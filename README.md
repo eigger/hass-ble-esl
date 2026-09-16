@@ -81,6 +81,12 @@ They work well for information that should stay visible, changes infrequently, a
 
 ---
 
+## Where to Buy
+
+- [AliExpress - Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html)
+
+---
+
 ## Installation
 
 1. Install via **HACS** (custom repository), or copy this repository into `custom_components/zhsunyco`.
