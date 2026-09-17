@@ -18,8 +18,6 @@ PRESETS: dict[str, DevicePreset] = {
             "tft": True,
             "rotation": 90,
             "mirror_x": True,
-            "min_voltage": 2.2,
-            "max_voltage": 2.9,
         },
     ),
     "0x000B": DevicePreset(
@@ -32,8 +30,6 @@ PRESETS: dict[str, DevicePreset] = {
         extra={
             "rotation": 270,
             "mirror_x": True,
-            "min_voltage": 2.2,
-            "max_voltage": 2.9,
         },
     ),
     "0x010B": DevicePreset(
@@ -46,8 +42,6 @@ PRESETS: dict[str, DevicePreset] = {
         extra={
             "rotation": 270,
             "mirror_x": True,
-            "min_voltage": 2.2,
-            "max_voltage": 2.9,
         },
     ),
     "0x0028": DevicePreset(
@@ -59,8 +53,6 @@ PRESETS: dict[str, DevicePreset] = {
         confidence=CONFIDENCE_HARDWARE,
         extra={
             "rotation": 90,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x0033": DevicePreset(
@@ -72,8 +64,6 @@ PRESETS: dict[str, DevicePreset] = {
         confidence=CONFIDENCE_HARDWARE,
         extra={
             "rotation": 90,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x002E": DevicePreset(
@@ -86,8 +76,6 @@ PRESETS: dict[str, DevicePreset] = {
         extra={
             "rotation": 90,
             "four_color": True,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x022B": DevicePreset(
@@ -101,8 +89,6 @@ PRESETS: dict[str, DevicePreset] = {
             "rotation": 180,
             "mirror_x": True,
             "compression": True,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x004B": DevicePreset(
@@ -113,8 +99,6 @@ PRESETS: dict[str, DevicePreset] = {
         colors="BWR",
         confidence=CONFIDENCE_HARDWARE,
         extra={
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x004E": DevicePreset(
@@ -126,8 +110,6 @@ PRESETS: dict[str, DevicePreset] = {
         confidence=CONFIDENCE_HARDWARE,
         extra={
             "four_color": True,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x012B": DevicePreset(
@@ -141,8 +123,6 @@ PRESETS: dict[str, DevicePreset] = {
             "mirror_y": True,
             "invert_luminance": True,
             "compression2": True,
-            "min_voltage": 2.2,
-            "max_voltage": 3.0,
         },
     ),
     "0x008B": DevicePreset(
@@ -154,8 +134,6 @@ PRESETS: dict[str, DevicePreset] = {
         confidence=CONFIDENCE_HARDWARE,
         extra={
             "compression2": True,
-            "min_voltage": 2.2,
-            "max_voltage": 3.2,
         },
     ),
 }

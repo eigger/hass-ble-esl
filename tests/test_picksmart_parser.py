@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
-from sensor_state_data import SensorLibrary
+from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from custom_components.zhsunyco.zhsunyco_ble.picksmart.const import (
     MANUFACTURER_ID,
@@ -76,9 +76,33 @@ def test_picksmart_parser_device_info_and_battery():
     assert parser.title == "CCDDEEFF (2.9\" EPD BWR)"
     assert parser.get_device_name() == "Zhsunyco CCDDEEFF"
     assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 2.6
-    # (2.6 - 2.2) * 100 / (3.0 - 2.2) = 50.0%
-    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 50.0
+    # (2.6 - 2.5) * 100 / (2.9 - 2.5) = 25%
+    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 25
+    assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is False
     assert parser._device_sw_version == "0x8101"
+
+
+def test_picksmart_parser_battery_low_and_clamp():
+    """Battery low turns on at 2.5 V; percentage clamps to 0-100."""
+    def run(decivolts):
+        parser = PickSmartBluetoothDeviceData(PRESETS["0x0033"])
+        info = MagicMock()
+        info.address = "AA:BB:CC:DD:EE:FF"
+        info.service_uuids = [SERVICE_UUIDS[0]]
+        info.manufacturer_data = {
+            MANUFACTURER_ID: bytes([0x33, decivolts, 0x81, 0x01, 0x40])
+        }
+        parser._start_update(info)
+        return (
+            parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE],
+            parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY],
+        )
+
+    assert run(0x18) == (0, True)    # 2.4 V
+    assert run(0x19) == (0, True)    # 2.5 V
+    assert run(0x1A) == (25, False)  # 2.6 V
+    assert run(0x1D) == (100, False)  # 2.9 V
+    assert run(0x20) == (100, False)  # 3.2 V (clamped)
 
 
 def test_picksmart_firmware_fix():

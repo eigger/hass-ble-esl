@@ -18,8 +18,6 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_HW_VERSION,
-    ATTR_SW_VERSION,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
@@ -30,7 +28,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -43,9 +40,13 @@ from sensor_state_data import (
     Units,
 )
 
-from .const import DOMAIN
+from .const import DOMAIN, SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
 from .coordinator import ZhsunycoPassiveBluetoothDataProcessor
-from .device import async_get_device_info, device_key_to_bluetooth_entity_key
+from .device import (
+    async_get_device_info,
+    device_key_to_bluetooth_entity_key,
+    hass_device_info,
+)
 from .types import ZhsunycoConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ SENSOR_DESCRIPTIONS = {
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=0,
     ),
     # Battery Voltage (V) — passive advertisement
     (
@@ -84,17 +86,9 @@ SENSOR_DESCRIPTIONS = {
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=1,
     ),
 }
-
-
-def hass_device_info(sensor_device_info):
-    device_info = sensor_device_info_to_hass_device_info(sensor_device_info)
-    if sensor_device_info.sw_version is not None:
-        device_info[ATTR_SW_VERSION] = sensor_device_info.sw_version
-    if sensor_device_info.hw_version is not None:
-        device_info[ATTR_HW_VERSION] = sensor_device_info.hw_version
-    return device_info
 
 
 def sensor_update_to_bluetooth_data_update(
@@ -230,6 +224,7 @@ class ZhsunycoBatteryPercentageSensorEntity(
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_suggested_display_precision = 0
 
     def __init__(
         self,
@@ -246,14 +241,14 @@ class ZhsunycoBatteryPercentageSensorEntity(
         self._attr_unique_id = f"zhsunyco_{self._identifier}_battery"
 
     @property
-    def native_value(self) -> float | None:
+    def native_value(self) -> int | None:
         volt = self.coordinator.data
         if volt is None:
             return None
-        min_v = 2.2
-        max_v = 3.0
-        pct = max(0.0, min(100.0, (volt - min_v) * 100.0 / (max_v - min_v)))
-        return round(pct, 1)
+        pct = (volt - SESSION_MIN_VOLTAGE) * 100.0 / (
+            SESSION_MAX_VOLTAGE - SESSION_MIN_VOLTAGE
+        )
+        return max(0, min(100, round(pct)))
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -276,6 +271,7 @@ class ZhsunycoBatteryVoltageSensorEntity(
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_suggested_display_precision = 1
 
     def __init__(
         self,

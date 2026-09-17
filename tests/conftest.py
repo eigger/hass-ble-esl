@@ -103,6 +103,7 @@ class MockBluetoothData:
         self._device_sw_version = None
         self._device_hw_version = None
         self._sensor_values = {}
+        self._binary_sensor_values = {}
 
     def supported(self, data) -> bool:
         self._start_update(data)
@@ -131,6 +132,9 @@ class MockBluetoothData:
 
     def update_predefined_sensor(self, desc, val) -> None:
         self._sensor_values[desc] = val
+
+    def update_predefined_binary_sensor(self, desc, val) -> None:
+        self._binary_sensor_values[desc] = val
 
     def update(self, service_info):
         self._start_update(service_info)

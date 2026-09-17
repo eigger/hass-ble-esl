@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from sensor_state_data import SensorLibrary
+from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from ..base import DevicePreset, ProtocolParser
 from .const import MANUFACTURER_ID, SERVICE_UUIDS
@@ -14,6 +14,13 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 _LOGGER = logging.getLogger(__name__)
+
+# Battery % is a linear map of the advertised voltage over min-max, and at or
+# below min the battery-low binary sensor turns on. Below 2.5 V e-paper refresh
+# becomes unreliable even though BLE communication still works. A preset may
+# override these via extra["min_voltage"] / extra["max_voltage"].
+DEFAULT_MIN_VOLTAGE = 2.5
+DEFAULT_MAX_VOLTAGE = 2.9
 
 
 def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:
@@ -101,15 +108,17 @@ class PickSmartBluetoothDeviceData(ProtocolParser):
         self.set_device_hw_version(f"0x{parsed['hardware']:04X}")
 
         volt = parsed["battery_v"]
-        min_volt = (self.preset.extra.get("min_voltage", 2.2)) if self.preset else 2.2
-        max_volt = (self.preset.extra.get("max_voltage", 3.0)) if self.preset else 3.0
+        extra = self.preset.extra if self.preset else {}
+        min_volt = extra.get("min_voltage", DEFAULT_MIN_VOLTAGE)
+        max_volt = extra.get("max_voltage", DEFAULT_MAX_VOLTAGE)
 
         batt = (volt - min_volt) * 100.0 / (max_volt - min_volt)
-        batt = max(0.0, min(100.0, batt))
+        batt = max(0, min(100, round(batt)))
 
-        self.update_predefined_sensor(
-            SensorLibrary.BATTERY__PERCENTAGE, round(batt, 1)
-        )
+        self.update_predefined_sensor(SensorLibrary.BATTERY__PERCENTAGE, batt)
         self.update_predefined_sensor(
             SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT, round(volt, 1)
+        )
+        self.update_predefined_binary_sensor(
+            BinarySensorDeviceClass.BATTERY, volt <= min_volt
         )

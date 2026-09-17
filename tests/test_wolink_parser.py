@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
-from sensor_state_data import SensorLibrary
+from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from custom_components.zhsunyco.zhsunyco_ble.wolink import WolinkProtocol
 from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
@@ -57,8 +57,15 @@ def test_parser_start_update_battery_and_versions():
     assert parser.title == "54200055 (2.9\" BWRY)"
     assert parser.get_device_name() == "Zhsunyco 54200055"
     assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 3.0
-    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 100.0
+    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 100
+    assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is False
     assert parser._device_sw_version == "258"
+
+    # 2200 mV (0x0898): 0 % and battery low
+    info.manufacturer_data = {MANUFACTURER_ID: mfr_bytes[:8] + bytes([0x08, 0x98])}
+    parser._start_update(info)
+    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 0
+    assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is True
     assert parser._device_hw_version == "772"
 
 
