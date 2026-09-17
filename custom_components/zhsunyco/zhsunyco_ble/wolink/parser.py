@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from sensor_state_data import SensorLibrary
+from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from ..base import DevicePreset, ProtocolParser
 from .const import MANUFACTURER_ID, SERVICE_UUID
@@ -15,6 +15,11 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 _LOGGER = logging.getLogger(__name__)
+
+# Battery % is a linear map of the advertised voltage over min-max, and at or
+# below min the battery-low binary sensor turns on.
+MIN_VOLTAGE = 2.2
+MAX_VOLTAGE = 3.0
 
 
 def is_wolink_advertisement(data: BluetoothServiceInfoBleak) -> bool:
@@ -74,16 +79,17 @@ class WolinkBluetoothDeviceData(ProtocolParser):
                         mfr_bytes[8:10].hex(),
                     )
                 volts = batt_mv / 1000.0
-                min_v, max_v = 2.2, 3.0
-                pct = max(
-                    0.0, min(100.0, (volts - min_v) * 100.0 / (max_v - min_v))
-                )
-                pct = round(pct, 1)
+                min_v, max_v = MIN_VOLTAGE, MAX_VOLTAGE
+                pct = (volts - min_v) * 100.0 / (max_v - min_v)
+                pct = max(0, min(100, round(pct)))
                 self.update_predefined_sensor(
                     SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT, volts
                 )
                 self.update_predefined_sensor(
                     SensorLibrary.BATTERY__PERCENTAGE, pct
+                )
+                self.update_predefined_binary_sensor(
+                    BinarySensorDeviceClass.BATTERY, volts <= min_v
                 )
                 if info.get("app_ver") is not None:
                     self.set_device_sw_version(str(info["app_ver"]))

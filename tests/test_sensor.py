@@ -19,7 +19,7 @@ from custom_components.zhsunyco.sensor import (
 
 
 def test_battery_percentage_sensor():
-    """Verify battery percentage mapping with 2.2V - 3.0V linear formula."""
+    """Verify battery percentage mapping with 2.2V - 3.0V linear formula (integer)."""
     hass = MagicMock()
     entry = MagicMock()
     entry.entry_id = "test_entry"
@@ -29,22 +29,23 @@ def test_battery_percentage_sensor():
     coordinator.data = 3.0
 
     sensor = ZhsunycoBatteryPercentageSensorEntity(hass, entry, coordinator)
-    assert sensor.native_value == 100.0
+    assert sensor.native_value == 100
+    assert isinstance(sensor.native_value, int)
     assert sensor.unique_id == "zhsunyco_54200055_battery"
 
     coordinator.data = 2.6
-    assert sensor.native_value == 50.0
+    assert sensor.native_value == 50
 
     coordinator.data = 2.2
-    assert sensor.native_value == 0.0
+    assert sensor.native_value == 0
 
     # Over-voltage capping
     coordinator.data = 3.2
-    assert sensor.native_value == 100.0
+    assert sensor.native_value == 100
 
     # Under-voltage capping
     coordinator.data = 2.0
-    assert sensor.native_value == 0.0
+    assert sensor.native_value == 0
 
     # None data
     coordinator.data = None
