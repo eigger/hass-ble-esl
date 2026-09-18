@@ -25,8 +25,11 @@ WHITE = (255, 255, 255)
 def draw_tag(d, x, y, s, c):
     """Draw an ESL tag icon inside an s×s box at (x, y). Coordinates already supersampled."""
     # tag body: landscape rounded rect, centered
-    bw, bh = s * 0.92, s * 0.70
-    bx, by = x + (s - bw) / 2, y + (s - bh) / 2
+    # badge overhangs the body's top-right corner, so keep body + badge inside the box
+    br = s * 0.17
+    bw, bh = s * 0.86, s * 0.66
+    bx = x + (s - bw) / 2 - br * 0.22
+    by = y + (s - bh) / 2 + br * 0.15
     r = s * 0.10
     d.rounded_rectangle([bx, by, bx + bw, by + bh], radius=r, fill=c["body"])
     # screen inset
@@ -52,7 +55,6 @@ def draw_tag(d, x, y, s, c):
     d.rounded_rectangle([sx1 - pad - chip * 2.3, cy, sx1 - pad - chip * 1.3, cy + chip], radius=chip * 0.25, fill=RED)
     d.rounded_rectangle([sx1 - pad - chip, cy, sx1 - pad, cy + chip], radius=chip * 0.25, fill=YEL)
     # bluetooth badge, top-right, overlapping corner
-    br = s * 0.17
     bcx, bcy = bx + bw - br * 0.55, by + br * 0.55
     d.ellipse([bcx - br, bcy - br, bcx + br, bcy + br], fill=BT)
     draw_bt_rune(d, bcx, bcy, br * 0.95, WHITE, max(2, int(s * 0.024)))
