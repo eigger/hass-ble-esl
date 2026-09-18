@@ -12,7 +12,7 @@ from ..base import (
     DevicePreset,
     WriteResult,
 )
-from .const import MANUFACTURER_ID
+from .const import BRAND, MANUFACTURER_ID
 from .devices import PRESETS, apply_firmware_quirks, get_device_preset, preset_choices
 from .parser import (
     PickSmartBluetoothDeviceData,
@@ -32,6 +32,7 @@ class PickSmartBleBackend(BleBackend):
 
     id = "picksmart"
     name = "PickSmart (gicisky)"
+    brand = BRAND
     capabilities = Capabilities(
         passive_battery=True,
         session_battery=False,

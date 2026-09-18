@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from ..base import DevicePreset, ProtocolParser
-from .const import NAME_PREFIX, SERVICE_UUID
+from .const import BRAND, NAME_PREFIX, SERVICE_UUID
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
@@ -53,9 +53,9 @@ class EasyTagBluetoothDeviceData(ProtocolParser):
             else ""
         )
         self.set_title(f"{identifier} ({display_name})")
-        self.set_device_name(f"easyTag {identifier}")
+        self.set_device_name(f"{BRAND} {identifier}")
         self.set_device_type(f"{display_name}{res}")
-        self.set_device_manufacturer("easyTag")
+        self.set_device_manufacturer(BRAND)
 
     def _start_update(self, service_info: BluetoothServiceInfoBleak) -> None:
         """Update from BLE advertisement data."""

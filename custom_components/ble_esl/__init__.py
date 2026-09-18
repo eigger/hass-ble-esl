@@ -49,7 +49,7 @@ from .const import (
     WRITE_LOCK,
 )
 from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
-from .device import PROTOCOL_LABELS, format_model_name
+from .device import backend_brand, format_model_name, protocol_label
 from .renderer import render_image
 from .types import BleEslConfigEntry
 
@@ -86,11 +86,7 @@ def process_service_info(
                 entry_data["preset"] = refined_preset
                 data.set_preset(refined_preset)
 
-                protocol_name = PROTOCOL_LABELS.get(
-                    getattr(backend, "id", ""),
-                    getattr(backend, "name", "BLE"),
-                )
-                manufacturer = protocol_name
+                manufacturer = backend_brand(backend)
                 model = format_model_name(refined_preset)
 
                 device_id = entry_data.get("device_id")
@@ -147,11 +143,8 @@ async def async_setup_entry(
 
     sw_version = adv_info.sw_version if adv_info else None
     hw_version = adv_info.hw_version if adv_info else None
-    protocol_name = PROTOCOL_LABELS.get(
-        getattr(backend, "id", ""),
-        getattr(backend, "name", "BLE"),
-    )
-    manufacturer = protocol_name
+    protocol_name = protocol_label(backend)
+    manufacturer = backend_brand(backend)
     model = format_model_name(preset)
 
     hass.data[DOMAIN][entry.entry_id] = {}
@@ -173,8 +166,9 @@ async def async_setup_entry(
         config_entry_id=entry.entry_id,
         connections={(CONNECTION_BLUETOOTH, address)},
         manufacturer=manufacturer,
-        name=f"{protocol_name} {_identifier}",
+        name=f"{manufacturer} {_identifier}",
         model=model,
+        model_id=protocol_name,
         sw_version=sw_version,
         hw_version=hw_version,
     )

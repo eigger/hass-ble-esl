@@ -83,6 +83,8 @@ class BleBackend(ABC):
 
     id: str
     name: str
+    #: Brand the tags are sold under (shown as HA device manufacturer).
+    brand: str
     capabilities: Capabilities
 
     @abstractmethod

@@ -18,3 +18,6 @@ RESP_IMAGE_DATA = 0x05
 
 CONNECT_TIMEOUT = 30.0
 FEEDBACK_TIMEOUT = 10.0
+
+# Brand the tags are sold under; used as the HA device manufacturer
+BRAND = "Gicisky"

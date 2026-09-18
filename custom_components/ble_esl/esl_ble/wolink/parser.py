@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from ..base import DevicePreset, ProtocolParser
-from .const import MANUFACTURER_ID, SERVICE_UUID
+from .const import BRAND, MANUFACTURER_ID, SERVICE_UUID
 from .protocol import battery_looks_plausible, parse_manufacturer_data
 
 if TYPE_CHECKING:
@@ -56,9 +56,9 @@ class WolinkBluetoothDeviceData(ProtocolParser):
             else ""
         )
         self.set_title(f"{identifier} ({display_name})")
-        self.set_device_name(f"WOLINK {identifier}")
+        self.set_device_name(f"{BRAND} {identifier}")
         self.set_device_type(f"{display_name}{res}")
-        self.set_device_manufacturer("WOLINK")
+        self.set_device_manufacturer(BRAND)
 
     def _start_update(self, service_info: BluetoothServiceInfoBleak) -> None:
         """Update from BLE advertisement data."""

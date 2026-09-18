@@ -12,6 +12,7 @@ from ..base import (
     DevicePreset,
     WriteResult,
 )
+from .const import BRAND
 from .devices import PRESETS, preset_choices
 from .parser import EasyTagBluetoothDeviceData, is_easytag_advertisement
 from .writer import update_image
@@ -27,6 +28,7 @@ class EasyTagBleBackend(BleBackend):
 
     id = "easytag"
     name = "easyTag (eLabel)"
+    brand = BRAND
     capabilities = Capabilities(
         passive_battery=False,
         session_battery=True,

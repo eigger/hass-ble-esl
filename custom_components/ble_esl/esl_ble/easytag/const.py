@@ -32,3 +32,6 @@ KEY_INDEX_NOTIFY = 0  # KEY_TABLE[0]  == 'b' -> magic 0x62
 HEADER_LEN = 20
 PACKET_LEN = 204
 CHUNK_LEN = 200
+
+# Brand the tags are sold under; used as the HA device manufacturer
+BRAND = "Zhsunyco"

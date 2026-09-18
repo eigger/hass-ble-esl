@@ -12,7 +12,7 @@ from ..base import (
     DevicePreset,
     WriteResult,
 )
-from .const import MANUFACTURER_ID
+from .const import BRAND, MANUFACTURER_ID
 from .devices import PRESETS, preset_choices
 from .parser import WolinkBluetoothDeviceData, is_wolink_advertisement
 from .protocol import parse_manufacturer_data
@@ -29,6 +29,7 @@ class WolinkBleBackend(BleBackend):
 
     id = "wolink"
     name = "WOLINK (BWRY)"
+    brand = BRAND
     capabilities = Capabilities(
         passive_battery=True,
         session_battery=False,

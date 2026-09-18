@@ -40,3 +40,6 @@ ERROR_MESSAGES = {
 
 SCREEN_CLEAR = -2
 SCREEN_KEEP = -1
+
+# Brand the tags are sold under; used as the HA device manufacturer
+BRAND = "Zhsunyco"

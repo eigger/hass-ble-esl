@@ -39,9 +39,10 @@ def test_async_get_device_info():
     }
 
     dev_info = async_get_device_info(hass, entry_id, address)
-    assert dev_info["name"] == "WOLINK 54200055"
-    assert dev_info["manufacturer"] == "WOLINK"
+    assert dev_info["name"] == "Zhsunyco 54200055"
+    assert dev_info["manufacturer"] == "Zhsunyco"
     assert dev_info["model"] == "2.9\" BWRY 296x128"
+    assert dev_info["model_id"] == "WOLINK"
     assert dev_info["sw_version"] == "258"
     assert dev_info["hw_version"] == "772"
     assert ("bluetooth", address) in dev_info["connections"]
@@ -92,12 +93,12 @@ def test_process_service_info_updates_device_registry():
     assert entry_data["sw_version"] == "258"
     assert entry_data["hw_version"] == "772"
     assert entry_data["model"] == "2.9\" BWRY 296x128"
-    assert entry_data["manufacturer"] == "WOLINK"
+    assert entry_data["manufacturer"] == "Zhsunyco"
 
     device_registry.async_update_device.assert_called_once_with(
         "mock_device_id_123",
         sw_version="258",
         hw_version="772",
         model="2.9\" BWRY 296x128",
-        manufacturer="WOLINK",
+        manufacturer="Zhsunyco",
     )

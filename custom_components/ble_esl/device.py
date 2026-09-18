@@ -42,6 +42,22 @@ PROTOCOL_LABELS = {
     "easytag": "easyTag",
 }
 
+# Used when a backend has no brand (should not happen for bundled protocols)
+DEFAULT_BRAND = "BLE ESL"
+
+
+def protocol_label(backend) -> str:
+    """Human-readable protocol name for a backend (shown as HA model_id)."""
+    return PROTOCOL_LABELS.get(
+        getattr(backend, "id", ""),
+        getattr(backend, "name", "BLE"),
+    )
+
+
+def backend_brand(backend) -> str:
+    """Brand the tags are sold under (shown as HA manufacturer)."""
+    return getattr(backend, "brand", None) or DEFAULT_BRAND
+
 
 def format_model_name(preset: DevicePreset | None) -> str | None:
     """Format model name with resolution."""
@@ -64,25 +80,18 @@ def async_get_device_info(
     backend = entry_data.get("backend")
     preset = entry_data.get("preset")
 
-    protocol_name = None
-    if backend:
-        protocol_name = PROTOCOL_LABELS.get(
-            getattr(backend, "id", ""),
-            getattr(backend, "name", str(backend)),
-        )
-
-    manufacturer = (
-        entry_data.get("manufacturer")
-        or protocol_name
-        or "BLE ESL"
+    protocol_name = protocol_label(backend) if backend else None
+    manufacturer = entry_data.get("manufacturer") or (
+        backend_brand(backend) if backend else DEFAULT_BRAND
     )
     model = entry_data.get("model") or format_model_name(preset)
 
     return DeviceInfo(
         connections={(CONNECTION_BLUETOOTH, address)},
-        name=f"{protocol_name or 'ESL'} {identifier}",
+        name=f"{manufacturer} {identifier}",
         manufacturer=manufacturer,
         model=model,
+        model_id=protocol_name,
         sw_version=entry_data.get("sw_version"),
         hw_version=entry_data.get("hw_version"),
     )

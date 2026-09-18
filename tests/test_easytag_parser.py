@@ -54,4 +54,4 @@ def test_easytag_parser_device_info():
     parser._start_update(info)
 
     assert parser.title == "00E57D76 (2.9\" BWR (ET0290-3DB))"
-    assert parser.get_device_name() == "easyTag 00E57D76"
+    assert parser.get_device_name() == "Zhsunyco 00E57D76"
