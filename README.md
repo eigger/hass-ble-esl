@@ -424,50 +424,35 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 
 ## Examples
 
-Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
+Payloads are resolution-specific, not tag-specific: any example below works on any supported tag with the same resolution, regardless of brand or protocol. All of them call `ble_esl.write` — replace `device_id` with your own device. Files live in [`examples/`](./examples) (`gicisky/` originally from [hass-gicisky](https://github.com/eigger/hass-gicisky); `poshiji/` contributed by a PSJ-420 owner, see its [README](./examples/poshiji/README.md)).
 
-### PickSmart (Gicisky) — [`examples/gicisky/`](./examples/gicisky)
-
-Originally from [hass-gicisky](https://github.com/eigger/hass-gicisky); maintained here from now on.
-
-| Size | Example | Preview | YAML |
-|------|---------|---------|------|
-| 2.1" (250×128) | Date | ![2.1-date.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-date.jpg) | [2.1-date.yaml](./examples/gicisky/2.1-date.yaml) |
-| 2.1" (250×128) | Naver Weather | ![2.1-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-naver-weather.jpg) | [2.1-naver-weather.yaml](./examples/gicisky/2.1-naver-weather.yaml) |
-| 2.1" (250×128) | Waste Collection | ![2.1-waste-collection.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-waste-collection.png) | [2.1-waste-collection.yaml](./examples/gicisky/2.1-waste-collection.yaml) |
-| 2.1" (250×128) | Wifi | ![2.1-wifi.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-wifi.jpg) | [2.1-wifi.yaml](./examples/gicisky/2.1-wifi.yaml) |
-| 2.1" (250×128) | TMap time | ![2.1-tmap-time.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-tmap-time.jpg) | [2.1-tmap-time.yaml](./examples/gicisky/2.1-tmap-time.yaml) |
-| 2.9" (296×128) | Google Calendar | ![2.9-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-google-calendar.jpg) | [2.9-google-calendar.yaml](./examples/gicisky/2.9-google-calendar.yaml) |
-| 2.9" (296×128) | Presence Display | ![2.9-presence-display.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-presence-display.jpg) | [2.9-presence-display.yaml](./examples/gicisky/2.9-presence-display.yaml) |
-| 4.2" (400×300) | Image | ![4.2-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-image.jpg) | [4.2-image.yaml](./examples/gicisky/4.2-image.yaml) |
-| 4.2" (400×300) | 기상청 Weather | ![4.2-kma-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-kma-weather.png) | [4.2-kma-weather.yaml](./examples/gicisky/4.2-kma-weather.yaml) |
-| 4.2" (400×300) | Naver Weather | ![4.2-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-naver-weather.jpg) | [4.2-naver-weather.yaml](./examples/gicisky/4.2-naver-weather.yaml) |
-| 4.2" (400×300) | Date Weather | ![4.2-date-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-date-weather.jpg) | [4.2-date-weather.yaml](./examples/gicisky/4.2-date-weather.yaml) |
-| 4.2" (400×300) | Weather News | ![4.2-weather-news.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-weather-news.png) | [4.2-weather-news.yaml](./examples/gicisky/4.2-weather-news.yaml) |
-| 4.2" (400×300) | 3D Print | ![4.2-3d-print.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-3d-print.png) | [4.2-3d-print.yaml](./examples/gicisky/4.2-3d-print.yaml) |
-| 7.5" (800×480) | Google Calendar | ![7.5-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calendar.jpg) | [7.5-google-calendar.yaml](./examples/gicisky/7.5-google-calendar.yaml) |
-| 7.5" (800×480) | Google Calendar 2 | ![7.5-google-calender2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender2.png) | [7.5-google-calender2.yaml](./examples/gicisky/7.5-google-calender2.yaml) |
-| 7.5" (800×480) | Google Calendar 3 | ![7.5-google-calender3.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender3.png) | [7.5-google-calender3.yaml](./examples/gicisky/7.5-google-calender3.yaml) |
-| 7.5" (800×480) | Date Weather | ![7.5-date-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather.png) | [7.5-date-weather.yaml](./examples/gicisky/7.5-date-weather.yaml) |
-| 7.5" (800×480) | Date Weather 2 | ![7.5-date-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather2.png) | [7.5-date-weather2.yaml](./examples/gicisky/7.5-date-weather2.yaml) |
-| 7.5" (800×480) | Calendar Weather | ![7.5-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-calendar-weather.png) | [7.5-calendar-weather.yaml](./examples/gicisky/7.5-calendar-weather.yaml) |
-| 7.5" (800×480) | Image | ![7.5-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-image.jpg) | [7.5-image.yaml](./examples/gicisky/7.5-image.yaml) |
-| 10.2" (960×640) | Calendar Weather | ![10.2-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather.png) | [10.2-calendar-weather.yaml](./examples/gicisky/10.2-calendar-weather.yaml) |
-| 10.2" (960×640) | Calendar Weather 2 | ![10.2-calendar-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather2.png) | [10.2-calendar-weather2.yaml](./examples/gicisky/10.2-calendar-weather2.yaml) |
-| 10.2" (960×640) | Calendar | ![10.2-calendar.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar.png) | [10.2-calendar.yaml](./examples/gicisky/10.2-calendar.yaml) |
-
-### Poshiji (XTE) — [`examples/poshiji/`](./examples/poshiji)
-
-Contributed by the PSJ-420 owner. The weather preview is a photo of the actual panel. Usage notes: [`examples/poshiji/README.md`](./examples/poshiji/README.md).
-
-| Size | Example | Preview | YAML |
-|------|---------|---------|------|
-| 4.2" (400×300) | Four-color check | ![psj420-color-test.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/poshiji/psj420-color-test.png) | [psj420-color-test.yaml](./examples/poshiji/psj420-color-test.yaml) |
-| 4.2" (400×300) | Naver Weather | ![poshiji_psj420_4color.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png) | [psj420-weather-demo.yaml](./examples/poshiji/psj420-weather-demo.yaml) |
-
-### Zhsunyco (WOLINK / easyTag) — [`examples/zhsunyco/`](./examples/zhsunyco)
-
-No examples yet — the `gicisky/` payloads work as-is once coordinates are adjusted for the Zhsunyco resolution (e.g. 2.13" WOLINK is 250×122). Contributions welcome.
+| Size | Brand | Example | Preview | YAML |
+|------|-------|---------|---------|------|
+| 2.1" (250×128) | Gicisky | Date | ![2.1-date.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-date.jpg) | [2.1-date.yaml](./examples/gicisky/2.1-date.yaml) |
+| 2.1" (250×128) | Gicisky | Naver Weather | ![2.1-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-naver-weather.jpg) | [2.1-naver-weather.yaml](./examples/gicisky/2.1-naver-weather.yaml) |
+| 2.1" (250×128) | Gicisky | Waste Collection | ![2.1-waste-collection.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-waste-collection.png) | [2.1-waste-collection.yaml](./examples/gicisky/2.1-waste-collection.yaml) |
+| 2.1" (250×128) | Gicisky | Wifi | ![2.1-wifi.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-wifi.jpg) | [2.1-wifi.yaml](./examples/gicisky/2.1-wifi.yaml) |
+| 2.1" (250×128) | Gicisky | TMap time | ![2.1-tmap-time.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-tmap-time.jpg) | [2.1-tmap-time.yaml](./examples/gicisky/2.1-tmap-time.yaml) |
+| 2.9" (296×128) | Gicisky | Google Calendar | ![2.9-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-google-calendar.jpg) | [2.9-google-calendar.yaml](./examples/gicisky/2.9-google-calendar.yaml) |
+| 2.9" (296×128) | Gicisky | Presence Display | ![2.9-presence-display.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-presence-display.jpg) | [2.9-presence-display.yaml](./examples/gicisky/2.9-presence-display.yaml) |
+| 4.2" (400×300) | Gicisky | Image | ![4.2-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-image.jpg) | [4.2-image.yaml](./examples/gicisky/4.2-image.yaml) |
+| 4.2" (400×300) | Gicisky | 기상청 Weather | ![4.2-kma-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-kma-weather.png) | [4.2-kma-weather.yaml](./examples/gicisky/4.2-kma-weather.yaml) |
+| 4.2" (400×300) | Gicisky | Naver Weather | ![4.2-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-naver-weather.jpg) | [4.2-naver-weather.yaml](./examples/gicisky/4.2-naver-weather.yaml) |
+| 4.2" (400×300) | Gicisky | Date Weather | ![4.2-date-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-date-weather.jpg) | [4.2-date-weather.yaml](./examples/gicisky/4.2-date-weather.yaml) |
+| 4.2" (400×300) | Gicisky | Weather News | ![4.2-weather-news.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-weather-news.png) | [4.2-weather-news.yaml](./examples/gicisky/4.2-weather-news.yaml) |
+| 4.2" (400×300) | Gicisky | 3D Print | ![4.2-3d-print.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-3d-print.png) | [4.2-3d-print.yaml](./examples/gicisky/4.2-3d-print.yaml) |
+| 4.2" (400×300) | Poshiji | Four-color check | ![psj420-color-test.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/poshiji/psj420-color-test.png) | [psj420-color-test.yaml](./examples/poshiji/psj420-color-test.yaml) |
+| 4.2" (400×300) | Poshiji | Naver Weather | ![poshiji_psj420_4color.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png) | [psj420-weather-demo.yaml](./examples/poshiji/psj420-weather-demo.yaml) |
+| 7.5" (800×480) | Gicisky | Google Calendar | ![7.5-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calendar.jpg) | [7.5-google-calendar.yaml](./examples/gicisky/7.5-google-calendar.yaml) |
+| 7.5" (800×480) | Gicisky | Google Calendar 2 | ![7.5-google-calender2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender2.png) | [7.5-google-calender2.yaml](./examples/gicisky/7.5-google-calender2.yaml) |
+| 7.5" (800×480) | Gicisky | Google Calendar 3 | ![7.5-google-calender3.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender3.png) | [7.5-google-calender3.yaml](./examples/gicisky/7.5-google-calender3.yaml) |
+| 7.5" (800×480) | Gicisky | Date Weather | ![7.5-date-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather.png) | [7.5-date-weather.yaml](./examples/gicisky/7.5-date-weather.yaml) |
+| 7.5" (800×480) | Gicisky | Date Weather 2 | ![7.5-date-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather2.png) | [7.5-date-weather2.yaml](./examples/gicisky/7.5-date-weather2.yaml) |
+| 7.5" (800×480) | Gicisky | Calendar Weather | ![7.5-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-calendar-weather.png) | [7.5-calendar-weather.yaml](./examples/gicisky/7.5-calendar-weather.yaml) |
+| 7.5" (800×480) | Gicisky | Image | ![7.5-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-image.jpg) | [7.5-image.yaml](./examples/gicisky/7.5-image.yaml) |
+| 10.2" (960×640) | Gicisky | Calendar Weather | ![10.2-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather.png) | [10.2-calendar-weather.yaml](./examples/gicisky/10.2-calendar-weather.yaml) |
+| 10.2" (960×640) | Gicisky | Calendar Weather 2 | ![10.2-calendar-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather2.png) | [10.2-calendar-weather2.yaml](./examples/gicisky/10.2-calendar-weather2.yaml) |
+| 10.2" (960×640) | Gicisky | Calendar | ![10.2-calendar.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar.png) | [10.2-calendar.yaml](./examples/gicisky/10.2-calendar.yaml) |
 
 ---
 
