@@ -43,56 +43,50 @@ They work well for information that should stay visible, changes infrequently, a
 ## Supported Models
 
 > [!WARNING]
-> **Hardware Testing Notice**: The **WOLINK** and **easyTag** models below have **not** been physically tested on actual hardware yet — their implementations and presets are built from technical specifications. **PickSmart** models are fully verified (inherited from hass-gicisky).
+> **Hardware Testing Notice**: **PickSmart** (Gicisky) models are fully verified, inherited from hass-gicisky. **WOLINK** and **easyTag** models have **not** been physically tested yet — their implementations and presets are built from technical specifications.
 > If you test a WOLINK or easyTag device, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
 
-### 1. WOLINK Protocol (BWRY / 2bpp) — ⚠️ untested
+Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + red + yellow.
 
-| Size | Resolution | Colors |
-|------|------------|--------|
-| 1.54" | 200 × 200 | BWRY |
-| 2.13" | 250 × 122 | BWRY |
-| 2.66" | 296 × 152 | BWRY |
-| 2.90" | 296 × 128 | BWRY |
-| 3.50" | 384 × 184 | BWRY |
-| 3.70" | 416 × 240 | BWRY |
-| 4.20" | 400 × 300 | BWRY |
-| 5.83" | 648 × 480 | BWRY |
-| 7.50" | 800 × 480 | BWRY |
-| 10.2" | 960 × 640 | BWRY |
-| 13.3" | 960 × 680 | BWRY |
+| Size | Resolution | Colors | Brand | Protocol | Model / Type | Status |
+|------|------------|--------|-------|----------|--------------|--------|
+| 1.54" | 200 × 200 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 1.54" | 200 × 200 | BWR | Zhsunyco | easyTag | ET0154-33B | ⚠️ untested |
+| 2.1" | 250 × 132 | BW | Gicisky | PickSmart | TFT | ✅ verified |
+| 2.1" | 212 × 104 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 2.1" | 250 × 128 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 2.13" | 250 × 122 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 2.13" | 250 × 122 | BWR | Zhsunyco | easyTag | ETR0213-36B | ⚠️ untested |
+| 2.13" | 250 × 122 | BW | Zhsunyco | easyTag | ETR0213-39B | ⚠️ untested |
+| 2.66" | 296 × 152 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 2.66" | 296 × 152 | BWR | Zhsunyco | easyTag | ET0266-3A | ⚠️ untested |
+| 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 2.9" | 296 × 128 | BWR | Zhsunyco | easyTag | ET0290-3DB / ETR290-FF | ⚠️ untested |
+| 2.9" | 296 × 128 | BW | Gicisky | PickSmart | EPD | ✅ verified |
+| 2.9" | 296 × 128 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 2.9" | 296 × 128 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
+| 3.5" | 384 × 184 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 3.5" | 384 × 184 | BWR | Zhsunyco | easyTag | ET0350-55B | ⚠️ untested |
+| 3.7" | 416 × 240 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 3.7" | 240 × 416 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 4.2" | 400 × 300 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 4.2" | 400 × 300 | BWR | Zhsunyco | easyTag | ET0420-40B / 43B | ⚠️ untested |
+| 4.2" | 400 × 300 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 4.2" | 400 × 300 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
+| 5.8" | 648 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 5.8" | 648 × 480 | BWR | Zhsunyco | easyTag | ETR0580-4FB | ⚠️ untested |
+| 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 7.5" | 800 × 480 | BWR | Zhsunyco | easyTag | ET0750-44B | ⚠️ untested |
+| 7.5" | 800 × 480 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 10.2" | 960 × 640 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 10.2" | 960 × 640 | BWR | Zhsunyco | easyTag | ET1020-64 | ⚠️ untested |
+| 10.2" | 960 × 640 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
-### 2. easyTag Protocol (eLabel) — ⚠️ untested
-
-| Model | Size | Resolution | Colors |
-|-------|------|------------|--------|
-| ET0154-33B | 1.54" | 200 × 200 | BWR |
-| ETR0213-36B | 2.13" | 250 × 122 | BWR |
-| ETR0213-39B | 2.13" | 250 × 122 | BW |
-| ET0266-3A | 2.66" | 296 × 152 | BWR |
-| ET0290-3DB | 2.90" | 296 × 128 | BWR |
-| ETR290-FF | 2.90" | 296 × 128 | BWR |
-| ET0350-55B | 3.50" | 384 × 184 | BWR |
-| ET0420-40B / 43B | 4.20" | 400 × 300 | BWR |
-| ETR0580-4FB | 5.80" | 648 × 480 | BWR |
-| ET0750-44B | 7.50" | 800 × 480 | BWR |
-| ET1020-64 | 10.2" | 960 × 640 | BWR |
-
-### 3. PickSmart Protocol (gicisky) — ✅ verified
-
-| Type | Size | Resolution | Colors |
-|------|------|------------|--------|
-| TFT | 2.1" | 250 × 132 | BW |
-| EPD | 2.1" | 212 × 104 | BWR |
-| EPD | 2.1" | 250 × 128 | BWR |
-| EPD | 2.9" | 296 × 128 | BW |
-| EPD | 2.9" | 296 × 128 | BWR |
-| EPD | 2.9" | 296 × 128 | BWRY |
-| EPD | 3.7" | 240 × 416 | BWR |
-| EPD | 4.2" | 400 × 300 | BWR |
-| EPD | 4.2" | 400 × 300 | BWRY |
-| EPD | 7.5" | 800 × 480 | BWR |
-| EPD | 10.2" | 960 × 640 | BWR |
+Protocol notes:
+- **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
+- **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
+- **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
 
 ---
 
