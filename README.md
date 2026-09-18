@@ -43,10 +43,10 @@ They work well for information that should stay visible, changes infrequently, a
 ## Supported Models
 
 > [!WARNING]
-> **Hardware Testing Notice**: None of the models listed below have been physically tested on actual hardware yet.
-> Implementations and model presets are built according to technical specifications. If you test any of these devices, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
+> **Hardware Testing Notice**: The **WOLINK** and **easyTag** models below have **not** been physically tested on actual hardware yet — their implementations and presets are built from technical specifications. **PickSmart** models are fully verified (inherited from hass-gicisky).
+> If you test a WOLINK or easyTag device, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
 
-### 1. WOLINK Protocol (BWRY / 2bpp)
+### 1. WOLINK Protocol (BWRY / 2bpp) — ⚠️ untested
 
 | Size | Resolution | Colors |
 |------|------------|--------|
@@ -62,7 +62,7 @@ They work well for information that should stay visible, changes infrequently, a
 | 10.2" | 960 × 640 | BWRY |
 | 13.3" | 960 × 680 | BWRY |
 
-### 2. easyTag Protocol (eLabel)
+### 2. easyTag Protocol (eLabel) — ⚠️ untested
 
 | Model | Size | Resolution | Colors |
 |-------|------|------------|--------|
@@ -78,7 +78,7 @@ They work well for information that should stay visible, changes infrequently, a
 | ET0750-44B | 7.50" | 800 × 480 | BWR |
 | ET1020-64 | 10.2" | 960 × 640 | BWR |
 
-### 3. PickSmart Protocol (gicisky)
+### 3. PickSmart Protocol (gicisky) — ✅ verified
 
 | Type | Size | Resolution | Colors |
 |------|------|------------|--------|
