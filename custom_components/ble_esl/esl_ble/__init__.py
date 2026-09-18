@@ -20,6 +20,7 @@ from .base import (
 )
 from .easytag import EasyTagBleBackend, EasyTagProtocol
 from .picksmart import PickSmartBleBackend, PickSmartProtocol
+from .poshiji import PoshijiBleBackend
 from .wolink import WolinkBleBackend, WolinkProtocol
 
 if TYPE_CHECKING:
@@ -65,6 +66,7 @@ def detect(
 register(WolinkBleBackend())
 register(EasyTagBleBackend())
 register(PickSmartBleBackend())
+register(PoshijiBleBackend())
 
 __all__ = [
     "CONFIDENCE_COMMUNITY",
@@ -80,6 +82,7 @@ __all__ = [
     "EasyTagProtocol",
     "PickSmartBleBackend",
     "PickSmartProtocol",
+    "PoshijiBleBackend",
     "ProtocolBackend",
     "ProtocolParser",
     "WolinkBleBackend",

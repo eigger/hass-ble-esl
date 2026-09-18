@@ -22,7 +22,7 @@ Photos above are PickSmart (Gicisky) tags. See [Examples](#examples) for the ful
 
 An **electronic label** (electronic shelf label, ESL) is a low-power **e-paper** display that keeps showing content **without continuous power**.
 
-This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, and **PickSmart (gicisky)** BLE protocol families.
+This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, **PickSmart (gicisky)**, and **Poshiji (XTE)** BLE protocol families.
 
 They work well for information that should stay visible, changes infrequently, and lives where mains power is impractical — retail tags, home dashboard status displays, room calendars, sensors, and inventory monitors.
 
@@ -73,6 +73,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 4.2" | 400 × 300 | BWR | Zhsunyco | easyTag | ET0420-40B / 43B | ⚠️ untested |
 | 4.2" | 400 × 300 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 4.2" | 400 × 300 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
+| 4.2" | 400 × 300 | BWRY | Poshiji | XTE | PSJ-420 | ✅ owner-reported |
 | 5.8" | 648 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 5.8" | 648 × 480 | BWR | Zhsunyco | easyTag | ETR0580-4FB | ⚠️ untested |
 | 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
@@ -84,6 +85,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
+- **Poshiji (XTE)** — PSJ-420, 400×300 BWRY. Owner-reported screen updates with the original implementation; see [setup and port validation](docs/poshiji-psj420.md).
 - **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
