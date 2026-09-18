@@ -1,11 +1,10 @@
 # Poshiji PSJ-420 (XTE)
 
-This fork supports the Poshiji PSJ-420, a 400x300 black/white/red/yellow label,
+BLE ESL supports the Poshiji PSJ-420, a 400x300 black/white/red/yellow label,
 using its XTE protocol. Manufacturer, model and colors were confirmed by the
-device owner. The owner confirmed working screen updates after the advertisement
-and adaptive-write fixes in the original implementation. The preset uses
-`reported` confidence. This BLE ESL backend port has automated test coverage;
-the port itself still needs a device test.
+device owner, who verified working screen updates with this backend on the
+real tag. The preset uses `reported` confidence. The protocol codec and BLE
+transaction are also covered by automated tests.
 
 ## Product photo
 
@@ -43,7 +42,7 @@ are not recorded here.
 | Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
 | Discovery | Manufacturer ID `0x5258` plus known advertisement prefix | Capture and follow-up observation |
 | Battery / temperature telemetry | Not decoded or exposed | No validated field interpretation |
-| Hardware confidence | Owner-reported working updates | Original implementation; backend port covered by tests |
+| Hardware confidence | Owner-verified working updates | Device owner tested this backend; codec/transport covered by tests |
 
 **Not established:** enclosure dimensions/weight, battery type/capacity/life,
 operating temperature, IP rating, exact Bluetooth specification version,
@@ -62,29 +61,27 @@ Use `black`, `white`, `red` and `yellow`; other colors are quantized to BWRY.
 
 ## Installation and use
 
-Install this fork or copy `custom_components/ble_esl` to Home Assistant's
-`/config/custom_components/` folder, then restart Home Assistant completely.
-Add the tag through Settings > Devices & Services > BLE ESL. Manufacturer is
-Poshiji; the PSJ-420 model is detected automatically. Protocol and model are
-saved and restored by the standard BLE ESL config flow.
+Install BLE ESL (HACS or copy `custom_components/ble_esl` to
+`/config/custom_components/`), then restart Home Assistant. Add the tag through
+Settings > Devices & Services > BLE ESL. Manufacturer is Poshiji; the PSJ-420
+model is detected automatically. Protocol and model are saved and restored by
+the standard BLE ESL config flow.
 
-Disable the old hass-gicisky entry for this tag to avoid concurrent writes.
-Use `ble_esl.write` / `ble_esl.write_guarded` instead of the `gicisky` services,
-and select the new BLE ESL device. Existing imagespec payloads can be reused.
-Use `dry_run: true` for a preview before writing.
+Write with `ble_esl.write` / `ble_esl.write_guarded` and select the BLE ESL
+device. Use `dry_run: true` for a preview before writing. Make sure no other
+integration writes to the same tag.
 
 Writes use the smaller of 244 bytes and the backend's reported write limit.
 20-byte limits are accepted without changing logical XTE block contents.
-Retry Count and Write Delay options apply to the Poshiji backend.
+Retry Count and Write Delay options apply to the Poshiji backend; the delay is
+applied once per XTE command or block, not per ATT chunk.
 
 ## Discovery limits
 
 Only manufacturer ID `0x5258` with a 13-byte payload beginning with
 `fd024002009964060102ffff` is recognized. The final byte is ignored: the owner
-observed it change from `1e` to `1b` after an initial successful screen update.
-The earlier exact match rejected the changed advertisement and could leave
-device metadata unavailable after setup/reload. The final byte's meaning is
-not confirmed, so no battery/voltage readings are invented.
+observed it change from `1e` to `1b` after a successful screen update. Its
+meaning is not confirmed, so no battery/voltage readings are invented.
 
 No MAC address or device name is hardcoded. The discovery filter intentionally
 does not treat every device with this manufacturer ID as a PSJ-420. Changes
@@ -136,8 +133,7 @@ nearby-device addresses are included in this repository.
 | Symptom | Check |
 |---------|-------|
 | Device not discovered | Bluetooth is enabled, device is in range, advertisement matches the documented prefix. Do not match on a fixed MAC/name. |
-| Metadata unavailable after an update | Confirm the advertisement-tail fix is installed; the final byte is variable. This backend saves its selected protocol/model in the config entry. |
-| Old `XTE requires ATT MTU >= 247` message | An older implementation is running. Update the files and restart **Home Assistant**, not only the integration. |
+| Metadata unavailable after an update | The advertisement's final byte is variable and is ignored by the matcher; if the tag stops being recognized, capture the new manufacturer data and open an issue. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
 | Preview updates but panel does not | The preview is not a readback. Check `dry_run`; set `dry_run` on the enclosing action for the color-test payload; the weather automation sends to the panel. |
 | Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |

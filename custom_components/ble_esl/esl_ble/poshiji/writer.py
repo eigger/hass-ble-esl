@@ -27,12 +27,16 @@ class XteClient:
         self.responses.put_nowait(bytes(data))
 
     async def _write(self, characteristic, data: bytes, chunk_size: int) -> None:
+        """Write one logical frame (command or block) as consecutive ATT chunks."""
         for offset in range(0, len(data), chunk_size):
             await self.client.write_gatt_char(
                 characteristic, data[offset:offset + chunk_size], response=False
             )
-            if self.delay:
-                await asyncio.sleep(self.delay)
+        # Pause per logical frame, not per ATT chunk: with a 20-byte write
+        # limit a frame is up to 61 chunks, and a per-chunk retry delay would
+        # stretch a single attempt to minutes.
+        if self.delay:
+            await asyncio.sleep(self.delay)
 
     async def _command(self, characteristic, payload: bytes, chunk_size: int,
                        expected_payload: bytes) -> None:
@@ -86,8 +90,11 @@ class XteClient:
             await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
             return True
         finally:
-            # Disconnect in update_image is still attempted if unsubscribe fails.
-            await self.client.stop_notify(notify_char)
+            # Never let an unsubscribe failure on a dropped link mask the
+            # original transfer error; update_image still disconnects.
+            with contextlib.suppress(Exception):
+                if self.client.is_connected:
+                    await self.client.stop_notify(notify_char)
 
 
 async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0) -> WriteResult:

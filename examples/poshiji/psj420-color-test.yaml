@@ -87,4 +87,4 @@ data:
       anchor: mt
       font: fonts/NotoSansKR-Bold.ttf
 target:
-  device_id: { your_device_id }
+  device_id: <your device>

@@ -95,7 +95,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
-- **Poshiji (XTE)** — PSJ-420, 400×300 BWRY. Owner-reported screen updates with the original implementation; see [setup and port validation](docs/poshiji-psj420.md).
+- **Poshiji (XTE)** — PSJ-420, 400×300 BWRY. Verified on hardware by the device owner; see [setup and protocol notes](docs/poshiji-psj420.md).
 - **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).

@@ -93,6 +93,7 @@ class FakeClient:
         self.fail_write = fail_write
         self.writes = []
         self.stopped = False
+        self.is_connected = True
 
     async def start_notify(self, characteristic, callback):
         assert characteristic is self.notify_char
@@ -100,6 +101,8 @@ class FakeClient:
 
     async def stop_notify(self, characteristic):
         assert characteristic is self.notify_char
+        if not self.is_connected:
+            raise OSError("Not connected")
         self.stopped = True
 
     async def write_gatt_char(self, characteristic, data, response):
@@ -170,4 +173,30 @@ def test_write_failure_unsubscribes():
         asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
     assert client.stopped
 
+
+def test_write_failure_after_disconnect_keeps_original_error():
+    client = FakeClient(fail_write=True)
+    original = client.write_gatt_char
+
+    async def write_then_drop(characteristic, data, response):
+        client.is_connected = False
+        await original(characteristic, data, response)
+
+    client.write_gatt_char = write_then_drop
+    with pytest.raises(OSError, match="adapter write failed"):
+        asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
+    assert not client.stopped  # stop_notify skipped on a dropped link
+
+
+def test_delay_applies_per_frame_not_per_chunk(monkeypatch):
+    sleeps = []
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+    client = FakeClient(mtu_payload=20)
+    assert asyncio.run(XteClient(client, attempt=2).write_image(Image.new("RGB", (400, 300), "white")))
+    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000)))
+    assert sleeps == [pytest.approx(0.05)] * frames
 
