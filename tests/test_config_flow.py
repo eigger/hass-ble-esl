@@ -42,7 +42,7 @@ def test_title_helper():
     info.address = "66:66:54:20:00:55"
     backend = esl_ble.get("wolink")
     title = _title(info, backend, "290")
-    assert title == "54200055 (2.9\" BWRY)"
+    assert title == "Zhsunyco 54200055 (2.9\" BWRY)"
 
 
 def test_config_flow_bluetooth_step():
