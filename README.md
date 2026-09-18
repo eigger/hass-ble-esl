@@ -437,10 +437,11 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 
 | Example | Preview | YAML |
 |---------|---------|------|
-| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Preview / send action](examples/poshiji/psj420-color-test.yaml) |
+| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Payload list](examples/poshiji/psj420-color-test.yaml) |
 | Naver weather automation | <img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Actual PSJ-420 weather display" width="400" /> | [Weekday Naver weather automation](examples/poshiji/psj420-weather-demo.yaml) |
 
-The color test defaults to `dry_run: true`. The Naver weather automation sends
+The color test is a payload list for `ble_esl.write` → `data.payload`; set
+`data.dry_run: true` separately to preview. The Naver weather automation sends
 to the panel on weekdays at 08:00, 11:00, 14:00 and 17:00. Adjust its `location`
 and target device ID for your installation. Its photo is the actual device
 photo supplied by the owner; only the color-test preview is rendered.

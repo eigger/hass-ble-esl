@@ -56,7 +56,7 @@ transfer in one capture is not the panel's physical refresh time or a guarantee.
 All layouts are native 400×300; Home Assistant selects the size from the preset.
 Use `black`, `white`, `red` and `yellow`; other colors are quantized to BWRY.
 
-- [Four-color check](../examples/poshiji/psj420-color-test.yaml): preview or send four labeled swatches.
+- [Four-color check](../examples/poshiji/psj420-color-test.yaml): a payload list of four labeled swatches for `ble_esl.write` → `data.payload`.
 - [Naver weather automation](../examples/poshiji/psj420-weather-demo.yaml): weekday 08:00 / 11:00 / 14:00 / 17:00 updates, daily forecast low/high, fine-dust warnings and a two-line weather comment. Uses the owner-supplied actual device photo.
 - [Example setup instructions](../examples/poshiji/README.md): placeholders, preview/send behavior and entity requirements.
 
@@ -139,7 +139,7 @@ nearby-device addresses are included in this repository.
 | Metadata unavailable after an update | Confirm the advertisement-tail fix is installed; the final byte is variable. This backend saves its selected protocol/model in the config entry. |
 | Old `XTE requires ATT MTU >= 247` message | An older implementation is running. Update the files and restart **Home Assistant**, not only the integration. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
-| Preview updates but panel does not | The preview is not a readback. Check `dry_run`; the color-test example defaults to preview-only; the weather automation sends to the panel. |
+| Preview updates but panel does not | The preview is not a readback. Check `dry_run`; set `dry_run` on the enclosing action for the color-test payload; the weather automation sends to the panel. |
 | Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |
 
 The Naver example calls `weather.get_forecasts` with `type: daily` and uses the

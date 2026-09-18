@@ -8,7 +8,7 @@
 
 ![4색 확인 미리보기](psj420-color-test.png)
 
-개발자 도구 → 작업의 YAML 모드에서 사용합니다. `REPLACE_WITH_YOUR_BLE_ESL_DEVICE_ID`를 장치 ID로 바꾸세요. 기본값은 `dry_run: true`이며 Preview Content만 갱신합니다. 실제 전송은 `dry_run: false`로 변경하세요.
+이 파일은 사용자가 제공한 **payload 목록**입니다. 전체 서비스 호출이나 자동화가 아니므로 `ble_esl.write` 작업의 `data.payload` 아래에 넣으세요. 대상 장치는 별도로 선택합니다. 미리보기는 `data.dry_run: true`, 실제 전송은 `false`로 지정하며 배경은 `white`를 사용하세요. 표시 내용은 동일하므로 기존 렌더링 미리보기를 유지했습니다.
 
 ## 2. 네이버 날씨 자동화
 
