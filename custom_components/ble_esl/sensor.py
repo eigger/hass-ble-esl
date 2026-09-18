@@ -1,4 +1,4 @@
-"""Support for Zhsunyco sensors."""
+"""Support for BLE ESL sensors."""
 
 from __future__ import annotations
 
@@ -35,29 +35,29 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.util.dt import parse_datetime
 from propcache.api import cached_property
 from sensor_state_data import (
-    SensorDeviceClass as ZhsunycoSensorDeviceClass,
+    SensorDeviceClass as BleEslSensorDeviceClass,
     SensorUpdate,
     Units,
 )
 
 from .const import DOMAIN, SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
-from .coordinator import ZhsunycoPassiveBluetoothDataProcessor
+from .coordinator import BleEslPassiveBluetoothDataProcessor
 from .device import (
     async_get_device_info,
     device_key_to_bluetooth_entity_key,
     hass_device_info,
 )
-from .types import ZhsunycoConfigEntry
+from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_DESCRIPTIONS = {
     # Signal Strength (RSSI) (dBm) — passive advertisement
     (
-        ZhsunycoSensorDeviceClass.SIGNAL_STRENGTH,
+        BleEslSensorDeviceClass.SIGNAL_STRENGTH,
         Units.SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     ): SensorEntityDescription(
-        key=f"{ZhsunycoSensorDeviceClass.SIGNAL_STRENGTH}_{Units.SIGNAL_STRENGTH_DECIBELS_MILLIWATT}",
+        key=f"{BleEslSensorDeviceClass.SIGNAL_STRENGTH}_{Units.SIGNAL_STRENGTH_DECIBELS_MILLIWATT}",
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -66,10 +66,10 @@ SENSOR_DESCRIPTIONS = {
     ),
     # Battery Percentage (%) — passive advertisement
     (
-        ZhsunycoSensorDeviceClass.BATTERY,
+        BleEslSensorDeviceClass.BATTERY,
         Units.PERCENTAGE,
     ): SensorEntityDescription(
-        key=f"{ZhsunycoSensorDeviceClass.BATTERY}_{Units.PERCENTAGE}",
+        key=f"{BleEslSensorDeviceClass.BATTERY}_{Units.PERCENTAGE}",
         device_class=SensorDeviceClass.BATTERY,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -78,10 +78,10 @@ SENSOR_DESCRIPTIONS = {
     ),
     # Battery Voltage (V) — passive advertisement
     (
-        ZhsunycoSensorDeviceClass.VOLTAGE,
+        BleEslSensorDeviceClass.VOLTAGE,
         Units.ELECTRIC_POTENTIAL_VOLT,
     ): SensorEntityDescription(
-        key=f"{ZhsunycoSensorDeviceClass.VOLTAGE}_{Units.ELECTRIC_POTENTIAL_VOLT}",
+        key=f"{BleEslSensorDeviceClass.VOLTAGE}_{Units.ELECTRIC_POTENTIAL_VOLT}",
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -126,17 +126,17 @@ def sensor_update_to_bluetooth_data_update(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ZhsunycoConfigEntry,
+    entry: BleEslConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Zhsunyco BLE sensors."""
+    """Set up the BLE ESL sensors."""
     coordinator = entry.runtime_data
-    processor = ZhsunycoPassiveBluetoothDataProcessor(
+    processor = BleEslPassiveBluetoothDataProcessor(
         sensor_update_to_bluetooth_data_update
     )
     entry.async_on_unload(
         processor.async_add_entities_listener(
-            ZhsunycoBluetoothSensorEntity, async_add_entities
+            BleEslBluetoothSensorEntity, async_add_entities
         )
     )
     entry.async_on_unload(
@@ -165,38 +165,38 @@ async def async_setup_entry(
     ]
 
     entities: list[SensorEntity] = [
-        ZhsunycoDurationSensorEntity(hass, entry, duration_coordinator),
-        ZhsunycoFailureCountSensorEntity(hass, entry, failure_coordinator),
-        ZhsunycoLastFailureTimeSensorEntity(
+        BleEslDurationSensorEntity(hass, entry, duration_coordinator),
+        BleEslFailureCountSensorEntity(hass, entry, failure_coordinator),
+        BleEslLastFailureTimeSensorEntity(
             hass, entry, last_failure_coordinator
         ),
     ]
 
     if caps.session_battery and not caps.passive_battery:
         entities.extend([
-            ZhsunycoBatteryPercentageSensorEntity(
+            BleEslBatteryPercentageSensorEntity(
                 hass, entry, battery_coordinator
             ),
-            ZhsunycoBatteryVoltageSensorEntity(
+            BleEslBatteryVoltageSensorEntity(
                 hass, entry, battery_coordinator
             ),
         ])
 
     if caps.session_temperature:
         entities.append(
-            ZhsunycoTemperatureSensorEntity(hass, entry, temperature_coordinator)
+            BleEslTemperatureSensorEntity(hass, entry, temperature_coordinator)
         )
 
     async_add_entities(entities)
 
 
-class ZhsunycoBluetoothSensorEntity(
+class BleEslBluetoothSensorEntity(
     PassiveBluetoothProcessorEntity[
-        ZhsunycoPassiveBluetoothDataProcessor[float | None]
+        BleEslPassiveBluetoothDataProcessor[float | None]
     ],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco BLE passive sensor."""
+    """Representation of a BLE ESL passive sensor."""
 
     @property
     def native_value(self) -> int | float | datetime | None:
@@ -212,11 +212,11 @@ class ZhsunycoBluetoothSensorEntity(
         return super().available
 
 
-class ZhsunycoBatteryPercentageSensorEntity(
+class BleEslBatteryPercentageSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[float | None]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco battery percentage sensor."""
+    """Representation of a BLE ESL battery percentage sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "battery"
@@ -238,7 +238,7 @@ class ZhsunycoBatteryPercentageSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_battery"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_battery"
 
     @property
     def native_value(self) -> int | None:
@@ -259,11 +259,11 @@ class ZhsunycoBatteryPercentageSensorEntity(
         return True
 
 
-class ZhsunycoBatteryVoltageSensorEntity(
+class BleEslBatteryVoltageSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[float | None]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco battery voltage sensor."""
+    """Representation of a BLE ESL battery voltage sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "battery_voltage"
@@ -285,7 +285,7 @@ class ZhsunycoBatteryVoltageSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_battery_voltage"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_battery_voltage"
 
     @property
     def native_value(self) -> float | None:
@@ -300,11 +300,11 @@ class ZhsunycoBatteryVoltageSensorEntity(
         return True
 
 
-class ZhsunycoTemperatureSensorEntity(
+class BleEslTemperatureSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[int | None]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco temperature sensor."""
+    """Representation of a BLE ESL temperature sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "temperature"
@@ -325,7 +325,7 @@ class ZhsunycoTemperatureSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_temperature"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_temperature"
 
     @property
     def native_value(self) -> int | None:
@@ -340,11 +340,11 @@ class ZhsunycoTemperatureSensorEntity(
         return True
 
 
-class ZhsunycoDurationSensorEntity(
+class BleEslDurationSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[float]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco BLE write duration sensor."""
+    """Representation of a BLE ESL write duration sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "write_duration"
@@ -365,7 +365,7 @@ class ZhsunycoDurationSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_write_duration"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_write_duration"
         self._native_value: float = 0.0
 
     @property
@@ -391,11 +391,11 @@ class ZhsunycoDurationSensorEntity(
         super()._handle_coordinator_update()
 
 
-class ZhsunycoFailureCountSensorEntity(
+class BleEslFailureCountSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[int]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco BLE write failure count sensor."""
+    """Representation of a BLE ESL write failure count sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "failure_count"
@@ -415,7 +415,7 @@ class ZhsunycoFailureCountSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_failure_count"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_failure_count"
 
     @property
     def native_value(self) -> int | None:
@@ -430,11 +430,11 @@ class ZhsunycoFailureCountSensorEntity(
         return True
 
 
-class ZhsunycoLastFailureTimeSensorEntity(
+class BleEslLastFailureTimeSensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[datetime | None]],
     SensorEntity,
 ):
-    """Representation of a Zhsunyco BLE write last failure time sensor."""
+    """Representation of a BLE ESL write last failure time sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "last_failure_time"
@@ -454,7 +454,7 @@ class ZhsunycoLastFailureTimeSensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_last_failure_time"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_last_failure_time"
 
     @property
     def native_value(self) -> datetime | None:

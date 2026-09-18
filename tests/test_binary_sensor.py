@@ -1,4 +1,4 @@
-"""Tests for Zhsunyco binary sensor entities."""
+"""Tests for BLE ESL binary sensor entities."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from unittest.mock import MagicMock
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.helpers.entity import EntityCategory
 
-from custom_components.zhsunyco.binary_sensor import (
-    ZhsunycoBatteryLowBinarySensor,
-    ZhsunycoBluetoothConnectivitySensorEntity,
-    ZhsunycoDisplayInSyncBinarySensor,
+from custom_components.ble_esl.binary_sensor import (
+    BleEslBatteryLowBinarySensor,
+    BleEslBluetoothConnectivitySensorEntity,
+    BleEslDisplayInSyncBinarySensor,
     async_setup_entry,
 )
-from custom_components.zhsunyco.const import DOMAIN
-from custom_components.zhsunyco.zhsunyco_ble.base import BleBackend, Capabilities
+from custom_components.ble_esl.const import DOMAIN
+from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 
 
 def test_bluetooth_connectivity_sensor():
@@ -28,10 +28,10 @@ def test_bluetooth_connectivity_sensor():
     coordinator = MagicMock()
     coordinator.data = True
 
-    sensor = ZhsunycoBluetoothConnectivitySensorEntity(hass, entry, coordinator)
+    sensor = BleEslBluetoothConnectivitySensorEntity(hass, entry, coordinator)
     assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.device_class == BinarySensorDeviceClass.CONNECTIVITY or sensor._attr_device_class == BinarySensorDeviceClass.CONNECTIVITY
-    assert sensor.unique_id == "zhsunyco_54200055_connectivity"
+    assert sensor.unique_id == "ble_esl_54200055_connectivity"
 
     sensor._handle_coordinator_update()
     assert sensor.is_on is True
@@ -51,11 +51,11 @@ def test_display_in_sync_sensor():
     image_coord = MagicMock()
     preview_coord = MagicMock()
 
-    sensor = ZhsunycoDisplayInSyncBinarySensor(
+    sensor = BleEslDisplayInSyncBinarySensor(
         hass, entry, image_coord, preview_coord
     )
     assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
-    assert sensor.unique_id == "zhsunyco_54200055_display_in_sync"
+    assert sensor.unique_id == "ble_esl_54200055_display_in_sync"
 
     # Both None
     image_coord.data = None
@@ -115,8 +115,8 @@ def test_async_setup_entry_binary_sensor():
 
         assert len(added_entities) == 2
         types = [type(e) for e in added_entities]
-        assert ZhsunycoBluetoothConnectivitySensorEntity in types
-        assert ZhsunycoDisplayInSyncBinarySensor in types
+        assert BleEslBluetoothConnectivitySensorEntity in types
+        assert BleEslDisplayInSyncBinarySensor in types
 
         # Session-battery backend (easyTag): coordinator-based battery low added.
         backend_session = MagicMock(spec=BleBackend)
@@ -132,7 +132,7 @@ def test_async_setup_entry_binary_sensor():
         added_session = []
         await async_setup_entry(hass, entry, added_session.extend)
         assert len(added_session) == 3
-        assert ZhsunycoBatteryLowBinarySensor in [type(e) for e in added_session]
+        assert BleEslBatteryLowBinarySensor in [type(e) for e in added_session]
 
     asyncio.run(_test())
 
@@ -145,8 +145,8 @@ def test_battery_low_binary_sensor():
     hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
 
     coordinator = MagicMock()
-    sensor = ZhsunycoBatteryLowBinarySensor(hass, entry, coordinator)
-    assert sensor.unique_id == "zhsunyco_54200055_battery_low"
+    sensor = BleEslBatteryLowBinarySensor(hass, entry, coordinator)
+    assert sensor.unique_id == "ble_esl_54200055_battery_low"
     assert sensor.device_class == BinarySensorDeviceClass.BATTERY
     assert sensor.entity_category == EntityCategory.DIAGNOSTIC
 

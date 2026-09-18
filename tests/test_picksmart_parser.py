@@ -5,15 +5,15 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.const import (
+from custom_components.ble_esl.esl_ble.picksmart.const import (
     MANUFACTURER_ID,
     SERVICE_UUIDS,
 )
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.devices import (
+from custom_components.ble_esl.esl_ble.picksmart.devices import (
     PRESETS,
     get_device_preset,
 )
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.parser import (
+from custom_components.ble_esl.esl_ble.picksmart.parser import (
     PickSmartBluetoothDeviceData,
     is_picksmart_advertisement,
     parse_manufacturer_data,
@@ -74,7 +74,7 @@ def test_picksmart_parser_device_info_and_battery():
     parser._start_update(info)
 
     assert parser.title == "CCDDEEFF (2.9\" EPD BWR)"
-    assert parser.get_device_name() == "Zhsunyco CCDDEEFF"
+    assert parser.get_device_name() == "PickSmart CCDDEEFF"
     assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 2.6
     # (2.6 - 2.5) * 100 / (2.9 - 2.5) = 25%
     assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 25
@@ -120,8 +120,8 @@ def test_picksmart_firmware_fix():
 
 def test_picksmart_backend_refine_preset():
     """Verify PickSmartProtocol.refine_preset adjusts preset using AdvertisementInfo."""
-    from custom_components.zhsunyco.zhsunyco_ble.base import AdvertisementInfo
-    from custom_components.zhsunyco.zhsunyco_ble.picksmart import PickSmartProtocol
+    from custom_components.ble_esl.esl_ble.base import AdvertisementInfo
+    from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
 
     backend = PickSmartProtocol()
     preset_75 = backend.presets()["0x012B"]

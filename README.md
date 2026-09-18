@@ -1,10 +1,10 @@
-# hass-zhsunyco
+# hass-ble-esl
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?logo=home-assistant)](https://hacs.xyz/)
-[![GitHub Release](https://img.shields.io/github/release/eigger/hass-zhsunyco.svg)](https://github.com/eigger/hass-zhsunyco/releases)
-[![License](https://img.shields.io/github/license/eigger/hass-zhsunyco)](https://github.com/eigger/hass-zhsunyco/blob/main/LICENSE)
-![integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=%24.zhsunyco.total)
+[![GitHub Release](https://img.shields.io/github/release/eigger/hass-ble-esl.svg)](https://github.com/eigger/hass-ble-esl/releases)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl)](https://github.com/eigger/hass-ble-esl/blob/main/LICENSE)
+![integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=%24.ble_esl.total)
 
-Zhsunyco BLE Electronic Shelf Label (ESL) Home Assistant Integration
+Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
 ---
 
@@ -12,7 +12,7 @@ Zhsunyco BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
 An **electronic label** (electronic shelf label, ESL) is a low-power **e-paper** display that keeps showing content **without continuous power**.
 
-This integration provides local BLE push communication with **Zhsunyco** ESL tags across **WOLINK**, **easyTag (eLabel)**, and **PickSmart (gicisky)** BLE protocol families.
+This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, and **PickSmart (gicisky)** BLE protocol families.
 
 They work well for information that should stay visible, changes infrequently, and lives where mains power is impractical — retail tags, home dashboard status displays, room calendars, sensors, and inventory monitors.
 
@@ -20,8 +20,8 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Feedback & Support
 
-- Found a bug? [Open an issue](https://github.com/eigger/hass-zhsunyco/issues)
-- Questions or ideas? [Join the discussion](https://github.com/eigger/hass-zhsunyco/discussions)
+- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues)
+- Questions or ideas? [Join the discussion](https://github.com/eigger/hass-ble-esl/discussions)
 
 ---
 
@@ -29,7 +29,7 @@ They work well for information that should stay visible, changes infrequently, a
 
 > [!WARNING]
 > **Hardware Testing Notice**: None of the models listed below have been physically tested on actual hardware yet.
-> Implementations and model presets are built according to technical specifications. If you test any of these devices, please share your results in [Discussions](https://github.com/eigger/hass-zhsunyco/discussions) or [open an issue](https://github.com/eigger/hass-zhsunyco/issues)!
+> Implementations and model presets are built according to technical specifications. If you test any of these devices, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
 
 ### 1. WOLINK Protocol (BWRY / 2bpp)
 
@@ -89,9 +89,18 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Installation
 
-1. Install via **HACS** (custom repository), or copy this repository into `custom_components/zhsunyco`.
+1. Install via **HACS** (custom repository), or copy this repository into `custom_components/ble_esl`.
 2. Restart Home Assistant.
-3. Add the integration via **Settings** → **Devices & Services** → **Add Integration** → **Zhsunyco** (or auto-discover via Bluetooth).
+3. Add the integration via **Settings** → **Devices & Services** → **Add Integration** → **BLE ESL** (or auto-discover via Bluetooth).
+
+### Migrating from `hass-zhsunyco`
+
+This project was previously published as `hass-zhsunyco` with the integration domain `zhsunyco`. The domain is now `ble_esl`, and Home Assistant cannot move config entries between domains, so existing devices must be re-added:
+
+1. Remove the existing **Zhsunyco** integration entries under **Settings** → **Devices & Services**.
+2. Delete `custom_components/zhsunyco` (or uninstall the old repository in HACS) and install `hass-ble-esl`.
+3. Restart Home Assistant and add your tags again.
+4. Update automations and dashboards: service calls change from `zhsunyco.write` / `zhsunyco.write_guarded` to `ble_esl.write` / `ble_esl.write_guarded`, and entity IDs are regenerated.
 
 ---
 
@@ -117,7 +126,7 @@ bluetooth_proxy:
 
 ## Options
 
-Configure via **Settings** → **Devices & Services** → **Zhsunyco** → **Configure**:
+Configure via **Settings** → **Devices & Services** → **BLE ESL** → **Configure**:
 
 | Option | Default | Range | Description |
 |--------|---------|-------|-------------|
@@ -146,12 +155,12 @@ Labels are rendered with **[imagespec](https://github.com/eigger/imagespec)** �
 | Layout, palette, LLM authoring guide | [imagespec/docs/authoring.md](https://github.com/eigger/imagespec/blob/main/docs/authoring.md) |
 | Dithering (per-element only) | [imagespec/docs/dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md) |
 
-**Zhsunyco-specific behaviour:**
+**Integration-specific behaviour:**
 
 - **Resolution:** `width` and `height` come from the **device preset**, not the service call.
 - **Palette:** auto-selected per tag profile — BW, BWR (`black`/`white`/`red`), or BWRY (+ `yellow`). Off-palette colors are quantized to the nearest supported color.
 - **Rotation:** `rotate: 90/180/270` uses **canvas mode** — the fixed panel rotates; output size stays the device resolution.
-- **Default font:** `NotoSansKR-Regular.ttf` in `custom_components/zhsunyco/fonts/`. Custom fonts also work from `www/fonts/`.
+- **Default font:** `NotoSansKR-Regular.ttf` in `custom_components/ble_esl/fonts/`. Custom fonts also work from `www/fonts/`.
 - **`plot` element:** reads history from Home Assistant **Recorder**.
 - **`dlimg`:** local file paths under `/config/...` are allowed (HTTP/HTTPS and data URIs too).
 - **Dithering:** not a service option. Put `dither` on **photos and charts** in the payload — `dlimg`, `pie`, `diagram`, `plot`, `sparkline`, `progress_bar`, `gauge` — when they use off-palette colors. Leave text without `dither`. See [dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md).
@@ -163,7 +172,7 @@ Labels are rendered with **[imagespec](https://github.com/eigger/imagespec)** �
 
 ## Services
 
-### `zhsunyco.write`
+### `ble_esl.write`
 
 Renders the payload and sends it to the tag (unless `dry_run: true`).
 
@@ -177,7 +186,7 @@ Renders the payload and sends it to the tag (unless `dry_run: true`).
 Basic example:
 
 ```yaml
-action: zhsunyco.write
+action: ble_esl.write
 target:
   device_id: <your device>
 data:
@@ -194,7 +203,7 @@ data:
 Do **not** dither the whole panel. Add `dither` on chart/media elements that use off-palette colors (`dlimg`, `pie`, `diagram`, `plot`, `sparkline`, `progress_bar`, `gauge`):
 
 ```yaml
-action: zhsunyco.write
+action: ble_esl.write
 target:
   device_id: <your device>
 data:
@@ -231,7 +240,7 @@ data:
 Rotation and background:
 
 ```yaml
-action: zhsunyco.write
+action: ble_esl.write
 target:
   device_id: <your device>
 data:
@@ -249,7 +258,7 @@ data:
 Preview without sending (`dry_run` updates the tag's **Preview Content** image entity):
 
 ```yaml
-action: zhsunyco.write
+action: ble_esl.write
 target:
   device_id: <your device>
 data:
@@ -265,7 +274,7 @@ data:
 Combined dashboard-style example:
 
 ```yaml
-action: zhsunyco.write
+action: ble_esl.write
 target:
   device_id: <your device>
 data:
@@ -310,9 +319,9 @@ data:
       height: 60
 ```
 
-### `zhsunyco.write_guarded`
+### `ble_esl.write_guarded`
 
-Same rendering as `zhsunyco.write`, with guards before BLE transmission:
+Same rendering as `ble_esl.write`, with guards before BLE transmission:
 
 - duplicate image skip (when **Prevent Duplicate Send** is enabled)
 - write lock check
@@ -320,12 +329,12 @@ Same rendering as `zhsunyco.write`, with guards before BLE transmission:
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| `payload` | yes | — | Same as `zhsunyco.write` |
-| `rotate`, `background`, `dry_run` | no | — | Same as `zhsunyco.write` |
+| `payload` | yes | — | Same as `ble_esl.write` |
+| `rotate`, `background`, `dry_run` | no | — | Same as `ble_esl.write` |
 | `debounce_override_ms` | no | option value | Override debounce for this call (`0` = write immediately) |
 
 ```yaml
-action: zhsunyco.write_guarded
+action: ble_esl.write_guarded
 target:
   device_id: <your device>
 data:
@@ -340,7 +349,7 @@ data:
 Immediate write (skip debounce once):
 
 ```yaml
-action: zhsunyco.write_guarded
+action: ble_esl.write_guarded
 target:
   device_id: <your device>
 data:
@@ -355,14 +364,14 @@ data:
 
 | Service | When to use |
 |---------|-------------|
-| `zhsunyco.write` | Always send (except explicit `dry_run`) |
-| `zhsunyco.write_guarded` | Automations that fire often; skip duplicates and coalesce rapid updates |
+| `ble_esl.write` | Always send (except explicit `dry_run`) |
+| `ble_esl.write_guarded` | Automations that fire often; skip duplicates and coalesce rapid updates |
 
 ---
 
 ## Fonts
 
-The default font is `fonts/NotoSansKR-Regular.ttf`. The integration checks `custom_components/zhsunyco/fonts/` first, then `config/www/fonts/`.
+The default font is `fonts/NotoSansKR-Regular.ttf`. The integration checks `custom_components/ble_esl/fonts/` first, then `config/www/fonts/`.
 
 ### Built-in fonts
 

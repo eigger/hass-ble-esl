@@ -1,7 +1,7 @@
 write:
   target:
     entity:
-      integration: zhsunyco
+      integration: ble_esl
   fields:
     payload:
       required: true
@@ -45,7 +45,7 @@ write:
 write_guarded:
   target:
     entity:
-      integration: zhsunyco
+      integration: ble_esl
   fields:
     payload:
       required: true

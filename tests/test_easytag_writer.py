@@ -6,14 +6,14 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from PIL import Image
 
-from custom_components.zhsunyco.zhsunyco_ble.easytag.const import (
+from custom_components.ble_esl.esl_ble.easytag.const import (
     KEY_INDEX_NOTIFY,
     NOTIFY_UUID,
     WRITE_UUID,
 )
-from custom_components.zhsunyco.zhsunyco_ble.easytag.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.easytag.protocol import xor_key
-from custom_components.zhsunyco.zhsunyco_ble.easytag.writer import (
+from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
+from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
+from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
     update_image,
 )
@@ -95,7 +95,7 @@ def test_easytag_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.zhsunyco.zhsunyco_ble.easytag.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.easytag.writer.establish_connection",
             mock_establish,
         )
 

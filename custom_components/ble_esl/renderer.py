@@ -18,7 +18,7 @@ def _make_context(hass, *, default_font, palette):
     def font_resolver(name):
         base_name = os.path.basename(name)
 
-        # 1. Check local zhsunyco component fonts directory
+        # 1. Check local ble_esl component fonts directory
         local_font_dir = os.path.join(os.path.dirname(__file__), "fonts")
         local_path = os.path.join(local_font_dir, base_name)
         if os.path.exists(local_path):

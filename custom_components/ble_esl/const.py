@@ -1,8 +1,8 @@
-"""Constants for the Zhsunyco Bluetooth integration."""
+"""Constants for the BLE ESL integration."""
 
 from __future__ import annotations
 
-DOMAIN = "zhsunyco"
+DOMAIN = "ble_esl"
 LOCK = "lock"
 
 # Options / Config keys

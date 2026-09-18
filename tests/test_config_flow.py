@@ -1,18 +1,18 @@
-"""Tests for Zhsunyco config flow and options flow."""
+"""Tests for BLE ESL config flow and options flow."""
 
 from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
-from custom_components.zhsunyco import zhsunyco_ble
-from custom_components.zhsunyco.config_flow import (
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.config_flow import (
     OptionsFlowHandler,
-    ZhsunycoConfigFlow,
+    BleEslConfigFlow,
     _model_selector_options,
     _title,
 )
-from custom_components.zhsunyco.const import (
+from custom_components.ble_esl.const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
     CONF_PREVENT_DUPLICATE_SEND,
@@ -20,11 +20,11 @@ from custom_components.zhsunyco.const import (
     CONF_RETRY_COUNT,
     CONF_WRITE_DELAY_MS,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
+from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID,
     SERVICE_UUID,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import PRESETS
+from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 
 
 def test_model_selector_options():
@@ -40,7 +40,7 @@ def test_title_helper():
     """Verify title generation for discovered device."""
     info = MagicMock()
     info.address = "66:66:54:20:00:55"
-    backend = zhsunyco_ble.get("wolink")
+    backend = esl_ble.get("wolink")
     title = _title(info, backend, "290")
     assert title == "54200055 (2.9\" BWRY)"
 
@@ -49,7 +49,7 @@ def test_config_flow_bluetooth_step():
     """Verify bluetooth discovery flow to entry creation."""
 
     async def _test():
-        flow = ZhsunycoConfigFlow()
+        flow = BleEslConfigFlow()
         flow.hass = MagicMock()
         flow.context = {}
         flow.async_set_unique_id = AsyncMock()
@@ -135,11 +135,11 @@ def test_options_flow():
 
 def test_build_options_schema_fallback(monkeypatch):
     """Verify options schema falls back to first available preset when DEFAULT_MODEL is missing."""
-    from custom_components.zhsunyco.config_flow import _build_options_schema
-    from custom_components.zhsunyco.zhsunyco_ble.base import Capabilities, DevicePreset, BleBackend
+    from custom_components.ble_esl.config_flow import _build_options_schema
+    from custom_components.ble_esl.esl_ble.base import Capabilities, DevicePreset, BleBackend
     import voluptuous as vol
 
-    monkeypatch.setattr(zhsunyco_ble, "_BACKENDS", dict(zhsunyco_ble._BACKENDS))
+    monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
 
     class MockNo290Backend(BleBackend):
         id = "mock_no_290"
@@ -174,7 +174,7 @@ def test_build_options_schema_fallback(monkeypatch):
         async def write_image(self, *args, **kwargs):
             return MagicMock()
 
-    zhsunyco_ble.register(MockNo290Backend())
+    esl_ble.register(MockNo290Backend())
     _build_options_schema("mock_no_290")
 
     # Check vol.Required was called with default="custom_1"
@@ -190,9 +190,9 @@ def test_config_flow_auto_model_detection_skips_step():
     """Verify backend with model_detection=True skips model selection step in config flow."""
 
     async def _test():
-        from custom_components.zhsunyco.zhsunyco_ble.picksmart.const import MANUFACTURER_ID as PS_MFG_ID
+        from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PS_MFG_ID
 
-        flow = ZhsunycoConfigFlow()
+        flow = BleEslConfigFlow()
         flow.hass = MagicMock()
         flow.context = {}
         flow.async_set_unique_id = AsyncMock()
@@ -229,7 +229,7 @@ def test_config_flow_auto_model_detection_skips_step():
 
 def test_options_flow_hides_model_for_model_detection_backend():
     """Verify options schema does not expose CONF_MODEL for backends with model_detection=True."""
-    from custom_components.zhsunyco.config_flow import _build_options_schema
+    from custom_components.ble_esl.config_flow import _build_options_schema
     import voluptuous as vol
 
     vol.Required.reset_mock()

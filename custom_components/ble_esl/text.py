@@ -19,11 +19,11 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Zhsunyco text entities."""
-    async_add_entities([ZhsunycoTextEntity(hass, entry)])
+    """Set up BLE ESL text entities."""
+    async_add_entities([BleEslTextEntity(hass, entry)])
 
 
-class ZhsunycoTextEntity(RestoreText):
+class BleEslTextEntity(RestoreText):
     """Text entity for setting device alias."""
 
     _attr_has_entity_name = True
@@ -35,7 +35,7 @@ class ZhsunycoTextEntity(RestoreText):
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_alias"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_alias"
         self._attr_native_max = 32
         self._attr_native_min = 0
         self._attr_mode = "text"

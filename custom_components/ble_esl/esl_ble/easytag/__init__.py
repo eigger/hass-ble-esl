@@ -1,4 +1,4 @@
-"""easyTag (Zhsunyco / eLabel) Protocol Backend."""
+"""easyTag (eLabel) Protocol Backend."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ class EasyTagBleBackend(BleBackend):
     """easyTag BLE backend implementation."""
 
     id = "easytag"
-    name = "easyTag (Zhsunyco / eLabel)"
+    name = "easyTag (eLabel)"
     capabilities = Capabilities(
         passive_battery=False,
         session_battery=True,

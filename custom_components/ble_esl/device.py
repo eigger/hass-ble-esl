@@ -1,4 +1,4 @@
-"""Support for Zhsunyco Bluetooth devices."""
+"""Support for BLE ESL devices."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 from sensor_state_data import DeviceKey
 
 from .const import DOMAIN
-from .zhsunyco_ble.base import DevicePreset
+from .esl_ble.base import DevicePreset
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -58,7 +58,7 @@ def async_get_device_info(
     entry_id: str,
     address: str,
 ) -> DeviceInfo:
-    """Get DeviceInfo for a Zhsunyco BLE device."""
+    """Get DeviceInfo for a BLE ESL device."""
     identifier = address.replace(":", "")[-8:]
     entry_data = hass.data.get(DOMAIN, {}).get(entry_id, {})
     backend = entry_data.get("backend")
@@ -73,13 +73,14 @@ def async_get_device_info(
 
     manufacturer = (
         entry_data.get("manufacturer")
-        or (f"Zhsunyco ({protocol_name})" if protocol_name else "Zhsunyco")
+        or protocol_name
+        or "BLE ESL"
     )
     model = entry_data.get("model") or format_model_name(preset)
 
     return DeviceInfo(
         connections={(CONNECTION_BLUETOOTH, address)},
-        name=f"Zhsunyco {identifier}",
+        name=f"{protocol_name or 'ESL'} {identifier}",
         manufacturer=manufacturer,
         model=model,
         sw_version=entry_data.get("sw_version"),

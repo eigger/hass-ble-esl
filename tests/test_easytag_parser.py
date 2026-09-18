@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from custom_components.zhsunyco.zhsunyco_ble.easytag.const import SERVICE_UUID
-from custom_components.zhsunyco.zhsunyco_ble.easytag.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.easytag.parser import (
+from custom_components.ble_esl.esl_ble.easytag.const import SERVICE_UUID
+from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
+from custom_components.ble_esl.esl_ble.easytag.parser import (
     EasyTagBluetoothDeviceData,
     is_easytag_advertisement,
 )
@@ -54,4 +54,4 @@ def test_easytag_parser_device_info():
     parser._start_update(info)
 
     assert parser.title == "00E57D76 (2.9\" BWR (ET0290-3DB))"
-    assert parser.get_device_name() == "Zhsunyco 00E57D76"
+    assert parser.get_device_name() == "easyTag 00E57D76"

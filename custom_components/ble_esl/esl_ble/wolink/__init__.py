@@ -1,4 +1,4 @@
-"""WOLINK Protocol backend for Zhsunyco BWRY ESL tags."""
+"""WOLINK Protocol backend for BLE ESL BWRY ESL tags."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class WolinkBleBackend(BleBackend):
     """WOLINK BLE backend implementation."""
 
     id = "wolink"
-    name = "WOLINK (Zhsunyco BWRY)"
+    name = "WOLINK (BWRY)"
     capabilities = Capabilities(
         passive_battery=True,
         session_battery=False,

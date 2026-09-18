@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
-from custom_components.zhsunyco.zhsunyco_ble.base import DevicePreset
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import PRESETS
-from custom_components.zhsunyco.renderer import render_image
+from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from custom_components.ble_esl.renderer import render_image
 
 
 def test_render_image_bwry():

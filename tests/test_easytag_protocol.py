@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from PIL import Image
 
-from custom_components.zhsunyco.zhsunyco_ble.easytag.const import (
+from custom_components.ble_esl.esl_ble.easytag.const import (
     KEY_INDEX_CONFIG,
     KEY_INDEX_IMAGE,
     KEY_INDEX_NOTIFY,
     PACKET_LEN,
 )
-from custom_components.zhsunyco.zhsunyco_ble.easytag.protocol import (
+from custom_components.ble_esl.esl_ble.easytag.protocol import (
     build_image_frames,
     build_status_frames,
     compress_rle,

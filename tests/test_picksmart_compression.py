@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.compression import (
+from custom_components.ble_esl.esl_ble.picksmart.compression import (
     _qlz_compress_core,
     _qlz_decompress_core,
     compress,

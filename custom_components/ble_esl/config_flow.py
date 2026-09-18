@@ -1,4 +1,4 @@
-"""Config flow for Zhsunyco Bluetooth integration."""
+"""Config flow for the BLE ESL integration."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from . import zhsunyco_ble
+from . import esl_ble
 from .const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
@@ -44,7 +44,7 @@ from .const import (
     DEFAULT_WRITE_DELAY_MS,
     DOMAIN,
 )
-from .zhsunyco_ble import (
+from .esl_ble import (
     CONFIDENCE_COMMUNITY,
     CONFIDENCE_ESTIMATED,
     CONFIDENCE_HARDWARE,
@@ -58,7 +58,7 @@ def _model_selector_options(
     protocol_id: str = DEFAULT_PROTOCOL,
 ) -> list[SelectOptionDict]:
     """Generate model selector options sorted with verified models first."""
-    backend = zhsunyco_ble.get(protocol_id)
+    backend = esl_ble.get(protocol_id)
     presets = backend.presets()
 
     def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
@@ -81,7 +81,7 @@ def _model_selector_options(
 
 
 def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]:
-    backend = zhsunyco_ble.get(protocol_id)
+    backend = esl_ble.get(protocol_id)
     presets = backend.presets()
     default_model = DEFAULT_MODEL
     if default_model not in presets and presets:
@@ -159,8 +159,8 @@ def _title(
     return f"{identifier} ({model_str})"
 
 
-class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Zhsunyco Bluetooth."""
+class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for BLE ESL."""
 
     VERSION = 1
 
@@ -174,12 +174,12 @@ class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def _create_entry(self, model_key: str) -> ConfigFlowResult:
         """Create entry with determined model key."""
-        backend = self._backend or zhsunyco_ble.get(self._protocol_id)
+        backend = self._backend or esl_ble.get(self._protocol_id)
         if self._discovery_info:
             title = _title(self._discovery_info, backend, model_key)
         else:
             title = self.context.get("title_placeholders", {}).get(
-                "name", "Zhsunyco"
+                "name", "BLE ESL"
             )
 
         return self.async_create_entry(
@@ -197,7 +197,7 @@ class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
 
-        backend = zhsunyco_ble.detect(discovery_info)
+        backend = esl_ble.detect(discovery_info)
         if backend is None:
             return self.async_abort(reason="not_supported")
 
@@ -264,7 +264,7 @@ class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
             address = discovery_info.address
             if address in current_addresses or address in self._discovered_devices:
                 continue
-            backend = zhsunyco_ble.detect(discovery_info)
+            backend = esl_ble.detect(discovery_info)
             if backend is not None:
                 self._discovered_devices[address] = Discovery(
                     title=_title(discovery_info, backend),
@@ -288,7 +288,7 @@ class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle model selection step."""
-        backend = self._backend or zhsunyco_ble.get(self._protocol_id)
+        backend = self._backend or esl_ble.get(self._protocol_id)
 
         if user_input is not None:
             model_key = user_input[CONF_MODEL]
@@ -321,7 +321,7 @@ class ZhsunycoConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(OptionsFlowWithReload):
-    """Handle options flow for Zhsunyco."""
+    """Handle options flow for BLE ESL."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

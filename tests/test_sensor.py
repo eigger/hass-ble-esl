@@ -1,19 +1,19 @@
-"""Tests for Zhsunyco sensor entities and capabilities-based setup."""
+"""Tests for BLE ESL sensor entities and capabilities-based setup."""
 
 from __future__ import annotations
 
 import asyncio
 from unittest.mock import MagicMock
 
-from custom_components.zhsunyco.const import DOMAIN
-from custom_components.zhsunyco.zhsunyco_ble.base import Capabilities, BleBackend
-from custom_components.zhsunyco.sensor import (
-    ZhsunycoBatteryPercentageSensorEntity,
-    ZhsunycoBatteryVoltageSensorEntity,
-    ZhsunycoDurationSensorEntity,
-    ZhsunycoFailureCountSensorEntity,
-    ZhsunycoLastFailureTimeSensorEntity,
-    ZhsunycoTemperatureSensorEntity,
+from custom_components.ble_esl.const import DOMAIN
+from custom_components.ble_esl.esl_ble.base import Capabilities, BleBackend
+from custom_components.ble_esl.sensor import (
+    BleEslBatteryPercentageSensorEntity,
+    BleEslBatteryVoltageSensorEntity,
+    BleEslDurationSensorEntity,
+    BleEslFailureCountSensorEntity,
+    BleEslLastFailureTimeSensorEntity,
+    BleEslTemperatureSensorEntity,
     async_setup_entry,
 )
 
@@ -28,10 +28,10 @@ def test_battery_percentage_sensor():
     coordinator = MagicMock()
     coordinator.data = 3.0
 
-    sensor = ZhsunycoBatteryPercentageSensorEntity(hass, entry, coordinator)
+    sensor = BleEslBatteryPercentageSensorEntity(hass, entry, coordinator)
     assert sensor.native_value == 100
     assert isinstance(sensor.native_value, int)
-    assert sensor.unique_id == "zhsunyco_54200055_battery"
+    assert sensor.unique_id == "ble_esl_54200055_battery"
 
     coordinator.data = 2.6
     assert sensor.native_value == 50
@@ -62,9 +62,9 @@ def test_battery_voltage_sensor():
     coordinator = MagicMock()
     coordinator.data = 2.95
 
-    sensor = ZhsunycoBatteryVoltageSensorEntity(hass, entry, coordinator)
+    sensor = BleEslBatteryVoltageSensorEntity(hass, entry, coordinator)
     assert sensor.native_value == 2.95
-    assert sensor.unique_id == "zhsunyco_54200055_battery_voltage"
+    assert sensor.unique_id == "ble_esl_54200055_battery_voltage"
 
 
 def test_temperature_sensor():
@@ -77,9 +77,9 @@ def test_temperature_sensor():
     coordinator = MagicMock()
     coordinator.data = 25
 
-    sensor = ZhsunycoTemperatureSensorEntity(hass, entry, coordinator)
+    sensor = BleEslTemperatureSensorEntity(hass, entry, coordinator)
     assert sensor.native_value == 25
-    assert sensor.unique_id == "zhsunyco_54200055_temperature"
+    assert sensor.unique_id == "ble_esl_54200055_temperature"
 
     coordinator.data = -10
     assert sensor.native_value == -10
@@ -94,18 +94,18 @@ def test_duration_and_failure_sensors():
 
     dur_coord = MagicMock()
     dur_coord.data = 4.5
-    dur_sensor = ZhsunycoDurationSensorEntity(hass, entry, dur_coord)
+    dur_sensor = BleEslDurationSensorEntity(hass, entry, dur_coord)
     dur_sensor._handle_coordinator_update()
     assert dur_sensor.native_value == 4.5
 
     fail_coord = MagicMock()
     fail_coord.data = 2
-    fail_sensor = ZhsunycoFailureCountSensorEntity(hass, entry, fail_coord)
+    fail_sensor = BleEslFailureCountSensorEntity(hass, entry, fail_coord)
     assert fail_sensor.native_value == 2
 
     last_fail_coord = MagicMock()
     last_fail_coord.data = None
-    last_fail_sensor = ZhsunycoLastFailureTimeSensorEntity(
+    last_fail_sensor = BleEslLastFailureTimeSensorEntity(
         hass, entry, last_fail_coord
     )
     assert last_fail_sensor.native_value is None
@@ -150,10 +150,10 @@ def test_async_setup_entry_capabilities():
         # 3 base entities (duration, failure count, last failure time)
         assert len(added_entities) == 3
         types = [type(e) for e in added_entities]
-        assert ZhsunycoDurationSensorEntity in types
-        assert ZhsunycoFailureCountSensorEntity in types
-        assert ZhsunycoLastFailureTimeSensorEntity in types
-        assert ZhsunycoTemperatureSensorEntity not in types
+        assert BleEslDurationSensorEntity in types
+        assert BleEslFailureCountSensorEntity in types
+        assert BleEslLastFailureTimeSensorEntity in types
+        assert BleEslTemperatureSensorEntity not in types
 
         # Case 2: Session battery & temperature (e.g. easyTag)
         backend_session = MagicMock(spec=BleBackend)
@@ -172,8 +172,8 @@ def test_async_setup_entry_capabilities():
         # 3 base + 2 session battery + 1 temperature = 6 entities
         assert len(added_session_entities) == 6
         session_types = [type(e) for e in added_session_entities]
-        assert ZhsunycoBatteryPercentageSensorEntity in session_types
-        assert ZhsunycoBatteryVoltageSensorEntity in session_types
-        assert ZhsunycoTemperatureSensorEntity in session_types
+        assert BleEslBatteryPercentageSensorEntity in session_types
+        assert BleEslBatteryVoltageSensorEntity in session_types
+        assert BleEslTemperatureSensorEntity in session_types
 
     asyncio.run(_test())

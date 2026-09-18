@@ -1,4 +1,4 @@
-"""The Zhsunyco Bluetooth integration coordinator."""
+"""The BLE ESL integration coordinator."""
 
 from __future__ import annotations
 
@@ -19,15 +19,15 @@ from homeassistant.core import HomeAssistant
 from sensor_state_data import SensorUpdate
 
 if TYPE_CHECKING:
-    from .types import ZhsunycoConfigEntry
+    from .types import BleEslConfigEntry
 
 _T = TypeVar("_T")
 
 
-class ZhsunycoPassiveBluetoothProcessorCoordinator(
+class BleEslPassiveBluetoothProcessorCoordinator(
     PassiveBluetoothProcessorCoordinator[SensorUpdate]
 ):
-    """Define a Zhsunyco Bluetooth Passive Update Processor Coordinator."""
+    """Define a BLE ESL Passive Update Processor Coordinator."""
 
     def __init__(
         self,
@@ -37,10 +37,10 @@ class ZhsunycoPassiveBluetoothProcessorCoordinator(
         mode: BluetoothScanningMode,
         update_method: Callable[[BluetoothServiceInfoBleak], SensorUpdate],
         device_data: BluetoothData,
-        entry: ZhsunycoConfigEntry,
+        entry: BleEslConfigEntry,
         connectable: bool = False,
     ) -> None:
-        """Initialize the Zhsunyco Bluetooth Passive Update Processor Coordinator."""
+        """Initialize the BLE ESL Passive Update Processor Coordinator."""
         super().__init__(
             hass, logger, address, mode, update_method, connectable
         )
@@ -48,9 +48,9 @@ class ZhsunycoPassiveBluetoothProcessorCoordinator(
         self.entry = entry
 
 
-class ZhsunycoPassiveBluetoothDataProcessor(
+class BleEslPassiveBluetoothDataProcessor(
     PassiveBluetoothDataProcessor[_T, SensorUpdate]
 ):
-    """Define a Zhsunyco Bluetooth Passive Update Data Processor."""
+    """Define a BLE ESL Passive Update Data Processor."""
 
-    coordinator: ZhsunycoPassiveBluetoothProcessorCoordinator
+    coordinator: BleEslPassiveBluetoothProcessorCoordinator

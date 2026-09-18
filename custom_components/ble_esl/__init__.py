@@ -1,4 +1,4 @@
-"""The Zhsunyco Bluetooth integration."""
+"""The BLE ESL integration."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util.dt import now
 from sensor_state_data import SensorUpdate
 
-from . import zhsunyco_ble
+from . import esl_ble
 from .const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
@@ -48,10 +48,10 @@ from .const import (
     LOCK,
     WRITE_LOCK,
 )
-from .coordinator import ZhsunycoPassiveBluetoothProcessorCoordinator
+from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .device import PROTOCOL_LABELS, format_model_name
 from .renderer import render_image
-from .types import ZhsunycoConfigEntry
+from .types import BleEslConfigEntry
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -66,7 +66,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def process_service_info(
     hass: HomeAssistant,
-    entry: ZhsunycoConfigEntry,
+    entry: BleEslConfigEntry,
     device_registry: DeviceRegistry,
     service_info: BluetoothServiceInfoBleak,
 ) -> SensorUpdate:
@@ -90,7 +90,7 @@ def process_service_info(
                     getattr(backend, "id", ""),
                     getattr(backend, "name", "BLE"),
                 )
-                manufacturer = f"Zhsunyco ({protocol_name})"
+                manufacturer = protocol_name
                 model = format_model_name(refined_preset)
 
                 device_id = entry_data.get("device_id")
@@ -118,9 +118,9 @@ def process_service_info(
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ZhsunycoConfigEntry
+    hass: HomeAssistant, entry: BleEslConfigEntry
 ) -> bool:
-    """Set up Zhsunyco Bluetooth from a config entry."""
+    """Set up a BLE ESL device from a config entry."""
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
@@ -129,7 +129,7 @@ async def async_setup_entry(
 
     options = {**entry.data, **entry.options}
     protocol_id = options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
-    backend = zhsunyco_ble.get(protocol_id)
+    backend = esl_ble.get(protocol_id)
     model_key = options.get(CONF_MODEL, DEFAULT_MODEL)
     preset = backend.presets().get(model_key)
     if preset is None:
@@ -151,7 +151,7 @@ async def async_setup_entry(
         getattr(backend, "id", ""),
         getattr(backend, "name", "BLE"),
     )
-    manufacturer = f"Zhsunyco ({protocol_name})"
+    manufacturer = protocol_name
     model = format_model_name(preset)
 
     hass.data[DOMAIN][entry.entry_id] = {}
@@ -173,13 +173,13 @@ async def async_setup_entry(
         config_entry_id=entry.entry_id,
         connections={(CONNECTION_BLUETOOTH, address)},
         manufacturer=manufacturer,
-        name=f"Zhsunyco {_identifier}",
+        name=f"{protocol_name} {_identifier}",
         model=model,
         sw_version=sw_version,
         hw_version=hw_version,
     )
     hass.data[DOMAIN][entry.entry_id]["device_id"] = device_entry.id
-    bt_coordinator = ZhsunycoPassiveBluetoothProcessorCoordinator(
+    bt_coordinator = BleEslPassiveBluetoothProcessorCoordinator(
         hass,
         _LOGGER,
         address=address,
@@ -322,7 +322,7 @@ async def async_setup_entry(
         current_model = current_options.get(CONF_MODEL, DEFAULT_MODEL)
 
         address = hass.data[DOMAIN][entry_id]["address"]
-        backend = zhsunyco_ble.get(current_protocol)
+        backend = esl_ble.get(current_protocol)
         preset = backend.presets().get(current_model)
         if preset is None:
             preset = next(iter(backend.presets().values()))
@@ -617,7 +617,7 @@ async def async_setup_entry(
 
 
 async def async_unload_entry(
-    hass: HomeAssistant, entry: ZhsunycoConfigEntry
+    hass: HomeAssistant, entry: BleEslConfigEntry
 ) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(
@@ -656,6 +656,6 @@ async def get_entry_id_from_device(hass: HomeAssistant, device_id: str) -> str:
             return entry_id
 
     raise ValueError(
-        f"No loaded Zhsunyco entry has device_id {device_id!r} in hass.data['{DOMAIN}']. "
+        f"No loaded BLE ESL entry has device_id {device_id!r} in hass.data['{DOMAIN}']. "
         "Reload the integration after updating, or target the correct device."
     )

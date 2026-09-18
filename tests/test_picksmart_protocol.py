@@ -5,8 +5,8 @@ from __future__ import annotations
 import struct
 from PIL import Image
 
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.protocol import (
+from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
+from custom_components.ble_esl.esl_ble.picksmart.protocol import (
     encode_image,
     make_cmd_packet,
     make_size_packet,

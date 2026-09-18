@@ -28,16 +28,16 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Zhsunyco image entities."""
+    """Set up BLE ESL image entities."""
     image_coordinator = hass.data[DOMAIN][entry.entry_id]["image_coordinator"]
     preview_coordinator = hass.data[DOMAIN][entry.entry_id]["preview_coordinator"]
     async_add_entities([
-        ZhsunycoImageEntity(hass, entry, image_coordinator),
-        ZhsunycoPreviewImageEntity(hass, entry, preview_coordinator),
+        BleEslImageEntity(hass, entry, image_coordinator),
+        BleEslPreviewImageEntity(hass, entry, preview_coordinator),
     ])
 
 
-class ZhsunycoImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
+class BleEslImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
     """Representation of last updated image content."""
 
     _attr_has_entity_name = True
@@ -51,7 +51,7 @@ class ZhsunycoImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], Image
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_last_updated_content"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_last_updated_content"
         self._attr_content_type = "image/png"
         self._cached_image = Image(content_type="image/png", content=coordinator.data)
 
@@ -82,7 +82,7 @@ class ZhsunycoImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], Image
         super()._handle_coordinator_update()
 
 
-class ZhsunycoPreviewImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
+class BleEslPreviewImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
     """Representation of preview image content."""
 
     _attr_has_entity_name = True
@@ -97,7 +97,7 @@ class ZhsunycoPreviewImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]]
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_preview_content_image"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_preview_content_image"
         self._attr_content_type = "image/png"
         self._cached_image = Image(content_type="image/png", content=coordinator.data)
 

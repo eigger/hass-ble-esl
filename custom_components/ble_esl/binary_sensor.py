@@ -1,4 +1,4 @@
-"""Support for Zhsunyco binary sensors."""
+"""Support for BLE ESL binary sensors."""
 
 from __future__ import annotations
 
@@ -24,26 +24,26 @@ from homeassistant.helpers.update_coordinator import (
 )
 from propcache.api import cached_property
 from sensor_state_data import (
-    BinarySensorDeviceClass as ZhsunycoBinarySensorDeviceClass,
+    BinarySensorDeviceClass as BleEslBinarySensorDeviceClass,
     SensorUpdate,
 )
 
 from .const import DOMAIN, SESSION_MIN_VOLTAGE
-from .coordinator import ZhsunycoPassiveBluetoothDataProcessor
+from .coordinator import BleEslPassiveBluetoothDataProcessor
 from .device import (
     async_get_device_info,
     device_key_to_bluetooth_entity_key,
     hass_device_info,
 )
-from .types import ZhsunycoConfigEntry
+from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 BINARY_SENSOR_DESCRIPTIONS = {
     # Battery low: on when the advertised voltage is at or below the level where
     # e-paper refresh becomes unreliable even though BLE still works.
-    ZhsunycoBinarySensorDeviceClass.BATTERY: BinarySensorEntityDescription(
-        key=ZhsunycoBinarySensorDeviceClass.BATTERY,
+    BleEslBinarySensorDeviceClass.BATTERY: BinarySensorEntityDescription(
+        key=BleEslBinarySensorDeviceClass.BATTERY,
         device_class=BinarySensorDeviceClass.BATTERY,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -75,17 +75,17 @@ def sensor_update_to_bluetooth_data_update(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ZhsunycoConfigEntry,
+    entry: BleEslConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Zhsunyco BLE binary sensors."""
+    """Set up the BLE ESL binary sensors."""
     coordinator = entry.runtime_data
-    processor = ZhsunycoPassiveBluetoothDataProcessor(
+    processor = BleEslPassiveBluetoothDataProcessor(
         sensor_update_to_bluetooth_data_update
     )
     entry.async_on_unload(
         processor.async_add_entities_listener(
-            ZhsunycoBluetoothBinarySensorEntity, async_add_entities
+            BleEslBluetoothBinarySensorEntity, async_add_entities
         )
     )
     entry.async_on_unload(
@@ -99,15 +99,15 @@ async def async_setup_entry(
     image_coordinator = entry_data["image_coordinator"]
     preview_coordinator = entry_data["preview_coordinator"]
     entities: list[BinarySensorEntity] = [
-        ZhsunycoBluetoothConnectivitySensorEntity(hass, entry, connectivity_coordinator),
-        ZhsunycoDisplayInSyncBinarySensor(hass, entry, image_coordinator, preview_coordinator),
+        BleEslBluetoothConnectivitySensorEntity(hass, entry, connectivity_coordinator),
+        BleEslDisplayInSyncBinarySensor(hass, entry, image_coordinator, preview_coordinator),
     ]
 
     backend = entry_data.get("backend")
     caps = backend.capabilities if backend else None
     if caps and caps.session_battery and not caps.passive_battery:
         entities.append(
-            ZhsunycoBatteryLowBinarySensor(
+            BleEslBatteryLowBinarySensor(
                 hass, entry, entry_data["battery_coordinator"]
             )
         )
@@ -115,13 +115,13 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class ZhsunycoBluetoothBinarySensorEntity(
+class BleEslBluetoothBinarySensorEntity(
     PassiveBluetoothProcessorEntity[
-        ZhsunycoPassiveBluetoothDataProcessor[bool | None]
+        BleEslPassiveBluetoothDataProcessor[bool | None]
     ],
     BinarySensorEntity,
 ):
-    """Representation of a Zhsunyco BLE binary sensor."""
+    """Representation of a BLE ESL binary sensor."""
 
     @property
     def is_on(self) -> bool | None:
@@ -129,7 +129,7 @@ class ZhsunycoBluetoothBinarySensorEntity(
         return self.processor.entity_data.get(self.entity_key)
 
 
-class ZhsunycoBatteryLowBinarySensor(
+class BleEslBatteryLowBinarySensor(
     CoordinatorEntity[DataUpdateCoordinator[float | None]],
     BinarySensorEntity,
 ):
@@ -151,7 +151,7 @@ class ZhsunycoBatteryLowBinarySensor(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_battery_low"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_battery_low"
 
     @property
     def is_on(self) -> bool | None:
@@ -169,11 +169,11 @@ class ZhsunycoBatteryLowBinarySensor(
         return True
 
 
-class ZhsunycoBluetoothConnectivitySensorEntity(
+class BleEslBluetoothConnectivitySensorEntity(
     CoordinatorEntity[DataUpdateCoordinator[bool]],
     BinarySensorEntity,
 ):
-    """Representation of a Zhsunyco connectivity binary sensor."""
+    """Representation of a BLE ESL connectivity binary sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "connectivity"
@@ -187,7 +187,7 @@ class ZhsunycoBluetoothConnectivitySensorEntity(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_connectivity"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_connectivity"
         self._is_on = False
 
     @property
@@ -217,11 +217,11 @@ class ZhsunycoBluetoothConnectivitySensorEntity(
         super()._handle_coordinator_update()
 
 
-class ZhsunycoDisplayInSyncBinarySensor(
+class BleEslDisplayInSyncBinarySensor(
     CoordinatorEntity[DataUpdateCoordinator[bytes | None]],
     BinarySensorEntity,
 ):
-    """Representation of a Zhsunyco display synchronization binary sensor."""
+    """Representation of a BLE ESL display synchronization binary sensor."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "display_in_sync"
@@ -241,7 +241,7 @@ class ZhsunycoDisplayInSyncBinarySensor(
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_display_in_sync"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_display_in_sync"
 
     @property
     def is_on(self) -> bool | None:

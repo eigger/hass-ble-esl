@@ -1,15 +1,15 @@
-"""Tests for Zhsunyco device info helper and device registry updates."""
+"""Tests for BLE ESL device info helper and device registry updates."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from custom_components.zhsunyco import process_service_info
-from custom_components.zhsunyco.const import DOMAIN
-from custom_components.zhsunyco.device import async_get_device_info
-from custom_components.zhsunyco.zhsunyco_ble.base import DevicePreset
-from custom_components.zhsunyco.zhsunyco_ble.wolink import WolinkProtocol
-from custom_components.zhsunyco.zhsunyco_ble.wolink.const import MANUFACTURER_ID
+from custom_components.ble_esl import process_service_info
+from custom_components.ble_esl.const import DOMAIN
+from custom_components.ble_esl.device import async_get_device_info
+from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
+from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 
 
 def test_async_get_device_info():
@@ -39,8 +39,8 @@ def test_async_get_device_info():
     }
 
     dev_info = async_get_device_info(hass, entry_id, address)
-    assert dev_info["name"] == "Zhsunyco 54200055"
-    assert dev_info["manufacturer"] == "Zhsunyco (WOLINK)"
+    assert dev_info["name"] == "WOLINK 54200055"
+    assert dev_info["manufacturer"] == "WOLINK"
     assert dev_info["model"] == "2.9\" BWRY 296x128"
     assert dev_info["sw_version"] == "258"
     assert dev_info["hw_version"] == "772"
@@ -92,12 +92,12 @@ def test_process_service_info_updates_device_registry():
     assert entry_data["sw_version"] == "258"
     assert entry_data["hw_version"] == "772"
     assert entry_data["model"] == "2.9\" BWRY 296x128"
-    assert entry_data["manufacturer"] == "Zhsunyco (WOLINK)"
+    assert entry_data["manufacturer"] == "WOLINK"
 
     device_registry.async_update_device.assert_called_once_with(
         "mock_device_id_123",
         sw_version="258",
         hw_version="772",
         model="2.9\" BWRY 296x128",
-        manufacturer="Zhsunyco (WOLINK)",
+        manufacturer="WOLINK",
     )

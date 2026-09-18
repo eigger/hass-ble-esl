@@ -1,4 +1,4 @@
-"""Constants for easyTag (Zhsunyco / eLabel) ESL BLE protocol."""
+"""Constants for easyTag (eLabel) ESL BLE protocol."""
 
 from __future__ import annotations
 

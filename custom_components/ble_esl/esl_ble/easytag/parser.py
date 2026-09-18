@@ -53,9 +53,9 @@ class EasyTagBluetoothDeviceData(ProtocolParser):
             else ""
         )
         self.set_title(f"{identifier} ({display_name})")
-        self.set_device_name(f"Zhsunyco {identifier}")
+        self.set_device_name(f"easyTag {identifier}")
         self.set_device_type(f"{display_name}{res}")
-        self.set_device_manufacturer("Zhsunyco (easyTag)")
+        self.set_device_manufacturer("easyTag")
 
     def _start_update(self, service_info: BluetoothServiceInfoBleak) -> None:
         """Update from BLE advertisement data."""

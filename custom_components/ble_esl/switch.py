@@ -1,4 +1,4 @@
-"""Support for Zhsunyco write lock switch."""
+"""Support for BLE ESL write lock switch."""
 
 import logging
 
@@ -22,11 +22,11 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Zhsunyco write lock switch."""
-    async_add_entities([ZhsunycoWriteLockSwitch(hass, entry)])
+    """Set up the BLE ESL write lock switch."""
+    async_add_entities([BleEslWriteLockSwitch(hass, entry)])
 
 
-class ZhsunycoWriteLockSwitch(RestoreEntity, SwitchEntity):
+class BleEslWriteLockSwitch(RestoreEntity, SwitchEntity):
     """Switch that locks physical writes (virtual updates still apply)."""
 
     _attr_has_entity_name = True
@@ -38,7 +38,7 @@ class ZhsunycoWriteLockSwitch(RestoreEntity, SwitchEntity):
         address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._address = address
         self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"zhsunyco_{self._identifier}_write_lock"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_write_lock"
         self._hass = hass
         self._entry_id = entry.entry_id
         self._is_on = False

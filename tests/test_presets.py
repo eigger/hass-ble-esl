@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from custom_components.zhsunyco.zhsunyco_ble.base import (
+from custom_components.ble_esl.esl_ble.base import (
     CONFIDENCE_COMMUNITY,
     CONFIDENCE_ESTIMATED,
     CONFIDENCE_HARDWARE,
     CONFIDENCE_REPORTED,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import (
+from custom_components.ble_esl.esl_ble.wolink.devices import (
     PRESETS,
     preset_choices,
 )

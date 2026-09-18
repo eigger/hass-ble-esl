@@ -56,9 +56,9 @@ class WolinkBluetoothDeviceData(ProtocolParser):
             else ""
         )
         self.set_title(f"{identifier} ({display_name})")
-        self.set_device_name(f"Zhsunyco {identifier}")
+        self.set_device_name(f"WOLINK {identifier}")
         self.set_device_type(f"{display_name}{res}")
-        self.set_device_manufacturer("Zhsunyco (WOLINK)")
+        self.set_device_manufacturer("WOLINK")
 
     def _start_update(self, service_info: BluetoothServiceInfoBleak) -> None:
         """Update from BLE advertisement data."""

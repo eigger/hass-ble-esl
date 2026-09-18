@@ -5,13 +5,13 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
-from custom_components.zhsunyco.zhsunyco_ble.wolink import WolinkProtocol
-from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
+from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
+from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID,
     SERVICE_UUID,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.wolink.parser import (
+from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from custom_components.ble_esl.esl_ble.wolink.parser import (
     WolinkBluetoothDeviceData,
 )
 
@@ -55,7 +55,7 @@ def test_parser_start_update_battery_and_versions():
     parser._start_update(info)
 
     assert parser.title == "54200055 (2.9\" BWRY)"
-    assert parser.get_device_name() == "Zhsunyco 54200055"
+    assert parser.get_device_name() == "WOLINK 54200055"
     assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 3.0
     assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 100
     assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is False

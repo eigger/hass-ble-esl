@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 from PIL import Image
 import pytest
 
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.picksmart.writer import (
+from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
+from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
     PickSmartError,
     update_image,
@@ -163,7 +163,7 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.zhsunyco.zhsunyco_ble.picksmart.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.picksmart.writer.establish_connection",
             mock_establish,
         )
 

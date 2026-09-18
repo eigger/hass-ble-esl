@@ -1,4 +1,4 @@
-"""BLE plugin registry for Zhsunyco ESL."""
+"""BLE plugin registry for BLE ESL ESL."""
 
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "라벨 쓰기",
-      "description": "Zhsunyco 기기에 라벨 이미지를 씁니다.",
+      "description": "ESL 기기에 라벨 이미지를 씁니다.",
       "fields": {
         "payload": {
           "name": "페이로드",
@@ -127,7 +127,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Zhsunyco 옵션",
+        "title": "BLE ESL 옵션",
         "description": "태그 모델 해상도 및 쓰기 방식을 조정합니다.",
         "data": {
           "model": "모델",

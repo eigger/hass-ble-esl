@@ -7,8 +7,8 @@ import zlib
 from PIL import Image
 import pytest
 
-from custom_components.zhsunyco.zhsunyco_ble.base import DevicePreset
-from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
+from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.esl_ble.wolink.const import (
     OP_LOAD_IMAGE,
     OP_MULTISCREEN_REFRESH,
     OP_MULTISCREEN_STORE,
@@ -20,8 +20,8 @@ from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
     OP_RGB,
     OP_UNBIND_CLEAR,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.wolink.protocol import (
+from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from custom_components.ble_esl.esl_ble.wolink.protocol import (
     _battery_mv,
     battery_looks_plausible,
     cmd_load_image_chunk,

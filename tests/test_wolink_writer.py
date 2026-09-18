@@ -8,14 +8,14 @@ from PIL import Image
 import pytest
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from custom_components.zhsunyco.zhsunyco_ble.wolink.const import (
+from custom_components.ble_esl.esl_ble.wolink.const import (
     AES_KEY,
     AUTH_CHAR,
     DATA_CHAR,
     STATUS_CHAR,
 )
-from custom_components.zhsunyco.zhsunyco_ble.wolink.devices import PRESETS
-from custom_components.zhsunyco.zhsunyco_ble.wolink.writer import (
+from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
     update_image,
@@ -173,7 +173,7 @@ def test_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.zhsunyco.zhsunyco_ble.wolink.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.wolink.writer.establish_connection",
             mock_establish,
         )
 
