@@ -8,23 +8,14 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
 ## Gallery
 
-| Size | Example |
-|------|---------|
-| 2.1" (250×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch" width="200" /> |
-| 2.9" (296×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch" width="200" /> |
-| 10.2" (960×640) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch" width="200" /> |
+| Size | Brand | Example |
+|------|-------|---------|
+| 2.1" (250×128) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> |
+| 2.9" (296×128) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> |
+| 4.2" (400×300) | Poshiji (XTE) PSJ-420 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> |
+| 10.2" (960×640) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 
-Photos in the size table above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
-
-### Poshiji PSJ-420 — 4.2" BWRY
-
-<img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Owner-supplied Poshiji PSJ-420 displaying a Korean weather dashboard in black, white, red and yellow" width="450" />
-
-Owner-supplied photo of a working 400×300 four-color panel. See the
-[product specifications and setup guide](docs/poshiji-psj420.md),
-[purchase listing](https://ko.aliexpress.com/item/1005012582138232.html), and
-[ready-to-use Poshiji examples](examples/poshiji/README.md).
-
+Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/poshiji-psj420.md](docs/poshiji-psj420.md) for the PSJ-420 setup guide.
 
 ---
 
