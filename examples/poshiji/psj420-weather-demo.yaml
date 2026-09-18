@@ -162,5 +162,5 @@ actions:
           color: black
           anchor: mm
     target:
-      device_id: { your_device_id }
+      device_id: <your device>
 mode: single

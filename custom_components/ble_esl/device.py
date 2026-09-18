@@ -40,6 +40,7 @@ PROTOCOL_LABELS = {
     "wolink": "WOLINK",
     "picksmart": "PickSmart",
     "easytag": "easyTag",
+    "poshiji": "XTE",
 }
 
 # Used when a backend has no brand (should not happen for bundled protocols)

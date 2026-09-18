@@ -8,7 +8,7 @@
 
 ![4색 확인 미리보기](psj420-color-test.png)
 
-이 파일은 사용자가 제공한 **payload 목록**입니다. 전체 서비스 호출이나 자동화가 아니므로 `ble_esl.write` 작업의 `data.payload` 아래에 넣으세요. 대상 장치는 별도로 선택합니다. 미리보기는 `data.dry_run: true`, 실제 전송은 `false`로 지정하며 배경은 `white`를 사용하세요. 표시 내용은 동일하므로 기존 렌더링 미리보기를 유지했습니다.
+이 파일은 완전한 `ble_esl.write` 액션입니다. 개발자 도구 → 액션(YAML 모드)에 그대로 붙여넣고 `target.device_id`를 본인의 BLE ESL 장치 ID로 바꾸세요. 미리보기만 하려면 `data` 아래에 `dry_run: true`를 추가합니다. 배경은 `white`입니다.
 
 ## 2. 네이버 날씨 자동화
 
@@ -29,7 +29,7 @@
 | `wn_cond` | `sensor.wn_{{ location }}_current_condition` — 날씨 설명 |
 | `wn_pm10` | `sensor.wn_{{ location }}_pm10_description` — 미세먼지 등급 |
 | `wn_comment` | `sensor.wn_{{ location }}_day_short_comment` — 날씨 안내 문구 |
-| `target.device_id` | 사용자 제공 ID를 보존함. 다른 설치에서는 본인의 BLE ESL 장치 ID로 변경 |
+| `target.device_id` | `<your device>` 자리표시자. 본인의 BLE ESL 장치 ID로 변경 |
 | 폰트 | 저장소에 포함된 `CookieRunBold.ttf`, `CookieRunRegular.ttf` |
 
 `weather.get_forecasts`의 `daily` 응답에서 첫 번째 예보를 사용해 최저·최고 기온을 표시합니다. 실제 엔터티 이름이 표와 다르면 변수 네 개를 직접 수정하세요. 네이버 날씨 엔터티와 센서는 별도로 구성돼 있어야 합니다.
@@ -41,7 +41,7 @@
 - 노란 하단: 날씨 안내 문구를 두 줄로 분리.
 - 비·눈 또는 미세먼지 `나쁨` / `매우나쁨`이면 첫 줄을 빨간 경고로 표시.
 
-이 자동화는 `ble_esl.write`를 사용하고 미리보기 전용 옵션이 없으므로 실행하면 실제 전송합니다. 같은 장치를 대상으로 하는 이전 Gicisky 자동화는 비활성화하세요.
+이 자동화는 `ble_esl.write`를 사용하고 미리보기 전용 옵션이 없으므로 실행하면 실제 전송합니다. 같은 장치를 대상으로 하는 다른 자동화와 동시에 실행되지 않도록 하세요.
 
 ### 검증 범위와 전제
 
