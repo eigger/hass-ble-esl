@@ -83,7 +83,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 4.2" | 400 × 300 | BWR | Zhsunyco | easyTag | ET0420-40B / 43B | ⚠️ untested |
 | 4.2" | 400 × 300 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 4.2" | 400 × 300 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
-| 4.2" | 400 × 300 | BWRY | Poshiji | XTE | PSJ-420 | ✅ owner-reported |
+| 4.2" | 400 × 300 | BWRY | Poshiji | XTE | PSJ-420 | ✅ verified |
 | 5.8" | 648 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 5.8" | 648 × 480 | BWR | Zhsunyco | easyTag | ETR0580-4FB | ⚠️ untested |
 | 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
@@ -109,7 +109,7 @@ Availability varies by country. AliExpress listings by protocol family:
 | Protocol | Brand | Listing |
 |----------|-------|---------|
 | WOLINK / easyTag | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html) |
-| XTE | Poshiji | [PSJ-420 4.2" BWRY — owner-supplied purchase link](https://ko.aliexpress.com/item/1005012582138232.html) |
+| XTE | Poshiji | [PSJ-420 4.2" BWRY](https://ko.aliexpress.com/item/1005012582138232.html) |
 | PickSmart | Gicisky | [Gicisky store (item 1)](https://ko.aliexpress.com/item/1005002399342939.html) · [Gicisky store (item 2)](https://ko.aliexpress.com/item/1005002398744297.html) |
 
 ---
