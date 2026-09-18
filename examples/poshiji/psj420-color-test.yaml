@@ -1,0 +1,90 @@
+action: ble_esl.write
+data:
+  background: white
+  payload:
+    - type: text
+      value: PSJ-420 · 400 × 300
+      x: 200
+      'y': 12
+      size: 23
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: rectangle
+      x_start: 10
+      y_start: 65
+      x_end: 99
+      y_end: 205
+      fill: black
+      outline: black
+    - type: text
+      value: BLACK
+      x: 54
+      'y': 115
+      size: 16
+      color: white
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: rectangle
+      x_start: 107
+      y_start: 65
+      x_end: 196
+      y_end: 205
+      fill: white
+      outline: black
+    - type: text
+      value: WHITE
+      x: 151
+      'y': 115
+      size: 16
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: rectangle
+      x_start: 204
+      y_start: 65
+      x_end: 293
+      y_end: 205
+      fill: red
+      outline: black
+    - type: text
+      value: RED
+      x: 248
+      'y': 115
+      size: 16
+      color: white
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: rectangle
+      x_start: 301
+      y_start: 65
+      x_end: 390
+      y_end: 205
+      fill: yellow
+      outline: black
+    - type: text
+      value: YELLOW
+      x: 345
+      'y': 115
+      size: 16
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: text
+      value: 검정 · 흰색 · 빨강 · 노랑
+      x: 200
+      'y': 230
+      size: 23
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: text
+      value: Poshiji 4-color check
+      x: 200
+      'y': 268
+      size: 15
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+target:
+  device_id: { your_device_id }

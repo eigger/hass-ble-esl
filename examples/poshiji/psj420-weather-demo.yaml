@@ -1,0 +1,166 @@
+alias: 자동화_네이버_날씨
+description: ''
+triggers:
+  - trigger: time
+    at:
+      - '08:00:00'
+      - '11:00:00'
+      - '14:00:00'
+      - '17:00:00'
+conditions:
+  - condition: time
+    weekday: [mon, tue, wed, thu, fri]
+actions:
+  - variables:
+      location: gurodong
+      wn_weather: weather.wn_{{ location }}
+      wn_cond: sensor.wn_{{ location }}_current_condition
+      wn_pm10: sensor.wn_{{ location }}_pm10_description
+      wn_comment: sensor.wn_{{ location }}_day_short_comment
+      font_bold: fonts/CookieRunBold.ttf
+      font_med: fonts/CookieRunRegular.ttf
+  - action: weather.get_forecasts
+    target:
+      entity_id: '{{ wn_weather }}'
+    data:
+      type: daily
+    response_variable: weather_forecast
+  - variables:
+      time_str: "{{ now().strftime('%H:%M') }}"
+      date_str: >
+        {% set days = ['일','월','화','수','목','금','토'] %}
+        {{ now().strftime('%m.%d') }} ({{ days[now().strftime('%w')|int] }})
+      weather_state: '{{ states(wn_weather) }}'
+      temp_now: "{{ state_attr(wn_weather, 'temperature') | default(0) | round(1) }}"
+      forecast_today: '{{ weather_forecast[wn_weather].forecast[0] }}'
+      temp_min: '{{ forecast_today.templow | default(0) | round(0) }}'
+      temp_max: '{{ forecast_today.temperature | default(0) | round(0) }}'
+      desc_cond: '{{ states(wn_cond) }}'
+      desc_dust: '{{ states(wn_pm10) }}'
+      is_raining: "{{ 'rain' in weather_state or 'snow' in weather_state }}"
+      has_warning: "{{ is_raining or desc_dust in ['나쁨', '매우나쁨'] }}"
+      warning_text: >
+        {% if is_raining %}지금 밖은 비/눈이 내려요
+        {% elif desc_dust in ['나쁨', '매우나쁨'] %}미세먼지 {{ desc_dust }}! 마스크 필수
+        {% endif %}
+      line1_text: |
+        {% if has_warning %}
+        {{ warning_text }}
+        {% else %}
+        {% set text = states(wn_comment) %}
+        {% set words = text.split(' ') %}
+        {% set ns = namespace(l1='') %}
+        {% for word in words %}
+        {% if ns.l1 | length < 16 %}
+        {% set ns.l1 = ns.l1 ~ ' ' ~ word %}
+        {% endif %}
+        {% endfor %}
+        {{ ns.l1 | trim }}
+        {% endif %}
+      line2_text: |
+        {% if has_warning %}
+        {{ states(wn_comment) | truncate(24, true, '..') }}
+        {% else %}
+        {% set text = states(wn_comment) %}
+        {% set words = text.split(' ') %}
+        {% set ns = namespace(l1='', l2='') %}
+        {% for word in words %}
+        {% if ns.l1 | length < 16 %}
+        {% set ns.l1 = ns.l1 ~ ' ' ~ word %}
+        {% else %}
+        {% set ns.l2 = ns.l2 ~ ' ' ~ word %}
+        {% endif %}
+        {% endfor %}
+        {{ ns.l2 | trim }}
+        {% endif %}
+      color_line1: "{{ 'red' if has_warning else 'black' }}"
+  - action: ble_esl.write
+    data:
+      payload:
+        - type: rectangle
+          x_start: 0
+          y_start: 0
+          x_end: 400
+          y_end: 300
+          fill: white
+          outline: white
+        - type: rectangle
+          x_start: 0
+          y_start: 0
+          x_end: 400
+          y_end: 55
+          fill: black
+          outline: black
+        - type: text
+          value: '{{ date_str }}'
+          x: 20
+          y: 27
+          size: 35
+          font: '{{ font_bold }}'
+          color: white
+          anchor: lm
+        - type: text
+          value: '{{ time_str }} 기준'
+          x: 380
+          y: 27
+          size: 22
+          font: '{{ font_med }}'
+          color: white
+          anchor: rm
+        - type: icon
+          value: weather-{{ weather_state }}
+          x: 100
+          y: 125
+          size: 110
+          color: black
+          anchor: mm
+        - type: text
+          value: '{{ desc_cond }}'
+          x: 100
+          y: 195
+          size: 24
+          font: '{{ font_bold }}'
+          color: black
+          anchor: mm
+        - type: text
+          value: '{{ temp_now }}°'
+          x: 290
+          y: 125
+          size: 85
+          font: '{{ font_bold }}'
+          color: red
+          anchor: mm
+        - type: text
+          value: 최저 {{ temp_min }}° / 최고 {{ temp_max }}°
+          x: 290
+          y: 195
+          size: 22
+          font: '{{ font_med }}'
+          color: black
+          anchor: mm
+        - type: line
+          x_start: 0
+          x_end: 400
+          y_start: 260
+          y_end: 260
+          width: 80
+          fill: yellow
+        - type: text
+          value: '{{ line1_text }}'
+          x: 200
+          y: 252
+          size: 20
+          font: '{{ font_bold }}'
+          color: '{{ color_line1 }}'
+          anchor: mm
+        - type: text
+          value: '{{ line2_text }}'
+          x: 200
+          y: 280
+          size: 20
+          font: '{{ font_med }}'
+          color: black
+          anchor: mm
+    target:
+      device_id: { your_device_id }
+mode: single

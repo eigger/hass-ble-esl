@@ -14,7 +14,17 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | 2.9" (296×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch" width="200" /> |
 | 10.2" (960×640) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch" width="200" /> |
 
-Photos above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
+Photos in the size table above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
+
+### Poshiji PSJ-420 — 4.2" BWRY
+
+<img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Owner-supplied Poshiji PSJ-420 displaying a Korean weather dashboard in black, white, red and yellow" width="450" />
+
+Owner-supplied photo of a working 400×300 four-color panel. See the
+[product specifications and setup guide](docs/poshiji-psj420.md),
+[purchase listing](https://ko.aliexpress.com/item/1005012582138232.html), and
+[ready-to-use Poshiji examples](examples/poshiji/README.md).
+
 
 ---
 
@@ -22,7 +32,7 @@ Photos above are PickSmart (Gicisky) tags. See [Examples](#examples) for the ful
 
 An **electronic label** (electronic shelf label, ESL) is a low-power **e-paper** display that keeps showing content **without continuous power**.
 
-This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, and **PickSmart (gicisky)** BLE protocol families.
+This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, **PickSmart (gicisky)**, and **Poshiji (XTE)** BLE protocol families.
 
 They work well for information that should stay visible, changes infrequently, and lives where mains power is impractical — retail tags, home dashboard status displays, room calendars, sensors, and inventory monitors.
 
@@ -73,6 +83,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 4.2" | 400 × 300 | BWR | Zhsunyco | easyTag | ET0420-40B / 43B | ⚠️ untested |
 | 4.2" | 400 × 300 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 4.2" | 400 × 300 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
+| 4.2" | 400 × 300 | BWRY | Poshiji | XTE | PSJ-420 | ✅ verified |
 | 5.8" | 648 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 5.8" | 648 × 480 | BWR | Zhsunyco | easyTag | ETR0580-4FB | ⚠️ untested |
 | 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
@@ -84,6 +95,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
+- **Poshiji (XTE)** — PSJ-420, 400×300 BWRY. Owner-reported screen updates with the original implementation; see [setup and port validation](docs/poshiji-psj420.md).
 - **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
@@ -97,6 +109,7 @@ Availability varies by country. AliExpress listings by protocol family:
 | Protocol | Brand | Listing |
 |----------|-------|---------|
 | WOLINK / easyTag | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html) |
+| XTE | Poshiji | [PSJ-420 4.2" BWRY](https://ko.aliexpress.com/item/1005012582138232.html) |
 | PickSmart | Gicisky | [Gicisky store (item 1)](https://ko.aliexpress.com/item/1005002399342939.html) · [Gicisky store (item 2)](https://ko.aliexpress.com/item/1005002398744297.html) |
 
 ---
@@ -151,7 +164,7 @@ Configure via **Settings** → **Devices & Services** → **BLE ESL** → **Conf
 
 | Option | Default | Range | Description |
 |--------|---------|-------|-------------|
-| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart | Target BLE protocol family |
+| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart / poshiji | Target BLE protocol family |
 | **Model** | 2.9" (296×128) | model list | Hardware resolution profile |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
 | **Write Delay (ms)** | 0 | 0–1000 | Extra pause between BLE write packets |
@@ -419,6 +432,21 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 ---
 
 ## Examples
+
+### Poshiji PSJ-420 (400×300 BWRY)
+
+| Example | Preview | YAML |
+|---------|---------|------|
+| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Payload list](examples/poshiji/psj420-color-test.yaml) |
+| Naver weather automation | <img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Actual PSJ-420 weather display" width="400" /> | [Weekday Naver weather automation](examples/poshiji/psj420-weather-demo.yaml) |
+
+The color test is a payload list for `ble_esl.write` → `data.payload`; set
+`data.dry_run: true` separately to preview. The Naver weather automation sends
+to the panel on weekdays at 08:00, 11:00, 14:00 and 17:00. Adjust its `location`
+and target device ID for your installation. Its photo is the actual device
+photo supplied by the owner; only the color-test preview is rendered.
+[Usage, entities and migration notes](examples/poshiji/README.md).
+
 
 Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
 
