@@ -57,8 +57,7 @@ All layouts are native 400×300; Home Assistant selects the size from the preset
 Use `black`, `white`, `red` and `yellow`; other colors are quantized to BWRY.
 
 - [Four-color check](../examples/poshiji/psj420-color-test.yaml): preview or send four labeled swatches.
-- [Weather demo](../examples/poshiji/psj420-weather-demo.yaml): static Korean dashboard inspired by the photo.
-- [Live weather automation](../examples/poshiji/psj420-weather-automation.yaml): hourly current conditions and temperature from a weather entity.
+- [Naver weather automation](../examples/poshiji/psj420-weather-demo.yaml): weekday 08:00 / 11:00 / 14:00 / 17:00 updates, daily forecast low/high, fine-dust warnings and a two-line weather comment. Uses the owner-supplied actual device photo.
 - [Example setup instructions](../examples/poshiji/README.md): placeholders, preview/send behavior and entity requirements.
 
 ## Installation and use
@@ -140,9 +139,10 @@ nearby-device addresses are included in this repository.
 | Metadata unavailable after an update | Confirm the advertisement-tail fix is installed; the final byte is variable. This backend saves its selected protocol/model in the config entry. |
 | Old `XTE requires ATT MTU >= 247` message | An older implementation is running. Update the files and restart **Home Assistant**, not only the integration. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
-| Preview updates but panel does not | The preview is not a readback. Check `dry_run`; the first two examples intentionally default to preview-only. |
-| Weather automation does nothing | Replace the device ID and weather entity. It runs on the hour and skips `unknown` / `unavailable` weather states. Use Run actions for a manual check. |
+| Preview updates but panel does not | The preview is not a readback. Check `dry_run`; the color-test example defaults to preview-only; the weather automation sends to the panel. |
+| Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |
 
-The live example does not synthesize forecast low/high values from current
-conditions. Add a separately obtained forecast if daily minimum/maximum values
-are needed. Avoid overly frequent redraws; this is an e-paper panel, not an LCD.
+The Naver example calls `weather.get_forecasts` with `type: daily` and uses the
+first returned forecast for low/high values. It expects a non-empty forecast
+and valid weather/sensor data; it does not include an unavailable-data guard.
+Avoid overly frequent redraws; this is an e-paper panel, not an LCD.
