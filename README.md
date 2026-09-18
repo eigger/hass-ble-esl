@@ -437,15 +437,16 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 
 | Example | Preview | YAML |
 |---------|---------|------|
-| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Payload list](examples/poshiji/psj420-color-test.yaml) |
+| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Service call](examples/poshiji/psj420-color-test.yaml) |
 | Naver weather automation | <img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Actual PSJ-420 weather display" width="400" /> | [Weekday Naver weather automation](examples/poshiji/psj420-weather-demo.yaml) |
 
-The color test is a payload list for `ble_esl.write` → `data.payload`; set
-`data.dry_run: true` separately to preview. The Naver weather automation sends
+The color test is a complete `ble_esl.write` action — paste it into
+Developer tools → Actions (YAML mode) and replace `device_id`; add
+`dry_run: true` under `data` to preview only. The Naver weather automation sends
 to the panel on weekdays at 08:00, 11:00, 14:00 and 17:00. Adjust its `location`
 and target device ID for your installation. Its photo is the actual device
 photo supplied by the owner; only the color-test preview is rendered.
-[Usage, entities and migration notes](examples/poshiji/README.md).
+[Usage and entity notes](examples/poshiji/README.md).
 
 
 Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
