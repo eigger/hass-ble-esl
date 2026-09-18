@@ -89,7 +89,7 @@ class PickSmartClient:
             self.cmd_uuid, self._notification_handler
         )
         try:
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1.0)  # settle time after start_notify (matches hass-gicisky)
 
             # Step 1: START (0x01) -> [01 F4 00]
             start_resp = await self._write_with_response(
