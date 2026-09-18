@@ -1,7 +1,5 @@
 write:
   target:
-    device:
-      integration: ble_esl
     entity:
       integration: ble_esl
   fields:
@@ -46,8 +44,6 @@ write:
         boolean:
 write_guarded:
   target:
-    device:
-      integration: ble_esl
     entity:
       integration: ble_esl
   fields:
