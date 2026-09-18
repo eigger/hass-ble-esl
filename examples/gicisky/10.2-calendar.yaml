@@ -1,0 +1,329 @@
+alias: "960x640 캘린더 & 일정"
+description: "10.2인치 960x640 E-Ink 디스플레이용 월간 달력 + 일정 보드"
+triggers:
+  - trigger: time_pattern
+    hours: /1
+actions:
+  - action: calendar.get_events
+    target:
+      entity_id:
+        - calendar.google
+        - calendar.holidays
+    data:
+      duration:
+        hours: 72
+    response_variable: agenda_response
+  - variables:
+      font_bold: fonts/GmarketSansTTFBold.ttf
+      font_med: fonts/GmarketSansTTFMedium.ttf
+      weather_entity: weather.tongbogdong
+      temp_sensor: sensor.hyeonjaeondo
+      day_num: "{{ now().strftime('%d') }}"
+      month_str: "{{ now().strftime('%B') | upper }}"
+      weekday_str: "{{ now().strftime('%A') | upper }}"
+      weather_state: "{{ states(weather_entity) }}"
+      temp_now: "{{ states(temp_sensor) | float(0) | round(0) }}"
+      weather_text: >-
+        {{ states(weather_entity) | replace('partlycloudy', 'Partly Cloudy') |
+        replace('sunny', 'Sunny') | replace('rainy', 'Rainy') |
+        replace('cloudy', 'Cloudy') | replace('snowy', 'Snowy') |
+        replace('lightning', 'Storm') | title }}
+      agenda_events: |
+        {% if 'calendar.google' in agenda_response %}
+          {{ agenda_response['calendar.google']['events'] | sort(attribute='start') }}
+        {% else %}
+          []
+        {% endif %}
+  - action: ble_esl.write
+    data:
+      payload:
+        - type: rectangle
+          x_start: 0
+          y_start: 0
+          x_end: 960
+          y_end: 640
+          fill: white
+          outline: white
+        - type: rectangle
+          x_start: 0
+          y_start: 0
+          x_end: 320
+          y_end: 640
+          fill: black
+          outline: black
+        - type: text
+          value: "{{ month_str }}"
+          x: 160
+          "y": 80
+          size: 40
+          font: "{{ font_med }}"
+          color: white
+          anchor: mm
+        - type: text
+          value: "{{ day_num }}"
+          x: 160
+          "y": 220
+          size: 200
+          font: "{{ font_bold }}"
+          color: red
+          anchor: mm
+        - type: text
+          value: "{{ weekday_str }}"
+          x: 160
+          "y": 340
+          size: 36
+          font: "{{ font_bold }}"
+          color: white
+          anchor: mm
+        - type: line
+          x_start: 60
+          x_end: 260
+          y_start: 400
+          y_end: 400
+          width: 2
+          fill: white
+        - type: icon
+          value: weather-{{ weather_state }}
+          x: 160
+          "y": 480
+          size: 100
+          color: white
+          anchor: mm
+        - type: text
+          value: "{{ temp_now }}°C"
+          x: 160
+          "y": 550
+          size: 40
+          font: "{{ font_bold }}"
+          color: white
+          anchor: mm
+        - type: text
+          value: "{{ weather_text }}"
+          x: 160
+          "y": 590
+          size: 24
+          font: "{{ font_med }}"
+          color: white
+          anchor: mm
+        - type: text
+          value: TASKS & EVENTS
+          x: 360
+          "y": 60
+          size: 28
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+        - type: line
+          x_start: 360
+          x_end: 920
+          y_start: 90
+          y_end: 90
+          width: 3
+          fill: black
+        - type: rectangle
+          x_start: 360
+          y_start: 110
+          x_end: 370
+          y_end: 180
+          fill: red
+          visible: "{{ agenda_events | length > 0 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 0 -%}
+              {%- set event = agenda_events[0] -%}
+              {%- set s = event.start -%}
+              {%- if s is mapping -%}
+                {%- if s.date -%}TODAY{%- elif s.dateTime -%}{{ as_timestamp(s.dateTime) | timestamp_custom('%H:%M') }}{%- endif -%}
+              {%- else -%}{{ as_timestamp(s) | timestamp_custom('%H:%M') }}{%- endif -%}
+            {%- endif -%}
+          x: 390
+          "y": 130
+          size: 32
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 0 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 0 -%}
+              {{ agenda_events[0].summary | truncate(30, true, '..') }}
+            {%- endif -%}
+          x: 390
+          "y": 165
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 0 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 1 -%}
+              {%- set event = agenda_events[1] -%}
+              {%- set s = event.start -%}
+              {%- if s is mapping -%}
+                {%- if s.date -%}ALL DAY{%- elif s.dateTime -%}{{ as_timestamp(s.dateTime) | timestamp_custom('%H:%M') }}{%- endif -%}
+              {%- else -%}{{ as_timestamp(s) | timestamp_custom('%H:%M') }}{%- endif -%}
+            {%- endif -%}
+          x: 360
+          "y": 220
+          size: 30
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 1 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 1 -%}
+              {{ agenda_events[1].summary | truncate(38, true, '..') }}
+            {%- endif -%}
+          x: 480
+          "y": 220
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 1 }}"
+        - type: line
+          x_start: 360
+          x_end: 920
+          y_start: 255
+          y_end: 255
+          width: 1
+          fill: black
+          visible: "{{ agenda_events | length > 1 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 2 -%}
+              {%- set event = agenda_events[2] -%}
+              {%- set s = event.start -%}
+              {%- if s is mapping -%}
+                {%- if s.date -%}ALL DAY{%- elif s.dateTime -%}{{ as_timestamp(s.dateTime) | timestamp_custom('%H:%M') }}{%- endif -%}
+              {%- else -%}{{ as_timestamp(s) | timestamp_custom('%H:%M') }}{%- endif -%}
+            {%- endif -%}
+          x: 360
+          "y": 290
+          size: 30
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 2 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 2 -%}
+              {{ agenda_events[2].summary | truncate(38, true, '..') }}
+            {%- endif -%}
+          x: 480
+          "y": 290
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 2 }}"
+        - type: line
+          x_start: 360
+          x_end: 920
+          y_start: 325
+          y_end: 325
+          width: 1
+          fill: black
+          visible: "{{ agenda_events | length > 2 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 3 -%}
+              {%- set event = agenda_events[3] -%}
+              {%- set s = event.start -%}
+              {%- if s is mapping -%}
+                {%- if s.date -%}ALL DAY{%- elif s.dateTime -%}{{ as_timestamp(s.dateTime) | timestamp_custom('%H:%M') }}{%- endif -%}
+              {%- else -%}{{ as_timestamp(s) | timestamp_custom('%H:%M') }}{%- endif -%}
+            {%- endif -%}
+          x: 360
+          "y": 360
+          size: 30
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 3 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 3 -%}
+              {{ agenda_events[3].summary | truncate(38, true, '..') }}
+            {%- endif -%}
+          x: 480
+          "y": 360
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 3 }}"
+        - type: line
+          x_start: 360
+          x_end: 920
+          y_start: 395
+          y_end: 395
+          width: 1
+          fill: black
+          visible: "{{ agenda_events | length > 3 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 4 -%}
+              {%- set event = agenda_events[4] -%}
+              {%- set s = event.start -%}
+              {%- if s is mapping -%}
+                {%- if s.date -%}ALL DAY{%- elif s.dateTime -%}{{ as_timestamp(s.dateTime) | timestamp_custom('%H:%M') }}{%- endif -%}
+              {%- else -%}{{ as_timestamp(s) | timestamp_custom('%H:%M') }}{%- endif -%}
+            {%- endif -%}
+          x: 360
+          "y": 430
+          size: 30
+          font: "{{ font_bold }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 4 }}"
+        - type: text
+          value: |
+            {%- if agenda_events | length > 4 -%}
+              {{ agenda_events[4].summary | truncate(38, true, '..') }}
+            {%- endif -%}
+          x: 480
+          "y": 430
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: lm
+          visible: "{{ agenda_events | length > 4 }}"
+        - type: line
+          x_start: 360
+          x_end: 920
+          y_start: 465
+          y_end: 465
+          width: 1
+          fill: black
+          visible: "{{ agenda_events | length > 4 }}"
+        - type: text
+          value: You have a free day!
+          x: 640
+          "y": 300
+          size: 36
+          font: "{{ font_bold }}"
+          color: black
+          anchor: mm
+          visible: "{{ agenda_events | length == 0 }}"
+        - type: text
+          value: Enjoy your time.
+          x: 640
+          "y": 350
+          size: 28
+          font: "{{ font_med }}"
+          color: black
+          anchor: mm
+          visible: "{{ agenda_events | length == 0 }}"
+        - type: text
+          value: Make today count.
+          x: 920
+          "y": 600
+          size: 24
+          font: "{{ font_med }}"
+          color: red
+          anchor: rm
+    target:
+      device_id: b57204e610be646ecf56f8a8a12abb50

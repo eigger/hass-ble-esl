@@ -6,6 +6,16 @@
 
 Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
+## Gallery
+
+| Size | Example |
+|------|---------|
+| 2.1" (250×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch" width="200" /> |
+| 2.9" (296×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch" width="200" /> |
+| 10.2" (960×640) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch" width="200" /> |
+
+Photos above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
+
 ---
 
 ## What is an electronic label?
@@ -22,6 +32,11 @@ They work well for information that should stay visible, changes infrequently, a
 
 - Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues)
 - Questions or ideas? [Join the discussion](https://github.com/eigger/hass-ble-esl/discussions)
+
+## Related
+
+- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the original PickSmart-only integration, now archived. This repository is its successor; see [Migrating from `hass-gicisky`](#migrating-from-hass-gicisky).
+- [Stash](https://github.com/eigger/stash) — self-hosted home inventory manager. Track and restock items with barcode scanning, and print labels to ESL tags via Home Assistant.
 
 ---
 
@@ -93,14 +108,21 @@ They work well for information that should stay visible, changes infrequently, a
 2. Restart Home Assistant.
 3. Add the integration via **Settings** → **Devices & Services** → **Add Integration** → **BLE ESL** (or auto-discover via Bluetooth).
 
-### Migrating from `hass-zhsunyco`
+### Migrating from `hass-gicisky` or `hass-zhsunyco`
 
-This project was previously published as `hass-zhsunyco` with the integration domain `zhsunyco`. The domain is now `ble_esl`, and Home Assistant cannot move config entries between domains, so existing devices must be re-added:
+This repository supersedes two earlier integrations:
 
-1. Remove the existing **Zhsunyco** integration entries under **Settings** → **Devices & Services**.
-2. Delete `custom_components/zhsunyco` (or uninstall the old repository in HACS) and install `hass-ble-esl`.
-3. Restart Home Assistant and add your tags again.
-4. Update automations and dashboards: service calls change from `zhsunyco.write` / `zhsunyco.write_guarded` to `ble_esl.write` / `ble_esl.write_guarded`, and entity IDs are regenerated.
+| Old repository | Old domain | Protocol here |
+|----------------|------------|---------------|
+| [`hass-gicisky`](https://github.com/eigger/hass-gicisky) (archived) | `gicisky` | PickSmart |
+| `hass-zhsunyco` (renamed to this repo) | `zhsunyco` | WOLINK / easyTag |
+
+The domain is now `ble_esl`. Home Assistant cannot move config entries between domains, so existing devices must be re-added:
+
+1. Remove the existing **Gicisky** / **Zhsunyco** integration entries under **Settings** → **Devices & Services**.
+2. Delete `custom_components/gicisky` / `custom_components/zhsunyco` (or uninstall the old repository in HACS) and install `hass-ble-esl`.
+3. Restart Home Assistant and add your tags again. PickSmart tags are auto-discovered the same way as before.
+4. Update automations and dashboards: service calls change from `gicisky.write` / `zhsunyco.write` (and `*_guarded`) to `ble_esl.write` / `ble_esl.write_guarded`, and entity IDs are regenerated. The payload format is unchanged.
 
 ---
 
@@ -394,6 +416,97 @@ Custom font example:
 ```
 
 Place `MyCustomFont.ttf` in `config/www/fonts/`.
+
+---
+
+## Examples
+
+Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
+
+### PickSmart (Gicisky) — [`examples/gicisky/`](./examples/gicisky)
+
+Originally from [hass-gicisky](https://github.com/eigger/hass-gicisky); maintained here from now on.
+
+| Size | Example | Preview | YAML |
+|------|---------|---------|------|
+| 2.1" (250×128) | Date | ![2.1-date.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-date.jpg) | [2.1-date.yaml](./examples/gicisky/2.1-date.yaml) |
+| 2.1" (250×128) | Naver Weather | ![2.1-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-naver-weather.jpg) | [2.1-naver-weather.yaml](./examples/gicisky/2.1-naver-weather.yaml) |
+| 2.1" (250×128) | Waste Collection | ![2.1-waste-collection.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-waste-collection.png) | [2.1-waste-collection.yaml](./examples/gicisky/2.1-waste-collection.yaml) |
+| 2.1" (250×128) | Wifi | ![2.1-wifi.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-wifi.jpg) | [2.1-wifi.yaml](./examples/gicisky/2.1-wifi.yaml) |
+| 2.1" (250×128) | TMap time | ![2.1-tmap-time.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.1-tmap-time.jpg) | [2.1-tmap-time.yaml](./examples/gicisky/2.1-tmap-time.yaml) |
+| 2.9" (296×128) | Google Calendar | ![2.9-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-google-calendar.jpg) | [2.9-google-calendar.yaml](./examples/gicisky/2.9-google-calendar.yaml) |
+| 2.9" (296×128) | Presence Display | ![2.9-presence-display.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/2.9-presence-display.jpg) | [2.9-presence-display.yaml](./examples/gicisky/2.9-presence-display.yaml) |
+| 4.2" (400×300) | Image | ![4.2-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-image.jpg) | [4.2-image.yaml](./examples/gicisky/4.2-image.yaml) |
+| 4.2" (400×300) | 기상청 Weather | ![4.2-kma-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-kma-weather.png) | [4.2-kma-weather.yaml](./examples/gicisky/4.2-kma-weather.yaml) |
+| 4.2" (400×300) | Naver Weather | ![4.2-naver-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-naver-weather.jpg) | [4.2-naver-weather.yaml](./examples/gicisky/4.2-naver-weather.yaml) |
+| 4.2" (400×300) | Date Weather | ![4.2-date-weather.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-date-weather.jpg) | [4.2-date-weather.yaml](./examples/gicisky/4.2-date-weather.yaml) |
+| 4.2" (400×300) | Weather News | ![4.2-weather-news.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-weather-news.png) | [4.2-weather-news.yaml](./examples/gicisky/4.2-weather-news.yaml) |
+| 4.2" (400×300) | 3D Print | ![4.2-3d-print.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/4.2-3d-print.png) | [4.2-3d-print.yaml](./examples/gicisky/4.2-3d-print.yaml) |
+| 7.5" (800×480) | Google Calendar | ![7.5-google-calendar.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calendar.jpg) | [7.5-google-calendar.yaml](./examples/gicisky/7.5-google-calendar.yaml) |
+| 7.5" (800×480) | Google Calendar 2 | ![7.5-google-calender2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender2.png) | [7.5-google-calender2.yaml](./examples/gicisky/7.5-google-calender2.yaml) |
+| 7.5" (800×480) | Google Calendar 3 | ![7.5-google-calender3.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-google-calender3.png) | [7.5-google-calender3.yaml](./examples/gicisky/7.5-google-calender3.yaml) |
+| 7.5" (800×480) | Date Weather | ![7.5-date-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather.png) | [7.5-date-weather.yaml](./examples/gicisky/7.5-date-weather.yaml) |
+| 7.5" (800×480) | Date Weather 2 | ![7.5-date-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-date-weather2.png) | [7.5-date-weather2.yaml](./examples/gicisky/7.5-date-weather2.yaml) |
+| 7.5" (800×480) | Calendar Weather | ![7.5-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-calendar-weather.png) | [7.5-calendar-weather.yaml](./examples/gicisky/7.5-calendar-weather.yaml) |
+| 7.5" (800×480) | Image | ![7.5-image.jpg](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/7.5-image.jpg) | [7.5-image.yaml](./examples/gicisky/7.5-image.yaml) |
+| 10.2" (960×640) | Calendar Weather | ![10.2-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather.png) | [10.2-calendar-weather.yaml](./examples/gicisky/10.2-calendar-weather.yaml) |
+| 10.2" (960×640) | Calendar Weather 2 | ![10.2-calendar-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather2.png) | [10.2-calendar-weather2.yaml](./examples/gicisky/10.2-calendar-weather2.yaml) |
+| 10.2" (960×640) | Calendar | ![10.2-calendar.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar.png) | [10.2-calendar.yaml](./examples/gicisky/10.2-calendar.yaml) |
+
+### Zhsunyco (WOLINK / easyTag) — [`examples/zhsunyco/`](./examples/zhsunyco)
+
+No examples yet — the `gicisky/` payloads work as-is once coordinates are adjusted for the Zhsunyco resolution (e.g. 2.13" WOLINK is 250×122). Contributions welcome.
+
+---
+
+## Tools
+
+Web tools originally built for Gicisky tags. The payload format is shared, so they work for any protocol here — pick a matching resolution.
+
+- **[Image Edit & Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html)**
+- **[Payload Editor](https://eigger.github.io/Gicisky_Payload_Editor.html)**
+
+---
+
+## Appendix
+
+### T-Map integration
+
+```yaml
+# https://openapi.sk.com/products/detail?linkMenuSeq=46
+rest_command:
+  request_tmap_routes:
+    url: https://apis.openapi.sk.com/tmap/routes?version=1
+    method: POST
+    headers:
+      appKey: !secret tmap_api_key
+      accept: "application/json, text/html"
+    content_type: "application/json; charset=utf-8"
+    payload: >-
+      {
+        "startX": {{ startX }},
+        "startY": {{ startY }},
+        "endX": {{ endX }},
+        "endY": {{ endY }},
+        "searchOption": {{ searchOption }},
+        "totalValue": 2,
+        "trafficInfo ": "Y",
+        "mainRoadInfo": "Y"
+      }
+```
+
+See [2.1-tmap-time.yaml](./examples/gicisky/2.1-tmap-time.yaml) for a full label example.
+
+### Google Calendar
+
+Add a remote calendar: **Settings** → **Devices & Services** → **Calendar** → add Google `*.ics` URL.
+
+### Third-party custom components
+
+- [기상청 APIhub (eigger)](https://github.com/eigger/hass-kma)
+- [Naver Weather (minumida)](https://github.com/miumida/naver_weather)
+- [ha-weathernews (dugurs)](https://github.com/dugurs/ha-weathernews)
+- [Waste Collection Schedule (mampfes)](https://github.com/mampfes/hacs_waste_collection_schedule)
 
 ---
 
