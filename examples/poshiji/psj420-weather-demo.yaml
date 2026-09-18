@@ -1,0 +1,75 @@
+# Static sample data inspired by the supplied product photo, not live weather. Preview first.
+action: ble_esl.write
+target:
+  device_id: REPLACE_WITH_YOUR_BLE_ESL_DEVICE_ID
+data:
+  background: white
+  dry_run: true
+  payload:
+  - type: rectangle
+    x_start: 0
+    y_start: 0
+    x_end: 399
+    y_end: 49
+    fill: black
+  - type: text
+    value: 09.18 (금)
+    x: 14
+    y: 9
+    size: 27
+    color: white
+    anchor: lt
+    font: fonts/NotoSansKR-Bold.ttf
+  - type: text
+    value: 22:27 기준
+    x: 386
+    y: 17
+    size: 16
+    color: white
+    anchor: rt
+    font: fonts/NotoSansKR-Bold.ttf
+  - type: icon
+    value: weather-night
+    x: 70
+    y: 77
+    size: 86
+    color: black
+    anchor: mt
+  - type: text
+    value: 맑음
+    x: 70
+    y: 179
+    size: 24
+    color: black
+    anchor: mt
+    font: fonts/NotoSansKR-Bold.ttf
+  - type: text
+    value: 24.0°
+    x: 280
+    y: 65
+    size: 68
+    color: red
+    anchor: mt
+    font: fonts/NotoSansKR-Bold.ttf
+  - type: text
+    value: 최저 19° / 최고 29°
+    x: 276
+    y: 177
+    size: 19
+    color: black
+    anchor: mt
+    font: fonts/NotoSansKR-Bold.ttf
+  - type: rectangle
+    x_start: 0
+    y_start: 227
+    x_end: 399
+    y_end: 299
+    fill: yellow
+  - type: text
+    value: 내일 아침까지 맑은 날씨가 이어져요
+    x: 200
+    y: 250
+    size: 19
+    color: black
+    anchor: mt
+    font: fonts/NotoSansKR-Bold.ttf

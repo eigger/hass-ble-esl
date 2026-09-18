@@ -7,6 +7,60 @@ and adaptive-write fixes in the original implementation. The preset uses
 `reported` confidence. This BLE ESL backend port has automated test coverage;
 the port itself still needs a device test.
 
+## Product photo
+
+![Poshiji PSJ-420 showing a four-color weather dashboard](images/poshiji/poshiji_psj420_4color.png)
+
+Original photograph supplied by the device owner. It shows black text and icons,
+white background, red temperature and a yellow footer. The displayed date,
+weather and temperature are the photographed screen contents, not live data.
+
+## Purchase
+
+[AliExpress — Poshiji PSJ-420 purchase listing](https://ko.aliexpress.com/item/1005012582138232.html)
+
+This link was supplied by the device owner. The listing contents could not be
+retrieved during documentation preparation. Select/check **PSJ-420, 4.2-inch,
+400×300, BWRY, BLE** with the seller; do not assume every listing option uses
+this protocol. Current price, availability, accessories and seller warranty
+are not recorded here.
+
+## Product specifications and evidence
+
+| Item | Value | Basis |
+|------|-------|-------|
+| Brand | Poshiji | Owner identification |
+| Model | PSJ-420 | Owner identification |
+| Nominal panel class | 4.2-inch | Model/profile identification; not a physical measurement |
+| Resolution | 400 × 300 pixels | Owner specification and decoded image header |
+| Aspect ratio | 4:3 landscape | Resolution and photograph |
+| Display | Four-color electronic shelf label / e-paper | Owner description and photograph |
+| Colors | Black, white, red, yellow (BWRY) | Owner confirmation and visible photo contents |
+| Connection | Bluetooth Low Energy, connected GATT | Radio capture |
+| Integration backend | `poshiji` / Poshiji (XTE) | BLE ESL implementation |
+| Preset key | `psj-420` | BLE ESL implementation |
+| Image packing | 2 bits/pixel, 30,000 bytes before RLE | Capture reconstruction |
+| Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
+| Discovery | Manufacturer ID `0x5258` plus known advertisement prefix | Capture and follow-up observation |
+| Battery / temperature telemetry | Not decoded or exposed | No validated field interpretation |
+| Hardware confidence | Owner-reported working updates | Original implementation; backend port covered by tests |
+
+**Not established:** enclosure dimensions/weight, battery type/capacity/life,
+operating temperature, IP rating, exact Bluetooth specification version,
+maximum range and rated panel refresh time. LE 1M in the capture is a PHY,
+not evidence of a particular Bluetooth version. The roughly 0.69-second image
+transfer in one capture is not the panel's physical refresh time or a guarantee.
+
+## Examples
+
+All layouts are native 400×300; Home Assistant selects the size from the preset.
+Use `black`, `white`, `red` and `yellow`; other colors are quantized to BWRY.
+
+- [Four-color check](../examples/poshiji/psj420-color-test.yaml): preview or send four labeled swatches.
+- [Weather demo](../examples/poshiji/psj420-weather-demo.yaml): static Korean dashboard inspired by the photo.
+- [Live weather automation](../examples/poshiji/psj420-weather-automation.yaml): hourly current conditions and temperature from a weather entity.
+- [Example setup instructions](../examples/poshiji/README.md): placeholders, preview/send behavior and entity requirements.
+
 ## Installation and use
 
 Install this fork or copy `custom_components/ble_esl` to Home Assistant's
@@ -43,7 +97,7 @@ to the other 12 bytes still require investigation before widening the matcher.
 - Write without response: `00002760-08c2-11e1-9073-0e8ac72e0001`
 - Notifications: `00002760-08c2-11e1-9073-0e8ac72e0002`
 - Pixels: row-major, four pixels per byte, high bits first; 00 black, 01 white,
-  10 yellow, 11 red. The mapping still needs physical color confirmation.
+  10 yellow, 11 red. This mapping is consistent with the owner-supplied four-color photograph.
 - RLE: `(count, byte)` pairs, runs up to 255, with a reset halfway through the
   30000-byte packed frame (observed at offset 15000).
 - XTEK object: magic [0:4], sum of bytes [12:] as big-endian uint32 [4:8],
@@ -77,3 +131,18 @@ sizes, observed commands, the BLE transaction using a fake client, invalid
 replies, timeout, write failure and 20/182/244/514-byte backend write limits.
 No raw radio capture or
 nearby-device addresses are included in this repository.
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| Device not discovered | Bluetooth is enabled, device is in range, advertisement matches the documented prefix. Do not match on a fixed MAC/name. |
+| Metadata unavailable after an update | Confirm the advertisement-tail fix is installed; the final byte is variable. This backend saves its selected protocol/model in the config entry. |
+| Old `XTE requires ATT MTU >= 247` message | An older implementation is running. Update the files and restart **Home Assistant**, not only the integration. |
+| Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
+| Preview updates but panel does not | The preview is not a readback. Check `dry_run`; the first two examples intentionally default to preview-only. |
+| Weather automation does nothing | Replace the device ID and weather entity. It runs on the hour and skips `unknown` / `unavailable` weather states. Use Run actions for a manual check. |
+
+The live example does not synthesize forecast low/high values from current
+conditions. Add a separately obtained forecast if daily minimum/maximum values
+are needed. Avoid overly frequent redraws; this is an e-paper panel, not an LCD.

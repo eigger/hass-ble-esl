@@ -1,0 +1,87 @@
+# Paste into an automation YAML editor. Runs hourly and sends to the panel; replace both placeholders.
+alias: Poshiji PSJ-420 날씨
+description: 400×300 BWRY hourly weather; replace device_id and weather_entity.
+triggers:
+- trigger: time_pattern
+  hours: /1
+conditions:
+- condition: template
+  value_template: '{{ states(weather_entity) not in [''unknown'', ''unavailable'', ''none'', ''''] }}'
+variables:
+  weather_entity: weather.home
+actions:
+- action: ble_esl.write_guarded
+  target:
+    device_id: REPLACE_WITH_YOUR_BLE_ESL_DEVICE_ID
+  data:
+    background: white
+    dry_run: false
+    payload:
+    - type: rectangle
+      x_start: 0
+      y_start: 0
+      x_end: 399
+      y_end: 49
+      fill: black
+    - type: text
+      value: '{{ now().strftime(''%m.%d'') }} ({{ [''월'',''화'',''수'',''목'',''금'',''토'',''일''][now().weekday()] }})'
+      x: 14
+      y: 9
+      size: 27
+      color: white
+      anchor: lt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: text
+      value: '{{ now().strftime(''%H:%M'') }} 기준'
+      x: 386
+      y: 17
+      size: 16
+      color: white
+      anchor: rt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: icon
+      value: '{{ ''weather-night'' if states(weather_entity) == ''clear-night'' else ''weather-sunny'' if states(weather_entity) == ''sunny'' else ''weather-pouring'' if states(weather_entity) in [''rainy'',''pouring'',''lightning-rainy''] else ''weather-snowy'' if states(weather_entity) in [''snowy'',''snowy-rainy''] else ''weather-cloudy'' }}'
+      x: 70
+      y: 77
+      size: 86
+      color: black
+      anchor: mt
+    - type: text
+      value: '{{ {''clear-night'':''맑음'',''sunny'':''맑음'',''cloudy'':''흐림'',''partlycloudy'':''구름'',''rainy'':''비'',''pouring'':''폭우'',''snowy'':''눈'',''snowy-rainy'':''눈·비'',''fog'':''안개'',''windy'':''바람''}.get(states(weather_entity), ''확인 필요'') }}'
+      x: 70
+      y: 179
+      size: 24
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: text
+      value: '{{ state_attr(weather_entity, ''temperature'') if state_attr(weather_entity, ''temperature'') is number else ''--'' }}°'
+      x: 280
+      y: 65
+      size: 68
+      color: red
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: text
+      value: '{{ state_attr(weather_entity, ''temperature_unit'') | default(''단위 미제공'', true) }} · 현재 기온'
+      x: 276
+      y: 177
+      size: 19
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+    - type: rectangle
+      x_start: 0
+      y_start: 227
+      x_end: 399
+      y_end: 299
+      fill: yellow
+    - type: text
+      value: 매시간 날씨 정보를 갱신합니다
+      x: 200
+      y: 250
+      size: 19
+      color: black
+      anchor: mt
+      font: fonts/NotoSansKR-Bold.ttf
+mode: single

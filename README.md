@@ -14,7 +14,17 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | 2.9" (296×128) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch" width="200" /> |
 | 10.2" (960×640) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch" width="200" /> |
 
-Photos above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
+Photos in the size table above are PickSmart (Gicisky) tags. See [Examples](#examples) for the full list with YAML.
+
+### Poshiji PSJ-420 — 4.2" BWRY
+
+<img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Owner-supplied Poshiji PSJ-420 displaying a Korean weather dashboard in black, white, red and yellow" width="450" />
+
+Owner-supplied photo of a working 400×300 four-color panel. See the
+[product specifications and setup guide](docs/poshiji-psj420.md),
+[purchase listing](https://ko.aliexpress.com/item/1005012582138232.html), and
+[ready-to-use Poshiji examples](examples/poshiji/README.md).
+
 
 ---
 
@@ -99,6 +109,7 @@ Availability varies by country. AliExpress listings by protocol family:
 | Protocol | Brand | Listing |
 |----------|-------|---------|
 | WOLINK / easyTag | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html) |
+| XTE | Poshiji | [PSJ-420 4.2" BWRY — owner-supplied purchase link](https://ko.aliexpress.com/item/1005012582138232.html) |
 | PickSmart | Gicisky | [Gicisky store (item 1)](https://ko.aliexpress.com/item/1005002399342939.html) · [Gicisky store (item 2)](https://ko.aliexpress.com/item/1005002398744297.html) |
 
 ---
@@ -153,7 +164,7 @@ Configure via **Settings** → **Devices & Services** → **BLE ESL** → **Conf
 
 | Option | Default | Range | Description |
 |--------|---------|-------|-------------|
-| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart | Target BLE protocol family |
+| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart / poshiji | Target BLE protocol family |
 | **Model** | 2.9" (296×128) | model list | Hardware resolution profile |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
 | **Write Delay (ms)** | 0 | 0–1000 | Extra pause between BLE write packets |
@@ -421,6 +432,20 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 ---
 
 ## Examples
+
+### Poshiji PSJ-420 (400×300 BWRY)
+
+| Example | Preview | YAML |
+|---------|---------|------|
+| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Preview / send action](examples/poshiji/psj420-color-test.yaml) |
+| Weather photo-inspired demo | ![Static weather sample](examples/poshiji/psj420-weather-demo.png) | [Static sample action](examples/poshiji/psj420-weather-demo.yaml) |
+| Hourly live weather | ![Sample-data automation preview](examples/poshiji/psj420-weather-automation.png) | [Weather automation](examples/poshiji/psj420-weather-automation.yaml) |
+
+Replace the device ID in every example, and `weather.home` in the live automation.
+The first two actions default to `dry_run: true`; the automation sends to the panel.
+Rendered previews use sample values and are not panel photographs.
+[Usage, entities and migration notes](examples/poshiji/README.md).
+
 
 Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
 
