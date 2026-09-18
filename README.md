@@ -433,22 +433,6 @@ Place `MyCustomFont.ttf` in `config/www/fonts/`.
 
 ## Examples
 
-### Poshiji PSJ-420 (400×300 BWRY)
-
-| Example | Preview | YAML |
-|---------|---------|------|
-| Four-color check | ![Color test](examples/poshiji/psj420-color-test.png) | [Service call](examples/poshiji/psj420-color-test.yaml) |
-| Naver weather automation | <img src="docs/images/poshiji/poshiji_psj420_4color.png" alt="Actual PSJ-420 weather display" width="400" /> | [Weekday Naver weather automation](examples/poshiji/psj420-weather-demo.yaml) |
-
-The color test is a complete `ble_esl.write` action — paste it into
-Developer tools → Actions (YAML mode) and replace `device_id`; add
-`dry_run: true` under `data` to preview only. The Naver weather automation sends
-to the panel on weekdays at 08:00, 11:00, 14:00 and 17:00. Adjust its `location`
-and target device ID for your installation. Its photo is the actual device
-photo supplied by the owner; only the color-test preview is rendered.
-[Usage and entity notes](examples/poshiji/README.md).
-
-
 Examples live in [`examples/`](./examples) and are grouped by tag family, since payload coordinates depend on the device resolution. All of them call `ble_esl.write` — replace `device_id` with your own device.
 
 ### PickSmart (Gicisky) — [`examples/gicisky/`](./examples/gicisky)
@@ -480,6 +464,15 @@ Originally from [hass-gicisky](https://github.com/eigger/hass-gicisky); maintain
 | 10.2" (960×640) | Calendar Weather | ![10.2-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather.png) | [10.2-calendar-weather.yaml](./examples/gicisky/10.2-calendar-weather.yaml) |
 | 10.2" (960×640) | Calendar Weather 2 | ![10.2-calendar-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather2.png) | [10.2-calendar-weather2.yaml](./examples/gicisky/10.2-calendar-weather2.yaml) |
 | 10.2" (960×640) | Calendar | ![10.2-calendar.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar.png) | [10.2-calendar.yaml](./examples/gicisky/10.2-calendar.yaml) |
+
+### Poshiji (XTE) — [`examples/poshiji/`](./examples/poshiji)
+
+Contributed by the PSJ-420 owner. The weather preview is a photo of the actual panel. Usage notes: [`examples/poshiji/README.md`](./examples/poshiji/README.md).
+
+| Size | Example | Preview | YAML |
+|------|---------|---------|------|
+| 4.2" (400×300) | Four-color check | ![psj420-color-test.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/poshiji/psj420-color-test.png) | [psj420-color-test.yaml](./examples/poshiji/psj420-color-test.yaml) |
+| 4.2" (400×300) | Naver Weather | ![poshiji_psj420_4color.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png) | [psj420-weather-demo.yaml](./examples/poshiji/psj420-weather-demo.yaml) |
 
 ### Zhsunyco (WOLINK / easyTag) — [`examples/zhsunyco/`](./examples/zhsunyco)
 
