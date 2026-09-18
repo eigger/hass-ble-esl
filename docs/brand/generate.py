@@ -16,8 +16,6 @@ LIGHT = dict(body=(31, 41, 55), screen=(243, 244, 246), ink=(31, 41, 55),
              text=(17, 24, 39), sub=(107, 114, 128))
 DARK = dict(body=(229, 231, 235), screen=(31, 41, 55), ink=(229, 231, 235),
             text=(243, 244, 246), sub=(156, 163, 175))
-RED = (220, 38, 38)
-YEL = (245, 158, 11)
 BT = (0, 130, 252)
 WHITE = (255, 255, 255)
 
@@ -25,39 +23,17 @@ WHITE = (255, 255, 255)
 def draw_tag(d, x, y, s, c):
     """Draw an ESL tag icon inside an s×s box at (x, y). Coordinates already supersampled."""
     # tag body: landscape rounded rect, centered
-    # badge overhangs the body's top-right corner, so keep body + badge inside the box
-    br = s * 0.17
-    bw, bh = s * 0.86, s * 0.66
-    bx = x + (s - bw) / 2 - br * 0.22
-    by = y + (s - bh) / 2 + br * 0.15
+    bw, bh = s * 0.92, s * 0.70
+    bx, by = x + (s - bw) / 2, y + (s - bh) / 2
     r = s * 0.10
     d.rounded_rectangle([bx, by, bx + bw, by + bh], radius=r, fill=c["body"])
-    # screen inset
-    m = s * 0.075
+    # e-paper screen inset
+    m = s * 0.07
     sx0, sy0, sx1, sy1 = bx + m, by + m, bx + bw - m, by + bh - m
     d.rounded_rectangle([sx0, sy0, sx1, sy1], radius=r * 0.45, fill=c["screen"])
-    # content: a bold "price" bar and two thin lines, plus BWRY color chips
-    pad = s * 0.065
-    lh = s * 0.075
-    # thick bar
-    d.rounded_rectangle([sx0 + pad, sy0 + pad, sx0 + pad + (sx1 - sx0) * 0.55, sy0 + pad + lh * 1.5],
-                        radius=lh * 0.4, fill=c["ink"])
-    # thin lines
-    ly = sy0 + pad + lh * 1.5 + pad * 0.9
-    d.rounded_rectangle([sx0 + pad, ly, sx0 + pad + (sx1 - sx0) * 0.70, ly + lh * 0.7],
-                        radius=lh * 0.35, fill=c["ink"])
-    ly2 = ly + lh * 0.7 + pad * 0.7
-    d.rounded_rectangle([sx0 + pad, ly2, sx0 + pad + (sx1 - sx0) * 0.42, ly2 + lh * 0.7],
-                        radius=lh * 0.35, fill=c["ink"])
-    # color chips (red / yellow) bottom-right of screen
-    chip = lh * 1.1
-    cy = sy1 - pad - chip
-    d.rounded_rectangle([sx1 - pad - chip * 2.3, cy, sx1 - pad - chip * 1.3, cy + chip], radius=chip * 0.25, fill=RED)
-    d.rounded_rectangle([sx1 - pad - chip, cy, sx1 - pad, cy + chip], radius=chip * 0.25, fill=YEL)
-    # bluetooth badge, top-right, overlapping corner
-    bcx, bcy = bx + bw - br * 0.55, by + br * 0.55
-    d.ellipse([bcx - br, bcy - br, bcx + br, bcy + br], fill=BT)
-    draw_bt_rune(d, bcx, bcy, br * 0.95, WHITE, max(2, int(s * 0.024)))
+    # one large Bluetooth rune centred on the screen
+    cx, cy = (sx0 + sx1) / 2, (sy0 + sy1) / 2
+    draw_bt_rune(d, cx, cy, (sy1 - sy0) * 0.72, BT, max(2, int(s * 0.055)))
 
 
 def draw_bt_rune(d, cx, cy, h, color, w):
