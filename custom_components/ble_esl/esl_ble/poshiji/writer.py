@@ -9,7 +9,7 @@ from bleak import BleakClient
 from bleak_retry_connector import establish_connection
 from PIL import Image
 from ..base import WriteResult
-from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID
+from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID, NOTIFY_SETTLE_S
 from .protocol import make_image_object, pack_pixels, make_blocks, make_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ class XteClient:
         self.delay = max(0, write_delay_ms) / 1000 + 0.05 * max(0, attempt - 1)
         self.responses: asyncio.Queue[bytes] = asyncio.Queue()
         self.timeout = 5.0
+        self.settle = NOTIFY_SETTLE_S
 
     def _notification(self, _sender, data: bytearray) -> None:
         self.responses.put_nowait(bytes(data))
@@ -83,6 +84,8 @@ class XteClient:
         blocks = make_blocks(image_object)
         await self.client.start_notify(notify_char, self._notification)
         try:
+            if self.settle:
+                await asyncio.sleep(self.settle)
             await self._command(write_char, b"\x01" + len(image_object).to_bytes(4, "big"),
                                 chunk_size, bytes.fromhex("01ffbd"))
             for block in blocks:

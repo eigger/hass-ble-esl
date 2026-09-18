@@ -11,6 +11,10 @@ MANUFACTURER_ID = 0x5258
 ADVERTISEMENT = bytes.fromhex("fd024002009964060102ffff1e")
 WIDTH, HEIGHT = 400, 300
 BLOCK_DATA_SIZE = 1211  # 1220-byte logical block, including its 9-byte header.
+# Settle after enabling notifications before the first command, like the other
+# backends (PickSmart 1.0 s, WOLINK 0.5 s, easyTag 0.3 s); some adapters and
+# proxies drop a write issued immediately after the CCCD write.
+NOTIFY_SETTLE_S = 0.5
 PALETTE = ((0, 0, 0), (255, 255, 255), (255, 255, 0), (255, 0, 0))
 
 

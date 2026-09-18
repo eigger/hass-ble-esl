@@ -81,6 +81,12 @@ def test_blocks_and_worst_case_size():
     assert len(make_blocks(make_image_object(raw))) == 50
 
 
+def _client(client, **kwargs):
+    transport = XteClient(client, **kwargs)
+    transport.settle = 0  # Keep unit tests fast; the settle is asserted separately.
+    return transport
+
+
 class FakeClient:
     def __init__(self, reply="ok", mtu_payload=244, fail_write=False):
         self.write_char = SimpleNamespace(properties=["write-without-response"], max_write_without_response_size=mtu_payload)
@@ -131,7 +137,7 @@ class FakeClient:
 def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
-    assert asyncio.run(XteClient(client).write_image(image))
+    assert asyncio.run(_client(client).write_image(image))
     obj = make_image_object(b"\x55" * 30000)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
@@ -149,7 +155,7 @@ def test_transport_sequence(write_limit):
 ])
 def test_bad_responses_fail_and_unsubscribe(reply, error):
     client = FakeClient(reply=reply)
-    transport = XteClient(client)
+    transport = _client(client)
     transport.timeout = 0.01
     with pytest.raises(error):
         asyncio.run(transport.write_image(Image.new("RGB", (400, 300))))
@@ -160,17 +166,17 @@ def test_bad_responses_fail_and_unsubscribe(reply, error):
 def test_invalid_write_size_and_missing_service():
     client = FakeClient(mtu_payload=0)
     with pytest.raises(ValueError, match="write-without-response size"):
-        asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
     assert client.writes == []
     client.services.get_service = lambda uuid: None
     with pytest.raises(ValueError, match="service missing"):
-        asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
 
 
 def test_write_failure_unsubscribes():
     client = FakeClient(fail_write=True)
     with pytest.raises(OSError):
-        asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
     assert client.stopped
 
 
@@ -184,11 +190,11 @@ def test_write_failure_after_disconnect_keeps_original_error():
 
     client.write_gatt_char = write_then_drop
     with pytest.raises(OSError, match="adapter write failed"):
-        asyncio.run(XteClient(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
     assert not client.stopped  # stop_notify skipped on a dropped link
 
 
-def test_delay_applies_per_frame_not_per_chunk(monkeypatch):
+def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
     sleeps = []
 
     async def fake_sleep(seconds):
@@ -198,5 +204,6 @@ def test_delay_applies_per_frame_not_per_chunk(monkeypatch):
     client = FakeClient(mtu_payload=20)
     assert asyncio.run(XteClient(client, attempt=2).write_image(Image.new("RGB", (400, 300), "white")))
     frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000)))
-    assert sleeps == [pytest.approx(0.05)] * frames
+    # One settle after start_notify, then one retry delay per XTE frame.
+    assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames
 

@@ -71,7 +71,9 @@ Write with `ble_esl.write` / `ble_esl.write_guarded` and select the BLE ESL
 device. Use `dry_run: true` for a preview before writing. Make sure no other
 integration writes to the same tag.
 
-Writes use the smaller of 244 bytes and the backend's reported write limit.
+After enabling notifications the writer waits 0.5 s before the prepare
+command, like the other backends. Writes use the smaller of 244 bytes and
+the backend's reported write limit.
 20-byte limits are accepted without changing logical XTE block contents.
 Retry Count and Write Delay options apply to the Poshiji backend; the delay is
 applied once per XTE command or block, not per ATT chunk.
