@@ -98,7 +98,12 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Where to Buy
 
-- [AliExpress - Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html)
+Availability varies by country. AliExpress listings by protocol family:
+
+| Protocol | Brand | Listing |
+|----------|-------|---------|
+| WOLINK / easyTag | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html) |
+| PickSmart | Gicisky | [Gicisky store (item 1)](https://ko.aliexpress.com/item/1005002399342939.html) · [Gicisky store (item 2)](https://ko.aliexpress.com/item/1005002398744297.html) |
 
 ---
 
