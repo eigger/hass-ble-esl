@@ -9,7 +9,6 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
-from bleak_retry_connector import establish_connection
 
 from ..base import DevicePreset, WriteResult
 from .const import (
@@ -30,7 +29,6 @@ from .protocol import (
 )
 
 if TYPE_CHECKING:
-    from bleak.backends.device import BLEDevice
     from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
@@ -162,58 +160,16 @@ def prepare_frames(
     return build_image_frames(address, payload)
 
 
-async def update_image(
-    ble_device: BLEDevice,
-    preset: DevicePreset,
-    image: Image.Image,
-    *,
-    attempt: int = 1,
-    write_delay_ms: int = 0,
-) -> WriteResult:
-    """Encode (worker thread, overlapping the connect) and write an image."""
-    encode = asyncio.create_task(
-        asyncio.to_thread(prepare_frames, image, preset, ble_device.address)
-    )
-    try:
-        return await update_prepared(
-            ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
-        )
-    finally:
-        encode.cancel()  # no-op once awaited; drops the result if connect failed
-
-
-async def update_prepared(
-    ble_device: BLEDevice,
+async def write_session(
+    client: BleakClient,
+    address: str,
     preset: DevicePreset,
     prepared: Awaitable[list[bytes]],
     *,
     attempt: int = 1,
     write_delay_ms: int = 0,
 ) -> WriteResult:
-    """Connect and send an already-scheduled encode to the tag.
-
-    `prepared` is awaited only once the link is up, so the encode (started by
-    the caller in a worker thread) overlaps connecting; the caller owns it and
-    may await it again on a retry.
-    """
-    # Connect inside the try so connection failures surface as a failed
-    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
-    client: BleakClient | None = None
-    try:
-        client = await establish_connection(
-            BleakClient, ble_device, ble_device.address
-        )
-        frames = await prepared
-        easytag = EasyTagClient(client, preset, ble_device.address)
-        return await easytag.write_frames(
-            frames, attempt=attempt, write_delay_ms=write_delay_ms
-        )
-    except Exception as exc:
-        # The caller logs each failed attempt and raises after the last one;
-        # keep the traceback available at debug level without a second ERROR.
-        _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
-        return WriteResult(success=False, error=str(exc) or type(exc).__name__)
-    finally:
-        with contextlib.suppress(Exception):
-            if client and client.is_connected:
-                await client.disconnect()
+    """Send pre-built frames over an open link and read the battery/temperature reply."""
+    frames = await prepared
+    easytag = EasyTagClient(client, preset, address)
+    return await easytag.write_frames(frames, attempt=attempt, write_delay_ms=write_delay_ms)

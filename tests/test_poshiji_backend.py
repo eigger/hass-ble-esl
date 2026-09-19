@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import session
 from custom_components.ble_esl.config_flow import BleEslConfigFlow
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL
 from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
@@ -66,7 +67,7 @@ def test_config_flow_saves_poshiji_and_model():
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
-    monkeypatch.setattr(writer, "establish_connection", AsyncMock(return_value=client))
+    monkeypatch.setattr(session, "establish_connection", AsyncMock(return_value=client))
     transport = SimpleNamespace(write_object=AsyncMock(return_value=True, side_effect=error))
     factory = MagicMock(return_value=transport)
     monkeypatch.setattr(writer, "XteClient", factory)
@@ -88,7 +89,7 @@ def test_session_result_and_disconnect(monkeypatch, error):
 
 
 def test_connection_failure_is_reported(monkeypatch):
-    monkeypatch.setattr(writer, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
+    monkeypatch.setattr(session, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
     monkeypatch.setattr(writer, "prepare_image_object", MagicMock(return_value=b""))
-    result = asyncio.run(writer.update_image(advertisement(), PSJ_420, object()))
+    result = asyncio.run(esl_ble.get("poshiji").write_image(advertisement(), PSJ_420, object()))
     assert not result.success and result.error == "unavailable"

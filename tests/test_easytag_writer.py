@@ -13,9 +13,10 @@ from custom_components.ble_esl.esl_ble.easytag.const import (
 )
 from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
 from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import session
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
-    update_image,
 )
 
 MAC = "3D:00:00:E5:7D:76"
@@ -95,12 +96,12 @@ def test_easytag_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.easytag.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["3D"], img)
+        result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], img)
 
         assert result.success is True
         assert result.battery_mv == 2900
@@ -121,12 +122,12 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
             raise OSError("unavailable")
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.easytag.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["3D"], img)
+        result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], img)
 
         assert result.success is False
         assert result.error == "unavailable"
@@ -158,11 +159,11 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
             raise OSError("stop here")
 
         monkeypatch.setattr(writer, "prepare_frames", slow_prepare)
-        monkeypatch.setattr(writer, "establish_connection", connect)
+        monkeypatch.setattr(session, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await update_image(mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128)))
         await asyncio.sleep(0.2)  # let the encode thread finish
 
         assert result.success is False

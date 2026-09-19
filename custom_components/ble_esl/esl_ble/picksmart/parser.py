@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
-from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
-from ..base import DevicePreset, ProtocolParser
+from ..base import BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUIDS
 from .devices import get_device_preset
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
-
-_LOGGER = logging.getLogger(__name__)
 
 # Battery % is a linear map of the advertised voltage over min-max, and at or
 # below min the battery-low binary sensor turns on. Below 2.5 V e-paper refresh
@@ -27,10 +23,10 @@ def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     """Return True if advertisement matches PickSmart manufacturer data or service UUIDs."""
     if MANUFACTURER_ID in data.manufacturer_data:
         return True
-    for uuid in data.service_uuids:
-        if isinstance(uuid, str) and uuid.lower() in SERVICE_UUIDS:
-            return True
-    return False
+    return any(
+        isinstance(uuid, str) and uuid.lower() in SERVICE_UUIDS
+        for uuid in data.service_uuids
+    )
 
 
 def parse_manufacturer_data(data: bytes) -> dict | None:
@@ -51,74 +47,31 @@ def parse_manufacturer_data(data: bytes) -> dict | None:
     }
 
 
-class PickSmartBluetoothDeviceData(ProtocolParser):
+class PickSmartBluetoothDeviceData(BleParser):
     """Data parser for PickSmart Bluetooth ESL devices."""
 
-    def __init__(self, preset: DevicePreset | None = None) -> None:
-        super().__init__()
-        self.preset = preset
-        self.last_service_info: BluetoothServiceInfoBleak | None = None
+    brand = BRAND
+    fallback_name = "PickSmart"
+    is_advertisement = staticmethod(is_picksmart_advertisement)
 
-    def set_preset(self, preset: DevicePreset) -> None:
-        """Update active device preset."""
-        self.preset = preset
-        if self.last_service_info is not None:
-            self._update_device_info(self.last_service_info)
-
-    def supported(self, data: BluetoothServiceInfoBleak) -> bool:
-        """Return True if this advertisement is from a PickSmart device."""
-        return is_picksmart_advertisement(data)
-
-    def _update_device_info(self, service_info: BluetoothServiceInfoBleak) -> None:
-        identifier = service_info.address.replace(":", "")[-8:]
-        display_name = self.preset.display_name if self.preset else "PickSmart"
-        res = (
-            f" {self.preset.width}x{self.preset.height}"
-            if self.preset and f"{self.preset.width}x{self.preset.height}" not in display_name
-            else ""
-        )
-        self.set_title(f"{identifier} ({display_name})")
-        self.set_device_name(f"{BRAND} {identifier}")
-        self.set_device_type(f"{display_name}{res}")
-        self.set_device_manufacturer(BRAND)
-
-    def _start_update(self, service_info: BluetoothServiceInfoBleak) -> None:
-        """Update from BLE advertisement data."""
-        if not is_picksmart_advertisement(service_info):
-            return
-        self.last_service_info = service_info
-        self._update_device_info(service_info)
-
+    def _parse(self, service_info: BluetoothServiceInfoBleak) -> None:
         mfr_bytes = service_info.manufacturer_data.get(MANUFACTURER_ID)
-        if not mfr_bytes:
-            return
-
-        parsed = parse_manufacturer_data(mfr_bytes)
+        parsed = parse_manufacturer_data(mfr_bytes) if mfr_bytes else None
         if not parsed:
             return
 
-        device_id = parsed["device_id"]
-        firmware = parsed["firmware"]
-        preset = get_device_preset(device_id, firmware)
+        # The advertisement identifies the model; it overrides the configured preset.
+        preset = get_device_preset(parsed["device_id"], parsed["firmware"])
         if preset:
             self.preset = preset
             self._update_device_info(service_info)
 
-        self.set_device_sw_version(f"0x{firmware:04X}")
+        self.set_device_sw_version(f"0x{parsed['firmware']:04X}")
         self.set_device_hw_version(f"0x{parsed['hardware']:04X}")
 
-        volt = parsed["battery_v"]
         extra = self.preset.extra if self.preset else {}
-        min_volt = extra.get("min_voltage", DEFAULT_MIN_VOLTAGE)
-        max_volt = extra.get("max_voltage", DEFAULT_MAX_VOLTAGE)
-
-        batt = (volt - min_volt) * 100.0 / (max_volt - min_volt)
-        batt = max(0, min(100, round(batt)))
-
-        self.update_predefined_sensor(SensorLibrary.BATTERY__PERCENTAGE, batt)
-        self.update_predefined_sensor(
-            SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT, round(volt, 1)
-        )
-        self.update_predefined_binary_sensor(
-            BinarySensorDeviceClass.BATTERY, volt <= min_volt
+        self.update_battery(
+            round(parsed["battery_v"], 1),
+            extra.get("min_voltage", DEFAULT_MIN_VOLTAGE),
+            extra.get("max_voltage", DEFAULT_MAX_VOLTAGE),
         )
