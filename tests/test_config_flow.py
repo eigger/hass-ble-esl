@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.config_flow import (
-    OptionsFlowHandler,
     BleEslConfigFlow,
+    OptionsFlowHandler,
     _model_selector_options,
     _title,
 )
@@ -135,9 +135,15 @@ def test_options_flow():
 
 def test_build_options_schema_fallback(monkeypatch):
     """Verify options schema falls back to first available preset when DEFAULT_MODEL is missing."""
-    from custom_components.ble_esl.config_flow import _build_options_schema
-    from custom_components.ble_esl.esl_ble.base import BleBackend, BleParser, Capabilities, DevicePreset
     import voluptuous as vol
+
+    from custom_components.ble_esl.config_flow import _build_options_schema
+    from custom_components.ble_esl.esl_ble.base import (
+        BleBackend,
+        BleParser,
+        Capabilities,
+        DevicePreset,
+    )
 
     monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
 
@@ -229,8 +235,9 @@ def test_config_flow_auto_model_detection_skips_step():
 
 def test_options_flow_hides_model_for_model_detection_backend():
     """Verify options schema does not expose CONF_MODEL for backends with model_detection=True."""
-    from custom_components.ble_esl.config_flow import _build_options_schema
     import voluptuous as vol
+
+    from custom_components.ble_esl.config_flow import _build_options_schema
 
     vol.Required.reset_mock()
     _build_options_schema("picksmart")

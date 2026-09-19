@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import NotificationTimeout
+from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
     PickSmartError,
@@ -112,7 +113,7 @@ def test_picksmart_stall_detection():
         )
         img = Image.new("RGB", (296, 128), "white")
 
-        with pytest.raises(PickSmartError, match="Transfer stalled: part 0/.* requested 6 times"):
+        with pytest.raises(PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"):
             await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
         # One send per request: the initial one plus five resends.
         img_writes = [c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID]
@@ -185,7 +186,7 @@ def test_picksmart_timeout_error_is_descriptive(monkeypatch):
         mock_client.write_gatt_char = AsyncMock()  # never answers
 
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
-        with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after START"):
+        with pytest.raises(NotificationTimeout, match=r"No response from tag within 0\.05s after START"):
             await client.write_payload(prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC))
 
     asyncio.run(_test())

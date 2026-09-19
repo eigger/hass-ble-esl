@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.config_flow import BleEslConfigFlow
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
 from custom_components.ble_esl.esl_ble.poshiji import writer
 from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420

@@ -10,20 +10,18 @@ import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock
 
+from homeassistant.exceptions import HomeAssistantError
 from PIL import Image
 import pytest
 
 import custom_components.ble_esl as integration
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl import device
-from custom_components.ble_esl import services as svc
+from custom_components.ble_esl import device, esl_ble, services as svc
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
     DATA_LOCK,
 )
 from custom_components.ble_esl.esl_ble import WriteResult
-from homeassistant.exceptions import HomeAssistantError
 
 
 class FakeCoordinator:

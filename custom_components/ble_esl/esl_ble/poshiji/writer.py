@@ -5,11 +5,13 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable
 import logging
+
 from bleak import BleakClient
 from PIL import Image
+
 from ..base import DevicePreset, Notifications, WriteResult
-from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID, NOTIFY_SETTLE_S
-from .protocol import make_image_object, pack_pixels, make_blocks, make_command
+from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
+from .protocol import make_blocks, make_command, make_image_object, pack_pixels
 
 _LOGGER = logging.getLogger(__name__)
 

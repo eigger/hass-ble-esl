@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock
 
+from conftest import make_entry, make_runtime_data
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.helpers.entity import EntityCategory
 
@@ -14,7 +15,6 @@ from custom_components.ble_esl.binary_sensor import (
     BleEslDisplayInSyncBinarySensor,
     async_setup_entry,
 )
-from conftest import make_entry, make_runtime_data
 from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 
 

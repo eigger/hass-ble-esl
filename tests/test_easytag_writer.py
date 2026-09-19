@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
 from PIL import Image
 
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.const import (
     KEY_INDEX_NOTIFY,
     NOTIFY_UUID,
@@ -13,8 +16,6 @@ from custom_components.ble_esl.esl_ble.easytag.const import (
 )
 from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
 from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
     prepare,

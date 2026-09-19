@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 from conftest import make_entry, make_runtime_data
 
-from custom_components.ble_esl.esl_ble.base import Capabilities, BleBackend
+from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 from custom_components.ble_esl.sensor import (
     BleEslBatteryPercentageSensorEntity,
     BleEslBatteryVoltageSensorEntity,

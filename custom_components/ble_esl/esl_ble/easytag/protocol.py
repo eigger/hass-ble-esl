@@ -14,6 +14,7 @@ from .const import (
     PACKET_LEN,
 )
 
+
 # CRC-16/CMS: poly 0x8005, init 0xFFFF, MSB-first, no reflection, no xorout
 def crc16(data: bytes, length: int | None = None) -> int:
     """CRC-16/CMS check value: crc16(b"123456789") == 0xAEE7."""

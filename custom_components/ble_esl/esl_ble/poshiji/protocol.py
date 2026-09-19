@@ -1,8 +1,11 @@
 """Capture-verified PSJ-420 pixel packing and XTE framing."""
 
 import math
+
 from PIL import Image
-from .const import ADVERTISEMENT, WIDTH, HEIGHT, PALETTE, BLOCK_DATA_SIZE
+
+from .const import ADVERTISEMENT, BLOCK_DATA_SIZE, HEIGHT, PALETTE, WIDTH
+
 
 def is_psj420_advertisement(data: bytes | None) -> bool:
     """Recognize the observed PSJ-420 signature, ignoring its changing tail."""
@@ -19,7 +22,7 @@ def pack_pixels(image: Image.Image) -> bytes:
     packed = 0
     color_cache = {color: index for index, color in enumerate(PALETTE)}
     raw = rgb.tobytes()
-    for i, pixel in enumerate(zip(raw[0::3], raw[1::3], raw[2::3])):
+    for i, pixel in enumerate(zip(raw[0::3], raw[1::3], raw[2::3], strict=True)):
         value = color_cache.get(pixel)
         if value is None:
             value = min(range(4), key=lambda n: sum(

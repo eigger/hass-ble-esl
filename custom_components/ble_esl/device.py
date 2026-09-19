@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from homeassistant.components.bluetooth import async_last_service_info
-
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothEntityKey,
 )

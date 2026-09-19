@@ -2,12 +2,31 @@
 #
 # CI installs ruff unpinned, so without this file the effective rule set is
 # whatever the latest release happens to enable by default — a ruff upgrade can
-# turn a green branch red without any code change. Pin the selection here
-# instead: E/F are the pycodestyle+pyflakes rules this codebase was already
-# clean against (real errors: undefined names, unused imports, syntax issues).
-[lint]
-select = ["E", "F"]
+# turn a green branch red without any code change. Pin the selection here.
+line-length = 100
 
-# Long lines are pervasive in the device catalog and log-message formatting and
-# are not worth churning; everything else in E/F stays enforced.
-ignore = ["E501"]
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (undefined names, unused imports, ...)
+    "I",   # import ordering
+    "UP",  # pyupgrade: modern syntax for the supported Python versions
+    "B",   # bugbear: likely bugs (loop-variable closures, mutable defaults, ...)
+    "SIM", # simplify
+    "RUF", # ruff-specific (unsorted __all__, ambiguous regex in pytest.raises, ...)
+]
+ignore = [
+    # Long lines: the device catalogue and log/error messages are more readable
+    # unwrapped; the formatter keeps everything else within line-length.
+    "E501",
+    # Mutable class attributes are the declarative backend contract (PRESETS).
+    "RUF012",
+]
+
+[lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+known-first-party = ["custom_components"]
+
+[format]
+docstring-code-format = true

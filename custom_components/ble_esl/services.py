@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial
@@ -272,10 +273,8 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
             )
     finally:
         duration_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await duration_task
-        except asyncio.CancelledError:
-            pass
         if data.start_time is not None:
             data.duration_coordinator.async_set_updated_data(
                 round(time.monotonic() - data.start_time, 2)

@@ -6,13 +6,17 @@ from types import SimpleNamespace
 from PIL import Image
 import pytest
 
+from custom_components.ble_esl.esl_ble.poshiji.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
-from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
-from custom_components.ble_esl.esl_ble.poshiji.const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID
 from custom_components.ble_esl.esl_ble.poshiji.protocol import (
-    encode_rle, make_image_object, make_blocks, make_command, pack_pixels,
+    encode_rle,
     is_psj420_advertisement,
+    make_blocks,
+    make_command,
+    make_image_object,
+    pack_pixels,
 )
+from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
 
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
@@ -34,7 +38,7 @@ def test_rle_boundaries():
     assert encode_rle(b"\x55" * 256 + b"\xaa" * 2) == bytes.fromhex("ff55015502aa")
     raw = bytes(range(256)) * 120
     encoded = encode_rle(raw)
-    assert b"".join(bytes([v]) * n for n, v in zip(encoded[::2], encoded[1::2])) == raw
+    assert b"".join(bytes([v]) * n for n, v in zip(encoded[::2], encoded[1::2], strict=True)) == raw
 
 
 def test_palette_and_bit_order():

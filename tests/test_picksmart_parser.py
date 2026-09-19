@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
+
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
 from custom_components.ble_esl.esl_ble.picksmart.const import (

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import dataclasses
 from typing import Any
-import voluptuous as vol
 
 from homeassistant.components import onboarding
 from homeassistant.components.bluetooth import (
@@ -27,6 +26,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
 )
+import voluptuous as vol
 
 from . import esl_ble
 from .const import (

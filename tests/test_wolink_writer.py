@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from PIL import Image
 import pytest
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import base
+from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.const import (
     AES_KEY,
     AUTH_CHAR,
@@ -15,9 +19,6 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
     STATUS_CHAR,
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
@@ -340,7 +341,7 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         monkeypatch.setattr(WolinkClient, "_completion_timeout", staticmethod(lambda raw_len: 0.05))
-        with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after refresh"):
+        with pytest.raises(NotificationTimeout, match=r"No response from tag within 0\.05s after refresh"):
             await client.write_prepared(prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC))
 
     asyncio.run(_test())

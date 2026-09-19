@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import Awaitable
+import logging
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient

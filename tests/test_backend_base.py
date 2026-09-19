@@ -227,11 +227,11 @@ def test_notifications_next_and_clear():
 
 
 def test_notifications_timeout_names_the_step():
-    from custom_components.ble_esl.esl_ble.base import NotificationTimeout, Notifications
+    from custom_components.ble_esl.esl_ble.base import Notifications, NotificationTimeout
 
     async def _test():
         async with Notifications(_notifying_client(), "char") as replies:
-            with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after START"):
+            with pytest.raises(NotificationTimeout, match=r"No response from tag within 0\.05s after START"):
                 await replies.next(0.05, step="START")
             with pytest.raises(NotificationTimeout, match="after DONE"):
                 await replies.wait_for(lambda d: False, 0.05, step="DONE")

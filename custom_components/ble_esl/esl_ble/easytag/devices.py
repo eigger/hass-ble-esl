@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from ..base import (
     CONFIDENCE_HARDWARE,
     CONFIDENCE_REPORTED,

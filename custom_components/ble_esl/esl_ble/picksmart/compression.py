@@ -29,7 +29,7 @@ def _same(data: bytes | bytearray, pos: int, n: int) -> bool:
     if pos < 0 or pos + n >= len(data):
         return False
     v = data[pos]
-    for i in range(1, n + 1):
+    for i in range(1, n + 1):  # noqa: SIM110  (hot path; generator form is slower)
         if data[pos + i] != v:
             return False
     return True
