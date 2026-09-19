@@ -87,7 +87,8 @@ BleBackend.write_image(ble_device, preset, image)
   Raise on any protocol error — `write_prepared` turns every exception
   (including connect failures) into a failed `WriteResult` with
   `str(exc) or type name`, which the retry loop and failure sensors use.
-  Give timeouts a message (`asyncio.TimeoutError` has none).
+  Read replies through `base.Notifications`; its timeouts already carry the step
+  (`asyncio.TimeoutError` alone has no message).
 * Never catch exceptions to return `success=True`; never leave the link
   subscribed to notifications (unsubscribe in `finally`, suppressing errors on
   a dropped link).

@@ -54,6 +54,8 @@ class EasyTagClient:
         async with Notifications(
             self.client, NOTIFY_UUID, settle=POST_CCCD_DELAY + PRE_HEADER_DELAY
         ) as replies:
+            # Anything notified during the settle window is not our reply.
+            replies.clear()
             base_delay = (
                 INTER_PACKET_DELAY
                 + (write_delay_ms / 1000.0)

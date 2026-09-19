@@ -124,6 +124,37 @@ def test_wolink_write_image_flow_with_status_notification():
     asyncio.run(_test())
 
 
+def test_wolink_error_during_upload_fails_before_refresh():
+    """An ERR status frame received while chunks are still being sent fails the
+    write without sending the refresh command."""
+
+    async def _test():
+        mock_client = MagicMock()
+        sent = []
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=True):
+            sent.append(bytes(data[:2]))
+            if data[:2] == b"\x00\xa5" and len(sent) == 1:  # first image chunk
+                mock_client._handler(None, bytearray([0x01, 0x01]))  # ERR=1 during upload
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        img = Image.new("RGB", (296, 128), "white")
+        with pytest.raises(WolinkError, match="device error 1: epd initialization error"):
+            await client.write_prepared(prepare(PRESETS["290"], img, MAC))
+
+        assert b"\x02\xa5" not in sent  # refresh (0xA502) never sent
+        mock_client.stop_notify.assert_awaited_once()
+
+    asyncio.run(_test())
+
+
 def test_wolink_write_image_error_notification():
     """Verify write_image handles device ERR status frame."""
 
