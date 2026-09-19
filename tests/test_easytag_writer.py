@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
 from PIL import Image
 
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.const import (
     KEY_INDEX_NOTIFY,
     NOTIFY_UUID,
@@ -13,8 +16,6 @@ from custom_components.ble_esl.esl_ble.easytag.const import (
 )
 from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
 from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
     prepare,
@@ -87,9 +88,7 @@ def test_easytag_update_image_entrypoint(monkeypatch):
             plain[2] = 29
             plain[3] = 18
             kn = xor_key(MAC, KEY_INDEX_NOTIFY)
-            mock_client.start_notify.call_args[0][1](
-                None, bytearray(b ^ kn for b in plain)
-            )
+            mock_client.start_notify.call_args[0][1](None, bytearray(b ^ kn for b in plain))
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
@@ -140,7 +139,6 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
     """Encoding overlaps connecting instead of delaying it."""
     import time
 
-
     async def _test():
         encode_done_at = None
 
@@ -163,7 +161,9 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("easytag").write_image(
+            mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128))
+        )
         await asyncio.sleep(0.2)  # let the encode thread finish
 
         assert result.success is False

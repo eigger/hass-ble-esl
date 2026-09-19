@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 from conftest import make_entry, make_runtime_data
 
-from custom_components.ble_esl.esl_ble.base import Capabilities, BleBackend
+from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 from custom_components.ble_esl.sensor import (
     BleEslBatteryPercentageSensorEntity,
     BleEslBatteryVoltageSensorEntity,
@@ -98,9 +98,7 @@ def test_duration_and_failure_sensors():
 
     last_fail_coord = MagicMock()
     last_fail_coord.data = None
-    last_fail_sensor = BleEslLastFailureTimeSensorEntity(
-        hass, entry, last_fail_coord
-    )
+    last_fail_sensor = BleEslLastFailureTimeSensorEntity(hass, entry, last_fail_coord)
     assert last_fail_sensor.native_value is None
 
 

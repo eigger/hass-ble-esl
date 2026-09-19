@@ -385,9 +385,7 @@ class BleBackend(ABC):
 
     # ── Hooks ────────────────────────────────────────────────────────────
 
-    def refine_preset(
-        self, preset: DevicePreset, info: AdvertisementInfo | None
-    ) -> DevicePreset:
+    def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
         """Refine preset using advertisement info (e.g. firmware quirks). Default is identity."""
         return preset
 
@@ -397,9 +395,7 @@ class BleBackend(ABC):
         """Extract advertisement data from service info."""
         raise NotImplementedError
 
-    def prepare_image(
-        self, preset: DevicePreset, image: Image.Image, address: str
-    ) -> Any:
+    def prepare_image(self, preset: DevicePreset, image: Image.Image, address: str) -> Any:
         """Encode an image into whatever write_session() sends.
 
         CPU-bound and synchronous; callers run it in a worker thread, once
@@ -487,9 +483,6 @@ class BleBackend(ABC):
         finally:
             encode.cancel()  # no-op once awaited; drops the result if connect failed
 
-    async def read_status(
-        self, ble_device: BLEDevice, preset: DevicePreset
-    ) -> WriteResult:
+    async def read_status(self, ble_device: BLEDevice, preset: DevicePreset) -> WriteResult:
         """Optional status query without writing an image."""
         return WriteResult(success=False, error="not supported")
-

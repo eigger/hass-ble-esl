@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.config_flow import BleEslConfigFlow
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
 from custom_components.ble_esl.esl_ble.poshiji import writer
 from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
@@ -17,7 +17,9 @@ from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
 
 def advertisement(tail=0x1B):
     return SimpleNamespace(
-        address="AA:BB:CC:DD:EE:FF", name="FFEEDDCCBBAA", service_uuids=[],
+        address="AA:BB:CC:DD:EE:FF",
+        name="FFEEDDCCBBAA",
+        service_uuids=[],
         manufacturer_data={0x5258: bytes.fromhex("fd024002009964060102ffff") + bytes([tail])},
     )
 
@@ -61,6 +63,7 @@ def test_config_flow_saves_poshiji_and_model():
         assert result["data"][CONF_PROTOCOL] == "poshiji"
         assert result["data"][CONF_MODEL] == "psj-420"
         assert "Poshiji" in result["title"]
+
     asyncio.run(run())
 
 
@@ -74,9 +77,15 @@ def test_session_result_and_disconnect(monkeypatch, error):
     image, encoded = object(), b"XTEK-encoded"
     prepare = MagicMock(return_value=encoded)
     monkeypatch.setattr(esl_ble.get("poshiji"), "prepare_image", prepare)
-    result = asyncio.run(esl_ble.get("poshiji").write_image(
-        advertisement(), PSJ_420, image, attempt=2, write_delay_ms=30,
-    ))
+    result = asyncio.run(
+        esl_ble.get("poshiji").write_image(
+            advertisement(),
+            PSJ_420,
+            image,
+            attempt=2,
+            write_delay_ms=30,
+        )
+    )
     # Encoded before connecting, in a worker thread, then handed to the session.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
     factory.assert_called_once_with(client, 2, 30)

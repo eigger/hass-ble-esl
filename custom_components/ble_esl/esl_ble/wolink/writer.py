@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import Awaitable
+import logging
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
@@ -49,9 +49,7 @@ class WolinkError(Exception):
 class WolinkClient:
     """Client handling a single connected WOLINK BLE session."""
 
-    def __init__(
-        self, client: BleakClient, preset: DevicePreset, address: str
-    ) -> None:
+    def __init__(self, client: BleakClient, preset: DevicePreset, address: str) -> None:
         self.client = client
         self.preset = preset
         self.address = address
@@ -144,8 +142,7 @@ class WolinkClient:
 
         if raw_len > 100000:
             est_seconds = int(
-                (len(payload) / 200)
-                * (0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1)))
+                (len(payload) / 200) * (0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1)))
             )
             _LOGGER.info(
                 "Sending large image (%d bytes, %d chunks) to %s — estimated transfer time: ~%ds",
@@ -157,9 +154,7 @@ class WolinkClient:
         timeout = self._completion_timeout(raw_len)
 
         async with Notifications(self.client, STATUS_CHAR) as status:
-            await self._write_chunked(
-                payload, write_delay_ms=write_delay_ms, attempt=attempt
-            )
+            await self._write_chunked(payload, write_delay_ms=write_delay_ms, attempt=attempt)
             # Status frames during the upload are only busy indications, but an
             # error reported before the refresh is still an error.
             for frame in status.clear():

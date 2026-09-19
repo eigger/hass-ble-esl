@@ -52,7 +52,10 @@ class PoshijiBleBackend(BleBackend):
     ) -> WriteResult:
         # Only the captured PSJ-420 profile is known; refuse before connecting.
         if (preset.key, preset.width, preset.height, preset.colors) != (
-            PSJ_420.key, PSJ_420.width, PSJ_420.height, PSJ_420.colors,
+            PSJ_420.key,
+            PSJ_420.width,
+            PSJ_420.height,
+            PSJ_420.colors,
         ):
             return WriteResult(success=False, error="Unsupported Poshiji preset")
         return await super().write_prepared(

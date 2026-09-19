@@ -122,18 +122,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up the BLE ESL sensors."""
     data = entry.runtime_data
-    processor = BleEslPassiveBluetoothDataProcessor(
-        sensor_update_to_bluetooth_data_update
+    processor = BleEslPassiveBluetoothDataProcessor(sensor_update_to_bluetooth_data_update)
+    entry.async_on_unload(
+        processor.async_add_entities_listener(BleEslBluetoothSensorEntity, async_add_entities)
     )
     entry.async_on_unload(
-        processor.async_add_entities_listener(
-            BleEslBluetoothSensorEntity, async_add_entities
-        )
-    )
-    entry.async_on_unload(
-        data.bt_coordinator.async_register_processor(
-            processor, SensorEntityDescription
-        )
+        data.bt_coordinator.async_register_processor(processor, SensorEntityDescription)
     )
 
     caps = data.backend.capabilities
@@ -143,22 +137,20 @@ async def async_setup_entry(
         BleEslLastFailureTimeSensorEntity(hass, entry, data.last_failure_coordinator),
     ]
     if caps.session_battery and not caps.passive_battery:
-        entities.extend([
-            BleEslBatteryPercentageSensorEntity(hass, entry, data.battery_coordinator),
-            BleEslBatteryVoltageSensorEntity(hass, entry, data.battery_coordinator),
-        ])
-    if caps.session_temperature:
-        entities.append(
-            BleEslTemperatureSensorEntity(hass, entry, data.temperature_coordinator)
+        entities.extend(
+            [
+                BleEslBatteryPercentageSensorEntity(hass, entry, data.battery_coordinator),
+                BleEslBatteryVoltageSensorEntity(hass, entry, data.battery_coordinator),
+            ]
         )
+    if caps.session_temperature:
+        entities.append(BleEslTemperatureSensorEntity(hass, entry, data.temperature_coordinator))
 
     async_add_entities(entities)
 
 
 class BleEslBluetoothSensorEntity(
-    PassiveBluetoothProcessorEntity[
-        BleEslPassiveBluetoothDataProcessor[float | None]
-    ],
+    PassiveBluetoothProcessorEntity[BleEslPassiveBluetoothDataProcessor[float | None]],
     SensorEntity,
 ):
     """Representation of a BLE ESL passive sensor."""
@@ -180,15 +172,12 @@ class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None],
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_suggested_display_precision = 0
 
-
     @property
     def native_value(self) -> int | None:
         volt = self.coordinator.data
         if volt is None:
             return None
-        pct = (volt - SESSION_MIN_VOLTAGE) * 100.0 / (
-            SESSION_MAX_VOLTAGE - SESSION_MIN_VOLTAGE
-        )
+        pct = (volt - SESSION_MIN_VOLTAGE) * 100.0 / (SESSION_MAX_VOLTAGE - SESSION_MIN_VOLTAGE)
         return max(0, min(100, round(pct)))
 
 
@@ -202,7 +191,6 @@ class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], Se
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_suggested_display_precision = 1
-
 
     @property
     def native_value(self) -> float | None:
@@ -218,7 +206,6 @@ class BleEslTemperatureSensorEntity(BleEslCoordinatorEntity[int | None], SensorE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-
 
     @property
     def native_value(self) -> int | None:
@@ -264,7 +251,6 @@ class BleEslFailureCountSensorEntity(BleEslCoordinatorEntity[int], SensorEntity)
     _attr_icon = "mdi:alert-circle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-
     @property
     def native_value(self) -> int | None:
         return self.coordinator.data
@@ -278,7 +264,6 @@ class BleEslLastFailureTimeSensorEntity(BleEslCoordinatorEntity[datetime | None]
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:clock-alert"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-
 
     @property
     def native_value(self) -> datetime | None:

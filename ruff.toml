@@ -1,13 +1,35 @@
 # Ruff configuration.
 #
-# CI installs ruff unpinned, so without this file the effective rule set is
-# whatever the latest release happens to enable by default — a ruff upgrade can
-# turn a green branch red without any code change. Pin the selection here
-# instead: E/F are the pycodestyle+pyflakes rules this codebase was already
-# clean against (real errors: undefined names, unused imports, syntax issues).
-[lint]
-select = ["E", "F"]
+# Whole rule families are enabled below, so a ruff release that adds a rule to
+# one of them could fail CI without a code change. CI therefore pins the ruff
+# version (.github/workflows/tests.yml); bump it there deliberately and fix
+# whatever the new version reports in the same PR.
+line-length = 100
+# Lowest interpreter in the CI matrix; UP must not emit syntax newer than this.
+target-version = "py312"
 
-# Long lines are pervasive in the device catalog and log-message formatting and
-# are not worth churning; everything else in E/F stays enforced.
-ignore = ["E501"]
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (undefined names, unused imports, ...)
+    "I",   # import ordering
+    "UP",  # pyupgrade: modern syntax for the supported Python versions
+    "B",   # bugbear: likely bugs (loop-variable closures, mutable defaults, ...)
+    "SIM", # simplify
+    "RUF", # ruff-specific (unsorted __all__, ambiguous regex in pytest.raises, ...)
+]
+ignore = [
+    # Long lines: the device catalogue and log/error messages are more readable
+    # unwrapped; the formatter keeps everything else within line-length.
+    "E501",
+    # Mutable class attributes are the declarative backend contract (PRESETS).
+    "RUF012",
+]
+
+[lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+known-first-party = ["custom_components"]
+
+[format]
+docstring-code-format = true

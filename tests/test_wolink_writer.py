@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from PIL import Image
 import pytest
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import base
+from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.const import (
     AES_KEY,
     AUTH_CHAR,
@@ -15,9 +19,6 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
     STATUS_CHAR,
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
@@ -115,7 +116,9 @@ def test_wolink_write_image_flow_with_status_notification():
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_prepared(prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1)
+        result = await client.write_prepared(
+            prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1
+        )
 
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
@@ -177,7 +180,9 @@ def test_wolink_write_image_error_notification():
         img = Image.new("RGB", (296, 128), "white")
 
         with pytest.raises(WolinkError, match="device error 2: epd write error"):
-            await client.write_prepared(prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1)
+            await client.write_prepared(
+                prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1
+            )
 
     asyncio.run(_test())
 
@@ -212,7 +217,9 @@ def test_write_image_entrypoint(monkeypatch):
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], img, attempt=2, write_delay_ms=50)
+        result = await esl_ble.get("wolink").write_image(
+            mock_ble_device, PRESETS["290"], img, attempt=2, write_delay_ms=50
+        )
 
         assert result.success is True
         assert result.battery_mv is None  # No redundant GATT battery read
@@ -250,7 +257,6 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
     keeps ticking, and the connection starts before the encode finishes."""
     import time
 
-
     async def _test():
         ticks = 0
         encode_done_at = None
@@ -284,7 +290,9 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
         task = asyncio.create_task(ticker())
-        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("wolink").write_image(
+            mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
+        )
         task.cancel()
 
         assert result.success is False and result.error == "stop at auth"
@@ -317,7 +325,9 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("wolink").write_image(
+            mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
+        )
         assert result.success is False and result.error == "no link"
         assert started.is_set()
         await asyncio.sleep(0)
@@ -340,8 +350,12 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         monkeypatch.setattr(WolinkClient, "_completion_timeout", staticmethod(lambda raw_len: 0.05))
-        with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after refresh"):
-            await client.write_prepared(prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC))
+        with pytest.raises(
+            NotificationTimeout, match=r"No response from tag within 0\.05s after refresh"
+        ):
+            await client.write_prepared(
+                prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC)
+            )
 
     asyncio.run(_test())
 
@@ -365,7 +379,9 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
         )
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await esl_ble.get("wolink").write_prepared(mock_ble_device, PRESETS["290"], prepared)
+        result = await esl_ble.get("wolink").write_prepared(
+            mock_ble_device, PRESETS["290"], prepared
+        )
 
         assert result.success is False and result.error == "stop"
         assert order == ["connect"]

@@ -10,20 +10,18 @@ import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock
 
+from homeassistant.exceptions import HomeAssistantError
 from PIL import Image
 import pytest
 
 import custom_components.ble_esl as integration
-from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl import device
-from custom_components.ble_esl import services as svc
+from custom_components.ble_esl import device, esl_ble, services as svc
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
     DATA_LOCK,
 )
 from custom_components.ble_esl.esl_ble import WriteResult
-from homeassistant.exceptions import HomeAssistantError
 
 
 class FakeCoordinator:
@@ -57,23 +55,17 @@ class Harness:
         self.hass.config_entries.async_forward_entry_setups = AsyncMock()
         # Real executor future: the encode is awaited by the backend after
         # connecting and again on retries, and cancelled if never awaited.
-        self.hass.async_add_executor_job = (
-            lambda func, *args: loop.run_in_executor(None, func, *args)
+        self.hass.async_add_executor_job = lambda func, *args: loop.run_in_executor(
+            None, func, *args
         )
-        self.hass.async_create_background_task = (
-            lambda coro, name=None: loop.create_task(coro)
-        )
+        self.hass.async_create_background_task = lambda coro, name=None: loop.create_task(coro)
         self.services: dict[str, object] = {}
-        self.hass.services.async_register = (
-            lambda domain, name, handler: self.services.__setitem__(name, handler)
+        self.hass.services.async_register = lambda domain, name, handler: self.services.__setitem__(
+            name, handler
         )
         self.entries: dict[str, MagicMock] = {}
-        self.hass.config_entries.async_get_entry = (
-            lambda entry_id: self.entries[entry_id]
-        )
-        self.hass.config_entries.async_loaded_entries = (
-            lambda domain: list(self.entries.values())
-        )
+        self.hass.config_entries.async_get_entry = lambda entry_id: self.entries[entry_id]
+        self.hass.config_entries.async_loaded_entries = lambda domain: list(self.entries.values())
 
         # Rendering: return a different image per payload so image bytes differ.
         def fake_render(hass, preset, payload, *, rotate=0, background="white"):
@@ -83,9 +75,7 @@ class Harness:
 
         monkeypatch.setattr(svc, "render_image", fake_render)
         monkeypatch.setattr(integration, "DataUpdateCoordinator", FakeCoordinator)
-        monkeypatch.setattr(
-            integration, "BleEslPassiveBluetoothProcessorCoordinator", MagicMock()
-        )
+        monkeypatch.setattr(integration, "BleEslPassiveBluetoothProcessorCoordinator", MagicMock())
         monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: None)
         monkeypatch.setattr(svc, "sleep", AsyncMock())  # retry backoff
 
@@ -204,6 +194,7 @@ def test_ble_handle_resolved_per_attempt(harness_factory):
         h = harness_factory(asyncio.get_running_loop(), {CONF_RETRY_COUNT: 2})
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
         h.available = False
+
         async def become_available(*args, **kwargs):
             return WriteResult(success=True)
 
@@ -366,9 +357,7 @@ def test_duplicate_guard_rechecked_under_lock(harness_factory):
     once the first one succeeds, instead of being sent a second time."""
 
     async def _test():
-        h = harness_factory(
-            asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True}
-        )
+        h = harness_factory(asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True})
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
         first_started = asyncio.Event()
@@ -422,9 +411,7 @@ def test_dry_run_is_preview_only(harness_factory):
     """dry_run renders the preview but does not count as a sent image."""
 
     async def _test():
-        h = harness_factory(
-            asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True}
-        )
+        h = harness_factory(asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True})
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
         await h.call("write_guarded", "dev-e1", payload="p", dry_run=True)

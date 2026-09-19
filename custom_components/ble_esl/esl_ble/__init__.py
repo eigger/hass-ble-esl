@@ -41,9 +41,7 @@ def register(backend: BleBackend) -> None:
 def get(backend_id: str) -> BleBackend:
     """Retrieve a BLE backend by ID."""
     if backend_id not in _BACKENDS:
-        raise KeyError(
-            f"Unknown BLE backend: {backend_id!r}. Available: {list(_BACKENDS.keys())}"
-        )
+        raise KeyError(f"Unknown BLE backend: {backend_id!r}. Available: {list(_BACKENDS.keys())}")
     return _BACKENDS[backend_id]
 
 
@@ -82,10 +80,10 @@ __all__ = [
     "BleParser",
     "Capabilities",
     "DevicePreset",
-    "ProtocolContractError",
     "EasyTagBleBackend",
     "PickSmartBleBackend",
     "PoshijiBleBackend",
+    "ProtocolContractError",
     "WolinkBleBackend",
     "WriteResult",
     "all_backends",

@@ -36,9 +36,7 @@ class PickSmartBleBackend(BleBackend):
     prepare_image = staticmethod(writer.prepare)
     write_session = staticmethod(writer.write_session)
 
-    def refine_preset(
-        self, preset: DevicePreset, info: AdvertisementInfo | None
-    ) -> DevicePreset:
+    def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
         """The advertisement identifies the model and firmware; it is authoritative."""
         if info is None or not info.raw:
             return preset

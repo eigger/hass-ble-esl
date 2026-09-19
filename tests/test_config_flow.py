@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.config_flow import (
-    OptionsFlowHandler,
     BleEslConfigFlow,
+    OptionsFlowHandler,
     _model_selector_options,
     _title,
 )
@@ -42,7 +42,7 @@ def test_title_helper():
     info.address = "66:66:54:20:00:55"
     backend = esl_ble.get("wolink")
     title = _title(info, backend, "290")
-    assert title == "Zhsunyco 54200055 (2.9\" BWRY)"
+    assert title == 'Zhsunyco 54200055 (2.9" BWRY)'
 
 
 def test_config_flow_bluetooth_step():
@@ -60,9 +60,7 @@ def test_config_flow_bluetooth_step():
         unsupported_info.address = "11:22:33:44:55:66"
         unsupported_info.manufacturer_data = {}
         unsupported_info.service_uuids = []
-        flow.async_abort = MagicMock(
-            return_value={"type": "abort", "reason": "not_supported"}
-        )
+        flow.async_abort = MagicMock(return_value={"type": "abort", "reason": "not_supported"})
 
         result = await flow.async_step_bluetooth(unsupported_info)
         assert result["type"] == "abort"
@@ -74,9 +72,7 @@ def test_config_flow_bluetooth_step():
         supported_info.manufacturer_data = {MANUFACTURER_ID: b"\x00" * 10}
         supported_info.service_uuids = [SERVICE_UUID]
 
-        flow.async_show_form = MagicMock(
-            side_effect=lambda **kwargs: {"type": "form", **kwargs}
-        )
+        flow.async_show_form = MagicMock(side_effect=lambda **kwargs: {"type": "form", **kwargs})
         confirm_result = await flow.async_step_bluetooth(supported_info)
         assert confirm_result["type"] == "form"
         assert confirm_result["step_id"] == "bluetooth_confirm"
@@ -135,9 +131,15 @@ def test_options_flow():
 
 def test_build_options_schema_fallback(monkeypatch):
     """Verify options schema falls back to first available preset when DEFAULT_MODEL is missing."""
-    from custom_components.ble_esl.config_flow import _build_options_schema
-    from custom_components.ble_esl.esl_ble.base import BleBackend, BleParser, Capabilities, DevicePreset
     import voluptuous as vol
+
+    from custom_components.ble_esl.config_flow import _build_options_schema
+    from custom_components.ble_esl.esl_ble.base import (
+        BleBackend,
+        BleParser,
+        Capabilities,
+        DevicePreset,
+    )
 
     monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
 
@@ -179,7 +181,8 @@ def test_build_options_schema_fallback(monkeypatch):
 
     # Check vol.Required was called with default="custom_1"
     calls = [
-        call for call in vol.Required.call_args_list
+        call
+        for call in vol.Required.call_args_list
         if len(call.args) > 0 and call.args[0] == CONF_MODEL
     ]
     assert len(calls) > 0
@@ -197,9 +200,7 @@ def test_config_flow_auto_model_detection_skips_step():
         flow.context = {}
         flow.async_set_unique_id = AsyncMock()
         flow._abort_if_unique_id_configured = MagicMock()
-        flow.async_show_form = MagicMock(
-            side_effect=lambda **kwargs: {"type": "form", **kwargs}
-        )
+        flow.async_show_form = MagicMock(side_effect=lambda **kwargs: {"type": "form", **kwargs})
         flow.async_create_entry = MagicMock(
             side_effect=lambda **kwargs: {"type": "create_entry", **kwargs}
         )
@@ -208,9 +209,7 @@ def test_config_flow_auto_model_detection_skips_step():
         service_info = MagicMock()
         service_info.address = "AA:BB:CC:DD:EE:FF"
         service_info.service_uuids = []
-        service_info.manufacturer_data = {
-            PS_MFG_ID: bytes.fromhex("331e010100")
-        }
+        service_info.manufacturer_data = {PS_MFG_ID: bytes.fromhex("331e010100")}
 
         # Step 1: Bluetooth discovery
         confirm_result = await flow.async_step_bluetooth(service_info)
@@ -229,14 +228,12 @@ def test_config_flow_auto_model_detection_skips_step():
 
 def test_options_flow_hides_model_for_model_detection_backend():
     """Verify options schema does not expose CONF_MODEL for backends with model_detection=True."""
-    from custom_components.ble_esl.config_flow import _build_options_schema
     import voluptuous as vol
+
+    from custom_components.ble_esl.config_flow import _build_options_schema
 
     vol.Required.reset_mock()
     _build_options_schema("picksmart")
-    called_keys = [
-        call.args[0] for call in vol.Required.call_args_list if len(call.args) > 0
-    ]
+    called_keys = [call.args[0] for call in vol.Required.call_args_list if len(call.args) > 0]
     assert CONF_MODEL not in called_keys
     assert CONF_RETRY_COUNT in called_keys
-

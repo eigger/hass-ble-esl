@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 import zlib
+
 from PIL import Image
 import pytest
 
@@ -91,15 +92,11 @@ def test_command_builders():
 
     # Refresh compressed: 0x02 0xA5 + size(4B LE)
     cmd_comp = cmd_refresh_compressed(2500)
-    assert cmd_comp[:2] == bytes(
-        [OP_REFRESH_COMPRESSED & 0xFF, OP_REFRESH_COMPRESSED >> 8]
-    )
+    assert cmd_comp[:2] == bytes([OP_REFRESH_COMPRESSED & 0xFF, OP_REFRESH_COMPRESSED >> 8])
     assert struct.unpack_from("<I", cmd_comp, 2)[0] == 2500
 
     # Unbind clear: 0x04 0xA5
-    assert cmd_unbind_clear() == bytes(
-        [OP_UNBIND_CLEAR & 0xFF, OP_UNBIND_CLEAR >> 8]
-    )
+    assert cmd_unbind_clear() == bytes([OP_UNBIND_CLEAR & 0xFF, OP_UNBIND_CLEAR >> 8])
 
     # Multiscreen store tag & chunks
     assert multiscreen_picture_tag(0) == b"PIC00\0"
@@ -108,15 +105,11 @@ def test_command_builders():
         multiscreen_picture_tag(11)
 
     cmd_ms_chunk = cmd_multiscreen_store_chunk(20, b"DATA")
-    assert cmd_ms_chunk[:2] == bytes(
-        [OP_MULTISCREEN_STORE & 0xFF, OP_MULTISCREEN_STORE >> 8]
-    )
+    assert cmd_ms_chunk[:2] == bytes([OP_MULTISCREEN_STORE & 0xFF, OP_MULTISCREEN_STORE >> 8])
     assert struct.unpack_from("<I", cmd_ms_chunk, 2)[0] == 20
 
     cmd_ms_end = cmd_multiscreen_store_end(12345)
-    assert cmd_ms_end[:2] == bytes(
-        [OP_MULTISCREEN_STORE & 0xFF, OP_MULTISCREEN_STORE >> 8]
-    )
+    assert cmd_ms_end[:2] == bytes([OP_MULTISCREEN_STORE & 0xFF, OP_MULTISCREEN_STORE >> 8])
     assert struct.unpack_from("<I", cmd_ms_end, 2)[0] == 12345
 
     # OTA
@@ -134,21 +127,26 @@ def test_command_builders():
 
     # Multiscreen refresh
     cmd_ms_ref = cmd_multiscreen_refresh(0, -1)
-    assert cmd_ms_ref[:2] == bytes(
-        [OP_MULTISCREEN_REFRESH & 0xFF, OP_MULTISCREEN_REFRESH >> 8]
-    )
+    assert cmd_ms_ref[:2] == bytes([OP_MULTISCREEN_REFRESH & 0xFF, OP_MULTISCREEN_REFRESH >> 8])
     assert struct.unpack_from("<bb", cmd_ms_ref, 2) == (0, -1)
 
 
 def test_parse_manufacturer_data():
     """Verify 0xBBAA manufacturer broadcast payload unpacking."""
-    raw = bytes([
-        0x12, 0x34,  # PID: "1234"
-        0x01, 0x02,  # AppVer: 0x0201 = 513
-        0x03, 0x04,  # HwVer: 0x0403 = 1027
-        0x05, 0x06,  # DispVer: 0x0605 = 1541
-        0x0B, 0xB8,  # BatVoltage_mv: 0x0BB8 = 3000 mV (BE)
-    ])
+    raw = bytes(
+        [
+            0x12,
+            0x34,  # PID: "1234"
+            0x01,
+            0x02,  # AppVer: 0x0201 = 513
+            0x03,
+            0x04,  # HwVer: 0x0403 = 1027
+            0x05,
+            0x06,  # DispVer: 0x0605 = 1541
+            0x0B,
+            0xB8,  # BatVoltage_mv: 0x0BB8 = 3000 mV (BE)
+        ]
+    )
     info = parse_manufacturer_data(raw)
     assert info["pid"] == "1234"
     assert info["app_ver"] == 513
@@ -175,10 +173,10 @@ def test_quantize_image():
     """Verify quantizing PIL image to bit planes."""
     img = Image.new("RGB", (2, 2), "white")
     pixels = img.load()
-    pixels[0, 0] = (0, 0, 0)        # Black
+    pixels[0, 0] = (0, 0, 0)  # Black
     pixels[1, 0] = (255, 255, 255)  # White
-    pixels[0, 1] = (255, 0, 0)      # Red
-    pixels[1, 1] = (255, 255, 0)    # Yellow
+    pixels[0, 1] = (255, 0, 0)  # Red
+    pixels[1, 1] = (255, 255, 0)  # Yellow
 
     plane_bw, plane_red, plane_yellow = quantize_image(img, 2, 2, "BWRY")
     assert plane_bw == [1, 0, 0, 0]

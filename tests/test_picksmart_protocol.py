@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+
 from PIL import Image
 
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS

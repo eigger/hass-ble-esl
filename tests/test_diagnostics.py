@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import json
 from unittest.mock import MagicMock
 
@@ -41,9 +41,11 @@ def test_diagnostics_content_and_redaction(monkeypatch):
         entry.options = {"retry_count": 2}
         data = entry.runtime_data
         data.failure_coordinator.data = 3
-        data.last_failure_coordinator.data = datetime(2026, 9, 20, 12, 0, tzinfo=timezone.utc)
+        data.last_failure_coordinator.data = datetime(2026, 9, 20, 12, 0, tzinfo=UTC)
         data.last_image_data = b"png" * 10
-        monkeypatch.setattr(diagnostics, "async_last_service_info", lambda *a, **k: _advertisement())
+        monkeypatch.setattr(
+            diagnostics, "async_last_service_info", lambda *a, **k: _advertisement()
+        )
 
         result = await diagnostics.async_get_config_entry_diagnostics(hass, entry)
 
@@ -108,12 +110,10 @@ def test_diagnostics_masks_mac_in_name_and_source_and_survives_parse_errors(monk
         entry = make_entry()
         entry.version, entry.unique_id, entry.data, entry.options = 1, ADDRESS, {}, {}
         info = _advertisement()
-        info.name = ADDRESS.replace(":", "")            # e.g. Poshiji advertises its MAC as the name
-        info.source = f"proxy-{ADDRESS.lower()}"        # a proxy id may embed a MAC
+        info.name = ADDRESS.replace(":", "")  # e.g. Poshiji advertises its MAC as the name
+        info.source = f"proxy-{ADDRESS.lower()}"  # a proxy id may embed a MAC
         monkeypatch.setattr(diagnostics, "async_last_service_info", lambda *a, **k: info)
-        monkeypatch.setattr(
-            entry.runtime_data.backend, "parse_advertisement", lambda i: 1 / 0
-        )
+        monkeypatch.setattr(entry.runtime_data.backend, "parse_advertisement", lambda i: 1 / 0)
 
         result = await diagnostics.async_get_config_entry_diagnostics(MagicMock(), entry)
 

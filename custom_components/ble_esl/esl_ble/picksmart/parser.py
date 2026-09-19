@@ -23,8 +23,7 @@ def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     if MANUFACTURER_ID in data.manufacturer_data:
         return True
     return any(
-        isinstance(uuid, str) and uuid.lower() in SERVICE_UUIDS
-        for uuid in data.service_uuids
+        isinstance(uuid, str) and uuid.lower() in SERVICE_UUIDS for uuid in data.service_uuids
     )
 
 

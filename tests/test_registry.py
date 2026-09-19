@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
+
 import pytest
 
 from custom_components.ble_esl import esl_ble
@@ -77,7 +78,7 @@ def test_registry_detect_mutual_exclusivity():
 
     # 3. PickSmart Advertisement
     info_picksmart = MagicMock()
-    info_picksmart.manufacturer_data = {PICKSMART_MFR_ID: b"\x33\x1E\x81\x01\x40"}
+    info_picksmart.manufacturer_data = {PICKSMART_MFR_ID: b"\x33\x1e\x81\x01\x40"}
     info_picksmart.service_uuids = [PICKSMART_SERVICE_UUIDS[0]]
     info_picksmart.name = "BleTag"
 
@@ -134,9 +135,7 @@ def test_registry_custom_backend(monkeypatch):
         def parse_advertisement(self, service_info):
             return None
 
-        async def write_image(
-            self, ble_device, preset, image, *, attempt=1, write_delay_ms=0
-        ):
+        async def write_image(self, ble_device, preset, image, *, attempt=1, write_delay_ms=0):
             return MagicMock()
 
     mock_backend = MockTestBackend()

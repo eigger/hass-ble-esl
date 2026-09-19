@@ -2,26 +2,40 @@
 
 Usage: python docs/brand/generate.py custom_components/ble_esl/brand
 """
-from PIL import Image, ImageDraw, ImageFont
-import sys
+
 import os
+import sys
+
+from PIL import Image, ImageDraw, ImageFont
 
 OUT = sys.argv[1]
-FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "custom_components", "ble_esl", "fonts")
+FONT_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "custom_components", "ble_esl", "fonts"
+)
 FONT_BOLD = os.path.join(FONT_DIR, "GmarketSansTTFBold.ttf")
 FONT_MED = os.path.join(FONT_DIR, "GmarketSansTTFMedium.ttf")
 SS = 4  # supersample
 
-LIGHT = dict(body=(31, 41, 55), screen=(243, 244, 246), ink=(31, 41, 55),
-             text=(17, 24, 39), sub=(107, 114, 128))
-DARK = dict(body=(229, 231, 235), screen=(31, 41, 55), ink=(229, 231, 235),
-            text=(243, 244, 246), sub=(156, 163, 175))
+LIGHT = dict(
+    body=(31, 41, 55),
+    screen=(243, 244, 246),
+    ink=(31, 41, 55),
+    text=(17, 24, 39),
+    sub=(107, 114, 128),
+)
+DARK = dict(
+    body=(229, 231, 235),
+    screen=(31, 41, 55),
+    ink=(229, 231, 235),
+    text=(243, 244, 246),
+    sub=(156, 163, 175),
+)
 BT = (0, 130, 252)
 WHITE = (255, 255, 255)
 
 
 def draw_tag(d, x, y, s, c):
-    """Draw an ESL tag icon inside an s×s box at (x, y). Coordinates already supersampled."""
+    """Draw an ESL tag icon inside an s x s box at (x, y). Coordinates already supersampled."""
     # tag body: landscape rounded rect, centered
     bw, bh = s * 0.92, s * 0.70
     bx, by = x + (s - bw) / 2, y + (s - bh) / 2

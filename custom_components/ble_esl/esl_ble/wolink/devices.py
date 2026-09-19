@@ -80,4 +80,3 @@ PRESETS: dict[str, DevicePreset] = {
         _p("133", '13.3" BWR', 1600, 1200, colors="BWR"),
     )
 }
-

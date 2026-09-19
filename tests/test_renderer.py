@@ -54,9 +54,7 @@ def test_render_image_per_element_dither():
     )
     hass = _hass()
 
-    img_flat = render_image(
-        hass, preset, [_rect("#b0b0b0", size=(10, 10), outline="#b0b0b0")]
-    )
+    img_flat = render_image(hass, preset, [_rect("#b0b0b0", size=(10, 10), outline="#b0b0b0")])
     img_dither = render_image(
         hass, preset, [_rect("#b0b0b0", size=(10, 10), outline="#b0b0b0", dither="floyd")]
     )

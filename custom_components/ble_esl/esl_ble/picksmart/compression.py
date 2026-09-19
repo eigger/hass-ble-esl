@@ -29,7 +29,7 @@ def _same(data: bytes | bytearray, pos: int, n: int) -> bool:
     if pos < 0 or pos + n >= len(data):
         return False
     v = data[pos]
-    for i in range(1, n + 1):
+    for i in range(1, n + 1):  # noqa: SIM110  (hot path; generator form is slower)
         if data[pos + i] != v:
             return False
     return True
@@ -39,9 +39,7 @@ def _qlz_compress_core(source: bytes | bytearray) -> bytes | None:
     """QuickLZ Level 1 core compression. Returns None if no compression gain."""
     size = len(source)
     last_byte_idx = size - 1
-    last_matchstart = (
-        last_byte_idx - _UNCONDITIONAL_MATCHLEN_COMPRESSOR - _UNCOMPRESSED_END
-    )
+    last_matchstart = last_byte_idx - _UNCONDITIONAL_MATCHLEN_COMPRESSOR - _UNCOMPRESSED_END
 
     if last_matchstart < 0:
         return None
@@ -60,9 +58,7 @@ def _qlz_compress_core(source: bytes | bytearray) -> bytes | None:
         if (cword_val & 1) == 1:
             if src > (size >> 1) and (dst > src - (src >> 5)):
                 return None
-            struct.pack_into(
-                "<I", out, cword_ptr, (cword_val >> 1) | (1 << 31)
-            )
+            struct.pack_into("<I", out, cword_ptr, (cword_val >> 1) | (1 << 31))
             cword_ptr = dst
             dst += _CWORD_LEN
             cword_val = 1 << 31
@@ -75,21 +71,17 @@ def _qlz_compress_core(source: bytes | bytearray) -> bytes | None:
         h_offset[h] = src
 
         dist = src - o
-        if (cached & 0xFFFFFF) == 0 and o != _NO_ENTRY and (
-            dist > _MINOFFSET
-            or (
-                src == o + 1
-                and lits >= 3
-                and src > 3
-                and _same(source, src - 3, 6)
+        if (
+            (cached & 0xFFFFFF) == 0
+            and o != _NO_ENTRY
+            and (
+                dist > _MINOFFSET
+                or (src == o + 1 and lits >= 3 and src > 3 and _same(source, src - 3, 6))
             )
         ):
             matchlen = 3
             remaining = min(255, last_byte_idx - _UNCOMPRESSED_END - src + 1)
-            while (
-                matchlen < remaining
-                and source[src + matchlen] == source[o + matchlen]
-            ):
+            while matchlen < remaining and source[src + matchlen] == source[o + matchlen]:
                 matchlen += 1
 
             h_shifted = h << 4
@@ -117,9 +109,7 @@ def _qlz_compress_core(source: bytes | bytearray) -> bytes | None:
 
     while src <= last_byte_idx:
         if (cword_val & 1) == 1:
-            struct.pack_into(
-                "<I", out, cword_ptr, (cword_val >> 1) | (1 << 31)
-            )
+            struct.pack_into("<I", out, cword_ptr, (cword_val >> 1) | (1 << 31))
             cword_ptr = dst
             dst += _CWORD_LEN
             cword_val = 1 << 31
@@ -201,9 +191,7 @@ def _qlz_decompress_core(stream: bytes, dest_size: int) -> bytes:
 
             safe_limit = dst - 3
             if safe_limit > last_hashed:
-                last_hashed = _update_hash(
-                    out, hash_offset, last_hashed, safe_limit, dest_size
-                )
+                last_hashed = _update_hash(out, hash_offset, last_hashed, safe_limit, dest_size)
 
             offset2 = hash_offset[h]
             match_start = dst
@@ -215,9 +203,7 @@ def _qlz_decompress_core(stream: bytes, dest_size: int) -> bytes:
                 offset2 += 1
                 dst += 1
 
-            last_hashed = _update_hash(
-                out, hash_offset, last_hashed, match_start, dest_size
-            )
+            last_hashed = _update_hash(out, hash_offset, last_hashed, match_start, dest_size)
             last_hashed = dst - 1
         else:
             cword_val >>= 1

@@ -13,10 +13,7 @@ if TYPE_CHECKING:
 
 def is_easytag_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     """Return True if advertisement matches easyTag service UUID or name prefix."""
-    if any(
-        isinstance(u, str) and u.lower() == SERVICE_UUID.lower()
-        for u in data.service_uuids
-    ):
+    if any(isinstance(u, str) and u.lower() == SERVICE_UUID.lower() for u in data.service_uuids):
         return True
     return isinstance(data.name, str) and data.name.startswith(NAME_PREFIX)
 

@@ -165,7 +165,7 @@ def test_quantize_matches_reference_semantics():
                 for k in range(3):
                     err = c[k] - palette[best][k]
 
-                    def add(nx, ny, num):
+                    def add(nx, ny, num, k=k, err=err):
                         px[nx][ny][k] = max(0, min(255, px[nx][ny][k] + ((err * num) >> 4)))
 
                     if y + 1 < height:

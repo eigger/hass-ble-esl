@@ -21,7 +21,7 @@ def test_quicklz_core_roundtrip():
 
 def test_quicklz_full_compress_decompress_roundtrip():
     """Verify multi-part QuickLZ Level 1 compress2 roundtrip."""
-    chunk = (b"PIC_SMART_TEST_DATA_64B_CHUNK__" * 2)  # 64 bytes
+    chunk = b"PIC_SMART_TEST_DATA_64B_CHUNK__" * 2  # 64 bytes
     payload = chunk * 20  # 1280 bytes -> part1 640B, part2 640B
 
     compressed = compress(payload)
@@ -31,7 +31,7 @@ def test_quicklz_full_compress_decompress_roundtrip():
 
 def test_quicklz_force_raw():
     """Verify raw fallback (0x74 chunks) roundtrip."""
-    chunk = (b"RAW_UNCOMPRESSED_CHUNK_64_BYTES_" * 2)  # 64 bytes
+    chunk = b"RAW_UNCOMPRESSED_CHUNK_64_BYTES_" * 2  # 64 bytes
     payload = chunk * 10  # 640 bytes
 
     compressed_raw = compress(payload, force_raw=True)

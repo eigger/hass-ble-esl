@@ -38,4 +38,4 @@ class EasyTagBleBackend(BleBackend):
         return None
 
 
-__all__ = ["EasyTagBleBackend", "EasyTagBluetoothDeviceData", "PRESETS", "is_easytag_advertisement"]
+__all__ = ["PRESETS", "EasyTagBleBackend", "EasyTagBluetoothDeviceData", "is_easytag_advertisement"]

@@ -25,7 +25,9 @@ IDS = [b.id for b in BACKENDS]
 def test_package_layout(backend):
     """Each protocol lives in esl_ble/<id>/ with the required modules."""
     package = f"custom_components.ble_esl.esl_ble.{backend.id}"
-    assert type(backend).__module__ == package, "backend class must be defined in the package __init__"
+    assert type(backend).__module__ == package, (
+        "backend class must be defined in the package __init__"
+    )
     for module in REQUIRED_MODULES:
         importlib.import_module(f"{package}.{module}")
 
@@ -35,7 +37,9 @@ def test_package_layout(backend):
     assert devices.PRESETS is backend.PRESETS
     writer = importlib.import_module(f"{package}.writer")
     assert callable(getattr(writer, "prepare", None)), "writer.prepare(preset, image, address)"
-    assert callable(getattr(writer, "write_session", None)), "writer.write_session(client, address, preset, prepared, ...)"
+    assert callable(getattr(writer, "write_session", None)), (
+        "writer.write_session(client, address, preset, prepared, ...)"
+    )
 
 
 @pytest.mark.parametrize("backend", BACKENDS, ids=IDS)
@@ -85,7 +89,10 @@ def test_backend_ids_are_unique_and_matchers_disjoint_on_each_others_samples():
     assert len(IDS) == len(set(IDS))
     samples = {
         "wolink": {"manufacturer_data": {0xBBAA: bytes(10)}, "service_uuids": []},
-        "easytag": {"manufacturer_data": {}, "service_uuids": ["00001523-1212-efde-1523-785feabcd123"]},
+        "easytag": {
+            "manufacturer_data": {},
+            "service_uuids": ["00001523-1212-efde-1523-785feabcd123"],
+        },
         "picksmart": {"manufacturer_data": {0x5053: bytes(5)}, "service_uuids": []},
         "poshiji": {
             "manufacturer_data": {0x5258: bytes.fromhex("fd024002009964060102ffff1e")},

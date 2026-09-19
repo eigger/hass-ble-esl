@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock
 
+from conftest import make_entry, make_runtime_data
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.helpers.entity import EntityCategory
 
@@ -14,7 +15,6 @@ from custom_components.ble_esl.binary_sensor import (
     BleEslDisplayInSyncBinarySensor,
     async_setup_entry,
 )
-from conftest import make_entry, make_runtime_data
 from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 
 
@@ -27,8 +27,14 @@ def test_bluetooth_connectivity_sensor():
     coordinator.data = True
 
     sensor = BleEslBluetoothConnectivitySensorEntity(hass, entry, coordinator)
-    assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
-    assert sensor.device_class == BinarySensorDeviceClass.CONNECTIVITY or sensor._attr_device_class == BinarySensorDeviceClass.CONNECTIVITY
+    assert (
+        sensor.entity_category == EntityCategory.DIAGNOSTIC
+        or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    )
+    assert (
+        sensor.device_class == BinarySensorDeviceClass.CONNECTIVITY
+        or sensor._attr_device_class == BinarySensorDeviceClass.CONNECTIVITY
+    )
     assert sensor.unique_id == "ble_esl_54200055_connectivity"
 
     sensor._handle_coordinator_update()
@@ -47,10 +53,11 @@ def test_display_in_sync_sensor():
     image_coord = MagicMock()
     preview_coord = MagicMock()
 
-    sensor = BleEslDisplayInSyncBinarySensor(
-        hass, entry, image_coord, preview_coord
+    sensor = BleEslDisplayInSyncBinarySensor(hass, entry, image_coord, preview_coord)
+    assert (
+        sensor.entity_category == EntityCategory.DIAGNOSTIC
+        or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
     )
-    assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.unique_id == "ble_esl_54200055_display_in_sync"
 
     # Both None

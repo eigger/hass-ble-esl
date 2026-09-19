@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import NotificationTimeout
+from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
     PickSmartError,
@@ -41,9 +42,7 @@ def test_picksmart_handshake_flow():
                     mock_client._handler(None, bytearray([0x02]))
                 elif data[0] == 0x03:
                     # Step 3 response: 05 00 + part 0 (4B LE)
-                    mock_client._handler(
-                        None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00])
-                    )
+                    mock_client._handler(None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00]))
             elif char == IMG_UUID:
                 # Step 4 response: request next part or signal completion (large part)
                 part = int.from_bytes(data[:4], "little")
@@ -88,14 +87,10 @@ def test_picksmart_stall_detection():
                 elif data[0] == 0x02:
                     mock_client._handler(None, bytearray([0x02]))
                 elif data[0] == 0x03:
-                    mock_client._handler(
-                        None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00])
-                    )
+                    mock_client._handler(None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00]))
             elif char == IMG_UUID:
                 # Repeat same part 0 repeatedly
-                mock_client._handler(
-                    None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00])
-                )
+                mock_client._handler(None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00]))
 
         mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
         mock_client.stop_notify = AsyncMock()
@@ -112,10 +107,12 @@ def test_picksmart_stall_detection():
         )
         img = Image.new("RGB", (296, 128), "white")
 
-        with pytest.raises(PickSmartError, match="Transfer stalled: part 0/.* requested 6 times"):
+        with pytest.raises(PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"):
             await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
         # One send per request: the initial one plus five resends.
-        img_writes = [c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID]
+        img_writes = [
+            c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID
+        ]
         assert len(img_writes) == 6
 
     asyncio.run(_test())
@@ -158,7 +155,9 @@ def test_picksmart_recovers_from_resend_requests(monkeypatch):
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
-        result = await client.write_payload(prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC))
+        result = await client.write_payload(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+        )
 
         assert result.success is True
         sent_parts = [
@@ -185,8 +184,12 @@ def test_picksmart_timeout_error_is_descriptive(monkeypatch):
         mock_client.write_gatt_char = AsyncMock()  # never answers
 
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
-        with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after START"):
-            await client.write_payload(prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC))
+        with pytest.raises(
+            NotificationTimeout, match=r"No response from tag within 0\.05s after START"
+        ):
+            await client.write_payload(
+                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+            )
 
     asyncio.run(_test())
 
@@ -222,9 +225,7 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
                 elif data[0] == 0x02:
                     mock_client._handler(None, bytearray([0x02]))
                 elif data[0] == 0x03:
-                    mock_client._handler(
-                        None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00])
-                    )
+                    mock_client._handler(None, bytearray([0x05, 0x00, 0x00, 0x00, 0x00, 0x00]))
             elif char == IMG_UUID:
                 part = int.from_bytes(data[:4], "little")
                 next_part = part + 1
@@ -280,7 +281,6 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
     """Encoding overlaps connecting instead of delaying it."""
     import time
 
-
     async def _test():
         encode_done_at = None
 
@@ -303,7 +303,9 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("picksmart").write_image(
+            mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128))
+        )
         await asyncio.sleep(0.2)  # let the encode thread finish
 
         assert result.success is False
@@ -352,7 +354,9 @@ def test_picksmart_unexpected_frame_only_ok_after_last_part(ends_after_last):
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
 
         if ends_after_last:
-            assert (await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))).success is True
+            assert (
+                await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+            ).success is True
         else:
             with pytest.raises(PickSmartError, match=r"ended transfer after part 1/\d+ with 0508"):
                 await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
