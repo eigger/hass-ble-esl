@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable
 import contextlib
 import logging
 from bleak import BleakClient
@@ -110,22 +111,36 @@ def prepare_image_object(image: Image.Image) -> bytes:
 
 
 async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0) -> WriteResult:
-    """Connect and send a PSJ-420 image, preserving errors for HA diagnostics."""
+    """Encode (worker thread, overlapping the connect) and write a PSJ-420 image."""
+    encode = asyncio.create_task(asyncio.to_thread(prepare_image_object, image))
+    try:
+        return await update_prepared(
+            ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
+        )
+    finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
+
+
+async def update_prepared(
+    ble_device, preset, prepared: Awaitable[bytes], *, attempt=1, write_delay_ms=0
+) -> WriteResult:
+    """Connect and send an already-scheduled encode, preserving errors for HA diagnostics.
+
+    `prepared` is awaited only once the link is up; the caller owns it and may
+    await it again on a retry.
+    """
     if (preset.key, preset.width, preset.height, preset.colors) != ("psj-420", 400, 300, "BWRY"):
         return WriteResult(success=False, error="Unsupported Poshiji preset")
     client = None
-    # Encode in a worker thread while connecting (see the other writers).
-    encode = asyncio.create_task(asyncio.to_thread(prepare_image_object, image))
     try:
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
-        success = await XteClient(client, attempt, write_delay_ms).write_object(await encode)
+        success = await XteClient(client, attempt, write_delay_ms).write_object(await prepared)
         return WriteResult(success=success)
     except Exception as exc:
         error = str(exc) or type(exc).__name__
         _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
         return WriteResult(success=False, error=error)
     finally:
-        encode.cancel()  # no-op once awaited; drops the result if connect failed
         if client and client.is_connected:
             with contextlib.suppress(Exception):
                 await client.disconnect()

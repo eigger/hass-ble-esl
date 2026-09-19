@@ -312,3 +312,32 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
         assert result.error == "No completion notification from tag within 30s after refresh"
 
     asyncio.run(_test())
+
+
+def test_update_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monkeypatch):
+    """The caller-owned future is awaited once the link is up and not cancelled here."""
+    from custom_components.ble_esl.esl_ble.wolink import writer
+
+    async def _test():
+        order = []
+        prepared = asyncio.get_running_loop().create_future()
+
+        async def connect(*args, **kwargs):
+            order.append("connect")
+            prepared.set_result((b"", 0))
+            return MagicMock(is_connected=False)
+
+        monkeypatch.setattr(writer, "establish_connection", connect)
+        monkeypatch.setattr(
+            writer.WolinkClient, "authenticate", AsyncMock(side_effect=OSError("stop"))
+        )
+        mock_ble_device = MagicMock()
+        mock_ble_device.address = MAC
+        result = await writer.update_prepared(mock_ble_device, PRESETS["290"], prepared)
+
+        assert result.success is False and result.error == "stop"
+        assert order == ["connect"]
+        assert prepared.done() and not prepared.cancelled()
+        assert prepared.result() == (b"", 0)  # still usable for a retry
+
+    asyncio.run(_test())

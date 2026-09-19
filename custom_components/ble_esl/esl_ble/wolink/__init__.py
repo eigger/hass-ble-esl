@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Awaitable, Mapping
 from typing import TYPE_CHECKING
 
 from ..base import (
@@ -16,7 +16,7 @@ from .const import BRAND, MANUFACTURER_ID
 from .devices import PRESETS, preset_choices
 from .parser import WolinkBluetoothDeviceData, is_wolink_advertisement
 from .protocol import parse_manufacturer_data
-from .writer import update_image
+from .writer import PreparedImage, prepare_payload, update_image, update_prepared
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -96,6 +96,26 @@ class WolinkBleBackend(BleBackend):
             image,
             attempt=attempt,
             write_delay_ms=write_delay_ms,
+        )
+
+    def prepare_image(
+        self, preset: DevicePreset, image: Image.Image, address: str
+    ) -> PreparedImage:
+        """Quantize, pack and compress (CPU-bound; caller runs it in a thread)."""
+        return prepare_payload(image, preset)
+
+    async def write_prepared(
+        self,
+        ble_device: BLEDevice,
+        preset: DevicePreset,
+        prepared: Awaitable[PreparedImage],
+        *,
+        attempt: int = 1,
+        write_delay_ms: int = 0,
+    ) -> WriteResult:
+        """Write an already-scheduled encode to the device."""
+        return await update_prepared(
+            ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 
