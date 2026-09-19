@@ -111,24 +111,34 @@ def _compress_byte_data(
     buf = bytearray([0x00, 0x00, 0x00, 0x00])
     pos = 0
     for _ in range(width):
-        buf.extend([
-            0x75,
-            byte_per_line + 7,
-            byte_per_line,
-            0x00, 0x00, 0x00, 0x00,
-        ])
+        buf.extend(
+            [
+                0x75,
+                byte_per_line + 7,
+                byte_per_line,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
         buf.extend(byte_data[pos : pos + byte_per_line])
         pos += byte_per_line
 
     if byte_data_red is not None:
         pos = 0
         for _ in range(width):
-            buf.extend([
-                0x75,
-                byte_per_line + 7,
-                byte_per_line,
-                0x00, 0x00, 0x00, 0x00,
-            ])
+            buf.extend(
+                [
+                    0x75,
+                    byte_per_line + 7,
+                    byte_per_line,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                ]
+            )
             buf.extend(byte_data_red[pos : pos + byte_per_line])
             pos += byte_per_line
 
@@ -207,14 +217,10 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
     pixels = img.load()
 
     if four_color:
-        return _make_four_color_packet(
-            pixels, width, height, mirror_x, mirror_y, invert_luminance
-        )
+        return _make_four_color_packet(pixels, width, height, mirror_x, mirror_y, invert_luminance)
 
     if compression2:
-        return _compress_byte_data_2(
-            pixels, width, height, mirror_x, mirror_y, invert_luminance
-        )
+        return _compress_byte_data_2(pixels, width, height, mirror_x, mirror_y, invert_luminance)
 
     byte_data = []
     byte_data_red = []
@@ -250,9 +256,7 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
         byte_data_red.append(current_byte_red)
 
     if compression:
-        return _compress_byte_data(
-            byte_data, byte_data_red if support_red else None, width, height
-        )
+        return _compress_byte_data(byte_data, byte_data_red if support_red else None, width, height)
 
     combined = byte_data + byte_data_red if support_red else byte_data
     return bytes(combined)

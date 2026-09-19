@@ -167,6 +167,7 @@ ha_components = MockModule("homeassistant.components")
 sys.modules["homeassistant.components"] = ha_components
 ha.components = ha_components
 
+
 # Mock homeassistant.exceptions
 class MockHomeAssistantError(Exception):
     """Mock HomeAssistantError."""

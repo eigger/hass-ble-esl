@@ -76,9 +76,7 @@ def render_image(
             rotate_mode="canvas",  # ESL panel: fixed resolution, background rotates
             background=background,
             dither=False,
-            context=_make_context(
-                hass, default_font="NotoSansKR-Regular.ttf", palette=palette
-            ),
+            context=_make_context(hass, default_font="NotoSansKR-Regular.ttf", palette=palette),
         )
     except RenderError as err:
         raise HomeAssistantError(str(err)) from err

@@ -56,7 +56,9 @@ EXPECTED_UNIQUE_IDS = [
 ]
 
 
-@pytest.mark.parametrize(("make", "suffix"), EXPECTED_UNIQUE_IDS, ids=[s for _, s in EXPECTED_UNIQUE_IDS])
+@pytest.mark.parametrize(
+    ("make", "suffix"), EXPECTED_UNIQUE_IDS, ids=[s for _, s in EXPECTED_UNIQUE_IDS]
+)
 def test_unique_id_and_binding(make, suffix):
     hass, entry = _hass_entry()
     entity = make(hass, entry)

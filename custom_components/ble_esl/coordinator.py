@@ -37,15 +37,11 @@ class BleEslPassiveBluetoothProcessorCoordinator(
         connectable: bool = False,
     ) -> None:
         """Initialize the BLE ESL Passive Update Processor Coordinator."""
-        super().__init__(
-            hass, logger, address, mode, update_method, connectable
-        )
+        super().__init__(hass, logger, address, mode, update_method, connectable)
         self.device_data = device_data
 
 
-class BleEslPassiveBluetoothDataProcessor(
-    PassiveBluetoothDataProcessor[_T, SensorUpdate]
-):
+class BleEslPassiveBluetoothDataProcessor(PassiveBluetoothDataProcessor[_T, SensorUpdate]):
     """Define a BLE ESL Passive Update Data Processor."""
 
     coordinator: BleEslPassiveBluetoothProcessorCoordinator

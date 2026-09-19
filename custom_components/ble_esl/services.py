@@ -58,9 +58,7 @@ _LOGGER = logging.getLogger(__name__)
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the domain services (once per HA instance)."""
     hass.services.async_register(DOMAIN, SERVICE_WRITE, partial(_async_write, hass))
-    hass.services.async_register(
-        DOMAIN, SERVICE_WRITE_GUARDED, partial(_async_write_guarded, hass)
-    )
+    hass.services.async_register(DOMAIN, SERVICE_WRITE_GUARDED, partial(_async_write_guarded, hass))
 
 
 # ── Target resolution ────────────────────────────────────────────────────
@@ -76,10 +74,7 @@ async def async_targeted_entries(
     # targets not in the registries at all, are simply absent here: that is
     # HA's standard target contract (a call is not an error because one of
     # several targets is unknown), so only an all-miss is reported.
-    loaded = {
-        entry.entry_id: entry
-        for entry in hass.config_entries.async_loaded_entries(DOMAIN)
-    }
+    loaded = {entry.entry_id: entry for entry in hass.config_entries.async_loaded_entries(DOMAIN)}
     targets = [loaded[entry_id] for entry_id in sorted(entry_ids) if entry_id in loaded]
     if not targets:
         raise HomeAssistantError(
@@ -105,13 +100,10 @@ async def _for_each_target(
     not prevent the others from being written.
     """
     targets = await async_targeted_entries(hass, service)
-    results = await asyncio.gather(
-        *(handler(entry) for entry in targets), return_exceptions=True
-    )
+    results = await asyncio.gather(*(handler(entry) for entry in targets), return_exceptions=True)
     errors = [str(r) for r in results if isinstance(r, HomeAssistantError)]
     unexpected = [
-        r for r in results
-        if isinstance(r, BaseException) and not isinstance(r, HomeAssistantError)
+        r for r in results if isinstance(r, BaseException) and not isinstance(r, HomeAssistantError)
     ]
     if unexpected:
         # A programming error keeps its traceback; the other tags' write
@@ -258,7 +250,10 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
 
             _LOGGER.warning(
                 "Write failed to %s (attempt %d/%d): %s",
-                address, attempt, job.max_retries, result.error,
+                address,
+                attempt,
+                job.max_retries,
+                result.error,
             )
             if attempt < job.max_retries:
                 await sleep(1)
@@ -420,7 +415,8 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Non
             if data.pending_write_cancel is not None:
                 _LOGGER.info(
                     "Cancelled pending write for %s, rescheduled with %dms delay",
-                    job.address, debounce_ms,
+                    job.address,
+                    debounce_ms,
                 )
             schedule_debounced_write(hass, job, debounce_ms / 1000.0)
         else:

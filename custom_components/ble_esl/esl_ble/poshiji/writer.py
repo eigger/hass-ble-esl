@@ -15,6 +15,7 @@ from .protocol import make_blocks, make_command, make_image_object, pack_pixels
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class XteClient:
     """Send the observed transaction, requiring both application responses."""
 
@@ -29,7 +30,7 @@ class XteClient:
         """Write one logical frame (command or block) as consecutive ATT chunks."""
         for offset in range(0, len(data), chunk_size):
             await self.client.write_gatt_char(
-                characteristic, data[offset:offset + chunk_size], response=False
+                characteristic, data[offset : offset + chunk_size], response=False
             )
         # Pause per logical frame, not per ATT chunk: with a 20-byte write
         # limit a frame is up to 61 chunks, and a per-chunk retry delay would
@@ -60,8 +61,9 @@ class XteClient:
 
         return accept
 
-    async def _command(self, characteristic, payload: bytes, chunk_size: int,
-                       expected_payload: bytes) -> None:
+    async def _command(
+        self, characteristic, payload: bytes, chunk_size: int, expected_payload: bytes
+    ) -> None:
         assert self._replies is not None, "inside write_object()'s notification session"
         self._replies.clear()
         await self._write(characteristic, make_command(payload), chunk_size)
@@ -78,7 +80,10 @@ class XteClient:
         notify_char = service.get_characteristic(NOTIFY_UUID)
         if write_char is None or notify_char is None:
             raise ValueError("XTE characteristics missing")
-        if "write-without-response" not in write_char.properties or "notify" not in notify_char.properties:
+        if (
+            "write-without-response" not in write_char.properties
+            or "notify" not in notify_char.properties
+        ):
             raise ValueError("XTE characteristic properties do not match")
         chunk_size = min(244, write_char.max_write_without_response_size)
         # 244 is the captured upper bound, not a minimum ATT payload. Preserve
@@ -90,8 +95,12 @@ class XteClient:
         blocks = make_blocks(image_object)
         async with Notifications(self.client, notify_char, settle=self.settle) as replies:
             self._replies = replies
-            await self._command(write_char, b"\x01" + len(image_object).to_bytes(4, "big"),
-                                chunk_size, bytes.fromhex("01ffbd"))
+            await self._command(
+                write_char,
+                b"\x01" + len(image_object).to_bytes(4, "big"),
+                chunk_size,
+                bytes.fromhex("01ffbd"),
+            )
             for block in blocks:
                 await self._write(write_char, block, chunk_size)
             await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))

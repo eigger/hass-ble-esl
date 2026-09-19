@@ -105,9 +105,7 @@ def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]
                     mode=NumberSelectorMode.BOX,
                 )
             ),
-            vol.Required(
-                CONF_WRITE_DELAY_MS, default=DEFAULT_WRITE_DELAY_MS
-            ): NumberSelector(
+            vol.Required(CONF_WRITE_DELAY_MS, default=DEFAULT_WRITE_DELAY_MS): NumberSelector(
                 NumberSelectorConfig(
                     min=0,
                     max=1000,
@@ -120,9 +118,7 @@ def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]
                 CONF_PREVENT_DUPLICATE_SEND,
                 default=DEFAULT_PREVENT_DUPLICATE_SEND,
             ): bool,
-            vol.Required(
-                CONF_DEBOUNCE_MS, default=DEFAULT_DEBOUNCE_MS
-            ): NumberSelector(
+            vol.Required(CONF_DEBOUNCE_MS, default=DEFAULT_DEBOUNCE_MS): NumberSelector(
                 NumberSelectorConfig(
                     min=0,
                     max=120000,
@@ -175,9 +171,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
         if self._discovery_info:
             title = _title(self._discovery_info, backend, model_key)
         else:
-            title = self.context.get("title_placeholders", {}).get(
-                "name", "BLE ESL"
-            )
+            title = self.context.get("title_placeholders", {}).get("name", "BLE ESL")
 
         return self.async_create_entry(
             title=title,
@@ -231,9 +225,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders=self.context["title_placeholders"],
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the user step to pick discovered device."""
         if user_input is not None:
             address = user_input[CONF_ADDRESS]
@@ -247,9 +239,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             self._protocol_id = discovery.backend.id
 
             if discovery.backend.capabilities.model_detection:
-                adv_info = discovery.backend.parse_advertisement(
-                    discovery.discovery_info
-                )
+                adv_info = discovery.backend.parse_advertisement(discovery.discovery_info)
                 if adv_info and adv_info.model_key:
                     self._detected_model = adv_info.model_key
                     return self._create_entry(self._detected_model)
@@ -273,17 +263,14 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_devices_found")
 
         titles = {
-            address: discovery.title
-            for (address, discovery) in self._discovered_devices.items()
+            address: discovery.title for (address, discovery) in self._discovered_devices.items()
         }
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_ADDRESS): vol.In(titles)}),
         )
 
-    async def async_step_model(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_model(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle model selection step."""
         backend = self._backend or esl_ble.get(self._protocol_id)
 
@@ -318,9 +305,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 class OptionsFlowHandler(OptionsFlowWithReload):
     """Handle options flow for BLE ESL."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)

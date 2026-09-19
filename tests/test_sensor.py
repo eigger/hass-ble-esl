@@ -98,9 +98,7 @@ def test_duration_and_failure_sensors():
 
     last_fail_coord = MagicMock()
     last_fail_coord.data = None
-    last_fail_sensor = BleEslLastFailureTimeSensorEntity(
-        hass, entry, last_fail_coord
-    )
+    last_fail_sensor = BleEslLastFailureTimeSensorEntity(hass, entry, last_fail_coord)
     assert last_fail_sensor.native_value is None
 
 

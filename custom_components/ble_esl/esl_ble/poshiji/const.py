@@ -16,5 +16,3 @@ BLOCK_DATA_SIZE = 1211  # 1220-byte logical block, including its 9-byte header.
 # proxies drop a write issued immediately after the CCCD write.
 NOTIFY_SETTLE_S = 0.5
 PALETTE = ((0, 0, 0), (255, 255, 255), (255, 255, 0), (255, 0, 0))
-
-

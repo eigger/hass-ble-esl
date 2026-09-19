@@ -21,13 +21,13 @@ plus the package-layout ones against every registered backend.
 
 ```python
 class FooBluetoothDeviceData(BleParser):
-    brand = BRAND                       # required: HA device manufacturer
-    fallback_name = "Foo"               # required: model name until a preset is known
-    is_advertisement = staticmethod(is_foo_advertisement)   # required
+    brand = BRAND  # required: HA device manufacturer
+    fallback_name = "Foo"  # required: model name until a preset is known
+    is_advertisement = staticmethod(is_foo_advertisement)  # required
 
-    def _parse(self, service_info):     # optional: readings from the advertisement
+    def _parse(self, service_info):  # optional: readings from the advertisement
         ...
-        self.update_battery(volts, MIN_V, MAX_V)   # voltage / % / battery-low in one call
+        self.update_battery(volts, MIN_V, MAX_V)  # voltage / % / battery-low in one call
         self.set_device_sw_version(...)
 ```
 
@@ -38,18 +38,18 @@ inherited; do not override `_start_update`.
 
 ```python
 class FooBleBackend(BleBackend):
-    id = "foo"                          # registry / options key, lowercase, unique
-    label = "FOO"                       # short name shown as the HA model_id
-    name = "Foo (vendor)"               # shown in the config UI
+    id = "foo"  # registry / options key, lowercase, unique
+    label = "FOO"  # short name shown as the HA model_id
+    name = "Foo (vendor)"  # shown in the config UI
     capabilities = Capabilities(
-        passive_battery=...,            # battery from advertisements
-        session_battery=...,            # battery from the write session's reply
+        passive_battery=...,  # battery from advertisements
+        session_battery=...,  # battery from the write session's reply
         session_temperature=...,
-        model_detection=...,            # advertisement identifies the model -> no model step in the config flow
-        palettes=("BW", "BWR"),         # every preset's `colors` must be listed here
+        model_detection=...,  # advertisement identifies the model -> no model step in the config flow
+        palettes=("BW", "BWR"),  # every preset's `colors` must be listed here
     )
     PRESETS = PRESETS
-    parser_cls = FooBluetoothDeviceData # also supplies `brand`
+    parser_cls = FooBluetoothDeviceData  # also supplies `brand`
     prepare_image = staticmethod(writer.prepare)
     write_session = staticmethod(writer.write_session)
 

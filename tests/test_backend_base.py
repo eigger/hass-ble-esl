@@ -19,7 +19,7 @@ from custom_components.ble_esl.esl_ble.base import (
     battery_percent,
 )
 
-PRESET = DevicePreset(key="p", display_name="Panel 2.9\"", width=296, height=128)
+PRESET = DevicePreset(key="p", display_name='Panel 2.9"', width=296, height=128)
 PRESET_WITH_RES = DevicePreset(key="q", display_name="Panel 296x128", width=296, height=128)
 
 
@@ -55,8 +55,8 @@ def test_parser_naming_with_and_without_preset():
     assert parser._device_manufacturer == "Acme"
 
     parser.set_preset(PRESET)  # re-derives naming from the last advertisement
-    assert parser.title == "54200055 (Panel 2.9\")"
-    assert parser._device_type == "Panel 2.9\" 296x128"
+    assert parser.title == '54200055 (Panel 2.9")'
+    assert parser._device_type == 'Panel 2.9" 296x128'
 
     parser.set_preset(PRESET_WITH_RES)  # resolution already in the name: not repeated
     assert parser._device_type == "Panel 296x128"
@@ -98,8 +98,12 @@ def test_backend_declarative_defaults():
 def _define(**attrs):
     """Define a backend subclass with the given class body; returns the error message or None."""
     body = dict(
-        id="x", label="X", name="X", capabilities=_Backend.capabilities,
-        PRESETS=_Backend.PRESETS, parser_cls=_Parser,
+        id="x",
+        label="X",
+        name="X",
+        capabilities=_Backend.capabilities,
+        PRESETS=_Backend.PRESETS,
+        parser_cls=_Parser,
         parse_advertisement=lambda self, i: None,
         prepare_image=lambda self, p, i, a: i,
         write_session=_Backend.write_session,
@@ -231,7 +235,9 @@ def test_notifications_timeout_names_the_step():
 
     async def _test():
         async with Notifications(_notifying_client(), "char") as replies:
-            with pytest.raises(NotificationTimeout, match=r"No response from tag within 0\.05s after START"):
+            with pytest.raises(
+                NotificationTimeout, match=r"No response from tag within 0\.05s after START"
+            ):
                 await replies.next(0.05, step="START")
             with pytest.raises(NotificationTimeout, match="after DONE"):
                 await replies.wait_for(lambda d: False, 0.05, step="DONE")
@@ -281,7 +287,9 @@ def test_notifications_settle_after_subscribe(monkeypatch):
         order = []
         client = _notifying_client()
         client.start_notify = AsyncMock(side_effect=lambda *a: order.append("subscribe"))
-        monkeypatch.setattr(base.asyncio, "sleep", AsyncMock(side_effect=lambda s: order.append(f"sleep {s}")))
+        monkeypatch.setattr(
+            base.asyncio, "sleep", AsyncMock(side_effect=lambda s: order.append(f"sleep {s}"))
+        )
         async with base.Notifications(client, "char", settle=0.5):
             order.append("body")
         assert order == ["subscribe", "sleep 0.5", "body"]

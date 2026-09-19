@@ -210,9 +210,7 @@ def encode_image(
     w, h = align8(width), align8(height)
     expected = w * h
     if len(plane_bw) != expected:
-        raise ValueError(
-            f"plane_bw must be {expected} entries (got {len(plane_bw)})"
-        )
+        raise ValueError(f"plane_bw must be {expected} entries (got {len(plane_bw)})")
 
     def hx(v: int, digits: int) -> str:
         return f"{v:0{digits}X}"
@@ -322,11 +320,11 @@ def quantize_image(
             if not dither:
                 continue
             down = y + 1 < h
-            if (err := r - pal_r[best]):
+            if err := r - pal_r[best]:
                 diffuse(rs, i, err, down, right, y)
-            if (err := g - pal_g[best]):
+            if err := g - pal_g[best]:
                 diffuse(gs, i, err, down, right, y)
-            if (err := b - pal_b[best]):
+            if err := b - pal_b[best]:
                 diffuse(bs, i, err, down, right, y)
 
     w8, h8 = align8(width), align8(height)

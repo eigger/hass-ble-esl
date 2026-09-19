@@ -48,14 +48,12 @@ def test_parser_start_update_battery_and_versions():
     info.address = "66:66:54:20:00:55"
     info.service_uuids = [SERVICE_UUID]
     # PID=0x1234, AppVer=0x0102(258), HwVer=0x0304(772), DispVer=0x0506, Bat=3000mV (0x0BB8)
-    mfr_bytes = bytes([
-        0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8
-    ])
+    mfr_bytes = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
     info.manufacturer_data = {MANUFACTURER_ID: mfr_bytes}
 
     parser._start_update(info)
 
-    assert parser.title == "54200055 (2.9\" BWRY)"
+    assert parser.title == '54200055 (2.9" BWRY)'
     assert parser.get_device_name() == "Zhsunyco 54200055"
     assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 3.0
     assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 100

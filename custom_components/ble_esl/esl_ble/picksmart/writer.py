@@ -76,9 +76,7 @@ class PickSmartClient:
         await self.client.write_gatt_char(uuid, packet, response=False)
         if delay > 0:
             await asyncio.sleep(delay)
-        return await self._replies.next(
-            FEEDBACK_TIMEOUT if timeout is None else timeout, step=step
-        )
+        return await self._replies.next(FEEDBACK_TIMEOUT if timeout is None else timeout, step=step)
 
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
@@ -122,9 +120,7 @@ class PickSmartClient:
                 or img_start_resp[0] != RESP_IMAGE_DATA
                 or img_start_resp[1] != 0x00
             ):
-                raise PickSmartError(
-                    f"Unexpected image start response: {img_start_resp.hex()}"
-                )
+                raise PickSmartError(f"Unexpected image start response: {img_start_resp.hex()}")
 
             # Step 4: IMAGE_DATA chunk loop. The tag drives the transfer by
             # answering each chunk with the part it wants next; asking for the
@@ -140,18 +136,13 @@ class PickSmartClient:
                     self.img_uuid, data_packet, f"part {part}/{total_parts}"
                 )
 
-                if (
-                    len(resp) < 6
-                    or resp[0] != RESP_IMAGE_DATA
-                    or resp[1] != 0x00
-                ):
+                if len(resp) < 6 or resp[0] != RESP_IMAGE_DATA or resp[1] != 0x00:
                     # Not a "send me part N" frame. Only known to be fine when
                     # the chunk just sent was the last one; before that the
                     # image is incomplete whatever the frame means.
                     if (part + 1) * 240 < packet_size:
                         raise PickSmartError(
-                            f"Tag ended transfer after part {part}/{total_parts} "
-                            f"with {resp.hex()}"
+                            f"Tag ended transfer after part {part}/{total_parts} with {resp.hex()}"
                         )
                     _LOGGER.debug(
                         "%s: transfer ended by tag after last part %d/%d with %s",
@@ -212,7 +203,12 @@ async def write_session(
     cmd_uuid, img_uuid = sorted(char_uuids, key=lambda x: int(x[4:8], 16))[:2]
 
     picksmart = PickSmartClient(
-        client, cmd_uuid, img_uuid, preset, address,
-        attempt=attempt, write_delay_ms=write_delay_ms,
+        client,
+        cmd_uuid,
+        img_uuid,
+        preset,
+        address,
+        attempt=attempt,
+        write_delay_ms=write_delay_ms,
     )
     return await picksmart.write_payload(await prepared)

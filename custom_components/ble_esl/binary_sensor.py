@@ -72,18 +72,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up the BLE ESL binary sensors."""
     data = entry.runtime_data
-    processor = BleEslPassiveBluetoothDataProcessor(
-        sensor_update_to_bluetooth_data_update
+    processor = BleEslPassiveBluetoothDataProcessor(sensor_update_to_bluetooth_data_update)
+    entry.async_on_unload(
+        processor.async_add_entities_listener(BleEslBluetoothBinarySensorEntity, async_add_entities)
     )
     entry.async_on_unload(
-        processor.async_add_entities_listener(
-            BleEslBluetoothBinarySensorEntity, async_add_entities
-        )
-    )
-    entry.async_on_unload(
-        data.bt_coordinator.async_register_processor(
-            processor, BinarySensorEntityDescription
-        )
+        data.bt_coordinator.async_register_processor(processor, BinarySensorEntityDescription)
     )
 
     entities: list[BinarySensorEntity] = [
@@ -100,9 +94,7 @@ async def async_setup_entry(
 
 
 class BleEslBluetoothBinarySensorEntity(
-    PassiveBluetoothProcessorEntity[
-        BleEslPassiveBluetoothDataProcessor[bool | None]
-    ],
+    PassiveBluetoothProcessorEntity[BleEslPassiveBluetoothDataProcessor[bool | None]],
     BinarySensorEntity,
 ):
     """Representation of a BLE ESL binary sensor."""
@@ -186,7 +178,5 @@ class BleEslDisplayInSyncBinarySensor(BleEslCoordinatorEntity[bytes | None], Bin
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         self.async_on_remove(
-            self._preview_coordinator.async_add_listener(
-                self._handle_coordinator_update
-            )
+            self._preview_coordinator.async_add_listener(self._handle_coordinator_update)
         )

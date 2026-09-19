@@ -67,9 +67,7 @@ def parse_manufacturer_data(data: bytes) -> dict:
     Layout: PID(2B) + AppVer(2B) + HwVer(2B) + DispVer(2B) + BatVoltage_mv(2B) = 10 bytes.
     """
     if len(data) < 10:
-        raise ValueError(
-            f"expected at least 10 bytes of manufacturer data, got {len(data)}"
-        )
+        raise ValueError(f"expected at least 10 bytes of manufacturer data, got {len(data)}")
     return {
         "pid": data[0:2].hex(),
         "app_ver": struct.unpack_from("<H", data, 2)[0],
@@ -137,9 +135,7 @@ def cmd_ota_apply(firmware_size: int, crc16: int) -> bytes:
     )
 
 
-def cmd_rgb(
-    red: int, green: int, blue: int, on_ms: int, off_ms: int, work_ms: int
-) -> bytes:
+def cmd_rgb(red: int, green: int, blue: int, on_ms: int, off_ms: int, work_ms: int) -> bytes:
     return (
         _opcode_bytes(OP_RGB)
         + bytes([red & 0xFF, green & 0xFF, blue & 0xFF])
@@ -150,9 +146,7 @@ def cmd_rgb(
 
 
 def cmd_multiscreen_refresh(screen_a: int, screen_b: int) -> bytes:
-    return _opcode_bytes(OP_MULTISCREEN_REFRESH) + struct.pack(
-        "<bb", screen_a, screen_b
-    )
+    return _opcode_bytes(OP_MULTISCREEN_REFRESH) + struct.pack("<bb", screen_a, screen_b)
 
 
 def _color_distance(r1: int, g1: int, b1: int, r2: int, g2: int, b2: int) -> float:
@@ -160,11 +154,7 @@ def _color_distance(r1: int, g1: int, b1: int, r2: int, g2: int, b2: int) -> flo
     dr = r1 - r2
     dg = g1 - g2
     db = b1 - b2
-    return (
-        (2 + r_mean / 256) * dr * dr
-        + 4 * dg * dg
-        + (2 + (255 - r_mean) / 256) * db * db
-    )
+    return (2 + r_mean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - r_mean) / 256) * db * db
 
 
 def quantize_image(

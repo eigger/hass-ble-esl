@@ -11,7 +11,7 @@ from ..base import (
 PRESETS: dict[str, DevicePreset] = {
     "33": DevicePreset(
         key="33",
-        display_name="1.54\" BWR (ET0154-33B)",
+        display_name='1.54" BWR (ET0154-33B)',
         width=200,
         height=200,
         colors="BWR",
@@ -20,7 +20,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "36": DevicePreset(
         key="36",
-        display_name="2.13\" BWR (ETR0213-36B)",
+        display_name='2.13" BWR (ETR0213-36B)',
         width=250,
         height=122,
         colors="BWR",
@@ -29,7 +29,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "39": DevicePreset(
         key="39",
-        display_name="2.13\" BW (ETR0213-39B)",
+        display_name='2.13" BW (ETR0213-39B)',
         width=250,
         height=122,
         colors="BW",
@@ -38,7 +38,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "3A": DevicePreset(
         key="3A",
-        display_name="2.66\" BWR (ET0266-3A)",
+        display_name='2.66" BWR (ET0266-3A)',
         width=296,
         height=152,
         colors="BWR",
@@ -47,7 +47,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "3D": DevicePreset(
         key="3D",
-        display_name="2.9\" BWR (ET0290-3DB)",
+        display_name='2.9" BWR (ET0290-3DB)',
         width=296,
         height=128,
         colors="BWR",
@@ -56,7 +56,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "FF": DevicePreset(
         key="FF",
-        display_name="2.9\" BWR Gen1 (ETR290-FF)",
+        display_name='2.9" BWR Gen1 (ETR290-FF)',
         width=296,
         height=128,
         colors="BWR",
@@ -65,7 +65,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "55": DevicePreset(
         key="55",
-        display_name="3.5\" BWR (ET0350-55B)",
+        display_name='3.5" BWR (ET0350-55B)',
         width=384,
         height=184,
         colors="BWR",
@@ -74,7 +74,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "40": DevicePreset(
         key="40",
-        display_name="4.2\" BWR (ET0420-40B)",
+        display_name='4.2" BWR (ET0420-40B)',
         width=400,
         height=300,
         colors="BWR",
@@ -83,7 +83,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "43": DevicePreset(
         key="43",
-        display_name="4.2\" BWR (ET0420-43B)",
+        display_name='4.2" BWR (ET0420-43B)',
         width=400,
         height=300,
         colors="BWR",
@@ -92,7 +92,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "4F": DevicePreset(
         key="4F",
-        display_name="5.8\" BWR (ETR0580-4FB)",
+        display_name='5.8" BWR (ETR0580-4FB)',
         width=648,
         height=480,
         colors="BWR",
@@ -101,7 +101,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "44": DevicePreset(
         key="44",
-        display_name="7.5\" BWR (ET0750-44B)",
+        display_name='7.5" BWR (ET0750-44B)',
         width=800,
         height=480,
         colors="BWR",
@@ -110,7 +110,7 @@ PRESETS: dict[str, DevicePreset] = {
     ),
     "64": DevicePreset(
         key="64",
-        display_name="10.2\" BWR (ET1020-64)",
+        display_name='10.2" BWR (ET1020-64)',
         width=960,
         height=640,
         colors="BWR",
@@ -118,4 +118,3 @@ PRESETS: dict[str, DevicePreset] = {
         extra={"dither": True},
     ),
 }
-

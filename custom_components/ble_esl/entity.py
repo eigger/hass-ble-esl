@@ -38,9 +38,7 @@ class BleEslEntity:
     _address: str
     _identifier: str
 
-    def _bind_tag(
-        self, hass: HomeAssistant, entry: ConfigEntry, key: str | None = None
-    ) -> None:
+    def _bind_tag(self, hass: HomeAssistant, entry: ConfigEntry, key: str | None = None) -> None:
         """Bind to the tag of `entry`; `key` (default: class `_key`) is the unique-id suffix."""
         self.hass = hass
         self._entry_id = entry.entry_id
@@ -58,9 +56,7 @@ class BleEslEntity:
         return True
 
 
-class BleEslCoordinatorEntity[T](
-    BleEslEntity, CoordinatorEntity[DataUpdateCoordinator[T]]
-):
+class BleEslCoordinatorEntity[T](BleEslEntity, CoordinatorEntity[DataUpdateCoordinator[T]]):
     """Tag-bound entity fed by one of the per-entry DataUpdateCoordinators."""
 
     def __init__(

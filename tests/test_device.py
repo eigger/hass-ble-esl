@@ -18,7 +18,7 @@ def test_build_device_info():
     address = "66:66:54:20:00:55"
     preset = DevicePreset(
         key="290",
-        display_name="2.9\" BWRY",
+        display_name='2.9" BWRY',
         width=296,
         height=128,
         colors="BWRY",
@@ -26,7 +26,7 @@ def test_build_device_info():
     data = make_runtime_data(
         backend=WolinkBleBackend(),
         preset=preset,
-        model="2.9\" BWRY 296x128",
+        model='2.9" BWRY 296x128',
         sw_version="258",
         hw_version="772",
     )
@@ -34,7 +34,7 @@ def test_build_device_info():
     dev_info = build_device_info(data)
     assert dev_info["name"] == "Zhsunyco 54200055"
     assert dev_info["manufacturer"] == "Zhsunyco"
-    assert dev_info["model"] == "2.9\" BWRY 296x128"
+    assert dev_info["model"] == '2.9" BWRY 296x128'
     assert dev_info["model_id"] == "WOLINK"
     assert dev_info["sw_version"] == "258"
     assert dev_info["hw_version"] == "772"
@@ -69,14 +69,14 @@ def test_process_service_info_updates_device_registry():
     data = entry.runtime_data
     assert data.sw_version == "258"
     assert data.hw_version == "772"
-    assert data.model == "2.9\" BWRY 296x128"
+    assert data.model == '2.9" BWRY 296x128'
     assert data.manufacturer == "Zhsunyco"
 
     device_registry.async_update_device.assert_called_once_with(
         "mock_device_id_123",
         sw_version="258",
         hw_version="772",
-        model="2.9\" BWRY 296x128",
+        model='2.9" BWRY 296x128',
         manufacturer="Zhsunyco",
     )
 

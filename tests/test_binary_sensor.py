@@ -27,8 +27,14 @@ def test_bluetooth_connectivity_sensor():
     coordinator.data = True
 
     sensor = BleEslBluetoothConnectivitySensorEntity(hass, entry, coordinator)
-    assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
-    assert sensor.device_class == BinarySensorDeviceClass.CONNECTIVITY or sensor._attr_device_class == BinarySensorDeviceClass.CONNECTIVITY
+    assert (
+        sensor.entity_category == EntityCategory.DIAGNOSTIC
+        or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    )
+    assert (
+        sensor.device_class == BinarySensorDeviceClass.CONNECTIVITY
+        or sensor._attr_device_class == BinarySensorDeviceClass.CONNECTIVITY
+    )
     assert sensor.unique_id == "ble_esl_54200055_connectivity"
 
     sensor._handle_coordinator_update()
@@ -47,10 +53,11 @@ def test_display_in_sync_sensor():
     image_coord = MagicMock()
     preview_coord = MagicMock()
 
-    sensor = BleEslDisplayInSyncBinarySensor(
-        hass, entry, image_coord, preview_coord
+    sensor = BleEslDisplayInSyncBinarySensor(hass, entry, image_coord, preview_coord)
+    assert (
+        sensor.entity_category == EntityCategory.DIAGNOSTIC
+        or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
     )
-    assert sensor.entity_category == EntityCategory.DIAGNOSTIC or sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
     assert sensor.unique_id == "ble_esl_54200055_display_in_sync"
 
     # Both None

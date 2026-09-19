@@ -24,10 +24,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up BLE ESL image entities."""
     data = entry.runtime_data
-    async_add_entities([
-        BleEslImageEntity(hass, entry, data.image_coordinator),
-        BleEslPreviewImageEntity(hass, entry, data.preview_coordinator),
-    ])
+    async_add_entities(
+        [
+            BleEslImageEntity(hass, entry, data.image_coordinator),
+            BleEslPreviewImageEntity(hass, entry, data.preview_coordinator),
+        ]
+    )
 
 
 class _BleEslImageBase(BleEslCoordinatorEntity[bytes], ImageEntity):
@@ -65,11 +67,9 @@ class BleEslImageEntity(_BleEslImageBase):
     _attr_translation_key = "last_updated_content"
 
 
-
 class BleEslPreviewImageEntity(_BleEslImageBase):
     """Representation of preview image content."""
 
     _key = "preview_content_image"
     _attr_translation_key = "preview_content"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-

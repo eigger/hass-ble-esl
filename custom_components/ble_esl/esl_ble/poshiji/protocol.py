@@ -25,9 +25,9 @@ def pack_pixels(image: Image.Image) -> bytes:
     for i, pixel in enumerate(zip(raw[0::3], raw[1::3], raw[2::3], strict=True)):
         value = color_cache.get(pixel)
         if value is None:
-            value = min(range(4), key=lambda n: sum(
-                (pixel[c] - PALETTE[n][c]) ** 2 for c in range(3)
-            ))
+            value = min(
+                range(4), key=lambda n: sum((pixel[c] - PALETTE[n][c]) ** 2 for c in range(3))
+            )
             color_cache[pixel] = value
         packed = (packed << 2) | value
         if i % 4 == 3:
@@ -59,10 +59,20 @@ def make_image_object(pixels: bytes) -> bytes:
     compressed = encode_rle(pixels[:midpoint]) + encode_rle(pixels[midpoint:])
     # Preserve observed opaque fields (offsets 12..24 and 33) for this profile.
     metadata = bytes.fromhex("01000000110000000000000000")
-    body = (metadata + WIDTH.to_bytes(4, "big") + HEIGHT.to_bytes(4, "big")
-            + b"\x01" + len(compressed).to_bytes(4, "big") + compressed)
-    return (b"XTEK" + (sum(body) & 0xFFFFFFFF).to_bytes(4, "big")
-            + (12 + len(body)).to_bytes(4, "big") + body)
+    body = (
+        metadata
+        + WIDTH.to_bytes(4, "big")
+        + HEIGHT.to_bytes(4, "big")
+        + b"\x01"
+        + len(compressed).to_bytes(4, "big")
+        + compressed
+    )
+    return (
+        b"XTEK"
+        + (sum(body) & 0xFFFFFFFF).to_bytes(4, "big")
+        + (12 + len(body)).to_bytes(4, "big")
+        + body
+    )
 
 
 def make_command(payload: bytes) -> bytes:
@@ -79,11 +89,14 @@ def make_blocks(image_object: bytes) -> list[bytes]:
         raise ValueError("Invalid XTE block count")
     blocks = []
     for number in range(count):
-        payload = bytes((count, number)) + image_object[
-            number * BLOCK_DATA_SIZE:(number + 1) * BLOCK_DATA_SIZE
-        ]
-        blocks.append(b"XTE\x02" + (7 + len(payload)).to_bytes(2, "big")
-                      + bytes((sum(payload) & 0xFF,)) + payload)
+        payload = (
+            bytes((count, number))
+            + image_object[number * BLOCK_DATA_SIZE : (number + 1) * BLOCK_DATA_SIZE]
+        )
+        blocks.append(
+            b"XTE\x02"
+            + (7 + len(payload)).to_bytes(2, "big")
+            + bytes((sum(payload) & 0xFF,))
+            + payload
+        )
     return blocks
-
-

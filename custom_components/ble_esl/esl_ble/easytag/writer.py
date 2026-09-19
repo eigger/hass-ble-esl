@@ -40,9 +40,7 @@ class EasyTagError(Exception):
 class EasyTagClient:
     """Client handling a single connected easyTag BLE session."""
 
-    def __init__(
-        self, client: BleakClient, preset: DevicePreset, address: str
-    ) -> None:
+    def __init__(self, client: BleakClient, preset: DevicePreset, address: str) -> None:
         self.client = client
         self.preset = preset
         self.address = address
@@ -56,11 +54,7 @@ class EasyTagClient:
         ) as replies:
             # Anything notified during the settle window is not our reply.
             replies.clear()
-            base_delay = (
-                INTER_PACKET_DELAY
-                + (write_delay_ms / 1000.0)
-                + (0.05 * (attempt - 1))
-            )
+            base_delay = INTER_PACKET_DELAY + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1))
             # Send header (frame 0) and data frames (frames 1..N)
             for idx, frame in enumerate(frames):
                 await self.client.write_gatt_char(WRITE_UUID, frame, response=False)
@@ -85,9 +79,7 @@ class EasyTagClient:
         write_delay_ms: int = 0,
     ) -> WriteResult:
         """Transmit already-built image frames."""
-        return await self._send_frames(
-            frames, attempt=attempt, write_delay_ms=write_delay_ms
-        )
+        return await self._send_frames(frames, attempt=attempt, write_delay_ms=write_delay_ms)
 
     async def read_status(self) -> WriteResult:
         """Send status query ping frame (0xF0) and await battery/temp notify."""
