@@ -4,7 +4,7 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
-from bluetooth import device_of, sensor_values, service_info
+from bt import sensor_values, service_info, update_device
 import pytest
 
 from custom_components.ble_esl import esl_ble
@@ -39,7 +39,7 @@ def test_discovery_profile_and_no_invented_sensors():
         assert adv.model_key == "psj-420" and adv.battery_mv is None
         parser = backend.create_parser(PSJ_420)
         update = parser.update(info)
-        device = device_of(update)
+        device = update_device(update)
         assert device.manufacturer == "Poshiji"
         assert "PSJ-420" in device.model
         assert {k for k in sensor_values(update)} <= {"signal_strength"}  # nothing invented

@@ -96,6 +96,6 @@ def binary_values(update: Any) -> dict[str, bool | None]:
     return {k.key: v.native_value for k, v in update.binary_entity_values.items()}
 
 
-def device_of(update: Any) -> Any:
+def update_device(update: Any) -> Any:
     """The (single) SensorDeviceInfo in a SensorUpdate."""
     return update.devices[None]

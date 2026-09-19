@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bluetooth import binary_values, device_of, sensor_values, service_info
+from bt import binary_values, sensor_values, service_info, update_device
 
 from custom_components.ble_esl.esl_ble.picksmart.const import (
     MANUFACTURER_ID,
@@ -73,7 +73,7 @@ def test_picksmart_parser_device_info_and_battery():
     update = parser.update(info)
 
     assert update.title == 'CCDDEEFF (2.9" EPD BWR)'
-    device = device_of(update)
+    device = update_device(update)
     assert device.name == "Gicisky CCDDEEFF"
     assert device.sw_version == "0x8101"
     values = sensor_values(update)

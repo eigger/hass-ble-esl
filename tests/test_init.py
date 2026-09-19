@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bluetooth import inject_bluetooth_service_info
+from bt import inject_bluetooth_service_info
 from conftest import ADDRESS, IDENT, WOLINK_MFR_BYTES, device_of, setup_entry, wolink_service_info
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant

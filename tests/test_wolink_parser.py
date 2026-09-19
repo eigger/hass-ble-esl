@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bluetooth import binary_values, device_of, sensor_values, service_info
+from bt import binary_values, sensor_values, service_info, update_device
 
 from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
 from custom_components.ble_esl.esl_ble.wolink.const import (
@@ -50,7 +50,7 @@ def test_parser_start_update_battery_and_versions():
         service_info("66:66:54:20:00:55", manufacturer_data={MANUFACTURER_ID: mfr_bytes})
     )
     assert update.title == '54200055 (2.9" BWRY)'
-    device = device_of(update)
+    device = update_device(update)
     assert device.name == "Zhsunyco 54200055"
     assert device.sw_version == "258"
     assert device.hw_version == "772"

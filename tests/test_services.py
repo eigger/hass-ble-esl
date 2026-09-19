@@ -224,11 +224,13 @@ async def test_multi_target_pipelines_encodes(
     targets = [device_id_of(hass, "66:66:54:20:00:01"), device_id_of(hass, "66:66:54:20:00:02")]
     task = hass.async_create_task(call(hass, "write", targets))
     await first_started.wait()
-    await asyncio.sleep(0.05)
-    entries = hass.config_entries.async_loaded_entries(DOMAIN)
-    # The encode of the second tag is scheduled (its future exists) while the first writes.
+    # While the first tag is still transferring, the second has already encoded.
+    for _ in range(200):
+        if len(tag_writer.encoded) == 2:
+            break
+        await asyncio.sleep(0.01)
+    assert sorted(tag_writer.encoded) == ["66:66:54:20:00:01", "66:66:54:20:00:02"]
     assert tag_writer.write_prepared.await_count == 1
-    assert all(e.runtime_data.start_time is not None or True for e in entries)
     release_first.set()
     await task
     assert tag_writer.write_prepared.await_count == 2

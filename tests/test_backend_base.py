@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
-from bluetooth import device_of, service_info
+from bt import service_info, update_device
 import pytest
 
 from custom_components.ble_esl import esl_ble
@@ -46,7 +46,7 @@ def test_parser_naming_with_and_without_preset():
     parser = _Parser()
     update = parser.update(_info())
     assert update.title == "54200055 (Generic)"
-    device = device_of(update)
+    device = update_device(update)
     assert device.name == "Acme 54200055"
     assert device.model == "Generic"
     assert device.manufacturer == "Acme"
@@ -54,10 +54,10 @@ def test_parser_naming_with_and_without_preset():
     parser.set_preset(PRESET)  # re-derives naming from the last advertisement
     update = parser.update(_info())
     assert update.title == '54200055 (Panel 2.9")'
-    assert device_of(update).model == 'Panel 2.9" 296x128'
+    assert update_device(update).model == 'Panel 2.9" 296x128'
 
     parser.set_preset(PRESET_WITH_RES)  # resolution already in the name: not repeated
-    assert device_of(parser.update(_info())).model == "Panel 296x128"
+    assert update_device(parser.update(_info())).model == "Panel 296x128"
 
 
 def test_parser_ignores_foreign_advertisements():

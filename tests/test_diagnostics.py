@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from bluetooth import inject_bluetooth_service_info, service_info
+from bt import inject_bluetooth_service_info, service_info
 from conftest import ADDRESS, IDENT, device_id_of, setup_entry
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component

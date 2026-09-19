@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bluetooth import service_info
+from bt import service_info
 from conftest import ADDRESS, IDENT, device_of, setup_entry
 from homeassistant.core import HomeAssistant
 

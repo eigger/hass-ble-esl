@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bluetooth import inject_bluetooth_service_info, service_info
+from bt import inject_bluetooth_service_info, service_info
 from conftest import ADDRESS, IDENT, setup_entry, wolink_service_info
 from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_USER, ConfigEntryState
 from homeassistant.const import CONF_ADDRESS
@@ -204,3 +204,18 @@ def test_model_selector_options_verified_first():
     assert set(keys[:4]) == {"290", "350", "750", "420"}  # hardware/reported confidence first
     for option in options:
         assert ("(unverified)" in option["label"]) is (not PRESETS[option["value"]].verified)
+
+
+def test_options_schema_default_model_falls_back_per_protocol():
+    """DEFAULT_MODEL ("290") is WOLINK's; other protocols default to their first preset."""
+    from custom_components.ble_esl.config_flow import _build_options_schema
+    from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS as EASYTAG_PRESETS
+
+    def model_default(protocol):
+        for key in _build_options_schema(protocol):
+            if str(key) == CONF_MODEL:
+                return key.default()
+        raise AssertionError("no model field")
+
+    assert model_default("wolink") == "290"
+    assert model_default("easytag") == next(iter(EASYTAG_PRESETS))

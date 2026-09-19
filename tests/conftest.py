@@ -15,7 +15,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 from bleak.backends.device import BLEDevice
-from bluetooth import inject_bluetooth_service_info, service_info
+from bt import inject_bluetooth_service_info, service_info
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH
@@ -36,8 +36,11 @@ WOLINK_MFR_BYTES = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
-    """Let Home Assistant load custom_components/ble_esl."""
+def auto_enable_custom_integrations(request: pytest.FixtureRequest) -> None:
+    """Let Home Assistant load custom_components/ble_esl — only for tests that
+    use `hass`, so codec/session tests do not start a Home Assistant at all."""
+    if "hass" in request.fixturenames:
+        request.getfixturevalue("enable_custom_integrations")
 
 
 def wolink_service_info(address: str = ADDRESS, mfr_bytes: bytes = WOLINK_MFR_BYTES):
@@ -99,10 +102,11 @@ class TagWriter:
     """
 
     write_prepared: AsyncMock
-    ble_device: BLEDevice
     available: bool = True
     write_result: WriteResult = field(default_factory=lambda: WriteResult(success=True))
     write_hook: Callable[..., Awaitable[WriteResult]] | None = None
+    encoded: list[str] = field(default_factory=list)
+    """Addresses whose image has been encoded (prepare_image ran), in order."""
 
     def sent_image(self, call_index: int = -1) -> Image.Image:
         """The image handed to the backend on the n-th write."""
@@ -112,8 +116,7 @@ class TagWriter:
 @pytest.fixture
 def tag_writer() -> TagWriter:
     """Stub the WOLINK backend's encode/transfer and the renderer."""
-    ble_device = BLEDevice(ADDRESS, "WOLINK", {})
-    writer = TagWriter(write_prepared=AsyncMock(), ble_device=ble_device)
+    writer = TagWriter(write_prepared=AsyncMock())
 
     async def fake_write_prepared(ble_device, preset, prepared, **kwargs):
         image = await prepared
@@ -127,6 +130,7 @@ def tag_writer() -> TagWriter:
         # Keep the encode future *pending* when the write starts, as on a
         # loaded machine, so the await-after-connect path is exercised.
         time.sleep(0.02)
+        writer.encoded.append(address)
         return image
 
     def fake_render(hass, preset, payload, *, rotate=0, background="white"):
@@ -141,7 +145,7 @@ def tag_writer() -> TagWriter:
         patch.object(
             svc,
             "async_ble_device_from_address",
-            lambda hass, address: ble_device if writer.available else None,
+            lambda hass, address: BLEDevice(address, "WOLINK", {}) if writer.available else None,
         ),
         patch.object(svc, "sleep", AsyncMock()),  # retry backoff
     ):
