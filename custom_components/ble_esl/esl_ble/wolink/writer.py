@@ -221,10 +221,13 @@ async def update_image(
     write_delay_ms: int = 0,
 ) -> WriteResult:
     """Connect, authenticate, and write image to a WOLINK ESL device."""
-    client: BleakClient = await establish_connection(
-        BleakClient, ble_device, ble_device.address
-    )
+    # Connect inside the try so connection failures surface as a failed
+    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
+    client: BleakClient | None = None
     try:
+        client = await establish_connection(
+            BleakClient, ble_device, ble_device.address
+        )
         wolink = WolinkClient(client, preset, ble_device.address)
         await wolink.authenticate()
         return await wolink.write_image(

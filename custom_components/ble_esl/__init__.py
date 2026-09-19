@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from asyncio import Lock, sleep
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from functools import partial
 from io import BytesIO
@@ -18,10 +19,9 @@ from homeassistant.components.bluetooth import (
     async_last_service_info,
 )
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.device_registry import (
     CONNECTION_BLUETOOTH,
     DeviceRegistry,
@@ -31,6 +31,7 @@ from homeassistant.util.dt import now
 from sensor_state_data import SensorUpdate
 
 from . import esl_ble
+from .esl_ble import WriteResult
 from .const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
@@ -262,12 +263,12 @@ async def async_setup_entry(
     hass.data[DOMAIN][entry.entry_id]["start_time"] = None
     hass.data[DOMAIN][entry.entry_id]["last_image_data"] = None
 
-    # Create write debouncer
-    debounce_ms = int(options.get(CONF_DEBOUNCE_MS, DEFAULT_DEBOUNCE_MS))
-    hass.data[DOMAIN][entry.entry_id]["write_debouncer"] = Debouncer(
-        hass, _LOGGER, cooldown=debounce_ms / 1000.0, immediate=False
-    )
-    hass.data[DOMAIN][entry.entry_id]["write_pending"] = False
+    # Trailing-edge debounce for write_guarded: a loop TimerHandle for the
+    # pending write, replaced (cancelled + rescheduled) on every new call so the
+    # write fires `debounce_ms` after the *last* request with its payload.
+    # HA's Debouncer is not used because it neither restarts its timer nor
+    # keeps a call that arrives while a previous one is still executing.
+    hass.data[DOMAIN][entry.entry_id]["pending_write_handle"] = None
 
     connectivity_coordinator.async_set_updated_data(False)
     duration_coordinator.async_set_updated_data(0.0)
@@ -340,9 +341,13 @@ async def async_setup_entry(
         ]
         batt_coord = hass.data[DOMAIN][entry_id]["battery_coordinator"]
         temp_coord = hass.data[DOMAIN][entry_id]["temperature_coordinator"]
-        ble_device = async_ble_device_from_address(hass, address)
 
-        if require_ble_device and ble_device is None:
+        # The BLE device handle itself is resolved again in execute_write_core
+        # right before each attempt, since a debounced write may run much later.
+        if (
+            require_ble_device
+            and async_ble_device_from_address(hass, address) is None
+        ):
             _LOGGER.error(
                 "Cannot write to %s: BLE device handle is unavailable. Please check power/range and Bluetooth adapter state.",
                 address,
@@ -371,7 +376,6 @@ async def async_setup_entry(
             "last_failure_coordinator": last_fail_coord,
             "battery_coordinator": batt_coord,
             "temperature_coordinator": temp_coord,
-            "ble_device": ble_device,
             "image": image,
             "current_image_data": current_image_data,
             "max_retries": max_retries,
@@ -391,7 +395,6 @@ async def async_setup_entry(
         last_fail_coord = context["last_failure_coordinator"]
         batt_coord = context["battery_coordinator"]
         temp_coord = context["temperature_coordinator"]
-        ble_device = context["ble_device"]
         image = context["image"]
         current_image_data = context["current_image_data"]
         max_retries = context["max_retries"]
@@ -406,13 +409,22 @@ async def async_setup_entry(
 
         try:
             for attempt in range(1, max_retries + 1):
-                result = await backend.write_image(
-                    ble_device,
-                    preset,
-                    image,
-                    attempt=attempt,
-                    write_delay_ms=write_delay_ms,
-                )
+                # Resolve the handle fresh each attempt: the one seen at service
+                # call time may be stale after a debounce delay or a retry sleep.
+                ble_device = async_ble_device_from_address(hass, address)
+                if ble_device is None:
+                    result = WriteResult(
+                        success=False,
+                        error="BLE device handle is unavailable (out of range or adapter down)",
+                    )
+                else:
+                    result = await backend.write_image(
+                        ble_device,
+                        preset,
+                        image,
+                        attempt=attempt,
+                        write_delay_ms=write_delay_ms,
+                    )
                 if result.success:
                     # For session-based protocols (e.g. easyTag), write result provides battery/temp.
                     # For WOLINK, battery is passively updated via 0xBBAA advertisement broadcasts.
@@ -425,6 +437,12 @@ async def async_setup_entry(
                             result.temperature_c
                         )
                     image_coord.async_set_updated_data(current_image_data)
+                    # Only a successful write counts for duplicate detection;
+                    # a failed or locked-out write must not suppress a retry
+                    # of the same payload.
+                    hass.data[DOMAIN][entry_id]["last_image_data"] = (
+                        current_image_data
+                    )
                     return
 
                 _LOGGER.warning(
@@ -463,78 +481,109 @@ async def async_setup_entry(
             conn_coord.async_set_updated_data(False)
 
     def cancel_pending_write(entry_id: str) -> None:
-        """Cancel pending debounced write for immediate execution paths."""
-        if not hass.data[DOMAIN][entry_id].get("write_pending"):
-            return
-        debouncer = hass.data[DOMAIN][entry_id]["write_debouncer"]
-        debouncer.async_cancel()
-        hass.data[DOMAIN][entry_id]["write_pending"] = False
+        """Cancel a pending debounced write (new request or immediate path)."""
+        handle = hass.data[DOMAIN][entry_id].get("pending_write_handle")
+        if handle is not None:
+            handle.cancel()
+            hass.data[DOMAIN][entry_id]["pending_write_handle"] = None
 
-    async def run_ble_write(
-        entry_id: str,
-        address: str,
-        image_coordinator: DataUpdateCoordinator[bytes],
-        current_image_data: bytes,
-        context: dict[str, Any],
-    ) -> None:
+    async def run_ble_write(context: dict[str, Any]) -> None:
         """Run BLE write under lock with final write-lock check."""
+        entry_id = context["entry_id"]
         async with hass.data[DOMAIN][LOCK]:
-            hass.data[DOMAIN][entry_id]["write_pending"] = False
             if hass.data[DOMAIN][entry_id].get(WRITE_LOCK, False):
                 _LOGGER.info(
-                    "Write lock active for %s — skipping BLE write", address
+                    "Write lock active for %s — skipping BLE write",
+                    context["address"],
                 )
                 return
             await execute_write_core(context)
 
+    def schedule_debounced_write(context: dict[str, Any], delay_s: float) -> None:
+        """(Re)schedule a write to run `delay_s` after this call.
+
+        Any pending write for the entry is cancelled first, so repeated calls
+        collapse into one write carrying the last payload, sent once requests
+        have been quiet for the debounce delay (trailing edge). The write runs
+        as a background task; the service call itself returns immediately.
+        """
+        entry_id = context["entry_id"]
+        address = context["address"]
+        entry_data = hass.data[DOMAIN][entry_id]
+        cancel_pending_write(entry_id)
+
+        async def _run() -> None:
+            try:
+                await run_ble_write(context)
+            except HomeAssistantError as err:
+                # No service caller to propagate to; the failure sensors are
+                # already updated by execute_write_core.
+                _LOGGER.error("Debounced write to %s failed: %s", address, err)
+
+        @callback
+        def _fire() -> None:
+            entry_data["pending_write_handle"] = None
+            hass.async_create_background_task(
+                _run(), name=f"ble_esl debounced write {address}"
+            )
+
+        entry_data["pending_write_handle"] = hass.loop.call_later(delay_s, _fire)
+
+    async def for_each_target(
+        service: ServiceCall,
+        handler: Callable[[str], Awaitable[None]],
+    ) -> None:
+        """Run handler per targeted device, continuing past per-device failures.
+
+        Errors are collected and raised together at the end so one unreachable
+        tag does not prevent the remaining targets from being written.
+        """
+        errors: list[str] = []
+        for device_id in normalize_device_ids(service):
+            try:
+                entry_id = await get_entry_id_from_device(hass, device_id)
+                await handler(entry_id)
+            except (HomeAssistantError, ValueError) as err:
+                errors.append(str(err))
+        if errors:
+            raise HomeAssistantError("; ".join(errors))
+
     # Handler for the write custom service
     async def writeservice(service: ServiceCall) -> None:
-        device_ids = normalize_device_ids(service)
         dry_run = service.data.get("dry_run", False)
 
-        for device_id in device_ids:
-            entry_id = await get_entry_id_from_device(hass, device_id)
+        async def handle(entry_id: str) -> None:
             context = await build_write_context(
                 service, entry_id, require_ble_device=False
             )
             if context is None:
-                continue
-
-            address = context["address"]
-            image_coord = context["image_coordinator"]
-            current_image_data = context["current_image_data"]
-            hass.data[DOMAIN][entry_id]["last_image_data"] = (
-                current_image_data
-            )
+                return
 
             if dry_run:
-                continue
+                # Dry run stands in for a successful write for duplicate detection.
+                hass.data[DOMAIN][entry_id]["last_image_data"] = (
+                    context["current_image_data"]
+                )
+                return
 
             cancel_pending_write(entry_id)
-            await run_ble_write(
-                entry_id,
-                address,
-                image_coord,
-                current_image_data,
-                context,
-            )
+            await run_ble_write(context)
+
+        await for_each_target(service, handle)
 
     # Handler for the guarded write service
     async def writeguardedservice(service: ServiceCall) -> None:
-        device_ids = normalize_device_ids(service)
         dry_run = service.data.get("dry_run", False)
 
-        for device_id in device_ids:
-            entry_id = await get_entry_id_from_device(hass, device_id)
+        async def handle(entry_id: str) -> None:
             context = await build_write_context(
                 service, entry_id, require_ble_device=True
             )
             if context is None:
-                continue
+                return
 
             current_options = context["options"]
             address = context["address"]
-            image_coord = context["image_coordinator"]
             current_image_data = context["current_image_data"]
             last_image_data = hass.data[DOMAIN][entry_id].get("last_image_data")
             prevent_duplicate_send = current_options.get(
@@ -546,20 +595,19 @@ async def async_setup_entry(
                 and current_image_data == last_image_data
             ):
                 _LOGGER.info("Skipping duplicate image for %s", address)
-                continue
-
-            hass.data[DOMAIN][entry_id]["last_image_data"] = (
-                current_image_data
-            )
+                return
 
             if dry_run:
-                continue
+                hass.data[DOMAIN][entry_id]["last_image_data"] = (
+                    current_image_data
+                )
+                return
 
             if hass.data[DOMAIN][entry_id].get(WRITE_LOCK, False):
                 _LOGGER.info(
                     "Write lock active for %s — skipping BLE write", address
                 )
-                continue
+                return
 
             debounce_ms = int(
                 service.data.get(
@@ -570,37 +618,19 @@ async def async_setup_entry(
                 )
             )
 
-            debouncer = hass.data[DOMAIN][entry_id]["write_debouncer"]
             if debounce_ms > 0:
-                new_cooldown = debounce_ms / 1000.0
-                if debouncer.cooldown != new_cooldown:
-                    debouncer.cooldown = new_cooldown
-                had_pending = hass.data[DOMAIN][entry_id]["write_pending"]
-                hass.data[DOMAIN][entry_id]["write_pending"] = True
-                if had_pending:
+                if hass.data[DOMAIN][entry_id].get("pending_write_handle"):
                     _LOGGER.info(
                         "Cancelled pending write for %s, rescheduled with %dms delay",
                         address,
                         debounce_ms,
                     )
-                debouncer.function = partial(
-                    run_ble_write,
-                    entry_id,
-                    address,
-                    image_coord,
-                    current_image_data,
-                    context,
-                )
-                debouncer.async_schedule_call()
+                schedule_debounced_write(context, debounce_ms / 1000.0)
             else:
                 cancel_pending_write(entry_id)
-                await run_ble_write(
-                    entry_id,
-                    address,
-                    image_coord,
-                    current_image_data,
-                    context,
-                )
+                await run_ble_write(context)
+
+        await for_each_target(service, handle)
 
     # Register the services
     hass.services.async_register(DOMAIN, "write", writeservice)
@@ -622,10 +652,10 @@ async def async_unload_entry(
         return False
 
     if entry.entry_id in hass.data.get(DOMAIN, {}):
-        if write_debouncer := hass.data[DOMAIN][entry.entry_id].get(
-            "write_debouncer"
+        if handle := hass.data[DOMAIN][entry.entry_id].get(
+            "pending_write_handle"
         ):
-            write_debouncer.async_shutdown()
+            handle.cancel()
 
     if DOMAIN in hass.data:
         hass.data[DOMAIN].pop(entry.entry_id, None)
