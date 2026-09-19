@@ -95,15 +95,15 @@ jobs:
           git commit -m "chore: bump imagespec to ${LATEST_VERSION}"
           git push --force origin "${branch}"
 
-          existing_pr="$(gh pr list --head "${branch}" --base master --json number --jq '.[0].number' || true)"
+          existing_pr="$(gh pr list --head "${branch}" --base main --json number --jq '.[0].number' || true)"
           if [ -n "$existing_pr" ] && [ "$existing_pr" != "null" ]; then
             echo "Pull request already exists: #${existing_pr}"
           elif ! gh pr create \
-            --base master \
+            --base main \
             --head "${branch}" \
             --title "chore: bump imagespec to ${LATEST_VERSION}" \
             --body "Automated dependency update: bumps imagespec to version ${LATEST_VERSION}."; then
             echo "::error::Failed to create pull request. In repository Settings > Actions > General, enable 'Allow GitHub Actions to create and approve pull requests'."
-            echo "Branch was pushed. Open a PR manually: https://github.com/${GITHUB_REPOSITORY}/compare/master...${branch}?expand=1"
+            echo "Branch was pushed. Open a PR manually: https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}?expand=1"
             exit 1
           fi
