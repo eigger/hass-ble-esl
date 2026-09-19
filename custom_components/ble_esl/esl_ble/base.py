@@ -99,7 +99,14 @@ class ProtocolContractError(TypeError):
 
 
 def _missing_attrs(cls: type, names: tuple[str, ...]) -> list[str]:
-    return [f"class attribute '{n}'" for n in names if not hasattr(cls, n)]
+    """Names not set on the class, or set to an empty string."""
+    problems = []
+    for name in names:
+        if not hasattr(cls, name):
+            problems.append(f"class attribute '{name}'")
+        elif getattr(cls, name) == "":
+            problems.append(f"class attribute '{name}' is empty")
+    return problems
 
 
 def _overrides(cls: type, base: type, name: str) -> bool:
@@ -141,12 +148,15 @@ class BleParser(BluetoothData, ABC):
     #: Shown as the model name until a preset is known.
     fallback_name: str
 
-    REQUIRED = ("brand", "fallback_name", "is_advertisement")
+    REQUIRED = ("brand", "fallback_name")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        if missing := _missing_attrs(cls, cls.REQUIRED):
-            raise ProtocolContractError(f"{cls.__name__} is missing: " + "; ".join(missing))
+        problems = _missing_attrs(cls, cls.REQUIRED)
+        if not _overrides(cls, BleParser, "is_advertisement"):
+            problems.append("is_advertisement not provided")
+        if problems:
+            raise ProtocolContractError(f"{cls.__name__} is missing: " + "; ".join(problems))
 
     def __init__(self, preset: DevicePreset | None = None) -> None:
         super().__init__()

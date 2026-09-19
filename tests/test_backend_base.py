@@ -150,6 +150,14 @@ def test_contract_validates_presets_against_class_attributes():
 def test_contract_parser_requires_brand_name_and_matcher():
     with pytest.raises(ProtocolContractError, match="fallback_name"):
         type("P", (BleParser,), {"brand": "b", "is_advertisement": staticmethod(lambda i: True)})
+    with pytest.raises(ProtocolContractError, match="is_advertisement not provided"):
+        type("P", (BleParser,), {"brand": "b", "fallback_name": "n"})
+
+
+def test_contract_rejects_empty_identity_strings():
+    message = _define(id="", label="")
+    assert "class attribute 'id' is empty" in message
+    assert "class attribute 'label' is empty" in message
 
 
 def test_registry_rejects_duplicate_ids(monkeypatch):
