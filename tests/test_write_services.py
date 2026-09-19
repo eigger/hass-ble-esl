@@ -81,6 +81,14 @@ class Harness:
         monkeypatch.setattr(integration, "async_last_service_info", lambda *a, **k: None)
         monkeypatch.setattr(integration, "sleep", AsyncMock())  # retry backoff
 
+        # homeassistant.helpers.event is mocked; emulate async_call_later's
+        # contract (action receives a datetime, returns a cancel callable).
+        def fake_call_later(hass, delay, action):
+            handle = loop.call_later(delay, action, None)
+            return handle.cancel
+
+        monkeypatch.setattr(integration, "async_call_later", fake_call_later)
+
         self.ble_device = MagicMock()
         self.ble_device.address = "AA:BB:CC:DD:EE:FF"
         self.available = True
@@ -231,20 +239,20 @@ def test_debounce_is_trailing_edge_with_last_payload(harness_factory):
         h = harness_factory(asyncio.get_running_loop())
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
-        await h.call("write_guarded", "dev-e1", payload="first", debounce_override_ms=100)
-        await asyncio.sleep(0.07)
-        await h.call("write_guarded", "dev-e1", payload="second!", debounce_override_ms=100)
+        await h.call("write_guarded", "dev-e1", payload="first", debounce_override_ms=300)
+        await asyncio.sleep(0.15)
+        await h.call("write_guarded", "dev-e1", payload="second!", debounce_override_ms=300)
 
-        # 100 ms after the *first* call nothing has been written yet.
-        await asyncio.sleep(0.06)
+        # 300 ms after the *first* call nothing has been written yet.
+        await asyncio.sleep(0.20)
         assert h.write_image.await_count == 0
 
-        # 100 ms after the *second* call a single write with its payload fires.
-        await asyncio.sleep(0.08)
+        # 300 ms after the *second* call a single write with its payload fires.
+        await asyncio.sleep(0.25)
         assert h.write_image.await_count == 1
         sent = h.write_image.await_args.args[2]
         assert sent.getpixel((0, 0))[0] == len("second!")
-        assert h.entry_data("e1")["pending_write_handle"] is None
+        assert h.entry_data("e1")["pending_write_cancel"] is None
 
     asyncio.run(_test())
 
@@ -254,12 +262,122 @@ def test_immediate_write_cancels_pending_debounced_write(harness_factory):
         h = harness_factory(asyncio.get_running_loop())
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
-        await h.call("write_guarded", "dev-e1", payload="queued", debounce_override_ms=100)
-        assert h.entry_data("e1")["pending_write_handle"] is not None
+        await h.call("write_guarded", "dev-e1", payload="queued", debounce_override_ms=300)
+        assert h.entry_data("e1")["pending_write_cancel"] is not None
 
         await h.call("write", "dev-e1", payload="now")
-        assert h.entry_data("e1")["pending_write_handle"] is None
-        await asyncio.sleep(0.15)
+        assert h.entry_data("e1")["pending_write_cancel"] is None
+        await asyncio.sleep(0.4)
+        assert h.write_image.await_count == 1
+
+    asyncio.run(_test())
+
+
+def test_fired_debounced_write_dropped_when_superseded(harness_factory):
+    """A debounced write whose timer fired but is still queued on the BLE lock
+    is dropped once an immediate write cancels it (generation token)."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+
+        # Hold the BLE lock so a fired debounced write has to queue behind it.
+        lock = h.hass.data[DOMAIN][integration.LOCK]
+        await lock.acquire()
+
+        await h.call("write_guarded", "dev-e1", payload="stale", debounce_override_ms=50)
+        await asyncio.sleep(0.1)  # timer fires; task now waits on the lock
+        assert h.entry_data("e1")["pending_write_cancel"] is None
+        assert h.write_image.await_count == 0
+
+        immediate = asyncio.get_running_loop().create_task(
+            h.call("write", "dev-e1", payload="fresh!!")
+        )
+        await asyncio.sleep(0)  # let it cancel + bump the generation, then queue
+        lock.release()
+        await immediate
+        await asyncio.sleep(0.05)
+
+        assert h.write_image.await_count == 1
+        sent = h.write_image.await_args.args[2]
+        assert sent.getpixel((0, 0))[0] == len("fresh!!")
+
+    asyncio.run(_test())
+
+
+def test_duplicate_guard_rechecked_under_lock(harness_factory):
+    """Same payload arriving while an identical write is in flight is skipped
+    once the first one succeeds, instead of being sent a second time."""
+
+    async def _test():
+        h = harness_factory(
+            asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True}
+        )
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+
+        first_started = asyncio.Event()
+        release_first = asyncio.Event()
+
+        async def slow_write(*args, **kwargs):
+            first_started.set()
+            await release_first.wait()
+            return WriteResult(success=True)
+
+        h.write_image.side_effect = slow_write
+
+        first = asyncio.get_running_loop().create_task(
+            h.call("write_guarded", "dev-e1", payload="same")
+        )
+        await first_started.wait()
+        # Pre-lock check passes (nothing written yet); this call queues on the lock.
+        second = asyncio.get_running_loop().create_task(
+            h.call("write_guarded", "dev-e1", payload="same")
+        )
+        await asyncio.sleep(0)
+        release_first.set()
+        await first
+        await second
+
+        assert h.write_image.await_count == 1
+
+    asyncio.run(_test())
+
+
+def test_write_guarded_without_ble_handle_fails_like_write(harness_factory):
+    """write_guarded no longer silently skips an invisible tag."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop(), {CONF_RETRY_COUNT: 2})
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        h.available = False
+
+        with pytest.raises(HomeAssistantError, match="unavailable"):
+            await h.call("write_guarded", "dev-e1", payload="x")
+
+        assert h.write_image.await_count == 0
+        assert h.entry_data("e1")["failure_coordinator"].data == 1
+        # Preview was still rendered.
+        assert h.entry_data("e1")["preview_coordinator"].data is not None
+
+    asyncio.run(_test())
+
+
+def test_dry_run_is_preview_only(harness_factory):
+    """dry_run renders the preview but does not count as a sent image."""
+
+    async def _test():
+        h = harness_factory(
+            asyncio.get_running_loop(), {CONF_PREVENT_DUPLICATE_SEND: True}
+        )
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+
+        await h.call("write_guarded", "dev-e1", payload="p", dry_run=True)
+        assert h.write_image.await_count == 0
+        assert h.entry_data("e1")["preview_coordinator"].data is not None
+        assert h.entry_data("e1")["last_image_data"] is None
+
+        # The real write of the same payload must not be treated as a duplicate.
+        await h.call("write_guarded", "dev-e1", payload="p")
         assert h.write_image.await_count == 1
 
     asyncio.run(_test())
