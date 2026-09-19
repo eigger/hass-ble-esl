@@ -290,10 +290,14 @@ def test_fired_debounced_write_dropped_when_superseded(harness_factory):
         assert h.entry_data("e1")["pending_write_cancel"] is None
         assert h.write_image.await_count == 0
 
+        generation_before = h.entry_data("e1")["write_generation"]
         immediate = asyncio.get_running_loop().create_task(
             h.call("write", "dev-e1", payload="fresh!!")
         )
-        await asyncio.sleep(0)  # let it cancel + bump the generation, then queue
+        # Release the lock only once the immediate write has cancelled the
+        # pending one (bumped the generation) and is itself queued on the lock.
+        while h.entry_data("e1")["write_generation"] == generation_before:
+            await asyncio.sleep(0)
         lock.release()
         await immediate
         await asyncio.sleep(0.05)

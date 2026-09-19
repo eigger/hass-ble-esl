@@ -470,14 +470,13 @@ async def async_setup_entry(
             # Update final elapsed time. The entry may have been unloaded
             # while a debounced write was in flight; then only the (orphaned)
             # coordinators from the context are left to update.
-            entry_data = hass.data[DOMAIN].get(entry_id, {})
-            start_time = entry_data.get("start_time")
-            if start_time is not None:
-                elapsed_time = round(time.monotonic() - start_time, 2)
-                dur_coord.async_set_updated_data(elapsed_time)
-
-            entry_data["start_time"] = None
-            entry_data["duration_task"] = None
+            if entry_data := hass.data[DOMAIN].get(entry_id):
+                start_time = entry_data.get("start_time")
+                if start_time is not None:
+                    elapsed_time = round(time.monotonic() - start_time, 2)
+                    dur_coord.async_set_updated_data(elapsed_time)
+                entry_data["start_time"] = None
+                entry_data["duration_task"] = None
             conn_coord.async_set_updated_data(False)
 
     def cancel_pending_write(entry_id: str) -> None:
