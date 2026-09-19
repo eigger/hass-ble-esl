@@ -67,15 +67,19 @@ def test_config_flow_saves_poshiji_and_model():
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
     monkeypatch.setattr(writer, "establish_connection", AsyncMock(return_value=client))
-    transport = SimpleNamespace(write_image=AsyncMock(return_value=True, side_effect=error))
+    transport = SimpleNamespace(write_object=AsyncMock(return_value=True, side_effect=error))
     factory = MagicMock(return_value=transport)
     monkeypatch.setattr(writer, "XteClient", factory)
-    image = object()
+    image, encoded = object(), b"XTEK-encoded"
+    prepare = MagicMock(return_value=encoded)
+    monkeypatch.setattr(writer, "prepare_image_object", prepare)
     result = asyncio.run(esl_ble.get("poshiji").write_image(
         advertisement(), PSJ_420, image, attempt=2, write_delay_ms=30,
     ))
+    # Encoded before connecting, in a worker thread, then handed to the session.
+    prepare.assert_called_once_with(image)
     factory.assert_called_once_with(client, 2, 30)
-    transport.write_image.assert_awaited_once_with(image)
+    transport.write_object.assert_awaited_once_with(encoded)
     client.disconnect.assert_awaited_once()
     assert result.success is (error is None)
     assert result.battery_mv is None
@@ -85,5 +89,6 @@ def test_session_result_and_disconnect(monkeypatch, error):
 
 def test_connection_failure_is_reported(monkeypatch):
     monkeypatch.setattr(writer, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
+    monkeypatch.setattr(writer, "prepare_image_object", MagicMock(return_value=b""))
     result = asyncio.run(writer.update_image(advertisement(), PSJ_420, object()))
     assert not result.success and result.error == "unavailable"

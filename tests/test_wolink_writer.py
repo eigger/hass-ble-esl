@@ -209,3 +209,39 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
         assert result.error == "unavailable"
 
     asyncio.run(_test())
+
+
+def test_encoding_runs_off_the_event_loop(monkeypatch):
+    """Encoding happens in a worker thread before connecting; the loop keeps ticking."""
+    import time
+
+    from custom_components.ble_esl.esl_ble.wolink import writer
+
+    async def _test():
+        ticks = 0
+
+        async def ticker():
+            nonlocal ticks
+            while True:
+                ticks += 1
+                await asyncio.sleep(0.01)
+
+        def slow_prepare(image, preset):
+            time.sleep(0.3)  # blocking CPU stand-in
+            return b"", 0
+
+        connect = AsyncMock(side_effect=OSError("stop here"))
+        monkeypatch.setattr(writer, "prepare_payload", slow_prepare)
+        monkeypatch.setattr(writer, "establish_connection", connect)
+
+        mock_ble_device = MagicMock()
+        mock_ble_device.address = MAC
+        task = asyncio.create_task(ticker())
+        result = await update_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        task.cancel()
+
+        assert result.success is False
+        assert connect.await_count == 1  # encoded first, then connected
+        assert ticks >= 10  # loop was not blocked during the 300 ms encode
+
+    asyncio.run(_test())

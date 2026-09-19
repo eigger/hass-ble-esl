@@ -80,9 +80,13 @@ class PickSmartClient:
         return self._response_data
 
     async def write_image(self, image: Image.Image) -> WriteResult:
-        """Execute 4-step image transfer handshake."""
+        """Encode (off the event loop) and run the transfer handshake."""
+        payload = await asyncio.to_thread(encode_image, image, self.preset)
+        return await self.write_payload(payload)
+
+    async def write_payload(self, payload: bytes) -> WriteResult:
+        """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
-        payload = encode_image(image, self.preset)
         packet_size = len(payload)
 
         await self.client.start_notify(
@@ -174,6 +178,9 @@ async def update_image(
     # WriteResult (and count toward retries) instead of escaping as raw exceptions.
     client: BleakClient | None = None
     try:
+        # Encode before connecting: keeps the tag's connection window short and
+        # the event loop free during the CPU-bound work.
+        payload = await asyncio.to_thread(encode_image, image, preset)
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
@@ -200,7 +207,7 @@ async def update_image(
             attempt=attempt,
             write_delay_ms=write_delay_ms,
         )
-        return await picksmart.write_image(image)
+        return await picksmart.write_payload(payload)
     except Exception as exc:
         _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
         return WriteResult(success=False, error=str(exc))
