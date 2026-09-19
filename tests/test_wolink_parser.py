@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
-from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
+from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
 from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID,
     SERVICE_UUID,
@@ -70,8 +70,8 @@ def test_parser_start_update_battery_and_versions():
 
 
 def test_protocol_parse_advertisement():
-    """Verify WolinkProtocol.parse_advertisement helper."""
-    protocol = WolinkProtocol()
+    """Verify WolinkBleBackend.parse_advertisement helper."""
+    protocol = WolinkBleBackend()
 
     info = MagicMock()
     info.manufacturer_data = {

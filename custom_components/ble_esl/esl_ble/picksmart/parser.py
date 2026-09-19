@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from ..base import BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUIDS
-from .devices import get_device_preset
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
@@ -60,12 +59,8 @@ class PickSmartBluetoothDeviceData(BleParser):
         if not parsed:
             return
 
-        # The advertisement identifies the model; it overrides the configured preset.
-        preset = get_device_preset(parsed["device_id"], parsed["firmware"])
-        if preset:
-            self.preset = preset
-            self._update_device_info(service_info)
-
+        # The model the advertisement identifies is applied by the backend's
+        # refine_preset() -> set_preset(); here only the readings are parsed.
         self.set_device_sw_version(f"0x{parsed['firmware']:04X}")
         self.set_device_hw_version(f"0x{parsed['hardware']:04X}")
 

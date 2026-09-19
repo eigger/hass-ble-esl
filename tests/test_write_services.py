@@ -75,9 +75,8 @@ class Harness:
         )
 
         # Rendering: return a different image per payload so image bytes differ.
-        def fake_render(entry_id, preset, service, hass):
+        def fake_render(hass, preset, payload, *, rotate=0, background="white"):
             img = Image.new("RGB", (preset.width, preset.height), "white")
-            payload = service.data.get("payload", "")
             img.putpixel((0, 0), (len(str(payload)) % 256, 0, 0))
             return img
 

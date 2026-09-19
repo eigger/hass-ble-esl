@@ -175,7 +175,14 @@ async def build_write_job(
     data.parser.set_preset(preset)
 
     image = await hass.async_add_executor_job(
-        render_image, entry.entry_id, preset, service, hass
+        partial(
+            render_image,
+            hass,
+            preset,
+            service.data.get("payload", ""),
+            rotate=service.data.get("rotate", 0),
+            background=service.data.get("background", "white"),
+        )
     )
     buffer = BytesIO()
     image.save(buffer, "PNG")

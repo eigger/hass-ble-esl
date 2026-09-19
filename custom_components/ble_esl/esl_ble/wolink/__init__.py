@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
 from . import writer
 from .const import BRAND, MANUFACTURER_ID
-from .devices import PRESETS, preset_choices
+from .devices import PRESETS
 from .parser import WolinkBluetoothDeviceData, is_wolink_advertisement
 from .protocol import parse_manufacturer_data
 
@@ -72,13 +72,9 @@ class WolinkBleBackend(BleBackend):
         )
 
 
-WolinkProtocol = WolinkBleBackend
-
 __all__ = [
     "PRESETS",
     "WolinkBleBackend",
     "WolinkBluetoothDeviceData",
-    "WolinkProtocol",
     "is_wolink_advertisement",
-    "preset_choices",
 ]

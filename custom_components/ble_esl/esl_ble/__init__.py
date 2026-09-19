@@ -14,14 +14,12 @@ from .base import (
     BleParser,
     Capabilities,
     DevicePreset,
-    ProtocolBackend,
-    ProtocolParser,
     WriteResult,
 )
-from .easytag import EasyTagBleBackend, EasyTagProtocol
-from .picksmart import PickSmartBleBackend, PickSmartProtocol
+from .easytag import EasyTagBleBackend
+from .picksmart import PickSmartBleBackend
 from .poshiji import PoshijiBleBackend
-from .wolink import WolinkBleBackend, WolinkProtocol
+from .wolink import WolinkBleBackend
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
@@ -79,14 +77,9 @@ __all__ = [
     "Capabilities",
     "DevicePreset",
     "EasyTagBleBackend",
-    "EasyTagProtocol",
     "PickSmartBleBackend",
-    "PickSmartProtocol",
     "PoshijiBleBackend",
-    "ProtocolBackend",
-    "ProtocolParser",
     "WolinkBleBackend",
-    "WolinkProtocol",
     "WriteResult",
     "all_backends",
     "detect",

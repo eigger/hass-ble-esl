@@ -5,9 +5,8 @@ import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import WRITE_LOCK
 from .entity import BleEslEntity
@@ -24,8 +23,13 @@ async def async_setup_entry(
     async_add_entities([BleEslWriteLockSwitch(hass, entry)])
 
 
-class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
-    """Switch that locks physical writes (virtual updates still apply)."""
+class BleEslWriteLockSwitch(BleEslEntity, SwitchEntity):
+    """Switch that locks physical writes (virtual updates still apply).
+
+    The state is persisted in the config entry data, which async_setup_entry
+    seeds into runtime_data.write_lock, so the lock is in force before this
+    entity is even added.
+    """
 
     _key = "write_lock"
     _attr_translation_key = "write_lock"
@@ -34,52 +38,24 @@ class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._bind_tag(hass, entry)
-        self._is_on = False
 
     @property
     def is_on(self) -> bool:
-        return self._is_on
+        return self._data.write_lock
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the write lock."""
-        self._is_on = True
-        self._data.write_lock = True
-
-        # Save to config entry data for persistence
-        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
-        if config_entry:
-            data = {**config_entry.data, WRITE_LOCK: True}
-            self.hass.config_entries.async_update_entry(config_entry, data=data)
-
-        self.async_write_ha_state()
+        self._async_set(True)
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the write lock."""
-        self._is_on = False
-        self._data.write_lock = False
+        self._async_set(False)
 
-        # Save to config entry data for persistence
-        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
-        if config_entry:
-            data = {**config_entry.data, WRITE_LOCK: False}
-            self.hass.config_entries.async_update_entry(config_entry, data=data)
-
+    @callback
+    def _async_set(self, value: bool) -> None:
+        self._data.write_lock = value
+        if config_entry := self.hass.config_entries.async_get_entry(self._entry_id):
+            self.hass.config_entries.async_update_entry(
+                config_entry, data={**config_entry.data, WRITE_LOCK: value}
+            )
         self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """Restore state when added to hass."""
-        await super().async_added_to_hass()
-
-        # Restore from config entry data (most reliable for config entities)
-        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
-        if config_entry and WRITE_LOCK in config_entry.data:
-            self._is_on = config_entry.data[WRITE_LOCK]
-        else:
-            # Fallback to RestoreEntity if not in config entry
-            last_state = await self.async_get_last_state()
-            if last_state is not None:
-                self._is_on = last_state.state == "on"
-            else:
-                self._is_on = False
-
-        self._data.write_lock = self._is_on

@@ -119,11 +119,11 @@ def test_picksmart_firmware_fix():
 
 
 def test_picksmart_backend_refine_preset():
-    """Verify PickSmartProtocol.refine_preset adjusts preset using AdvertisementInfo."""
+    """Verify PickSmartBleBackend.refine_preset adjusts preset using AdvertisementInfo."""
     from custom_components.ble_esl.esl_ble.base import AdvertisementInfo
-    from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
+    from custom_components.ble_esl.esl_ble.picksmart import PickSmartBleBackend
 
-    backend = PickSmartProtocol()
+    backend = PickSmartBleBackend()
     preset_75 = backend.presets()["0x012B"]
 
     # 1. Without AdvertisementInfo -> unmodified

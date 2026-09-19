@@ -28,7 +28,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.util.dt import parse_datetime
 from sensor_state_data import (
     SensorDeviceClass as BleEslSensorDeviceClass,
     SensorUpdate,
@@ -165,17 +164,9 @@ class BleEslBluetoothSensorEntity(
     """Representation of a BLE ESL passive sensor."""
 
     @property
-    def native_value(self) -> int | float | datetime | None:
+    def native_value(self) -> float | None:
         """Return the native value."""
-        value = self.processor.entity_data.get(self.entity_key)
-        if isinstance(value, str) and parse_datetime(value):
-            value = parse_datetime(value)
-        return value
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return super().available
+        return self.processor.entity_data.get(self.entity_key)
 
 
 class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):

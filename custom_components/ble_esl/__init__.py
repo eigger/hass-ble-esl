@@ -139,7 +139,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         update_method=partial(process_service_info, hass, entry, device_registry),
         device_data=parser,
         connectable=True,
-        entry=entry,
     )
 
     def coordinator(initial: Any) -> DataUpdateCoordinator[Any]:

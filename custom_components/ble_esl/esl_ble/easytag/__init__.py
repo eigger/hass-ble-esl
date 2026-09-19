@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
 from . import writer
 from .const import BRAND
-from .devices import PRESETS, preset_choices
+from .devices import PRESETS
 from .parser import EasyTagBluetoothDeviceData, is_easytag_advertisement
 
 if TYPE_CHECKING:
@@ -59,13 +59,9 @@ class EasyTagBleBackend(BleBackend):
         )
 
 
-EasyTagProtocol = EasyTagBleBackend
-
 __all__ = [
     "EasyTagBleBackend",
     "EasyTagBluetoothDeviceData",
-    "EasyTagProtocol",
     "PRESETS",
     "is_easytag_advertisement",
-    "preset_choices",
 ]

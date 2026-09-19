@@ -294,7 +294,3 @@ class BleBackend(ABC):
         """Optional status query without writing an image."""
         return WriteResult(success=False, error="not supported")
 
-
-# Backwards compatibility aliases
-ProtocolParser = BleParser
-ProtocolBackend = BleBackend
