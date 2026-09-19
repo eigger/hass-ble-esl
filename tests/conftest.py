@@ -261,6 +261,10 @@ ha_update_coordinator.DataUpdateCoordinator = MockBase
 sys.modules["homeassistant.helpers.update_coordinator"] = ha_update_coordinator
 ha_helpers.update_coordinator = ha_update_coordinator
 
+ha_helpers_service = MockModule("homeassistant.helpers.service")
+sys.modules["homeassistant.helpers.service"] = ha_helpers_service
+ha_helpers.service = ha_helpers_service
+
 ha_helpers_event = MockModule("homeassistant.helpers.event")
 sys.modules["homeassistant.helpers.event"] = ha_helpers_event
 ha_helpers.event = ha_helpers_event

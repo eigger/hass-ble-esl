@@ -89,6 +89,23 @@ class Harness:
 
         monkeypatch.setattr(integration, "async_call_later", fake_call_later)
 
+        # homeassistant.helpers.service is mocked; emulate the real helper's
+        # contract for the device_id form (it also handles entity/area/label):
+        # return the config entry ids of the referenced devices.
+        async def fake_extract(*args):
+            service = args[-1]
+            device_ids = service.data.get("device_id", [])
+            if isinstance(device_ids, str):
+                device_ids = [device_ids]
+            return {
+                entry_id
+                for entry_id, data in self.hass.data.get(DOMAIN, {}).items()
+                if isinstance(data, dict) and data.get("device_id") in device_ids
+            }
+
+        self.extract = AsyncMock(side_effect=fake_extract)
+        monkeypatch.setattr(integration, "async_extract_config_entry_ids", self.extract)
+
         self.ble_device = MagicMock()
         self.ble_device.address = "AA:BB:CC:DD:EE:FF"
         self.available = True
@@ -195,7 +212,7 @@ def test_multi_device_call_continues_after_failure(harness_factory):
         h.write_image.side_effect = fail_first
 
         with pytest.raises(HomeAssistantError, match="boom"):
-            await h.call("write", ["dev-e1", "unknown-device", "dev-e2"], payload="x")
+            await h.call("write", ["dev-e1", "dev-e2"], payload="x")
 
         assert h.write_image.await_count == 2
         assert h.entry_data("e1")["failure_coordinator"].data == 1
@@ -383,5 +400,46 @@ def test_dry_run_is_preview_only(harness_factory):
         # The real write of the same payload must not be treated as a duplicate.
         await h.call("write_guarded", "dev-e1", payload="p")
         assert h.write_image.await_count == 1
+
+    asyncio.run(_test())
+
+
+def test_target_resolution_uses_ha_helper_and_filters_to_loaded_entries(harness_factory):
+    """Targets come from async_extract_config_entry_ids (entity/device/area/label),
+    limited to entries this integration has loaded; nothing matching is an error."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
+        await h.add_entry("e2", "AA:BB:CC:DD:EE:02")
+
+        # The helper may return entries of other integrations sharing a device.
+        h.extract.side_effect = None
+        h.extract.return_value = {"e2", "other-integration-entry", "e1"}
+        await h.call("write", "ignored-by-fake", payload="x")
+        assert h.write_image.await_count == 2
+
+        h.extract.return_value = {"other-integration-entry"}
+        with pytest.raises(HomeAssistantError, match="No loaded BLE ESL device matches"):
+            await h.call("write", "ignored-by-fake", payload="x")
+        assert h.write_image.await_count == 2
+
+    asyncio.run(_test())
+
+
+@pytest.mark.parametrize("takes_hass", [True, False])
+def test_extract_helper_called_per_ha_version_signature(harness_factory, monkeypatch, takes_hass):
+    """Older HA needs hass as the first argument; 2025.12+ warns if it is passed."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
+        monkeypatch.setattr(integration, "_EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS", takes_hass)
+
+        await h.call("write", "dev-e1", payload="x")
+
+        args = h.extract.await_args.args
+        assert (args[0] is h.hass) == takes_hass
+        assert len(args) == (2 if takes_hass else 1)
 
     asyncio.run(_test())

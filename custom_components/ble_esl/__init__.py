@@ -7,6 +7,7 @@ from asyncio import Lock, sleep
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from functools import partial
+import inspect
 from io import BytesIO
 import logging
 import time
@@ -27,6 +28,7 @@ from homeassistant.helpers.device_registry import (
     DeviceRegistry,
 )
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.service import async_extract_config_entry_ids
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util.dt import now
 from sensor_state_data import SensorUpdate
@@ -64,6 +66,40 @@ PLATFORMS: list[Platform] = [
 ]
 
 _LOGGER = logging.getLogger(__name__)
+
+# HA 2025.12 deprecated the leading `hass` argument (removed in 2026.10) and
+# logs a warning when it is passed; earlier versions require it. Decide once
+# from the signature so both work without a warning.
+_EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS = (
+    "hass" in inspect.signature(async_extract_config_entry_ids).parameters
+)
+
+
+async def async_targeted_entry_ids(
+    hass: HomeAssistant, service: ServiceCall
+) -> list[str]:
+    """Resolve a service call's target (entity/device/area/floor/label) to
+    the loaded BLE ESL config entries it refers to."""
+    if _EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS:
+        entry_ids = await async_extract_config_entry_ids(hass, service)
+    else:
+        entry_ids = await async_extract_config_entry_ids(service)
+    # Ids the helper returns for devices/entities of *other* integrations, or
+    # targets not in the registries at all, are simply absent here: that is
+    # HA's standard target contract (a call is not an error because one of
+    # several targets is unknown), so only an all-miss is reported.
+    loaded = hass.data.get(DOMAIN, {})
+    targets = sorted(
+        entry_id
+        for entry_id in entry_ids
+        if isinstance(data := loaded.get(entry_id), dict) and "address" in data
+    )
+    if not targets:
+        raise HomeAssistantError(
+            "No loaded BLE ESL device matches the service target; "
+            "target a BLE ESL device, one of its entities, or its area/label."
+        )
+    return targets
 
 
 def process_service_info(
@@ -291,15 +327,6 @@ async def async_setup_entry(
                 elapsed = round(time.monotonic() - start_time, 1)
                 entry_data["duration_coordinator"].async_set_updated_data(elapsed)
             await asyncio.sleep(1)
-
-    def normalize_device_ids(service: ServiceCall) -> list[str]:
-        """Normalize service device_id payload into a list."""
-        device_ids = service.data.get("device_id")
-        if isinstance(device_ids, str):
-            return [device_ids]
-        if device_ids is None:
-            return []
-        return device_ids
 
     async def build_write_context(
         service: ServiceCall, entry_id: str
@@ -564,11 +591,10 @@ async def async_setup_entry(
         tag does not prevent the remaining targets from being written.
         """
         errors: list[str] = []
-        for device_id in normalize_device_ids(service):
+        for entry_id in await async_targeted_entry_ids(hass, service):
             try:
-                entry_id = await get_entry_id_from_device(hass, device_id)
                 await handler(entry_id)
-            except (HomeAssistantError, ValueError) as err:
+            except HomeAssistantError as err:
                 errors.append(str(err))
         if errors:
             raise HomeAssistantError("; ".join(errors))
@@ -675,21 +701,3 @@ async def async_unload_entry(
         hass.services.async_remove(DOMAIN, "write_guarded")
 
     return unload_ok
-
-
-async def get_entry_id_from_device(hass: HomeAssistant, device_id: str) -> str:
-    """Resolve HA device_id to config entry_id by scanning hass.data[DOMAIN] only."""
-    domain_data = hass.data.get(DOMAIN, {})
-    for entry_id, rt in domain_data.items():
-        if entry_id == LOCK:
-            continue
-        if not isinstance(rt, dict) or "address" not in rt:
-            continue
-        if rt.get("device_id") == device_id:
-            _LOGGER.debug("device %s -> entry %s", device_id, entry_id)
-            return entry_id
-
-    raise ValueError(
-        f"No loaded BLE ESL entry has device_id {device_id!r} in hass.data['{DOMAIN}']. "
-        "Reload the integration after updating, or target the correct device."
-    )
