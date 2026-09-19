@@ -27,12 +27,13 @@ async def async_setup_entry(
 class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
     """Switch that locks physical writes (virtual updates still apply)."""
 
+    _key = "write_lock"
     _attr_translation_key = "write_lock"
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:lock"
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        self._bind_tag(hass, entry, "write_lock")
+        self._bind_tag(hass, entry)
         self._is_on = False
 
     @property

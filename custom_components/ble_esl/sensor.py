@@ -207,6 +207,7 @@ class BleEslBluetoothSensorEntity(
 class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):
     """Representation of a BLE ESL battery percentage sensor."""
 
+    _key = "battery"
     _attr_translation_key = "battery"
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
@@ -214,13 +215,6 @@ class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None],
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_suggested_display_precision = 0
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[float | None],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "battery")
 
     @property
     def native_value(self) -> int | None:
@@ -236,6 +230,7 @@ class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None],
 class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):
     """Representation of a BLE ESL battery voltage sensor."""
 
+    _key = "battery_voltage"
     _attr_translation_key = "battery_voltage"
     _attr_device_class = SensorDeviceClass.VOLTAGE
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
@@ -243,13 +238,6 @@ class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], Se
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_suggested_display_precision = 1
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[float | None],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "battery_voltage")
 
     @property
     def native_value(self) -> float | None:
@@ -259,19 +247,13 @@ class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], Se
 class BleEslTemperatureSensorEntity(BleEslCoordinatorEntity[int | None], SensorEntity):
     """Representation of a BLE ESL temperature sensor."""
 
+    _key = "temperature"
     _attr_translation_key = "temperature"
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[int | None],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "temperature")
 
     @property
     def native_value(self) -> int | None:
@@ -281,6 +263,7 @@ class BleEslTemperatureSensorEntity(BleEslCoordinatorEntity[int | None], SensorE
 class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
     """Representation of a BLE ESL write duration sensor."""
 
+    _key = "write_duration"
     _attr_translation_key = "write_duration"
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
@@ -293,7 +276,7 @@ class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[float],
     ) -> None:
-        super().__init__(hass, entry, coordinator, "write_duration")
+        super().__init__(hass, entry, coordinator)
         self._native_value: float = 0.0
 
     @property
@@ -310,18 +293,12 @@ class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
 class BleEslFailureCountSensorEntity(BleEslCoordinatorEntity[int], SensorEntity):
     """Representation of a BLE ESL write failure count sensor."""
 
+    _key = "failure_count"
     _attr_translation_key = "failure_count"
     _attr_state_class = SensorStateClass.TOTAL
     _attr_icon = "mdi:alert-circle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[int],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "failure_count")
 
     @property
     def native_value(self) -> int | None:
@@ -331,18 +308,12 @@ class BleEslFailureCountSensorEntity(BleEslCoordinatorEntity[int], SensorEntity)
 class BleEslLastFailureTimeSensorEntity(BleEslCoordinatorEntity[datetime | None], SensorEntity):
     """Representation of a BLE ESL write last failure time sensor."""
 
+    _key = "last_failure_time"
     _attr_translation_key = "last_failure_time"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:clock-alert"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[datetime | None],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "last_failure_time")
 
     @property
     def native_value(self) -> datetime | None:

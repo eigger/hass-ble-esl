@@ -42,9 +42,8 @@ class _BleEslImageBase(BleEslCoordinatorEntity[bytes], ImageEntity):
         hass: HomeAssistant,
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[bytes],
-        key: str,
     ) -> None:
-        super().__init__(hass, entry, coordinator, key)
+        super().__init__(hass, entry, coordinator)
         ImageEntity.__init__(self, hass)
         self._cached_image = Image(content_type="image/png", content=coordinator.data)
 
@@ -64,27 +63,15 @@ class _BleEslImageBase(BleEslCoordinatorEntity[bytes], ImageEntity):
 class BleEslImageEntity(_BleEslImageBase):
     """Representation of last updated image content."""
 
+    _key = "last_updated_content"
     _attr_translation_key = "last_updated_content"
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[bytes],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "last_updated_content")
 
 
 class BleEslPreviewImageEntity(_BleEslImageBase):
     """Representation of preview image content."""
 
+    _key = "preview_content_image"
     _attr_translation_key = "preview_content"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[bytes],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "preview_content_image")

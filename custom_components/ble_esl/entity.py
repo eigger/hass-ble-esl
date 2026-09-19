@@ -29,19 +29,23 @@ class BleEslEntity:
     """
 
     _attr_has_entity_name = True
+    #: Unique-id suffix; set on the class, or pass `key` to _bind_tag().
+    _key: str
 
     hass: HomeAssistant
     _entry_id: str
     _address: str
     _identifier: str
 
-    def _bind_tag(self, hass: HomeAssistant, entry: ConfigEntry, key: str) -> None:
-        """Bind to the tag of `entry`; `key` is the unique-id suffix."""
+    def _bind_tag(
+        self, hass: HomeAssistant, entry: ConfigEntry, key: str | None = None
+    ) -> None:
+        """Bind to the tag of `entry`; `key` (default: class `_key`) is the unique-id suffix."""
         self.hass = hass
         self._entry_id = entry.entry_id
         self._address = hass.data[DOMAIN][entry.entry_id]["address"]
         self._identifier = self._address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_{key}"
+        self._attr_unique_id = f"ble_esl_{self._identifier}_{key or self._key}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -62,7 +66,7 @@ class BleEslCoordinatorEntity[T](
         hass: HomeAssistant,
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[T],
-        key: str,
+        key: str | None = None,
     ) -> None:
         super().__init__(coordinator)
         self._bind_tag(hass, entry, key)

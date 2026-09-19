@@ -124,16 +124,9 @@ class BleEslBluetoothBinarySensorEntity(
 class BleEslBatteryLowBinarySensor(BleEslCoordinatorEntity[float | None], BinarySensorEntity):
     """Battery-low binary sensor for session-polled battery voltage."""
 
+    _key = "battery_low"
     _attr_device_class = BinarySensorDeviceClass.BATTERY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        coordinator: DataUpdateCoordinator[float | None],
-    ) -> None:
-        super().__init__(hass, entry, coordinator, "battery_low")
 
     @property
     def is_on(self) -> bool | None:
@@ -146,6 +139,7 @@ class BleEslBatteryLowBinarySensor(BleEslCoordinatorEntity[float | None], Binary
 class BleEslBluetoothConnectivitySensorEntity(BleEslCoordinatorEntity[bool], BinarySensorEntity):
     """Representation of a BLE ESL connectivity binary sensor."""
 
+    _key = "connectivity"
     _attr_translation_key = "connectivity"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -156,7 +150,7 @@ class BleEslBluetoothConnectivitySensorEntity(BleEslCoordinatorEntity[bool], Bin
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[bool],
     ) -> None:
-        super().__init__(hass, entry, coordinator, "connectivity")
+        super().__init__(hass, entry, coordinator)
         self._is_on = False
 
     @property
@@ -175,6 +169,7 @@ class BleEslBluetoothConnectivitySensorEntity(BleEslCoordinatorEntity[bool], Bin
 class BleEslDisplayInSyncBinarySensor(BleEslCoordinatorEntity[bytes | None], BinarySensorEntity):
     """Representation of a BLE ESL display synchronization binary sensor."""
 
+    _key = "display_in_sync"
     _attr_translation_key = "display_in_sync"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -185,7 +180,7 @@ class BleEslDisplayInSyncBinarySensor(BleEslCoordinatorEntity[bytes | None], Bin
         image_coordinator: DataUpdateCoordinator[bytes | None],
         preview_coordinator: DataUpdateCoordinator[bytes | None],
     ) -> None:
-        super().__init__(hass, entry, image_coordinator, "display_in_sync")
+        super().__init__(hass, entry, image_coordinator)
         self._preview_coordinator = preview_coordinator
 
     @property

@@ -23,6 +23,7 @@ async def async_setup_entry(
 class BleEslTextEntity(BleEslEntity, RestoreText):
     """Text entity for setting device alias."""
 
+    _key = "alias"
     _attr_translation_key = "alias"
     _attr_entity_category = EntityCategory.CONFIG
     _attr_native_max = 32
@@ -30,7 +31,7 @@ class BleEslTextEntity(BleEslEntity, RestoreText):
     _attr_mode = TextMode.TEXT
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        self._bind_tag(hass, entry, "alias")
+        self._bind_tag(hass, entry)
         self._attr_native_value = self._identifier
 
     def set_value(self, value: str) -> None:
