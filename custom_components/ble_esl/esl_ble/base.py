@@ -365,6 +365,16 @@ class BleBackend(ABC):
         """Return device presets supported by this protocol."""
         return self.PRESETS
 
+    def preset_for(self, model_key: str | None) -> DevicePreset:
+        """The preset for a configured model key, or the first preset if unknown.
+
+        A stale or foreign key (e.g. the WOLINK-centric DEFAULT_MODEL on
+        another protocol) degrades to the protocol's first preset rather
+        than failing setup.
+        """
+        preset = self.PRESETS.get(model_key) if model_key else None
+        return preset if preset is not None else next(iter(self.PRESETS.values()))
+
     def supported(self, service_info: BluetoothServiceInfoBleak) -> bool:
         """Return True if this advertisement belongs to this protocol."""
         return self.parser_cls.is_advertisement(service_info)

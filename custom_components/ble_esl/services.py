@@ -19,10 +19,7 @@ import logging
 import time
 from typing import Any
 
-from homeassistant.components.bluetooth import (
-    async_ble_device_from_address,
-    async_last_service_info,
-)
+from homeassistant.components.bluetooth import async_ble_device_from_address
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_call_later
@@ -47,6 +44,7 @@ from .const import (
     SERVICE_WRITE_GUARDED,
 )
 from .data import BleEslRuntimeData
+from .device import resolve_preset
 from .esl_ble import WriteResult
 from .esl_ble.base import DevicePreset
 from .renderer import render_image
@@ -165,12 +163,9 @@ async def build_write_job(
     options = {**entry.data, **entry.options}
     backend = data.backend
 
-    preset = backend.presets().get(options.get(CONF_MODEL, DEFAULT_MODEL))
-    if preset is None:
-        preset = next(iter(backend.presets().values()))
-    service_info = async_last_service_info(hass, data.address, connectable=True)
-    if service_info:
-        preset = backend.refine_preset(preset, backend.parse_advertisement(service_info))
+    preset = resolve_preset(
+        hass, backend, data.address, options.get(CONF_MODEL, DEFAULT_MODEL)
+    ).preset
     data.preset = preset
     data.parser.set_preset(preset)
 

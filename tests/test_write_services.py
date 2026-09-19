@@ -15,6 +15,7 @@ import pytest
 
 import custom_components.ble_esl as integration
 from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl import device
 from custom_components.ble_esl import services as svc
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
@@ -85,8 +86,7 @@ class Harness:
         monkeypatch.setattr(
             integration, "BleEslPassiveBluetoothProcessorCoordinator", MagicMock()
         )
-        monkeypatch.setattr(integration, "async_last_service_info", lambda *a, **k: None)
-        monkeypatch.setattr(svc, "async_last_service_info", lambda *a, **k: None)
+        monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: None)
         monkeypatch.setattr(svc, "sleep", AsyncMock())  # retry backoff
 
         # homeassistant.helpers.event is mocked; emulate async_call_later's

@@ -10,7 +10,6 @@ from typing import Any
 from homeassistant.components.bluetooth import (
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
-    async_last_service_info,
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -35,7 +34,7 @@ from .const import (
 )
 from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
-from .device import format_model_name
+from .device import format_model_name, resolve_preset
 from .services import async_setup_services, cancel_pending_write
 from .types import BleEslConfigEntry
 
@@ -100,15 +99,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 
     options = {**entry.data, **entry.options}
     backend = esl_ble.get(options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL))
-    preset = backend.presets().get(options.get(CONF_MODEL, DEFAULT_MODEL))
-    if preset is None:
-        preset = next(iter(backend.presets().values()))
-
-    adv_info = None
-    service_info = async_last_service_info(hass, address, connectable=True)
-    if service_info:
-        adv_info = backend.parse_advertisement(service_info)
-        preset = backend.refine_preset(preset, adv_info)
+    preset, service_info, adv_info = resolve_preset(
+        hass, backend, address, options.get(CONF_MODEL, DEFAULT_MODEL)
+    )
 
     parser = backend.create_parser(preset=preset)
     if service_info:

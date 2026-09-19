@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
+
+from homeassistant.components.bluetooth import async_last_service_info
 
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothEntityKey,
@@ -12,9 +14,12 @@ from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceIn
 from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 from sensor_state_data import DeviceKey
 
-from .esl_ble.base import DevicePreset
+from .esl_ble.base import AdvertisementInfo, BleBackend, DevicePreset
 
 if TYPE_CHECKING:
+    from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
+    from homeassistant.core import HomeAssistant
+
     from .data import BleEslRuntimeData
 
 
@@ -33,6 +38,30 @@ def hass_device_info(sensor_device_info):
     if sensor_device_info.hw_version is not None:
         device_info[ATTR_HW_VERSION] = sensor_device_info.hw_version
     return device_info
+
+
+class PresetResolution(NamedTuple):
+    """A preset resolved from configuration and the tag's last advertisement."""
+
+    preset: DevicePreset
+    service_info: BluetoothServiceInfoBleak | None
+    advertisement: AdvertisementInfo | None
+
+
+def resolve_preset(
+    hass: HomeAssistant, backend: BleBackend, address: str, model_key: str | None
+) -> PresetResolution:
+    """Configured model -> preset, refined by what the tag last advertised.
+
+    The one place this happens: at setup, before every write, and (via
+    process_service_info) on every advertisement.
+    """
+    preset = backend.preset_for(model_key)
+    service_info = async_last_service_info(hass, address, connectable=True)
+    advertisement = backend.parse_advertisement(service_info) if service_info else None
+    if advertisement is not None:
+        preset = backend.refine_preset(preset, advertisement)
+    return PresetResolution(preset, service_info, advertisement)
 
 
 def format_model_name(preset: DevicePreset | None) -> str | None:
