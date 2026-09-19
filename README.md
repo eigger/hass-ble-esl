@@ -197,6 +197,8 @@ Labels are rendered with **[imagespec](https://github.com/eigger/imagespec)** â€
 
 ## Services
 
+Both services take a standard `target:`: a BLE ESL device, any of its entities, or an area/floor/label containing one. Several tags can be targeted in one call; each is written in turn and failures are reported together at the end. The examples below use `device_id`.
+
 ### `ble_esl.write`
 
 Renders the payload and sends it to the tag (unless `dry_run: true`).
