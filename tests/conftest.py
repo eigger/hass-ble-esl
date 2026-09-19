@@ -69,6 +69,10 @@ class MockRestoreText(MockEntity):
     pass
 
 
+class MockRestoreEntity(MockEntity):
+    """Distinct from MockEntity: RestoreEntity and SwitchEntity are siblings in HA."""
+
+
 class MockModule(types.ModuleType):
     """A ModuleType that dynamically returns MagicMocks for unassigned attributes."""
 
@@ -288,7 +292,7 @@ sys.modules["homeassistant.helpers.sensor"] = ha_helpers_sensor
 ha_helpers.sensor = ha_helpers_sensor
 
 ha_restore = MockModule("homeassistant.helpers.restore_state")
-ha_restore.RestoreEntity = MockEntity
+ha_restore.RestoreEntity = MockRestoreEntity
 sys.modules["homeassistant.helpers.restore_state"] = ha_restore
 ha_helpers.restore_state = ha_restore
 

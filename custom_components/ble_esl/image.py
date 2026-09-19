@@ -7,18 +7,13 @@ import logging
 from homeassistant.components.image import Image, ImageEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
-from propcache.api import cached_property
 
 from .const import DOMAIN
-from .device import async_get_device_info
+from .entity import BleEslCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,37 +32,20 @@ async def async_setup_entry(
     ])
 
 
-class BleEslImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
-    """Representation of last updated image content."""
+class _BleEslImageBase(BleEslCoordinatorEntity[bytes], ImageEntity):
+    """Image entity whose PNG bytes come from a coordinator."""
 
-    _attr_has_entity_name = True
-    _attr_translation_key = "last_updated_content"
+    _attr_content_type = "image/png"
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, coordinator: DataUpdateCoordinator[bytes]):
-        CoordinatorEntity.__init__(self, coordinator)
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        coordinator: DataUpdateCoordinator[bytes],
+    ) -> None:
+        super().__init__(hass, entry, coordinator)
         ImageEntity.__init__(self, hass)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_last_updated_content"
-        self._attr_content_type = "image/png"
         self._cached_image = Image(content_type="image/png", content=coordinator.data)
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        """Entity always available."""
-        return True
-
-    @property
-    def data(self) -> bytes:
-        """Return coordinator data for this entity."""
-        return self.coordinator.data
 
     def image(self) -> bytes | None:
         """Return bytes of image."""
@@ -76,49 +54,24 @@ class BleEslImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEn
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.debug("Updated image data")
+        _LOGGER.debug("Updated image data for %s", self._attr_unique_id)
         self._cached_image = Image(content_type="image/png", content=self.data)
         self._attr_image_last_updated = dt_util.now()
         super()._handle_coordinator_update()
 
 
-class BleEslPreviewImageEntity(CoordinatorEntity[DataUpdateCoordinator[bytes]], ImageEntity):
+class BleEslImageEntity(_BleEslImageBase):
+    """Representation of last updated image content."""
+
+    _key = "last_updated_content"
+    _attr_translation_key = "last_updated_content"
+
+
+
+class BleEslPreviewImageEntity(_BleEslImageBase):
     """Representation of preview image content."""
 
-    _attr_has_entity_name = True
+    _key = "preview_content_image"
     _attr_translation_key = "preview_content"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, coordinator: DataUpdateCoordinator[bytes]):
-        CoordinatorEntity.__init__(self, coordinator)
-        ImageEntity.__init__(self, hass)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_preview_content_image"
-        self._attr_content_type = "image/png"
-        self._cached_image = Image(content_type="image/png", content=coordinator.data)
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-    @property
-    def data(self) -> bytes:
-        return self.coordinator.data
-
-    def image(self) -> bytes | None:
-        return self._cached_image.content
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        _LOGGER.debug("Updated preview image data")
-        self._cached_image = Image(content_type="image/png", content=self.data)
-        self._attr_image_last_updated = dt_util.now()
-        super()._handle_coordinator_update()
