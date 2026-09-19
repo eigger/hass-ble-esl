@@ -518,3 +518,45 @@ def test_skipped_write_discards_failed_encode_quietly(harness_factory, monkeypat
         assert unhandled == []
 
     asyncio.run(_test())
+
+
+def test_multi_target_call_pipelines_encodes_and_writes_in_order(harness_factory, monkeypatch):
+    """Both tags of one call encode up front; writes are serialized by the lock in order."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
+        await h.add_entry("e2", "AA:BB:CC:DD:EE:02")
+        encoded: list[str] = []
+        first_write_started = asyncio.Event()
+        release_first = asyncio.Event()
+
+        def prepare(preset, image, address):
+            h.loop.call_soon_threadsafe(encoded.append, address)
+            return image
+
+        async def slow_write(ble_device, preset, prepared, **kwargs):
+            if not first_write_started.is_set():
+                first_write_started.set()
+                await release_first.wait()
+            return WriteResult(success=True)
+
+        monkeypatch.setattr(esl_ble.get("wolink"), "prepare_image", prepare)
+        h.write_prepared.side_effect = slow_write
+
+        call = asyncio.get_running_loop().create_task(
+            h.call("write", ["dev-e1", "dev-e2"], payload="x")
+        )
+        await first_write_started.wait()
+        await asyncio.sleep(0.05)
+        # Second tag has already encoded while the first is still writing.
+        assert sorted(encoded) == ["AA:BB:CC:DD:EE:01", "AA:BB:CC:DD:EE:02"]
+        assert h.write_prepared.await_count == 1
+        release_first.set()
+        await call
+
+        assert h.write_prepared.await_count == 2
+        assert h.entry_data("e1")["image_coordinator"].data is not None
+        assert h.entry_data("e2")["image_coordinator"].data is not None
+
+    asyncio.run(_test())

@@ -147,8 +147,11 @@ class BleBackend(ABC):
     ) -> WriteResult:
         """Write the result of prepare_image() to the device.
 
-        `prepared` is awaited only after the connection is up, so encoding
-        overlaps connecting; awaiting it again on a retry reuses the result.
+        Backends override this to await `prepared` only once their link is up
+        (so encoding overlaps connecting) and to reuse the result on retries.
+        This default has no such hook: it awaits the encode first and hands the
+        result to write_image(), which for the default prepare_image() is the
+        unchanged image.
         """
         return await self.write_image(
             ble_device,

@@ -594,17 +594,25 @@ async def async_setup_entry(
         service: ServiceCall,
         handler: Callable[[str], Awaitable[None]],
     ) -> None:
-        """Run handler per targeted device, continuing past per-device failures.
+        """Run handler for every targeted device, continuing past failures.
 
-        Errors are collected and raised together at the end so one unreachable
-        tag does not prevent the remaining targets from being written.
+        Handlers run concurrently: each renders and starts its encode right
+        away and then queues on the BLE lock (FIFO, so tags are written in
+        target order), which lets later tags encode while an earlier one is
+        transferring. Errors are collected and raised together at the end so
+        one unreachable tag does not prevent the others from being written.
         """
-        errors: list[str] = []
-        for entry_id in await async_targeted_entry_ids(hass, service):
-            try:
-                await handler(entry_id)
-            except HomeAssistantError as err:
-                errors.append(str(err))
+        targets = await async_targeted_entry_ids(hass, service)
+        results = await asyncio.gather(
+            *(handler(entry_id) for entry_id in targets), return_exceptions=True
+        )
+        errors = [str(r) for r in results if isinstance(r, HomeAssistantError)]
+        unexpected = [
+            r for r in results
+            if isinstance(r, BaseException) and not isinstance(r, HomeAssistantError)
+        ]
+        if unexpected:
+            raise unexpected[0]
         if errors:
             raise HomeAssistantError("; ".join(errors))
 
