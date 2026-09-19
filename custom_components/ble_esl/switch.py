@@ -6,13 +6,11 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
-from propcache.api import cached_property
 
 from .const import DOMAIN, WRITE_LOCK
-from .device import async_get_device_info
+from .entity import BleEslEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,30 +24,16 @@ async def async_setup_entry(
     async_add_entities([BleEslWriteLockSwitch(hass, entry)])
 
 
-class BleEslWriteLockSwitch(RestoreEntity, SwitchEntity):
+class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
     """Switch that locks physical writes (virtual updates still apply)."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "write_lock"
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:lock"
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_write_lock"
-        self._hass = hass
-        self._entry_id = entry.entry_id
+        self._bind_tag(hass, entry, "write_lock")
         self._is_on = False
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self._hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        return True
 
     @property
     def is_on(self) -> bool:
@@ -58,26 +42,26 @@ class BleEslWriteLockSwitch(RestoreEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the write lock."""
         self._is_on = True
-        self._hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = True
+        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = True
 
         # Save to config entry data for persistence
-        config_entry = self._hass.config_entries.async_get_entry(self._entry_id)
+        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         if config_entry:
             data = {**config_entry.data, WRITE_LOCK: True}
-            self._hass.config_entries.async_update_entry(config_entry, data=data)
+            self.hass.config_entries.async_update_entry(config_entry, data=data)
 
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the write lock."""
         self._is_on = False
-        self._hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = False
+        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = False
 
         # Save to config entry data for persistence
-        config_entry = self._hass.config_entries.async_get_entry(self._entry_id)
+        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         if config_entry:
             data = {**config_entry.data, WRITE_LOCK: False}
-            self._hass.config_entries.async_update_entry(config_entry, data=data)
+            self.hass.config_entries.async_update_entry(config_entry, data=data)
 
         self.async_write_ha_state()
 
@@ -86,7 +70,7 @@ class BleEslWriteLockSwitch(RestoreEntity, SwitchEntity):
         await super().async_added_to_hass()
 
         # Restore from config entry data (most reliable for config entities)
-        config_entry = self._hass.config_entries.async_get_entry(self._entry_id)
+        config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
         if config_entry and WRITE_LOCK in config_entry.data:
             self._is_on = config_entry.data[WRITE_LOCK]
         else:
@@ -98,4 +82,4 @@ class BleEslWriteLockSwitch(RestoreEntity, SwitchEntity):
                 self._is_on = False
 
         # Update hass.data with restored state
-        self._hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = self._is_on
+        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = self._is_on

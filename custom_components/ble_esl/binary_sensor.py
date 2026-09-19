@@ -15,14 +15,9 @@ from homeassistant.components.bluetooth.passive_update_processor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
-from propcache.api import cached_property
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from sensor_state_data import (
     BinarySensorDeviceClass as BleEslBinarySensorDeviceClass,
     SensorUpdate,
@@ -30,11 +25,8 @@ from sensor_state_data import (
 
 from .const import DOMAIN, SESSION_MIN_VOLTAGE
 from .coordinator import BleEslPassiveBluetoothDataProcessor
-from .device import (
-    async_get_device_info,
-    device_key_to_bluetooth_entity_key,
-    hass_device_info,
-)
+from .device import device_key_to_bluetooth_entity_key, hass_device_info
+from .entity import BleEslCoordinatorEntity
 from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -129,13 +121,9 @@ class BleEslBluetoothBinarySensorEntity(
         return self.processor.entity_data.get(self.entity_key)
 
 
-class BleEslBatteryLowBinarySensor(
-    CoordinatorEntity[DataUpdateCoordinator[float | None]],
-    BinarySensorEntity,
-):
+class BleEslBatteryLowBinarySensor(BleEslCoordinatorEntity[float | None], BinarySensorEntity):
     """Battery-low binary sensor for session-polled battery voltage."""
 
-    _attr_has_entity_name = True
     _attr_device_class = BinarySensorDeviceClass.BATTERY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -145,13 +133,7 @@ class BleEslBatteryLowBinarySensor(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[float | None],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_battery_low"
+        super().__init__(hass, entry, coordinator, "battery_low")
 
     @property
     def is_on(self) -> bool | None:
@@ -160,54 +142,27 @@ class BleEslBatteryLowBinarySensor(
             return None
         return volt <= SESSION_MIN_VOLTAGE
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
 
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-
-class BleEslBluetoothConnectivitySensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[bool]],
-    BinarySensorEntity,
-):
+class BleEslBluetoothConnectivitySensorEntity(BleEslCoordinatorEntity[bool], BinarySensorEntity):
     """Representation of a BLE ESL connectivity binary sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "connectivity"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, coordinator: DataUpdateCoordinator[bool]):
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_connectivity"
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        coordinator: DataUpdateCoordinator[bool],
+    ) -> None:
+        super().__init__(hass, entry, coordinator, "connectivity")
         self._is_on = False
 
     @property
     def is_on(self) -> bool | None:
         """Return the native value."""
         return self._is_on
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        """Entity always available."""
-        return True
-
-    @property
-    def data(self) -> bool:
-        """Return coordinator data for this entity."""
-        return self.coordinator.data
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -217,13 +172,9 @@ class BleEslBluetoothConnectivitySensorEntity(
         super()._handle_coordinator_update()
 
 
-class BleEslDisplayInSyncBinarySensor(
-    CoordinatorEntity[DataUpdateCoordinator[bytes | None]],
-    BinarySensorEntity,
-):
+class BleEslDisplayInSyncBinarySensor(BleEslCoordinatorEntity[bytes | None], BinarySensorEntity):
     """Representation of a BLE ESL display synchronization binary sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "display_in_sync"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -233,15 +184,9 @@ class BleEslDisplayInSyncBinarySensor(
         entry: ConfigEntry,
         image_coordinator: DataUpdateCoordinator[bytes | None],
         preview_coordinator: DataUpdateCoordinator[bytes | None],
-    ):
-        super().__init__(image_coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
+    ) -> None:
+        super().__init__(hass, entry, image_coordinator, "display_in_sync")
         self._preview_coordinator = preview_coordinator
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_display_in_sync"
 
     @property
     def is_on(self) -> bool | None:
@@ -250,14 +195,6 @@ class BleEslDisplayInSyncBinarySensor(
         if img is None or pre is None:
             return None
         return img == pre
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        return True
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

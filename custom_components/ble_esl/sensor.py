@@ -26,14 +26,9 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util.dt import parse_datetime
-from propcache.api import cached_property
 from sensor_state_data import (
     SensorDeviceClass as BleEslSensorDeviceClass,
     SensorUpdate,
@@ -42,11 +37,8 @@ from sensor_state_data import (
 
 from .const import DOMAIN, SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
 from .coordinator import BleEslPassiveBluetoothDataProcessor
-from .device import (
-    async_get_device_info,
-    device_key_to_bluetooth_entity_key,
-    hass_device_info,
-)
+from .device import device_key_to_bluetooth_entity_key, hass_device_info
+from .entity import BleEslCoordinatorEntity
 from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -212,13 +204,9 @@ class BleEslBluetoothSensorEntity(
         return super().available
 
 
-class BleEslBatteryPercentageSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[float | None]],
-    SensorEntity,
-):
+class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):
     """Representation of a BLE ESL battery percentage sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "battery"
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
@@ -232,13 +220,7 @@ class BleEslBatteryPercentageSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[float | None],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_battery"
+        super().__init__(hass, entry, coordinator, "battery")
 
     @property
     def native_value(self) -> int | None:
@@ -250,22 +232,10 @@ class BleEslBatteryPercentageSensorEntity(
         )
         return max(0, min(100, round(pct)))
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
 
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-
-class BleEslBatteryVoltageSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[float | None]],
-    SensorEntity,
-):
+class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):
     """Representation of a BLE ESL battery voltage sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "battery_voltage"
     _attr_device_class = SensorDeviceClass.VOLTAGE
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
@@ -279,34 +249,16 @@ class BleEslBatteryVoltageSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[float | None],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_battery_voltage"
+        super().__init__(hass, entry, coordinator, "battery_voltage")
 
     @property
     def native_value(self) -> float | None:
         return self.coordinator.data
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
 
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-
-class BleEslTemperatureSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[int | None]],
-    SensorEntity,
-):
+class BleEslTemperatureSensorEntity(BleEslCoordinatorEntity[int | None], SensorEntity):
     """Representation of a BLE ESL temperature sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "temperature"
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -319,34 +271,16 @@ class BleEslTemperatureSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[int | None],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_temperature"
+        super().__init__(hass, entry, coordinator, "temperature")
 
     @property
     def native_value(self) -> int | None:
         return self.coordinator.data
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
 
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-
-class BleEslDurationSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[float]],
-    SensorEntity,
-):
+class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
     """Representation of a BLE ESL write duration sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "write_duration"
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.SECONDS
@@ -359,30 +293,12 @@ class BleEslDurationSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[float],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_write_duration"
+        super().__init__(hass, entry, coordinator, "write_duration")
         self._native_value: float = 0.0
 
     @property
     def native_value(self) -> float | None:
         return self._native_value
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-    @property
-    def data(self) -> float:
-        return self.coordinator.data
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -391,13 +307,9 @@ class BleEslDurationSensorEntity(
         super()._handle_coordinator_update()
 
 
-class BleEslFailureCountSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[int]],
-    SensorEntity,
-):
+class BleEslFailureCountSensorEntity(BleEslCoordinatorEntity[int], SensorEntity):
     """Representation of a BLE ESL write failure count sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "failure_count"
     _attr_state_class = SensorStateClass.TOTAL
     _attr_icon = "mdi:alert-circle"
@@ -409,34 +321,16 @@ class BleEslFailureCountSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[int],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_failure_count"
+        super().__init__(hass, entry, coordinator, "failure_count")
 
     @property
     def native_value(self) -> int | None:
         return self.coordinator.data
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
 
-    @cached_property
-    def available(self) -> bool:
-        return True
-
-
-class BleEslLastFailureTimeSensorEntity(
-    CoordinatorEntity[DataUpdateCoordinator[datetime | None]],
-    SensorEntity,
-):
+class BleEslLastFailureTimeSensorEntity(BleEslCoordinatorEntity[datetime | None], SensorEntity):
     """Representation of a BLE ESL write last failure time sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "last_failure_time"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:clock-alert"
@@ -448,22 +342,8 @@ class BleEslLastFailureTimeSensorEntity(
         entry: ConfigEntry,
         coordinator: DataUpdateCoordinator[datetime | None],
     ) -> None:
-        super().__init__(coordinator)
-        self.hass = hass
-        self._entry_id = entry.entry_id
-        address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._address = address
-        self._identifier = address.replace(":", "")[-8:]
-        self._attr_unique_id = f"ble_esl_{self._identifier}_last_failure_time"
+        super().__init__(hass, entry, coordinator, "last_failure_time")
 
     @property
     def native_value(self) -> datetime | None:
         return self.coordinator.data
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
-
-    @cached_property
-    def available(self) -> bool:
-        return True
