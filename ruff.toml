@@ -1,8 +1,8 @@
 # Ruff configuration.
 #
 # Whole rule families are enabled below, so a ruff release that adds a rule to
-# one of them could fail CI without a code change. CI therefore pins the ruff
-# version (.github/workflows/tests.yml); bump it there deliberately and fix
+# one of them could fail CI without a code change. The ruff version is
+# therefore pinned (requirements_lint.txt) and bumped by Dependabot; fix
 # whatever the new version reports in the same PR.
 line-length = 100
 # Lowest interpreter in the CI matrix; UP must not emit syntax newer than this.
