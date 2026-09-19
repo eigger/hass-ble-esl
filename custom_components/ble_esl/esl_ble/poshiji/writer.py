@@ -64,6 +64,7 @@ class XteClient:
                 return
 
     async def write_image(self, image: Image.Image) -> bool:
+        """Encode and send. Convenience for direct use and the session tests; the integration goes through BleBackend.write_image(), which encodes off the loop once and overlaps it with connecting."""
         image_object = await asyncio.to_thread(prepare_image_object, image)
         return await self.write_object(image_object)
 
@@ -98,7 +99,7 @@ class XteClient:
             return True
         finally:
             # Never let an unsubscribe failure on a dropped link mask the
-            # original transfer error; update_image still disconnects.
+            # original transfer error; ble_session() still disconnects.
             with contextlib.suppress(Exception):
                 if self.client.is_connected:
                     await self.client.stop_notify(notify_char)

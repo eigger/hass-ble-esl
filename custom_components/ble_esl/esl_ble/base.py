@@ -45,6 +45,12 @@ class DevicePreset:
         """True if the preset is confirmed working on physical hardware."""
         return self.confidence in (CONFIDENCE_HARDWARE, CONFIDENCE_REPORTED)
 
+    @property
+    def model_name(self) -> str:
+        """Display name with the resolution appended unless it already contains it."""
+        res = f"{self.width}x{self.height}"
+        return self.display_name if res in self.display_name else f"{self.display_name} {res}"
+
 
 @dataclass(frozen=True)
 class Capabilities:
@@ -123,9 +129,7 @@ class BleParser(BluetoothData, ABC):
         if self.preset is None:
             display_name, model = self.fallback_name, self.fallback_name
         else:
-            display_name = self.preset.display_name
-            res = f"{self.preset.width}x{self.preset.height}"
-            model = display_name if res in display_name else f"{display_name} {res}"
+            display_name, model = self.preset.display_name, self.preset.model_name
         self.set_title(f"{identifier} ({display_name})")
         self.set_device_name(f"{self.brand} {identifier}")
         self.set_device_type(model)

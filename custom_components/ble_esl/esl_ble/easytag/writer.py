@@ -118,7 +118,12 @@ class EasyTagClient:
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Encode (off the event loop) and transmit image frames."""
+        """Encode (off the event loop) and transmit image frames.
+
+        Convenience for direct use and the session tests; the integration goes
+        through BleBackend.write_image(), which encodes off the loop once and
+        overlaps it with connecting.
+        """
         frames = await asyncio.to_thread(
             prepare_frames, image, self.preset, self.address
         )

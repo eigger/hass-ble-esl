@@ -177,7 +177,12 @@ class WolinkClient:
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Encode (off the event loop), send, and refresh an image."""
+        """Encode (off the event loop), send, and refresh an image.
+
+        Convenience for direct use and the session tests; the integration goes
+        through BleBackend.write_image(), which encodes off the loop once and
+        overlaps it with connecting.
+        """
         prepared = await asyncio.to_thread(prepare_payload, image, self.preset)
         return await self.write_prepared(
             prepared, attempt=attempt, write_delay_ms=write_delay_ms

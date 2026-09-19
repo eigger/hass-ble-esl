@@ -93,7 +93,12 @@ class PickSmartClient:
         return self._response_data
 
     async def write_image(self, image: Image.Image) -> WriteResult:
-        """Encode (off the event loop) and run the transfer handshake."""
+        """Encode (off the event loop) and run the transfer handshake.
+
+        Convenience for direct use and the session tests; the integration goes
+        through BleBackend.write_image(), which encodes off the loop once and
+        overlaps it with connecting.
+        """
         payload = await asyncio.to_thread(encode_image, image, self.preset)
         return await self.write_payload(payload)
 
