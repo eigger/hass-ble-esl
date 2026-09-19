@@ -120,21 +120,3 @@ PRESETS: dict[str, DevicePreset] = {
     ),
 }
 
-
-def preset_choices() -> list[tuple[str, str]]:
-    """Return model choices for config flow, verified hardware first."""
-    def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
-        _, p = item
-        order = {
-            CONFIDENCE_HARDWARE: 0,
-            CONFIDENCE_REPORTED: 1,
-        }
-        return (order.get(p.confidence, 2), p.width * p.height)
-
-    out = []
-    for key, preset in sorted(PRESETS.items(), key=sort_key):
-        label = f"{preset.display_name} — {preset.width}x{preset.height}"
-        if not preset.verified:
-            label += " (unverified)"
-        out.append((key, label))
-    return out

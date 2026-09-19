@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
 from . import writer
 from .const import BRAND, MANUFACTURER_ID
-from .devices import PRESETS, apply_firmware_quirks, get_device_preset, preset_choices
+from .devices import PRESETS, apply_firmware_quirks, get_device_preset
 from .parser import (
     PickSmartBluetoothDeviceData,
     is_picksmart_advertisement,
@@ -89,15 +89,11 @@ class PickSmartBleBackend(BleBackend):
         )
 
 
-PickSmartProtocol = PickSmartBleBackend
-
 __all__ = [
     "PRESETS",
     "PickSmartBleBackend",
     "PickSmartBluetoothDeviceData",
-    "PickSmartProtocol",
     "apply_firmware_quirks",
     "get_device_preset",
     "is_picksmart_advertisement",
-    "preset_choices",
 ]

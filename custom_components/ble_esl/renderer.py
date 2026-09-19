@@ -4,6 +4,7 @@ import os
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.exceptions import HomeAssistantError
 from imagespec import RenderContext, RenderError, render
+from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,19 +55,26 @@ def _make_context(hass, *, default_font, palette):
     )
 
 
-def render_image(entity_id, preset, service, hass):
-    """Render an image using imagespec tailored to the device preset."""
+def render_image(
+    hass,
+    preset,
+    payload,
+    *,
+    rotate: int = 0,
+    background: str = "white",
+) -> Image.Image:
+    """Render an imagespec payload for the device preset (CPU-bound; run in an executor)."""
     colors = getattr(preset, "colors", "BWRY")
     palette = PALETTES.get(colors, ["black", "white", "red", "yellow"])
 
     try:
         return render(
-            payload=service.data.get("payload", ""),
+            payload=payload,
             width=preset.width,
             height=preset.height,
-            rotate=int(service.data.get("rotate", 0)),
+            rotate=int(rotate),
             rotate_mode="canvas",  # ESL panel: fixed resolution, background rotates
-            background=service.data.get("background", "white"),
+            background=background,
             dither=False,
             context=_make_context(
                 hass, default_font="NotoSansKR-Regular.ttf", palette=palette

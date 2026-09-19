@@ -27,7 +27,7 @@ def test_render_image_bwry():
     hass = MagicMock()
     hass.config.path = MagicMock(return_value="/tmp/mock_fonts")
 
-    image = render_image("dummy_entity", preset, service, hass)
+    image = render_image(hass, preset, service.data["payload"], rotate=service.data.get("rotate", 0), background=service.data.get("background", "white"))
 
     assert image is not None
     assert image.size == (296, 128)
@@ -56,7 +56,7 @@ def test_render_image_bwr():
     hass = MagicMock()
     hass.config.path = MagicMock(return_value="/tmp/mock_fonts")
 
-    image = render_image("dummy_entity", preset, service, hass)
+    image = render_image(hass, preset, service.data["payload"], rotate=service.data.get("rotate", 0), background=service.data.get("background", "white"))
 
     assert image is not None
     assert image.size == (960, 640)
@@ -90,7 +90,7 @@ def test_render_image_per_element_dither():
         ],
         "background": "white",
     }
-    img_flat = render_image("dummy_entity", preset, service_flat, hass)
+    img_flat = render_image(hass, preset, service_flat.data["payload"], rotate=service_flat.data.get("rotate", 0), background=service_flat.data.get("background", "white"))
 
     service_dither = MagicMock()
     service_dither.data = {
@@ -108,7 +108,7 @@ def test_render_image_per_element_dither():
         ],
         "background": "white",
     }
-    img_dither = render_image("dummy_entity", preset, service_dither, hass)
+    img_dither = render_image(hass, preset, service_dither.data["payload"], rotate=service_dither.data.get("rotate", 0), background=service_dither.data.get("background", "white"))
 
     w, h = img_flat.size
     unique_flat = {

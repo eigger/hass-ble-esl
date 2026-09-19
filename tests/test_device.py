@@ -9,7 +9,7 @@ from conftest import make_entry, make_runtime_data
 from custom_components.ble_esl import process_service_info
 from custom_components.ble_esl.device import build_device_info
 from custom_components.ble_esl.esl_ble.base import DevicePreset
-from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
+from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 
 
@@ -24,7 +24,7 @@ def test_build_device_info():
         colors="BWRY",
     )
     data = make_runtime_data(
-        backend=WolinkProtocol(),
+        backend=WolinkBleBackend(),
         preset=preset,
         model="2.9\" BWRY 296x128",
         sw_version="258",
@@ -44,7 +44,7 @@ def test_build_device_info():
 def test_process_service_info_updates_device_registry():
     """Verify process_service_info updates device registry with sw/hw/model."""
     hass = MagicMock()
-    backend = WolinkProtocol()
+    backend = WolinkBleBackend()
     preset = backend.presets()["290"]
     entry = make_entry(
         backend=backend,

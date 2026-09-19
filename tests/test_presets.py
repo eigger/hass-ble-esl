@@ -10,7 +10,6 @@ from custom_components.ble_esl.esl_ble.base import (
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import (
     PRESETS,
-    preset_choices,
 )
 
 
@@ -48,20 +47,18 @@ def test_presets_catalog():
     assert PRESETS["133"].colors == "BWR"
 
 
-def test_preset_choices_ordering():
-    """Verify preset_choices orders verified hardware/reported models before unverified ones."""
-    choices = preset_choices()
-    assert len(choices) == 11
+def test_model_selector_ordering():
+    """The config-flow model list puts verified hardware/reported models first
+    and marks the rest as unverified."""
+    from custom_components.ble_esl.config_flow import _model_selector_options
 
-    keys = [k for k, _ in choices]
-    # First 4 must be verified: 290, 350, 750, 420 (in sorted order of hardware/reported confidence and area)
-    verified_keys = {"290", "350", "750", "420"}
-    assert set(keys[:4]) == verified_keys
+    options = _model_selector_options("wolink")
+    assert len(options) == 11
 
-    # Check unverified markers
-    for key, label in choices:
-        preset = PRESETS[key]
-        if not preset.verified:
-            assert "(unverified)" in label
-        else:
-            assert "(unverified)" not in label
+    keys = [o["value"] for o in options]
+    # First 4 must be verified: 290, 350, 750, 420 (hardware/reported confidence, then area)
+    assert set(keys[:4]) == {"290", "350", "750", "420"}
+
+    for option in options:
+        preset = PRESETS[option["value"]]
+        assert ("(unverified)" in option["label"]) is (not preset.verified)

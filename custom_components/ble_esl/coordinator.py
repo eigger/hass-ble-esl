@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from logging import Logger
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from bluetooth_sensor_state_data import BluetoothData
 from homeassistant.components.bluetooth import (
@@ -17,9 +17,6 @@ from homeassistant.components.bluetooth.passive_update_processor import (
 )
 from homeassistant.core import HomeAssistant
 from sensor_state_data import SensorUpdate
-
-if TYPE_CHECKING:
-    from .types import BleEslConfigEntry
 
 _T = TypeVar("_T")
 
@@ -37,7 +34,6 @@ class BleEslPassiveBluetoothProcessorCoordinator(
         mode: BluetoothScanningMode,
         update_method: Callable[[BluetoothServiceInfoBleak], SensorUpdate],
         device_data: BluetoothData,
-        entry: BleEslConfigEntry,
         connectable: bool = False,
     ) -> None:
         """Initialize the BLE ESL Passive Update Processor Coordinator."""
@@ -45,7 +41,6 @@ class BleEslPassiveBluetoothProcessorCoordinator(
             hass, logger, address, mode, update_method, connectable
         )
         self.device_data = device_data
-        self.entry = entry
 
 
 class BleEslPassiveBluetoothDataProcessor(

@@ -81,24 +81,3 @@ PRESETS: dict[str, DevicePreset] = {
     )
 }
 
-
-def preset_choices() -> list[tuple[str, str]]:
-    """Return (key, label) pairs for UI picker, verified presets first."""
-
-    def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
-        _, preset = item
-        order = {
-            CONFIDENCE_HARDWARE: 0,
-            CONFIDENCE_REPORTED: 1,
-            CONFIDENCE_COMMUNITY: 2,
-            CONFIDENCE_ESTIMATED: 3,
-        }
-        return (order.get(preset.confidence, 4), preset.width * preset.height)
-
-    out = []
-    for key, preset in sorted(PRESETS.items(), key=sort_key):
-        label = f"{preset.display_name} — {preset.width}x{preset.height}"
-        if not preset.verified:
-            label += " (unverified)"
-        out.append((key, label))
-    return out

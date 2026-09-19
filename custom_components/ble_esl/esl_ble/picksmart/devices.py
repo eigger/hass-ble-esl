@@ -157,17 +157,3 @@ def get_device_preset(device_id: int, firmware: int) -> DevicePreset | None:
         return None
     return apply_firmware_quirks(preset, firmware)
 
-
-def preset_choices() -> list[tuple[str, str]]:
-    """Return model choices for config flow."""
-    def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
-        _, p = item
-        return (0 if p.verified else 1, p.width * p.height)
-
-    out = []
-    for key, preset in sorted(PRESETS.items(), key=sort_key):
-        label = f"{preset.display_name} — {preset.width}x{preset.height}"
-        if not preset.verified:
-            label += " (unverified)"
-        out.append((key, label))
-    return out
