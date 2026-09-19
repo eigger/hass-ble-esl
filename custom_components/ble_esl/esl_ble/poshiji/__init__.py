@@ -4,7 +4,7 @@ from ..base import AdvertisementInfo, BleBackend, Capabilities
 from .const import BRAND
 from .devices import PRESETS, PSJ_420
 from .parser import PoshijiBluetoothDeviceData, is_poshiji_advertisement
-from .writer import update_image
+from .writer import prepare_image_object, update_image, update_prepared
 
 
 class PoshijiBleBackend(BleBackend):
@@ -33,3 +33,10 @@ class PoshijiBleBackend(BleBackend):
     async def write_image(self, ble_device, preset, image, *, attempt=1, write_delay_ms=0):
         return await update_image(ble_device, preset, image,
                                   attempt=attempt, write_delay_ms=write_delay_ms)
+
+    def prepare_image(self, preset, image, address):
+        return prepare_image_object(image)
+
+    async def write_prepared(self, ble_device, preset, prepared, *, attempt=1, write_delay_ms=0):
+        return await update_prepared(ble_device, preset, prepared,
+                                     attempt=attempt, write_delay_ms=write_delay_ms)

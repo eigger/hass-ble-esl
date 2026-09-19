@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Awaitable, Mapping
 from typing import TYPE_CHECKING
 
 from ..base import (
@@ -19,7 +19,8 @@ from .parser import (
     is_picksmart_advertisement,
     parse_manufacturer_data,
 )
-from .writer import update_image
+from .protocol import encode_image
+from .writer import update_image, update_prepared
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -107,6 +108,26 @@ class PickSmartBleBackend(BleBackend):
             image,
             attempt=attempt,
             write_delay_ms=write_delay_ms,
+        )
+
+    def prepare_image(
+        self, preset: DevicePreset, image: Image.Image, address: str
+    ) -> bytes:
+        """Encode to the PickSmart byte stream (CPU-bound; caller runs it in a thread)."""
+        return encode_image(image, preset)
+
+    async def write_prepared(
+        self,
+        ble_device: BLEDevice,
+        preset: DevicePreset,
+        prepared: Awaitable[bytes],
+        *,
+        attempt: int = 1,
+        write_delay_ms: int = 0,
+    ) -> WriteResult:
+        """Write an already-scheduled encode to the device."""
+        return await update_prepared(
+            ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 

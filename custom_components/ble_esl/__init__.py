@@ -407,7 +407,6 @@ async def async_setup_entry(
         last_fail_coord = context["last_failure_coordinator"]
         batt_coord = context["battery_coordinator"]
         temp_coord = context["temperature_coordinator"]
-        image = context["image"]
         current_image_data = context["current_image_data"]
         max_retries = context["max_retries"]
         write_delay_ms = context["write_delay_ms"]
@@ -430,10 +429,13 @@ async def async_setup_entry(
                         error="BLE device handle is unavailable (out of range or adapter down)",
                     )
                 else:
-                    result = await backend.write_image(
+                    # The encode was started before the BLE lock was taken;
+                    # the backend awaits it once the link is up, and a retry
+                    # awaits the same future again instead of re-encoding.
+                    result = await backend.write_prepared(
                         ble_device,
                         preset,
-                        image,
+                        context["prepared"],
                         attempt=attempt,
                         write_delay_ms=write_delay_ms,
                     )
@@ -518,26 +520,44 @@ async def async_setup_entry(
         """
         entry_id = context["entry_id"]
         address = context["address"]
-        async with hass.data[DOMAIN][LOCK]:
-            entry_data = hass.data[DOMAIN].get(entry_id)
-            if entry_data is None:
-                return  # entry unloaded while waiting for the lock
-            if entry_data.get(WRITE_LOCK, False):
-                _LOGGER.info(
-                    "Write lock active for %s — skipping BLE write", address
-                )
-                return
-            generation = context.get("generation")
-            if generation is not None and generation != entry_data["write_generation"]:
-                _LOGGER.debug("Superseded debounced write for %s dropped", address)
-                return
-            if (
-                context.get("prevent_duplicate_send")
-                and context["current_image_data"] == entry_data.get("last_image_data")
-            ):
-                _LOGGER.info("Skipping duplicate image for %s", address)
-                return
-            await execute_write_core(context)
+        backend = context["backend"]
+        # Encode once per write, in HA's executor, *before* queueing on the
+        # BLE lock: tags waiting their turn encode while another transfers,
+        # and the CPU-bound work never runs on the event loop. The backend
+        # awaits the future only once its link is up (overlapping connect),
+        # and every retry attempt reuses the same result.
+        prepared = hass.async_add_executor_job(
+            backend.prepare_image, context["preset"], context["image"], address
+        )
+        context["prepared"] = prepared
+        try:
+            async with hass.data[DOMAIN][LOCK]:
+                entry_data = hass.data[DOMAIN].get(entry_id)
+                if entry_data is None:
+                    return  # entry unloaded while waiting for the lock
+                if entry_data.get(WRITE_LOCK, False):
+                    _LOGGER.info(
+                        "Write lock active for %s — skipping BLE write", address
+                    )
+                    return
+                generation = context.get("generation")
+                if generation is not None and generation != entry_data["write_generation"]:
+                    _LOGGER.debug("Superseded debounced write for %s dropped", address)
+                    return
+                if (
+                    context.get("prevent_duplicate_send")
+                    and context["current_image_data"] == entry_data.get("last_image_data")
+                ):
+                    _LOGGER.info("Skipping duplicate image for %s", address)
+                    return
+                await execute_write_core(context)
+        finally:
+            # Skipped or failed before the encode was awaited: drop it without
+            # a "Future exception was never retrieved" warning.
+            if not prepared.done():
+                prepared.cancel()
+            elif not prepared.cancelled():
+                prepared.exception()
 
     def schedule_debounced_write(context: dict[str, Any], delay_s: float) -> None:
         """(Re)schedule a write to run `delay_s` after this call.

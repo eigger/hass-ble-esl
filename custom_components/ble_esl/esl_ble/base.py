@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Awaitable, Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -123,7 +123,40 @@ class BleBackend(ABC):
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Write an image to the device."""
+        """Encode and write an image to the device in one step."""
+
+    def prepare_image(
+        self, preset: DevicePreset, image: Image.Image, address: str
+    ) -> Any:
+        """Encode an image into whatever write_prepared() sends.
+
+        CPU-bound and synchronous; the caller runs it in a worker thread,
+        once per write, before taking the BLE lock. The default keeps the
+        image as-is for backends that encode inside write_image().
+        """
+        return image
+
+    async def write_prepared(
+        self,
+        ble_device: BLEDevice,
+        preset: DevicePreset,
+        prepared: Awaitable[Any],
+        *,
+        attempt: int = 1,
+        write_delay_ms: int = 0,
+    ) -> WriteResult:
+        """Write the result of prepare_image() to the device.
+
+        `prepared` is awaited only after the connection is up, so encoding
+        overlaps connecting; awaiting it again on a retry reuses the result.
+        """
+        return await self.write_image(
+            ble_device,
+            preset,
+            await prepared,
+            attempt=attempt,
+            write_delay_ms=write_delay_ms,
+        )
 
     async def read_status(
         self, ble_device: BLEDevice, preset: DevicePreset

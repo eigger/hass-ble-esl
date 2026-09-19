@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
@@ -169,22 +170,40 @@ async def update_image(
     attempt: int = 1,
     write_delay_ms: int = 0,
 ) -> WriteResult:
-    """Connect, transmit image, and receive battery/temperature feedback."""
-    # Connect inside the try so connection failures surface as a failed
-    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
-    client: BleakClient | None = None
-    # Encode in a worker thread while the connection is being established:
-    # the event loop stays free, the radio starts immediately (sleepy tags
-    # have short advertising windows), and the link is held only for
-    # whatever part of the encode outlasts the connect.
+    """Encode (worker thread, overlapping the connect) and write an image."""
     encode = asyncio.create_task(
         asyncio.to_thread(prepare_frames, image, preset, ble_device.address)
     )
     try:
+        return await update_prepared(
+            ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
+        )
+    finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
+
+
+async def update_prepared(
+    ble_device: BLEDevice,
+    preset: DevicePreset,
+    prepared: Awaitable[list[bytes]],
+    *,
+    attempt: int = 1,
+    write_delay_ms: int = 0,
+) -> WriteResult:
+    """Connect and send an already-scheduled encode to the tag.
+
+    `prepared` is awaited only once the link is up, so the encode (started by
+    the caller in a worker thread) overlaps connecting; the caller owns it and
+    may await it again on a retry.
+    """
+    # Connect inside the try so connection failures surface as a failed
+    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
+    client: BleakClient | None = None
+    try:
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
-        frames = await encode
+        frames = await prepared
         easytag = EasyTagClient(client, preset, ble_device.address)
         return await easytag.write_frames(
             frames, attempt=attempt, write_delay_ms=write_delay_ms
@@ -195,7 +214,6 @@ async def update_image(
         _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
         return WriteResult(success=False, error=str(exc) or type(exc).__name__)
     finally:
-        encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()
