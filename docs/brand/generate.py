@@ -3,9 +3,10 @@
 Usage: python docs/brand/generate.py custom_components/ble_esl/brand
 """
 
-from PIL import Image, ImageDraw, ImageFont
-import sys
 import os
+import sys
+
+from PIL import Image, ImageDraw, ImageFont
 
 OUT = sys.argv[1]
 FONT_DIR = os.path.join(
@@ -34,7 +35,7 @@ WHITE = (255, 255, 255)
 
 
 def draw_tag(d, x, y, s, c):
-    """Draw an ESL tag icon inside an s×s box at (x, y). Coordinates already supersampled."""
+    """Draw an ESL tag icon inside an s x s box at (x, y). Coordinates already supersampled."""
     # tag body: landscape rounded rect, centered
     bw, bh = s * 0.92, s * 0.70
     bx, by = x + (s - bw) / 2, y + (s - bh) / 2

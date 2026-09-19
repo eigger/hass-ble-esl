@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import json
 from unittest.mock import MagicMock
 
@@ -41,7 +41,7 @@ def test_diagnostics_content_and_redaction(monkeypatch):
         entry.options = {"retry_count": 2}
         data = entry.runtime_data
         data.failure_coordinator.data = 3
-        data.last_failure_coordinator.data = datetime(2026, 9, 20, 12, 0, tzinfo=timezone.utc)
+        data.last_failure_coordinator.data = datetime(2026, 9, 20, 12, 0, tzinfo=UTC)
         data.last_image_data = b"png" * 10
         monkeypatch.setattr(
             diagnostics, "async_last_service_info", lambda *a, **k: _advertisement()

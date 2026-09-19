@@ -1,9 +1,12 @@
 # Ruff configuration.
 #
-# CI installs ruff unpinned, so without this file the effective rule set is
-# whatever the latest release happens to enable by default — a ruff upgrade can
-# turn a green branch red without any code change. Pin the selection here.
+# Whole rule families are enabled below, so a ruff release that adds a rule to
+# one of them could fail CI without a code change. CI therefore pins the ruff
+# version (.github/workflows/tests.yml); bump it there deliberately and fix
+# whatever the new version reports in the same PR.
 line-length = 100
+# Lowest interpreter in the CI matrix; UP must not emit syntax newer than this.
+target-version = "py312"
 
 [lint]
 select = [
