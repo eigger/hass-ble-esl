@@ -427,19 +427,14 @@ def test_target_resolution_uses_ha_helper_and_filters_to_loaded_entries(harness_
     asyncio.run(_test())
 
 
-@pytest.mark.parametrize("takes_hass", [True, False])
-def test_extract_helper_called_per_ha_version_signature(harness_factory, monkeypatch, takes_hass):
-    """Older HA needs hass as the first argument; 2025.12+ warns if it is passed."""
+def test_extract_helper_called_without_hass(harness_factory):
+    """HA 2025.12+ signature: the service call alone (hass would log a warning)."""
 
     async def _test():
         h = harness_factory(asyncio.get_running_loop())
         await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
-        monkeypatch.setattr(integration, "_EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS", takes_hass)
-
         await h.call("write", "dev-e1", payload="x")
-
-        args = h.extract.await_args.args
-        assert (args[0] is h.hass) == takes_hass
-        assert len(args) == (2 if takes_hass else 1)
+        assert h.extract.await_args.args == (h.extract.await_args.args[0],)
+        assert h.extract.await_args.args[0] is not h.hass
 
     asyncio.run(_test())
