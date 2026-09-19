@@ -35,6 +35,9 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# (compressed payload, uncompressed length) — the latter picks the refresh timeout.
+PreparedImage = tuple[bytes, int]
+
 
 class WolinkError(Exception):
     """WOLINK device error."""
@@ -175,28 +178,37 @@ class WolinkClient:
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Encode, compress, send, and refresh an image."""
-        plane_bw, plane_red, plane_yellow = quantize_image(
-            image, self.preset.width, self.preset.height, self.preset.colors
+        """Encode (off the event loop), send, and refresh an image."""
+        prepared = await asyncio.to_thread(prepare_payload, image, self.preset)
+        return await self.write_prepared(
+            prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
-        raw = encode_planes(plane_bw, plane_red, plane_yellow, self.preset)
-        payload = compress_wolink_blocks(raw)
+
+    async def write_prepared(
+        self,
+        prepared: PreparedImage,
+        *,
+        attempt: int = 1,
+        write_delay_ms: int = 0,
+    ) -> WriteResult:
+        """Send an already-encoded image and trigger the refresh."""
+        payload, raw_len = prepared
         refresh = cmd_refresh_compressed(len(payload))
 
-        if len(raw) > 100000:
+        if raw_len > 100000:
             est_seconds = int(
                 (len(payload) / 200)
                 * (0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1)))
             )
             _LOGGER.info(
                 "Sending large image (%d bytes, %d chunks) to %s — estimated transfer time: ~%ds",
-                len(raw),
+                raw_len,
                 (len(payload) + 199) // 200,
                 self.address,
                 est_seconds,
             )
             timeout = 120.0
-        elif len(raw) > 20000:
+        elif raw_len > 20000:
             timeout = 60.0
         else:
             timeout = 30.0
@@ -212,6 +224,19 @@ class WolinkClient:
         return WriteResult(success=success)
 
 
+def prepare_payload(image: Image.Image, preset: DevicePreset) -> PreparedImage:
+    """Quantize, pack and compress an image for `preset`.
+
+    Pure-Python per-pixel work (seconds for the larger panels); callers run
+    it in a worker thread so the event loop stays responsive.
+    """
+    plane_bw, plane_red, plane_yellow = quantize_image(
+        image, preset.width, preset.height, preset.colors
+    )
+    raw = encode_planes(plane_bw, plane_red, plane_yellow, preset)
+    return compress_wolink_blocks(raw), len(raw)
+
+
 async def update_image(
     ble_device: BLEDevice,
     preset: DevicePreset,
@@ -224,19 +249,26 @@ async def update_image(
     # Connect inside the try so connection failures surface as a failed
     # WriteResult (and count toward retries) instead of escaping as raw exceptions.
     client: BleakClient | None = None
+    # Encode in a worker thread while the connection is being established:
+    # the event loop stays free, the radio starts immediately (sleepy tags
+    # have short advertising windows), and the link is held only for
+    # whatever part of the encode outlasts the connect.
+    encode = asyncio.create_task(asyncio.to_thread(prepare_payload, image, preset))
     try:
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
+        prepared = await encode
         wolink = WolinkClient(client, preset, ble_device.address)
         await wolink.authenticate()
-        return await wolink.write_image(
-            image, attempt=attempt, write_delay_ms=write_delay_ms
+        return await wolink.write_prepared(
+            prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
     except Exception as exc:
         _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
         return WriteResult(success=False, error=str(exc))
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()

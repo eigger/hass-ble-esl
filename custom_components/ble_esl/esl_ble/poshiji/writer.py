@@ -64,6 +64,11 @@ class XteClient:
                 return
 
     async def write_image(self, image: Image.Image) -> bool:
+        image_object = await asyncio.to_thread(prepare_image_object, image)
+        return await self.write_object(image_object)
+
+    async def write_object(self, image_object: bytes) -> bool:
+        """Send an already-encoded XTEK object."""
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
             raise ValueError("XTE service missing")
@@ -80,7 +85,6 @@ class XteClient:
         if chunk_size < 20:
             raise ValueError(f"Invalid XTE write-without-response size: {chunk_size}")
         _LOGGER.debug("XTE write chunk size: %s bytes", chunk_size)
-        image_object = await asyncio.to_thread(lambda: make_image_object(pack_pixels(image)))
         blocks = make_blocks(image_object)
         await self.client.start_notify(notify_char, self._notification)
         try:
@@ -100,20 +104,28 @@ class XteClient:
                     await self.client.stop_notify(notify_char)
 
 
+def prepare_image_object(image: Image.Image) -> bytes:
+    """Pack and RLE-encode an image into an XTEK object (CPU-bound, run in a thread)."""
+    return make_image_object(pack_pixels(image))
+
+
 async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0) -> WriteResult:
     """Connect and send a PSJ-420 image, preserving errors for HA diagnostics."""
     if (preset.key, preset.width, preset.height, preset.colors) != ("psj-420", 400, 300, "BWRY"):
         return WriteResult(success=False, error="Unsupported Poshiji preset")
     client = None
+    # Encode in a worker thread while connecting (see the other writers).
+    encode = asyncio.create_task(asyncio.to_thread(prepare_image_object, image))
     try:
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
-        success = await XteClient(client, attempt, write_delay_ms).write_image(image)
+        success = await XteClient(client, attempt, write_delay_ms).write_object(await encode)
         return WriteResult(success=success)
     except Exception as exc:
         error = str(exc) or type(exc).__name__
         _LOGGER.error("Poshiji update failed for %s: %s", ble_device.address, error)
         return WriteResult(success=False, error=error)
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         if client and client.is_connected:
             with contextlib.suppress(Exception):
                 await client.disconnect()

@@ -119,19 +119,22 @@ class EasyTagClient:
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Quantize, encode, and transmit image frames."""
-        dither = self.preset.extra.get("dither", True)
-        plane_bw, plane_red = quantize_image(
-            image,
-            self.preset.width,
-            self.preset.height,
-            self.preset.colors,
-            dither=dither,
+        """Encode (off the event loop) and transmit image frames."""
+        frames = await asyncio.to_thread(
+            prepare_frames, image, self.preset, self.address
         )
-        payload = encode_image(
-            plane_bw, plane_red, self.preset.width, self.preset.height
+        return await self.write_frames(
+            frames, attempt=attempt, write_delay_ms=write_delay_ms
         )
-        frames = build_image_frames(self.address, payload)
+
+    async def write_frames(
+        self,
+        frames: list[bytes],
+        *,
+        attempt: int = 1,
+        write_delay_ms: int = 0,
+    ) -> WriteResult:
+        """Transmit already-built image frames."""
         return await self._send_frames(
             frames, attempt=attempt, write_delay_ms=write_delay_ms
         )
@@ -140,6 +143,22 @@ class EasyTagClient:
         """Send status query ping frame (0xF0) and await battery/temp notify."""
         frames = build_status_frames(self.address)
         return await self._send_frames(frames)
+
+
+def prepare_frames(
+    image: Image.Image, preset: DevicePreset, address: str
+) -> list[bytes]:
+    """Quantize (with dithering), encode and frame an image for `preset`.
+
+    Pure-Python per-pixel work (seconds for the larger panels); callers run
+    it in a worker thread so the event loop stays responsive.
+    """
+    dither = preset.extra.get("dither", True)
+    plane_bw, plane_red = quantize_image(
+        image, preset.width, preset.height, preset.colors, dither=dither
+    )
+    payload = encode_image(plane_bw, plane_red, preset.width, preset.height)
+    return build_image_frames(address, payload)
 
 
 async def update_image(
@@ -154,18 +173,27 @@ async def update_image(
     # Connect inside the try so connection failures surface as a failed
     # WriteResult (and count toward retries) instead of escaping as raw exceptions.
     client: BleakClient | None = None
+    # Encode in a worker thread while the connection is being established:
+    # the event loop stays free, the radio starts immediately (sleepy tags
+    # have short advertising windows), and the link is held only for
+    # whatever part of the encode outlasts the connect.
+    encode = asyncio.create_task(
+        asyncio.to_thread(prepare_frames, image, preset, ble_device.address)
+    )
     try:
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
+        frames = await encode
         easytag = EasyTagClient(client, preset, ble_device.address)
-        return await easytag.write_image(
-            image, attempt=attempt, write_delay_ms=write_delay_ms
+        return await easytag.write_frames(
+            frames, attempt=attempt, write_delay_ms=write_delay_ms
         )
     except Exception as exc:
         _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
         return WriteResult(success=False, error=str(exc))
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()
