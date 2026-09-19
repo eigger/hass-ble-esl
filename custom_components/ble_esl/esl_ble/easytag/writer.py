@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 
-from ..base import DevicePreset, WriteResult
+from ..base import DevicePreset, Notifications, WriteResult
 from .const import (
     EVERY_5TH_BONUS,
     FEEDBACK_TIMEOUT,
@@ -34,6 +33,10 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
+class EasyTagError(Exception):
+    """easyTag device error."""
+
+
 class EasyTagClient:
     """Client handling a single connected easyTag BLE session."""
 
@@ -43,90 +46,33 @@ class EasyTagClient:
         self.client = client
         self.preset = preset
         self.address = address
-        self._notify_event: asyncio.Event | None = None
-        self._notify_data: bytearray | None = None
-
-    def _handle_notify(self, _sender: Any, data: bytearray) -> None:
-        """Handle incoming notify frame from device."""
-        self._notify_data = data
-        if self._notify_event:
-            self._notify_event.set()
-
-    @contextlib.asynccontextmanager
-    async def _notify_session(self):
-        """Subscribe to notifications before writing any command frames."""
-        self._notify_event = asyncio.Event()
-        self._notify_data = None
-        await self.client.start_notify(NOTIFY_UUID, self._handle_notify)
-        try:
-            yield
-        finally:
-            with contextlib.suppress(Exception):
-                if self.client and self.client.is_connected:
-                    await self.client.stop_notify(NOTIFY_UUID)
 
     async def _send_frames(
         self, frames: list[bytes], *, attempt: int = 1, write_delay_ms: int = 0
     ) -> WriteResult:
-        """Send header + data frames and await notify response."""
-        async with self._notify_session():
-            await asyncio.sleep(POST_CCCD_DELAY + PRE_HEADER_DELAY)
-
+        """Send header + data frames and read the battery/temperature reply."""
+        async with Notifications(
+            self.client, NOTIFY_UUID, settle=POST_CCCD_DELAY + PRE_HEADER_DELAY
+        ) as replies:
             base_delay = (
                 INTER_PACKET_DELAY
                 + (write_delay_ms / 1000.0)
                 + (0.05 * (attempt - 1))
             )
-
             # Send header (frame 0) and data frames (frames 1..N)
             for idx, frame in enumerate(frames):
-                await self.client.write_gatt_char(
-                    WRITE_UUID, frame, response=False
-                )
-                delay = base_delay + (EVERY_5TH_BONUS if (idx % 5 == 0) else 0)
-                await asyncio.sleep(delay)
+                await self.client.write_gatt_char(WRITE_UUID, frame, response=False)
+                await asyncio.sleep(base_delay + (EVERY_5TH_BONUS if idx % 5 == 0 else 0))
 
-            # Await feedback notification
-            try:
-                assert self._notify_event is not None
-                await asyncio.wait_for(
-                    self._notify_event.wait(), timeout=FEEDBACK_TIMEOUT
-                )
-            except asyncio.TimeoutError:
-                _LOGGER.warning(
-                    "Timed out waiting for easyTag notify response from %s",
-                    self.address,
-                )
-                return WriteResult(
-                    success=False, error="timeout waiting for notify"
-                )
+            reply = await replies.next(FEEDBACK_TIMEOUT, step="image frames")
 
-            if not self._notify_data:
-                return WriteResult(success=False, error="empty notify payload")
-
-            parsed = parse_notify(self.address, bytes(self._notify_data))
-            return WriteResult(
-                success=True,
-                battery_mv=parsed.get("battery_mv"),
-                temperature_c=parsed.get("temperature_c"),
-            )
-
-    async def write_image(
-        self,
-        image: Image.Image,
-        *,
-        attempt: int = 1,
-        write_delay_ms: int = 0,
-    ) -> WriteResult:
-        """Encode (off the event loop) and transmit image frames.
-
-        Convenience for direct use and the session tests; the integration goes
-        through BleBackend.write_image(), which encodes off the loop once and
-        overlaps it with connecting.
-        """
-        frames = await asyncio.to_thread(prepare, self.preset, image, self.address)
-        return await self.write_frames(
-            frames, attempt=attempt, write_delay_ms=write_delay_ms
+        if not reply:
+            raise EasyTagError("Empty notify payload from tag")
+        parsed = parse_notify(self.address, reply)
+        return WriteResult(
+            success=True,
+            battery_mv=parsed.get("battery_mv"),
+            temperature_c=parsed.get("temperature_c"),
         )
 
     async def write_frames(

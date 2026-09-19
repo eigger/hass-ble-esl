@@ -17,6 +17,7 @@ from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
+    prepare,
 )
 
 MAC = "3D:00:00:E5:7D:76"
@@ -58,7 +59,7 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
 
         client = EasyTagClient(mock_client, PRESETS["3D"], MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_image(img)
+        result = await client.write_frames(prepare(PRESETS["3D"], img, MAC))
 
         assert result.success is True
         assert result.battery_mv == 3000

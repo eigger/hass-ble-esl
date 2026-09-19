@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 
-from ..base import DevicePreset, WriteResult
+from ..base import DevicePreset, Notifications, WriteResult
 from .const import (
     CMD_IMAGE,
     CMD_SIZE,
@@ -62,12 +61,7 @@ class PickSmartClient:
         self.address = address
         self.attempt = attempt
         self.write_delay_ms = write_delay_ms
-        self._event = asyncio.Event()
-        self._response_data: bytes | None = None
-
-    def _notification_handler(self, _sender: Any, data: bytearray) -> None:
-        self._response_data = bytes(data)
-        self._event.set()
+        self._replies: Notifications | None = None
 
     async def _write_with_response(
         self,
@@ -76,48 +70,24 @@ class PickSmartClient:
         step: str,
         timeout: float | None = None,
     ) -> bytes:
-        if timeout is None:
-            timeout = FEEDBACK_TIMEOUT
-        self._response_data = None
-        self._event.clear()
-
+        assert self._replies is not None, "inside write_payload()'s notification session"
+        self._replies.clear()
         delay = (self.write_delay_ms / 1000.0) + (0.05 * (self.attempt - 1))
         await self.client.write_gatt_char(uuid, packet, response=False)
         if delay > 0:
             await asyncio.sleep(delay)
-
-        try:
-            await asyncio.wait_for(self._event.wait(), timeout=timeout)
-        except TimeoutError as exc:
-            # asyncio's TimeoutError has an empty str(); say what was awaited.
-            raise PickSmartError(
-                f"No response from tag within {timeout:g}s after {step}"
-            ) from exc
-        if self._response_data is None:
-            raise PickSmartError(f"Empty response from tag after {step}")
-        return self._response_data
-
-    async def write_image(self, image: Image.Image) -> WriteResult:
-        """Encode (off the event loop) and run the transfer handshake.
-
-        Convenience for direct use and the session tests; the integration goes
-        through BleBackend.write_image(), which encodes off the loop once and
-        overlaps it with connecting.
-        """
-        payload = await asyncio.to_thread(prepare, self.preset, image, self.address)
-        return await self.write_payload(payload)
+        return await self._replies.next(
+            FEEDBACK_TIMEOUT if timeout is None else timeout, step=step
+        )
 
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
         packet_size = len(payload)
 
-        await self.client.start_notify(
-            self.cmd_uuid, self._notification_handler
-        )
-        try:
-            await asyncio.sleep(1.0)  # settle time after start_notify (matches hass-gicisky)
-
+        # 1 s settle after start_notify matches hass-gicisky.
+        async with Notifications(self.client, self.cmd_uuid, settle=1.0) as replies:
+            self._replies = replies
             # Step 1: START (0x01) -> [01 F4 00]
             start_resp = await self._write_with_response(
                 self.cmd_uuid,
@@ -219,10 +189,6 @@ class PickSmartClient:
                 part = new_part
 
             return WriteResult(success=True)
-        finally:
-            with contextlib.suppress(Exception):
-                if self.client and self.client.is_connected:
-                    await self.client.stop_notify(self.cmd_uuid)
 
 
 async def write_session(

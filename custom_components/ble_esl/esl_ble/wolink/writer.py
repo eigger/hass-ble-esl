@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from ..base import DevicePreset, WriteResult
+from ..base import DevicePreset, Notifications, WriteResult
 from .const import (
     AES_KEY,
     AUTH_CHAR,
@@ -56,9 +55,6 @@ class WolinkClient:
         self.client = client
         self.preset = preset
         self.address = address
-        self.last_error_code = 0
-        self._status_event: asyncio.Event | None = None
-        self._armed = False
 
     async def authenticate(self) -> None:
         """Perform AES-128 ECB challenge-response authentication.
@@ -98,60 +94,25 @@ class WolinkClient:
             _LOGGER.debug("Could not read GATT battery: %s", exc)
             return None
 
-    def _handle_status(self, _sender: Any, data: bytearray) -> None:
-        """Handle status notification frame (byte 0: BUSY, byte 1: ERR)."""
-        if not data:
-            return
-        busy = data[0]
-        err = data[1] if len(data) >= 2 else 0
+    @staticmethod
+    def _completion_timeout(raw_len: int) -> float:
+        """How long the panel may take to refresh after the upload, by image size."""
+        if raw_len > 100000:
+            return 120.0
+        if raw_len > 20000:
+            return 60.0
+        return 30.0
 
-        if err:
-            self.last_error_code = err
-            if self._status_event:
-                self._status_event.set()
-            return
+    @staticmethod
+    def _status_error(data: bytes) -> int:
+        """Error code carried by a status frame (byte 1), 0 if none."""
+        return data[1] if len(data) >= 2 else 0
 
-        if not self._armed:
-            _LOGGER.debug("Status frame before arming: %s", bytes(data).hex())
-            return
-
-        if busy in (0x00, 0xFF):
-            self.last_error_code = 0
-            if self._status_event:
-                self._status_event.set()
-
-    @contextlib.asynccontextmanager
-    async def _status_session(self):
-        """Subscribe to status notifications before sending image/refresh commands."""
-        self._status_event = asyncio.Event()
-        self._armed = False
-        self.last_error_code = 0
-        await self.client.start_notify(STATUS_CHAR, self._handle_status)
-        try:
-            yield
-        finally:
-            self._armed = False
-            with contextlib.suppress(Exception):
-                if self.client and self.client.is_connected:
-                    await self.client.stop_notify(STATUS_CHAR)
-
-    def _arm_completion(self) -> None:
-        """Arm completion notification check."""
-        self._armed = True
-
-    async def _wait_for_completion(self, timeout: float) -> bool:
-        """Wait for completion event."""
-        if self._status_event is None:
-            raise RuntimeError("_wait_for_completion outside a _status_session")
-        try:
-            await asyncio.wait_for(self._status_event.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
-            _LOGGER.warning("Timed out waiting for device notification")
-            return False
-
-        if self.last_error_code:
-            raise WolinkError(self.last_error_code)
-        return True
+    def _completed(self, data: bytes) -> bool:
+        """Accept a status frame after the refresh: error -> raise, idle -> done."""
+        if err := self._status_error(data):
+            raise WolinkError(err)
+        return bool(data) and data[0] in (0x00, 0xFF)
 
     async def _write_chunked(
         self,
@@ -169,24 +130,6 @@ class WolinkClient:
             await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
             offset += len(chunk)
             await asyncio.sleep(delay)
-
-    async def write_image(
-        self,
-        image: Image.Image,
-        *,
-        attempt: int = 1,
-        write_delay_ms: int = 0,
-    ) -> WriteResult:
-        """Encode (off the event loop), send, and refresh an image.
-
-        Convenience for direct use and the session tests; the integration goes
-        through BleBackend.write_image(), which encodes off the loop once and
-        overlaps it with connecting.
-        """
-        prepared = await asyncio.to_thread(prepare, self.preset, image, self.address)
-        return await self.write_prepared(
-            prepared, attempt=attempt, write_delay_ms=write_delay_ms
-        )
 
     async def write_prepared(
         self,
@@ -211,25 +154,19 @@ class WolinkClient:
                 self.address,
                 est_seconds,
             )
-            timeout = 120.0
-        elif raw_len > 20000:
-            timeout = 60.0
-        else:
-            timeout = 30.0
+        timeout = self._completion_timeout(raw_len)
 
-        async with self._status_session():
+        async with Notifications(self.client, STATUS_CHAR) as status:
             await self._write_chunked(
                 payload, write_delay_ms=write_delay_ms, attempt=attempt
             )
-            self._arm_completion()
+            # Status frames during the upload are only busy indications, but an
+            # error reported before the refresh is still an error.
+            for frame in status.clear():
+                if err := self._status_error(frame):
+                    raise WolinkError(err)
             await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
-            success = await self._wait_for_completion(timeout)
-
-        if not success:
-            return WriteResult(
-                success=False,
-                error=f"No completion notification from tag within {timeout:g}s after refresh",
-            )
+            await status.wait_for(self._completed, timeout, step="refresh")
         return WriteResult(success=True)
 
 

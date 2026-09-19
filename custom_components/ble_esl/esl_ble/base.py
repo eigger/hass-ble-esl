@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 import contextlib
 from dataclasses import dataclass, field
 import logging
@@ -131,6 +131,81 @@ async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()
+
+
+class NotificationTimeout(TimeoutError):
+    """No notification arrived in time. Carries a message (asyncio's does not)."""
+
+
+class Notifications:
+    """Notifications from one characteristic, queued for the session's duration.
+
+    Every protocol client needs the same thing around its transfer:
+    subscribe, optionally let the link settle, read replies with a timeout,
+    and unsubscribe in `finally` even when the link has dropped. Only the
+    interpretation of the replies is protocol-specific.
+
+        async with Notifications(client, NOTIFY_UUID, settle=0.5) as replies:
+            await client.write_gatt_char(WRITE_UUID, cmd, response=False)
+            reply = await replies.next(timeout=5, step="START")
+    """
+
+    def __init__(self, client: BleakClient, characteristic: Any, *, settle: float = 0.0) -> None:
+        self._client = client
+        self._characteristic = characteristic
+        self._settle = settle
+        self._queue: asyncio.Queue[bytes] = asyncio.Queue()
+
+    async def __aenter__(self) -> Notifications:
+        await self._client.start_notify(self._characteristic, self._on_notify)
+        if self._settle:
+            # Some adapters/proxies drop a write issued right after the CCCD write.
+            await asyncio.sleep(self._settle)
+        return self
+
+    async def __aexit__(self, *exc_info: Any) -> None:
+        # Never let an unsubscribe failure on a dropped link mask the
+        # original error; ble_session() still disconnects.
+        with contextlib.suppress(Exception):
+            if self._client.is_connected:
+                await self._client.stop_notify(self._characteristic)
+
+    def _on_notify(self, _sender: Any, data: bytearray) -> None:
+        self._queue.put_nowait(bytes(data))
+
+    def clear(self) -> list[bytes]:
+        """Drop (and return) notifications received so far."""
+        dropped = []
+        while not self._queue.empty():
+            dropped.append(self._queue.get_nowait())
+        return dropped
+
+    async def next(self, timeout: float, *, step: str) -> bytes:
+        """The next notification, or NotificationTimeout naming `step`."""
+        try:
+            return await asyncio.wait_for(self._queue.get(), timeout)
+        except TimeoutError as exc:
+            raise NotificationTimeout(
+                f"No response from tag within {timeout:g}s after {step}"
+            ) from exc
+
+    async def wait_for(
+        self, accept: Callable[[bytes], bool], timeout: float, *, step: str
+    ) -> bytes:
+        """The first notification `accept` returns True for, within `timeout` overall.
+
+        `accept` may raise to turn an error frame into the session's failure.
+        """
+        try:
+            async with asyncio.timeout(timeout):
+                while True:
+                    data = await self._queue.get()
+                    if accept(data):
+                        return data
+        except TimeoutError as exc:
+            raise NotificationTimeout(
+                f"No response from tag within {timeout:g}s after {step}"
+            ) from exc
 
 
 class BleParser(BluetoothData, ABC):

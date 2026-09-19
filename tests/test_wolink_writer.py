@@ -17,9 +17,11 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble import base
+from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
+    prepare,
 )
 
 MAC = "66:66:54:20:00:55"
@@ -113,7 +115,7 @@ def test_wolink_write_image_flow_with_status_notification():
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_image(img, write_delay_ms=0, attempt=1)
+        result = await client.write_prepared(prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1)
 
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
@@ -144,7 +146,7 @@ def test_wolink_write_image_error_notification():
         img = Image.new("RGB", (296, 128), "white")
 
         with pytest.raises(WolinkError, match="device error 2: epd write error"):
-            await client.write_image(img, write_delay_ms=0, attempt=1)
+            await client.write_prepared(prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1)
 
     asyncio.run(_test())
 
@@ -295,7 +297,8 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
 
 
 def test_wolink_completion_timeout_has_message(monkeypatch):
-    """A tag that never confirms the refresh yields a descriptive error, not None."""
+    """A tag that never confirms the refresh raises a descriptive timeout (the
+    backend turns it into the WriteResult error)."""
 
     async def _test():
         mock_client = MagicMock()
@@ -305,11 +308,9 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
         mock_client.write_gatt_char = AsyncMock()  # never notifies
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
-        monkeypatch.setattr(client, "_wait_for_completion", AsyncMock(return_value=False))
-        result = await client.write_image(Image.new("RGB", (296, 128), "white"))
-
-        assert result.success is False
-        assert result.error == "No completion notification from tag within 30s after refresh"
+        monkeypatch.setattr(WolinkClient, "_completion_timeout", staticmethod(lambda raw_len: 0.05))
+        with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after refresh"):
+            await client.write_prepared(prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC))
 
     asyncio.run(_test())
 
