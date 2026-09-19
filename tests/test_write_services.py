@@ -434,7 +434,7 @@ def test_extract_helper_called_without_hass(harness_factory):
         h = harness_factory(asyncio.get_running_loop())
         await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
         await h.call("write", "dev-e1", payload="x")
-        assert h.extract.await_args.args == (h.extract.await_args.args[0],)
-        assert h.extract.await_args.args[0] is not h.hass
+        args = h.extract.await_args.args
+        assert len(args) == 1 and args[0] is not h.hass
 
     asyncio.run(_test())
