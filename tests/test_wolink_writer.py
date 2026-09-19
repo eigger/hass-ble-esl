@@ -211,14 +211,16 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
     asyncio.run(_test())
 
 
-def test_encoding_runs_off_the_event_loop(monkeypatch):
-    """Encoding happens in a worker thread before connecting; the loop keeps ticking."""
+def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
+    """Encoding runs in a worker thread concurrently with connecting: the loop
+    keeps ticking, and the connection starts before the encode finishes."""
     import time
 
     from custom_components.ble_esl.esl_ble.wolink import writer
 
     async def _test():
         ticks = 0
+        encode_done_at = None
 
         async def ticker():
             nonlocal ticks
@@ -227,10 +229,22 @@ def test_encoding_runs_off_the_event_loop(monkeypatch):
                 await asyncio.sleep(0.01)
 
         def slow_prepare(image, preset):
+            nonlocal encode_done_at
             time.sleep(0.3)  # blocking CPU stand-in
+            encode_done_at = time.monotonic()
             return b"", 0
 
-        connect = AsyncMock(side_effect=OSError("stop here"))
+        mock_client = MagicMock()
+        mock_client.is_connected = True
+        mock_client.disconnect = AsyncMock()
+        mock_client.read_gatt_char = AsyncMock(side_effect=OSError("stop at auth"))
+        connect_started_at = None
+
+        async def connect(*args, **kwargs):
+            nonlocal connect_started_at
+            connect_started_at = time.monotonic()
+            return mock_client
+
         monkeypatch.setattr(writer, "prepare_payload", slow_prepare)
         monkeypatch.setattr(writer, "establish_connection", connect)
 
@@ -240,8 +254,41 @@ def test_encoding_runs_off_the_event_loop(monkeypatch):
         result = await update_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
         task.cancel()
 
-        assert result.success is False
-        assert connect.await_count == 1  # encoded first, then connected
+        assert result.success is False and result.error == "stop at auth"
+        assert connect_started_at < encode_done_at  # radio not delayed by the encode
         assert ticks >= 10  # loop was not blocked during the 300 ms encode
+        assert mock_client.disconnect.await_count == 1
+
+    asyncio.run(_test())
+
+
+def test_connect_failure_does_not_leak_encode_task(monkeypatch):
+    """If connecting fails while the encode is still running, the result is
+    dropped cleanly (no pending-task or unretrieved-exception warnings)."""
+    from custom_components.ble_esl.esl_ble.wolink import writer
+
+    async def _test():
+        started = asyncio.Event()
+
+        async def slow_encode(*args):
+            started.set()
+            await asyncio.sleep(0.2)
+            return b"", 0
+
+        async def failing_connect(*args, **kwargs):
+            await asyncio.sleep(0)  # a real connect yields to the loop
+            raise OSError("no link")
+
+        monkeypatch.setattr(writer.asyncio, "to_thread", slow_encode)
+        monkeypatch.setattr(writer, "establish_connection", failing_connect)
+
+        mock_ble_device = MagicMock()
+        mock_ble_device.address = MAC
+        result = await update_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        assert result.success is False and result.error == "no link"
+        assert started.is_set()
+        await asyncio.sleep(0)
+        pending = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        assert pending == []
 
     asyncio.run(_test())

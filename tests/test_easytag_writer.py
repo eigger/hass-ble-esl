@@ -132,3 +132,40 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
         assert result.error == "unavailable"
 
     asyncio.run(_test())
+
+
+def test_connection_starts_before_encode_finishes(monkeypatch):
+    """Encoding overlaps connecting instead of delaying it."""
+    import time
+
+    from custom_components.ble_esl.esl_ble.easytag import writer
+
+    async def _test():
+        encode_done_at = None
+
+        def slow_prepare(*args, **kwargs):
+            nonlocal encode_done_at
+            time.sleep(0.15)
+            encode_done_at = time.monotonic()
+            return []
+
+        connect_started_at = None
+
+        async def connect(*args, **kwargs):
+            nonlocal connect_started_at
+            connect_started_at = time.monotonic()
+            await asyncio.sleep(0)  # a real connect yields to the loop
+            raise OSError("stop here")
+
+        monkeypatch.setattr(writer, "prepare_frames", slow_prepare)
+        monkeypatch.setattr(writer, "establish_connection", connect)
+
+        mock_ble_device = MagicMock()
+        mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
+        result = await update_image(mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128)))
+        await asyncio.sleep(0.2)  # let the encode thread finish
+
+        assert result.success is False
+        assert connect_started_at < encode_done_at
+
+    asyncio.run(_test())

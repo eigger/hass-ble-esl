@@ -114,17 +114,18 @@ async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0
     if (preset.key, preset.width, preset.height, preset.colors) != ("psj-420", 400, 300, "BWRY"):
         return WriteResult(success=False, error="Unsupported Poshiji preset")
     client = None
+    # Encode in a worker thread while connecting (see the other writers).
+    encode = asyncio.create_task(asyncio.to_thread(prepare_image_object, image))
     try:
-        # Encode before connecting: keeps the tag's connection window short.
-        image_object = await asyncio.to_thread(prepare_image_object, image)
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
-        success = await XteClient(client, attempt, write_delay_ms).write_object(image_object)
+        success = await XteClient(client, attempt, write_delay_ms).write_object(await encode)
         return WriteResult(success=success)
     except Exception as exc:
         error = str(exc) or type(exc).__name__
         _LOGGER.error("Poshiji update failed for %s: %s", ble_device.address, error)
         return WriteResult(success=False, error=error)
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         if client and client.is_connected:
             with contextlib.suppress(Exception):
                 await client.disconnect()

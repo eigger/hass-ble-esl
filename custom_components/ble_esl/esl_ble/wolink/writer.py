@@ -35,6 +35,9 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# (compressed payload, uncompressed length) — the latter picks the refresh timeout.
+PreparedImage = tuple[bytes, int]
+
 
 class WolinkError(Exception):
     """WOLINK device error."""
@@ -221,10 +224,6 @@ class WolinkClient:
         return WriteResult(success=success)
 
 
-# (compressed payload, uncompressed length) — the latter picks the refresh timeout.
-PreparedImage = tuple[bytes, int]
-
-
 def prepare_payload(image: Image.Image, preset: DevicePreset) -> PreparedImage:
     """Quantize, pack and compress an image for `preset`.
 
@@ -250,13 +249,16 @@ async def update_image(
     # Connect inside the try so connection failures surface as a failed
     # WriteResult (and count toward retries) instead of escaping as raw exceptions.
     client: BleakClient | None = None
+    # Encode in a worker thread while the connection is being established:
+    # the event loop stays free, the radio starts immediately (sleepy tags
+    # have short advertising windows), and the link is held only for
+    # whatever part of the encode outlasts the connect.
+    encode = asyncio.create_task(asyncio.to_thread(prepare_payload, image, preset))
     try:
-        # Encode before connecting: keeps the tag's connection window short and
-        # the event loop free during the CPU-bound work.
-        prepared = await asyncio.to_thread(prepare_payload, image, preset)
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
+        prepared = await encode
         wolink = WolinkClient(client, preset, ble_device.address)
         await wolink.authenticate()
         return await wolink.write_prepared(
@@ -266,6 +268,7 @@ async def update_image(
         _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
         return WriteResult(success=False, error=str(exc))
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()

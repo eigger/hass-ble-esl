@@ -177,10 +177,12 @@ async def update_image(
     # Connect inside the try so connection failures surface as a failed
     # WriteResult (and count toward retries) instead of escaping as raw exceptions.
     client: BleakClient | None = None
+    # Encode in a worker thread while the connection is being established:
+    # the event loop stays free, the radio starts immediately (sleepy tags
+    # have short advertising windows), and the link is held only for
+    # whatever part of the encode outlasts the connect.
+    encode = asyncio.create_task(asyncio.to_thread(encode_image, image, preset))
     try:
-        # Encode before connecting: keeps the tag's connection window short and
-        # the event loop free during the CPU-bound work.
-        payload = await asyncio.to_thread(encode_image, image, preset)
         client = await establish_connection(
             BleakClient, ble_device, ble_device.address
         )
@@ -207,11 +209,12 @@ async def update_image(
             attempt=attempt,
             write_delay_ms=write_delay_ms,
         )
-        return await picksmart.write_payload(payload)
+        return await picksmart.write_payload(await encode)
     except Exception as exc:
         _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
         return WriteResult(success=False, error=str(exc))
     finally:
+        encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()
