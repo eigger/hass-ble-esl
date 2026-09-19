@@ -4,23 +4,25 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
+from bluetooth import device_of, sensor_values, service_info
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.config_flow import BleEslConfigFlow
-from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL
 from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
 from custom_components.ble_esl.esl_ble.poshiji import writer
 from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
 
 
-def advertisement(tail=0x1B):
-    return SimpleNamespace(
-        address="AA:BB:CC:DD:EE:FF",
+def advertisement(tail=0x1B, payload=None):
+    return service_info(
+        "AA:BB:CC:DD:EE:FF",
         name="FFEEDDCCBBAA",
-        service_uuids=[],
-        manufacturer_data={0x5258: bytes.fromhex("fd024002009964060102ffff") + bytes([tail])},
+        manufacturer_data={
+            0x5258: payload
+            if payload is not None
+            else bytes.fromhex("fd024002009964060102ffff") + bytes([tail])
+        },
     )
 
 
@@ -36,35 +38,16 @@ def test_discovery_profile_and_no_invented_sensors():
         adv = backend.parse_advertisement(info)
         assert adv.model_key == "psj-420" and adv.battery_mv is None
         parser = backend.create_parser(PSJ_420)
-        parser.update(info)
-        assert parser._device_manufacturer == "Poshiji"
-        assert "PSJ-420" in parser._device_type
-        assert parser._sensor_values == {}
+        update = parser.update(info)
+        device = device_of(update)
+        assert device.manufacturer == "Poshiji"
+        assert "PSJ-420" in device.model
+        assert {k for k in sensor_values(update)} <= {"signal_strength"}  # nothing invented
         assert not backend.capabilities.session_battery
         assert not backend.capabilities.passive_battery
-    unknown = advertisement()
-    unknown.manufacturer_data = {0x5258: b"\x00" * 13}
+    unknown = advertisement(payload=b"\x00" * 13)
     assert backend.parse_advertisement(unknown) is None
     assert not backend.supported(unknown)
-
-
-def test_config_flow_saves_poshiji_and_model():
-    async def run():
-        flow = BleEslConfigFlow()
-        flow.hass = MagicMock()
-        flow.context = {}
-        flow.async_set_unique_id = AsyncMock()
-        flow._abort_if_unique_id_configured = MagicMock()
-        flow.async_show_form = MagicMock(side_effect=lambda **kw: {"type": "form", **kw})
-        flow.async_create_entry = MagicMock(side_effect=lambda **kw: {"type": "create_entry", **kw})
-        result = await flow.async_step_bluetooth(advertisement())
-        assert result["step_id"] == "bluetooth_confirm"
-        result = await flow.async_step_bluetooth_confirm(user_input={})
-        assert result["data"][CONF_PROTOCOL] == "poshiji"
-        assert result["data"][CONF_MODEL] == "psj-420"
-        assert "Poshiji" in result["title"]
-
-    asyncio.run(run())
 
 
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])

@@ -187,3 +187,7 @@ cython_debug/
 # Reference and local research docs
 .reference/
 reference/
+
+# Generated in CI from the installed Home Assistant / manifest.json
+requirements_ha.txt
+requirements.txt

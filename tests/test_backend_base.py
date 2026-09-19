@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from bluetooth import device_of, service_info
 import pytest
 
 from custom_components.ble_esl import esl_ble
@@ -38,35 +39,32 @@ class _Parser(BleParser):
 
 
 def _info(name="yes", address="66:66:54:20:00:55"):
-    info = MagicMock()
-    info.name = name
-    info.address = address
-    info.manufacturer_data = {}
-    info.service_uuids = []
-    return info
+    return service_info(address, name=name)
 
 
 def test_parser_naming_with_and_without_preset():
     parser = _Parser()
-    parser.update(_info())
-    assert parser.title == "54200055 (Generic)"
-    assert parser._device_name == "Acme 54200055"
-    assert parser._device_type == "Generic"
-    assert parser._device_manufacturer == "Acme"
+    update = parser.update(_info())
+    assert update.title == "54200055 (Generic)"
+    device = device_of(update)
+    assert device.name == "Acme 54200055"
+    assert device.model == "Generic"
+    assert device.manufacturer == "Acme"
 
     parser.set_preset(PRESET)  # re-derives naming from the last advertisement
-    assert parser.title == '54200055 (Panel 2.9")'
-    assert parser._device_type == 'Panel 2.9" 296x128'
+    update = parser.update(_info())
+    assert update.title == '54200055 (Panel 2.9")'
+    assert device_of(update).model == 'Panel 2.9" 296x128'
 
     parser.set_preset(PRESET_WITH_RES)  # resolution already in the name: not repeated
-    assert parser._device_type == "Panel 296x128"
+    assert device_of(parser.update(_info())).model == "Panel 296x128"
 
 
 def test_parser_ignores_foreign_advertisements():
     parser = _Parser(PRESET)
-    parser.update(_info(name="no"))
+    update = parser.update(_info(name="no"))
     assert parser.last_service_info is None
-    assert parser.title is None
+    assert update.title is None and update.devices == {}
 
 
 class _Backend(BleBackend):

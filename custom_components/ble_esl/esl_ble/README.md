@@ -102,4 +102,8 @@ BleBackend.write_image(ble_device, preset, image)
    discovery flow for the tags.
 3. `README.md` (repo root): supported-models table and gallery entry.
 4. Tests: `tests/test_<id>_protocol.py` for the codecs (no hardware),
-   `tests/test_<id>_writer.py` for the session against a mocked client.
+   `tests/test_<id>_writer.py` for the session against a mocked BleakClient,
+   and a sample advertisement in `tests/test_protocol_contract.py`. Integration
+   behaviour (discovery, entities, services) is covered generically through a
+   real Home Assistant; add a case to `tests/test_config_flow.py` if the
+   protocol's discovery differs (e.g. model detection).
