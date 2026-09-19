@@ -2,8 +2,18 @@
 
 from __future__ import annotations
 
+from asyncio import Lock
+
+from homeassistant.util.hass_dict import HassKey
+
 DOMAIN = "ble_esl"
-LOCK = "lock"
+
+SERVICE_WRITE = "write"
+SERVICE_WRITE_GUARDED = "write_guarded"
+
+#: hass.data key of the single asyncio.Lock that serialises BLE writes across
+#: all tags (one transfer at a time per HA instance).
+DATA_LOCK: HassKey[Lock] = HassKey(f"{DOMAIN}_ble_lock")
 
 # Options / Config keys
 CONF_PROTOCOL = "protocol"
@@ -26,5 +36,5 @@ DEFAULT_DEBOUNCE_MS = 0
 SESSION_MIN_VOLTAGE = 2.2
 SESSION_MAX_VOLTAGE = 3.0
 
-# Runtime state keys
+#: Config-entry data key under which the write-lock switch persists its state.
 WRITE_LOCK = "write_lock"

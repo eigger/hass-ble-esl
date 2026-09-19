@@ -35,7 +35,7 @@ from sensor_state_data import (
     Units,
 )
 
-from .const import DOMAIN, SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
+from .const import SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
 from .coordinator import BleEslPassiveBluetoothDataProcessor
 from .device import device_key_to_bluetooth_entity_key, hass_device_info
 from .entity import BleEslCoordinatorEntity
@@ -122,7 +122,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the BLE ESL sensors."""
-    coordinator = entry.runtime_data
+    data = entry.runtime_data
     processor = BleEslPassiveBluetoothDataProcessor(
         sensor_update_to_bluetooth_data_update
     )
@@ -132,51 +132,25 @@ async def async_setup_entry(
         )
     )
     entry.async_on_unload(
-        coordinator.async_register_processor(
+        data.bt_coordinator.async_register_processor(
             processor, SensorEntityDescription
         )
     )
 
-    backend = hass.data[DOMAIN][entry.entry_id]["backend"]
-    caps = backend.capabilities
-
-    battery_coordinator = hass.data[DOMAIN][entry.entry_id][
-        "battery_coordinator"
-    ]
-    temperature_coordinator = hass.data[DOMAIN][entry.entry_id][
-        "temperature_coordinator"
-    ]
-    duration_coordinator = hass.data[DOMAIN][entry.entry_id][
-        "duration_coordinator"
-    ]
-    failure_coordinator = hass.data[DOMAIN][entry.entry_id][
-        "failure_coordinator"
-    ]
-    last_failure_coordinator = hass.data[DOMAIN][entry.entry_id][
-        "last_failure_coordinator"
-    ]
-
+    caps = data.backend.capabilities
     entities: list[SensorEntity] = [
-        BleEslDurationSensorEntity(hass, entry, duration_coordinator),
-        BleEslFailureCountSensorEntity(hass, entry, failure_coordinator),
-        BleEslLastFailureTimeSensorEntity(
-            hass, entry, last_failure_coordinator
-        ),
+        BleEslDurationSensorEntity(hass, entry, data.duration_coordinator),
+        BleEslFailureCountSensorEntity(hass, entry, data.failure_coordinator),
+        BleEslLastFailureTimeSensorEntity(hass, entry, data.last_failure_coordinator),
     ]
-
     if caps.session_battery and not caps.passive_battery:
         entities.extend([
-            BleEslBatteryPercentageSensorEntity(
-                hass, entry, battery_coordinator
-            ),
-            BleEslBatteryVoltageSensorEntity(
-                hass, entry, battery_coordinator
-            ),
+            BleEslBatteryPercentageSensorEntity(hass, entry, data.battery_coordinator),
+            BleEslBatteryVoltageSensorEntity(hass, entry, data.battery_coordinator),
         ])
-
     if caps.session_temperature:
         entities.append(
-            BleEslTemperatureSensorEntity(hass, entry, temperature_coordinator)
+            BleEslTemperatureSensorEntity(hass, entry, data.temperature_coordinator)
         )
 
     async_add_entities(entities)

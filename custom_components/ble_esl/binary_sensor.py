@@ -23,7 +23,7 @@ from sensor_state_data import (
     SensorUpdate,
 )
 
-from .const import DOMAIN, SESSION_MIN_VOLTAGE
+from .const import SESSION_MIN_VOLTAGE
 from .coordinator import BleEslPassiveBluetoothDataProcessor
 from .device import device_key_to_bluetooth_entity_key, hass_device_info
 from .entity import BleEslCoordinatorEntity
@@ -71,7 +71,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the BLE ESL binary sensors."""
-    coordinator = entry.runtime_data
+    data = entry.runtime_data
     processor = BleEslPassiveBluetoothDataProcessor(
         sensor_update_to_bluetooth_data_update
     )
@@ -81,28 +81,20 @@ async def async_setup_entry(
         )
     )
     entry.async_on_unload(
-        coordinator.async_register_processor(
+        data.bt_coordinator.async_register_processor(
             processor, BinarySensorEntityDescription
         )
     )
 
-    entry_data = hass.data[DOMAIN][entry.entry_id]
-    connectivity_coordinator = entry_data["connectivity_coordinator"]
-    image_coordinator = entry_data["image_coordinator"]
-    preview_coordinator = entry_data["preview_coordinator"]
     entities: list[BinarySensorEntity] = [
-        BleEslBluetoothConnectivitySensorEntity(hass, entry, connectivity_coordinator),
-        BleEslDisplayInSyncBinarySensor(hass, entry, image_coordinator, preview_coordinator),
+        BleEslBluetoothConnectivitySensorEntity(hass, entry, data.connectivity_coordinator),
+        BleEslDisplayInSyncBinarySensor(
+            hass, entry, data.image_coordinator, data.preview_coordinator
+        ),
     ]
-
-    backend = entry_data.get("backend")
-    caps = backend.capabilities if backend else None
-    if caps and caps.session_battery and not caps.passive_battery:
-        entities.append(
-            BleEslBatteryLowBinarySensor(
-                hass, entry, entry_data["battery_coordinator"]
-            )
-        )
+    caps = data.backend.capabilities
+    if caps.session_battery and not caps.passive_battery:
+        entities.append(BleEslBatteryLowBinarySensor(hass, entry, data.battery_coordinator))
 
     async_add_entities(entities)
 

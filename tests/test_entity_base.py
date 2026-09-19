@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+from conftest import ADDRESS, make_entry
 import pytest
 
 from custom_components.ble_esl.binary_sensor import (
@@ -11,7 +12,6 @@ from custom_components.ble_esl.binary_sensor import (
     BleEslBluetoothConnectivitySensorEntity,
     BleEslDisplayInSyncBinarySensor,
 )
-from custom_components.ble_esl.const import DOMAIN
 from custom_components.ble_esl.image import BleEslImageEntity, BleEslPreviewImageEntity
 from custom_components.ble_esl.sensor import (
     BleEslBatteryPercentageSensorEntity,
@@ -24,16 +24,11 @@ from custom_components.ble_esl.sensor import (
 from custom_components.ble_esl.switch import BleEslWriteLockSwitch
 from custom_components.ble_esl.text import BleEslTextEntity
 
-ADDRESS = "66:66:54:20:00:55"
 IDENT = "54200055"
 
 
 def _hass_entry():
-    hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": ADDRESS}}}
-    return hass, entry
+    return MagicMock(), make_entry()
 
 
 def _coord(data=None):

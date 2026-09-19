@@ -14,16 +14,14 @@ from custom_components.ble_esl.binary_sensor import (
     BleEslDisplayInSyncBinarySensor,
     async_setup_entry,
 )
-from custom_components.ble_esl.const import DOMAIN
+from conftest import make_entry, make_runtime_data
 from custom_components.ble_esl.esl_ble.base import BleBackend, Capabilities
 
 
 def test_bluetooth_connectivity_sensor():
     """Verify bluetooth connectivity binary sensor entity."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     coordinator = MagicMock()
     coordinator.data = True
@@ -44,9 +42,7 @@ def test_bluetooth_connectivity_sensor():
 def test_display_in_sync_sensor():
     """Verify display synchronization binary sensor entity."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     image_coord = MagicMock()
     preview_coord = MagicMock()
@@ -85,7 +81,6 @@ def test_async_setup_entry_binary_sensor():
         hass = MagicMock()
         entry = MagicMock()
         entry.entry_id = "test_entry"
-        entry.runtime_data = MagicMock()
 
         # Passive-battery backend (WOLINK / PickSmart): battery low comes from
         # the passive processor, so no coordinator-based entity is added.
@@ -97,18 +92,7 @@ def test_async_setup_entry_binary_sensor():
             model_detection=False,
             palettes=("BWRY",),
         )
-        hass.data = {
-            DOMAIN: {
-                "test_entry": {
-                    "address": "66:66:54:20:00:55",
-                    "backend": backend_passive,
-                    "battery_coordinator": MagicMock(),
-                    "connectivity_coordinator": MagicMock(),
-                    "image_coordinator": MagicMock(),
-                    "preview_coordinator": MagicMock(),
-                }
-            }
-        }
+        entry.runtime_data = make_runtime_data(backend=backend_passive)
 
         added_entities = []
         await async_setup_entry(hass, entry, added_entities.extend)
@@ -127,7 +111,7 @@ def test_async_setup_entry_binary_sensor():
             model_detection=False,
             palettes=("BWR",),
         )
-        hass.data[DOMAIN]["test_entry"]["backend"] = backend_session
+        entry.runtime_data = make_runtime_data(backend=backend_session)
 
         added_session = []
         await async_setup_entry(hass, entry, added_session.extend)
@@ -140,9 +124,7 @@ def test_async_setup_entry_binary_sensor():
 def test_battery_low_binary_sensor():
     """Battery low is on at or below the session minimum voltage."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     coordinator = MagicMock()
     sensor = BleEslBatteryLowBinarySensor(hass, entry, coordinator)

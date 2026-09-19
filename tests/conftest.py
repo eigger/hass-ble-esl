@@ -302,3 +302,59 @@ sys.modules["homeassistant.util"] = ha_util
 sys.modules["homeassistant.util.dt"] = ha_util_dt
 ha.util = ha_util
 ha.util.dt = ha_util_dt
+
+ha_util_hass_dict = MockModule("homeassistant.util.hass_dict")
+ha_util_hass_dict.HassKey = str  # a HassKey is just a hashable key
+sys.modules["homeassistant.util.hass_dict"] = ha_util_hass_dict
+ha_util.hass_dict = ha_util_hass_dict
+
+ha_helpers_typing = MockModule("homeassistant.helpers.typing")
+sys.modules["homeassistant.helpers.typing"] = ha_helpers_typing
+ha_helpers.typing = ha_helpers_typing
+
+
+# ── Test helpers ──────────────────────────────────────────────────────────────
+
+ADDRESS = "66:66:54:20:00:55"
+
+
+def make_runtime_data(**overrides):
+    """A BleEslRuntimeData with MagicMock coordinators and the WOLINK 2.9" preset.
+
+    Imported lazily so the HA mocks above are in place first.
+    """
+    from custom_components.ble_esl.data import BleEslRuntimeData
+    from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
+
+    backend = overrides.pop("backend", None) or WolinkBleBackend()
+    preset = overrides.pop("preset", None) or backend.presets()["290"]
+    fields = dict(
+        address=ADDRESS,
+        backend=backend,
+        preset=preset,
+        parser=MagicMock(),
+        device_id="mock_device_id",
+        manufacturer="Zhsunyco",
+        model=None,
+        sw_version=None,
+        hw_version=None,
+        bt_coordinator=MagicMock(),
+        image_coordinator=MagicMock(data=None),
+        preview_coordinator=MagicMock(data=None),
+        connectivity_coordinator=MagicMock(data=False),
+        duration_coordinator=MagicMock(data=0.0),
+        failure_coordinator=MagicMock(data=0),
+        last_failure_coordinator=MagicMock(data=None),
+        battery_coordinator=MagicMock(data=None),
+        temperature_coordinator=MagicMock(data=None),
+    )
+    fields.update(overrides)
+    return BleEslRuntimeData(**fields)
+
+
+def make_entry(entry_id="test_entry", **runtime_overrides):
+    """A MagicMock config entry carrying runtime data."""
+    entry = MagicMock()
+    entry.entry_id = entry_id
+    entry.runtime_data = make_runtime_data(**runtime_overrides)
+    return entry

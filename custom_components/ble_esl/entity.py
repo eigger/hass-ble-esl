@@ -11,8 +11,8 @@ from homeassistant.helpers.update_coordinator import (
 )
 from propcache.api import cached_property
 
-from .const import DOMAIN
-from .device import async_get_device_info
+from .data import BleEslRuntimeData
+from .device import build_device_info
 
 
 class BleEslEntity:
@@ -34,6 +34,7 @@ class BleEslEntity:
 
     hass: HomeAssistant
     _entry_id: str
+    _data: BleEslRuntimeData
     _address: str
     _identifier: str
 
@@ -43,13 +44,14 @@ class BleEslEntity:
         """Bind to the tag of `entry`; `key` (default: class `_key`) is the unique-id suffix."""
         self.hass = hass
         self._entry_id = entry.entry_id
-        self._address = hass.data[DOMAIN][entry.entry_id]["address"]
-        self._identifier = self._address.replace(":", "")[-8:]
+        self._data = entry.runtime_data
+        self._address = self._data.address
+        self._identifier = self._data.identifier
         self._attr_unique_id = f"ble_esl_{self._identifier}_{key or self._key}"
 
     @property
     def device_info(self) -> DeviceInfo:
-        return async_get_device_info(self.hass, self._entry_id, self._address)
+        return build_device_info(self._data)
 
     @cached_property
     def available(self) -> bool:

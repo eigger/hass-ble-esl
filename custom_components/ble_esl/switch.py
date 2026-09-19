@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import DOMAIN, WRITE_LOCK
+from .const import WRITE_LOCK
 from .entity import BleEslEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the write lock."""
         self._is_on = True
-        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = True
+        self._data.write_lock = True
 
         # Save to config entry data for persistence
         config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
@@ -56,7 +56,7 @@ class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the write lock."""
         self._is_on = False
-        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = False
+        self._data.write_lock = False
 
         # Save to config entry data for persistence
         config_entry = self.hass.config_entries.async_get_entry(self._entry_id)
@@ -82,5 +82,4 @@ class BleEslWriteLockSwitch(BleEslEntity, RestoreEntity, SwitchEntity):
             else:
                 self._is_on = False
 
-        # Update hass.data with restored state
-        self.hass.data[DOMAIN][self._entry_id][WRITE_LOCK] = self._is_on
+        self._data.write_lock = self._is_on
