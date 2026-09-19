@@ -53,8 +53,11 @@ def resolve_preset(
 ) -> PresetResolution:
     """Configured model -> preset, refined by what the tag last advertised.
 
-    The one place this happens: at setup, before every write, and (via
-    process_service_info) on every advertisement.
+    Used at setup and before every write, where the tag's *last seen*
+    advertisement is looked up. process_service_info() is a different path
+    on purpose: it receives each live advertisement and refines from that
+    directly, so it must not be routed through here (that would re-read the
+    last advertisement a second time).
     """
     preset = backend.preset_for(model_key)
     service_info = async_last_service_info(hass, address, connectable=True)

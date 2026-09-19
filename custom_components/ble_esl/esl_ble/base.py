@@ -305,8 +305,8 @@ class BleBackend(ABC):
         write_prepared()  to refuse before connecting (see Poshiji)
         read_status()     status query without a write
 
-    presets() / supported() / create_parser() / brand are derived from the
-    class attributes and should not be overridden.
+    presets() / preset_for() / supported() / create_parser() / brand are
+    derived from the class attributes and should not be overridden.
     """
 
     id: str
