@@ -82,10 +82,7 @@ def _model_selector_options(
 
 def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]:
     backend = esl_ble.get(protocol_id)
-    presets = backend.presets()
-    default_model = DEFAULT_MODEL
-    if default_model not in presets and presets:
-        default_model = next(iter(presets.keys()))
+    default_model = backend.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
@@ -294,9 +291,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             model_key = user_input[CONF_MODEL]
             return self._create_entry(model_key)
 
-        default_model = self._detected_model or DEFAULT_MODEL
-        if default_model not in backend.presets():
-            default_model = next(iter(backend.presets()))
+        default_model = backend.preset_for(self._detected_model or DEFAULT_MODEL).key
 
         schema = vol.Schema(
             {

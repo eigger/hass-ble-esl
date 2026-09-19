@@ -287,3 +287,10 @@ def test_notifications_settle_after_subscribe(monkeypatch):
         assert order == ["subscribe", "sleep 0.5", "body"]
 
     asyncio.run(_test())
+
+
+def test_preset_for_falls_back_to_first_preset():
+    backend = _Backend()
+    assert backend.preset_for("p") is PRESET
+    assert backend.preset_for("290") is PRESET  # foreign/stale key
+    assert backend.preset_for(None) is PRESET

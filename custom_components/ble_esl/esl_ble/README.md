@@ -66,8 +66,8 @@ class FooBleBackend(BleBackend):
 | `write_prepared()` | rarely | to refuse before connecting (Poshiji) |
 | `read_status()` | optional | status query without a write |
 
-`presets()`, `supported()`, `create_parser()` and `brand` are derived from the
-class attributes — do not override them.
+`presets()`, `preset_for()`, `supported()`, `create_parser()` and `brand` are
+derived from the class attributes — do not override them.
 
 ## Write path (provided by the base)
 

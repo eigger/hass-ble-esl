@@ -79,3 +79,27 @@ def test_process_service_info_updates_device_registry():
         model="2.9\" BWRY 296x128",
         manufacturer="Zhsunyco",
     )
+
+
+def test_resolve_preset_refines_from_last_advertisement(monkeypatch):
+    """Configured model -> preset, then the advertisement's model (PickSmart) wins."""
+    from custom_components.ble_esl import device
+    from custom_components.ble_esl.esl_ble.picksmart import PickSmartBleBackend
+    from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PS_ID
+
+    backend = PickSmartBleBackend()
+    info = MagicMock()
+    info.address = "AA:BB:CC:DD:EE:FF"
+    info.service_uuids = []
+    info.manufacturer_data = {PS_ID: bytes([0x33, 0x1A, 0x81, 0x01, 0x40])}  # device 0x0033
+    monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: info)
+
+    resolved = device.resolve_preset(MagicMock(), backend, info.address, "0x0028")
+    assert resolved.preset.key == "0x0033"  # advertisement is authoritative
+    assert resolved.service_info is info
+    assert resolved.advertisement.raw["device_id"] == 0x33
+
+    monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: None)
+    resolved = device.resolve_preset(MagicMock(), backend, info.address, "bogus")
+    assert resolved.preset is next(iter(backend.presets().values()))
+    assert resolved.service_info is None and resolved.advertisement is None
