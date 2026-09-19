@@ -14,7 +14,7 @@ from homeassistant.components.bluetooth import (
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.device_registry import (
     CONNECTION_BLUETOOTH,
     DeviceRegistry,
@@ -31,11 +31,12 @@ from .const import (
     DEFAULT_MODEL,
     DEFAULT_PROTOCOL,
     DOMAIN,
+    WRITE_LOCK,
 )
 from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
 from .device import backend_brand, format_model_name, protocol_label
-from .services import async_setup_services
+from .services import async_setup_services, cancel_pending_write
 from .types import BleEslConfigEntry
 
 PLATFORMS: list[Platform] = [
@@ -47,6 +48,9 @@ PLATFORMS: list[Platform] = [
 ]
 
 _LOGGER = logging.getLogger(__name__)
+
+# Config-entry only: a `ble_esl:` YAML section is rejected at startup.
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -163,6 +167,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         last_failure_coordinator=coordinator(None),
         battery_coordinator=coordinator(None),
         temperature_coordinator=coordinator(None),
+        # Seeded from the persisted switch state so a write arriving before
+        # the switch entity is added is already gated.
+        write_lock=bool(entry.data.get(WRITE_LOCK, False)),
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -173,7 +180,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok and (cancel := entry.runtime_data.pending_write_cancel):
-        cancel()
-        entry.runtime_data.pending_write_cancel = None
+    if unload_ok:
+        # Cancels a pending debounce timer and bumps the generation, so a
+        # debounced write that already fired but is still queued on the BLE
+        # lock is dropped instead of writing to an unloaded entry's tag.
+        cancel_pending_write(entry.runtime_data)
     return unload_ok

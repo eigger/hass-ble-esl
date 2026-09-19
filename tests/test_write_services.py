@@ -619,13 +619,12 @@ def test_services_registered_once_at_domain_setup(harness_factory):
 
     async def _test():
         h = harness_factory(asyncio.get_running_loop())
-        registered_before = dict(h.services)
+        assert h.services == {}
         await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
         assert set(h.services) == {"write", "write_guarded"}
-        await h.add_entry("e2", "AA:BB:CC:DD:EE:02")
-        assert h.services["write"] is not registered_before.get("write")  # registered at first setup
         first = h.services["write"]
-        assert h.services["write"] is first  # entry setup does not re-register
+        await h.add_entry("e2", "AA:BB:CC:DD:EE:02")
+        assert h.services["write"] is first  # second entry does not re-register
 
         h.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
         assert await integration.async_unload_entry(h.hass, h.entries["e1"])
@@ -646,6 +645,49 @@ def test_unload_cancels_pending_debounced_write(harness_factory):
         assert await integration.async_unload_entry(h.hass, entry)
         assert entry.runtime_data.pending_write_cancel is None
         await asyncio.sleep(0.3)
+        assert h.write_prepared.await_count == 0
+
+    asyncio.run(_test())
+
+
+def test_unload_drops_debounced_write_queued_on_lock(harness_factory):
+    """A debounced write whose timer already fired but which is still waiting
+    for the BLE lock is dropped when its entry unloads."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        entry = await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        lock = h.hass.data[DATA_LOCK]
+        await lock.acquire()
+        await h.call("write_guarded", "dev-e1", payload="stale", debounce_override_ms=50)
+        await asyncio.sleep(0.1)  # timer fired; the write is queued on the lock
+
+        h.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
+        assert await integration.async_unload_entry(h.hass, entry)
+        lock.release()
+        await asyncio.sleep(0.05)
+        assert h.write_prepared.await_count == 0
+
+    asyncio.run(_test())
+
+
+def test_write_lock_seeded_from_entry_data(harness_factory):
+    """A persisted write lock gates writes before the switch entity is added."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        entry = await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        assert entry.runtime_data.write_lock is False
+
+        h.entries.clear()
+        locked = _make_entry("e2", "AA:BB:CC:DD:EE:02", h.options)
+        locked.data = {**locked.data, integration.WRITE_LOCK: True}
+        h.entries["e2"] = locked
+        assert await integration.async_setup_entry(h.hass, locked)
+        locked.runtime_data.device_id = "dev-e2"
+        assert locked.runtime_data.write_lock is True
+
+        await h.call("write", "dev-e2", payload="x")
         assert h.write_prepared.await_count == 0
 
     asyncio.run(_test())

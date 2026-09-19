@@ -308,6 +308,10 @@ ha_util_hass_dict.HassKey = str  # a HassKey is just a hashable key
 sys.modules["homeassistant.util.hass_dict"] = ha_util_hass_dict
 ha_util.hass_dict = ha_util_hass_dict
 
+ha_helpers_cv = MockModule("homeassistant.helpers.config_validation")
+sys.modules["homeassistant.helpers.config_validation"] = ha_helpers_cv
+ha_helpers.config_validation = ha_helpers_cv
+
 ha_helpers_typing = MockModule("homeassistant.helpers.typing")
 sys.modules["homeassistant.helpers.typing"] = ha_helpers_typing
 ha_helpers.typing = ha_helpers_typing
