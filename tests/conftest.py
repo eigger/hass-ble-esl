@@ -201,6 +201,25 @@ sys.modules["homeassistant.components.recorder"] = ha_recorder
 sys.modules["homeassistant.components.recorder.history"] = ha_recorder_history
 ha_components.recorder = ha_recorder
 
+ha_diagnostics = MockModule("homeassistant.components.diagnostics")
+
+
+def _mock_redact(data, to_redact):
+    """Mirror HA's async_redact_data: recursively replace listed keys' values."""
+    if isinstance(data, dict):
+        return {
+            k: "**REDACTED**" if k in to_redact else _mock_redact(v, to_redact)
+            for k, v in data.items()
+        }
+    if isinstance(data, list):
+        return [_mock_redact(v, to_redact) for v in data]
+    return data
+
+
+ha_diagnostics.async_redact_data = _mock_redact
+sys.modules["homeassistant.components.diagnostics"] = ha_diagnostics
+ha_components.diagnostics = ha_diagnostics
+
 ha_onboarding = MockModule("homeassistant.components.onboarding")
 sys.modules["homeassistant.components.onboarding"] = ha_onboarding
 ha_components.onboarding = ha_onboarding
