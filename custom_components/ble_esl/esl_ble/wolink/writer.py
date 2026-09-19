@@ -221,7 +221,12 @@ class WolinkClient:
             await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
             success = await self._wait_for_completion(timeout)
 
-        return WriteResult(success=success)
+        if not success:
+            return WriteResult(
+                success=False,
+                error=f"No completion notification from tag within {timeout:g}s after refresh",
+            )
+        return WriteResult(success=True)
 
 
 def prepare_payload(image: Image.Image, preset: DevicePreset) -> PreparedImage:

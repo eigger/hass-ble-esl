@@ -166,8 +166,16 @@ class PickSmartClient:
                     or resp[0] != RESP_IMAGE_DATA
                     or resp[1] != 0x00
                 ):
+                    # Not a "send me part N" frame. Only known to be fine when
+                    # the chunk just sent was the last one; before that the
+                    # image is incomplete whatever the frame means.
+                    if (part + 1) * 240 < packet_size:
+                        raise PickSmartError(
+                            f"Tag ended transfer after part {part}/{total_parts} "
+                            f"with {resp.hex()}"
+                        )
                     _LOGGER.debug(
-                        "%s: transfer ended by tag after part %d/%d with %s",
+                        "%s: transfer ended by tag after last part %d/%d with %s",
                         self.address,
                         part,
                         total_parts,

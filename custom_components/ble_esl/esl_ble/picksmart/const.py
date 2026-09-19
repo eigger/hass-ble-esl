@@ -20,8 +20,9 @@ CONNECT_TIMEOUT = 30.0
 FEEDBACK_TIMEOUT = 10.0
 
 # The tag re-requests a chunk it could not accept. Give up only after this
-# many consecutive requests for the same part; each resend waits a little
-# longer first (RESEND_BACKOFF_S * n) to let the tag finish its previous write.
+# many consecutive requests for the same part; the n-th resend first waits
+# RESEND_BACKOFF_S * n (50 ms, 100 ms, ...) to let the tag finish its
+# previous write.
 MAX_SAME_PART_REQUESTS = 6
 RESEND_BACKOFF_S = 0.05
 

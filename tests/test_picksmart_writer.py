@@ -70,7 +70,7 @@ def test_picksmart_handshake_flow():
 
 
 def test_picksmart_stall_detection():
-    """Verify stall error is raised when device requests the same part 3 times."""
+    """Verify stall error is raised when device requests the same part 6 times."""
 
     async def _test():
         mock_client = MagicMock()
@@ -306,5 +306,53 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
 
         assert result.success is False
         assert connect_started_at < encode_done_at
+
+    asyncio.run(_test())
+
+
+@pytest.mark.parametrize("ends_after_last", [True, False])
+def test_picksmart_unexpected_frame_only_ok_after_last_part(ends_after_last):
+    """A non-'send me part N' frame is success only once every part was sent."""
+
+    async def _test():
+        mock_client = MagicMock()
+        payload_parts = None
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            if char == CMD_UUID:
+                if data[0] == 0x01:
+                    mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+                elif data[0] == 0x02:
+                    mock_client._handler(None, bytearray([0x02]))
+                elif data[0] == 0x03:
+                    mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
+            elif char == IMG_UUID:
+                part = int.from_bytes(data[0:4], "little")
+                end_at = payload_parts - 1 if ends_after_last else 1
+                if part == end_at:
+                    mock_client._handler(None, bytearray([0x05, 0x08]))  # unknown frame
+                else:
+                    mock_client._handler(
+                        None, bytearray([0x05, 0x00]) + (part + 1).to_bytes(4, "little")
+                    )
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        from custom_components.ble_esl.esl_ble.picksmart.protocol import encode_image
+
+        img = Image.new("RGB", (296, 128), "white")
+        payload_parts = (len(encode_image(img, PRESETS["0x0033"])) + 239) // 240
+        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+
+        if ends_after_last:
+            assert (await client.write_image(img)).success is True
+        else:
+            with pytest.raises(PickSmartError, match=r"ended transfer after part 1/\d+ with 0508"):
+                await client.write_image(img)
 
     asyncio.run(_test())
