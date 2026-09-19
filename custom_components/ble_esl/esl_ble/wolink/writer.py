@@ -183,7 +183,7 @@ class WolinkClient:
         through BleBackend.write_image(), which encodes off the loop once and
         overlaps it with connecting.
         """
-        prepared = await asyncio.to_thread(prepare_payload, image, self.preset)
+        prepared = await asyncio.to_thread(prepare, self.preset, image, self.address)
         return await self.write_prepared(
             prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
@@ -233,7 +233,7 @@ class WolinkClient:
         return WriteResult(success=True)
 
 
-def prepare_payload(image: Image.Image, preset: DevicePreset) -> PreparedImage:
+def prepare(preset: DevicePreset, image: Image.Image, address: str) -> PreparedImage:
     """Quantize, pack and compress an image for `preset`.
 
     Pure-Python per-pixel work (seconds for the larger panels); callers run

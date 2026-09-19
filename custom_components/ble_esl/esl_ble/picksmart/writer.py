@@ -33,6 +33,11 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
+def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
+    """Encode an image to the PickSmart byte stream (CPU-bound; run in a thread)."""
+    return encode_image(image, preset)
+
+
 class PickSmartError(Exception):
     """PickSmart device error."""
 
@@ -99,7 +104,7 @@ class PickSmartClient:
         through BleBackend.write_image(), which encodes off the loop once and
         overlaps it with connecting.
         """
-        payload = await asyncio.to_thread(encode_image, image, self.preset)
+        payload = await asyncio.to_thread(prepare, self.preset, image, self.address)
         return await self.write_payload(payload)
 
     async def write_payload(self, payload: bytes) -> WriteResult:

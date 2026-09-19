@@ -9,7 +9,7 @@ import pytest
 
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import session
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
     PickSmartError,
@@ -237,7 +237,7 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.session.establish_connection",
+            "custom_components.ble_esl.esl_ble.base.establish_connection",
             mock_establish,
         )
 
@@ -261,7 +261,7 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
             raise OSError("unavailable")
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.session.establish_connection",
+            "custom_components.ble_esl.esl_ble.base.establish_connection",
             mock_establish,
         )
 
@@ -278,7 +278,6 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
     """Encoding overlaps connecting instead of delaying it."""
     import time
 
-    from custom_components.ble_esl.esl_ble.picksmart import writer
 
     async def _test():
         encode_done_at = None
@@ -297,8 +296,8 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
             await asyncio.sleep(0)  # a real connect yields to the loop
             raise OSError("stop here")
 
-        monkeypatch.setattr(writer, "encode_image", slow_prepare)
-        monkeypatch.setattr(session, "establish_connection", connect)
+        monkeypatch.setattr(esl_ble.get("picksmart"), "prepare_image", slow_prepare)
+        monkeypatch.setattr(base, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"

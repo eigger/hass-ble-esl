@@ -35,7 +35,7 @@ from .const import (
 )
 from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
-from .device import backend_brand, format_model_name, protocol_label
+from .device import format_model_name
 from .services import async_setup_services, cancel_pending_write
 from .types import BleEslConfigEntry
 
@@ -85,7 +85,7 @@ def process_service_info(
         data.hw_version = update_kwargs["hw_version"] = adv_info.hw_version
     if (model := format_model_name(data.preset)) != data.model:
         data.model = update_kwargs["model"] = model
-    if (manufacturer := backend_brand(data.backend)) != data.manufacturer:
+    if (manufacturer := data.backend.brand) != data.manufacturer:
         data.manufacturer = update_kwargs["manufacturer"] = manufacturer
     if update_kwargs:
         device_registry.async_update_device(data.device_id, **update_kwargs)
@@ -114,7 +114,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     if service_info:
         parser.update(service_info)
 
-    manufacturer = backend_brand(backend)
+    manufacturer = backend.brand
     model = format_model_name(preset)
     sw_version = adv_info.sw_version if adv_info else None
     hw_version = adv_info.hw_version if adv_info else None
@@ -126,7 +126,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         manufacturer=manufacturer,
         name=f"{manufacturer} {address.replace(':', '')[-8:]}",
         model=model,
-        model_id=protocol_label(backend),
+        model_id=backend.label,
         sw_version=sw_version,
         hw_version=hw_version,
     )

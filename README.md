@@ -91,6 +91,8 @@ Protocol notes:
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
 
+Have a tag that speaks another protocol? Each protocol is one self-contained package with an enforced contract — see [Adding a protocol backend](custom_components/ble_esl/esl_ble/README.md).
+
 ---
 
 ## Where to Buy

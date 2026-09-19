@@ -156,9 +156,7 @@ def _title(
     identifier = discovery_info.address.replace(":", "")[-8:]
     preset = backend.presets().get(model_key) if model_key else None
     model_str = preset.display_name if preset else backend.name
-    brand = getattr(backend, "brand", None)
-    prefix = f"{brand} " if brand else ""
-    return f"{prefix}{identifier} ({model_str})"
+    return f"{backend.brand} {identifier} ({model_str})"
 
 
 class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
