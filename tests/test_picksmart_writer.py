@@ -109,8 +109,81 @@ def test_picksmart_stall_detection():
         )
         img = Image.new("RGB", (296, 128), "white")
 
-        with pytest.raises(PickSmartError, match="Transfer stalled: part 0 requested 3 times"):
+        with pytest.raises(PickSmartError, match="Transfer stalled: part 0/.* requested 6 times"):
             await client.write_image(img)
+        # One send per request: the initial one plus five resends.
+        img_writes = [c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID]
+        assert len(img_writes) == 6
+
+    asyncio.run(_test())
+
+
+def test_picksmart_recovers_from_resend_requests(monkeypatch):
+    """A tag re-requesting a part a few times is served, not treated as a stall."""
+
+    async def _test():
+        monkeypatch.setattr(
+            "custom_components.ble_esl.esl_ble.picksmart.writer.RESEND_BACKOFF_S", 0.0
+        )
+        mock_client = MagicMock()
+        requests_for_part3 = 0
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            nonlocal requests_for_part3
+            if char == CMD_UUID:
+                if data[0] == 0x01:
+                    mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+                elif data[0] == 0x02:
+                    mock_client._handler(None, bytearray([0x02]))
+                elif data[0] == 0x03:
+                    mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
+            elif char == IMG_UUID:
+                part = int.from_bytes(data[0:4], "little")
+                # Reject part 3 four times (5 requests in total), then accept it.
+                if part == 3 and requests_for_part3 < 4:
+                    requests_for_part3 += 1
+                    nxt = 3
+                else:
+                    nxt = part + 1
+                mock_client._handler(None, bytearray([0x05, 0x00]) + nxt.to_bytes(4, "little"))
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        result = await client.write_image(Image.new("RGB", (296, 128), "white"))
+
+        assert result.success is True
+        sent_parts = [
+            int.from_bytes(c.args[1][0:4], "little")
+            for c in mock_client.write_gatt_char.await_args_list
+            if c.args[0] == IMG_UUID
+        ]
+        assert sent_parts.count(3) == 5
+        assert sorted(set(sent_parts)) == list(range(max(sent_parts) + 1))  # every part sent
+
+    asyncio.run(_test())
+
+
+def test_picksmart_timeout_error_is_descriptive(monkeypatch):
+    """A tag that stops answering yields a message naming the step, not ''."""
+
+    async def _test():
+        monkeypatch.setattr(
+            "custom_components.ble_esl.esl_ble.picksmart.writer.FEEDBACK_TIMEOUT", 0.05
+        )
+        mock_client = MagicMock()
+        mock_client.start_notify = AsyncMock()
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock()  # never answers
+
+        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        with pytest.raises(PickSmartError, match="No response from tag within 0.05s after START"):
+            await client.write_image(Image.new("RGB", (296, 128), "white"))
 
     asyncio.run(_test())
 
