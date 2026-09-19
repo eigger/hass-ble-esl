@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
+from bt import binary_values, sensor_values, service_info, update_device
 
 from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
 from custom_components.ble_esl.esl_ble.wolink.const import (
@@ -41,31 +41,33 @@ def test_parser_supported():
 
 
 def test_parser_start_update_battery_and_versions():
-    """Verify parser extracts battery, versions, and naming."""
+    """Parser publishes voltage/%/battery-low and sw/hw versions from the advertisement."""
     parser = WolinkBluetoothDeviceData(PRESETS["290"])
-
-    info = MagicMock()
-    info.address = "66:66:54:20:00:55"
-    info.service_uuids = [SERVICE_UUID]
-    # PID=0x1234, AppVer=0x0102(258), HwVer=0x0304(772), DispVer=0x0506, Bat=3000mV (0x0BB8)
+    # PID=0x1234, AppVer=258, HwVer=772, DispVer=0x0506, battery 3000 mV
     mfr_bytes = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
-    info.manufacturer_data = {MANUFACTURER_ID: mfr_bytes}
 
-    parser._start_update(info)
-
-    assert parser.title == '54200055 (2.9" BWRY)'
-    assert parser.get_device_name() == "Zhsunyco 54200055"
-    assert parser._sensor_values[SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT] == 3.0
-    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 100
-    assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is False
-    assert parser._device_sw_version == "258"
+    update = parser.update(
+        service_info("66:66:54:20:00:55", manufacturer_data={MANUFACTURER_ID: mfr_bytes})
+    )
+    assert update.title == '54200055 (2.9" BWRY)'
+    device = update_device(update)
+    assert device.name == "Zhsunyco 54200055"
+    assert device.sw_version == "258"
+    assert device.hw_version == "772"
+    values = sensor_values(update)
+    assert values["voltage"] == 3.0
+    assert values["battery"] == 100
+    assert binary_values(update)["battery"] is False
 
     # 2200 mV (0x0898): 0 % and battery low
-    info.manufacturer_data = {MANUFACTURER_ID: mfr_bytes[:8] + bytes([0x08, 0x98])}
-    parser._start_update(info)
-    assert parser._sensor_values[SensorLibrary.BATTERY__PERCENTAGE] == 0
-    assert parser._binary_sensor_values[BinarySensorDeviceClass.BATTERY] is True
-    assert parser._device_hw_version == "772"
+    update = parser.update(
+        service_info(
+            "66:66:54:20:00:55",
+            manufacturer_data={MANUFACTURER_ID: mfr_bytes[:8] + bytes([0x08, 0x98])},
+        )
+    )
+    assert sensor_values(update)["battery"] == 0
+    assert binary_values(update)["battery"] is True
 
 
 def test_protocol_parse_advertisement():
