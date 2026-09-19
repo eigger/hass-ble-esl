@@ -4,20 +4,18 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+from conftest import make_entry, make_runtime_data
+
 from custom_components.ble_esl import process_service_info
-from custom_components.ble_esl.const import DOMAIN
-from custom_components.ble_esl.device import async_get_device_info
+from custom_components.ble_esl.device import build_device_info
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 
 
-def test_async_get_device_info():
-    """Verify async_get_device_info retrieves model, sw_version, and hw_version."""
-    hass = MagicMock()
-    entry_id = "test_entry"
+def test_build_device_info():
+    """Verify build_device_info exposes model, protocol, sw_version and hw_version."""
     address = "66:66:54:20:00:55"
-
     preset = DevicePreset(
         key="290",
         display_name="2.9\" BWRY",
@@ -25,20 +23,15 @@ def test_async_get_device_info():
         height=128,
         colors="BWRY",
     )
+    data = make_runtime_data(
+        backend=WolinkProtocol(),
+        preset=preset,
+        model="2.9\" BWRY 296x128",
+        sw_version="258",
+        hw_version="772",
+    )
 
-    backend = WolinkProtocol()
-    hass.data = {
-        DOMAIN: {
-            entry_id: {
-                "backend": backend,
-                "preset": preset,
-                "sw_version": "258",
-                "hw_version": "772",
-            }
-        }
-    }
-
-    dev_info = async_get_device_info(hass, entry_id, address)
+    dev_info = build_device_info(data)
     assert dev_info["name"] == "Zhsunyco 54200055"
     assert dev_info["manufacturer"] == "Zhsunyco"
     assert dev_info["model"] == "2.9\" BWRY 296x128"
@@ -51,32 +44,16 @@ def test_async_get_device_info():
 def test_process_service_info_updates_device_registry():
     """Verify process_service_info updates device registry with sw/hw/model."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-
     backend = WolinkProtocol()
     preset = backend.presets()["290"]
-    parser = backend.create_parser(preset=preset)
-
-    coordinator = MagicMock()
-    coordinator.device_data = parser
-    entry.runtime_data = coordinator
-
+    entry = make_entry(
+        backend=backend,
+        preset=preset,
+        parser=backend.create_parser(preset=preset),
+        device_id="mock_device_id_123",
+        manufacturer=None,
+    )
     device_registry = MagicMock()
-
-    hass.data = {
-        DOMAIN: {
-            "test_entry": {
-                "backend": backend,
-                "preset": preset,
-                "device_id": "mock_device_id_123",
-                "sw_version": None,
-                "hw_version": None,
-                "model": None,
-                "manufacturer": None,
-            }
-        }
-    }
 
     service_info = MagicMock()
     service_info.address = "66:66:54:20:00:55"
@@ -89,11 +66,11 @@ def test_process_service_info_updates_device_registry():
     update = process_service_info(hass, entry, device_registry, service_info)
     assert update is not None
 
-    entry_data = hass.data[DOMAIN]["test_entry"]
-    assert entry_data["sw_version"] == "258"
-    assert entry_data["hw_version"] == "772"
-    assert entry_data["model"] == "2.9\" BWRY 296x128"
-    assert entry_data["manufacturer"] == "Zhsunyco"
+    data = entry.runtime_data
+    assert data.sw_version == "258"
+    assert data.hw_version == "772"
+    assert data.model == "2.9\" BWRY 296x128"
+    assert data.manufacturer == "Zhsunyco"
 
     device_registry.async_update_device.assert_called_once_with(
         "mock_device_id_123",

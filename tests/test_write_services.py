@@ -15,10 +15,11 @@ import pytest
 
 import custom_components.ble_esl as integration
 from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl import services as svc
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
-    DOMAIN,
+    DATA_LOCK,
 )
 from custom_components.ble_esl.esl_ble import WriteResult
 from homeassistant.exceptions import HomeAssistantError
@@ -51,6 +52,7 @@ class Harness:
         self.hass = MagicMock()
         self.hass.data = {}
         self.hass.loop = loop
+        self._domain_ready = False
         self.hass.config_entries.async_forward_entry_setups = AsyncMock()
         # Real executor future: the encode is awaited by the backend after
         # connecting and again on retries, and cancelled if never awaited.
@@ -68,6 +70,9 @@ class Harness:
         self.hass.config_entries.async_get_entry = (
             lambda entry_id: self.entries[entry_id]
         )
+        self.hass.config_entries.async_loaded_entries = (
+            lambda domain: list(self.entries.values())
+        )
 
         # Rendering: return a different image per payload so image bytes differ.
         def fake_render(entry_id, preset, service, hass):
@@ -76,13 +81,14 @@ class Harness:
             img.putpixel((0, 0), (len(str(payload)) % 256, 0, 0))
             return img
 
-        monkeypatch.setattr(integration, "render_image", fake_render)
+        monkeypatch.setattr(svc, "render_image", fake_render)
         monkeypatch.setattr(integration, "DataUpdateCoordinator", FakeCoordinator)
         monkeypatch.setattr(
             integration, "BleEslPassiveBluetoothProcessorCoordinator", MagicMock()
         )
         monkeypatch.setattr(integration, "async_last_service_info", lambda *a, **k: None)
-        monkeypatch.setattr(integration, "sleep", AsyncMock())  # retry backoff
+        monkeypatch.setattr(svc, "async_last_service_info", lambda *a, **k: None)
+        monkeypatch.setattr(svc, "sleep", AsyncMock())  # retry backoff
 
         # homeassistant.helpers.event is mocked; emulate async_call_later's
         # contract (action receives a datetime, returns a cancel callable).
@@ -90,7 +96,7 @@ class Harness:
             handle = loop.call_later(delay, action, None)
             return handle.cancel
 
-        monkeypatch.setattr(integration, "async_call_later", fake_call_later)
+        monkeypatch.setattr(svc, "async_call_later", fake_call_later)
 
         # homeassistant.helpers.service is mocked; emulate the real helper's
         # contract for the device_id form (it also handles entity/area/label):
@@ -102,18 +108,18 @@ class Harness:
                 device_ids = [device_ids]
             return {
                 entry_id
-                for entry_id, data in self.hass.data.get(DOMAIN, {}).items()
-                if isinstance(data, dict) and data.get("device_id") in device_ids
+                for entry_id, entry in self.entries.items()
+                if entry.runtime_data.device_id in device_ids
             }
 
         self.extract = AsyncMock(side_effect=fake_extract)
-        monkeypatch.setattr(integration, "async_extract_config_entry_ids", self.extract)
+        monkeypatch.setattr(svc, "async_extract_config_entry_ids", self.extract)
 
         self.ble_device = MagicMock()
         self.ble_device.address = "AA:BB:CC:DD:EE:FF"
         self.available = True
         monkeypatch.setattr(
-            integration,
+            svc,
             "async_ble_device_from_address",
             lambda hass, address: self.ble_device if self.available else None,
         )
@@ -146,15 +152,19 @@ class Harness:
         self.options = options or {}
 
     async def add_entry(self, entry_id: str, address: str):
+        if not self._domain_ready:
+            # Lock and services are domain-level, registered once.
+            assert await integration.async_setup(self.hass, {})
+            self._domain_ready = True
         entry = _make_entry(entry_id, address, self.options)
         self.entries[entry_id] = entry
         assert await integration.async_setup_entry(self.hass, entry)
         # Device id is what services target; make it predictable.
-        self.hass.data[DOMAIN][entry_id]["device_id"] = f"dev-{entry_id}"
+        entry.runtime_data.device_id = f"dev-{entry_id}"
         return entry
 
-    def entry_data(self, entry_id: str) -> dict:
-        return self.hass.data[DOMAIN][entry_id]
+    def entry_data(self, entry_id: str):
+        return self.entries[entry_id].runtime_data
 
     def call(self, name: str, device_id, **data):
         service = MagicMock()
@@ -182,8 +192,8 @@ def test_write_without_ble_handle_counts_as_failed_attempts(harness_factory):
             await h.call("write", "dev-e1", payload="x")
 
         assert h.write_prepared.await_count == 0
-        assert h.entry_data("e1")["failure_coordinator"].data == 1
-        assert h.entry_data("e1")["last_failure_coordinator"].data is not None
+        assert h.entry_data("e1").failure_coordinator.data == 1
+        assert h.entry_data("e1").last_failure_coordinator.data is not None
 
     asyncio.run(_test())
 
@@ -199,21 +209,21 @@ def test_ble_handle_resolved_per_attempt(harness_factory):
             return WriteResult(success=True)
 
         # First attempt has no handle; make it appear before the retry.
-        real_sleep = integration.sleep
+        real_sleep = svc.sleep
 
         async def sleep_then_available(*args, **kwargs):
             h.available = True
             await real_sleep(*args, **kwargs)
 
-        integration.sleep = sleep_then_available
+        svc.sleep = sleep_then_available
         h.write_hook = become_available
         try:
             await h.call("write", "dev-e1", payload="x")
         finally:
-            integration.sleep = real_sleep
+            svc.sleep = real_sleep
 
         assert h.write_prepared.await_count == 1
-        assert h.entry_data("e1")["failure_coordinator"].data == 0
+        assert h.entry_data("e1").failure_coordinator.data == 0
 
     asyncio.run(_test())
 
@@ -239,8 +249,8 @@ def test_multi_device_call_continues_after_failure(harness_factory):
             await h.call("write", ["dev-e1", "dev-e2"], payload="x")
 
         assert h.write_prepared.await_count == 2  # both attempted
-        failures = [h.entry_data(e)["failure_coordinator"].data for e in ("e1", "e2")]
-        written = [h.entry_data(e)["image_coordinator"].data is not None for e in ("e1", "e2")]
+        failures = [h.entry_data(e).failure_coordinator.data for e in ("e1", "e2")]
+        written = [h.entry_data(e).image_coordinator.data is not None for e in ("e1", "e2")]
         assert sorted(failures) == [0, 1]
         assert sorted(written) == [False, True]
 
@@ -260,13 +270,13 @@ def test_duplicate_guard_ignores_failed_write(harness_factory):
         h.write_result = WriteResult(success=False, error="boom")
         with pytest.raises(HomeAssistantError):
             await h.call("write_guarded", "dev-e1", payload="same")
-        assert h.entry_data("e1")["last_image_data"] is None
+        assert h.entry_data("e1").last_image_data is None
 
         # Same payload again: must be sent, not skipped as a duplicate.
         h.write_result = WriteResult(success=True)
         await h.call("write_guarded", "dev-e1", payload="same")
         assert h.write_prepared.await_count == 2
-        assert h.entry_data("e1")["last_image_data"] is not None
+        assert h.entry_data("e1").last_image_data is not None
 
         # Now it is a genuine duplicate and is skipped.
         await h.call("write_guarded", "dev-e1", payload="same")
@@ -295,7 +305,7 @@ def test_debounce_is_trailing_edge_with_last_payload(harness_factory):
         assert h.write_prepared.await_count == 1
         sent = h.write_prepared.await_args.args[2].result()
         assert sent.getpixel((0, 0))[0] == len("second!")
-        assert h.entry_data("e1")["pending_write_cancel"] is None
+        assert h.entry_data("e1").pending_write_cancel is None
 
     asyncio.run(_test())
 
@@ -306,10 +316,10 @@ def test_immediate_write_cancels_pending_debounced_write(harness_factory):
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
         await h.call("write_guarded", "dev-e1", payload="queued", debounce_override_ms=300)
-        assert h.entry_data("e1")["pending_write_cancel"] is not None
+        assert h.entry_data("e1").pending_write_cancel is not None
 
         await h.call("write", "dev-e1", payload="now")
-        assert h.entry_data("e1")["pending_write_cancel"] is None
+        assert h.entry_data("e1").pending_write_cancel is None
         await asyncio.sleep(0.4)
         assert h.write_prepared.await_count == 1
 
@@ -325,21 +335,21 @@ def test_fired_debounced_write_dropped_when_superseded(harness_factory):
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
 
         # Hold the BLE lock so a fired debounced write has to queue behind it.
-        lock = h.hass.data[DOMAIN][integration.LOCK]
+        lock = h.hass.data[DATA_LOCK]
         await lock.acquire()
 
         await h.call("write_guarded", "dev-e1", payload="stale", debounce_override_ms=50)
         await asyncio.sleep(0.1)  # timer fires; task now waits on the lock
-        assert h.entry_data("e1")["pending_write_cancel"] is None
+        assert h.entry_data("e1").pending_write_cancel is None
         assert h.write_prepared.await_count == 0
 
-        generation_before = h.entry_data("e1")["write_generation"]
+        generation_before = h.entry_data("e1").write_generation
         immediate = asyncio.get_running_loop().create_task(
             h.call("write", "dev-e1", payload="fresh!!")
         )
         # Release the lock only once the immediate write has cancelled the
         # pending one (bumped the generation) and is itself queued on the lock.
-        while h.entry_data("e1")["write_generation"] == generation_before:
+        while h.entry_data("e1").write_generation == generation_before:
             await asyncio.sleep(0)
         lock.release()
         await immediate
@@ -402,9 +412,9 @@ def test_write_guarded_without_ble_handle_fails_like_write(harness_factory):
             await h.call("write_guarded", "dev-e1", payload="x")
 
         assert h.write_prepared.await_count == 0
-        assert h.entry_data("e1")["failure_coordinator"].data == 1
+        assert h.entry_data("e1").failure_coordinator.data == 1
         # Preview was still rendered.
-        assert h.entry_data("e1")["preview_coordinator"].data is not None
+        assert h.entry_data("e1").preview_coordinator.data is not None
 
     asyncio.run(_test())
 
@@ -420,8 +430,8 @@ def test_dry_run_is_preview_only(harness_factory):
 
         await h.call("write_guarded", "dev-e1", payload="p", dry_run=True)
         assert h.write_prepared.await_count == 0
-        assert h.entry_data("e1")["preview_coordinator"].data is not None
-        assert h.entry_data("e1")["last_image_data"] is None
+        assert h.entry_data("e1").preview_coordinator.data is not None
+        assert h.entry_data("e1").last_image_data is None
 
         # The real write of the same payload must not be treated as a duplicate.
         await h.call("write_guarded", "dev-e1", payload="p")
@@ -501,7 +511,7 @@ def test_encode_starts_before_waiting_for_ble_lock(harness_factory, monkeypatch)
 
         monkeypatch.setattr(esl_ble.get("wolink"), "prepare_image", prepare)
 
-        lock = h.hass.data[DOMAIN][integration.LOCK]
+        lock = h.hass.data[DATA_LOCK]
         await lock.acquire()
         write = asyncio.get_running_loop().create_task(h.call("write", "dev-e1", payload="x"))
         await asyncio.wait_for(encoded.wait(), 2)  # encoded while the lock is still held
@@ -520,7 +530,7 @@ def test_skipped_write_discards_failed_encode_quietly(harness_factory, monkeypat
     async def _test():
         h = harness_factory(asyncio.get_running_loop())
         await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
-        h.entry_data("e1")[integration.WRITE_LOCK] = True
+        h.entry_data("e1").write_lock = True
 
         def broken_prepare(preset, image, address):
             raise RuntimeError("encode failed")
@@ -576,8 +586,8 @@ def test_multi_target_call_pipelines_encodes_and_writes_in_order(harness_factory
         await call
 
         assert h.write_prepared.await_count == 2
-        assert h.entry_data("e1")["image_coordinator"].data is not None
-        assert h.entry_data("e2")["image_coordinator"].data is not None
+        assert h.entry_data("e1").image_coordinator.data is not None
+        assert h.entry_data("e2").image_coordinator.data is not None
 
     asyncio.run(_test())
 
@@ -600,5 +610,84 @@ def test_unexpected_error_keeps_other_targets_failures_as_note(harness_factory, 
         with pytest.raises(ValueError, match="bug") as excinfo:
             await h.call("write", ["dev-e1", "dev-e2"], payload="x")
         assert any("boom" in note for note in getattr(excinfo.value, "__notes__", []))
+
+    asyncio.run(_test())
+
+
+def test_services_registered_once_at_domain_setup(harness_factory):
+    """Services come from async_setup, not per entry, and survive an entry unload."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        assert h.services == {}
+        await h.add_entry("e1", "AA:BB:CC:DD:EE:01")
+        assert set(h.services) == {"write", "write_guarded"}
+        first = h.services["write"]
+        await h.add_entry("e2", "AA:BB:CC:DD:EE:02")
+        assert h.services["write"] is first  # second entry does not re-register
+
+        h.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
+        assert await integration.async_unload_entry(h.hass, h.entries["e1"])
+        assert h.services["write"] is first
+        h.hass.services.async_remove.assert_not_called()
+
+    asyncio.run(_test())
+
+
+def test_unload_cancels_pending_debounced_write(harness_factory):
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        entry = await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        await h.call("write_guarded", "dev-e1", payload="queued", debounce_override_ms=200)
+        assert entry.runtime_data.pending_write_cancel is not None
+
+        h.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
+        assert await integration.async_unload_entry(h.hass, entry)
+        assert entry.runtime_data.pending_write_cancel is None
+        await asyncio.sleep(0.3)
+        assert h.write_prepared.await_count == 0
+
+    asyncio.run(_test())
+
+
+def test_unload_drops_debounced_write_queued_on_lock(harness_factory):
+    """A debounced write whose timer already fired but which is still waiting
+    for the BLE lock is dropped when its entry unloads."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        entry = await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        lock = h.hass.data[DATA_LOCK]
+        await lock.acquire()
+        await h.call("write_guarded", "dev-e1", payload="stale", debounce_override_ms=50)
+        await asyncio.sleep(0.1)  # timer fired; the write is queued on the lock
+
+        h.hass.config_entries.async_unload_platforms = AsyncMock(return_value=True)
+        assert await integration.async_unload_entry(h.hass, entry)
+        lock.release()
+        await asyncio.sleep(0.05)
+        assert h.write_prepared.await_count == 0
+
+    asyncio.run(_test())
+
+
+def test_write_lock_seeded_from_entry_data(harness_factory):
+    """A persisted write lock gates writes before the switch entity is added."""
+
+    async def _test():
+        h = harness_factory(asyncio.get_running_loop())
+        entry = await h.add_entry("e1", "AA:BB:CC:DD:EE:FF")
+        assert entry.runtime_data.write_lock is False
+
+        h.entries.clear()
+        locked = _make_entry("e2", "AA:BB:CC:DD:EE:02", h.options)
+        locked.data = {**locked.data, integration.WRITE_LOCK: True}
+        h.entries["e2"] = locked
+        assert await integration.async_setup_entry(h.hass, locked)
+        locked.runtime_data.device_id = "dev-e2"
+        assert locked.runtime_data.write_lock is True
+
+        await h.call("write", "dev-e2", payload="x")
+        assert h.write_prepared.await_count == 0
 
     asyncio.run(_test())

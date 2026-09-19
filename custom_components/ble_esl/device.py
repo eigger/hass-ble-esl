@@ -12,11 +12,10 @@ from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceIn
 from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 from sensor_state_data import DeviceKey
 
-from .const import DOMAIN
 from .esl_ble.base import DevicePreset
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
+    from .data import BleEslRuntimeData
 
 
 def device_key_to_bluetooth_entity_key(
@@ -70,29 +69,14 @@ def format_model_name(preset: DevicePreset | None) -> str | None:
     return f"{preset.display_name} {res}"
 
 
-def async_get_device_info(
-    hass: HomeAssistant,
-    entry_id: str,
-    address: str,
-) -> DeviceInfo:
-    """Get DeviceInfo for a BLE ESL device."""
-    identifier = address.replace(":", "")[-8:]
-    entry_data = hass.data.get(DOMAIN, {}).get(entry_id, {})
-    backend = entry_data.get("backend")
-    preset = entry_data.get("preset")
-
-    protocol_name = protocol_label(backend) if backend else None
-    manufacturer = entry_data.get("manufacturer") or (
-        backend_brand(backend) if backend else DEFAULT_BRAND
-    )
-    model = entry_data.get("model") or format_model_name(preset)
-
+def build_device_info(data: BleEslRuntimeData) -> DeviceInfo:
+    """DeviceInfo shared by every entity of a tag."""
     return DeviceInfo(
-        connections={(CONNECTION_BLUETOOTH, address)},
-        name=f"{manufacturer} {identifier}",
-        manufacturer=manufacturer,
-        model=model,
-        model_id=protocol_name,
-        sw_version=entry_data.get("sw_version"),
-        hw_version=entry_data.get("hw_version"),
+        connections={(CONNECTION_BLUETOOTH, data.address)},
+        name=f"{data.manufacturer} {data.identifier}",
+        manufacturer=data.manufacturer,
+        model=data.model,
+        model_id=protocol_label(data.backend),
+        sw_version=data.sw_version,
+        hw_version=data.hw_version,
     )

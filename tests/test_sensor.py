@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock
 
-from custom_components.ble_esl.const import DOMAIN
+from conftest import make_entry, make_runtime_data
+
 from custom_components.ble_esl.esl_ble.base import Capabilities, BleBackend
 from custom_components.ble_esl.sensor import (
     BleEslBatteryPercentageSensorEntity,
@@ -21,9 +22,7 @@ from custom_components.ble_esl.sensor import (
 def test_battery_percentage_sensor():
     """Verify battery percentage mapping with 2.2V - 3.0V linear formula (integer)."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     coordinator = MagicMock()
     coordinator.data = 3.0
@@ -55,9 +54,7 @@ def test_battery_percentage_sensor():
 def test_battery_voltage_sensor():
     """Verify battery voltage entity."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     coordinator = MagicMock()
     coordinator.data = 2.95
@@ -70,9 +67,7 @@ def test_battery_voltage_sensor():
 def test_temperature_sensor():
     """Verify temperature entity."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     coordinator = MagicMock()
     coordinator.data = 25
@@ -88,9 +83,7 @@ def test_temperature_sensor():
 def test_duration_and_failure_sensors():
     """Verify write duration and failure entities."""
     hass = MagicMock()
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
-    hass.data = {DOMAIN: {"test_entry": {"address": "66:66:54:20:00:55"}}}
+    entry = make_entry()
 
     dur_coord = MagicMock()
     dur_coord.data = 4.5
@@ -118,7 +111,6 @@ def test_async_setup_entry_capabilities():
         hass = MagicMock()
         entry = MagicMock()
         entry.entry_id = "test_entry"
-        entry.runtime_data = MagicMock()
 
         # Case 1: WOLINK protocol (passive_battery=True, session_battery=False, session_temperature=False)
         backend_wolink = MagicMock(spec=BleBackend)
@@ -129,20 +121,7 @@ def test_async_setup_entry_capabilities():
             model_detection=False,
             palettes=("BWRY",),
         )
-
-        hass.data = {
-            DOMAIN: {
-                "test_entry": {
-                    "address": "66:66:54:20:00:55",
-                    "backend": backend_wolink,
-                    "battery_coordinator": MagicMock(),
-                    "temperature_coordinator": MagicMock(),
-                    "duration_coordinator": MagicMock(),
-                    "failure_coordinator": MagicMock(),
-                    "last_failure_coordinator": MagicMock(),
-                }
-            }
-        }
+        entry.runtime_data = make_runtime_data(backend=backend_wolink)
 
         added_entities = []
         await async_setup_entry(hass, entry, added_entities.extend)
@@ -164,7 +143,7 @@ def test_async_setup_entry_capabilities():
             model_detection=False,
             palettes=("BWR",),
         )
-        hass.data[DOMAIN]["test_entry"]["backend"] = backend_session
+        entry.runtime_data = make_runtime_data(backend=backend_session)
 
         added_session_entities = []
         await async_setup_entry(hass, entry, added_session_entities.extend)

@@ -12,7 +12,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
 from .entity import BleEslCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,11 +23,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up BLE ESL image entities."""
-    image_coordinator = hass.data[DOMAIN][entry.entry_id]["image_coordinator"]
-    preview_coordinator = hass.data[DOMAIN][entry.entry_id]["preview_coordinator"]
+    data = entry.runtime_data
     async_add_entities([
-        BleEslImageEntity(hass, entry, image_coordinator),
-        BleEslPreviewImageEntity(hass, entry, preview_coordinator),
+        BleEslImageEntity(hass, entry, data.image_coordinator),
+        BleEslPreviewImageEntity(hass, entry, data.preview_coordinator),
     ])
 
 
