@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable
-import contextlib
 import logging
 from bleak import BleakClient
 from PIL import Image
-from ..base import DevicePreset, WriteResult
+from ..base import DevicePreset, Notifications, WriteResult
 from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID, NOTIFY_SETTLE_S
-from .devices import PSJ_420
 from .protocol import make_image_object, pack_pixels, make_blocks, make_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,12 +19,9 @@ class XteClient:
     def __init__(self, client, attempt: int = 1, write_delay_ms: int = 0):
         self.client = client
         self.delay = max(0, write_delay_ms) / 1000 + 0.05 * max(0, attempt - 1)
-        self.responses: asyncio.Queue[bytes] = asyncio.Queue()
         self.timeout = 5.0
         self.settle = NOTIFY_SETTLE_S
-
-    def _notification(self, _sender, data: bytearray) -> None:
-        self.responses.put_nowait(bytes(data))
+        self._replies: Notifications | None = None
 
     async def _write(self, characteristic, data: bytes, chunk_size: int) -> None:
         """Write one logical frame (command or block) as consecutive ATT chunks."""
@@ -40,34 +35,37 @@ class XteClient:
         if self.delay:
             await asyncio.sleep(self.delay)
 
+    @staticmethod
+    def _expecting(expected_payload: bytes):
+        """Accept the XTE\x04 frame whose body is `expected_payload`; raise on any other."""
+
+        def accept(response: bytes) -> bool:
+            if not response.startswith(b"XTE\x04"):
+                return False
+            if len(response) < 6:
+                raise ValueError("Truncated XTE response")
+            length = response[4]
+            if length < 7 or length > len(response):
+                raise ValueError("Invalid XTE response length")
+            body = response[6:length]
+            if sum(body) & 0xFF != response[5]:
+                raise ValueError("Invalid XTE response checksum")
+            # Only the captured positive responses are currently known.
+            # Never treat an arbitrary notification as transfer success.
+            if body != expected_payload:
+                raise ValueError(f"Unexpected XTE response: {body.hex()}")
+            return True
+
+        return accept
+
     async def _command(self, characteristic, payload: bytes, chunk_size: int,
                        expected_payload: bytes) -> None:
-        while not self.responses.empty():
-            self.responses.get_nowait()
+        assert self._replies is not None, "inside write_object()'s notification session"
+        self._replies.clear()
         await self._write(characteristic, make_command(payload), chunk_size)
-        async with asyncio.timeout(self.timeout):
-            while True:
-                response = await self.responses.get()
-                if not response.startswith(b"XTE\x04"):
-                    continue
-                if len(response) < 6:
-                    raise ValueError("Truncated XTE response")
-                length = response[4]
-                if length < 7 or length > len(response):
-                    raise ValueError("Invalid XTE response length")
-                body = response[6:length]
-                if sum(body) & 0xFF != response[5]:
-                    raise ValueError("Invalid XTE response checksum")
-                # Only the captured positive responses are currently known.
-                # Never treat an arbitrary notification as transfer success.
-                if body != expected_payload:
-                    raise ValueError(f"Unexpected XTE response: {body.hex()}")
-                return
-
-    async def write_image(self, image: Image.Image) -> bool:
-        """Encode and send. Convenience for direct use and the session tests; the integration goes through BleBackend.write_image(), which encodes off the loop once and overlaps it with connecting."""
-        image_object = await asyncio.to_thread(prepare, PSJ_420, image, "")  # XTE encode is address-independent
-        return await self.write_object(image_object)
+        await self._replies.wait_for(
+            self._expecting(expected_payload), self.timeout, step=f"command {payload[0]:#04x}"
+        )
 
     async def write_object(self, image_object: bytes) -> bool:
         """Send an already-encoded XTEK object."""
@@ -88,22 +86,14 @@ class XteClient:
             raise ValueError(f"Invalid XTE write-without-response size: {chunk_size}")
         _LOGGER.debug("XTE write chunk size: %s bytes", chunk_size)
         blocks = make_blocks(image_object)
-        await self.client.start_notify(notify_char, self._notification)
-        try:
-            if self.settle:
-                await asyncio.sleep(self.settle)
+        async with Notifications(self.client, notify_char, settle=self.settle) as replies:
+            self._replies = replies
             await self._command(write_char, b"\x01" + len(image_object).to_bytes(4, "big"),
                                 chunk_size, bytes.fromhex("01ffbd"))
             for block in blocks:
                 await self._write(write_char, block, chunk_size)
             await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
             return True
-        finally:
-            # Never let an unsubscribe failure on a dropped link mask the
-            # original transfer error; ble_session() still disconnects.
-            with contextlib.suppress(Exception):
-                if self.client.is_connected:
-                    await self.client.stop_notify(notify_char)
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:

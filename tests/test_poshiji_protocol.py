@@ -6,7 +6,8 @@ from types import SimpleNamespace
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient
+from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
+from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
 from custom_components.ble_esl.esl_ble.poshiji.const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID
 from custom_components.ble_esl.esl_ble.poshiji.protocol import (
     encode_rle, make_image_object, make_blocks, make_command, pack_pixels,
@@ -137,7 +138,7 @@ class FakeClient:
 def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
-    assert asyncio.run(_client(client).write_image(image))
+    assert asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
     obj = make_image_object(b"\x55" * 30000)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
@@ -158,7 +159,7 @@ def test_bad_responses_fail_and_unsubscribe(reply, error):
     transport = _client(client)
     transport.timeout = 0.01
     with pytest.raises(error):
-        asyncio.run(transport.write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(transport.write_object(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
     assert client.stopped
     assert len(client.writes) == 1  # No data sent after a failed preparation.
 
@@ -166,17 +167,17 @@ def test_bad_responses_fail_and_unsubscribe(reply, error):
 def test_invalid_write_size_and_missing_service():
     client = FakeClient(mtu_payload=0)
     with pytest.raises(ValueError, match="write-without-response size"):
-        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_object(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
     assert client.writes == []
     client.services.get_service = lambda uuid: None
     with pytest.raises(ValueError, match="service missing"):
-        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_object(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
 
 
 def test_write_failure_unsubscribes():
     client = FakeClient(fail_write=True)
     with pytest.raises(OSError):
-        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_object(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
     assert client.stopped
 
 
@@ -190,7 +191,7 @@ def test_write_failure_after_disconnect_keeps_original_error():
 
     client.write_gatt_char = write_then_drop
     with pytest.raises(OSError, match="adapter write failed"):
-        asyncio.run(_client(client).write_image(Image.new("RGB", (400, 300))))
+        asyncio.run(_client(client).write_object(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
     assert not client.stopped  # stop_notify skipped on a dropped link
 
 
@@ -202,7 +203,7 @@ def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
 
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
     client = FakeClient(mtu_payload=20)
-    assert asyncio.run(XteClient(client, attempt=2).write_image(Image.new("RGB", (400, 300), "white")))
+    assert asyncio.run(XteClient(client, attempt=2).write_object(prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")))
     frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000)))
     # One settle after start_notify, then one retry delay per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames

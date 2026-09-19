@@ -193,3 +193,97 @@ def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
         assert prepared.done() and not prepared.cancelled()
 
     asyncio.run(_test())
+
+
+# ── Notifications ────────────────────────────────────────────────────────
+
+
+def _notifying_client(*, connected=True, stop_fails=False):
+    client = MagicMock(is_connected=connected)
+    client.handler = None
+
+    async def start_notify(char, handler):
+        client.handler = handler
+
+    client.start_notify = AsyncMock(side_effect=start_notify)
+    client.stop_notify = AsyncMock(side_effect=OSError("gone") if stop_fails else None)
+    return client
+
+
+def test_notifications_next_and_clear():
+    from custom_components.ble_esl.esl_ble.base import Notifications
+
+    async def _test():
+        client = _notifying_client()
+        async with Notifications(client, "char") as replies:
+            client.handler(None, bytearray(b"a"))
+            client.handler(None, bytearray(b"b"))
+            assert replies.clear() == [b"a", b"b"]
+            client.handler(None, bytearray(b"c"))
+            assert await replies.next(0.1, step="cmd") == b"c"
+        client.stop_notify.assert_awaited_once_with("char")
+
+    asyncio.run(_test())
+
+
+def test_notifications_timeout_names_the_step():
+    from custom_components.ble_esl.esl_ble.base import NotificationTimeout, Notifications
+
+    async def _test():
+        async with Notifications(_notifying_client(), "char") as replies:
+            with pytest.raises(NotificationTimeout, match="No response from tag within 0.05s after START"):
+                await replies.next(0.05, step="START")
+            with pytest.raises(NotificationTimeout, match="after DONE"):
+                await replies.wait_for(lambda d: False, 0.05, step="DONE")
+
+    asyncio.run(_test())
+
+
+def test_notifications_wait_for_skips_and_can_raise():
+    from custom_components.ble_esl.esl_ble.base import Notifications
+
+    def accept(data):
+        if data == b"err":
+            raise ValueError("device error")
+        return data == b"ok"
+
+    async def _test():
+        client = _notifying_client()
+        async with Notifications(client, "char") as replies:
+            client.handler(None, bytearray(b"busy"))
+            client.handler(None, bytearray(b"ok"))
+            assert await replies.wait_for(accept, 0.1, step="x") == b"ok"
+            client.handler(None, bytearray(b"err"))
+            with pytest.raises(ValueError, match="device error"):
+                await replies.wait_for(accept, 0.1, step="x")
+
+    asyncio.run(_test())
+
+
+@pytest.mark.parametrize("connected,stop_fails", [(True, True), (False, False)])
+def test_notifications_unsubscribe_never_masks_the_session_error(connected, stop_fails):
+    from custom_components.ble_esl.esl_ble.base import Notifications
+
+    async def _test():
+        client = _notifying_client(connected=connected, stop_fails=stop_fails)
+        with pytest.raises(RuntimeError, match="transfer failed"):
+            async with Notifications(client, "char"):
+                raise RuntimeError("transfer failed")
+        assert client.stop_notify.await_count == (1 if connected else 0)
+
+    asyncio.run(_test())
+
+
+def test_notifications_settle_after_subscribe(monkeypatch):
+    from custom_components.ble_esl.esl_ble import base
+
+    async def _test():
+        order = []
+        client = _notifying_client()
+        client.start_notify = AsyncMock(side_effect=lambda *a: order.append("subscribe"))
+        monkeypatch.setattr(base.asyncio, "sleep", AsyncMock(side_effect=lambda s: order.append(f"sleep {s}")))
+        async with base.Notifications(client, "char", settle=0.5):
+            order.append("body")
+        assert order == ["subscribe", "sleep 0.5", "body"]
+
+    asyncio.run(_test())
