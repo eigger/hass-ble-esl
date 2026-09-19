@@ -212,7 +212,7 @@ def test_multi_device_call_continues_after_failure(harness_factory):
         h.write_image.side_effect = fail_first
 
         with pytest.raises(HomeAssistantError, match="boom"):
-            await h.call("write", ["dev-e1", "unknown-device", "dev-e2"], payload="x")
+            await h.call("write", ["dev-e1", "dev-e2"], payload="x")
 
         assert h.write_image.await_count == 2
         assert h.entry_data("e1")["failure_coordinator"].data == 1

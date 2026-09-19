@@ -84,11 +84,15 @@ async def async_targeted_entry_ids(
         entry_ids = await async_extract_config_entry_ids(hass, service)
     else:
         entry_ids = await async_extract_config_entry_ids(service)
+    # Ids the helper returns for devices/entities of *other* integrations, or
+    # targets not in the registries at all, are simply absent here: that is
+    # HA's standard target contract (a call is not an error because one of
+    # several targets is unknown), so only an all-miss is reported.
     loaded = hass.data.get(DOMAIN, {})
     targets = sorted(
         entry_id
         for entry_id in entry_ids
-        if isinstance(loaded.get(entry_id), dict)
+        if isinstance(data := loaded.get(entry_id), dict) and "address" in data
     )
     if not targets:
         raise HomeAssistantError(
