@@ -7,7 +7,6 @@ from asyncio import Lock, sleep
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from functools import partial
-import inspect
 from io import BytesIO
 import logging
 import time
@@ -67,23 +66,13 @@ PLATFORMS: list[Platform] = [
 
 _LOGGER = logging.getLogger(__name__)
 
-# HA 2025.12 deprecated the leading `hass` argument (removed in 2026.10) and
-# logs a warning when it is passed; earlier versions require it. Decide once
-# from the signature so both work without a warning.
-_EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS = (
-    "hass" in inspect.signature(async_extract_config_entry_ids).parameters
-)
-
-
 async def async_targeted_entry_ids(
     hass: HomeAssistant, service: ServiceCall
 ) -> list[str]:
     """Resolve a service call's target (entity/device/area/floor/label) to
     the loaded BLE ESL config entries it refers to."""
-    if _EXTRACT_CONFIG_ENTRY_IDS_TAKES_HASS:
-        entry_ids = await async_extract_config_entry_ids(hass, service)
-    else:
-        entry_ids = await async_extract_config_entry_ids(service)
+    # Signature without `hass` requires HA 2025.12+ (see hacs.json).
+    entry_ids = await async_extract_config_entry_ids(service)
     # Ids the helper returns for devices/entities of *other* integrations, or
     # targets not in the registries at all, are simply absent here: that is
     # HA's standard target contract (a call is not an error because one of
