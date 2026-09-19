@@ -16,6 +16,8 @@ from .const import (
     CMD_SIZE,
     CMD_START,
     FEEDBACK_TIMEOUT,
+    MAX_SAME_PART_REQUESTS,
+    RESEND_BACKOFF_S,
     RESP_IMAGE_DATA,
     SERVICE_UUID_PREFIX,
 )
@@ -64,8 +66,14 @@ class PickSmartClient:
         self._event.set()
 
     async def _write_with_response(
-        self, uuid: str, packet: bytes, timeout: float = FEEDBACK_TIMEOUT
+        self,
+        uuid: str,
+        packet: bytes,
+        step: str,
+        timeout: float | None = None,
     ) -> bytes:
+        if timeout is None:
+            timeout = FEEDBACK_TIMEOUT
         self._response_data = None
         self._event.clear()
 
@@ -74,9 +82,15 @@ class PickSmartClient:
         if delay > 0:
             await asyncio.sleep(delay)
 
-        await asyncio.wait_for(self._event.wait(), timeout=timeout)
+        try:
+            await asyncio.wait_for(self._event.wait(), timeout=timeout)
+        except TimeoutError as exc:
+            # asyncio's TimeoutError has an empty str(); say what was awaited.
+            raise PickSmartError(
+                f"No response from tag within {timeout:g}s after {step}"
+            ) from exc
         if self._response_data is None:
-            raise PickSmartError("No response received from device")
+            raise PickSmartError(f"Empty response from tag after {step}")
         return self._response_data
 
     async def write_image(self, image: Image.Image) -> WriteResult:
@@ -97,7 +111,9 @@ class PickSmartClient:
 
             # Step 1: START (0x01) -> [01 F4 00]
             start_resp = await self._write_with_response(
-                self.cmd_uuid, make_cmd_packet(CMD_START, packet_size, compression2)
+                self.cmd_uuid,
+                make_cmd_packet(CMD_START, packet_size, compression2),
+                "START",
             )
             if (
                 len(start_resp) < 3
@@ -109,14 +125,18 @@ class PickSmartClient:
 
             # Step 2: SIZE_DATA (0x02) -> [02]
             size_resp = await self._write_with_response(
-                self.cmd_uuid, make_cmd_packet(CMD_SIZE, packet_size, compression2)
+                self.cmd_uuid,
+                make_cmd_packet(CMD_SIZE, packet_size, compression2),
+                "SIZE",
             )
             if len(size_resp) < 1 or size_resp[0] != 0x02:
                 raise PickSmartError(f"Unexpected size response: {size_resp.hex()}")
 
             # Step 3: IMAGE START (0x03) -> [05 00 ... part]
             img_start_resp = await self._write_with_response(
-                self.cmd_uuid, make_cmd_packet(CMD_IMAGE, packet_size, compression2)
+                self.cmd_uuid,
+                make_cmd_packet(CMD_IMAGE, packet_size, compression2),
+                "IMAGE START",
             )
             if (
                 len(img_start_resp) < 6
@@ -127,15 +147,18 @@ class PickSmartClient:
                     f"Unexpected image start response: {img_start_resp.hex()}"
                 )
 
-            # Step 4: IMAGE_DATA chunk loop
+            # Step 4: IMAGE_DATA chunk loop. The tag drives the transfer by
+            # answering each chunk with the part it wants next; asking for the
+            # same part again is its way of requesting a resend.
             part = int.from_bytes(img_start_resp[2:6], "little")
             last_part = -1
             same_part_count = 0
+            total_parts = (packet_size + 239) // 240
 
             while part * 240 < packet_size:
                 data_packet = make_size_packet(part, payload)
                 resp = await self._write_with_response(
-                    self.img_uuid, data_packet
+                    self.img_uuid, data_packet, f"part {part}/{total_parts}"
                 )
 
                 if (
@@ -143,15 +166,43 @@ class PickSmartClient:
                     or resp[0] != RESP_IMAGE_DATA
                     or resp[1] != 0x00
                 ):
+                    # Not a "send me part N" frame. Only known to be fine when
+                    # the chunk just sent was the last one; before that the
+                    # image is incomplete whatever the frame means.
+                    if (part + 1) * 240 < packet_size:
+                        raise PickSmartError(
+                            f"Tag ended transfer after part {part}/{total_parts} "
+                            f"with {resp.hex()}"
+                        )
+                    _LOGGER.debug(
+                        "%s: transfer ended by tag after last part %d/%d with %s",
+                        self.address,
+                        part,
+                        total_parts,
+                        resp.hex(),
+                    )
                     break
 
                 new_part = int.from_bytes(resp[2:6], "little")
                 if new_part == last_part:
                     same_part_count += 1
-                    if same_part_count >= 3:
+                    if same_part_count >= MAX_SAME_PART_REQUESTS:
                         raise PickSmartError(
-                            f"Transfer stalled: part {new_part} requested 3 times"
+                            f"Transfer stalled: part {new_part}/{total_parts} "
+                            f"requested {same_part_count} times"
                         )
+                    _LOGGER.debug(
+                        "%s: tag re-requested part %d/%d (%d/%d), resending",
+                        self.address,
+                        new_part,
+                        total_parts,
+                        same_part_count,
+                        MAX_SAME_PART_REQUESTS,
+                    )
+                    # Back off a little before resending; a tag that is still
+                    # committing the previous chunk tends to reject a resend
+                    # sent straight away, which is what hits the stall limit.
+                    await asyncio.sleep(RESEND_BACKOFF_S * (same_part_count - 1))
                 else:
                     same_part_count = 1
                     last_part = new_part
@@ -211,8 +262,10 @@ async def update_image(
         )
         return await picksmart.write_payload(await encode)
     except Exception as exc:
-        _LOGGER.error("Failed to write to %s: %s", ble_device.address, exc)
-        return WriteResult(success=False, error=str(exc))
+        # The caller logs each failed attempt and raises after the last one;
+        # keep the traceback available at debug level without a second ERROR.
+        _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
+        return WriteResult(success=False, error=str(exc) or type(exc).__name__)
     finally:
         encode.cancel()  # no-op once awaited; drops the result if connect failed
         with contextlib.suppress(Exception):

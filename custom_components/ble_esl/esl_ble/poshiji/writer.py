@@ -122,7 +122,7 @@ async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0
         return WriteResult(success=success)
     except Exception as exc:
         error = str(exc) or type(exc).__name__
-        _LOGGER.error("Poshiji update failed for %s: %s", ble_device.address, error)
+        _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
         return WriteResult(success=False, error=error)
     finally:
         encode.cancel()  # no-op once awaited; drops the result if connect failed

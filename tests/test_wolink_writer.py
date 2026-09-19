@@ -292,3 +292,23 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
         assert pending == []
 
     asyncio.run(_test())
+
+
+def test_wolink_completion_timeout_has_message(monkeypatch):
+    """A tag that never confirms the refresh yields a descriptive error, not None."""
+
+    async def _test():
+        mock_client = MagicMock()
+        mock_client.is_connected = True
+        mock_client.start_notify = AsyncMock()
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock()  # never notifies
+
+        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        monkeypatch.setattr(client, "_wait_for_completion", AsyncMock(return_value=False))
+        result = await client.write_image(Image.new("RGB", (296, 128), "white"))
+
+        assert result.success is False
+        assert result.error == "No completion notification from tag within 30s after refresh"
+
+    asyncio.run(_test())
