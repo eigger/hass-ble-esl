@@ -2,24 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Mapping
+from collections.abc import Awaitable
 from typing import TYPE_CHECKING
 
-from ..base import (
-    AdvertisementInfo,
-    BleBackend,
-    Capabilities,
-    DevicePreset,
-    WriteResult,
-)
+from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
+from . import writer
 from .const import BRAND, MANUFACTURER_ID
 from .devices import PRESETS, preset_choices
 from .parser import WolinkBluetoothDeviceData, is_wolink_advertisement
 from .protocol import parse_manufacturer_data
-from .writer import PreparedImage, prepare_payload, update_image, update_prepared
 
 if TYPE_CHECKING:
-    from bleak.backends.device import BLEDevice
+    from bleak import BleakClient
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
     from PIL import Image
 
@@ -37,20 +31,8 @@ class WolinkBleBackend(BleBackend):
         model_detection=False,
         palettes=("BW", "BWR", "BWRY"),
     )
-
-    def presets(self) -> Mapping[str, DevicePreset]:
-        """Return WOLINK device presets."""
-        return PRESETS
-
-    def create_parser(
-        self, preset: DevicePreset | None = None
-    ) -> WolinkBluetoothDeviceData:
-        """Return an advertisement parser bound to this preset."""
-        return WolinkBluetoothDeviceData(preset=preset)
-
-    def supported(self, service_info: BluetoothServiceInfoBleak) -> bool:
-        """Check if advertisement belongs to WOLINK."""
-        return is_wolink_advertisement(service_info)
+    PRESETS = PRESETS
+    parser_cls = WolinkBluetoothDeviceData
 
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
@@ -61,61 +43,32 @@ class WolinkBleBackend(BleBackend):
             return None
         try:
             parsed = parse_manufacturer_data(mfr_bytes)
-            sw_ver = (
-                str(parsed["app_ver"])
-                if parsed.get("app_ver") is not None
-                else None
-            )
-            hw_ver = (
-                str(parsed["hw_ver"])
-                if parsed.get("hw_ver") is not None
-                else None
-            )
-            return AdvertisementInfo(
-                battery_mv=parsed.get("battery_mv"),
-                sw_version=sw_ver,
-                hw_version=hw_ver,
-                raw=parsed,
-            )
         except Exception:
             return None
-
-    async def write_image(
-        self,
-        ble_device: BLEDevice,
-        preset: DevicePreset,
-        image: Image.Image,
-        *,
-        attempt: int = 1,
-        write_delay_ms: int = 0,
-    ) -> WriteResult:
-        """Write image to device."""
-        return await update_image(
-            ble_device,
-            preset,
-            image,
-            attempt=attempt,
-            write_delay_ms=write_delay_ms,
+        return AdvertisementInfo(
+            battery_mv=parsed.get("battery_mv"),
+            sw_version=str(parsed["app_ver"]) if parsed.get("app_ver") is not None else None,
+            hw_version=str(parsed["hw_ver"]) if parsed.get("hw_ver") is not None else None,
+            raw=parsed,
         )
 
     def prepare_image(
         self, preset: DevicePreset, image: Image.Image, address: str
-    ) -> PreparedImage:
-        """Quantize, pack and compress (CPU-bound; caller runs it in a thread)."""
-        return prepare_payload(image, preset)
+    ) -> writer.PreparedImage:
+        return writer.prepare_payload(image, preset)
 
-    async def write_prepared(
+    async def write_session(
         self,
-        ble_device: BLEDevice,
+        client: BleakClient,
+        address: str,
         preset: DevicePreset,
-        prepared: Awaitable[PreparedImage],
+        prepared: Awaitable[writer.PreparedImage],
         *,
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Write an already-scheduled encode to the device."""
-        return await update_prepared(
-            ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
+        return await writer.write_session(
+            client, address, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 

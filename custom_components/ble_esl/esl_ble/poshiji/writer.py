@@ -7,9 +7,8 @@ from collections.abc import Awaitable
 import contextlib
 import logging
 from bleak import BleakClient
-from bleak_retry_connector import establish_connection
 from PIL import Image
-from ..base import WriteResult
+from ..base import DevicePreset, WriteResult
 from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID, NOTIFY_SETTLE_S
 from .protocol import make_image_object, pack_pixels, make_blocks, make_command
 
@@ -65,6 +64,7 @@ class XteClient:
                 return
 
     async def write_image(self, image: Image.Image) -> bool:
+        """Encode and send. Convenience for direct use and the session tests; the integration goes through BleBackend.write_image(), which encodes off the loop once and overlaps it with connecting."""
         image_object = await asyncio.to_thread(prepare_image_object, image)
         return await self.write_object(image_object)
 
@@ -99,7 +99,7 @@ class XteClient:
             return True
         finally:
             # Never let an unsubscribe failure on a dropped link mask the
-            # original transfer error; update_image still disconnects.
+            # original transfer error; ble_session() still disconnects.
             with contextlib.suppress(Exception):
                 if self.client.is_connected:
                     await self.client.stop_notify(notify_char)
@@ -110,37 +110,15 @@ def prepare_image_object(image: Image.Image) -> bytes:
     return make_image_object(pack_pixels(image))
 
 
-async def update_image(ble_device, preset, image, *, attempt=1, write_delay_ms=0) -> WriteResult:
-    """Encode (worker thread, overlapping the connect) and write a PSJ-420 image."""
-    encode = asyncio.create_task(asyncio.to_thread(prepare_image_object, image))
-    try:
-        return await update_prepared(
-            ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
-        )
-    finally:
-        encode.cancel()  # no-op once awaited; drops the result if connect failed
-
-
-async def update_prepared(
-    ble_device, preset, prepared: Awaitable[bytes], *, attempt=1, write_delay_ms=0
+async def write_session(
+    client: BleakClient,
+    address: str,
+    preset: DevicePreset,
+    prepared: Awaitable[bytes],
+    *,
+    attempt: int = 1,
+    write_delay_ms: int = 0,
 ) -> WriteResult:
-    """Connect and send an already-scheduled encode, preserving errors for HA diagnostics.
-
-    `prepared` is awaited only once the link is up; the caller owns it and may
-    await it again on a retry.
-    """
-    if (preset.key, preset.width, preset.height, preset.colors) != ("psj-420", 400, 300, "BWRY"):
-        return WriteResult(success=False, error="Unsupported Poshiji preset")
-    client = None
-    try:
-        client = await establish_connection(BleakClient, ble_device, ble_device.address)
-        success = await XteClient(client, attempt, write_delay_ms).write_object(await prepared)
-        return WriteResult(success=success)
-    except Exception as exc:
-        error = str(exc) or type(exc).__name__
-        _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
-        return WriteResult(success=False, error=error)
-    finally:
-        if client and client.is_connected:
-            with contextlib.suppress(Exception):
-                await client.disconnect()
+    """Send an encoded XTEK object over an open link."""
+    success = await XteClient(client, attempt, write_delay_ms).write_object(await prepared)
+    return WriteResult(success=success)

@@ -8,10 +8,11 @@ from PIL import Image
 import pytest
 
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import session
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
     PickSmartError,
-    update_image,
 )
 
 CMD_UUID = "0000fef1-0000-1000-8000-00805f9b34fb"
@@ -236,12 +237,12 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.picksmart.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["0x0033"], img)
+        result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0033"], img)
 
         assert result.success is True
         assert mock_client.disconnect.called
@@ -260,12 +261,12 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
             raise OSError("unavailable")
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.picksmart.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["0x0028"], img)
+        result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0028"], img)
 
         assert result.success is False
         assert result.error == "unavailable"
@@ -297,11 +298,11 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
             raise OSError("stop here")
 
         monkeypatch.setattr(writer, "encode_image", slow_prepare)
-        monkeypatch.setattr(writer, "establish_connection", connect)
+        monkeypatch.setattr(session, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await update_image(mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128)))
         await asyncio.sleep(0.2)  # let the encode thread finish
 
         assert result.success is False

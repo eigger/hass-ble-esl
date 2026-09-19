@@ -60,13 +60,8 @@ def backend_brand(backend) -> str:
 
 
 def format_model_name(preset: DevicePreset | None) -> str | None:
-    """Format model name with resolution."""
-    if preset is None:
-        return None
-    res = f"{preset.width}x{preset.height}"
-    if res in preset.display_name:
-        return preset.display_name
-    return f"{preset.display_name} {res}"
+    """Model name shown in HA (None when no preset is known)."""
+    return None if preset is None else preset.model_name
 
 
 def build_device_info(data: BleEslRuntimeData) -> DeviceInfo:

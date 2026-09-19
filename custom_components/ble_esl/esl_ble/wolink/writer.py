@@ -9,7 +9,6 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
-from bleak_retry_connector import establish_connection
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from ..base import DevicePreset, WriteResult
@@ -31,7 +30,6 @@ from .protocol import (
 )
 
 if TYPE_CHECKING:
-    from bleak.backends.device import BLEDevice
     from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
@@ -179,7 +177,12 @@ class WolinkClient:
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        """Encode (off the event loop), send, and refresh an image."""
+        """Encode (off the event loop), send, and refresh an image.
+
+        Convenience for direct use and the session tests; the integration goes
+        through BleBackend.write_image(), which encodes off the loop once and
+        overlaps it with connecting.
+        """
         prepared = await asyncio.to_thread(prepare_payload, image, self.preset)
         return await self.write_prepared(
             prepared, attempt=attempt, write_delay_ms=write_delay_ms
@@ -243,57 +246,21 @@ def prepare_payload(image: Image.Image, preset: DevicePreset) -> PreparedImage:
     return compress_wolink_blocks(raw), len(raw)
 
 
-async def update_image(
-    ble_device: BLEDevice,
-    preset: DevicePreset,
-    image: Image.Image,
-    *,
-    attempt: int = 1,
-    write_delay_ms: int = 0,
-) -> WriteResult:
-    """Encode (worker thread, overlapping the connect) and write an image."""
-    encode = asyncio.create_task(asyncio.to_thread(prepare_payload, image, preset))
-    try:
-        return await update_prepared(
-            ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
-        )
-    finally:
-        encode.cancel()  # no-op once awaited; drops the result if connect failed
-
-
-async def update_prepared(
-    ble_device: BLEDevice,
+async def write_session(
+    client: BleakClient,
+    address: str,
     preset: DevicePreset,
     prepared: Awaitable[PreparedImage],
     *,
     attempt: int = 1,
     write_delay_ms: int = 0,
 ) -> WriteResult:
-    """Connect, authenticate and send an already-scheduled encode to the tag.
+    """Authenticate and send an encode over an open link.
 
-    `prepared` is awaited only once the link is up, so the encode (started by
-    the caller in a worker thread) overlaps connecting; the caller owns it and
-    may await it again on a retry.
+    `prepared` is awaited once the link is up (the caller owns it and may
+    await it again on a retry); authentication must precede any other write.
     """
-    # Connect inside the try so connection failures surface as a failed
-    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
-    client: BleakClient | None = None
-    try:
-        client = await establish_connection(
-            BleakClient, ble_device, ble_device.address
-        )
-        payload = await prepared
-        wolink = WolinkClient(client, preset, ble_device.address)
-        await wolink.authenticate()
-        return await wolink.write_prepared(
-            payload, attempt=attempt, write_delay_ms=write_delay_ms
-        )
-    except Exception as exc:
-        # The caller logs each failed attempt and raises after the last one;
-        # keep the traceback available at debug level without a second ERROR.
-        _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
-        return WriteResult(success=False, error=str(exc) or type(exc).__name__)
-    finally:
-        with contextlib.suppress(Exception):
-            if client and client.is_connected:
-                await client.disconnect()
+    payload = await prepared
+    wolink = WolinkClient(client, preset, address)
+    await wolink.authenticate()
+    return await wolink.write_prepared(payload, attempt=attempt, write_delay_ms=write_delay_ms)

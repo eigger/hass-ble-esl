@@ -15,10 +15,11 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
     STATUS_CHAR,
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import session
 from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
-    update_image,
 )
 
 MAC = "66:66:54:20:00:55"
@@ -148,8 +149,8 @@ def test_wolink_write_image_error_notification():
     asyncio.run(_test())
 
 
-def test_update_image_entrypoint(monkeypatch):
-    """Verify update_image handles connection, authentication, write, and disconnect (no GATT battery read)."""
+def test_write_image_entrypoint(monkeypatch):
+    """Verify write_image handles connection, authentication, write, and disconnect (no GATT battery read)."""
 
     async def _test():
         mock_ble_device = MagicMock()
@@ -173,12 +174,12 @@ def test_update_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.wolink.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["290"], img, attempt=2, write_delay_ms=50)
+        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], img, attempt=2, write_delay_ms=50)
 
         assert result.success is True
         assert result.battery_mv is None  # No redundant GATT battery read
@@ -198,12 +199,12 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
             raise OSError("unavailable")
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.wolink.writer.establish_connection",
+            "custom_components.ble_esl.esl_ble.session.establish_connection",
             mock_establish,
         )
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await update_image(mock_ble_device, PRESETS["290"], img)
+        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], img)
 
         assert result.success is False
         assert result.error == "unavailable"
@@ -246,12 +247,12 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(writer, "prepare_payload", slow_prepare)
-        monkeypatch.setattr(writer, "establish_connection", connect)
+        monkeypatch.setattr(session, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
         task = asyncio.create_task(ticker())
-        result = await update_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
         task.cancel()
 
         assert result.success is False and result.error == "stop at auth"
@@ -280,11 +281,11 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
             raise OSError("no link")
 
         monkeypatch.setattr(writer.asyncio, "to_thread", slow_encode)
-        monkeypatch.setattr(writer, "establish_connection", failing_connect)
+        monkeypatch.setattr(session, "establish_connection", failing_connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await update_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
+        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128)))
         assert result.success is False and result.error == "no link"
         assert started.is_set()
         await asyncio.sleep(0)
@@ -314,7 +315,7 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
     asyncio.run(_test())
 
 
-def test_update_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monkeypatch):
+def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monkeypatch):
     """The caller-owned future is awaited once the link is up and not cancelled here."""
     from custom_components.ble_esl.esl_ble.wolink import writer
 
@@ -327,13 +328,13 @@ def test_update_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(mon
             prepared.set_result((b"", 0))
             return MagicMock(is_connected=False)
 
-        monkeypatch.setattr(writer, "establish_connection", connect)
+        monkeypatch.setattr(session, "establish_connection", connect)
         monkeypatch.setattr(
             writer.WolinkClient, "authenticate", AsyncMock(side_effect=OSError("stop"))
         )
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await writer.update_prepared(mock_ble_device, PRESETS["290"], prepared)
+        result = await esl_ble.get("wolink").write_prepared(mock_ble_device, PRESETS["290"], prepared)
 
         assert result.success is False and result.error == "stop"
         assert order == ["connect"]
