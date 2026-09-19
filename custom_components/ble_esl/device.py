@@ -35,28 +35,14 @@ def hass_device_info(sensor_device_info):
     return device_info
 
 
-PROTOCOL_LABELS = {
-    "wolink": "WOLINK",
-    "picksmart": "PickSmart",
-    "easytag": "easyTag",
-    "poshiji": "XTE",
-}
-
-# Used when a backend has no brand (should not happen for bundled protocols)
-DEFAULT_BRAND = "BLE ESL"
-
-
 def protocol_label(backend) -> str:
-    """Human-readable protocol name for a backend (shown as HA model_id)."""
-    return PROTOCOL_LABELS.get(
-        getattr(backend, "id", ""),
-        getattr(backend, "name", "BLE"),
-    )
+    """Short protocol name for a backend (shown as HA model_id)."""
+    return backend.label
 
 
 def backend_brand(backend) -> str:
     """Brand the tags are sold under (shown as HA manufacturer)."""
-    return getattr(backend, "brand", None) or DEFAULT_BRAND
+    return backend.brand
 
 
 def format_model_name(preset: DevicePreset | None) -> str | None:

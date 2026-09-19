@@ -14,6 +14,7 @@ from .base import (
     BleParser,
     Capabilities,
     DevicePreset,
+    ProtocolContractError,
     WriteResult,
 )
 from .easytag import EasyTagBleBackend
@@ -28,7 +29,12 @@ _BACKENDS: dict[str, BleBackend] = {}
 
 
 def register(backend: BleBackend) -> None:
-    """Register a BLE backend."""
+    """Register a BLE backend (the class-level contract is checked at definition time)."""
+    if backend.id in _BACKENDS and _BACKENDS[backend.id] is not backend:
+        raise ProtocolContractError(
+            f"backend id {backend.id!r} is already registered by "
+            f"{type(_BACKENDS[backend.id]).__name__}"
+        )
     _BACKENDS[backend.id] = backend
 
 
@@ -76,6 +82,7 @@ __all__ = [
     "BleParser",
     "Capabilities",
     "DevicePreset",
+    "ProtocolContractError",
     "EasyTagBleBackend",
     "PickSmartBleBackend",
     "PoshijiBleBackend",

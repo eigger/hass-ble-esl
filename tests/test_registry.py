@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble.base import Capabilities, BleBackend
+from custom_components.ble_esl.esl_ble.base import BleBackend, BleParser, Capabilities, DevicePreset
 from custom_components.ble_esl.esl_ble.easytag.const import (
     SERVICE_UUID as EASYTAG_SERVICE_UUID,
 )
@@ -112,8 +112,14 @@ def test_registry_custom_backend(monkeypatch):
     """Verify registering a new protocol backend dynamically."""
     monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
 
+    class MockParser(BleParser):
+        brand = "Mock"
+        fallback_name = "Mock"
+        is_advertisement = staticmethod(lambda info: "mock_uuid" in info.service_uuids)
+
     class MockTestBackend(BleBackend):
         id = "mock_test"
+        label = "MOCK"
         name = "Mock Protocol"
         capabilities = Capabilities(
             passive_battery=False,
@@ -122,15 +128,8 @@ def test_registry_custom_backend(monkeypatch):
             model_detection=False,
             palettes=("BW",),
         )
-
-        def presets(self):
-            return {}
-
-        def supported(self, service_info):
-            return "mock_uuid" in service_info.service_uuids
-
-        def create_parser(self, preset=None):
-            return MagicMock()
+        PRESETS = {"m": DevicePreset(key="m", display_name="Mock", width=8, height=8, colors="BW")}
+        parser_cls = MockParser
 
         def parse_advertisement(self, service_info):
             return None

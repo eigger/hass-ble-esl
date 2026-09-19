@@ -7,12 +7,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.ble_esl.esl_ble import session
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import (
     BleBackend,
     BleParser,
     Capabilities,
     DevicePreset,
+    ProtocolContractError,
     WriteResult,
     battery_percent,
 )
@@ -69,36 +71,92 @@ def test_parser_ignores_foreign_advertisements():
 
 class _Backend(BleBackend):
     id = "t"
+    label = "T"
     name = "Test"
-    brand = "Acme"
-    capabilities = Capabilities(False, False, False, False, ("BW",))
+    capabilities = Capabilities(False, False, False, False, ("BWRY",))
     PRESETS = {PRESET.key: PRESET}
     parser_cls = _Parser
 
     def parse_advertisement(self, service_info):
         return None
 
+    def prepare_image(self, preset, image, address):
+        return image
+
+    async def write_session(self, client, address, preset, prepared, **kwargs):
+        return WriteResult(success=True)
+
 
 def test_backend_declarative_defaults():
     backend = _Backend()
     assert backend.presets() is _Backend.PRESETS
+    assert backend.brand == "Acme"  # from the parser class
     assert isinstance(backend.create_parser(PRESET), _Parser)
     assert backend.supported(_info()) and not backend.supported(_info(name="no"))
-    assert backend.prepare_image(PRESET, "img", "aa") == "img"  # pass-through default
 
 
-def test_backend_without_write_session_reports_not_implemented(monkeypatch):
-    """A backend that implements neither hook fails cleanly, not with a traceback."""
+def _define(**attrs):
+    """Define a backend subclass with the given class body; returns the error message or None."""
+    body = dict(
+        id="x", label="X", name="X", capabilities=_Backend.capabilities,
+        PRESETS=_Backend.PRESETS, parser_cls=_Parser,
+        parse_advertisement=lambda self, i: None,
+        prepare_image=lambda self, p, i, a: i,
+        write_session=_Backend.write_session,
+    )
+    body.update(attrs)
+    for key, value in list(body.items()):
+        if value is _REMOVE:
+            del body[key]
+    try:
+        type("Probe", (BleBackend,), body)
+    except ProtocolContractError as err:
+        return str(err)
+    return None
 
-    async def _test():
-        client = MagicMock(is_connected=False)
-        monkeypatch.setattr(session, "establish_connection", AsyncMock(return_value=client))
-        device = MagicMock(address="AA:BB:CC:DD:EE:FF")
-        result = await _Backend().write_image(device, PRESET, "img")
-        assert result.success is False
-        assert "neither write_session nor write_image" in result.error
 
-    asyncio.run(_test())
+_REMOVE = object()
+
+
+def test_contract_complete_backend_defines_cleanly():
+    assert _define() is None
+
+
+def test_contract_reports_every_missing_piece_at_definition_time():
+    message = _define(label=_REMOVE, PRESETS={}, parse_advertisement=_REMOVE)
+    assert "class attribute 'label'" in message
+    assert "PRESETS is empty" in message
+    assert "parse_advertisement() not implemented" in message
+
+
+def test_contract_write_path_requires_hooks_or_write_image():
+    assert "write path" in _define(prepare_image=_REMOVE)
+    assert "write path" in _define(write_session=_REMOVE)
+
+    async def write_image(self, *args, **kwargs):
+        return WriteResult(success=True)
+
+    assert _define(prepare_image=_REMOVE, write_session=_REMOVE, write_image=write_image) is None
+
+
+def test_contract_validates_presets_against_class_attributes():
+    bad_key = {"other": PRESET}
+    assert "PRESETS['other'].key is 'p'" in _define(PRESETS=bad_key)
+    bw_only = Capabilities(False, False, False, False, ("BW",))
+    assert "not in capabilities.palettes" in _define(capabilities=bw_only)
+    assert "parser_cls must be a BleParser subclass" in _define(parser_cls=object)
+
+
+def test_contract_parser_requires_brand_name_and_matcher():
+    with pytest.raises(ProtocolContractError, match="fallback_name"):
+        type("P", (BleParser,), {"brand": "b", "is_advertisement": staticmethod(lambda i: True)})
+
+
+def test_registry_rejects_duplicate_ids(monkeypatch):
+    monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
+    esl_ble.register(_Backend())
+    with pytest.raises(ProtocolContractError, match="already registered"):
+        esl_ble.register(type("Dup", (_Backend,), {})())
 
 
 def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
@@ -106,6 +164,8 @@ def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
     link is closed either way; the caller-owned encode future is untouched."""
 
     class Backend(_Backend):
+        id = "t2"
+
         async def write_session(self, client, address, preset, prepared, **kwargs):
             assert address == "AA:BB:CC:DD:EE:FF"
             await prepared
@@ -113,7 +173,7 @@ def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
 
     async def _test():
         client = MagicMock(is_connected=True, disconnect=AsyncMock())
-        monkeypatch.setattr(session, "establish_connection", AsyncMock(return_value=client))
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
         prepared = asyncio.get_running_loop().create_future()
         prepared.set_result(b"x")
         device = MagicMock(address="AA:BB:CC:DD:EE:FF")

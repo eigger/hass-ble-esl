@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import session
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.config_flow import BleEslConfigFlow
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL
 from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
@@ -67,18 +67,18 @@ def test_config_flow_saves_poshiji_and_model():
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
-    monkeypatch.setattr(session, "establish_connection", AsyncMock(return_value=client))
+    monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
     transport = SimpleNamespace(write_object=AsyncMock(return_value=True, side_effect=error))
     factory = MagicMock(return_value=transport)
     monkeypatch.setattr(writer, "XteClient", factory)
     image, encoded = object(), b"XTEK-encoded"
     prepare = MagicMock(return_value=encoded)
-    monkeypatch.setattr(writer, "prepare_image_object", prepare)
+    monkeypatch.setattr(esl_ble.get("poshiji"), "prepare_image", prepare)
     result = asyncio.run(esl_ble.get("poshiji").write_image(
         advertisement(), PSJ_420, image, attempt=2, write_delay_ms=30,
     ))
     # Encoded before connecting, in a worker thread, then handed to the session.
-    prepare.assert_called_once_with(image)
+    prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
     factory.assert_called_once_with(client, 2, 30)
     transport.write_object.assert_awaited_once_with(encoded)
     client.disconnect.assert_awaited_once()
@@ -89,7 +89,7 @@ def test_session_result_and_disconnect(monkeypatch, error):
 
 
 def test_connection_failure_is_reported(monkeypatch):
-    monkeypatch.setattr(session, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
-    monkeypatch.setattr(writer, "prepare_image_object", MagicMock(return_value=b""))
+    monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
+    monkeypatch.setattr(esl_ble.get("poshiji"), "prepare_image", MagicMock(return_value=b""))
     result = asyncio.run(esl_ble.get("poshiji").write_image(advertisement(), PSJ_420, object()))
     assert not result.success and result.error == "unavailable"

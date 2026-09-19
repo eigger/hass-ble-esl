@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 import asyncio
-from collections.abc import Awaitable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Mapping
+import contextlib
 from dataclasses import dataclass, field
 import logging
 from typing import TYPE_CHECKING, Any
 
+from bleak import BleakClient
+from bleak_retry_connector import establish_connection
 from bluetooth_sensor_state_data import BluetoothData
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
-from .session import ble_session
-
 if TYPE_CHECKING:
-    from bleak import BleakClient
     from bleak.backends.device import BLEDevice
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
     from PIL import Image
@@ -90,13 +90,50 @@ def battery_percent(volts: float, min_v: float, max_v: float) -> int:
     return max(0, min(100, round(pct)))
 
 
+class ProtocolContractError(TypeError):
+    """A backend or parser class does not satisfy the protocol contract.
+
+    Raised when the class is *defined* (import time), listing everything
+    that is missing, so an incomplete protocol package can never load.
+    """
+
+
+def _missing_attrs(cls: type, names: tuple[str, ...]) -> list[str]:
+    return [f"class attribute '{n}'" for n in names if not hasattr(cls, n)]
+
+
+def _overrides(cls: type, base: type, name: str) -> bool:
+    return getattr(cls, name) is not getattr(base, name)
+
+
+@contextlib.asynccontextmanager
+async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
+    """Connect to the tag for the duration of the block, then disconnect.
+
+    Connecting happens inside the context so a connection failure raises
+    out of the block like any other session error; BleBackend.write_prepared
+    turns it into a failed WriteResult that counts toward retries.
+    Disconnect failures on an already-dropped link are suppressed so they
+    never mask the original error.
+    """
+    client: BleakClient | None = None
+    try:
+        client = await establish_connection(BleakClient, ble_device, ble_device.address)
+        yield client
+    finally:
+        with contextlib.suppress(Exception):
+            if client and client.is_connected:
+                await client.disconnect()
+
+
 class BleParser(BluetoothData, ABC):
     """Base class for protocol-specific Bluetooth advertisement parsers.
 
-    Subclasses set `brand` and `fallback_name`, provide `is_advertisement`
-    (the protocol's advertisement matcher) and override `_parse()` to update
-    sensors from the advertisement. Device naming, preset tracking and the
-    update skeleton live here.
+    Contract (checked when the subclass is defined):
+      required  brand, fallback_name, is_advertisement
+      optional  _parse()  — sensor readings from the advertisement
+
+    Device naming, preset tracking and the update skeleton live here.
     """
 
     #: Brand the tags are sold under (HA device manufacturer).
@@ -104,15 +141,22 @@ class BleParser(BluetoothData, ABC):
     #: Shown as the model name until a preset is known.
     fallback_name: str
 
+    REQUIRED = ("brand", "fallback_name", "is_advertisement")
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if missing := _missing_attrs(cls, cls.REQUIRED):
+            raise ProtocolContractError(f"{cls.__name__} is missing: " + "; ".join(missing))
+
     def __init__(self, preset: DevicePreset | None = None) -> None:
         super().__init__()
         self.preset = preset
         self.last_service_info: BluetoothServiceInfoBleak | None = None
 
     @staticmethod
-    @abstractmethod
     def is_advertisement(service_info: BluetoothServiceInfoBleak) -> bool:
         """Return True if this advertisement belongs to the protocol."""
+        raise NotImplementedError
 
     def supported(self, data: BluetoothServiceInfoBleak) -> bool:
         """Return True if this advertisement is from a device of this protocol."""
@@ -156,23 +200,81 @@ class BleParser(BluetoothData, ABC):
 
 
 class BleBackend(ABC):
-    """Abstract base class for ESL BLE backends.
+    """A protocol backend: declarative class attributes plus a few hooks.
 
-    A backend is mostly declarative: `PRESETS` and `parser_cls` drive the
-    preset/parser/advertisement methods, and the write path is implemented
-    here on top of two protocol-specific hooks, `prepare_image()` (the
-    CPU-bound encode) and `write_session()` (the transfer over an open
-    link). `parse_advertisement()` and, where the advertisement identifies
-    the model, `refine_preset()` are the remaining per-protocol pieces.
+    Contract (checked when the subclass is defined, see __init_subclass__):
+
+      required class attributes
+        id            registry / options key, lowercase, unique
+        label         short protocol name shown as the HA model_id ("WOLINK")
+        name          protocol name shown in the config UI
+        capabilities  Capabilities
+        PRESETS       non-empty mapping key -> DevicePreset, key == preset.key
+        parser_cls    BleParser subclass (also supplies `brand`)
+      required hooks
+        parse_advertisement(service_info) -> AdvertisementInfo | None
+        write path: prepare_image() *and* write_session(), or override
+                    write_image() wholesale
+      optional (defaults provided)
+        refine_preset()   when the advertisement identifies the model
+        write_prepared()  to refuse before connecting (see Poshiji)
+        read_status()     status query without a write
+
+    presets() / supported() / create_parser() / brand are derived from the
+    class attributes and should not be overridden.
     """
 
     id: str
+    label: str
     name: str
-    #: Brand the tags are sold under (shown as HA device manufacturer).
-    brand: str
     capabilities: Capabilities
     PRESETS: Mapping[str, DevicePreset]
     parser_cls: type[BleParser]
+
+    REQUIRED = ("id", "label", "name", "capabilities", "PRESETS", "parser_cls")
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # Every check is independent so one message lists everything to fix.
+        problems = _missing_attrs(cls, cls.REQUIRED)
+        parser_cls = getattr(cls, "parser_cls", None)
+        if parser_cls is not None and not (
+            isinstance(parser_cls, type) and issubclass(parser_cls, BleParser)
+        ):
+            problems.append("parser_cls must be a BleParser subclass")
+        presets = getattr(cls, "PRESETS", None)
+        if presets is not None:
+            if not presets:
+                problems.append("PRESETS is empty")
+            else:
+                problems += [
+                    f"PRESETS[{k!r}].key is {v.key!r}" for k, v in presets.items() if k != v.key
+                ]
+                if (caps := getattr(cls, "capabilities", None)) is not None:
+                    problems += [
+                        f"PRESETS[{k!r}].colors {v.colors!r} not in capabilities.palettes"
+                        for k, v in presets.items()
+                        if v.colors not in caps.palettes
+                    ]
+        if not _overrides(cls, BleBackend, "parse_advertisement"):
+            problems.append("parse_advertisement() not implemented")
+        has_hooks = _overrides(cls, BleBackend, "prepare_image") and _overrides(
+            cls, BleBackend, "write_session"
+        )
+        if not has_hooks and not _overrides(cls, BleBackend, "write_image"):
+            problems.append(
+                "write path: implement prepare_image() and write_session(), "
+                "or override write_image()"
+            )
+        if problems:
+            raise ProtocolContractError(f"{cls.__name__} is missing: " + "; ".join(problems))
+
+    # ── Derived from the class attributes ────────────────────────────────
+
+    @property
+    def brand(self) -> str:
+        """Brand the tags are sold under (shown as HA device manufacturer)."""
+        return self.parser_cls.brand
 
     def presets(self) -> Mapping[str, DevicePreset]:
         """Return device presets supported by this protocol."""
@@ -186,19 +288,19 @@ class BleBackend(ABC):
         """Return an advertisement parser bound to this preset."""
         return self.parser_cls(preset=preset)
 
+    # ── Hooks ────────────────────────────────────────────────────────────
+
     def refine_preset(
         self, preset: DevicePreset, info: AdvertisementInfo | None
     ) -> DevicePreset:
         """Refine preset using advertisement info (e.g. firmware quirks). Default is identity."""
         return preset
 
-    @abstractmethod
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
         """Extract advertisement data from service info."""
-
-    # ── Write path ───────────────────────────────────────────────────────
+        raise NotImplementedError
 
     def prepare_image(
         self, preset: DevicePreset, image: Image.Image, address: str
@@ -206,10 +308,10 @@ class BleBackend(ABC):
         """Encode an image into whatever write_session() sends.
 
         CPU-bound and synchronous; callers run it in a worker thread, once
-        per write, before taking the BLE lock. The default passes the image
-        through, for a backend that overrides write_image() wholesale.
+        per write, before taking the BLE lock. Usually
+        `prepare_image = staticmethod(writer.prepare)`.
         """
-        return image
+        raise NotImplementedError
 
     async def write_session(
         self,
@@ -226,10 +328,12 @@ class BleBackend(ABC):
         `prepared` is the encode; await it only once any pre-transfer
         handshake that can be done without it is finished, so encoding
         overlaps connecting. Raise on protocol errors; write_prepared()
-        converts exceptions to a failed WriteResult. A backend implements
-        this or overrides write_image() itself.
+        converts exceptions to a failed WriteResult. Usually
+        `write_session = staticmethod(writer.write_session)`.
         """
-        raise NotImplementedError(f"{type(self).__name__} implements neither write_session nor write_image")
+        raise NotImplementedError
+
+    # ── Write path (shared) ──────────────────────────────────────────────
 
     async def write_prepared(
         self,

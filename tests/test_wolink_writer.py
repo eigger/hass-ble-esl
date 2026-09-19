@@ -16,7 +16,7 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import session
+from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.wolink.writer import (
     WolinkClient,
     WolinkError,
@@ -174,7 +174,7 @@ def test_write_image_entrypoint(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.session.establish_connection",
+            "custom_components.ble_esl.esl_ble.base.establish_connection",
             mock_establish,
         )
 
@@ -199,7 +199,7 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
             raise OSError("unavailable")
 
         monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.session.establish_connection",
+            "custom_components.ble_esl.esl_ble.base.establish_connection",
             mock_establish,
         )
 
@@ -217,7 +217,6 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
     keeps ticking, and the connection starts before the encode finishes."""
     import time
 
-    from custom_components.ble_esl.esl_ble.wolink import writer
 
     async def _test():
         ticks = 0
@@ -229,7 +228,7 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
                 ticks += 1
                 await asyncio.sleep(0.01)
 
-        def slow_prepare(image, preset):
+        def slow_prepare(preset, image, address):
             nonlocal encode_done_at
             time.sleep(0.3)  # blocking CPU stand-in
             encode_done_at = time.monotonic()
@@ -246,8 +245,8 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
             connect_started_at = time.monotonic()
             return mock_client
 
-        monkeypatch.setattr(writer, "prepare_payload", slow_prepare)
-        monkeypatch.setattr(session, "establish_connection", connect)
+        monkeypatch.setattr(esl_ble.get("wolink"), "prepare_image", slow_prepare)
+        monkeypatch.setattr(base, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
@@ -281,7 +280,7 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
             raise OSError("no link")
 
         monkeypatch.setattr(writer.asyncio, "to_thread", slow_encode)
-        monkeypatch.setattr(session, "establish_connection", failing_connect)
+        monkeypatch.setattr(base, "establish_connection", failing_connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
@@ -328,7 +327,7 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
             prepared.set_result((b"", 0))
             return MagicMock(is_connected=False)
 
-        monkeypatch.setattr(session, "establish_connection", connect)
+        monkeypatch.setattr(base, "establish_connection", connect)
         monkeypatch.setattr(
             writer.WolinkClient, "authenticate", AsyncMock(side_effect=OSError("stop"))
         )

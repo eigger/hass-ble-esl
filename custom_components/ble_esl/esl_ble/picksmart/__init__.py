@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable
 from typing import TYPE_CHECKING
 
-from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
+from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset
 from . import writer
-from .const import BRAND, MANUFACTURER_ID
+from .const import MANUFACTURER_ID
 from .devices import PRESETS, apply_firmware_quirks, get_device_preset
 from .parser import (
     PickSmartBluetoothDeviceData,
@@ -16,17 +15,15 @@ from .parser import (
 )
 
 if TYPE_CHECKING:
-    from bleak import BleakClient
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
-    from PIL import Image
 
 
 class PickSmartBleBackend(BleBackend):
-    """PickSmart (gicisky) BLE backend implementation."""
+    """PickSmart (gicisky) BLE backend."""
 
     id = "picksmart"
+    label = "PickSmart"
     name = "PickSmart (gicisky)"
-    brand = BRAND
     capabilities = Capabilities(
         passive_battery=True,
         session_battery=False,
@@ -36,6 +33,8 @@ class PickSmartBleBackend(BleBackend):
     )
     PRESETS = PRESETS
     parser_cls = PickSmartBluetoothDeviceData
+    prepare_image = staticmethod(writer.prepare)
+    write_session = staticmethod(writer.write_session)
 
     def refine_preset(
         self, preset: DevicePreset, info: AdvertisementInfo | None
@@ -67,25 +66,6 @@ class PickSmartBleBackend(BleBackend):
             sw_version=f"0x{parsed['firmware']:04X}",
             hw_version=f"0x{parsed['hardware']:04X}",
             raw=parsed,
-        )
-
-    def prepare_image(
-        self, preset: DevicePreset, image: Image.Image, address: str
-    ) -> bytes:
-        return writer.encode_image(image, preset)
-
-    async def write_session(
-        self,
-        client: BleakClient,
-        address: str,
-        preset: DevicePreset,
-        prepared: Awaitable[bytes],
-        *,
-        attempt: int = 1,
-        write_delay_ms: int = 0,
-    ) -> WriteResult:
-        return await writer.write_session(
-            client, address, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 

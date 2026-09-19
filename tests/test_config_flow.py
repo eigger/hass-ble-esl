@@ -136,13 +136,19 @@ def test_options_flow():
 def test_build_options_schema_fallback(monkeypatch):
     """Verify options schema falls back to first available preset when DEFAULT_MODEL is missing."""
     from custom_components.ble_esl.config_flow import _build_options_schema
-    from custom_components.ble_esl.esl_ble.base import Capabilities, DevicePreset, BleBackend
+    from custom_components.ble_esl.esl_ble.base import BleBackend, BleParser, Capabilities, DevicePreset
     import voluptuous as vol
 
     monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
 
+    class MockParser(BleParser):
+        brand = "Mock"
+        fallback_name = "Mock"
+        is_advertisement = staticmethod(lambda info: "mock_no_290" in info.service_uuids)
+
     class MockNo290Backend(BleBackend):
         id = "mock_no_290"
+        label = "MOCK"
         name = "Mock No 290"
         capabilities = Capabilities(
             passive_battery=False,
@@ -151,22 +157,16 @@ def test_build_options_schema_fallback(monkeypatch):
             model_detection=False,
             palettes=("BW",),
         )
-
-        def presets(self):
-            return {
-                "custom_1": DevicePreset(
-                    key="custom_1",
-                    display_name="Custom 1",
-                    width=100,
-                    height=100,
-                )
-            }
-
-        def create_parser(self, preset=None):
-            return MagicMock()
-
-        def supported(self, service_info):
-            return "mock_no_290" in service_info.service_uuids
+        PRESETS = {
+            "custom_1": DevicePreset(
+                key="custom_1",
+                display_name="Custom 1",
+                width=100,
+                height=100,
+                colors="BW",
+            )
+        }
+        parser_cls = MockParser
 
         def parse_advertisement(self, service_info):
             return None

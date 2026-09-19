@@ -10,6 +10,7 @@ from bleak import BleakClient
 from PIL import Image
 from ..base import DevicePreset, WriteResult
 from .const import SERVICE_UUID, WRITE_UUID, NOTIFY_UUID, NOTIFY_SETTLE_S
+from .devices import PSJ_420
 from .protocol import make_image_object, pack_pixels, make_blocks, make_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class XteClient:
 
     async def write_image(self, image: Image.Image) -> bool:
         """Encode and send. Convenience for direct use and the session tests; the integration goes through BleBackend.write_image(), which encodes off the loop once and overlaps it with connecting."""
-        image_object = await asyncio.to_thread(prepare_image_object, image)
+        image_object = await asyncio.to_thread(prepare, PSJ_420, image, "")  # XTE encode is address-independent
         return await self.write_object(image_object)
 
     async def write_object(self, image_object: bytes) -> bool:
@@ -105,7 +106,7 @@ class XteClient:
                     await self.client.stop_notify(notify_char)
 
 
-def prepare_image_object(image: Image.Image) -> bytes:
+def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
     """Pack and RLE-encode an image into an XTEK object (CPU-bound, run in a thread)."""
     return make_image_object(pack_pixels(image))
 

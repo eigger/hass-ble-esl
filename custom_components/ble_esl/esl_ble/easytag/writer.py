@@ -124,9 +124,7 @@ class EasyTagClient:
         through BleBackend.write_image(), which encodes off the loop once and
         overlaps it with connecting.
         """
-        frames = await asyncio.to_thread(
-            prepare_frames, image, self.preset, self.address
-        )
+        frames = await asyncio.to_thread(prepare, self.preset, image, self.address)
         return await self.write_frames(
             frames, attempt=attempt, write_delay_ms=write_delay_ms
         )
@@ -149,9 +147,7 @@ class EasyTagClient:
         return await self._send_frames(frames)
 
 
-def prepare_frames(
-    image: Image.Image, preset: DevicePreset, address: str
-) -> list[bytes]:
+def prepare(preset: DevicePreset, image: Image.Image, address: str) -> list[bytes]:
     """Quantize (with dithering), encode and frame an image for `preset`.
 
     Pure-Python per-pixel work (seconds for the larger panels); callers run
