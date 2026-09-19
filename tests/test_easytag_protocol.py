@@ -132,3 +132,71 @@ def test_quantize_image():
     assert red is not None
     assert bw[0] == 1  # Black pixel
     assert red[1] == 1  # Red pixel
+
+
+def test_quantize_matches_reference_semantics():
+    """Pin the quantizer's exact semantics: column-major scan, transposed
+    Floyd-Steinberg weights, floor-shift errors, clamp per add, and row 0
+    never receiving the 3/16 term."""
+    import random
+
+    from custom_components.ble_esl.esl_ble.easytag.protocol import (
+        PALETTE_BW,
+        PALETTE_BWR,
+        align8,
+        quantize_image,
+    )
+
+    def reference(px, width, height, palette, dither):
+        # Straightforward per-pixel formulation, kept as a test oracle.
+        px = [[list(px[x][y]) for y in range(height)] for x in range(width)]
+        idx = [[0] * height for _ in range(width)]
+        for x in range(width):
+            for y in range(height):
+                c = px[x][y]
+                best, bd = 0, 1 << 30
+                for n, p in enumerate(palette):
+                    d = sum((c[k] - p[k]) ** 2 for k in range(3))
+                    if d < bd:
+                        best, bd = n, d
+                idx[x][y] = best
+                if not dither:
+                    continue
+                for k in range(3):
+                    err = c[k] - palette[best][k]
+
+                    def add(nx, ny, num):
+                        px[nx][ny][k] = max(0, min(255, px[nx][ny][k] + ((err * num) >> 4)))
+
+                    if y + 1 < height:
+                        add(x, y + 1, 7)
+                    if x + 1 < width:
+                        if y - 1 > 0:
+                            add(x + 1, y - 1, 3)
+                        add(x + 1, y, 5)
+                        if y + 1 < height:
+                            add(x + 1, y + 1, 1)
+        w, h = align8(width), align8(height)
+        bw = [0] * (w * h)
+        red = [0] * (w * h) if len(palette) == 3 else None
+        for x in range(width):
+            for y in range(height):
+                if idx[x][y] == 0:
+                    bw[y * w + x] = 1
+                elif idx[x][y] == 2 and red is not None:
+                    red[y * w + x] = 1
+        return bw, red
+
+    rng = random.Random(7)
+    for width, height in ((37, 29), (64, 16), (250, 122)):
+        pixels = [
+            [(rng.randrange(256), rng.randrange(256), rng.randrange(256)) for _ in range(height)]
+            for _ in range(width)
+        ]
+        img = Image.new("RGB", (width, height))
+        img.putdata([pixels[x][y] for y in range(height) for x in range(width)])
+        for colors, palette in (("BW", PALETTE_BW), ("BWR", PALETTE_BWR)):
+            for dither in (True, False):
+                assert quantize_image(img, width, height, colors, dither) == reference(
+                    pixels, width, height, palette, dither
+                ), (width, height, colors, dither)

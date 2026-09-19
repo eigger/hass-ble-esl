@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from PIL import Image
 
 from .const import (
     CHUNK_LEN,
@@ -13,9 +13,6 @@ from .const import (
     KEY_TABLE,
     PACKET_LEN,
 )
-
-if TYPE_CHECKING:
-    from PIL import Image
 
 # CRC-16/CMS: poly 0x8005, init 0xFFFF, MSB-first, no reflection, no xorout
 def crc16(data: bytes, length: int | None = None) -> int:
@@ -133,7 +130,7 @@ def parse_notify(mac: str, frame: bytes) -> dict:
 
 
 def compress_rle(pixels: list[int]) -> bytes:
-    """Run-length encode bitplane pixels per eLabel k3.c#a."""
+    """Run-length encode bitplane pixels (easyTag RLE format)."""
     out = bytearray()
     n, i = len(pixels), 0
     while i < n:
@@ -248,54 +245,99 @@ def quantize_image(
     colors: str = "BWR",
     dither: bool = True,
 ) -> tuple[list[int], list[int] | None]:
-    """Quantize PIL image to 8-aligned BW and Red bitplanes."""
-    img_rgb = image.convert("RGB")
-    palette = PALETTE_BWR if "R" in colors else PALETTE_BW
-    has_red = "R" in colors
+    """Quantize PIL image to 8-aligned BW and Red bitplanes.
 
-    px = [
-        [list(img_rgb.getpixel((x, y))) for y in range(height)]
-        for x in range(width)
-    ]
-    idx = [[0] * height for _ in range(width)]
+    Nearest palette colour per pixel with error diffusion, scanning column by
+    column (x outer, y inner) and pushing the error to (x, y+1) 7/16,
+    (x+1, y-1) 3/16, (x+1, y) 5/16 and (x+1, y+1) 1/16 (Floyd-Steinberg,
+    transposed). The exact neighbourhood and rounding are what the tags
+    expect; keep them as they are.
+
+    Works on flat per-channel lists in column-major order so the whole thing
+    is plain integer arithmetic on locals; the per-pixel getpixel() and
+    closure version took ~2.4 s for 960x640.
+    """
+    has_red = "R" in colors
+    palette = PALETTE_BWR if has_red else PALETTE_BW
+    n = width * height
+
+    # Column-major (x*height + y): the transposed image's row-major bytes.
+    if image.size != (width, height):
+        raise ValueError(f"expected a {width}x{height} image, got {image.size}")
+    raw = image.convert("RGB").transpose(Image.Transpose.TRANSPOSE).tobytes()
+    rs, gs, bs = list(raw[0::3]), list(raw[1::3]), list(raw[2::3])
+    idx = [0] * n
+
+    (kr, kg, kb), (wr, wg, wb) = palette[0], palette[1]
+    rr, rg, rb = palette[2] if has_red else (0, 0, 0)
+    pal_r = [kr, wr, rr]
+    pal_g = [kg, wg, rg]
+    pal_b = [kb, wb, rb]
+    h = height
+
+    def diffuse(ch: list[int], i: int, err: int, down: bool, right: bool, y: int) -> None:
+        # Floyd-Steinberg weights, transposed scan; `>> 4` floors like the
+        # reference, clamped to 0..255 after each add.
+        if down:
+            j = i + 1
+            v = ch[j] + ((err * 7) >> 4)
+            ch[j] = 0 if v < 0 else (255 if v > 255 else v)
+        if right:
+            # `> 0` (not `>= 0`): row 0 never receives the 3/16 term. This
+            # is intentional to reproduce the established output exactly.
+            if y - 1 > 0:
+                j = i + h - 1
+                v = ch[j] + ((err * 3) >> 4)
+                ch[j] = 0 if v < 0 else (255 if v > 255 else v)
+            j = i + h
+            v = ch[j] + ((err * 5) >> 4)
+            ch[j] = 0 if v < 0 else (255 if v > 255 else v)
+            if down:
+                j = i + h + 1
+                v = ch[j] + (err >> 4)
+                ch[j] = 0 if v < 0 else (255 if v > 255 else v)
 
     for x in range(width):
-        for y in range(height):
-            c = px[x][y]
-            best, bd = 0, 1 << 30
-            for n, p in enumerate(palette):
-                d = sum((c[k] - p[k]) ** 2 for k in range(3))
+        base = x * h
+        right = x + 1 < width
+        for y in range(h):
+            i = base + y
+            r, g, b = rs[i], gs[i], bs[i]
+            # Nearest palette entry by squared RGB distance; ties keep the
+            # lowest index (black < white < red), as in the reference.
+            dr, dg, db = r - kr, g - kg, b - kb
+            bd = dr * dr + dg * dg + db * db
+            best = 0
+            dr, dg, db = r - wr, g - wg, b - wb
+            d = dr * dr + dg * dg + db * db
+            if d < bd:
+                best, bd = 1, d
+            if has_red:
+                dr, dg, db = r - rr, g - rg, b - rb
+                d = dr * dr + dg * dg + db * db
                 if d < bd:
-                    best, bd = n, d
-            idx[x][y] = best
+                    best = 2
+            idx[i] = best
             if not dither:
                 continue
-            for k in range(3):
-                err = c[k] - palette[best][k]
+            down = y + 1 < h
+            if (err := r - pal_r[best]):
+                diffuse(rs, i, err, down, right, y)
+            if (err := g - pal_g[best]):
+                diffuse(gs, i, err, down, right, y)
+            if (err := b - pal_b[best]):
+                diffuse(bs, i, err, down, right, y)
 
-                def add(nx, ny, num):
-                    px[nx][ny][k] = max(
-                        0, min(255, px[nx][ny][k] + ((err * num) >> 4))
-                    )
-
-                if y + 1 < height:
-                    add(x, y + 1, 7)
-                if x + 1 < width:
-                    if y - 1 > 0:
-                        add(x + 1, y - 1, 3)
-                    add(x + 1, y, 5)
-                    if y + 1 < height:
-                        add(x + 1, y + 1, 1)
-
-    w, h = align8(width), align8(height)
-    bw = [0] * (w * h)
-    red = [0] * (w * h) if has_red else None
+    w8, h8 = align8(width), align8(height)
+    bw = [0] * (w8 * h8)
+    red = [0] * (w8 * h8) if has_red else None
     for x in range(width):
-        for y in range(height):
-            i = y * w + x
-            if idx[x][y] == 0:
-                bw[i] = 1  # black ink
-            elif idx[x][y] == 2 and red is not None:
-                red[i] = 1  # red ink
+        base = x * h
+        for y in range(h):
+            c = idx[base + y]
+            if c == 0:
+                bw[y * w8 + x] = 1  # black ink
+            elif c == 2 and red is not None:
+                red[y * w8 + x] = 1  # red ink
 
     return bw, red
