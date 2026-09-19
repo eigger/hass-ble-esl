@@ -170,10 +170,13 @@ async def update_image(
     write_delay_ms: int = 0,
 ) -> WriteResult:
     """Connect, resolve characteristics, and write image to PickSmart ESL."""
-    client: BleakClient = await establish_connection(
-        BleakClient, ble_device, ble_device.address
-    )
+    # Connect inside the try so connection failures surface as a failed
+    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
+    client: BleakClient | None = None
     try:
+        client = await establish_connection(
+            BleakClient, ble_device, ble_device.address
+        )
         char_uuids = [
             c.uuid
             for svc in client.services

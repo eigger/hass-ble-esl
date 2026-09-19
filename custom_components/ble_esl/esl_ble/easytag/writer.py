@@ -151,10 +151,13 @@ async def update_image(
     write_delay_ms: int = 0,
 ) -> WriteResult:
     """Connect, transmit image, and receive battery/temperature feedback."""
-    client: BleakClient = await establish_connection(
-        BleakClient, ble_device, ble_device.address
-    )
+    # Connect inside the try so connection failures surface as a failed
+    # WriteResult (and count toward retries) instead of escaping as raw exceptions.
+    client: BleakClient | None = None
     try:
+        client = await establish_connection(
+            BleakClient, ble_device, ble_device.address
+        )
         easytag = EasyTagClient(client, preset, ble_device.address)
         return await easytag.write_image(
             image, attempt=attempt, write_delay_ms=write_delay_ms

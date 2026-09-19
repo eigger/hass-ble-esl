@@ -174,3 +174,27 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
         assert mock_client.disconnect.called
 
     asyncio.run(_test())
+
+
+def test_connection_failure_is_reported_not_raised(monkeypatch):
+    """establish_connection errors become a failed WriteResult so retries/counters apply."""
+
+    async def _test():
+        mock_ble_device = MagicMock()
+        mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
+
+        async def mock_establish(*args, **kwargs):
+            raise OSError("unavailable")
+
+        monkeypatch.setattr(
+            "custom_components.ble_esl.esl_ble.picksmart.writer.establish_connection",
+            mock_establish,
+        )
+
+        img = Image.new("RGB", (296, 128), "white")
+        result = await update_image(mock_ble_device, PRESETS["0x0028"], img)
+
+        assert result.success is False
+        assert result.error == "unavailable"
+
+    asyncio.run(_test())

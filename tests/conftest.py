@@ -261,9 +261,9 @@ ha_update_coordinator.DataUpdateCoordinator = MockBase
 sys.modules["homeassistant.helpers.update_coordinator"] = ha_update_coordinator
 ha_helpers.update_coordinator = ha_update_coordinator
 
-ha_helpers_debounce = MockModule("homeassistant.helpers.debounce")
-sys.modules["homeassistant.helpers.debounce"] = ha_helpers_debounce
-ha_helpers.debounce = ha_helpers_debounce
+ha_helpers_event = MockModule("homeassistant.helpers.event")
+sys.modules["homeassistant.helpers.event"] = ha_helpers_event
+ha_helpers.event = ha_helpers_event
 
 ha_helpers_selector = MockModule("homeassistant.helpers.selector")
 ha_helpers_selector.SelectOptionDict = dict
