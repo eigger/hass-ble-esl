@@ -31,7 +31,7 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Feedback & Support
 
-- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues)
+- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **Settings → Devices & services → BLE ESL → the device → ⋮ → Download diagnostics**. It contains the backend, preset, firmware versions, options, last advertisement and failure counters (the MAC address is redacted).
 - Questions or ideas? [Join the discussion](https://github.com/eigger/hass-ble-esl/discussions)
 
 ## Related
