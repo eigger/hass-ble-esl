@@ -85,15 +85,25 @@ class PickSmartClient:
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
-        packet_size = len(payload)
-
         timing: dict[str, float | int] = {"settle_s": NOTIFY_SETTLE_S}
+        try:
+            return await self._transfer(payload, compression2, timing)
+        except Exception as exc:
+            # Let the caller report how far the attempt got (see write_prepared).
+            exc.timing = timing  # type: ignore[attr-defined]
+            raise
+
+    async def _transfer(
+        self, payload: bytes, compression2: bool, timing: dict[str, float | int]
+    ) -> WriteResult:
+        packet_size = len(payload)
         t0 = time.monotonic()
         async with Notifications(self.client, self.cmd_uuid, settle=NOTIFY_SETTLE_S) as replies:
             self._replies = replies
             # Step 1: START (0x01) -> [01 F4 00], probed (see const.py).
             start_packet = make_cmd_packet(CMD_START, packet_size, compression2)
             for probe in range(1, START_PROBE_ATTEMPTS + 1):
+                timing["start_probes"] = probe
                 try:
                     start_resp = await self._write_with_response(
                         self.cmd_uuid, start_packet, "START", timeout=START_PROBE_TIMEOUT_S
@@ -111,7 +121,6 @@ class PickSmartClient:
                         probe,
                         START_PROBE_ATTEMPTS,
                     )
-            timing["start_probes"] = probe
             timing["start_s"] = round(time.monotonic() - t0 - NOTIFY_SETTLE_S, 3)
             if (
                 len(start_resp) < 3
@@ -208,6 +217,7 @@ class PickSmartClient:
             timing.update(
                 {
                     "parts": total_parts,
+                    "sends": sends,  # parts + resends; round_trip_ms * sends ~= transfer_s
                     "resends": resends,
                     "transfer_s": round(transfer_s, 3),
                     "round_trip_ms": round(transfer_s / sends * 1000) if sends else 0,

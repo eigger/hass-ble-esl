@@ -190,7 +190,8 @@ def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
 
         result = await Backend().write_prepared(device, PRESET, prepared)
 
-        assert result == WriteResult(success=False, error="TimeoutError")
+        assert (result.success, result.error) == (False, "TimeoutError")
+        assert set(result.timing) == {"connect_s", "session_s"}  # failures are timed too
         client.disconnect.assert_awaited_once()
         assert prepared.done() and not prepared.cancelled()
 

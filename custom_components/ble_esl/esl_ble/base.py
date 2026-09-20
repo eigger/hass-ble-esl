@@ -447,6 +447,7 @@ class BleBackend(ABC):
         WriteResult so it counts toward retries and the failure sensors.
         """
         started = time.monotonic()
+        connected: float | None = None
         try:
             async with ble_session(ble_device) as client:
                 connected = time.monotonic()
@@ -468,7 +469,17 @@ class BleBackend(ABC):
             # The caller logs each failed attempt and raises after the last
             # one; keep the traceback at debug level without a second ERROR.
             _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
-            return WriteResult(success=False, error=str(exc) or type(exc).__name__)
+            # A failed attempt is the one worth tuning from: keep what the
+            # protocol measured before raising (it may attach `timing` to
+            # the exception) plus the connect/session split.
+            now = time.monotonic()
+            timing: dict[str, float | int] = {
+                "connect_s": round((connected or now) - started, 3),
+                **getattr(exc, "timing", {}),
+            }
+            if connected is not None:
+                timing["session_s"] = round(now - connected, 3)
+            return WriteResult(success=False, error=str(exc) or type(exc).__name__, timing=timing)
 
     async def write_image(
         self,
