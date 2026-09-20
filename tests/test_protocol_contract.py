@@ -94,7 +94,7 @@ def test_backend_ids_are_unique_and_matchers_disjoint_on_each_others_samples():
             "service_uuids": ["00001523-1212-efde-1523-785feabcd123"],
         },
         "picksmart": {"manufacturer_data": {0x5053: bytes(5)}, "service_uuids": []},
-        "poshiji": {
+        "xte": {
             "manufacturer_data": {0x5258: bytes.fromhex("fd024002009964060102ffff1e")},
             "service_uuids": [],
         },

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from bt import inject_bluetooth_service_info
+from bt import inject_bluetooth_service_info, service_info
 from conftest import ADDRESS, IDENT, WOLINK_MFR_BYTES, device_of, setup_entry, wolink_service_info
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.ble_esl.const import DOMAIN, WRITE_LOCK
+from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL, DOMAIN, WRITE_LOCK
 
 
 async def test_setup_creates_device_and_entities(hass: HomeAssistant, wolink_entry) -> None:
@@ -108,3 +109,33 @@ async def test_unload_makes_entities_unavailable(hass: HomeAssistant, wolink_ent
     await hass.async_block_till_done()
     assert wolink_entry.state is ConfigEntryState.NOT_LOADED
     assert hass.states.get(f"switch.zhsunyco_{IDENT}_write_lock").state == "unavailable"
+
+
+async def test_legacy_backend_id_is_migrated(hass: HomeAssistant, enable_bluetooth) -> None:
+    """Entries written before the "poshiji" -> "xte" rename still load, and are rewritten."""
+    address = "AA:BB:CC:DD:EE:42"
+    inject_bluetooth_service_info(
+        hass,
+        service_info(
+            address,
+            name="FFEEDDCCBBAA",
+            manufacturer_data={0x5258: bytes.fromhex("fd024002009964060102ffff1e")},
+        ),
+    )
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=address,
+        title="Poshiji DDEEEE42",
+        data={CONF_PROTOCOL: "poshiji", CONF_MODEL: "psj-420"},
+        options={CONF_PROTOCOL: "poshiji"},
+        minor_version=1,
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.minor_version == 2
+    assert entry.data[CONF_PROTOCOL] == "xte" and entry.options[CONF_PROTOCOL] == "xte"
+    assert entry.runtime_data.backend.id == "xte"
+    assert entry.runtime_data.preset.key == "psj-420"
+    assert device_of(hass, address).model_id == "XTE"

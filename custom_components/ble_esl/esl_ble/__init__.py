@@ -19,13 +19,15 @@ from .base import (
 )
 from .easytag import EasyTagBleBackend
 from .picksmart import PickSmartBleBackend
-from .poshiji import PoshijiBleBackend
 from .wolink import WolinkBleBackend
+from .xte import XteBleBackend
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 _BACKENDS: dict[str, BleBackend] = {}
+# Former backend ids still found in config entries written by older releases.
+LEGACY_IDS: dict[str, str] = {"poshiji": "xte"}
 
 
 def register(backend: BleBackend) -> None:
@@ -39,7 +41,8 @@ def register(backend: BleBackend) -> None:
 
 
 def get(backend_id: str) -> BleBackend:
-    """Retrieve a BLE backend by ID."""
+    """Retrieve a BLE backend by ID (legacy ids are accepted)."""
+    backend_id = LEGACY_IDS.get(backend_id, backend_id)
     if backend_id not in _BACKENDS:
         raise KeyError(f"Unknown BLE backend: {backend_id!r}. Available: {list(_BACKENDS.keys())}")
     return _BACKENDS[backend_id]
@@ -68,13 +71,14 @@ def detect(
 register(WolinkBleBackend())
 register(EasyTagBleBackend())
 register(PickSmartBleBackend())
-register(PoshijiBleBackend())
+register(XteBleBackend())
 
 __all__ = [
     "CONFIDENCE_COMMUNITY",
     "CONFIDENCE_ESTIMATED",
     "CONFIDENCE_HARDWARE",
     "CONFIDENCE_REPORTED",
+    "LEGACY_IDS",
     "AdvertisementInfo",
     "BleBackend",
     "BleParser",
@@ -82,10 +86,10 @@ __all__ = [
     "DevicePreset",
     "EasyTagBleBackend",
     "PickSmartBleBackend",
-    "PoshijiBleBackend",
     "ProtocolContractError",
     "WolinkBleBackend",
     "WriteResult",
+    "XteBleBackend",
     "all_backends",
     "detect",
     "get",

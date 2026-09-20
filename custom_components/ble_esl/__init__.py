@@ -92,6 +92,20 @@ def process_service_info(
     return update
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:
+    """Rewrite legacy backend ids stored by older releases (1.1 -> 1.2)."""
+    if entry.version > 1:
+        return False
+    if entry.minor_version < 2:
+        data = {**entry.data}
+        options = {**entry.options}
+        for store in (data, options):
+            if store.get(CONF_PROTOCOL) in esl_ble.LEGACY_IDS:
+                store[CONF_PROTOCOL] = esl_ble.LEGACY_IDS[store[CONF_PROTOCOL]]
+        hass.config_entries.async_update_entry(entry, data=data, options=options, minor_version=2)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:
     """Set up a BLE ESL device from a config entry."""
     address = entry.unique_id

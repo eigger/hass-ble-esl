@@ -15,7 +15,7 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | 4.2" (400×300) | Poshiji (XTE) PSJ-420 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> |
 | 10.2" (960×640) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 
-Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/poshiji-psj420.md](docs/poshiji-psj420.md) for the PSJ-420 setup guide.
+Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/xte.md](docs/xte.md) for the XTE (Poshiji) setup guide.
 
 ---
 
@@ -23,7 +23,7 @@ Photos are of real tags. See [Examples](#examples) for the full list with YAML, 
 
 An **electronic label** (electronic shelf label, ESL) is a low-power **e-paper** display that keeps showing content **without continuous power**.
 
-This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, **PickSmart (gicisky)**, and **Poshiji (XTE)** BLE protocol families.
+This integration provides local BLE push communication with e-paper ESL tags across **WOLINK**, **easyTag (eLabel)**, **PickSmart (gicisky)**, and **XTE (Poshiji)** BLE protocol families.
 
 They work well for information that should stay visible, changes infrequently, and lives where mains power is impractical — retail tags, home dashboard status displays, room calendars, sensors, and inventory monitors.
 
@@ -59,6 +59,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 2.13" | 250 × 122 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 2.13" | 250 × 122 | BWR | Zhsunyco | easyTag | ETR0213-36B | ⚠️ untested |
 | 2.13" | 250 × 122 | BW | Zhsunyco | easyTag | ETR0213-39B | ⚠️ untested |
+| 2.13" | 250 × 122 | BWRY | Poshiji | XTE | PSJ-213 | ⚠️ community report |
 | 2.66" | 296 × 152 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 2.66" | 296 × 152 | BWR | Zhsunyco | easyTag | ET0266-3A | ⚠️ untested |
 | 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
@@ -86,7 +87,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
-- **Poshiji (XTE)** — PSJ-420, 400×300 BWRY. Verified on hardware by the device owner; see [setup and protocol notes](docs/poshiji-psj420.md).
+- **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. See [setup and protocol notes](docs/xte.md).
 - **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
@@ -159,7 +160,7 @@ Configure via **Settings** → **Devices & Services** → **BLE ESL** → **Conf
 
 | Option | Default | Range | Description |
 |--------|---------|-------|-------------|
-| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart / poshiji | Target BLE protocol family |
+| **Protocol Backend** | auto / wolink | wolink / easytag / picksmart / xte | Target BLE protocol family |
 | **Model** | 2.9" (296×128) | model list | Hardware resolution profile |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
 | **Write Delay (ms)** | 0 | 0–1000 | Extra pause between BLE write packets |
@@ -196,7 +197,7 @@ Labels are rendered with **[imagespec](https://github.com/eigger/imagespec)** �
 - **Layout:** prefer `row` / `column` / `stack` over hand-placed coordinates.
 - **Image entities:** each tag exposes **Last Updated Content** (last image sent) and **Preview Content** (`dry_run` renders).
 - **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt — `attempt`, `success`, `error`, and the per-stage timings (`connect_s`, `session_s`; PickSmart also `start_probes`, `parts`, `resends`, `round_trip_ms`, `transfer_s`, `completed_by_tag`). Watch `start_probes` (should mostly be 1) and `round_trip_ms` (path quality) without turning on debug logging; the same data is in the diagnostics download.
-- **Battery:** the tag voltage is mapped linearly to **Battery** (%) — PickSmart over 2.5–2.9 V, WOLINK / easyTag over 2.2–3.0 V — and a **Battery** binary sensor (low battery) turns on at the bottom of that range (PickSmart: 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works). Poshiji tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
+- **Battery:** the tag voltage is mapped linearly to **Battery** (%) — PickSmart over 2.5–2.9 V, WOLINK / easyTag over 2.2–3.0 V — and a **Battery** binary sensor (low battery) turns on at the bottom of that range (PickSmart: 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works). XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
 
 ---
 

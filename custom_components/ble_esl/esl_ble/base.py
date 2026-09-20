@@ -307,7 +307,7 @@ class BleBackend(ABC):
                     write_image() wholesale
       optional (defaults provided)
         refine_preset()   when the advertisement identifies the model
-        write_prepared()  to refuse before connecting (see Poshiji)
+        write_prepared()  to refuse before connecting (see XTE)
         read_status()     status query without a write
 
     presets() / preset_for() / supported() / create_parser() / brand are

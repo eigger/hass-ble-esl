@@ -1,4 +1,4 @@
-"""Poshiji XTE constants."""
+"""XTE constants."""
 
 BRAND = "Poshiji"
 SERVICE_UUID = "00002760-08c2-11e1-9073-0e8ac72e1001"

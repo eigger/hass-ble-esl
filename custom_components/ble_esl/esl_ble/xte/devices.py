@@ -1,4 +1,4 @@
-"""Poshiji models confirmed on hardware.
+"""XTE models confirmed on hardware.
 
 Adding a model is one DevicePreset here. Everything else derives from it:
 discovery and model detection from ``extra["device_number"]`` (the tag type
@@ -14,7 +14,7 @@ captured before it is added rather than guessed from its size.
 
 from __future__ import annotations
 
-from ..base import CONFIDENCE_REPORTED, DevicePreset
+from ..base import CONFIDENCE_COMMUNITY, CONFIDENCE_REPORTED, DevicePreset
 from .protocol import parse_advertisement
 
 PSJ_420 = DevicePreset(
@@ -26,8 +26,21 @@ PSJ_420 = DevicePreset(
     confidence=CONFIDENCE_REPORTED,
     extra={"device_number": 153},
 )
+# Viewed landscape 250x122; the panel scans along the short edge, so the
+# native buffer is portrait 122x250 (rotate 90 degrees counter-clockwise,
+# rows padded to 124 pixels). Pushed successfully by a community user with
+# this same transaction; not re-tested with this integration.
+PSJ_213 = DevicePreset(
+    key="psj-213",
+    display_name='PSJ-213 2.13" BWRY',
+    width=250,
+    height=122,
+    colors="BWRY",
+    confidence=CONFIDENCE_COMMUNITY,
+    extra={"device_number": 140, "rotation": 90},
+)
 
-PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420,)}
+PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420, PSJ_213)}
 
 
 def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:

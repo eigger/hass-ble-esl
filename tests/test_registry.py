@@ -15,11 +15,11 @@ from custom_components.ble_esl.esl_ble.picksmart.const import (
     MANUFACTURER_ID as PICKSMART_MFR_ID,
     SERVICE_UUIDS as PICKSMART_SERVICE_UUIDS,
 )
-from custom_components.ble_esl.esl_ble.poshiji.const import MANUFACTURER_ID as POSHIJI_MFR_ID
 from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID as WOLINK_MFR_ID,
     SERVICE_UUID as WOLINK_SERVICE_UUID,
 )
+from custom_components.ble_esl.esl_ble.xte.const import MANUFACTURER_ID as XTE_MFR_ID
 
 
 def test_registry_get():
@@ -27,7 +27,7 @@ def test_registry_get():
     assert esl_ble.get("wolink").id == "wolink"
     assert esl_ble.get("easytag").id == "easytag"
     assert esl_ble.get("picksmart").id == "picksmart"
-    assert esl_ble.get("poshiji").id == "poshiji"
+    assert esl_ble.get("xte").id == "xte"
 
     with pytest.raises(KeyError, match="Unknown BLE backend: 'unknown'"):
         esl_ble.get("unknown")
@@ -39,7 +39,7 @@ def test_registry_all_backends():
     assert "wolink" in backend_ids
     assert "easytag" in backend_ids
     assert "picksmart" in backend_ids
-    assert "poshiji" in backend_ids
+    assert "xte" in backend_ids
 
 
 def test_registry_detect_mutual_exclusivity():
@@ -47,7 +47,7 @@ def test_registry_detect_mutual_exclusivity():
     wolink_backend = esl_ble.get("wolink")
     easytag_backend = esl_ble.get("easytag")
     picksmart_backend = esl_ble.get("picksmart")
-    poshiji_backend = esl_ble.get("poshiji")
+    xte_backend = esl_ble.get("xte")
 
     # 1. WOLINK Advertisement
     info_wolink = MagicMock()
@@ -58,7 +58,7 @@ def test_registry_detect_mutual_exclusivity():
     assert wolink_backend.supported(info_wolink) is True
     assert easytag_backend.supported(info_wolink) is False
     assert picksmart_backend.supported(info_wolink) is False
-    assert poshiji_backend.supported(info_wolink) is False
+    assert xte_backend.supported(info_wolink) is False
     assert esl_ble.detect(info_wolink) is wolink_backend
 
     # 2. easyTag Advertisement
@@ -70,7 +70,7 @@ def test_registry_detect_mutual_exclusivity():
     assert easytag_backend.supported(info_easytag) is True
     assert wolink_backend.supported(info_easytag) is False
     assert picksmart_backend.supported(info_easytag) is False
-    assert poshiji_backend.supported(info_easytag) is False
+    assert xte_backend.supported(info_easytag) is False
     assert esl_ble.detect(info_easytag) is easytag_backend
 
     # 3. PickSmart Advertisement
@@ -82,20 +82,20 @@ def test_registry_detect_mutual_exclusivity():
     assert picksmart_backend.supported(info_picksmart) is True
     assert wolink_backend.supported(info_picksmart) is False
     assert easytag_backend.supported(info_picksmart) is False
-    assert poshiji_backend.supported(info_picksmart) is False
+    assert xte_backend.supported(info_picksmart) is False
     assert esl_ble.detect(info_picksmart) is picksmart_backend
 
-    # 4. Poshiji (XTE) Advertisement
-    info_poshiji = MagicMock()
-    info_poshiji.manufacturer_data = {POSHIJI_MFR_ID: bytes.fromhex("fd024002009964060102ffff1e")}
-    info_poshiji.service_uuids = []
-    info_poshiji.name = "FFEEDDCCBBAA"
+    # 4. XTE Advertisement
+    info_xte = MagicMock()
+    info_xte.manufacturer_data = {XTE_MFR_ID: bytes.fromhex("fd024002009964060102ffff1e")}
+    info_xte.service_uuids = []
+    info_xte.name = "FFEEDDCCBBAA"
 
-    assert poshiji_backend.supported(info_poshiji) is True
-    assert wolink_backend.supported(info_poshiji) is False
-    assert easytag_backend.supported(info_poshiji) is False
-    assert picksmart_backend.supported(info_poshiji) is False
-    assert esl_ble.detect(info_poshiji) is poshiji_backend
+    assert xte_backend.supported(info_xte) is True
+    assert wolink_backend.supported(info_xte) is False
+    assert easytag_backend.supported(info_xte) is False
+    assert picksmart_backend.supported(info_xte) is False
+    assert esl_ble.detect(info_xte) is xte_backend
 
     # 5. Unknown Advertisement
     info_other = MagicMock()

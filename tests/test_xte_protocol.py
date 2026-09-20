@@ -7,9 +7,13 @@ from types import SimpleNamespace
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.poshiji.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
-from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420, preset_for_advertisement
-from custom_components.ble_esl.esl_ble.poshiji.protocol import (
+from custom_components.ble_esl.esl_ble.xte.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
+from custom_components.ble_esl.esl_ble.xte.devices import (
+    PSJ_213,
+    PSJ_420,
+    preset_for_advertisement,
+)
+from custom_components.ble_esl.esl_ble.xte.protocol import (
     buffer_size,
     encode_rle,
     make_blocks,
@@ -18,7 +22,7 @@ from custom_components.ble_esl.esl_ble.poshiji.protocol import (
     pack_pixels,
     parse_advertisement,
 )
-from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
+from custom_components.ble_esl.esl_ble.xte.writer import XteClient, prepare
 
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
@@ -37,7 +41,8 @@ def test_advertisement_fields_psj420_and_psj213():
     assert (theirs.device_number, theirs.battery_percent, theirs.firmware) == (140, 99, "4.0.2")
     # Battery and firmware are readings, not identity.
     assert preset_for_advertisement(bytes.fromhex("fd024103009905060102ffff1b")) is PSJ_420
-    assert preset_for_advertisement(bytes.fromhex("fd024002008c63060102ffff1c")) is None
+    assert preset_for_advertisement(bytes.fromhex("fd024002008c63060102ffff1c")) is PSJ_213
+    assert preset_for_advertisement(bytes.fromhex("fd024002008d63060102ffff1c")) is None
     assert (
         parse_advertisement(bytes.fromhex("fd02400200 99 ff 06".replace(" ", ""))).battery_percent
         == 100
