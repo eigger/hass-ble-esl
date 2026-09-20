@@ -1,38 +1,112 @@
-"""Capture-verified PSJ-420 pixel packing and XTE framing."""
+"""XTE advertisement decoding, pixel packing and framing.
 
+Framing and packing are capture-verified on the PSJ-420. The advertisement
+layout (see docs/poshiji-psj420.md) is common to the XTE firmware family.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
 import math
+from typing import TYPE_CHECKING
 
-from PIL import Image
+from .const import BLOCK_DATA_SIZE, PALETTES
 
-from .const import ADVERTISEMENT, BLOCK_DATA_SIZE, HEIGHT, PALETTE, WIDTH
+if TYPE_CHECKING:
+    from PIL import Image
+
+    from ..base import DevicePreset
+
+# Manufacturer data (company id 0x5258 stripped):
+#   [0] record type   [1] hardware revision   [2] firmware major.minor (BCD)
+#   [3] firmware patch   [4:6] device number (u16, identifies the tag type)
+#   [6] battery %   [7] chip type << 4 | tx power   [8:] not read by the app
+# The tag alternates this record with a 2-byte `ff 01` payload under the
+# same company id; the record-type check rejects that one.
+RECORD_TYPES = frozenset({0xFD, 0xFE, 0xFC, 0x04})
+ADVERTISEMENT_MIN_LENGTH = 8
 
 
-def is_psj420_advertisement(data: bytes | None) -> bool:
-    """Recognize the observed PSJ-420 signature, ignoring its changing tail."""
-    return data is not None and len(data) == 13 and data[:12] == ADVERTISEMENT[:12]
+@dataclass(frozen=True)
+class Advertisement:
+    """Fields decoded from an XTE manufacturer-data record."""
+
+    record_type: int
+    hardware_revision: int
+    firmware: str
+    device_number: int
+    battery_percent: int
+    chip_type: int
+    tx_power: int
 
 
-def pack_pixels(image: Image.Image) -> bytes:
-    """Pack four pixels per byte, most significant pixel first."""
-    if image.size != (WIDTH, HEIGHT):
-        raise ValueError("XTE requires a 400x300 image")
-    rgb = image.convert("RGB")
+def parse_advertisement(data: bytes | None) -> Advertisement | None:
+    """Decode an XTE record, or None if `data` is not one."""
+    if data is None or len(data) < ADVERTISEMENT_MIN_LENGTH or data[0] not in RECORD_TYPES:
+        return None
+    return Advertisement(
+        record_type=data[0],
+        hardware_revision=data[1],
+        firmware=f"{data[2] >> 4}.{data[2] & 0x0F}.{data[3]}",
+        device_number=int.from_bytes(data[4:6], "big"),
+        battery_percent=min(100, data[6]),
+        chip_type=data[7] >> 4,
+        tx_power=data[7] & 0x0F,
+    )
+
+
+# XTEK container header after the length field: image count 1, offset of
+# the (only) image record 17, then the record's x 0 and y 0; width and
+# height follow. OBJECT_FLAG is the record's compression byte, 1 = RLE.
+OBJECT_METADATA = bytes.fromhex("01000000110000000000000000")
+OBJECT_FLAG = b"\x01"
+
+
+def buffer_size(preset: DevicePreset) -> tuple[int, int]:
+    """Native buffer dimensions: the as-viewed size, swapped when the panel scans the other way."""
+    if preset.extra.get("rotation", 0) % 180:
+        return preset.height, preset.width
+    return preset.width, preset.height
+
+
+def row_bytes(width: int) -> int:
+    """Packed bytes per row: four pixels per byte, the row padded to a multiple of four."""
+    return math.ceil(width / 4)
+
+
+def pack_pixels(image: Image.Image, preset: DevicePreset) -> bytes:
+    """Rotate into the native buffer, then pack four pixels per byte, first pixel in the high bits."""
+    if image.size != (preset.width, preset.height):
+        raise ValueError(f"XTE requires a {preset.width}x{preset.height} image")
+    rotation = preset.extra.get("rotation", 0)
+    if rotation:
+        image = image.rotate(rotation, expand=True)
+    width, height = image.size
+    palette = PALETTES[preset.colors]
     # Quantize using a fixed palette without dithering, like the HA renderer.
-    result = bytearray()
-    packed = 0
-    color_cache = {color: index for index, color in enumerate(PALETTE)}
-    raw = rgb.tobytes()
-    for i, pixel in enumerate(zip(raw[0::3], raw[1::3], raw[2::3], strict=True)):
+    color_cache = {color: index for index, color in enumerate(palette)}
+
+    def code(pixel: tuple[int, int, int]) -> int:
         value = color_cache.get(pixel)
         if value is None:
             value = min(
-                range(4), key=lambda n: sum((pixel[c] - PALETTE[n][c]) ** 2 for c in range(3))
+                range(4), key=lambda n: sum((pixel[c] - palette[n][c]) ** 2 for c in range(3))
             )
             color_cache[pixel] = value
-        packed = (packed << 2) | value
-        if i % 4 == 3:
-            result.append(packed)
-            packed = 0
+        return value
+
+    raw = image.convert("RGB").tobytes()
+    stride = width * 3
+    padding = (-width) % 4  # padded pixels pack as code 0 (black)
+    result = bytearray()
+    for y in range(height):
+        row = raw[y * stride : (y + 1) * stride]
+        codes = [code(p) for p in zip(row[0::3], row[1::3], row[2::3], strict=True)]
+        codes.extend([0] * padding)
+        for i in range(0, len(codes), 4):
+            result.append(
+                (codes[i] << 6) | (codes[i + 1] << 4) | (codes[i + 2] << 2) | codes[i + 3]
+            )
     return bytes(result)
 
 
@@ -49,21 +123,20 @@ def encode_rle(data: bytes) -> bytes:
     return bytes(output)
 
 
-def make_image_object(pixels: bytes) -> bytes:
-    """Build XTEK metadata, RLE image and 32-bit additive checksum."""
-    if len(pixels) != WIDTH * HEIGHT // 4:
-        raise ValueError("Expected 30000 bytes of packed XTE pixels")
+def make_image_object(pixels: bytes, width: int, height: int) -> bytes:
+    """Build the XTEK container (one full-screen image record) around packed buffer rows."""
+    expected = row_bytes(width) * height
+    if len(pixels) != expected:
+        raise ValueError(f"Expected {expected} bytes of packed XTE pixels")
     # The captured encoder resets its run at byte 15000, halfway through the
     # frame. Preserve that boundary even when both adjacent bytes are equal.
     midpoint = len(pixels) // 2
     compressed = encode_rle(pixels[:midpoint]) + encode_rle(pixels[midpoint:])
-    # Preserve observed opaque fields (offsets 12..24 and 33) for this profile.
-    metadata = bytes.fromhex("01000000110000000000000000")
     body = (
-        metadata
-        + WIDTH.to_bytes(4, "big")
-        + HEIGHT.to_bytes(4, "big")
-        + b"\x01"
+        OBJECT_METADATA
+        + width.to_bytes(4, "big")
+        + height.to_bytes(4, "big")
+        + OBJECT_FLAG
         + len(compressed).to_bytes(4, "big")
         + compressed
     )

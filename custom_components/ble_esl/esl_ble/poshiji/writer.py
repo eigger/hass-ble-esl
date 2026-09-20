@@ -11,7 +11,7 @@ from PIL import Image
 
 from ..base import DevicePreset, Notifications, WriteResult
 from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
-from .protocol import make_blocks, make_command, make_image_object, pack_pixels
+from .protocol import buffer_size, make_blocks, make_command, make_image_object, pack_pixels
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,7 +109,8 @@ class XteClient:
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
     """Pack and RLE-encode an image into an XTEK object (CPU-bound, run in a thread)."""
-    return make_image_object(pack_pixels(image))
+    width, height = buffer_size(preset)
+    return make_image_object(pack_pixels(image, preset), width, height)
 
 
 async def write_session(

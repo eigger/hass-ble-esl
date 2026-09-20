@@ -1,27 +1,54 @@
 """Codec and transport checks without a BLE adapter or Home Assistant."""
 
 import asyncio
+import dataclasses
 from types import SimpleNamespace
 
 from PIL import Image
 import pytest
 
 from custom_components.ble_esl.esl_ble.poshiji.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
-from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
+from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420, preset_for_advertisement
 from custom_components.ble_esl.esl_ble.poshiji.protocol import (
+    buffer_size,
     encode_rle,
-    is_psj420_advertisement,
     make_blocks,
     make_command,
     make_image_object,
     pack_pixels,
+    parse_advertisement,
 )
 from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
 
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
 def test_advertisement_variable_tail(tail):
-    assert is_psj420_advertisement(bytes.fromhex("fd024002009964060102ffff") + bytes([tail]))
+    data = bytes.fromhex("fd024002009964060102ffff") + bytes([tail])
+    assert preset_for_advertisement(data) is PSJ_420
+
+
+def test_advertisement_fields_psj420_and_psj213():
+    """Field layout of the XTE manufacturer-data record."""
+    ours = parse_advertisement(bytes.fromhex("fd024002009964060102ffff1e"))
+    assert (ours.record_type, ours.hardware_revision, ours.firmware) == (0xFD, 2, "4.0.2")
+    assert (ours.device_number, ours.battery_percent) == (153, 100)
+    assert (ours.chip_type, ours.tx_power) == (0, 6)
+    theirs = parse_advertisement(bytes.fromhex("fd024002008c63060102ffff1c"))
+    assert (theirs.device_number, theirs.battery_percent, theirs.firmware) == (140, 99, "4.0.2")
+    # Battery and firmware are readings, not identity.
+    assert preset_for_advertisement(bytes.fromhex("fd024103009905060102ffff1b")) is PSJ_420
+    assert preset_for_advertisement(bytes.fromhex("fd024002008c63060102ffff1c")) is None
+    assert (
+        parse_advertisement(bytes.fromhex("fd02400200 99 ff 06".replace(" ", ""))).battery_percent
+        == 100
+    )
+
+
+@pytest.mark.parametrize("record_type", [0xFD, 0xFE, 0xFC, 0x04])
+def test_advertisement_record_types(record_type):
+    data = bytes([record_type]) + bytes.fromhex("024002009964060102ffff1e")
+    assert parse_advertisement(data).record_type == record_type
+    assert preset_for_advertisement(data) is PSJ_420
 
 
 @pytest.mark.parametrize(
@@ -29,13 +56,15 @@ def test_advertisement_variable_tail(tail):
     [
         None,
         b"",
-        bytes.fromhex("fd024002009964060102ffff"),
-        bytes.fromhex("fd024002009964060102ffff1b00"),
-        bytes.fromhex("fd024003009964060102ffff1b"),
+        bytes.fromhex("ff01"),  # the alternating 2-byte payload under the same company id
+        bytes.fromhex("fd0240020099"),  # too short to carry battery and chip bytes
+        bytes.fromhex("00024002009964060102ffff1e"),  # unknown record type
+        b"\x00" * 13,
     ],
 )
-def test_advertisement_rejects_other_signatures(data):
-    assert not is_psj420_advertisement(data)
+def test_advertisement_rejects_other_payloads(data):
+    assert parse_advertisement(data) is None
+    assert preset_for_advertisement(data) is None
 
 
 def test_rle_boundaries():
@@ -50,13 +79,37 @@ def test_palette_and_bit_order():
     image = Image.new("RGB", (400, 300), "white")
     for x, color in enumerate(("black", "white", "yellow", "red")):
         image.putpixel((x, 0), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
-    assert pack_pixels(image) == b"\x1b" + b"\x55" * 29999
+    assert pack_pixels(image, PSJ_420) == b"\x1b" + b"\x55" * 29999
     with pytest.raises(ValueError, match="400x300"):
-        pack_pixels(Image.new("RGB", (300, 400)))
+        pack_pixels(Image.new("RGB", (300, 400)), PSJ_420)
+
+
+def test_rows_pad_to_four_pixels_and_rotate_into_the_buffer():
+    """A 250x122 as-viewed preset with a portrait buffer: 31-byte rows, 122x250."""
+    portrait = dataclasses.replace(
+        PSJ_420, key="t", width=250, height=122, extra={"device_number": 1, "rotation": 90}
+    )
+    assert buffer_size(portrait) == (122, 250)
+    assert buffer_size(PSJ_420) == (400, 300)
+    image = Image.new("RGB", (250, 122), "white")
+    for x, color in enumerate(("white", "yellow", "red", "black", "black", "white")):
+        image.putpixel((249, x), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
+    packed = pack_pixels(image, portrait)
+    assert len(packed) == 31 * 250
+    # Rotated 90 degrees counter-clockwise, the right-hand column becomes buffer row 0,
+    # top pixel first; the two padded pixels pack as black.
+    assert packed[:2] == bytes.fromhex("6c15")
+    assert packed[2:30] == b"\x55" * 28
+    assert packed[30] == 0x50  # 122 px: last byte holds 2 white pixels + 2 padded (black)
+    assert packed[31:62] == b"\x55" * 30 + b"\x50"
+    obj = make_image_object(packed, *buffer_size(portrait))
+    assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
+    with pytest.raises(ValueError, match="250x122"):
+        pack_pixels(Image.new("RGB", (122, 250)), portrait)
 
 
 def test_image_header_and_half_frame_run_boundary():
-    obj = make_image_object(b"\xaa" * 30000)
+    obj = make_image_object(b"\xaa" * 30000, 400, 300)
     # Each independently encoded 15000-byte half is 58*255 + 210 bytes.
     encoded_half = bytes.fromhex("ffaa") * 58 + bytes.fromhex("d2aa")
     assert obj[38:] == encoded_half * 2
@@ -66,8 +119,10 @@ def test_image_header_and_half_frame_run_boundary():
     assert obj[12:25] == bytes.fromhex("01000000110000000000000000")
     assert obj[25:34] == bytes.fromhex("000001900000012c01")
     assert int.from_bytes(obj[34:38], "big") == 236
-    with pytest.raises(ValueError):
-        make_image_object(b"\x00")
+    with pytest.raises(ValueError, match="30000 bytes"):
+        make_image_object(b"\x00", 400, 300)
+    with pytest.raises(ValueError, match="7750 bytes"):  # 122 px rows pad to 31 bytes
+        make_image_object(b"\x00" * 7625, 122, 250)
 
 
 def test_control_commands_from_capture():
@@ -89,8 +144,8 @@ def test_blocks_and_worst_case_size():
         assert block[6] == sum(block[7:]) & 255
         assert block[7:9] == bytes((9, i))
     raw = (bytes(range(256)) * 118)[:30000]
-    assert len(make_image_object(raw)) == 60038
-    assert len(make_blocks(make_image_object(raw))) == 50
+    assert len(make_image_object(raw, 400, 300)) == 60038
+    assert len(make_blocks(make_image_object(raw, 400, 300))) == 50
 
 
 def _client(client, **kwargs):
@@ -157,7 +212,7 @@ def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
     assert asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
-    obj = make_image_object(b"\x55" * 30000)
+    obj = make_image_object(b"\x55" * 30000, 400, 300)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
     for block in make_blocks(obj):
@@ -239,6 +294,6 @@ def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
         )
     )
-    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000)))
+    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000, 400, 300)))
     # One settle after start_notify, then one retry delay per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames

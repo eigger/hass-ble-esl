@@ -15,10 +15,7 @@ from custom_components.ble_esl.esl_ble.picksmart.const import (
     MANUFACTURER_ID as PICKSMART_MFR_ID,
     SERVICE_UUIDS as PICKSMART_SERVICE_UUIDS,
 )
-from custom_components.ble_esl.esl_ble.poshiji.const import (
-    ADVERTISEMENT as POSHIJI_ADVERTISEMENT,
-    MANUFACTURER_ID as POSHIJI_MFR_ID,
-)
+from custom_components.ble_esl.esl_ble.poshiji.const import MANUFACTURER_ID as POSHIJI_MFR_ID
 from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID as WOLINK_MFR_ID,
     SERVICE_UUID as WOLINK_SERVICE_UUID,
@@ -90,7 +87,7 @@ def test_registry_detect_mutual_exclusivity():
 
     # 4. Poshiji (XTE) Advertisement
     info_poshiji = MagicMock()
-    info_poshiji.manufacturer_data = {POSHIJI_MFR_ID: POSHIJI_ADVERTISEMENT}
+    info_poshiji.manufacturer_data = {POSHIJI_MFR_ID: bytes.fromhex("fd024002009964060102ffff1e")}
     info_poshiji.service_uuids = []
     info_poshiji.name = "FFEEDDCCBBAA"
 

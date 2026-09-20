@@ -1,4 +1,4 @@
-"""Poshiji PSJ-420 backend using the XTE BLE protocol."""
+"""Poshiji backend using the XTE BLE protocol."""
 
 from __future__ import annotations
 
@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING
 
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
 from . import writer
-from .devices import PRESETS, PSJ_420
+from .const import MANUFACTURER_ID, PALETTES
+from .devices import PRESETS, preset_for_advertisement
 from .parser import PoshijiBluetoothDeviceData, is_poshiji_advertisement
+from .protocol import parse_advertisement
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -22,24 +24,44 @@ class PoshijiBleBackend(BleBackend):
     label = "XTE"
     name = "Poshiji (XTE)"
     capabilities = Capabilities(
-        passive_battery=False,
+        passive_battery=True,
         session_battery=False,
         session_temperature=False,
         model_detection=True,
-        palettes=("BWRY",),
+        palettes=tuple(PALETTES),
     )
     PRESETS = PRESETS
     parser_cls = PoshijiBluetoothDeviceData
     prepare_image = staticmethod(writer.prepare)
     write_session = staticmethod(writer.write_session)
 
+    def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
+        """The advertised device number is authoritative over the configured model."""
+        if info is None or info.model_key is None:
+            return preset
+        return self.PRESETS.get(info.model_key, preset)
+
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """The advertisement identifies the (single) model and carries no readings."""
-        if not self.supported(service_info):
+        """The advertisement names the tag type (model), battery and versions."""
+        data = service_info.manufacturer_data.get(MANUFACTURER_ID)
+        advertisement = parse_advertisement(data)
+        preset = preset_for_advertisement(data)
+        if advertisement is None or preset is None:
             return None
-        return AdvertisementInfo(model_key=PSJ_420.key)
+        return AdvertisementInfo(
+            model_key=preset.key,
+            sw_version=advertisement.firmware,
+            hw_version=str(advertisement.hardware_revision),
+            raw={
+                "device_number": advertisement.device_number,
+                "battery_percent": advertisement.battery_percent,
+                "record_type": advertisement.record_type,
+                "chip_type": advertisement.chip_type,
+                "tx_power": advertisement.tx_power,
+            },
+        )
 
     async def write_prepared(
         self,
@@ -50,17 +72,18 @@ class PoshijiBleBackend(BleBackend):
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        # Only the captured PSJ-420 profile is known; refuse before connecting.
-        if (preset.key, preset.width, preset.height, preset.colors) != (
-            PSJ_420.key,
-            PSJ_420.width,
-            PSJ_420.height,
-            PSJ_420.colors,
-        ):
+        # Only captured profiles are known; refuse anything else before connecting.
+        if self.PRESETS.get(preset.key) != preset:
             return WriteResult(success=False, error="Unsupported Poshiji preset")
         return await super().write_prepared(
             ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 
-__all__ = ["PRESETS", "PoshijiBleBackend", "PoshijiBluetoothDeviceData", "is_poshiji_advertisement"]
+__all__ = [
+    "PRESETS",
+    "PoshijiBleBackend",
+    "PoshijiBluetoothDeviceData",
+    "is_poshiji_advertisement",
+    "preset_for_advertisement",
+]
