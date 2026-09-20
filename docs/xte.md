@@ -113,10 +113,10 @@ model and resolution.
 ### Other models in the family
 
 The same firmware ships across sizes. Model names printed on the tags are
-`PSJ-<size>`; the vendor manual's own table uses `ESL-<size><colors>` (1.54"
+`PSJ-<size>`; the same panels are also listed as `ESL-<size><colors>` (1.54"
 ESL-15BWRY 200×200, 2.13" ESL-21BWRY 250×122, 2.66" ESL-26BWRY 296×152, 2.9"
 ESL-29BWRY 296×128, 3.5" ESL-35BWRY 384×184, 3.7" ESL-37BWRY 416×240, and a
-freezer variant ESL-21MBW; the 4.2" is not in that table).
+freezer variant ESL-21MBW; the 4.2" has no such listing).
 
 Catalog (`esl_ble/xte/devices.py`):
 
