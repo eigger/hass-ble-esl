@@ -15,6 +15,10 @@ CMD_START = 0x01
 CMD_SIZE = 0x02
 CMD_IMAGE = 0x03
 RESP_IMAGE_DATA = 0x05
+# Second byte of the 0x05 reply: 0x00 = "send me part N" (next four bytes),
+# 0x08 = transfer complete (observed after the last part on every tag tested).
+RESP_STATUS_NEXT_PART = 0x00
+RESP_STATUS_COMPLETE = 0x08
 
 CONNECT_TIMEOUT = 30.0
 FEEDBACK_TIMEOUT = 10.0
@@ -25,8 +29,11 @@ FEEDBACK_TIMEOUT = 10.0
 # short timeout and resend it if unanswered. START only opens the transfer
 # (SIZE/IMAGE follow), so repeating it is harmless. The first answered START
 # proves both the subscription and the tag's readiness end to end.
+# Field data (six tags, 0.2 s settle): START was answered in 0.05-0.19 s, and
+# one tag in six dropped the first START. 0.4 s leaves 2x margin on the answer
+# while keeping the cost of a dropped START small.
 NOTIFY_SETTLE_S = 0.2
-START_PROBE_TIMEOUT_S = 0.7
+START_PROBE_TIMEOUT_S = 0.4
 START_PROBE_ATTEMPTS = 3
 
 # The tag re-requests a chunk it could not accept. Give up only after this

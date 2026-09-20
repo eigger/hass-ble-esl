@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import logging
-from typing import cast
+from typing import Any, cast
 
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothDataUpdate,
@@ -234,6 +234,14 @@ class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
     @property
     def native_value(self) -> float | None:
         return self._native_value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """The last write attempt's breakdown (attempt, success, error, and the
+        per-stage timings such as connect_s / start_probes / round_trip_ms), so
+        the write path can be monitored from the entity instead of debug logs.
+        Each write's final duration update publishes it."""
+        return self._data.last_write_timing
 
     @callback
     def _handle_coordinator_update(self) -> None:

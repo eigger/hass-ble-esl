@@ -83,7 +83,7 @@ class WriteResult:
     battery_mv: int | None = None
     temperature_c: int | None = None
     error: str | None = None
-    timing: dict[str, float | int] = field(default_factory=dict)
+    timing: dict[str, float | int | bool] = field(default_factory=dict)
     """Per-stage timings in seconds (and counts) for the diagnostics download
     and debug log: `connect_s`/`session_s` from write_prepared(), the rest
     protocol-specific (e.g. PickSmart's settle, START probes, chunk round trip)."""
@@ -473,7 +473,7 @@ class BleBackend(ABC):
             # protocol measured before raising (it may attach `timing` to
             # the exception) plus the connect/session split.
             now = time.monotonic()
-            timing: dict[str, float | int] = {
+            timing: dict[str, float | int | bool | str] = {
                 "connect_s": round((connected or now) - started, 3),
                 **getattr(exc, "timing", {}),
             }

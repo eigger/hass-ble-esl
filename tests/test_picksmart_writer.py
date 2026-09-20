@@ -416,9 +416,24 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
     asyncio.run(_test())
 
 
-@pytest.mark.parametrize("ends_after_last", [True, False])
-def test_picksmart_unexpected_frame_only_ok_after_last_part(ends_after_last):
-    """A non-'send me part N' frame is success only once every part was sent."""
+@pytest.mark.parametrize(
+    ("frame", "at", "expect"),
+    [
+        (bytes([0x05, 0x08, 0, 0, 0, 0]), "last", "completed"),
+        (bytes([0x05, 0x08, 0, 0, 0, 0]), 1, r"Tag reported completion after part 1/\d+"),
+        (
+            bytes([0x05, 0x01, 0, 0, 0, 0]),
+            "last",
+            r"Unexpected reply after part \d+/\d+: 050100000000",
+        ),
+        (bytes([0x07]), 1, r"Unexpected reply after part 1/\d+: 07"),
+    ],
+    ids=["complete-after-last", "complete-too-early", "unknown-after-last", "unknown-early"],
+)
+def test_picksmart_transfer_end_frames(frame, at, expect):
+    """05 08 is the tag's completion frame (seen after the last part on every
+    tag tested); it is accepted only there. Any other non-'next part' reply
+    fails the transfer wherever it arrives."""
 
     async def _test():
         mock_client = MagicMock()
@@ -437,9 +452,9 @@ def test_picksmart_unexpected_frame_only_ok_after_last_part(ends_after_last):
                     mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
             elif char == IMG_UUID:
                 part = int.from_bytes(data[0:4], "little")
-                end_at = payload_parts - 1 if ends_after_last else 1
+                end_at = payload_parts - 1 if at == "last" else at
                 if part == end_at:
-                    mock_client._handler(None, bytearray([0x05, 0x08]))  # unknown frame
+                    mock_client._handler(None, bytearray(frame))
                 else:
                     mock_client._handler(
                         None, bytearray([0x05, 0x00]) + (part + 1).to_bytes(4, "little")
@@ -455,12 +470,12 @@ def test_picksmart_unexpected_frame_only_ok_after_last_part(ends_after_last):
         payload_parts = (len(encode_image(img, PRESETS["0x0033"])) + 239) // 240
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
 
-        if ends_after_last:
-            assert (
-                await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
-            ).success is True
+        if expect == "completed":
+            result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+            assert result.success is True
+            assert result.timing["completed_by_tag"] is True
         else:
-            with pytest.raises(PickSmartError, match=r"ended transfer after part 1/\d+ with 0508"):
+            with pytest.raises(PickSmartError, match=expect):
                 await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
 
     asyncio.run(_test())

@@ -81,6 +81,9 @@ async def test_write_sends_rendered_image_and_updates_image_entity(
         "success": True,
         "transfer_s": 0.1,
     }
+    # ...and the Write Duration sensor carries it as attributes for monitoring.
+    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
+    assert attrs["attempt"] == 1 and attrs["success"] is True and attrs["transfer_s"] == 0.1
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "on"
     assert sensor(hass, "failure_count") == "0"
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
@@ -144,6 +147,8 @@ async def test_failed_write_after_retries(
     assert tag_writer.write_prepared.await_count == 3
     assert sensor(hass, "failure_count") == "1"
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
+    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
+    assert (attrs["attempt"], attrs["success"], attrs["error"]) == (3, False, "boom")
 
 
 async def test_encode_once_per_write_reused_across_retries(
