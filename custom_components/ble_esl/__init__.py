@@ -103,10 +103,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     try:
         backend = esl_ble.get(protocol)
     except KeyError as exc:
-        # Backend ids are not migrated; an entry from a release that used
-        # another id is removed and the tag added again.
+        # Backend ids are not migrated: for an entry from a release that used
+        # another id, the user removes the device and adds the tag again.
         raise ConfigEntryError(
-            f"Unknown protocol backend {protocol!r}; remove this device and add it again"
+            translation_domain=DOMAIN,
+            translation_key="unknown_backend",
+            translation_placeholders={"protocol": protocol},
         ) from exc
     preset, service_info, adv_info = resolve_preset(
         hass, backend, address, options.get(CONF_MODEL, DEFAULT_MODEL)

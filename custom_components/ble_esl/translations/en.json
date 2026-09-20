@@ -51,26 +51,50 @@
   },
   "entity": {
     "sensor": {
-      "battery": { "name": "Battery" },
-      "battery_voltage": { "name": "Battery Voltage" },
-      "temperature": { "name": "Temperature" },
-      "write_duration": { "name": "Write Duration" },
-      "failure_count": { "name": "Failure Count" },
-      "last_failure_time": { "name": "Last Failure Time" }
+      "battery": {
+        "name": "Battery"
+      },
+      "battery_voltage": {
+        "name": "Battery Voltage"
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "write_duration": {
+        "name": "Write Duration"
+      },
+      "failure_count": {
+        "name": "Failure Count"
+      },
+      "last_failure_time": {
+        "name": "Last Failure Time"
+      }
     },
     "binary_sensor": {
-      "connectivity": { "name": "Connectivity" },
-      "display_in_sync": { "name": "Display In Sync" }
+      "connectivity": {
+        "name": "Connectivity"
+      },
+      "display_in_sync": {
+        "name": "Display In Sync"
+      }
     },
     "image": {
-      "last_updated_content": { "name": "Last Updated Content" },
-      "preview_content": { "name": "Preview Content" }
+      "last_updated_content": {
+        "name": "Last Updated Content"
+      },
+      "preview_content": {
+        "name": "Preview Content"
+      }
     },
     "text": {
-      "alias": { "name": "Alias" }
+      "alias": {
+        "name": "Alias"
+      }
     },
     "switch": {
-      "write_lock": { "name": "Write Lock" }
+      "write_lock": {
+        "name": "Write Lock"
+      }
     }
   },
   "config": {
@@ -120,6 +144,11 @@
           "debounce_ms": "Delay before writing to device. New writes cancel pending ones. 0 = disabled (immediate write)."
         }
       }
+    }
+  },
+  "exceptions": {
+    "unknown_backend": {
+      "message": "Unknown protocol backend {protocol}; remove this device and add it again."
     }
   }
 }

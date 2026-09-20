@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bt import inject_bluetooth_service_info, service_info
+from bt import inject_bluetooth_service_info
 from conftest import ADDRESS, IDENT, WOLINK_MFR_BYTES, device_of, setup_entry, wolink_service_info
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -116,14 +116,6 @@ async def test_unknown_backend_id_fails_setup_clearly(
 ) -> None:
     """Backend ids are not migrated: an entry with a stale id asks to be re-added."""
     address = "AA:BB:CC:DD:EE:42"
-    inject_bluetooth_service_info(
-        hass,
-        service_info(
-            address,
-            name="FFEEDDCCBBAA",
-            manufacturer_data={0x5258: bytes.fromhex("fd024002009964060102ffff1e")},
-        ),
-    )
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=address,
@@ -134,4 +126,5 @@ async def test_unknown_backend_id_fails_setup_clearly(
     assert not await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.SETUP_ERROR
-    assert "remove this device and add it again" in (entry.reason or "")
+    assert entry.error_reason_translation_key == "unknown_backend"
+    assert entry.error_reason_translation_placeholders == {"protocol": "poshiji"}

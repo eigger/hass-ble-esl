@@ -145,5 +145,10 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "unknown_backend": {
+      "message": "Backend de protocolo desconhecido {protocol}; remova este dispositivo e adicione-o novamente."
+    }
   }
 }
