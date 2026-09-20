@@ -9,8 +9,8 @@ MANUFACTURER_ID = 0x5258
 BATTERY_LOW_PERCENT = 10
 BLOCK_DATA_SIZE = 1211  # 1220-byte logical block, including its 9-byte header.
 # Settle after enabling notifications before the first command, like the other
-# backends (PickSmart 1.0 s, WOLINK 0.5 s, easyTag 0.3 s); some adapters and
-# proxies drop a write issued immediately after the CCCD write.
+# backends (PickSmart 0.2 s, easyTag 0.8 s); some adapters and proxies drop a
+# write issued immediately after the CCCD write.
 NOTIFY_SETTLE_S = 0.5
 # Two-bit pixel value -> RGB, per preset ``colors``. Only the BWRY mapping
 # (00 black, 01 white, 10 yellow, 11 red) has been captured; a model with

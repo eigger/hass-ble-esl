@@ -28,9 +28,6 @@ PSJ_420 = DevicePreset(
 )
 
 PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420,)}
-BY_DEVICE_NUMBER: dict[int, DevicePreset] = {
-    preset.extra["device_number"]: preset for preset in PRESETS.values()
-}
 
 
 def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:
@@ -38,4 +35,7 @@ def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:
     advertisement = parse_advertisement(data)
     if advertisement is None:
         return None
-    return BY_DEVICE_NUMBER.get(advertisement.device_number)
+    for preset in PRESETS.values():
+        if preset.extra["device_number"] == advertisement.device_number:
+            return preset
+    return None

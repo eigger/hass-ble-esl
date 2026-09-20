@@ -35,6 +35,12 @@ class PoshijiBleBackend(BleBackend):
     prepare_image = staticmethod(writer.prepare)
     write_session = staticmethod(writer.write_session)
 
+    def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
+        """The advertised device number is authoritative over the configured model."""
+        if info is None or info.model_key is None:
+            return preset
+        return self.PRESETS.get(info.model_key, preset)
+
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:

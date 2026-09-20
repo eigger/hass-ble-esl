@@ -111,13 +111,16 @@ def test_new_model_is_one_catalog_entry(monkeypatch):
         extra={"device_number": 140},
     )
     monkeypatch.setitem(devices.PRESETS, other.key, other)
-    monkeypatch.setitem(devices.BY_DEVICE_NUMBER, 140, other)
     backend = esl_ble.get("poshiji")
     info = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
     assert esl_ble.detect(info) is backend
     assert backend.parse_advertisement(info).model_key == "psj-290"
     assert backend.parse_advertisement(advertisement()).model_key == "psj-420"
     assert backend.preset_for("psj-290") is other
+    # A stale configured model is corrected by what the tag advertises.
+    assert backend.refine_preset(PSJ_420, backend.parse_advertisement(info)) is other
+    assert backend.refine_preset(other, backend.parse_advertisement(advertisement())) is PSJ_420
+    assert backend.refine_preset(PSJ_420, None) is PSJ_420
     assert "PSJ-290" in update_device(backend.create_parser(other).update(info)).model
     obj = writer.prepare(other, Image.new("RGB", (296, 128), "white"), "")
     assert obj[25:33] == (296).to_bytes(4, "big") + (128).to_bytes(4, "big")
