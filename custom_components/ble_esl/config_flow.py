@@ -278,18 +278,19 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             model_key = user_input[CONF_MODEL]
             return self._create_entry(model_key)
 
-        default_model = backend.preset_for(self._detected_model or DEFAULT_MODEL).key
-
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_MODEL, default=default_model): SelectSelector(
-                    SelectSelectorConfig(
-                        options=_model_selector_options(backend.id),
-                        mode=SelectSelectorMode.DROPDOWN,
-                    )
-                )
-            }
+        selector = SelectSelector(
+            SelectSelectorConfig(
+                options=_model_selector_options(backend.id),
+                mode=SelectSelectorMode.DROPDOWN,
+            )
         )
+        if backend.capabilities.model_detection and not self._detected_model:
+            # The tag's type is unknown; no size is a better guess than another.
+            field = vol.Required(CONF_MODEL)
+        else:
+            default_model = backend.preset_for(self._detected_model or DEFAULT_MODEL).key
+            field = vol.Required(CONF_MODEL, default=default_model)
+        schema = vol.Schema({field: selector})
 
         return self.async_show_form(
             step_id="model",

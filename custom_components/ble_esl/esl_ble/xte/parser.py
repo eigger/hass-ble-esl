@@ -20,24 +20,26 @@ _unknown_reported: set[str] = set()
 
 
 def is_xte_advertisement(info: BluetoothServiceInfoBleak) -> bool:
+    """Any XTE record is ours; a device number not in the catalog is reported once."""
     data = info.manufacturer_data.get(MANUFACTURER_ID)
-    if preset_for_advertisement(data) is not None:
-        return True
-    # An XTE tag of a type not in the catalog: say so once, with what a
-    # report needs, instead of ignoring it silently.
     advertisement = parse_advertisement(data)
-    if advertisement is not None and info.address not in _unknown_reported:
+    if advertisement is None:
+        return False
+    if preset_for_advertisement(data) is None and info.address not in _unknown_reported:
+        # The model has to be picked by hand; log what a report needs so the
+        # device number can be added to the catalog.
         _unknown_reported.add(info.address)
         _LOGGER.info(
-            "Unsupported XTE tag %s: device number %d, hardware %d, firmware %s, "
-            "manufacturer data %s. Open an issue with the tag's model and resolution.",
+            "XTE tag %s has an unknown device number %d (hardware %d, firmware %s, "
+            "manufacturer data %s): select its model manually, and open an issue with "
+            "this line and the tag's model and resolution.",
             info.address,
             advertisement.device_number,
             advertisement.hardware_revision,
             advertisement.firmware,
             data.hex(),
         )
-    return False
+    return True
 
 
 class XteBluetoothDeviceData(BleParser):

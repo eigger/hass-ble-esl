@@ -20,7 +20,7 @@ from custom_components.ble_esl.esl_ble.xte.devices import (
     PSJ_420,
     preset_for_advertisement,
 )
-from custom_components.ble_esl.esl_ble.xte.protocol import encode_rle, make_blocks
+from custom_components.ble_esl.esl_ble.xte.protocol import buffer_size, encode_rle, make_blocks
 
 
 def advertisement(tail=0x1B, payload=None):
@@ -93,34 +93,66 @@ def test_psj213_is_detected_and_packed_portrait():
     assert len(make_blocks(obj)) == 1
 
 
-def test_unknown_device_number_is_not_claimed_but_reported_once(caplog):
-    """An XTE tag of a type not in the catalog is left alone, and reported once."""
+def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(caplog):
+    """An XTE tag of an uncaptured type is ours, needs a manual model, and is logged once."""
     backend = esl_ble.get("xte")
     unknown = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
     with caplog.at_level(logging.INFO, logger="custom_components.ble_esl.esl_ble.xte"):
-        assert not backend.supported(unknown)
-        assert backend.parse_advertisement(unknown) is None
-        assert esl_ble.detect(unknown) is None
-        assert not backend.supported(unknown)
-    reports = [r for r in caplog.records if "Unsupported XTE tag" in r.message]
+        assert backend.supported(unknown)
+        assert esl_ble.detect(unknown) is backend
+        assert backend.supported(unknown)
+    adv = backend.parse_advertisement(unknown)
+    assert adv.model_key is None
+    assert adv.raw["device_number"] == 141 and adv.raw["battery_percent"] == 99
+    # The configured (hand-picked) model stays, stamped with the seen device number.
+    size_only = devices.PRESETS["psj-290"]
+    refined = backend.refine_preset(size_only, adv)
+    assert refined.key == "psj-290" and refined.extra["seen_device_number"] == 141
+    assert refined.extra["rotation"] == 90
+    assert backend.refine_preset(refined, adv) is refined  # no churn on repeated refines
+    update = backend.create_parser(size_only).update(unknown)
+    assert '2.9" BWRY' in update_device(update).model and sensor_values(update)["battery"] == 99
+    reports = [r for r in caplog.records if "unknown device number" in r.message]
     assert len(reports) == 1
     assert "device number 141" in reports[0].message and "4.0.2" in reports[0].message
     assert "fd024002008d63060102ffff1c" in reports[0].message
+
+
+def test_size_only_presets_pack_at_their_resolution():
+    """Size-only entries have no device number but are complete for a manual pick."""
+    expected_buffers = {
+        "psj-154": (200, 200),  # square: no rotation
+        "psj-266": (152, 296),
+        "psj-290": (128, 296),
+        "psj-350": (384, 184),  # larger: landscape like the PSJ-420
+        "psj-370": (416, 240),
+        "psj-750": (800, 480),
+    }
+    for key, (buf_w, buf_h) in expected_buffers.items():
+        preset = devices.PRESETS[key]
+        assert "device_number" not in preset.extra and not preset.verified
+        assert (preset.extra.get("rotation", 0) == 90) == (key in ("psj-266", "psj-290"))
+        assert buffer_size(preset) == (buf_w, buf_h)
+        obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
+        assert obj[25:33] == buf_w.to_bytes(4, "big") + buf_h.to_bytes(4, "big")
 
 
 def test_catalog_entries_are_complete_and_disjoint():
     """A model is one PRESETS entry; check what discovery and packing derive from it."""
     device_numbers = {}
     for key, preset in devices.PRESETS.items():
+        assert preset.colors in PALETTES, f"{key} palette {preset.colors} has no pixel mapping"
         number = preset.extra.get("device_number")
-        assert isinstance(number, int) and 0 < number <= 0xFFFF, f"{key} has no device number"
+        if number is None:
+            continue  # size-only entry, picked by hand until its device number is known
+        assert isinstance(number, int) and 0 < number <= 0xFFFF, f"{key} device number"
         assert number not in device_numbers, (
             f"{key} shares a device number with {device_numbers[number]}"
         )
-        assert preset.colors in PALETTES, f"{key} palette {preset.colors} has no pixel mapping"
         record = b"\xfd\x02\x40\x02" + number.to_bytes(2, "big") + b"\x64\x06"
         assert preset_for_advertisement(record) is preset
         device_numbers[number] = key
+    assert {"psj-420", "psj-213"} <= set(device_numbers.values())
 
 
 def test_new_model_is_one_catalog_entry(monkeypatch):
@@ -157,6 +189,32 @@ def test_foreign_preset_is_refused_before_connecting(monkeypatch):
     result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
     assert not result.success and result.error == "Unsupported XTE preset"
     connect.assert_not_awaited()
+
+
+@pytest.mark.parametrize("number", [97, 102, 106, 109, 119, 122])
+def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, number):
+    """A hand-picked size on a tag type with another pixel layout never gets a bad image."""
+    connect = AsyncMock(side_effect=AssertionError("must not connect"))
+    monkeypatch.setattr(base, "establish_connection", connect)
+    backend = esl_ble.get("xte")
+    payload = (
+        bytes.fromhex("fd024002") + number.to_bytes(2, "big") + bytes.fromhex("63060102ffff1c")
+    )
+    adv = backend.parse_advertisement(advertisement(payload=payload))
+    preset = backend.refine_preset(devices.PRESETS["psj-290"], adv)
+    result = asyncio.run(backend.write_image(advertisement(), preset, object()))
+    assert not result.success and f"device number {number}" in result.error
+    connect.assert_not_awaited()
+    # Any other seen device number writes normally (the stamp is not a rejection).
+    other = backend.refine_preset(
+        devices.PRESETS["psj-290"],
+        backend.parse_advertisement(
+            advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+        ),
+    )
+    monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("down")))
+    result = asyncio.run(backend.write_image(advertisement(), other, object()))
+    assert result.error == "down"
 
 
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
