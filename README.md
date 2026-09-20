@@ -15,7 +15,7 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | 4.2" (400×300) | Poshiji (XTE) PSJ-420 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> |
 | 10.2" (960×640) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 
-Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/xte.md](docs/xte.md) for the XTE (Poshiji) setup guide.
+Photos are of real tags. See [Examples](#examples) for the full list with YAML, [docs/xte.md](docs/xte.md) for the XTE (Poshiji) setup guide, and [docs/migration.md](docs/migration.md) if you are coming from `hass-gicisky`.
 
 ---
 
@@ -36,7 +36,7 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Related
 
-- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the original PickSmart-only integration, now archived. This repository is its successor; see [Migrating from `hass-gicisky`](https://github.com/eigger/hass-ble-esl#migrating-from-hass-gicisky-or-hass-zhsunyco).
+- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the original PickSmart-only integration, now archived. This repository is its successor; see [docs/migration.md](docs/migration.md) for the step-by-step migration guide.
 - [Stash](https://github.com/eigger/stash) — self-hosted home inventory manager. Track and restock items with barcode scanning, and print labels to ESL tags via Home Assistant.
 
 ---
@@ -124,19 +124,7 @@ Requires Home Assistant **2025.12** or newer.
 
 ### Migrating from `hass-gicisky` or `hass-zhsunyco`
 
-This repository supersedes two earlier integrations:
-
-| Old repository | Old domain | Protocol here |
-|----------------|------------|---------------|
-| [`hass-gicisky`](https://github.com/eigger/hass-gicisky) (archived) | `gicisky` | PickSmart |
-| `hass-zhsunyco` (renamed to this repo) | `zhsunyco` | WOLINK / easyTag |
-
-The domain is now `ble_esl`. Home Assistant cannot move config entries between domains, so existing devices must be re-added:
-
-1. Remove the existing **Gicisky** / **Zhsunyco** integration entries under **Settings** → **Devices & Services**.
-2. Delete `custom_components/gicisky` / `custom_components/zhsunyco` (or uninstall the old repository in HACS) and install `hass-ble-esl`.
-3. Restart Home Assistant and add your tags again. PickSmart tags are auto-discovered the same way as before.
-4. Update automations and dashboards: service calls change from `gicisky.write` / `zhsunyco.write` (and `*_guarded`) to `ble_esl.write` / `ble_esl.write_guarded`, and entity IDs are regenerated. The payload format is unchanged.
+This repository supersedes [`hass-gicisky`](https://github.com/eigger/hass-gicisky) (archived, PickSmart) and `hass-zhsunyco` (renamed to this repo, WOLINK / easyTag). The domain is now `ble_esl`, so existing tags must be re-added and `gicisky.write` / `zhsunyco.write` calls renamed to `ble_esl.write`; the payload format is unchanged. See the **[migration guide](docs/migration.md)** for the step-by-step walkthrough.
 
 ---
 
