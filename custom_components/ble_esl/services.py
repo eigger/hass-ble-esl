@@ -12,6 +12,7 @@ import asyncio
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable
 import contextlib
+import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial
@@ -21,7 +22,13 @@ import time
 from typing import Any
 
 from homeassistant.components.bluetooth import async_ble_device_from_address
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import async_extract_config_entry_ids
@@ -57,8 +64,18 @@ _LOGGER = logging.getLogger(__name__)
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Register the domain services (once per HA instance)."""
-    hass.services.async_register(DOMAIN, SERVICE_WRITE, partial(_async_write, hass))
-    hass.services.async_register(DOMAIN, SERVICE_WRITE_GUARDED, partial(_async_write_guarded, hass))
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_WRITE,
+        partial(_async_write, hass),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_WRITE_GUARDED,
+        partial(_async_write_guarded, hass),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
 
 
 # ── Target resolution ────────────────────────────────────────────────────
@@ -84,35 +101,90 @@ async def async_targeted_entries(
     return targets
 
 
+# ── Outcomes (service response data) ────────────────────────────────────
+
+
+@dataclass
+class WriteOutcome:
+    """What happened to one target, reported in the service response.
+
+    status:  written    the image is on the tag
+             failed     every attempt failed (see error / attempts)
+             scheduled  write_guarded: debounced, will run after `delay_ms`
+             duplicate  write_guarded: unchanged image, not sent
+             locked     the write-lock switch is on, not sent
+             preview    dry_run: rendered only
+             dropped    a debounced write superseded before it could run
+    """
+
+    status: str
+    error: str | None = None
+    attempts: int | None = None
+    duration_s: float | None = None
+    delay_ms: int | None = None
+    timing: dict[str, float | int] | None = None
+
+    def as_response(self) -> dict[str, Any]:
+        return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
+
+
+class WriteFailed(HomeAssistantError):
+    """A write failed after its retries; carries the outcome for the response."""
+
+    def __init__(self, address: str, outcome: WriteOutcome) -> None:
+        super().__init__(
+            f"Failed to write to {address} after {outcome.attempts} attempts: {outcome.error}"
+        )
+        self.outcome = outcome
+
+
 async def _for_each_target(
     hass: HomeAssistant,
     service: ServiceCall,
-    handler: Callable[[BleEslConfigEntry], Awaitable[None]],
-) -> None:
+    handler: Callable[[BleEslConfigEntry], Awaitable[WriteOutcome]],
+) -> ServiceResponse:
     """Run handler for every targeted entry, continuing past failures.
 
     Handlers run concurrently: each renders and starts its encode right
     away and then queues on the BLE lock, which transfers to one tag at a
     time, so later tags encode while an earlier one is transferring. (The
     render step awaits before the lock, so the transfer order is the order
-    renders finish, not necessarily the target order.) Errors are
-    collected and raised together at the end so one unreachable tag does
-    not prevent the others from being written.
+    renders finish, not necessarily the target order.)
+
+    Without a requested response, write failures are collected and raised
+    together at the end (one unreachable tag does not prevent the others
+    from being written). With `response_variable`, failures are reported
+    per target in the response instead of raising, so an automation can
+    branch on them. Programming errors always raise.
     """
     targets = await async_targeted_entries(hass, service)
     results = await asyncio.gather(*(handler(entry) for entry in targets), return_exceptions=True)
-    errors = [str(r) for r in results if isinstance(r, HomeAssistantError)]
-    unexpected = [
-        r for r in results if isinstance(r, BaseException) and not isinstance(r, HomeAssistantError)
-    ]
+
+    outcomes: dict[str, WriteOutcome] = {}
+    errors: list[str] = []
+    unexpected: list[BaseException] = []
+    for entry, result in zip(targets, results, strict=True):
+        if isinstance(result, WriteOutcome):
+            outcomes[entry.runtime_data.device_id] = result
+        elif isinstance(result, WriteFailed):
+            outcomes[entry.runtime_data.device_id] = result.outcome
+            errors.append(str(result))
+        elif isinstance(result, HomeAssistantError):
+            outcomes[entry.runtime_data.device_id] = WriteOutcome("failed", error=str(result))
+            errors.append(str(result))
+        else:
+            unexpected.append(result)
     if unexpected:
         # A programming error keeps its traceback; the other tags' write
         # failures are attached so they are not lost from the report.
         if errors:
             unexpected[0].add_note("Other targets failed: " + "; ".join(errors))
         raise unexpected[0]
-    if errors:
+    if errors and not service.return_response:
         raise HomeAssistantError("; ".join(errors))
+    if not service.return_response:
+        return None
+    return {device_id: outcome.as_response() for device_id, outcome in outcomes.items()}
 
 
 # ── Write job ────────────────────────────────────────────────────────────
@@ -199,10 +271,11 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
         await asyncio.sleep(1)
 
 
-async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
+async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Write with retries, tracking duration/connectivity and the result sensors.
 
-    Raises HomeAssistantError after the last failed attempt.
+    Returns the "written" outcome; raises WriteFailed after the last failed
+    attempt (a HomeAssistantError carrying the "failed" outcome).
     """
     data = job.data
     address = job.address
@@ -253,7 +326,12 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
                 # failed or locked-out write must not suppress a retry of
                 # the same payload.
                 data.last_image_data = job.image_png
-                return
+                return WriteOutcome(
+                    "written",
+                    attempts=attempt,
+                    duration_s=round(time.monotonic() - data.start_time, 2),
+                    timing=result.timing or None,
+                )
 
             _LOGGER.warning(
                 "Write failed to %s (attempt %d/%d): %s",
@@ -270,8 +348,15 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
                 (data.failure_coordinator.data or 0) + 1
             )
             data.last_failure_coordinator.async_set_updated_data(now())
-            raise HomeAssistantError(
-                f"Failed to write to {address} after {job.max_retries} attempts: {result.error}"
+            raise WriteFailed(
+                address,
+                WriteOutcome(
+                    "failed",
+                    error=result.error,
+                    attempts=attempt,
+                    duration_s=round(time.monotonic() - data.start_time, 2),
+                    timing=result.timing or None,
+                ),
             )
     finally:
         duration_task.cancel()
@@ -285,7 +370,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
         data.connectivity_coordinator.async_set_updated_data(False)
 
 
-async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> None:
+async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Encode, then write under the BLE lock.
 
     The encode runs once per write, in HA's executor, *before* queueing on
@@ -309,14 +394,14 @@ async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> None:
         async with hass.data[DATA_LOCK]:
             if data.write_lock:
                 _LOGGER.info("Write lock active for %s — skipping BLE write", address)
-                return
+                return WriteOutcome("locked")
             if job.generation is not None and job.generation != data.write_generation:
                 _LOGGER.debug("Superseded debounced write for %s dropped", address)
-                return
+                return WriteOutcome("dropped")
             if job.prevent_duplicate_send and job.image_png == data.last_image_data:
                 _LOGGER.info("Skipping duplicate image for %s", address)
-                return
-            await execute_write(hass, job)
+                return WriteOutcome("duplicate")
+            return await execute_write(hass, job)
     finally:
         # Skipped or failed before the encode was awaited: drop it without
         # a "Future exception was never retrieved" warning.
@@ -376,25 +461,25 @@ def schedule_debounced_write(hass: HomeAssistant, job: WriteJob, delay_s: float)
 # ── Service handlers ─────────────────────────────────────────────────────
 
 
-async def _async_write(hass: HomeAssistant, service: ServiceCall) -> None:
+async def _async_write(hass: HomeAssistant, service: ServiceCall) -> ServiceResponse:
     """ble_esl.write: always send (unless dry_run)."""
     dry_run = service.data.get("dry_run", False)
 
-    async def handle(entry: BleEslConfigEntry) -> None:
+    async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
         job = await build_write_job(hass, entry, service)
         if dry_run:
-            return
+            return WriteOutcome("preview")
         cancel_pending_write(job.data)
-        await run_ble_write(hass, job)
+        return await run_ble_write(hass, job)
 
-    await _for_each_target(hass, service, handle)
+    return await _for_each_target(hass, service, handle)
 
 
-async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> None:
+async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> ServiceResponse:
     """ble_esl.write_guarded: duplicate guard, write lock, debounce, then send."""
     dry_run = service.data.get("dry_run", False)
 
-    async def handle(entry: BleEslConfigEntry) -> None:
+    async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
         job = await build_write_job(hass, entry, service)
         data = job.data
         options = {**entry.data, **entry.options}
@@ -404,13 +489,13 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Non
 
         if job.prevent_duplicate_send and job.image_png == data.last_image_data:
             _LOGGER.info("Skipping duplicate image for %s", job.address)
-            return
+            return WriteOutcome("duplicate")
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.
-            return
+            return WriteOutcome("preview")
         if data.write_lock:
             _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-            return
+            return WriteOutcome("locked")
 
         debounce_ms = int(
             service.data.get(
@@ -426,8 +511,8 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Non
                     debounce_ms,
                 )
             schedule_debounced_write(hass, job, debounce_ms / 1000.0)
-        else:
-            cancel_pending_write(data)
-            await run_ble_write(hass, job)
+            return WriteOutcome("scheduled", delay_ms=debounce_ms)
+        cancel_pending_write(data)
+        return await run_ble_write(hass, job)
 
-    await _for_each_target(hass, service, handle)
+    return await _for_each_target(hass, service, handle)

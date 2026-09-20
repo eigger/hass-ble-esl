@@ -396,6 +396,36 @@ data:
 | `ble_esl.write` | Always send (except explicit `dry_run`) |
 | `ble_esl.write_guarded` | Automations that fire often; skip duplicates and coalesce rapid updates |
 
+### Response data
+
+Both services can return what happened to each target. Ask for it with `response_variable`; the result is a map keyed by device id:
+
+```yaml
+- action: ble_esl.write
+  target:
+    device_id: <your device>
+  data:
+    payload: [...]
+  response_variable: result
+- if: "{{ result.values() | selectattr('status', 'eq', 'failed') | list }}"
+  then:
+    - action: notify.mobile_app_phone
+      data:
+        message: "ESL write failed: {{ result.values() | map(attribute='error') | join(', ') }}"
+```
+
+| `status` | Meaning | Extra fields |
+|---|---|---|
+| `written` | Image is on the tag | `attempts`, `duration_s`, `timing` (per-stage seconds, protocol-specific) |
+| `failed` | Every attempt failed | `error`, `attempts`, `duration_s`, `timing` of the last attempt |
+| `scheduled` | `write_guarded` debounced the write | `delay_ms` — it will run after the quiet period |
+| `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
+| `locked` | Write lock switch is on; preview updated only | |
+| `preview` | `dry_run`: rendered only | |
+| `dropped` | A debounced write was superseded before it could run | |
+
+When a response is requested, a failed tag is **reported instead of raising**, so the automation continues and can branch on it. Without `response_variable` a failure still raises (and stops the automation) as before. Targeting no loaded tag at all always raises.
+
 ---
 
 ## Fonts
