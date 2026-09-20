@@ -12,6 +12,10 @@ BLOCK_DATA_SIZE = 1211  # 1220-byte logical block, including its 9-byte header.
 # backends (PickSmart 0.2 s, easyTag 0.8 s); some adapters and proxies drop a
 # write issued immediately after the CCCD write.
 NOTIFY_SETTLE_S = 0.5
+# Tag types whose pixel layout differs from the 2-bit row packing below (the
+# codes are regrouped into nibbles); not implemented, so writes to them are
+# refused before connecting.
+UNSUPPORTED_PACKING_DEVICE_NUMBERS = frozenset({97, 102, 106, 109, 119, 122})
 # Two-bit pixel value -> RGB, per preset ``colors``. Only the BWRY mapping
 # (00 black, 01 white, 10 yellow, 11 red) has been captured; a model with
 # another palette needs its mapping added here before its preset can load.

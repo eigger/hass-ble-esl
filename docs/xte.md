@@ -108,10 +108,12 @@ set automatically, otherwise the config flow asks for it and offers the
 size-only presets below (marked *unverified*). The integration also logs one
 INFO line per tag with the device number, versions and raw manufacturer
 data — please open an issue with that line, the tag's printed model and its
-resolution, and the size preset becomes a captured one. Some tag types (97,
-102, 106, 109, 119, 122) use a different pixel layout that is not
-implemented; a wrong pick shows as garbage or a sheared image, never as
-damage.
+resolution, and the size preset becomes a captured one. Tag types 97, 102,
+106, 109, 119 and 122 use a different pixel layout that is not implemented;
+writes to them are refused before connecting. For any other type a wrong
+size pick shows as garbage or a sheared image, never as damage. The model
+of a hand-picked tag cannot be changed in the options; remove the device
+and add it again.
 
 ### Other models in the family
 
@@ -137,8 +139,9 @@ Catalog (`esl_ble/xte/devices.py`):
 Panels up to 2.9" are assumed to scan along their short edge like the
 PSJ-213 (portrait buffer); the larger sizes are assumed landscape like the
 PSJ-420. If a manually picked size displays as diagonal stripes (shear), the
-orientation assumption is wrong for that panel; report it and the preset's
-`rotation` is flipped.
+orientation assumption is wrong for that panel; on the square 1.54" a wrong
+assumption shows instead as the picture lying on its side. Report either
+and the preset's `rotation` is flipped.
 Promoting a size-only entry is filling in its `device_number`; the key stays,
 so existing config entries keep working.
 
@@ -188,7 +191,7 @@ nearby-device addresses are included in this repository.
 
 | Symptom | Check |
 |---------|-------|
-| Device not discovered | Bluetooth is enabled, device is in range, and the advertisement decodes as described above with a device number in the catalog. Do not match on a fixed MAC/name. |
+| Device not discovered | Bluetooth is enabled, device is in range, and the advertisement decodes as an XTE record (manufacturer ID `0x5258`, record type `fd`/`fe`/`fc`/`04`). Do not match on a fixed MAC/name. |
 | Tag stops being recognized | Discovery keys on the device number only, so battery and firmware changes are fine. If it still stops, capture the manufacturer data (`0x5258`) and open an issue. |
 | "XTE tag … has an unknown device number" in the log | Pick the model by size in the config flow. Open an issue with the logged line plus the tag's printed model and resolution so the size becomes a captured model. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |

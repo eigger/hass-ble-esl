@@ -104,9 +104,12 @@ def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(capl
     adv = backend.parse_advertisement(unknown)
     assert adv.model_key is None
     assert adv.raw["device_number"] == 141 and adv.raw["battery_percent"] == 99
-    # The configured (hand-picked) model stays; readings still flow.
+    # The configured (hand-picked) model stays, stamped with the seen device number.
     size_only = devices.PRESETS["psj-290"]
-    assert backend.refine_preset(size_only, adv) is size_only
+    refined = backend.refine_preset(size_only, adv)
+    assert refined.key == "psj-290" and refined.extra["seen_device_number"] == 141
+    assert refined.extra["rotation"] == 90
+    assert backend.refine_preset(refined, adv) is refined  # no churn on repeated refines
     update = backend.create_parser(size_only).update(unknown)
     assert '2.9" BWRY' in update_device(update).model and sensor_values(update)["battery"] == 99
     reports = [r for r in caplog.records if "unknown device number" in r.message]
@@ -185,6 +188,32 @@ def test_foreign_preset_is_refused_before_connecting(monkeypatch):
     result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
     assert not result.success and result.error == "Unsupported XTE preset"
     connect.assert_not_awaited()
+
+
+@pytest.mark.parametrize("number", [97, 102, 106, 109, 119, 122])
+def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, number):
+    """A hand-picked size on a tag type with another pixel layout never gets a bad image."""
+    connect = AsyncMock(side_effect=AssertionError("must not connect"))
+    monkeypatch.setattr(base, "establish_connection", connect)
+    backend = esl_ble.get("xte")
+    payload = (
+        bytes.fromhex("fd024002") + number.to_bytes(2, "big") + bytes.fromhex("63060102ffff1c")
+    )
+    adv = backend.parse_advertisement(advertisement(payload=payload))
+    preset = backend.refine_preset(devices.PRESETS["psj-290"], adv)
+    result = asyncio.run(backend.write_image(advertisement(), preset, object()))
+    assert not result.success and f"device number {number}" in result.error
+    connect.assert_not_awaited()
+    # Any other seen device number writes normally (the stamp is not a rejection).
+    other = backend.refine_preset(
+        devices.PRESETS["psj-290"],
+        backend.parse_advertisement(
+            advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+        ),
+    )
+    monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("down")))
+    result = asyncio.run(backend.write_image(advertisement(), other, object()))
+    assert result.error == "down"
 
 
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])

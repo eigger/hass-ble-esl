@@ -8,6 +8,7 @@ from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_USER, ConfigEn
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import voluptuous as vol
 
 from custom_components.ble_esl.config_flow import _model_selector_options
 from custom_components.ble_esl.const import (
@@ -114,6 +115,9 @@ async def test_bluetooth_discovery_xte_unknown_device_number_asks_for_model(
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "model"
+    # No size is a better guess than another: the picker has no default.
+    field = next(k for k in result["data_schema"].schema if k == CONF_MODEL)
+    assert field.default is vol.UNDEFINED
     labels = {o["value"]: o["label"] for o in _model_selector_options("xte")}
     assert labels["psj-290"] == '2.9" BWRY — 296x128 (unverified)'
     assert "(unverified)" not in labels["psj-420"]
