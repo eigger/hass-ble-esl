@@ -1,7 +1,7 @@
 """XTE advertisement decoding, pixel packing and framing.
 
 Framing and packing are capture-verified on the PSJ-420. The advertisement
-layout (see docs/xte-psj420.md) is common to the XTE firmware family.
+layout (see docs/xte.md) is common to the XTE firmware family.
 """
 
 from __future__ import annotations

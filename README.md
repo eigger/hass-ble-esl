@@ -15,7 +15,7 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | 4.2" (400×300) | Poshiji (XTE) PSJ-420 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> |
 | 10.2" (960×640) | Gicisky (PickSmart) | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 
-Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/xte-psj420.md](docs/xte-psj420.md) for the PSJ-420 setup guide.
+Photos are of real tags. See [Examples](#examples) for the full list with YAML, and [docs/xte.md](docs/xte.md) for the XTE (Poshiji) setup guide.
 
 ---
 
@@ -87,7 +87,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
-- **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. See [setup and protocol notes](docs/xte-psj420.md).
+- **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. See [setup and protocol notes](docs/xte.md).
 - **WOLINK** — Zhsunyco BWRY tags, 2 bpp. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).

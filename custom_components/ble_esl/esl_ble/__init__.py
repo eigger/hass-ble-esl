@@ -78,6 +78,7 @@ __all__ = [
     "CONFIDENCE_ESTIMATED",
     "CONFIDENCE_HARDWARE",
     "CONFIDENCE_REPORTED",
+    "LEGACY_IDS",
     "AdvertisementInfo",
     "BleBackend",
     "BleParser",

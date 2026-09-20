@@ -1,9 +1,11 @@
-# XTE — Poshiji PSJ-420
+# XTE (Poshiji PSJ-420, PSJ-213)
 
-BLE ESL supports the Poshiji PSJ-420, a 400x300 black/white/red/yellow label,
-using its XTE protocol. Manufacturer, model and colors were confirmed by the
-device owner, who verified working screen updates with this backend on the
-real tag. The preset uses `reported` confidence. The protocol codec and BLE
+BLE ESL supports the XTE protocol family sold under the Poshiji brand. The
+reference device is the PSJ-420, a 400x300 black/white/red/yellow label;
+the catalog under [Advertisement](#advertisement) lists the other models.
+Manufacturer, model and colors of the PSJ-420 were confirmed by the device
+owner, who verified working screen updates with this backend on the real
+tag. Its preset uses `reported` confidence. The protocol codec and BLE
 transaction are also covered by automated tests.
 
 ## Product photo
