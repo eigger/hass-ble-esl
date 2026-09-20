@@ -93,34 +93,53 @@ def test_psj213_is_detected_and_packed_portrait():
     assert len(make_blocks(obj)) == 1
 
 
-def test_unknown_device_number_is_not_claimed_but_reported_once(caplog):
-    """An XTE tag of a type not in the catalog is left alone, and reported once."""
+def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(caplog):
+    """An XTE tag of an uncaptured type is ours, needs a manual model, and is logged once."""
     backend = esl_ble.get("xte")
     unknown = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
     with caplog.at_level(logging.INFO, logger="custom_components.ble_esl.esl_ble.xte"):
-        assert not backend.supported(unknown)
-        assert backend.parse_advertisement(unknown) is None
-        assert esl_ble.detect(unknown) is None
-        assert not backend.supported(unknown)
-    reports = [r for r in caplog.records if "Unsupported XTE tag" in r.message]
+        assert backend.supported(unknown)
+        assert esl_ble.detect(unknown) is backend
+        assert backend.supported(unknown)
+    adv = backend.parse_advertisement(unknown)
+    assert adv.model_key is None
+    assert adv.raw["device_number"] == 141 and adv.raw["battery_percent"] == 99
+    # The configured (hand-picked) model stays; readings still flow.
+    size_only = devices.PRESETS["psj-290"]
+    assert backend.refine_preset(size_only, adv) is size_only
+    update = backend.create_parser(size_only).update(unknown)
+    assert '2.9" BWRY' in update_device(update).model and sensor_values(update)["battery"] == 99
+    reports = [r for r in caplog.records if "unknown device number" in r.message]
     assert len(reports) == 1
     assert "device number 141" in reports[0].message and "4.0.2" in reports[0].message
     assert "fd024002008d63060102ffff1c" in reports[0].message
+
+
+def test_size_only_presets_pack_at_their_resolution():
+    """Size-only entries have no device number but are complete for a manual pick."""
+    for key in ("psj-154", "psj-266", "psj-290", "psj-350", "psj-370"):
+        preset = devices.PRESETS[key]
+        assert "device_number" not in preset.extra and not preset.verified
+        obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
+        assert obj[25:33] == preset.width.to_bytes(4, "big") + preset.height.to_bytes(4, "big")
 
 
 def test_catalog_entries_are_complete_and_disjoint():
     """A model is one PRESETS entry; check what discovery and packing derive from it."""
     device_numbers = {}
     for key, preset in devices.PRESETS.items():
+        assert preset.colors in PALETTES, f"{key} palette {preset.colors} has no pixel mapping"
         number = preset.extra.get("device_number")
-        assert isinstance(number, int) and 0 < number <= 0xFFFF, f"{key} has no device number"
+        if number is None:
+            continue  # size-only entry, picked by hand until its device number is known
+        assert isinstance(number, int) and 0 < number <= 0xFFFF, f"{key} device number"
         assert number not in device_numbers, (
             f"{key} shares a device number with {device_numbers[number]}"
         )
-        assert preset.colors in PALETTES, f"{key} palette {preset.colors} has no pixel mapping"
         record = b"\xfd\x02\x40\x02" + number.to_bytes(2, "big") + b"\x64\x06"
         assert preset_for_advertisement(record) is preset
         device_numbers[number] = key
+    assert {"psj-420", "psj-213"} <= set(device_numbers.values())
 
 
 def test_new_model_is_one_catalog_entry(monkeypatch):

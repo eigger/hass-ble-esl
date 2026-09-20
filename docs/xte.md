@@ -102,13 +102,16 @@ The tag alternates this record with a two-byte `ff 01` payload under the same
 company ID; the record-type check rejects it.
 
 A model is identified by its device number, never by the full byte string:
-battery and firmware bytes change over the tag's life. Device numbers not in
-the catalog are not claimed — some tag types (97, 102, 106, 109, 119, 122)
-use a different two-plane pixel layout, so a model must be
-captured before it is added. When an XTE tag with an unknown device number
-is seen, the integration logs one INFO line with its device number, versions
-and raw manufacturer data; please open an issue with that line and the tag's
-model and resolution.
+battery and firmware bytes change over the tag's life. Every XTE record is
+claimed; when the device number is one of the captured models the model is
+set automatically, otherwise the config flow asks for it and offers the
+size-only presets below (marked *unverified*). The integration also logs one
+INFO line per tag with the device number, versions and raw manufacturer
+data — please open an issue with that line, the tag's printed model and its
+resolution, and the size preset becomes a captured one. Some tag types (97,
+102, 106, 109, 119, 122) use a different pixel layout that is not
+implemented; a wrong pick shows as garbage or a sheared image, never as
+damage.
 
 ### Other models in the family
 
@@ -124,9 +127,17 @@ Catalog (`esl_ble/xte/devices.py`):
 |---|---|---|---|---|
 | PSJ-420 | 153 | 400×300 landscape | 400×300 | reported (owner-verified with this integration) |
 | PSJ-213 | 140 | 250×122 landscape | 122×250 portrait (`rotation: 90`, rows padded to 124 px) | community (pushed successfully with the same transaction elsewhere; not re-tested here) |
+| psj-154 | — | 200×200 | 200×200 | estimated (size only, manual pick) |
+| psj-266 | — | 296×152 | 296×152 | estimated (size only, manual pick) |
+| psj-290 | — | 296×128 | 296×128 | estimated (size only, manual pick) |
+| psj-350 | — | 384×184 | 384×184 | estimated (size only, manual pick) |
+| psj-370 | — | 416×240 | 416×240 | estimated (size only, manual pick) |
 
-Adding one is a single `DevicePreset` once its device number and orientation
-are known; a preset whose buffer is rotated carries `extra={"rotation": 90}`.
+The size-only entries assume a landscape buffer. If a manually picked size
+displays as diagonal stripes (shear), the panel scans along its short edge
+like the PSJ-213; report it and the preset gets `extra={"rotation": 90}`.
+Promoting a size-only entry is filling in its `device_number`; the key stays,
+so existing config entries keep working.
 
 ## Protocol
 
@@ -176,7 +187,7 @@ nearby-device addresses are included in this repository.
 |---------|-------|
 | Device not discovered | Bluetooth is enabled, device is in range, and the advertisement decodes as described above with a device number in the catalog. Do not match on a fixed MAC/name. |
 | Tag stops being recognized | Discovery keys on the device number only, so battery and firmware changes are fine. If it still stops, capture the manufacturer data (`0x5258`) and open an issue. |
-| "Unsupported Poshiji/XTE tag" in the log | An XTE tag whose device number is not in the catalog. Open an issue with the logged line plus the tag's model and resolution. |
+| "XTE tag … has an unknown device number" in the log | Pick the model by size in the config flow. Open an issue with the logged line plus the tag's printed model and resolution so the size becomes a captured model. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
 | Preview updates but panel does not | The preview is not a readback. Check `dry_run` under `data`; neither example sets it, so both send to the panel. |
 | Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |

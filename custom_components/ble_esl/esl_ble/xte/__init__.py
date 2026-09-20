@@ -36,7 +36,7 @@ class XteBleBackend(BleBackend):
     write_session = staticmethod(writer.write_session)
 
     def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
-        """The advertised device number is authoritative over the configured model."""
+        """A captured device number is authoritative; otherwise the configured model stays."""
         if info is None or info.model_key is None:
             return preset
         return self.PRESETS.get(info.model_key, preset)
@@ -44,14 +44,18 @@ class XteBleBackend(BleBackend):
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """The advertisement names the tag type (model), battery and versions."""
+        """The advertisement names the tag type, battery and versions.
+
+        model_key is set only for a captured device number; otherwise the
+        config flow asks for the model and the size-only presets are offered.
+        """
         data = service_info.manufacturer_data.get(MANUFACTURER_ID)
         advertisement = parse_advertisement(data)
-        preset = preset_for_advertisement(data)
-        if advertisement is None or preset is None:
+        if advertisement is None:
             return None
+        preset = preset_for_advertisement(data)
         return AdvertisementInfo(
-            model_key=preset.key,
+            model_key=None if preset is None else preset.key,
             sw_version=advertisement.firmware,
             hw_version=str(advertisement.hardware_revision),
             raw={
