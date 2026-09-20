@@ -13,6 +13,7 @@ from homeassistant.components.bluetooth import (
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.device_registry import (
     CONNECTION_BLUETOOTH,
@@ -92,27 +93,21 @@ def process_service_info(
     return update
 
 
-async def async_migrate_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:
-    """Rewrite legacy backend ids stored by older releases (1.1 -> 1.2)."""
-    if entry.version > 1:
-        return False
-    if entry.minor_version < 2:
-        data = {**entry.data}
-        options = {**entry.options}
-        for store in (data, options):
-            if store.get(CONF_PROTOCOL) in esl_ble.LEGACY_IDS:
-                store[CONF_PROTOCOL] = esl_ble.LEGACY_IDS[store[CONF_PROTOCOL]]
-        hass.config_entries.async_update_entry(entry, data=data, options=options, minor_version=2)
-    return True
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:
     """Set up a BLE ESL device from a config entry."""
     address = entry.unique_id
     assert address is not None
 
     options = {**entry.data, **entry.options}
-    backend = esl_ble.get(options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL))
+    protocol = options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
+    try:
+        backend = esl_ble.get(protocol)
+    except KeyError as exc:
+        # Backend ids are not migrated; an entry from a release that used
+        # another id is removed and the tag added again.
+        raise ConfigEntryError(
+            f"Unknown protocol backend {protocol!r}; remove this device and add it again"
+        ) from exc
     preset, service_info, adv_info = resolve_preset(
         hass, backend, address, options.get(CONF_MODEL, DEFAULT_MODEL)
     )
