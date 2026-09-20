@@ -1,6 +1,7 @@
 """Codec and transport checks without a BLE adapter or Home Assistant."""
 
 import asyncio
+import dataclasses
 from types import SimpleNamespace
 
 from PIL import Image
@@ -9,6 +10,7 @@ import pytest
 from custom_components.ble_esl.esl_ble.poshiji.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420, preset_for_advertisement
 from custom_components.ble_esl.esl_ble.poshiji.protocol import (
+    buffer_size,
     encode_rle,
     make_blocks,
     make_command,
@@ -26,7 +28,7 @@ def test_advertisement_variable_tail(tail):
 
 
 def test_advertisement_fields_psj420_and_psj213():
-    """Field layout as the vendor app reads it (xte-esl protocol.md section 5)."""
+    """Field layout of the XTE manufacturer-data record."""
     ours = parse_advertisement(bytes.fromhex("fd024002009964060102ffff1e"))
     assert (ours.record_type, ours.hardware_revision, ours.firmware) == (0xFD, 2, "4.0.2")
     assert (ours.device_number, ours.battery_percent) == (153, 100)
@@ -82,8 +84,32 @@ def test_palette_and_bit_order():
         pack_pixels(Image.new("RGB", (300, 400)), PSJ_420)
 
 
+def test_rows_pad_to_four_pixels_and_rotate_into_the_buffer():
+    """A 250x122 as-viewed preset with a portrait buffer: 31-byte rows, 122x250."""
+    portrait = dataclasses.replace(
+        PSJ_420, key="t", width=250, height=122, extra={"device_number": 1, "rotation": 90}
+    )
+    assert buffer_size(portrait) == (122, 250)
+    assert buffer_size(PSJ_420) == (400, 300)
+    image = Image.new("RGB", (250, 122), "white")
+    for x, color in enumerate(("white", "yellow", "red", "black", "black", "white")):
+        image.putpixel((249, x), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
+    packed = pack_pixels(image, portrait)
+    assert len(packed) == 31 * 250
+    # Rotated 90 degrees counter-clockwise, the right-hand column becomes buffer row 0,
+    # top pixel first; the two padded pixels pack as black.
+    assert packed[:2] == bytes.fromhex("6c15")
+    assert packed[2:30] == b"\x55" * 28
+    assert packed[30] == 0x50  # 122 px: last byte holds 2 white pixels + 2 padded (black)
+    assert packed[31:62] == b"\x55" * 30 + b"\x50"
+    obj = make_image_object(packed, *buffer_size(portrait))
+    assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
+    with pytest.raises(ValueError, match="250x122"):
+        pack_pixels(Image.new("RGB", (122, 250)), portrait)
+
+
 def test_image_header_and_half_frame_run_boundary():
-    obj = make_image_object(b"\xaa" * 30000, PSJ_420)
+    obj = make_image_object(b"\xaa" * 30000, 400, 300)
     # Each independently encoded 15000-byte half is 58*255 + 210 bytes.
     encoded_half = bytes.fromhex("ffaa") * 58 + bytes.fromhex("d2aa")
     assert obj[38:] == encoded_half * 2
@@ -94,7 +120,9 @@ def test_image_header_and_half_frame_run_boundary():
     assert obj[25:34] == bytes.fromhex("000001900000012c01")
     assert int.from_bytes(obj[34:38], "big") == 236
     with pytest.raises(ValueError, match="30000 bytes"):
-        make_image_object(b"\x00", PSJ_420)
+        make_image_object(b"\x00", 400, 300)
+    with pytest.raises(ValueError, match="7750 bytes"):  # 122 px rows pad to 31 bytes
+        make_image_object(b"\x00" * 7625, 122, 250)
 
 
 def test_control_commands_from_capture():
@@ -116,8 +144,8 @@ def test_blocks_and_worst_case_size():
         assert block[6] == sum(block[7:]) & 255
         assert block[7:9] == bytes((9, i))
     raw = (bytes(range(256)) * 118)[:30000]
-    assert len(make_image_object(raw, PSJ_420)) == 60038
-    assert len(make_blocks(make_image_object(raw, PSJ_420))) == 50
+    assert len(make_image_object(raw, 400, 300)) == 60038
+    assert len(make_blocks(make_image_object(raw, 400, 300))) == 50
 
 
 def _client(client, **kwargs):
@@ -184,7 +212,7 @@ def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
     assert asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
-    obj = make_image_object(b"\x55" * 30000, PSJ_420)
+    obj = make_image_object(b"\x55" * 30000, 400, 300)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
     for block in make_blocks(obj):
@@ -266,6 +294,6 @@ def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
         )
     )
-    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000, PSJ_420)))
+    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000, 400, 300)))
     # One settle after start_notify, then one retry delay per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames

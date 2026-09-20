@@ -3,12 +3,13 @@
 Adding a model is one DevicePreset here. Everything else derives from it:
 discovery and model detection from ``extra["device_number"]`` (the tag type
 the advertisement carries), image packing from ``width`` / ``height`` /
-``colors`` (the palette must exist in ``const.PALETTES``), and the write
-guard from membership in PRESETS.
+``colors`` (the palette must exist in ``const.PALETTES``) plus an optional
+``extra["rotation"]`` for panels whose native buffer is rotated from the
+as-viewed image, and the write guard from membership in PRESETS.
 
-Unknown device numbers are not claimed: the vendor SDK packs some tag types
-(97, 102, 106, 109, 119, 122) with a different two-plane layout, so a model
-must be captured before it is added rather than guessed from its size.
+Unknown device numbers are not claimed: some tag types (97, 102, 106, 109,
+119, 122) use a different two-plane pixel layout, so a model must be
+captured before it is added rather than guessed from its size.
 """
 
 from __future__ import annotations

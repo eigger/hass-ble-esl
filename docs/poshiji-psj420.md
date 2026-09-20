@@ -40,8 +40,8 @@ are not recorded here.
 | Preset key | `psj-420` | BLE ESL implementation |
 | Image packing | 2 bits/pixel, 30,000 bytes before RLE | Capture reconstruction |
 | Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
-| Discovery | Manufacturer ID `0x5258`, XTE record with device number 153 | Vendor app's advertisement parser (see [Advertisement](#advertisement)) |
-| Battery telemetry | Percentage from the advertisement | Vendor app's advertisement parser; PSJ-420 read 100 % |
+| Discovery | Manufacturer ID `0x5258`, XTE record with device number 153 | Advertisement layout (see [Advertisement](#advertisement)) |
+| Battery telemetry | Percentage from the advertisement | Advertisement layout; PSJ-420 read 100 % |
 | Temperature telemetry | Not exposed | Last advertised byte is probably °C but unconfirmed |
 | Hardware confidence | Owner-verified working updates | Device owner tested this backend; codec/transport covered by tests |
 
@@ -82,11 +82,9 @@ applied once per XTE command or block, not per ATT chunk.
 ## Advertisement
 
 The tag advertises under manufacturer ID `0x5258` (ASCII `XR` on the wire;
-not a registered company). The layout below is how the vendor's own app
-("POSHIJI ESL Management System") reads it, as recovered clean-room by
-[mattjoyce/xte-esl](https://github.com/mattjoyce/xte-esl) and cross-checked
-there against the tag's NFC record and factory screen. Home Assistant strips
-the two company-ID bytes; offsets are into what remains.
+not a registered company). The layout below is common to the XTE firmware
+family. Home Assistant strips the two company-ID bytes; offsets are into
+what remains.
 
 | Offset | PSJ-420 | Field |
 |---|---|---|
@@ -96,15 +94,15 @@ the two company-ID bytes; offsets are into what remains.
 | 4–5 | `00 99` | **Device number 153** — the tag type; identifies the model |
 | 6 | `64` | Battery, percent |
 | 7 | `06` | Chip type (high nibble), transmit power (low nibble) |
-| 8–12 | `01 02 ff ff 1e` | Not read by the app. The last byte (`1e` → `1b` seen after an update) sits where a temperature would; not exposed |
+| 8–12 | `01 02 ff ff 1e` | Not used. The last byte (`1e` → `1b` seen after an update) sits where a temperature would; not exposed |
 
 The tag alternates this record with a two-byte `ff 01` payload under the same
 company ID; the record-type check rejects it.
 
 A model is identified by its device number, never by the full byte string:
 battery and firmware bytes change over the tag's life. Device numbers not in
-the catalog are not claimed — the vendor SDK packs some tag types (97, 102,
-106, 109, 119, 122) with a different two-plane layout, so a model must be
+the catalog are not claimed — some tag types (97, 102, 106, 109, 119, 122)
+use a different two-plane pixel layout, so a model must be
 captured before it is added. When an XTE tag with an unknown device number
 is seen, the integration logs one INFO line with its device number, versions
 and raw manufacturer data; please open an issue with that line and the tag's
@@ -112,13 +110,14 @@ model and resolution.
 
 ### Other models in the family
 
-The vendor manual lists the same firmware across sizes (from xte-esl):
-1.54" ESL-15BWRY 200×200, 2.13" ESL-21BWRY 250×122 (PSJ-213, device number
-140, verified by xte-esl; native buffer is portrait 122×250), 2.66"
+The same firmware ships across sizes: 1.54" ESL-15BWRY 200×200, 2.13"
+ESL-21BWRY 250×122 (PSJ-213, device number 140; its native buffer is
+portrait 122×250, i.e. the image is rotated 90° before packing), 2.66"
 ESL-26BWRY 296×152, 2.9" ESL-29BWRY 296×128, 3.5" ESL-35BWRY 384×184, 3.7"
 ESL-37BWRY 416×240, plus the 4.2" PSJ-420 (device number 153) and a freezer
 variant ESL-21MBW. Adding one is a single `DevicePreset` in
-`esl_ble/poshiji/devices.py` once its device number and orientation are known.
+`esl_ble/poshiji/devices.py` once its device number and orientation are
+known; a preset whose buffer is rotated carries `extra={"rotation": 90}`.
 
 ## Protocol
 
@@ -132,8 +131,8 @@ variant ESL-21MBW. Adding one is a single `DevicePreset` in
 - XTEK object: magic [0:4], sum of bytes [12:] as big-endian uint32 [4:8],
   total length [8:12], image count 1 [12], image record offset 17 [13:17],
   then the record: x 0 [17:21], y 0 [21:25], width [25:29], height [29:33],
-  compression 01 = RLE [33], RLE length [34:38], RLE body [38:]. (Layout per
-  xte-esl protocol.md §7.1; this backend always sends one full-screen record.)
+  compression 01 = RLE [33], RLE length [34:38], RLE body [38:]. This backend
+  always sends one full-screen record.
 - Logical block: `XTE 02`, big-endian uint16 total length, one-byte sum of all
   following bytes, total block count, zero-based block index, up to 1211 bytes
   of object data. Each logical block is split into <=244-byte BLE writes.
