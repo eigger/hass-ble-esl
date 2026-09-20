@@ -110,11 +110,13 @@ class WriteOutcome:
 
     status:  written    the image is on the tag
              failed     every attempt failed (see error / attempts)
-             scheduled  write_guarded: debounced, will run after `delay_ms`
+             scheduled  write_guarded: debounced, will run after `delay_ms`;
+                        what happens then is not part of the response
              duplicate  write_guarded: unchanged image, not sent
              locked     the write-lock switch is on, not sent
              preview    dry_run: rendered only
-             dropped    a debounced write superseded before it could run
+             dropped    internal only (a fired debounced write superseded
+                        on the lock); never reaches a service response
     """
 
     status: str
@@ -352,7 +354,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 address,
                 WriteOutcome(
                     "failed",
-                    error=result.error,
+                    error=result.error or "unknown error",
                     attempts=attempt,
                     duration_s=round(time.monotonic() - data.start_time, 2),
                     timing=result.timing or None,
