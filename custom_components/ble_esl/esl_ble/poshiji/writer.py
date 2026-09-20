@@ -109,7 +109,7 @@ class XteClient:
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
     """Pack and RLE-encode an image into an XTEK object (CPU-bound, run in a thread)."""
-    return make_image_object(pack_pixels(image))
+    return make_image_object(pack_pixels(image, preset), preset)
 
 
 async def write_session(

@@ -1,4 +1,4 @@
-"""Poshiji PSJ-420 backend using the XTE BLE protocol."""
+"""Poshiji backend using the XTE BLE protocol."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
 from . import writer
-from .devices import PRESETS, PSJ_420
+from .const import MANUFACTURER_ID, PALETTES
+from .devices import PRESETS, preset_for_advertisement
 from .parser import PoshijiBluetoothDeviceData, is_poshiji_advertisement
 
 if TYPE_CHECKING:
@@ -26,7 +27,7 @@ class PoshijiBleBackend(BleBackend):
         session_battery=False,
         session_temperature=False,
         model_detection=True,
-        palettes=("BWRY",),
+        palettes=tuple(PALETTES),
     )
     PRESETS = PRESETS
     parser_cls = PoshijiBluetoothDeviceData
@@ -36,10 +37,9 @@ class PoshijiBleBackend(BleBackend):
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """The advertisement identifies the (single) model and carries no readings."""
-        if not self.supported(service_info):
-            return None
-        return AdvertisementInfo(model_key=PSJ_420.key)
+        """The advertisement fingerprints the model and carries no readings."""
+        preset = preset_for_advertisement(service_info.manufacturer_data.get(MANUFACTURER_ID))
+        return None if preset is None else AdvertisementInfo(model_key=preset.key)
 
     async def write_prepared(
         self,
@@ -50,17 +50,18 @@ class PoshijiBleBackend(BleBackend):
         attempt: int = 1,
         write_delay_ms: int = 0,
     ) -> WriteResult:
-        # Only the captured PSJ-420 profile is known; refuse before connecting.
-        if (preset.key, preset.width, preset.height, preset.colors) != (
-            PSJ_420.key,
-            PSJ_420.width,
-            PSJ_420.height,
-            PSJ_420.colors,
-        ):
+        # Only captured profiles are known; refuse anything else before connecting.
+        if self.PRESETS.get(preset.key) != preset:
             return WriteResult(success=False, error="Unsupported Poshiji preset")
         return await super().write_prepared(
             ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
 
 
-__all__ = ["PRESETS", "PoshijiBleBackend", "PoshijiBluetoothDeviceData", "is_poshiji_advertisement"]
+__all__ = [
+    "PRESETS",
+    "PoshijiBleBackend",
+    "PoshijiBluetoothDeviceData",
+    "is_poshiji_advertisement",
+    "preset_for_advertisement",
+]

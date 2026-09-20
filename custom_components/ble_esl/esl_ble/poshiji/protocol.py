@@ -1,32 +1,39 @@
-"""Capture-verified PSJ-420 pixel packing and XTE framing."""
+"""Capture-verified XTE pixel packing and framing (PSJ-420)."""
+
+from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
-from PIL import Image
+from .const import BLOCK_DATA_SIZE, PALETTES
 
-from .const import ADVERTISEMENT, BLOCK_DATA_SIZE, HEIGHT, PALETTE, WIDTH
+if TYPE_CHECKING:
+    from PIL import Image
+
+    from ..base import DevicePreset
+
+# Opaque XTEK header fields (object offsets 12..24 and 33) preserved from the
+# single PSJ-420 capture; not a general specification for all XTE devices.
+OBJECT_METADATA = bytes.fromhex("01000000110000000000000000")
+OBJECT_FLAG = b"\x01"
 
 
-def is_psj420_advertisement(data: bytes | None) -> bool:
-    """Recognize the observed PSJ-420 signature, ignoring its changing tail."""
-    return data is not None and len(data) == 13 and data[:12] == ADVERTISEMENT[:12]
-
-
-def pack_pixels(image: Image.Image) -> bytes:
+def pack_pixels(image: Image.Image, preset: DevicePreset) -> bytes:
     """Pack four pixels per byte, most significant pixel first."""
-    if image.size != (WIDTH, HEIGHT):
-        raise ValueError("XTE requires a 400x300 image")
+    if image.size != (preset.width, preset.height):
+        raise ValueError(f"XTE requires a {preset.width}x{preset.height} image")
+    palette = PALETTES[preset.colors]
     rgb = image.convert("RGB")
     # Quantize using a fixed palette without dithering, like the HA renderer.
     result = bytearray()
     packed = 0
-    color_cache = {color: index for index, color in enumerate(PALETTE)}
+    color_cache = {color: index for index, color in enumerate(palette)}
     raw = rgb.tobytes()
     for i, pixel in enumerate(zip(raw[0::3], raw[1::3], raw[2::3], strict=True)):
         value = color_cache.get(pixel)
         if value is None:
             value = min(
-                range(4), key=lambda n: sum((pixel[c] - PALETTE[n][c]) ** 2 for c in range(3))
+                range(4), key=lambda n: sum((pixel[c] - palette[n][c]) ** 2 for c in range(3))
             )
             color_cache[pixel] = value
         packed = (packed << 2) | value
@@ -49,21 +56,20 @@ def encode_rle(data: bytes) -> bytes:
     return bytes(output)
 
 
-def make_image_object(pixels: bytes) -> bytes:
+def make_image_object(pixels: bytes, preset: DevicePreset) -> bytes:
     """Build XTEK metadata, RLE image and 32-bit additive checksum."""
-    if len(pixels) != WIDTH * HEIGHT // 4:
-        raise ValueError("Expected 30000 bytes of packed XTE pixels")
+    expected = preset.width * preset.height // 4
+    if len(pixels) != expected:
+        raise ValueError(f"Expected {expected} bytes of packed XTE pixels")
     # The captured encoder resets its run at byte 15000, halfway through the
     # frame. Preserve that boundary even when both adjacent bytes are equal.
     midpoint = len(pixels) // 2
     compressed = encode_rle(pixels[:midpoint]) + encode_rle(pixels[midpoint:])
-    # Preserve observed opaque fields (offsets 12..24 and 33) for this profile.
-    metadata = bytes.fromhex("01000000110000000000000000")
     body = (
-        metadata
-        + WIDTH.to_bytes(4, "big")
-        + HEIGHT.to_bytes(4, "big")
-        + b"\x01"
+        OBJECT_METADATA
+        + preset.width.to_bytes(4, "big")
+        + preset.height.to_bytes(4, "big")
+        + OBJECT_FLAG
         + len(compressed).to_bytes(4, "big")
         + compressed
     )

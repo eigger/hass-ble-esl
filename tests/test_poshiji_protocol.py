@@ -7,10 +7,9 @@ from PIL import Image
 import pytest
 
 from custom_components.ble_esl.esl_ble.poshiji.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
-from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420
+from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420, preset_for_advertisement
 from custom_components.ble_esl.esl_ble.poshiji.protocol import (
     encode_rle,
-    is_psj420_advertisement,
     make_blocks,
     make_command,
     make_image_object,
@@ -21,7 +20,8 @@ from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
 def test_advertisement_variable_tail(tail):
-    assert is_psj420_advertisement(bytes.fromhex("fd024002009964060102ffff") + bytes([tail]))
+    data = bytes.fromhex("fd024002009964060102ffff") + bytes([tail])
+    assert preset_for_advertisement(data) is PSJ_420
 
 
 @pytest.mark.parametrize(
@@ -35,7 +35,7 @@ def test_advertisement_variable_tail(tail):
     ],
 )
 def test_advertisement_rejects_other_signatures(data):
-    assert not is_psj420_advertisement(data)
+    assert preset_for_advertisement(data) is None
 
 
 def test_rle_boundaries():
@@ -50,13 +50,13 @@ def test_palette_and_bit_order():
     image = Image.new("RGB", (400, 300), "white")
     for x, color in enumerate(("black", "white", "yellow", "red")):
         image.putpixel((x, 0), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
-    assert pack_pixels(image) == b"\x1b" + b"\x55" * 29999
+    assert pack_pixels(image, PSJ_420) == b"\x1b" + b"\x55" * 29999
     with pytest.raises(ValueError, match="400x300"):
-        pack_pixels(Image.new("RGB", (300, 400)))
+        pack_pixels(Image.new("RGB", (300, 400)), PSJ_420)
 
 
 def test_image_header_and_half_frame_run_boundary():
-    obj = make_image_object(b"\xaa" * 30000)
+    obj = make_image_object(b"\xaa" * 30000, PSJ_420)
     # Each independently encoded 15000-byte half is 58*255 + 210 bytes.
     encoded_half = bytes.fromhex("ffaa") * 58 + bytes.fromhex("d2aa")
     assert obj[38:] == encoded_half * 2
@@ -66,8 +66,8 @@ def test_image_header_and_half_frame_run_boundary():
     assert obj[12:25] == bytes.fromhex("01000000110000000000000000")
     assert obj[25:34] == bytes.fromhex("000001900000012c01")
     assert int.from_bytes(obj[34:38], "big") == 236
-    with pytest.raises(ValueError):
-        make_image_object(b"\x00")
+    with pytest.raises(ValueError, match="30000 bytes"):
+        make_image_object(b"\x00", PSJ_420)
 
 
 def test_control_commands_from_capture():
@@ -89,8 +89,8 @@ def test_blocks_and_worst_case_size():
         assert block[6] == sum(block[7:]) & 255
         assert block[7:9] == bytes((9, i))
     raw = (bytes(range(256)) * 118)[:30000]
-    assert len(make_image_object(raw)) == 60038
-    assert len(make_blocks(make_image_object(raw))) == 50
+    assert len(make_image_object(raw, PSJ_420)) == 60038
+    assert len(make_blocks(make_image_object(raw, PSJ_420))) == 50
 
 
 def _client(client, **kwargs):
@@ -157,7 +157,7 @@ def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
     assert asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
-    obj = make_image_object(b"\x55" * 30000)
+    obj = make_image_object(b"\x55" * 30000, PSJ_420)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
     for block in make_blocks(obj):
@@ -239,6 +239,6 @@ def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
         )
     )
-    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000)))
+    frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000, PSJ_420)))
     # One settle after start_notify, then one retry delay per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames
