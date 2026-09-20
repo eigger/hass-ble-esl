@@ -33,8 +33,9 @@ DEFAULT_WRITE_DELAY_MS = 0
 DEFAULT_PREVENT_DUPLICATE_SEND = False
 DEFAULT_DEBOUNCE_MS = 0
 
-# Session-polled battery (easyTag, WOLINK): the same voltage range as the
-# advertised readings, so percentages are comparable across backends.
+# Session-polled battery (backends with session_battery, i.e. easyTag): the
+# same voltage range as the advertised readings, so percentages are
+# comparable across backends.
 SESSION_MIN_VOLTAGE = BATTERY_MIN_VOLTAGE
 SESSION_MAX_VOLTAGE = BATTERY_MAX_VOLTAGE
 

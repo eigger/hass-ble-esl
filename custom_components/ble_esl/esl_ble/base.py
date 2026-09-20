@@ -26,9 +26,9 @@ _LOGGER = logging.getLogger(__name__)
 # Battery % is a linear map of the cell voltage over this range, and at or
 # below the minimum the battery-low binary sensor turns on. Below 2.5 V
 # e-paper refresh becomes unreliable even though BLE still works; the same
-# range applies to every backend that reports a voltage (advertised or
-# session-polled) so the percentages are comparable across tags. A preset may
-# override it via extra["min_voltage"] / extra["max_voltage"].
+# range applies to every backend that reports a voltage (advertised: PickSmart,
+# WOLINK; session-polled: easyTag) so the percentages are comparable across
+# tags. A preset may override it via extra["min_voltage"] / extra["max_voltage"].
 BATTERY_MIN_VOLTAGE = 2.5
 BATTERY_MAX_VOLTAGE = 2.9
 

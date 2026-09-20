@@ -197,7 +197,7 @@ Labels are rendered with **[imagespec](https://github.com/eigger/imagespec)** �
 - **Layout:** prefer `row` / `column` / `stack` over hand-placed coordinates.
 - **Image entities:** each tag exposes **Last Updated Content** (last image sent) and **Preview Content** (`dry_run` renders).
 - **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt — `attempt`, `success`, `error`, and the per-stage timings (`connect_s`, `session_s`; PickSmart also `start_probes`, `parts`, `resends`, `round_trip_ms`, `transfer_s`, `completed_by_tag`). Watch `start_probes` (should mostly be 1) and `round_trip_ms` (path quality) without turning on debug logging; the same data is in the diagnostics download.
-- **Battery:** the tag voltage is mapped linearly to **Battery** (%) over 2.5–2.9 V for every backend that reports a voltage (PickSmart and WOLINK from the advertisement, easyTag and WOLINK from the write session), and a **Battery** binary sensor (low battery) turns on at 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
+- **Battery:** the tag voltage is mapped linearly to **Battery** (%) over 2.5–2.9 V for every backend that reports a voltage (PickSmart and WOLINK from the advertisement, easyTag from the write session), and a **Battery** binary sensor (low battery) turns on at 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
 
 ---
 

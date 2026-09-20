@@ -59,6 +59,27 @@ def test_parser_start_update_battery_and_versions():
     assert values["battery"] == 100
     assert binary_values(update)["battery"] is False
 
+    # 2600 mV (0x0A28): a quarter of the shared 2.5-2.9 V range, not low
+    update = parser.update(
+        service_info(
+            "66:66:54:20:00:55",
+            manufacturer_data={MANUFACTURER_ID: mfr_bytes[:8] + bytes([0x0A, 0x28])},
+        )
+    )
+    assert sensor_values(update)["voltage"] == 2.6
+    assert sensor_values(update)["battery"] == 25
+    assert binary_values(update)["battery"] is False
+
+    # 2500 mV (0x09C4): the bottom of the range, 0 % and battery low
+    update = parser.update(
+        service_info(
+            "66:66:54:20:00:55",
+            manufacturer_data={MANUFACTURER_ID: mfr_bytes[:8] + bytes([0x09, 0xC4])},
+        )
+    )
+    assert sensor_values(update)["battery"] == 0
+    assert binary_values(update)["battery"] is True
+
     # 2200 mV (0x0898): 0 % and battery low
     update = parser.update(
         service_info(
