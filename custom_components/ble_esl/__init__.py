@@ -107,6 +107,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     if service_info:
         parser.update(service_info)
 
+    identifier = address.replace(":", "")[-8:]
     manufacturer = backend.brand
     model = format_model_name(preset)
     sw_version = adv_info.sw_version if adv_info else None
@@ -117,7 +118,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         config_entry_id=entry.entry_id,
         connections={(CONNECTION_BLUETOOTH, address)},
         manufacturer=manufacturer,
-        name=f"{manufacturer} {address.replace(':', '')[-8:]}",
+        name=f"{manufacturer} {identifier}",
         model=model,
         model_id=backend.label,
         sw_version=sw_version,
@@ -134,9 +135,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         connectable=True,
     )
 
-    def coordinator(initial: Any) -> DataUpdateCoordinator[Any]:
-        """A push-only coordinator seeded with `initial`."""
-        coord: DataUpdateCoordinator[Any] = DataUpdateCoordinator(hass, _LOGGER, name=DOMAIN)
+    def coordinator(purpose: str, initial: Any) -> DataUpdateCoordinator[Any]:
+        """A push-only coordinator seeded with `initial`, named for the log."""
+        coord: DataUpdateCoordinator[Any] = DataUpdateCoordinator(
+            hass, _LOGGER, name=f"{DOMAIN} {identifier} {purpose}"
+        )
         coord.async_set_updated_data(initial)
         return coord
 
@@ -151,14 +154,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         sw_version=sw_version,
         hw_version=hw_version,
         bt_coordinator=bt_coordinator,
-        image_coordinator=coordinator(None),
-        preview_coordinator=coordinator(None),
-        connectivity_coordinator=coordinator(False),
-        duration_coordinator=coordinator(0.0),
-        failure_coordinator=coordinator(0),
-        last_failure_coordinator=coordinator(None),
-        battery_coordinator=coordinator(None),
-        temperature_coordinator=coordinator(None),
+        image_coordinator=coordinator("image", None),
+        preview_coordinator=coordinator("preview", None),
+        connectivity_coordinator=coordinator("connectivity", False),
+        duration_coordinator=coordinator("duration", 0.0),
+        failure_coordinator=coordinator("failures", 0),
+        last_failure_coordinator=coordinator("last failure", None),
+        battery_coordinator=coordinator("battery", None),
+        temperature_coordinator=coordinator("temperature", None),
         # Seeded from the persisted switch state so a write arriving before
         # the switch entity is added is already gated.
         write_lock=bool(entry.data.get(WRITE_LOCK, False)),

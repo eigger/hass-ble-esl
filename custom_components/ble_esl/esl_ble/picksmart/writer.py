@@ -20,6 +20,8 @@ from .const import (
     NOTIFY_SETTLE_S,
     RESEND_BACKOFF_S,
     RESP_IMAGE_DATA,
+    RESP_STATUS_COMPLETE,
+    RESP_STATUS_NEXT_PART,
     SERVICE_UUID_PREFIX,
     START_PROBE_ATTEMPTS,
     START_PROBE_TIMEOUT_S,
@@ -160,6 +162,7 @@ class PickSmartClient:
             same_part_count = 0
             total_parts = (packet_size + 239) // 240
             sends = resends = 0
+            completed_by_tag = False
             transfer_started = time.monotonic()
 
             while part * 240 < packet_size:
@@ -169,22 +172,24 @@ class PickSmartClient:
                     self.img_uuid, data_packet, f"part {part}/{total_parts}"
                 )
 
-                if len(resp) < 6 or resp[0] != RESP_IMAGE_DATA or resp[1] != 0x00:
-                    # Not a "send me part N" frame. Only known to be fine when
-                    # the chunk just sent was the last one; before that the
-                    # image is incomplete whatever the frame means.
+                if (
+                    len(resp) >= 2
+                    and resp[0] == RESP_IMAGE_DATA
+                    and resp[1] == RESP_STATUS_COMPLETE
+                ):
+                    # The tag confirms it has everything (seen after the last
+                    # part on every tag tested); anything earlier is a short
+                    # transfer whatever the tag thinks.
                     if (part + 1) * 240 < packet_size:
                         raise PickSmartError(
-                            f"Tag ended transfer after part {part}/{total_parts} with {resp.hex()}"
+                            f"Tag reported completion after part {part}/{total_parts}"
                         )
-                    _LOGGER.debug(
-                        "%s: transfer ended by tag after last part %d/%d with %s",
-                        self.address,
-                        part,
-                        total_parts,
-                        resp.hex(),
-                    )
+                    completed_by_tag = True
                     break
+                if len(resp) < 6 or resp[0] != RESP_IMAGE_DATA or resp[1] != RESP_STATUS_NEXT_PART:
+                    raise PickSmartError(
+                        f"Unexpected reply after part {part}/{total_parts}: {resp.hex()}"
+                    )
 
                 new_part = int.from_bytes(resp[2:6], "little")
                 if new_part == last_part:
@@ -221,6 +226,7 @@ class PickSmartClient:
                     "resends": resends,
                     "transfer_s": round(transfer_s, 3),
                     "round_trip_ms": round(transfer_s / sends * 1000) if sends else 0,
+                    "completed_by_tag": completed_by_tag,
                 }
             )
             return WriteResult(success=True, timing=timing)
