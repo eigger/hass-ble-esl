@@ -124,7 +124,7 @@ class WriteOutcome:
     attempts: int | None = None
     duration_s: float | None = None
     delay_ms: int | None = None
-    timing: dict[str, float | int | bool] | None = None
+    timing: dict[str, float | int | bool | str] | None = None
 
     def as_response(self) -> dict[str, Any]:
         return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}
@@ -309,13 +309,15 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     attempt=attempt,
                     write_delay_ms=job.write_delay_ms,
                 )
-            if result.timing:
-                data.last_write_timing = {
-                    "attempt": attempt,
-                    "success": result.success,
-                    **result.timing,
-                }
-                _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
+            # Every attempt is recorded (with whatever the backend timed) so the
+            # Write Duration sensor's attributes always describe the last one.
+            data.last_write_timing = {
+                "attempt": attempt,
+                "success": result.success,
+                **({"error": result.error} if not result.success and result.error else {}),
+                **result.timing,
+            }
+            _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
             if result.success:
                 # Session-based protocols (e.g. easyTag) report battery/temp
                 # in the write result; others update passively from adverts.
