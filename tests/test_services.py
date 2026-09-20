@@ -462,3 +462,98 @@ async def test_skipped_write_discards_failed_encode_quietly(
     gc.collect()
     assert tag_writer.write_prepared.await_count == 0
     assert unhandled == []
+
+
+# ── Response data ────────────────────────────────────────────────────────
+
+
+async def respond(hass: HomeAssistant, service: str, target, **data):
+    return await hass.services.async_call(
+        DOMAIN,
+        service,
+        {"device_id": target, "payload": PAYLOAD, **data},
+        blocking=True,
+        return_response=True,
+    )
+
+
+async def test_response_written(hass: HomeAssistant, wolink_entry, tag_writer) -> None:
+    device_id = device_id_of(hass)
+    response = await respond(hass, "write", device_id)
+    assert set(response) == {device_id}
+    outcome = response[device_id]
+    assert outcome["status"] == "written"
+    assert outcome["attempts"] == 1
+    assert outcome["duration_s"] >= 0
+    assert outcome["timing"] == {"transfer_s": 0.1}
+
+
+async def test_response_reports_failure_instead_of_raising(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """With a response requested, a failed tag is reported, not raised."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 2})
+    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
+
+    response = await respond(hass, "write", device_id_of(hass))
+
+    outcome = response[device_id_of(hass)]
+    assert outcome["status"] == "failed"
+    assert outcome["error"] == "boom"
+    assert outcome["attempts"] == 2
+    assert outcome["timing"] == {"connect_s": 0.5}
+    assert sensor(hass, "failure_count") == "1"  # sensors still updated
+
+
+async def test_response_mixed_targets(hass: HomeAssistant, enable_bluetooth, tag_writer) -> None:
+    await setup_entry(hass, address="66:66:54:20:00:01", options={CONF_RETRY_COUNT: 1})
+    await setup_entry(hass, address="66:66:54:20:00:02", options={CONF_RETRY_COUNT: 1})
+    first, second = device_id_of(hass, "66:66:54:20:00:01"), device_id_of(hass, "66:66:54:20:00:02")
+
+    async def fail_first(ble_device, preset, image, **kwargs):
+        return WriteResult(success=ble_device.address != "66:66:54:20:00:01", error="boom")
+
+    tag_writer.write_hook = fail_first
+    response = await respond(hass, "write", [first, second])
+    assert response[first]["status"] == "failed"
+    assert response[second]["status"] == "written"
+
+
+async def test_response_guarded_statuses(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    device_id = device_id_of(hass)
+
+    assert (await respond(hass, "write_guarded", device_id, dry_run=True))[device_id] == {
+        "status": "preview"
+    }
+
+    assert (await respond(hass, "write_guarded", device_id))[device_id]["status"] == "written"
+    assert (await respond(hass, "write_guarded", device_id))[device_id] == {"status": "duplicate"}
+
+    entry.runtime_data.write_lock = True
+    assert (await respond(hass, "write_guarded", device_id, payload="new"))[device_id] == {
+        "status": "locked"
+    }
+    entry.runtime_data.write_lock = False
+
+    response = await respond(
+        hass, "write_guarded", device_id, payload="newer", debounce_override_ms=5000
+    )
+    assert response[device_id] == {"status": "scheduled", "delay_ms": 5000}
+    await advance(hass, freezer, 6)
+    assert tag_writer.write_prepared.await_count == 2
+
+
+async def test_response_locked_for_write(hass: HomeAssistant, wolink_entry, tag_writer) -> None:
+    wolink_entry.runtime_data.write_lock = True
+    response = await respond(hass, "write", device_id_of(hass))
+    assert response[device_id_of(hass)] == {"status": "locked"}
+
+
+async def test_no_target_still_raises_with_response(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    with pytest.raises(HomeAssistantError, match="No loaded BLE ESL device matches"):
+        await respond(hass, "write", "not-a-device")
