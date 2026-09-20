@@ -1,0 +1,41 @@
+# Keeps the test environment on the current Home Assistant release.
+#
+# pytest-homeassistant-custom-component pins the Home Assistant version the
+# suite runs against, so each bump here is a dry run of the next HA release:
+# a deprecated or changed HA API fails the PR's CI before a user hits it.
+# ruff bumps can add rules (ruff.toml enables whole families); fix what the
+# new version reports in the same PR. manifest.json requirements (imagespec)
+# are handled by .github/workflows/update_dependencies.yml instead.
+#
+# Not covered here: the test job's Python version (.github/workflows/tests.yml).
+# When Home Assistant moves to a newer Python, the test-package bump PR fails
+# on the old interpreter; raise python-version in that PR by hand.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies, tests]
+    groups:
+      home-assistant-test:
+        patterns:
+          - pytest-homeassistant-custom-component
+          - bluetooth-sensor-state-data
+          - sensor-state-data
+      lint:
+        patterns:
+          - ruff
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies, ci]
+    ignore:
+      # Tracked by branch on purpose (HACS/hassfest validators follow HA releases);
+      # per-commit SHA bumps would be noise.
+      - dependency-name: hacs/action
+      - dependency-name: home-assistant/actions
