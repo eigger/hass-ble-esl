@@ -23,6 +23,15 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# Battery % is a linear map of the cell voltage over this range, and at or
+# below the minimum the battery-low binary sensor turns on. Below 2.5 V
+# e-paper refresh becomes unreliable even though BLE still works; the same
+# range applies to every backend that reports a voltage (advertised: PickSmart,
+# WOLINK; session-polled: easyTag) so the percentages are comparable across
+# tags. A preset may override it via extra["min_voltage"] / extra["max_voltage"].
+BATTERY_MIN_VOLTAGE = 2.5
+BATTERY_MAX_VOLTAGE = 2.9
+
 CONFIDENCE_HARDWARE = "hardware"  # Verified on real hardware
 CONFIDENCE_REPORTED = "reported"  # Third-party verified on real hardware
 CONFIDENCE_COMMUNITY = "community"  # Community report, not re-tested
@@ -280,7 +289,9 @@ class BleParser(BluetoothData, ABC):
     def _parse(self, service_info: BluetoothServiceInfoBleak) -> None:
         """Update sensors from the advertisement. Default: nothing to read."""
 
-    def update_battery(self, volts: float, min_v: float, max_v: float) -> None:
+    def update_battery(
+        self, volts: float, min_v: float = BATTERY_MIN_VOLTAGE, max_v: float = BATTERY_MAX_VOLTAGE
+    ) -> None:
         """Publish voltage, percentage and battery-low from a passive reading."""
         self.update_predefined_sensor(SensorLibrary.VOLTAGE__ELECTRIC_POTENTIAL_VOLT, volts)
         self.update_predefined_sensor(

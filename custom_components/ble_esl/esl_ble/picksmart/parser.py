@@ -4,18 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..base import BleParser
+from ..base import BATTERY_MAX_VOLTAGE, BATTERY_MIN_VOLTAGE, BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUIDS
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
-# Battery % is a linear map of the advertised voltage over min-max, and at or
-# below min the battery-low binary sensor turns on. Below 2.5 V e-paper refresh
-# becomes unreliable even though BLE communication still works. A preset may
-# override these via extra["min_voltage"] / extra["max_voltage"].
-DEFAULT_MIN_VOLTAGE = 2.5
-DEFAULT_MAX_VOLTAGE = 2.9
+# The shared range (base.BATTERY_*_VOLTAGE); a preset may override it via
+# extra["min_voltage"] / extra["max_voltage"].
+DEFAULT_MIN_VOLTAGE = BATTERY_MIN_VOLTAGE
+DEFAULT_MAX_VOLTAGE = BATTERY_MAX_VOLTAGE
 
 
 def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:

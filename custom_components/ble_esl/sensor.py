@@ -38,6 +38,7 @@ from .const import SESSION_MAX_VOLTAGE, SESSION_MIN_VOLTAGE
 from .coordinator import BleEslPassiveBluetoothDataProcessor
 from .device import device_key_to_bluetooth_entity_key, hass_device_info
 from .entity import BleEslCoordinatorEntity
+from .esl_ble.base import battery_percent
 from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -177,8 +178,7 @@ class BleEslBatteryPercentageSensorEntity(BleEslCoordinatorEntity[float | None],
         volt = self.coordinator.data
         if volt is None:
             return None
-        pct = (volt - SESSION_MIN_VOLTAGE) * 100.0 / (SESSION_MAX_VOLTAGE - SESSION_MIN_VOLTAGE)
-        return max(0, min(100, round(pct)))
+        return battery_percent(volt, SESSION_MIN_VOLTAGE, SESSION_MAX_VOLTAGE)
 
 
 class BleEslBatteryVoltageSensorEntity(BleEslCoordinatorEntity[float | None], SensorEntity):

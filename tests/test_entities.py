@@ -151,6 +151,6 @@ async def test_easytag_session_battery_and_temperature(
         )
 
     assert hass.states.get(ids["voltage"]).state == "2.6"
-    assert hass.states.get(ids["battery"]).state == "50"  # (2.6-2.2)/(3.0-2.2)
+    assert hass.states.get(ids["battery"]).state == "25"  # (2.6-2.5)/(2.9-2.5)
     assert hass.states.get(ids["temperature"]).state == "21"
     assert hass.states.get(ids["low"]).state == "off"

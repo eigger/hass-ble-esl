@@ -14,11 +14,6 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-# Battery % is a linear map of the advertised voltage over min-max, and at or
-# below min the battery-low binary sensor turns on.
-MIN_VOLTAGE = 2.2
-MAX_VOLTAGE = 3.0
-
 
 def is_wolink_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     """Return True if advertisement matches WOLINK manufacturer data or service UUID."""
@@ -51,7 +46,7 @@ class WolinkBluetoothDeviceData(BleParser):
                 batt_mv,
                 mfr_bytes[8:10].hex(),
             )
-        self.update_battery(batt_mv / 1000.0, MIN_VOLTAGE, MAX_VOLTAGE)
+        self.update_battery(batt_mv / 1000.0)
         if info.get("app_ver") is not None:
             self.set_device_sw_version(str(info["app_ver"]))
         if info.get("hw_ver") is not None:
