@@ -123,6 +123,7 @@ def test_size_only_presets_pack_at_their_resolution():
         "psj-290": (128, 296),
         "psj-350": (384, 184),  # larger: landscape like the PSJ-420
         "psj-370": (416, 240),
+        "psj-750": (800, 480),
     }
     for key, (buf_w, buf_h) in expected_buffers.items():
         preset = devices.PRESETS[key]

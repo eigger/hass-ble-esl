@@ -86,6 +86,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 7.5" | 800 × 480 | BWR | Zhsunyco | easyTag | ET0750-44B | ⚠️ untested |
 | 7.5" | 800 × 480 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
+| 7.5" | 800 × 480 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
 | 10.2" | 960 × 640 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 10.2" | 960 × 640 | BWR | Zhsunyco | easyTag | ET1020-64 | ⚠️ untested |
 | 10.2" | 960 × 640 | BWR | Gicisky | PickSmart | EPD | ✅ verified |

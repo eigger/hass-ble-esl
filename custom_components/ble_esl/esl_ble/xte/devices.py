@@ -56,6 +56,10 @@ _SIZE_ONLY = (
     ("psj-290", '2.9" BWRY', 296, 128, 90),
     ("psj-350", '3.5" BWRY', 384, 184, 0),
     ("psj-370", '3.7" BWRY', 416, 240, 0),
+    # 7.5" is sold under the same brand but not confirmed to speak XTE; the
+    # 800x480 panel is the usual one for that size. 96000 packed bytes fit
+    # one batch (80 packets).
+    ("psj-750", '7.5" BWRY', 800, 480, 0),
 )
 
 PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420, PSJ_213)}

@@ -132,6 +132,7 @@ Catalog (`esl_ble/xte/devices.py`):
 | psj-290 | — | 296×128 | 128×296 portrait (`rotation: 90`) | estimated (size only, manual pick) |
 | psj-350 | — | 384×184 | 384×184 landscape | estimated (size only, manual pick) |
 | psj-370 | — | 416×240 | 416×240 landscape | estimated (size only, manual pick) |
+| psj-750 | — | 800×480 | 800×480 landscape | estimated (size only, manual pick; 7.5" is sold under the brand but not confirmed to be XTE) |
 
 Panels up to 2.9" are assumed to scan along their short edge like the
 PSJ-213 (portrait buffer); the larger sizes are assumed landscape like the
