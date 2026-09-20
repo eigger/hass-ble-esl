@@ -103,7 +103,9 @@ class TagWriter:
 
     write_prepared: AsyncMock
     available: bool = True
-    write_result: WriteResult = field(default_factory=lambda: WriteResult(success=True))
+    write_result: WriteResult = field(
+        default_factory=lambda: WriteResult(success=True, timing={"transfer_s": 0.1})
+    )
     write_hook: Callable[..., Awaitable[WriteResult]] | None = None
     encoded: list[str] = field(default_factory=list)
     """Addresses whose image has been encoded (prepare_image ran), in order."""

@@ -234,6 +234,13 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> None:
                     attempt=attempt,
                     write_delay_ms=job.write_delay_ms,
                 )
+            if result.timing:
+                data.last_write_timing = {
+                    "attempt": attempt,
+                    "success": result.success,
+                    **result.timing,
+                }
+                _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
             if result.success:
                 # Session-based protocols (e.g. easyTag) report battery/temp
                 # in the write result; others update passively from adverts.
