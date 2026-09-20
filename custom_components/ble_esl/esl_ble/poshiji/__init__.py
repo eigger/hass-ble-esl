@@ -10,6 +10,7 @@ from . import writer
 from .const import MANUFACTURER_ID, PALETTES
 from .devices import PRESETS, preset_for_advertisement
 from .parser import PoshijiBluetoothDeviceData, is_poshiji_advertisement
+from .protocol import parse_advertisement
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -23,7 +24,7 @@ class PoshijiBleBackend(BleBackend):
     label = "XTE"
     name = "Poshiji (XTE)"
     capabilities = Capabilities(
-        passive_battery=False,
+        passive_battery=True,
         session_battery=False,
         session_temperature=False,
         model_detection=True,
@@ -37,9 +38,24 @@ class PoshijiBleBackend(BleBackend):
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """The advertisement fingerprints the model and carries no readings."""
-        preset = preset_for_advertisement(service_info.manufacturer_data.get(MANUFACTURER_ID))
-        return None if preset is None else AdvertisementInfo(model_key=preset.key)
+        """The advertisement names the tag type (model), battery and versions."""
+        data = service_info.manufacturer_data.get(MANUFACTURER_ID)
+        advertisement = parse_advertisement(data)
+        preset = preset_for_advertisement(data)
+        if advertisement is None or preset is None:
+            return None
+        return AdvertisementInfo(
+            model_key=preset.key,
+            sw_version=advertisement.firmware,
+            hw_version=str(advertisement.hardware_revision),
+            raw={
+                "device_number": advertisement.device_number,
+                "battery_percent": advertisement.battery_percent,
+                "record_type": advertisement.record_type,
+                "chip_type": advertisement.chip_type,
+                "tx_power": advertisement.tx_power,
+            },
+        )
 
     async def write_prepared(
         self,

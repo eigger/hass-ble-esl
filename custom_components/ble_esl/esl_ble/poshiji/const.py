@@ -5,6 +5,8 @@ SERVICE_UUID = "00002760-08c2-11e1-9073-0e8ac72e1001"
 WRITE_UUID = "00002760-08c2-11e1-9073-0e8ac72e0001"
 NOTIFY_UUID = "00002760-08c2-11e1-9073-0e8ac72e0002"
 MANUFACTURER_ID = 0x5258
+# The advertisement carries a percentage, not a voltage; flag the last tenth.
+BATTERY_LOW_PERCENT = 10
 BLOCK_DATA_SIZE = 1211  # 1220-byte logical block, including its 9-byte header.
 # Settle after enabling notifications before the first command, like the other
 # backends (PickSmart 1.0 s, WOLINK 0.5 s, easyTag 0.3 s); some adapters and

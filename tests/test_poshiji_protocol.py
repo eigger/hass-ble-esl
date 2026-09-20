@@ -14,6 +14,7 @@ from custom_components.ble_esl.esl_ble.poshiji.protocol import (
     make_command,
     make_image_object,
     pack_pixels,
+    parse_advertisement,
 )
 from custom_components.ble_esl.esl_ble.poshiji.writer import XteClient, prepare
 
@@ -24,17 +25,43 @@ def test_advertisement_variable_tail(tail):
     assert preset_for_advertisement(data) is PSJ_420
 
 
+def test_advertisement_fields_psj420_and_psj213():
+    """Field layout as the vendor app reads it (xte-esl protocol.md section 5)."""
+    ours = parse_advertisement(bytes.fromhex("fd024002009964060102ffff1e"))
+    assert (ours.record_type, ours.hardware_revision, ours.firmware) == (0xFD, 2, "4.0.2")
+    assert (ours.device_number, ours.battery_percent) == (153, 100)
+    assert (ours.chip_type, ours.tx_power) == (0, 6)
+    theirs = parse_advertisement(bytes.fromhex("fd024002008c63060102ffff1c"))
+    assert (theirs.device_number, theirs.battery_percent, theirs.firmware) == (140, 99, "4.0.2")
+    # Battery and firmware are readings, not identity.
+    assert preset_for_advertisement(bytes.fromhex("fd024103009905060102ffff1b")) is PSJ_420
+    assert preset_for_advertisement(bytes.fromhex("fd024002008c63060102ffff1c")) is None
+    assert (
+        parse_advertisement(bytes.fromhex("fd02400200 99 ff 06".replace(" ", ""))).battery_percent
+        == 100
+    )
+
+
+@pytest.mark.parametrize("record_type", [0xFD, 0xFE, 0xFC, 0x04])
+def test_advertisement_record_types(record_type):
+    data = bytes([record_type]) + bytes.fromhex("024002009964060102ffff1e")
+    assert parse_advertisement(data).record_type == record_type
+    assert preset_for_advertisement(data) is PSJ_420
+
+
 @pytest.mark.parametrize(
     "data",
     [
         None,
         b"",
-        bytes.fromhex("fd024002009964060102ffff"),
-        bytes.fromhex("fd024002009964060102ffff1b00"),
-        bytes.fromhex("fd024003009964060102ffff1b"),
+        bytes.fromhex("ff01"),  # the alternating 2-byte payload under the same company id
+        bytes.fromhex("fd0240020099"),  # too short to carry battery and chip bytes
+        bytes.fromhex("00024002009964060102ffff1e"),  # unknown record type
+        b"\x00" * 13,
     ],
 )
-def test_advertisement_rejects_other_signatures(data):
+def test_advertisement_rejects_other_payloads(data):
+    assert parse_advertisement(data) is None
     assert preset_for_advertisement(data) is None
 
 

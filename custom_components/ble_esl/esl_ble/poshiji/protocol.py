@@ -1,7 +1,13 @@
-"""Capture-verified XTE pixel packing and framing (PSJ-420)."""
+"""XTE advertisement decoding, pixel packing and framing.
+
+Framing and packing are capture-verified on the PSJ-420. The advertisement
+layout follows the vendor app's parser (see docs/poshiji-psj420.md), which
+reads the same fields on every XTE tag.
+"""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 from typing import TYPE_CHECKING
 
@@ -11,6 +17,44 @@ if TYPE_CHECKING:
     from PIL import Image
 
     from ..base import DevicePreset
+
+# Manufacturer data (company id 0x5258 stripped) as the vendor app reads it:
+#   [0] record type   [1] hardware revision   [2] firmware major.minor (BCD)
+#   [3] firmware patch   [4:6] device number (u16, identifies the tag type)
+#   [6] battery %   [7] chip type << 4 | tx power   [8:] not read by the app
+# The tag alternates this record with a 2-byte `ff 01` payload under the
+# same company id; the record-type check rejects that one.
+RECORD_TYPES = frozenset({0xFD, 0xFE, 0xFC, 0x04})
+ADVERTISEMENT_MIN_LENGTH = 8
+
+
+@dataclass(frozen=True)
+class Advertisement:
+    """Fields decoded from an XTE manufacturer-data record."""
+
+    record_type: int
+    hardware_revision: int
+    firmware: str
+    device_number: int
+    battery_percent: int
+    chip_type: int
+    tx_power: int
+
+
+def parse_advertisement(data: bytes | None) -> Advertisement | None:
+    """Decode an XTE record, or None if `data` is not one."""
+    if data is None or len(data) < ADVERTISEMENT_MIN_LENGTH or data[0] not in RECORD_TYPES:
+        return None
+    return Advertisement(
+        record_type=data[0],
+        hardware_revision=data[1],
+        firmware=f"{data[2] >> 4}.{data[2] & 0x0F}.{data[3]}",
+        device_number=int.from_bytes(data[4:6], "big"),
+        battery_percent=min(100, data[6]),
+        chip_type=data[7] >> 4,
+        tx_power=data[7] & 0x0F,
+    )
+
 
 # Opaque XTEK header fields (object offsets 12..24 and 33) preserved from the
 # single PSJ-420 capture; not a general specification for all XTE devices.

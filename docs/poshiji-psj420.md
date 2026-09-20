@@ -40,8 +40,9 @@ are not recorded here.
 | Preset key | `psj-420` | BLE ESL implementation |
 | Image packing | 2 bits/pixel, 30,000 bytes before RLE | Capture reconstruction |
 | Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
-| Discovery | Manufacturer ID `0x5258` plus known advertisement prefix | Capture and follow-up observation |
-| Battery / temperature telemetry | Not decoded or exposed | No validated field interpretation |
+| Discovery | Manufacturer ID `0x5258`, XTE record with device number 153 | Vendor app's advertisement parser (see [Advertisement](#advertisement)) |
+| Battery telemetry | Percentage from the advertisement | Vendor app's advertisement parser; PSJ-420 read 100 % |
+| Temperature telemetry | Not exposed | Last advertised byte is probably °C but unconfirmed |
 | Hardware confidence | Owner-verified working updates | Device owner tested this backend; codec/transport covered by tests |
 
 **Not established:** enclosure dimensions/weight, battery type/capacity/life,
@@ -78,16 +79,46 @@ the backend's reported write limit.
 Retry Count and Write Delay options apply to the Poshiji backend; the delay is
 applied once per XTE command or block, not per ATT chunk.
 
-## Discovery limits
+## Advertisement
 
-Only manufacturer ID `0x5258` with a 13-byte payload beginning with
-`fd024002009964060102ffff` is recognized. The final byte is ignored: the owner
-observed it change from `1e` to `1b` after a successful screen update. Its
-meaning is not confirmed, so no battery/voltage readings are invented.
+The tag advertises under manufacturer ID `0x5258` (ASCII `XR` on the wire;
+not a registered company). The layout below is how the vendor's own app
+("POSHIJI ESL Management System") reads it, as recovered clean-room by
+[mattjoyce/xte-esl](https://github.com/mattjoyce/xte-esl) and cross-checked
+there against the tag's NFC record and factory screen. Home Assistant strips
+the two company-ID bytes; offsets are into what remains.
 
-No MAC address or device name is hardcoded. The discovery filter intentionally
-does not treat every device with this manufacturer ID as a PSJ-420. Changes
-to the other 12 bytes still require investigation before widening the matcher.
+| Offset | PSJ-420 | Field |
+|---|---|---|
+| 0 | `fd` | Record type; one of `fd`, `fe`, `fc`, `04` |
+| 1 | `02` | Hardware revision |
+| 2–3 | `40 02` | Firmware 4.0.2 (BCD major.minor, then patch) |
+| 4–5 | `00 99` | **Device number 153** — the tag type; identifies the model |
+| 6 | `64` | Battery, percent |
+| 7 | `06` | Chip type (high nibble), transmit power (low nibble) |
+| 8–12 | `01 02 ff ff 1e` | Not read by the app. The last byte (`1e` → `1b` seen after an update) sits where a temperature would; not exposed |
+
+The tag alternates this record with a two-byte `ff 01` payload under the same
+company ID; the record-type check rejects it.
+
+A model is identified by its device number, never by the full byte string:
+battery and firmware bytes change over the tag's life. Device numbers not in
+the catalog are not claimed — the vendor SDK packs some tag types (97, 102,
+106, 109, 119, 122) with a different two-plane layout, so a model must be
+captured before it is added. When an XTE tag with an unknown device number
+is seen, the integration logs one INFO line with its device number, versions
+and raw manufacturer data; please open an issue with that line and the tag's
+model and resolution.
+
+### Other models in the family
+
+The vendor manual lists the same firmware across sizes (from xte-esl):
+1.54" ESL-15BWRY 200×200, 2.13" ESL-21BWRY 250×122 (PSJ-213, device number
+140, verified by xte-esl; native buffer is portrait 122×250), 2.66"
+ESL-26BWRY 296×152, 2.9" ESL-29BWRY 296×128, 3.5" ESL-35BWRY 384×184, 3.7"
+ESL-37BWRY 416×240, plus the 4.2" PSJ-420 (device number 153) and a freezer
+variant ESL-21MBW. Adding one is a single `DevicePreset` in
+`esl_ble/poshiji/devices.py` once its device number and orientation are known.
 
 ## Protocol
 
@@ -99,8 +130,10 @@ to the other 12 bytes still require investigation before widening the matcher.
 - RLE: `(count, byte)` pairs, runs up to 255, with a reset halfway through the
   30000-byte packed frame (observed at offset 15000).
 - XTEK object: magic [0:4], sum of bytes [12:] as big-endian uint32 [4:8],
-  total length [8:12], observed opaque metadata [12:25], width [25:29], height
-  [29:33], observed flag 01 [33], RLE length [34:38], RLE body [38:].
+  total length [8:12], image count 1 [12], image record offset 17 [13:17],
+  then the record: x 0 [17:21], y 0 [21:25], width [25:29], height [29:33],
+  compression 01 = RLE [33], RLE length [34:38], RLE body [38:]. (Layout per
+  xte-esl protocol.md §7.1; this backend always sends one full-screen record.)
 - Logical block: `XTE 02`, big-endian uint16 total length, one-byte sum of all
   following bytes, total block count, zero-based block index, up to 1211 bytes
   of object data. Each logical block is split into <=244-byte BLE writes.
@@ -111,8 +144,7 @@ to the other 12 bytes still require investigation before widening the matcher.
   Checksum and payload are checked. Only captured positive payloads `01 ff bd`
   (prepare) and `04 ff` (finish) are accepted. Unknown statuses fail explicitly.
 
-The opaque metadata and reply values are preserved from a single successful
-capture; they are not a general specification for all XTE devices. A finish
+The reply values are preserved from a single successful capture. A finish
 acknowledgment means the transaction was acknowledged, not that the e-paper
 has completed its physical refresh. No pairing or encryption was observed.
 
@@ -134,8 +166,9 @@ nearby-device addresses are included in this repository.
 
 | Symptom | Check |
 |---------|-------|
-| Device not discovered | Bluetooth is enabled, device is in range, advertisement matches the documented prefix. Do not match on a fixed MAC/name. |
-| Metadata unavailable after an update | The advertisement's final byte is variable and is ignored by the matcher; if the tag stops being recognized, capture the new manufacturer data and open an issue. |
+| Device not discovered | Bluetooth is enabled, device is in range, and the advertisement decodes as described above with a device number in the catalog. Do not match on a fixed MAC/name. |
+| Tag stops being recognized | Discovery keys on the device number only, so battery and firmware changes are fine. If it still stops, capture the manufacturer data (`0x5258`) and open an issue. |
+| "Unsupported Poshiji/XTE tag" in the log | An XTE tag whose device number is not in the catalog. Open an issue with the logged line plus the tag's model and resolution. |
 | Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
 | Preview updates but panel does not | The preview is not a readback. Check `dry_run` under `data`; neither example sets it, so both send to the panel. |
 | Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |

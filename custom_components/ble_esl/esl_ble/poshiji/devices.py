@@ -1,20 +1,21 @@
 """Poshiji models confirmed on hardware.
 
 Adding a model is one DevicePreset here. Everything else derives from it:
-discovery and model detection from ``extra["advertisement"]``, image
-packing from ``width`` / ``height`` / ``colors`` (the palette must exist in
-``const.PALETTES``), and the write guard from membership in PRESETS.
+discovery and model detection from ``extra["device_number"]`` (the tag type
+the advertisement carries), image packing from ``width`` / ``height`` /
+``colors`` (the palette must exist in ``const.PALETTES``), and the write
+guard from membership in PRESETS.
+
+Unknown device numbers are not claimed: the vendor SDK packs some tag types
+(97, 102, 106, 109, 119, 122) with a different two-plane layout, so a model
+must be captured before it is added rather than guessed from its size.
 """
 
 from __future__ import annotations
 
 from ..base import CONFIDENCE_REPORTED, DevicePreset
+from .protocol import parse_advertisement
 
-# ``extra["advertisement"]`` is the model fingerprint: the manufacturer data
-# (id 0x5258) minus its final byte. Two PSJ-420 advertisements differed only
-# in that byte (1e/1b, observed to change after a screen update); its meaning
-# is unconfirmed, so it is excluded from the fingerprint while the exact
-# length and the remaining bytes are kept to avoid claiming other XTE models.
 PSJ_420 = DevicePreset(
     key="psj-420",
     display_name='PSJ-420 4.2" BWRY',
@@ -22,18 +23,18 @@ PSJ_420 = DevicePreset(
     height=300,
     colors="BWRY",
     confidence=CONFIDENCE_REPORTED,
-    extra={"advertisement": bytes.fromhex("fd024002009964060102ffff")},
+    extra={"device_number": 153},
 )
 
 PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420,)}
+BY_DEVICE_NUMBER: dict[int, DevicePreset] = {
+    preset.extra["device_number"]: preset for preset in PRESETS.values()
+}
 
 
 def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:
-    """The model whose fingerprint the manufacturer data carries, or None."""
-    if data is None:
+    """The model whose device number the manufacturer data carries, or None."""
+    advertisement = parse_advertisement(data)
+    if advertisement is None:
         return None
-    for preset in PRESETS.values():
-        fingerprint: bytes = preset.extra["advertisement"]
-        if len(data) == len(fingerprint) + 1 and data.startswith(fingerprint):
-            return preset
-    return None
+    return BY_DEVICE_NUMBER.get(advertisement.device_number)
