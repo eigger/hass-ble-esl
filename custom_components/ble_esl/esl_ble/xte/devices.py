@@ -47,11 +47,11 @@ PSJ_213 = DevicePreset(
 # listed panel sizes; device numbers are unknown until a tag of that size is
 # seen (an unknown device number is logged once per address). Panels up to
 # 2.9" scan along their short edge like the PSJ-213, so their buffer is
-# portrait (rotation 90); the larger ones are assumed landscape like the
-# PSJ-420 until a tag shows otherwise. Keys follow the PSJ-<size> naming of
-# the captured models.
+# portrait (rotation 90); the square 1.54" and the larger ones are left
+# unrotated (landscape like the PSJ-420) until a tag shows otherwise. Keys
+# follow the PSJ-<size> naming of the captured models.
 _SIZE_ONLY = (
-    ("psj-154", '1.54" BWRY', 200, 200, 90),
+    ("psj-154", '1.54" BWRY', 200, 200, 0),
     ("psj-266", '2.66" BWRY', 296, 152, 90),
     ("psj-290", '2.9" BWRY', 296, 128, 90),
     ("psj-350", '3.5" BWRY', 384, 184, 0),
