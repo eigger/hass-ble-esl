@@ -36,7 +36,7 @@ They work well for information that should stay visible, changes infrequently, a
 
 ## Related
 
-- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the original PickSmart-only integration, now archived. This repository is its successor; see [Migrating from `hass-gicisky`](#migrating-from-hass-gicisky).
+- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the original PickSmart-only integration, now archived. This repository is its successor; see [Migrating from `hass-gicisky`](https://github.com/eigger/hass-ble-esl#migrating-from-hass-gicisky-or-hass-zhsunyco).
 - [Stash](https://github.com/eigger/stash) — self-hosted home inventory manager. Track and restock items with barcode scanning, and print labels to ESL tags via Home Assistant.
 
 ---
