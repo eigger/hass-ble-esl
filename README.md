@@ -108,7 +108,7 @@ Availability varies by country. AliExpress listings by protocol family:
 
 | Protocol | Brand | Listing |
 |----------|-------|---------|
-| WOLINK / easyTag | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label](https://ko.aliexpress.com/item/1005009231276243.html) |
+| WOLINK | Zhsunyco | [Zhsunyco BLE Electronic Shelf Label (WOLINK)](https://ko.aliexpress.com/item/1005009231276243.html) |
 | XTE | Poshiji | [Poshiji BWRY ESL, 2.13"–4.2"](https://ko.aliexpress.com/item/1005012725381116.html) |
 | PickSmart | Gicisky | [Gicisky store (item 1)](https://ko.aliexpress.com/item/1005002399342939.html) · [Gicisky store (item 2)](https://ko.aliexpress.com/item/1005002398744297.html) |
 
