@@ -18,13 +18,14 @@ weather and temperature are the photographed screen contents, not live data.
 
 ## Purchase
 
-[AliExpress — Poshiji PSJ-420 purchase listing](https://ko.aliexpress.com/item/1005012582138232.html)
+[AliExpress — Poshiji BWRY ESL, 2.13" to 4.2"](https://ko.aliexpress.com/item/1005012725381116.html)
 
-This link was supplied by the device owner. The listing contents could not be
-retrieved during documentation preparation. Select/check **PSJ-420, 4.2-inch,
-400×300, BWRY, BLE** with the seller; do not assume every listing option uses
-this protocol. Current price, availability, accessories and seller warranty
-are not recorded here.
+One listing covers the sizes from 2.13" to 4.2"; pick the size option you
+want. The 4.2" (PSJ-420) is the verified one; the 2.13" (PSJ-213) is a
+community report; the other sizes are size-only presets (see the catalog
+below) — check **BWRY, BLE** with the seller and do not assume every option
+uses this protocol. Current price, availability, accessories and seller
+warranty are not recorded here.
 
 ## Product specifications and evidence
 
