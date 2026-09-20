@@ -28,8 +28,6 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 _BACKENDS: dict[str, BleBackend] = {}
-# Former backend ids still found in config entries written by older releases.
-LEGACY_IDS: dict[str, str] = {"poshiji": "xte"}
 
 
 def register(backend: BleBackend) -> None:
@@ -43,8 +41,7 @@ def register(backend: BleBackend) -> None:
 
 
 def get(backend_id: str) -> BleBackend:
-    """Retrieve a BLE backend by ID (legacy ids are accepted)."""
-    backend_id = LEGACY_IDS.get(backend_id, backend_id)
+    """Retrieve a BLE backend by ID."""
     if backend_id not in _BACKENDS:
         raise KeyError(f"Unknown BLE backend: {backend_id!r}. Available: {list(_BACKENDS.keys())}")
     return _BACKENDS[backend_id]
@@ -82,7 +79,6 @@ __all__ = [
     "CONFIDENCE_ESTIMATED",
     "CONFIDENCE_HARDWARE",
     "CONFIDENCE_REPORTED",
-    "LEGACY_IDS",
     "AdvertisementInfo",
     "BleBackend",
     "BleParser",

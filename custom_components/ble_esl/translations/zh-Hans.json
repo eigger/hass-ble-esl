@@ -145,5 +145,10 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "unknown_backend": {
+      "message": "未知的协议后端 {protocol}；请删除此设备并重新添加。"
+    }
   }
 }

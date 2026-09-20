@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bt import inject_bluetooth_service_info, service_info
+from bt import inject_bluetooth_service_info
 from conftest import ADDRESS, IDENT, WOLINK_MFR_BYTES, device_of, setup_entry, wolink_service_info
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -111,31 +111,20 @@ async def test_unload_makes_entities_unavailable(hass: HomeAssistant, wolink_ent
     assert hass.states.get(f"switch.zhsunyco_{IDENT}_write_lock").state == "unavailable"
 
 
-async def test_legacy_backend_id_is_migrated(hass: HomeAssistant, enable_bluetooth) -> None:
-    """Entries written before the "poshiji" -> "xte" rename still load, and are rewritten."""
+async def test_unknown_backend_id_fails_setup_clearly(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """Backend ids are not migrated: an entry with a stale id asks to be re-added."""
     address = "AA:BB:CC:DD:EE:42"
-    inject_bluetooth_service_info(
-        hass,
-        service_info(
-            address,
-            name="FFEEDDCCBBAA",
-            manufacturer_data={0x5258: bytes.fromhex("fd024002009964060102ffff1e")},
-        ),
-    )
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=address,
         title="Poshiji DDEEEE42",
         data={CONF_PROTOCOL: "poshiji", CONF_MODEL: "psj-420"},
-        options={CONF_PROTOCOL: "poshiji"},
-        minor_version=1,
     )
     entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
+    assert not await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
-    assert entry.state is ConfigEntryState.LOADED
-    assert entry.minor_version == 2
-    assert entry.data[CONF_PROTOCOL] == "xte" and entry.options[CONF_PROTOCOL] == "xte"
-    assert entry.runtime_data.backend.id == "xte"
-    assert entry.runtime_data.preset.key == "psj-420"
-    assert device_of(hass, address).model_id == "XTE"
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert entry.error_reason_translation_key == "unknown_backend"
+    assert entry.error_reason_translation_placeholders == {"protocol": "poshiji"}
