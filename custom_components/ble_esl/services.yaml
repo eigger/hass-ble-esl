@@ -1,6 +1,4 @@
 write:
-  response:
-    optional: true
   target:
     entity:
       integration: ble_esl
@@ -45,8 +43,6 @@ write:
       selector:
         boolean:
 write_guarded:
-  response:
-    optional: true
   target:
     entity:
       integration: ble_esl
