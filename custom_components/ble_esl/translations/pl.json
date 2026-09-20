@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "Zapisz etykietę",
+      "description": "Zapisuje obraz etykiety na urządzeniu BLE ESL.",
+      "fields": {
+        "payload": {
+          "name": "Zawartość",
+          "description": "Zawartość opisująca, co narysować."
+        },
+        "rotate": {
+          "name": "Obrót",
+          "description": "Obrót etykiety w stopniach (0, 90, 180, 270). Domyślnie: 0."
+        },
+        "background": {
+          "name": "Tło",
+          "description": "Kolor tła (white, black, red, yellow). Domyślnie: white."
+        },
+        "dry_run": {
+          "name": "Próba",
+          "description": "Generuje obraz bez wysyłania go do urządzenia."
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "Zapisz etykietę (z zabezpieczeniami)",
+      "description": "Zapisuje obraz etykiety z zabezpieczeniami (duplikaty, blokada zapisu, odbicie).",
+      "fields": {
+        "payload": {
+          "name": "Zawartość",
+          "description": "Zawartość opisująca, co narysować."
+        },
+        "rotate": {
+          "name": "Obrót",
+          "description": "Obrót etykiety w stopniach (0, 90, 180, 270). Domyślnie: 0."
+        },
+        "background": {
+          "name": "Tło",
+          "description": "Kolor tła (white, black, red, yellow). Domyślnie: white."
+        },
+        "dry_run": {
+          "name": "Próba",
+          "description": "Generuje obraz bez wysyłania go do urządzenia."
+        },
+        "debounce_override_ms": {
+          "name": "Nadpisz odbicie",
+          "description": "Nadpisuje skonfigurowane opóźnienie odbicia dla tego wywołania (0 = natychmiast)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Bateria"
+      },
+      "battery_voltage": {
+        "name": "Napięcie baterii"
+      },
+      "temperature": {
+        "name": "Temperatura"
+      },
+      "write_duration": {
+        "name": "Czas zapisu"
+      },
+      "failure_count": {
+        "name": "Liczba błędów"
+      },
+      "last_failure_time": {
+        "name": "Ostatni błąd"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Łączność"
+      },
+      "display_in_sync": {
+        "name": "Ekran zsynchronizowany"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "Ostatnio wysłana zawartość"
+      },
+      "preview_content": {
+        "name": "Podgląd"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "Alias"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "Blokada zapisu"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Wybierz urządzenie do skonfigurowania.",
+        "data": {
+          "address": "Urządzenie"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Czy chcesz skonfigurować to urządzenie?"
+      },
+      "model": {
+        "title": "Wybierz model etykiety",
+        "description": "Wybierz model etykiety ESL i rozdzielczość ekranu.",
+        "data": {
+          "model": "Model"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "To urządzenie nie jest obsługiwane.",
+      "no_devices_found": "Nie znaleziono nieskonfigurowanych urządzeń.",
+      "already_in_progress": "Konfiguracja jest już w toku.",
+      "already_configured": "Urządzenie jest już skonfigurowane."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje BLE ESL",
+        "description": "Dostosuj model, rozdzielczość i ustawienia zapisu.",
+        "data": {
+          "model": "Model",
+          "retry_count": "Liczba ponowień",
+          "write_delay_ms": "Opóźnienie zapisu (ms)",
+          "prevent_duplicate_send": "Zapobiegaj podwójnemu wysyłaniu",
+          "debounce_ms": "Opóźnienie odbicia (ms)"
+        },
+        "data_description": {
+          "model": "Rozdzielczość ekranu i typ modelu ESL.",
+          "retry_count": "Ile razy ponawiać zapis, zanim nastąpi rezygnacja.",
+          "write_delay_ms": "Przerwa między kolejnymi blokami zapisywanymi na urządzeniu. Zwiększ, jeśli zapisy są niestabilne.",
+          "prevent_duplicate_send": "Pomija zapis, gdy nowy obraz jest identyczny z ostatnio wysłanym.",
+          "debounce_ms": "Oczekiwanie przed zapisem. Nowe żądanie anuluje oczekujące. 0 = wyłączone (zapis natychmiastowy)."
+        }
+      }
+    }
+  }
+}

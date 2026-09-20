@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "Label schrijven",
+      "description": "Schrijft een labelafbeelding naar een BLE ESL-apparaat.",
+      "fields": {
+        "payload": {
+          "name": "Payload",
+          "description": "Payload die beschrijft wat er getekend wordt."
+        },
+        "rotate": {
+          "name": "Rotatie",
+          "description": "Rotatie van het label in graden (0, 90, 180, 270). Standaard: 0."
+        },
+        "background": {
+          "name": "Achtergrond",
+          "description": "Achtergrondkleur (white, black, red, yellow). Standaard: white."
+        },
+        "dry_run": {
+          "name": "Proefdraaien",
+          "description": "Genereert de afbeelding zonder deze naar het apparaat te sturen."
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "Label beveiligd schrijven",
+      "description": "Schrijft een labelafbeelding met beveiligingen (duplicaten, schrijfvergrendeling, debounce).",
+      "fields": {
+        "payload": {
+          "name": "Payload",
+          "description": "Payload die beschrijft wat er getekend wordt."
+        },
+        "rotate": {
+          "name": "Rotatie",
+          "description": "Rotatie van het label in graden (0, 90, 180, 270). Standaard: 0."
+        },
+        "background": {
+          "name": "Achtergrond",
+          "description": "Achtergrondkleur (white, black, red, yellow). Standaard: white."
+        },
+        "dry_run": {
+          "name": "Proefdraaien",
+          "description": "Genereert de afbeelding zonder deze naar het apparaat te sturen."
+        },
+        "debounce_override_ms": {
+          "name": "Debounce overschrijven",
+          "description": "Overschrijft de ingestelde debouncevertraging voor deze aanroep (0 = direct)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Batterij"
+      },
+      "battery_voltage": {
+        "name": "Batterijspanning"
+      },
+      "temperature": {
+        "name": "Temperatuur"
+      },
+      "write_duration": {
+        "name": "Schrijfduur"
+      },
+      "failure_count": {
+        "name": "Aantal fouten"
+      },
+      "last_failure_time": {
+        "name": "Laatste fout"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Verbinding"
+      },
+      "display_in_sync": {
+        "name": "Scherm gesynchroniseerd"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "Laatst verzonden inhoud"
+      },
+      "preview_content": {
+        "name": "Voorbeeld"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "Alias"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "Schrijfvergrendeling"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Selecteer een apparaat om in te stellen.",
+        "data": {
+          "address": "Apparaat"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Wil je dit apparaat instellen?"
+      },
+      "model": {
+        "title": "Tagmodel selecteren",
+        "description": "Selecteer het ESL-tagmodel en de schermresolutie.",
+        "data": {
+          "model": "Model"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "Dit apparaat wordt niet ondersteund.",
+      "no_devices_found": "Geen niet-geconfigureerde apparaten gevonden.",
+      "already_in_progress": "De configuratie is al bezig.",
+      "already_configured": "Apparaat is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BLE ESL-opties",
+        "description": "Pas tagmodel, resolutie en schrijfinstellingen aan.",
+        "data": {
+          "model": "Model",
+          "retry_count": "Aantal pogingen",
+          "write_delay_ms": "Schrijfvertraging (ms)",
+          "prevent_duplicate_send": "Dubbel verzenden voorkomen",
+          "debounce_ms": "Debouncevertraging (ms)"
+        },
+        "data_description": {
+          "model": "Schermresolutie en modeltype van de ESL.",
+          "retry_count": "Hoe vaak het schrijven opnieuw wordt geprobeerd voordat wordt opgegeven.",
+          "write_delay_ms": "Pauze tussen elk blok dat naar het apparaat wordt geschreven. Verhoog dit als schrijven onbetrouwbaar is.",
+          "prevent_duplicate_send": "Slaat het schrijven over als de nieuwe afbeelding identiek is aan de laatst verzonden.",
+          "debounce_ms": "Wachttijd voor het schrijven. Een nieuwe aanvraag annuleert de wachtende. 0 = uit (direct schrijven)."
+        }
+      }
+    }
+  }
+}

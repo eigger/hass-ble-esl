@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "寫入標籤",
+      "description": "將標籤影像寫入 BLE ESL 裝置。",
+      "fields": {
+        "payload": {
+          "name": "酬載",
+          "description": "描述繪製內容的酬載。"
+        },
+        "rotate": {
+          "name": "旋轉",
+          "description": "標籤旋轉角度（0、90、180、270）。預設：0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景顏色（white、black、red、yellow）。預設：white。"
+        },
+        "dry_run": {
+          "name": "試執行",
+          "description": "僅產生影像，不傳送到裝置。"
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "受保護寫入標籤",
+      "description": "在保護機制（去重、寫入鎖定、防彈跳）下寫入標籤影像。",
+      "fields": {
+        "payload": {
+          "name": "酬載",
+          "description": "描述繪製內容的酬載。"
+        },
+        "rotate": {
+          "name": "旋轉",
+          "description": "標籤旋轉角度（0、90、180、270）。預設：0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景顏色（white、black、red、yellow）。預設：white。"
+        },
+        "dry_run": {
+          "name": "試執行",
+          "description": "僅產生影像，不傳送到裝置。"
+        },
+        "debounce_override_ms": {
+          "name": "覆寫防彈跳",
+          "description": "僅本次呼叫覆寫已設定的防彈跳延遲（0 = 立即）。"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "電池"
+      },
+      "battery_voltage": {
+        "name": "電池電壓"
+      },
+      "temperature": {
+        "name": "溫度"
+      },
+      "write_duration": {
+        "name": "寫入耗時"
+      },
+      "failure_count": {
+        "name": "失敗次數"
+      },
+      "last_failure_time": {
+        "name": "上次失敗時間"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "連線狀態"
+      },
+      "display_in_sync": {
+        "name": "顯示已同步"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "上次傳送的內容"
+      },
+      "preview_content": {
+        "name": "預覽"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "別名"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "寫入鎖定"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "選擇要設定的裝置。",
+        "data": {
+          "address": "裝置"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "是否要設定此裝置？"
+      },
+      "model": {
+        "title": "選擇標籤型號",
+        "description": "選擇 ESL 標籤型號與螢幕解析度。",
+        "data": {
+          "model": "型號"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "不支援此裝置。",
+      "no_devices_found": "找不到未設定的裝置。",
+      "already_in_progress": "設定流程已在進行中。",
+      "already_configured": "裝置已設定。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BLE ESL 選項",
+        "description": "調整標籤型號、解析度與寫入設定。",
+        "data": {
+          "model": "型號",
+          "retry_count": "重試次數",
+          "write_delay_ms": "寫入延遲 (ms)",
+          "prevent_duplicate_send": "防止重複傳送",
+          "debounce_ms": "防彈跳延遲 (ms)"
+        },
+        "data_description": {
+          "model": "ESL 螢幕解析度與型號類型。",
+          "retry_count": "放棄之前重試寫入的次數。",
+          "write_delay_ms": "寫入裝置的每個資料區塊之間的間隔。寫入不穩定時請增加。",
+          "prevent_duplicate_send": "當新影像與上次傳送的影像相同時略過寫入。",
+          "debounce_ms": "寫入前的等待時間。新的請求會取消待處理的請求。0 = 停用（立即寫入）。"
+        }
+      }
+    }
+  }
+}
