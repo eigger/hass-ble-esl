@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "Etikett schreiben",
+      "description": "Schreibt ein Etikettenbild auf ein BLE-ESL-Gerät.",
+      "fields": {
+        "payload": {
+          "name": "Payload",
+          "description": "Payload, das beschreibt, was gezeichnet wird."
+        },
+        "rotate": {
+          "name": "Drehung",
+          "description": "Drehung des Etiketts in Grad (0, 90, 180, 270). Standard: 0."
+        },
+        "background": {
+          "name": "Hintergrund",
+          "description": "Hintergrundfarbe (white, black, red, yellow). Standard: white."
+        },
+        "dry_run": {
+          "name": "Testlauf",
+          "description": "Erzeugt das Bild, ohne es an das Gerät zu senden."
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "Etikett geschützt schreiben",
+      "description": "Schreibt ein Etikettenbild mit Schutzmechanismen (Duplikate, Schreibsperre, Entprellung).",
+      "fields": {
+        "payload": {
+          "name": "Payload",
+          "description": "Payload, das beschreibt, was gezeichnet wird."
+        },
+        "rotate": {
+          "name": "Drehung",
+          "description": "Drehung des Etiketts in Grad (0, 90, 180, 270). Standard: 0."
+        },
+        "background": {
+          "name": "Hintergrund",
+          "description": "Hintergrundfarbe (white, black, red, yellow). Standard: white."
+        },
+        "dry_run": {
+          "name": "Testlauf",
+          "description": "Erzeugt das Bild, ohne es an das Gerät zu senden."
+        },
+        "debounce_override_ms": {
+          "name": "Entprellung überschreiben",
+          "description": "Überschreibt die konfigurierte Entprellverzögerung für diesen Aufruf (0 = sofort)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Batterie"
+      },
+      "battery_voltage": {
+        "name": "Batteriespannung"
+      },
+      "temperature": {
+        "name": "Temperatur"
+      },
+      "write_duration": {
+        "name": "Schreibdauer"
+      },
+      "failure_count": {
+        "name": "Fehleranzahl"
+      },
+      "last_failure_time": {
+        "name": "Letzter Fehler"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Verbindung"
+      },
+      "display_in_sync": {
+        "name": "Anzeige synchron"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "Zuletzt gesendeter Inhalt"
+      },
+      "preview_content": {
+        "name": "Vorschau"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "Alias"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "Schreibsperre"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Wähle ein Gerät zum Einrichten aus.",
+        "data": {
+          "address": "Gerät"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Möchtest du dieses Gerät einrichten?"
+      },
+      "model": {
+        "title": "Tag-Modell auswählen",
+        "description": "Wähle das ESL-Tag-Modell und die Displayauflösung.",
+        "data": {
+          "model": "Modell"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "Dieses Gerät wird nicht unterstützt.",
+      "no_devices_found": "Keine unkonfigurierten Geräte gefunden.",
+      "already_in_progress": "Der Konfigurationsablauf wird bereits ausgeführt.",
+      "already_configured": "Gerät ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BLE-ESL-Optionen",
+        "description": "Tag-Modell, Auflösung und Schreibeinstellungen anpassen.",
+        "data": {
+          "model": "Modell",
+          "retry_count": "Wiederholungen",
+          "write_delay_ms": "Schreibverzögerung (ms)",
+          "prevent_duplicate_send": "Doppeltes Senden verhindern",
+          "debounce_ms": "Entprellverzögerung (ms)"
+        },
+        "data_description": {
+          "model": "Displayauflösung und Modelltyp des ESL.",
+          "retry_count": "Wie oft das Schreiben wiederholt wird, bevor aufgegeben wird.",
+          "write_delay_ms": "Pause zwischen den an das Gerät geschriebenen Datenblöcken. Erhöhen, wenn Schreibvorgänge unzuverlässig sind.",
+          "prevent_duplicate_send": "Überspringt das Schreiben, wenn das neue Bild mit dem zuletzt gesendeten identisch ist.",
+          "debounce_ms": "Wartezeit vor dem Schreiben. Neue Anforderungen brechen ausstehende ab. 0 = deaktiviert (sofort schreiben)."
+        }
+      }
+    }
+  }
+}

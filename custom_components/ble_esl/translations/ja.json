@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "ラベルを書き込む",
+      "description": "BLE ESL デバイスにラベル画像を書き込みます。",
+      "fields": {
+        "payload": {
+          "name": "ペイロード",
+          "description": "描画内容を記述するペイロードです。"
+        },
+        "rotate": {
+          "name": "回転",
+          "description": "ラベルの回転角度（0、90、180、270）。既定値: 0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景色（white、black、red、yellow）。既定値: white。"
+        },
+        "dry_run": {
+          "name": "テスト実行",
+          "description": "デバイスに送信せず画像の生成のみ行います。"
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "ラベルを保護付きで書き込む",
+      "description": "保護機能（重複防止、書き込みロック、デバウンス）を適用してラベル画像を書き込みます。",
+      "fields": {
+        "payload": {
+          "name": "ペイロード",
+          "description": "描画内容を記述するペイロードです。"
+        },
+        "rotate": {
+          "name": "回転",
+          "description": "ラベルの回転角度（0、90、180、270）。既定値: 0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景色（white、black、red、yellow）。既定値: white。"
+        },
+        "dry_run": {
+          "name": "テスト実行",
+          "description": "デバイスに送信せず画像の生成のみ行います。"
+        },
+        "debounce_override_ms": {
+          "name": "デバウンスの上書き",
+          "description": "この呼び出しに限り、設定済みのデバウンス遅延を上書きします（0 = 即時）。"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "バッテリー"
+      },
+      "battery_voltage": {
+        "name": "バッテリー電圧"
+      },
+      "temperature": {
+        "name": "温度"
+      },
+      "write_duration": {
+        "name": "書き込み時間"
+      },
+      "failure_count": {
+        "name": "失敗回数"
+      },
+      "last_failure_time": {
+        "name": "最終失敗時刻"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "接続"
+      },
+      "display_in_sync": {
+        "name": "表示の同期"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "最終送信コンテンツ"
+      },
+      "preview_content": {
+        "name": "プレビュー"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "エイリアス"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "書き込みロック"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "設定するデバイスを選択してください。",
+        "data": {
+          "address": "デバイス"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "このデバイスを設定しますか？"
+      },
+      "model": {
+        "title": "タグモデルの選択",
+        "description": "ESL タグのモデルと画面解像度を選択してください。",
+        "data": {
+          "model": "モデル"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "このデバイスはサポートされていません。",
+      "no_devices_found": "未設定のデバイスが見つかりません。",
+      "already_in_progress": "設定はすでに進行中です。",
+      "already_configured": "デバイスはすでに設定されています。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BLE ESL オプション",
+        "description": "タグのモデル・解像度と書き込み設定を調整します。",
+        "data": {
+          "model": "モデル",
+          "retry_count": "再試行回数",
+          "write_delay_ms": "書き込み遅延 (ms)",
+          "prevent_duplicate_send": "重複送信の防止",
+          "debounce_ms": "デバウンス遅延 (ms)"
+        },
+        "data_description": {
+          "model": "ESL の画面解像度とモデルの種類です。",
+          "retry_count": "書き込みを諦めるまでに再試行する回数です。",
+          "write_delay_ms": "デバイスに書き込む各データ片の間隔です。書き込みが不安定な場合は増やしてください。",
+          "prevent_duplicate_send": "新しい画像が最後に送信した画像と同一の場合、書き込みをスキップします。",
+          "debounce_ms": "書き込み前の待機時間です。新しい要求は待機中の要求を取り消します。0 = 無効（即時書き込み）。"
+        }
+      }
+    }
+  }
+}

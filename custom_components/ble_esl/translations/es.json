@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "Escribir etiqueta",
+      "description": "Escribe una imagen de etiqueta en un dispositivo ESL BLE.",
+      "fields": {
+        "payload": {
+          "name": "Contenido",
+          "description": "Contenido que describe qué dibujar."
+        },
+        "rotate": {
+          "name": "Rotación",
+          "description": "Rotación de la etiqueta en grados (0, 90, 180, 270). Predeterminado: 0."
+        },
+        "background": {
+          "name": "Fondo",
+          "description": "Color de fondo (white, black, red, yellow). Predeterminado: white."
+        },
+        "dry_run": {
+          "name": "Simulación",
+          "description": "Genera la imagen sin enviarla al dispositivo."
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "Escribir etiqueta (protegido)",
+      "description": "Escribe una imagen de etiqueta con protecciones (duplicados, bloqueo de escritura, antirrebote).",
+      "fields": {
+        "payload": {
+          "name": "Contenido",
+          "description": "Contenido que describe qué dibujar."
+        },
+        "rotate": {
+          "name": "Rotación",
+          "description": "Rotación de la etiqueta en grados (0, 90, 180, 270). Predeterminado: 0."
+        },
+        "background": {
+          "name": "Fondo",
+          "description": "Color de fondo (white, black, red, yellow). Predeterminado: white."
+        },
+        "dry_run": {
+          "name": "Simulación",
+          "description": "Genera la imagen sin enviarla al dispositivo."
+        },
+        "debounce_override_ms": {
+          "name": "Anular antirrebote",
+          "description": "Anula el retardo antirrebote configurado para esta llamada (0 = inmediato)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Batería"
+      },
+      "battery_voltage": {
+        "name": "Tensión de la batería"
+      },
+      "temperature": {
+        "name": "Temperatura"
+      },
+      "write_duration": {
+        "name": "Duración de escritura"
+      },
+      "failure_count": {
+        "name": "Número de fallos"
+      },
+      "last_failure_time": {
+        "name": "Último fallo"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Conectividad"
+      },
+      "display_in_sync": {
+        "name": "Pantalla sincronizada"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "Último contenido enviado"
+      },
+      "preview_content": {
+        "name": "Vista previa"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "Alias"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "Bloqueo de escritura"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Selecciona un dispositivo para configurar.",
+        "data": {
+          "address": "Dispositivo"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "¿Quieres configurar este dispositivo?"
+      },
+      "model": {
+        "title": "Seleccionar modelo de etiqueta",
+        "description": "Selecciona el modelo de etiqueta ESL y la resolución de la pantalla.",
+        "data": {
+          "model": "Modelo"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "Este dispositivo no es compatible.",
+      "no_devices_found": "No se encontraron dispositivos sin configurar.",
+      "already_in_progress": "La configuración ya está en curso.",
+      "already_configured": "El dispositivo ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de BLE ESL",
+        "description": "Ajusta el modelo, la resolución y los parámetros de escritura.",
+        "data": {
+          "model": "Modelo",
+          "retry_count": "Reintentos",
+          "write_delay_ms": "Retardo de escritura (ms)",
+          "prevent_duplicate_send": "Evitar envíos duplicados",
+          "debounce_ms": "Retardo antirrebote (ms)"
+        },
+        "data_description": {
+          "model": "Resolución de pantalla y tipo de modelo ESL.",
+          "retry_count": "Número de reintentos de escritura antes de abandonar.",
+          "write_delay_ms": "Pausa entre cada bloque escrito en el dispositivo. Auméntala si las escrituras fallan.",
+          "prevent_duplicate_send": "Omite la escritura si la nueva imagen es idéntica a la última enviada.",
+          "debounce_ms": "Espera antes de escribir. Una nueva solicitud cancela la pendiente. 0 = desactivado (escritura inmediata)."
+        }
+      }
+    }
+  }
+}

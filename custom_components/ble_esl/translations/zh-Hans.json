@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "写入标签",
+      "description": "将标签图像写入 BLE ESL 设备。",
+      "fields": {
+        "payload": {
+          "name": "载荷",
+          "description": "描述绘制内容的载荷。"
+        },
+        "rotate": {
+          "name": "旋转",
+          "description": "标签旋转角度（0、90、180、270）。默认：0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景颜色（white、black、red、yellow）。默认：white。"
+        },
+        "dry_run": {
+          "name": "试运行",
+          "description": "仅生成图像，不发送到设备。"
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "受保护写入标签",
+      "description": "在保护机制（去重、写入锁定、防抖）下写入标签图像。",
+      "fields": {
+        "payload": {
+          "name": "载荷",
+          "description": "描述绘制内容的载荷。"
+        },
+        "rotate": {
+          "name": "旋转",
+          "description": "标签旋转角度（0、90、180、270）。默认：0。"
+        },
+        "background": {
+          "name": "背景",
+          "description": "背景颜色（white、black、red、yellow）。默认：white。"
+        },
+        "dry_run": {
+          "name": "试运行",
+          "description": "仅生成图像，不发送到设备。"
+        },
+        "debounce_override_ms": {
+          "name": "覆盖防抖",
+          "description": "仅本次调用覆盖已配置的防抖延迟（0 = 立即）。"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "电池"
+      },
+      "battery_voltage": {
+        "name": "电池电压"
+      },
+      "temperature": {
+        "name": "温度"
+      },
+      "write_duration": {
+        "name": "写入耗时"
+      },
+      "failure_count": {
+        "name": "失败次数"
+      },
+      "last_failure_time": {
+        "name": "上次失败时间"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "连接状态"
+      },
+      "display_in_sync": {
+        "name": "显示已同步"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "上次发送的内容"
+      },
+      "preview_content": {
+        "name": "预览"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "别名"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "写入锁定"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "选择要配置的设备。",
+        "data": {
+          "address": "设备"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "是否要设置此设备？"
+      },
+      "model": {
+        "title": "选择标签型号",
+        "description": "选择 ESL 标签型号和屏幕分辨率。",
+        "data": {
+          "model": "型号"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "不支持此设备。",
+      "no_devices_found": "未找到未配置的设备。",
+      "already_in_progress": "配置流程已在进行中。",
+      "already_configured": "设备已配置。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BLE ESL 选项",
+        "description": "调整标签型号、分辨率和写入设置。",
+        "data": {
+          "model": "型号",
+          "retry_count": "重试次数",
+          "write_delay_ms": "写入延迟 (ms)",
+          "prevent_duplicate_send": "防止重复发送",
+          "debounce_ms": "防抖延迟 (ms)"
+        },
+        "data_description": {
+          "model": "ESL 屏幕分辨率和型号类型。",
+          "retry_count": "放弃之前重试写入的次数。",
+          "write_delay_ms": "写入设备的每个数据块之间的间隔。写入不稳定时请增大。",
+          "prevent_duplicate_send": "当新图像与上次发送的图像相同时跳过写入。",
+          "debounce_ms": "写入前的等待时间。新请求会取消待处理的请求。0 = 禁用（立即写入）。"
+        }
+      }
+    }
+  }
+}

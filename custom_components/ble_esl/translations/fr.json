@@ -1,0 +1,149 @@
+{
+  "services": {
+    "write": {
+      "name": "Écrire l'étiquette",
+      "description": "Écrit une image d'étiquette sur un appareil ESL BLE.",
+      "fields": {
+        "payload": {
+          "name": "Contenu",
+          "description": "Contenu décrivant ce qu'il faut dessiner."
+        },
+        "rotate": {
+          "name": "Rotation",
+          "description": "Rotation de l'étiquette en degrés (0, 90, 180, 270). Par défaut : 0."
+        },
+        "background": {
+          "name": "Arrière-plan",
+          "description": "Couleur d'arrière-plan (white, black, red, yellow). Par défaut : white."
+        },
+        "dry_run": {
+          "name": "Simulation",
+          "description": "Génère l'image sans l'envoyer à l'appareil."
+        }
+      }
+    },
+    "write_guarded": {
+      "name": "Écrire l'étiquette (protégé)",
+      "description": "Écrit une image d'étiquette avec des protections (doublons, verrou d'écriture, anti-rebond).",
+      "fields": {
+        "payload": {
+          "name": "Contenu",
+          "description": "Contenu décrivant ce qu'il faut dessiner."
+        },
+        "rotate": {
+          "name": "Rotation",
+          "description": "Rotation de l'étiquette en degrés (0, 90, 180, 270). Par défaut : 0."
+        },
+        "background": {
+          "name": "Arrière-plan",
+          "description": "Couleur d'arrière-plan (white, black, red, yellow). Par défaut : white."
+        },
+        "dry_run": {
+          "name": "Simulation",
+          "description": "Génère l'image sans l'envoyer à l'appareil."
+        },
+        "debounce_override_ms": {
+          "name": "Remplacer l'anti-rebond",
+          "description": "Remplace le délai anti-rebond configuré pour cet appel (0 = immédiat)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Batterie"
+      },
+      "battery_voltage": {
+        "name": "Tension de la batterie"
+      },
+      "temperature": {
+        "name": "Température"
+      },
+      "write_duration": {
+        "name": "Durée d'écriture"
+      },
+      "failure_count": {
+        "name": "Nombre d'échecs"
+      },
+      "last_failure_time": {
+        "name": "Dernier échec"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivité"
+      },
+      "display_in_sync": {
+        "name": "Affichage synchronisé"
+      }
+    },
+    "image": {
+      "last_updated_content": {
+        "name": "Dernier contenu envoyé"
+      },
+      "preview_content": {
+        "name": "Aperçu"
+      }
+    },
+    "text": {
+      "alias": {
+        "name": "Alias"
+      }
+    },
+    "switch": {
+      "write_lock": {
+        "name": "Verrou d'écriture"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Sélectionnez un appareil à configurer.",
+        "data": {
+          "address": "Appareil"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Voulez-vous configurer cet appareil ?"
+      },
+      "model": {
+        "title": "Sélection du modèle",
+        "description": "Sélectionnez le modèle d'étiquette ESL et la résolution de l'écran.",
+        "data": {
+          "model": "Modèle"
+        }
+      }
+    },
+    "abort": {
+      "not_supported": "Cet appareil n'est pas pris en charge.",
+      "no_devices_found": "Aucun appareil non configuré trouvé.",
+      "already_in_progress": "La configuration est déjà en cours.",
+      "already_configured": "L'appareil est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options BLE ESL",
+        "description": "Ajustez le modèle, la résolution et les paramètres d'écriture.",
+        "data": {
+          "model": "Modèle",
+          "retry_count": "Nombre de tentatives",
+          "write_delay_ms": "Délai d'écriture (ms)",
+          "prevent_duplicate_send": "Empêcher les envois en double",
+          "debounce_ms": "Délai anti-rebond (ms)"
+        },
+        "data_description": {
+          "model": "Résolution de l'écran et type de modèle ESL.",
+          "retry_count": "Nombre de nouvelles tentatives d'écriture avant d'abandonner.",
+          "write_delay_ms": "Pause entre chaque bloc écrit sur l'appareil. À augmenter si les écritures sont instables.",
+          "prevent_duplicate_send": "Ignore l'écriture si la nouvelle image est identique à la dernière envoyée.",
+          "debounce_ms": "Attente avant l'écriture. Une nouvelle demande annule celle en attente. 0 = désactivé (écriture immédiate)."
+        }
+      }
+    }
+  }
+}
