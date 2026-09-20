@@ -35,7 +35,7 @@ def picksmart_service_info():
     )
 
 
-def poshiji_service_info():
+def xte_service_info():
     return service_info(
         POSHIJI_ADDRESS,
         name="FFEEDDCCBBAA",
@@ -91,13 +91,13 @@ async def test_bluetooth_discovery_picksmart_detects_model(
     assert result["data"] == {CONF_PROTOCOL: "picksmart", CONF_MODEL: "0x0033"}
 
 
-async def test_bluetooth_discovery_poshiji(hass: HomeAssistant, enable_bluetooth) -> None:
-    result = await start_bluetooth_flow(hass, poshiji_service_info())
+async def test_bluetooth_discovery_xte(hass: HomeAssistant, enable_bluetooth) -> None:
+    result = await start_bluetooth_flow(hass, xte_service_info())
     assert result["step_id"] == "bluetooth_confirm"
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "poshiji", CONF_MODEL: "psj-420"}
+    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-420"}
     assert result["title"].startswith("Poshiji ")
 
 

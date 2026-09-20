@@ -1,4 +1,4 @@
-# Poshiji PSJ-420 (XTE)
+# XTE — Poshiji PSJ-420
 
 BLE ESL supports the Poshiji PSJ-420, a 400x300 black/white/red/yellow label,
 using its XTE protocol. Manufacturer, model and colors were confirmed by the
@@ -36,7 +36,7 @@ are not recorded here.
 | Display | Four-color electronic shelf label / e-paper | Owner description and photograph |
 | Colors | Black, white, red, yellow (BWRY) | Owner confirmation and visible photo contents |
 | Connection | Bluetooth Low Energy, connected GATT | Radio capture |
-| Integration backend | `poshiji` / Poshiji (XTE) | BLE ESL implementation |
+| Integration backend | `xte` / XTE (Poshiji) | BLE ESL implementation |
 | Preset key | `psj-420` | BLE ESL implementation |
 | Image packing | 2 bits/pixel, 30,000 bytes before RLE | Capture reconstruction |
 | Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
@@ -110,14 +110,21 @@ model and resolution.
 
 ### Other models in the family
 
-The same firmware ships across sizes: 1.54" ESL-15BWRY 200×200, 2.13"
-ESL-21BWRY 250×122 (PSJ-213, device number 140; its native buffer is
-portrait 122×250, i.e. the image is rotated 90° before packing), 2.66"
-ESL-26BWRY 296×152, 2.9" ESL-29BWRY 296×128, 3.5" ESL-35BWRY 384×184, 3.7"
-ESL-37BWRY 416×240, plus the 4.2" PSJ-420 (device number 153) and a freezer
-variant ESL-21MBW. Adding one is a single `DevicePreset` in
-`esl_ble/poshiji/devices.py` once its device number and orientation are
-known; a preset whose buffer is rotated carries `extra={"rotation": 90}`.
+The same firmware ships across sizes. Model names printed on the tags are
+`PSJ-<size>`; the vendor manual's own table uses `ESL-<size><colors>` (1.54"
+ESL-15BWRY 200×200, 2.13" ESL-21BWRY 250×122, 2.66" ESL-26BWRY 296×152, 2.9"
+ESL-29BWRY 296×128, 3.5" ESL-35BWRY 384×184, 3.7" ESL-37BWRY 416×240, and a
+freezer variant ESL-21MBW; the 4.2" is not in that table).
+
+Catalog (`esl_ble/xte/devices.py`):
+
+| Preset | Device number | Viewed | Buffer | Confidence |
+|---|---|---|---|---|
+| PSJ-420 | 153 | 400×300 landscape | 400×300 | reported (owner-verified with this integration) |
+| PSJ-213 | 140 | 250×122 landscape | 122×250 portrait (`rotation: 90`, rows padded to 124 px) | community (pushed successfully with the same transaction elsewhere; not re-tested here) |
+
+Adding one is a single `DevicePreset` once its device number and orientation
+are known; a preset whose buffer is rotated carries `extra={"rotation": 90}`.
 
 ## Protocol
 

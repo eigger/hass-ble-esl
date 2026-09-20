@@ -1,4 +1,4 @@
-"""Poshiji discovery, model catalog, config persistence and session integration tests."""
+"""XTE discovery, model catalog, config persistence and session integration tests."""
 
 import asyncio
 import dataclasses
@@ -12,10 +12,15 @@ import pytest
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import CONFIDENCE_REPORTED
-from custom_components.ble_esl.esl_ble.poshiji import devices, writer
-from custom_components.ble_esl.esl_ble.poshiji.const import PALETTES
-from custom_components.ble_esl.esl_ble.poshiji.devices import PSJ_420, preset_for_advertisement
+from custom_components.ble_esl.esl_ble.base import CONFIDENCE_COMMUNITY, CONFIDENCE_REPORTED
+from custom_components.ble_esl.esl_ble.xte import devices, writer
+from custom_components.ble_esl.esl_ble.xte.const import PALETTES
+from custom_components.ble_esl.esl_ble.xte.devices import (
+    PSJ_213,
+    PSJ_420,
+    preset_for_advertisement,
+)
+from custom_components.ble_esl.esl_ble.xte.protocol import encode_rle, make_blocks
 
 
 def advertisement(tail=0x1B, payload=None):
@@ -31,14 +36,14 @@ def advertisement(tail=0x1B, payload=None):
 
 
 def test_discovery_profile_and_advertised_readings():
-    backend = esl_ble.get("poshiji")
+    backend = esl_ble.get("xte")
     assert backend.brand == "Poshiji"
     assert PSJ_420.confidence == CONFIDENCE_REPORTED
     assert PSJ_420.verified
     assert backend.capabilities.passive_battery and not backend.capabilities.session_battery
     for tail in (0x1E, 0x1B):
         info = advertisement(tail)
-        assert [b.id for b in esl_ble.all_backends() if b.supported(info)] == ["poshiji"]
+        assert [b.id for b in esl_ble.all_backends() if b.supported(info)] == ["xte"]
         assert esl_ble.detect(info) is backend
         adv = backend.parse_advertisement(info)
         assert adv.model_key == "psj-420" and adv.battery_mv is None
@@ -60,7 +65,7 @@ def test_discovery_profile_and_advertised_readings():
 
 def test_identity_survives_battery_and_firmware_changes():
     """The model is the device number; battery and firmware bytes may change."""
-    backend = esl_ble.get("poshiji")
+    backend = esl_ble.get("xte")
     drained = advertisement(payload=bytes.fromhex("fd024103009905060102ffff1b"))
     assert backend.supported(drained)
     adv = backend.parse_advertisement(drained)
@@ -70,19 +75,37 @@ def test_identity_survives_battery_and_firmware_changes():
     assert binary_values(update)["battery"] is True
 
 
+def test_psj213_is_detected_and_packed_portrait():
+    """PSJ-213: device number 140, viewed 250x122, portrait 122x250 buffer."""
+    backend = esl_ble.get("xte")
+    assert PSJ_213.confidence == CONFIDENCE_COMMUNITY and not PSJ_213.verified
+    info = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
+    assert esl_ble.detect(info) is backend
+    adv = backend.parse_advertisement(info)
+    assert adv.model_key == "psj-213" and adv.raw["battery_percent"] == 99
+    assert backend.refine_preset(PSJ_420, adv) is PSJ_213
+    update = backend.create_parser(PSJ_213).update(info)
+    assert "PSJ-213" in update_device(update).model and sensor_values(update)["battery"] == 99
+    obj = writer.prepare(PSJ_213, Image.new("RGB", (250, 122), "white"), "")
+    assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
+    rows = (b"\x55" * 30 + b"\x50") * 250  # 31-byte rows: 30 white bytes, then 2 px + 2 pad
+    assert obj[33] == 1 and obj[38:] == encode_rle(rows[:3875]) + encode_rle(rows[3875:])
+    assert len(make_blocks(obj)) == 1
+
+
 def test_unknown_device_number_is_not_claimed_but_reported_once(caplog):
-    """An XTE tag of another type (PSJ-213, device number 140) is left alone."""
-    backend = esl_ble.get("poshiji")
-    psj_213 = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
-    with caplog.at_level(logging.INFO, logger="custom_components.ble_esl.esl_ble.poshiji"):
-        assert not backend.supported(psj_213)
-        assert backend.parse_advertisement(psj_213) is None
-        assert esl_ble.detect(psj_213) is None
-        assert not backend.supported(psj_213)
-    reports = [r for r in caplog.records if "Unsupported Poshiji/XTE tag" in r.message]
+    """An XTE tag of a type not in the catalog is left alone, and reported once."""
+    backend = esl_ble.get("xte")
+    unknown = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+    with caplog.at_level(logging.INFO, logger="custom_components.ble_esl.esl_ble.xte"):
+        assert not backend.supported(unknown)
+        assert backend.parse_advertisement(unknown) is None
+        assert esl_ble.detect(unknown) is None
+        assert not backend.supported(unknown)
+    reports = [r for r in caplog.records if "Unsupported XTE tag" in r.message]
     assert len(reports) == 1
-    assert "device number 140" in reports[0].message and "4.0.2" in reports[0].message
-    assert "fd024002008c63060102ffff1c" in reports[0].message
+    assert "device number 141" in reports[0].message and "4.0.2" in reports[0].message
+    assert "fd024002008d63060102ffff1c" in reports[0].message
 
 
 def test_catalog_entries_are_complete_and_disjoint():
@@ -108,11 +131,11 @@ def test_new_model_is_one_catalog_entry(monkeypatch):
         display_name='PSJ-290 2.9" BWRY',
         width=296,
         height=128,
-        extra={"device_number": 140},
+        extra={"device_number": 141},
     )
     monkeypatch.setitem(devices.PRESETS, other.key, other)
-    backend = esl_ble.get("poshiji")
-    info = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
+    backend = esl_ble.get("xte")
+    info = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
     assert esl_ble.detect(info) is backend
     assert backend.parse_advertisement(info).model_key == "psj-290"
     assert backend.parse_advertisement(advertisement()).model_key == "psj-420"
@@ -131,8 +154,8 @@ def test_foreign_preset_is_refused_before_connecting(monkeypatch):
     connect = AsyncMock(side_effect=AssertionError("must not connect"))
     monkeypatch.setattr(base, "establish_connection", connect)
     foreign = dataclasses.replace(PSJ_420, width=296, height=128)
-    result = asyncio.run(esl_ble.get("poshiji").write_image(advertisement(), foreign, object()))
-    assert not result.success and result.error == "Unsupported Poshiji preset"
+    result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
+    assert not result.success and result.error == "Unsupported XTE preset"
     connect.assert_not_awaited()
 
 
@@ -145,9 +168,9 @@ def test_session_result_and_disconnect(monkeypatch, error):
     monkeypatch.setattr(writer, "XteClient", factory)
     image, encoded = object(), b"XTEK-encoded"
     prepare = MagicMock(return_value=encoded)
-    monkeypatch.setattr(esl_ble.get("poshiji"), "prepare_image", prepare)
+    monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", prepare)
     result = asyncio.run(
-        esl_ble.get("poshiji").write_image(
+        esl_ble.get("xte").write_image(
             advertisement(),
             PSJ_420,
             image,
@@ -168,6 +191,6 @@ def test_session_result_and_disconnect(monkeypatch, error):
 
 def test_connection_failure_is_reported(monkeypatch):
     monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
-    monkeypatch.setattr(esl_ble.get("poshiji"), "prepare_image", MagicMock(return_value=b""))
-    result = asyncio.run(esl_ble.get("poshiji").write_image(advertisement(), PSJ_420, object()))
+    monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", MagicMock(return_value=b""))
+    result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), PSJ_420, object()))
     assert not result.success and result.error == "unavailable"

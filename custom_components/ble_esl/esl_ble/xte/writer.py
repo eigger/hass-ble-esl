@@ -1,4 +1,4 @@
-"""Poshiji XTE BLE session and image writer."""
+"""XTE BLE session and image writer."""
 
 from __future__ import annotations
 

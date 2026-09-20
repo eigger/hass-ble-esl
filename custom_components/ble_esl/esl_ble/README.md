@@ -63,7 +63,7 @@ class FooBleBackend(BleBackend):
 | `parse_advertisement()` | yes | battery / versions / `model_key` from the advertisement, or `None` |
 | `prepare_image()` + `write_session()` | yes\* | \*or override `write_image()` wholesale |
 | `refine_preset(preset, info)` | when `model_detection=True` identifies more than one model | e.g. PickSmart's firmware quirks |
-| `write_prepared()` | rarely | to refuse before connecting (Poshiji) |
+| `write_prepared()` | rarely | to refuse before connecting (XTE) |
 | `read_status()` | optional | status query without a write |
 
 `presets()`, `preset_for()`, `supported()`, `create_parser()` and `brand` are

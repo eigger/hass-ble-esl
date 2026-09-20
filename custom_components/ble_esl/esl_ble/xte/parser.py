@@ -1,4 +1,4 @@
-"""Recognize Poshiji advertisements and publish what they carry."""
+"""Recognize XTE advertisements and publish what they carry."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 _unknown_reported: set[str] = set()
 
 
-def is_poshiji_advertisement(info: BluetoothServiceInfoBleak) -> bool:
+def is_xte_advertisement(info: BluetoothServiceInfoBleak) -> bool:
     data = info.manufacturer_data.get(MANUFACTURER_ID)
     if preset_for_advertisement(data) is not None:
         return True
@@ -29,7 +29,7 @@ def is_poshiji_advertisement(info: BluetoothServiceInfoBleak) -> bool:
     if advertisement is not None and info.address not in _unknown_reported:
         _unknown_reported.add(info.address)
         _LOGGER.info(
-            "Unsupported Poshiji/XTE tag %s: device number %d, hardware %d, firmware %s, "
+            "Unsupported XTE tag %s: device number %d, hardware %d, firmware %s, "
             "manufacturer data %s. Open an issue with the tag's model and resolution.",
             info.address,
             advertisement.device_number,
@@ -40,12 +40,12 @@ def is_poshiji_advertisement(info: BluetoothServiceInfoBleak) -> bool:
     return False
 
 
-class PoshijiBluetoothDeviceData(BleParser):
-    """Parser for Poshiji tags: battery percentage and versions from the advertisement."""
+class XteBluetoothDeviceData(BleParser):
+    """Parser for XTE tags: battery percentage and versions from the advertisement."""
 
     brand = BRAND
-    fallback_name = "Poshiji"
-    is_advertisement = staticmethod(is_poshiji_advertisement)
+    fallback_name = "XTE"
+    is_advertisement = staticmethod(is_xte_advertisement)
 
     def _parse(self, service_info: BluetoothServiceInfoBleak) -> None:
         advertisement = parse_advertisement(service_info.manufacturer_data.get(MANUFACTURER_ID))

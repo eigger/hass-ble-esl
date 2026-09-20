@@ -1,4 +1,4 @@
-"""Poshiji backend using the XTE BLE protocol."""
+"""XTE protocol backend (tags sold as Poshiji)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, Wr
 from . import writer
 from .const import MANUFACTURER_ID, PALETTES
 from .devices import PRESETS, preset_for_advertisement
-from .parser import PoshijiBluetoothDeviceData, is_poshiji_advertisement
+from .parser import XteBluetoothDeviceData, is_xte_advertisement
 from .protocol import parse_advertisement
 
 if TYPE_CHECKING:
@@ -17,12 +17,12 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
-class PoshijiBleBackend(BleBackend):
-    """Poshiji (XTE) BLE backend."""
+class XteBleBackend(BleBackend):
+    """XTE BLE backend."""
 
-    id = "poshiji"
+    id = "xte"
     label = "XTE"
-    name = "Poshiji (XTE)"
+    name = "XTE (Poshiji)"
     capabilities = Capabilities(
         passive_battery=True,
         session_battery=False,
@@ -31,7 +31,7 @@ class PoshijiBleBackend(BleBackend):
         palettes=tuple(PALETTES),
     )
     PRESETS = PRESETS
-    parser_cls = PoshijiBluetoothDeviceData
+    parser_cls = XteBluetoothDeviceData
     prepare_image = staticmethod(writer.prepare)
     write_session = staticmethod(writer.write_session)
 
@@ -74,7 +74,7 @@ class PoshijiBleBackend(BleBackend):
     ) -> WriteResult:
         # Only captured profiles are known; refuse anything else before connecting.
         if self.PRESETS.get(preset.key) != preset:
-            return WriteResult(success=False, error="Unsupported Poshiji preset")
+            return WriteResult(success=False, error="Unsupported XTE preset")
         return await super().write_prepared(
             ble_device, preset, prepared, attempt=attempt, write_delay_ms=write_delay_ms
         )
@@ -82,8 +82,8 @@ class PoshijiBleBackend(BleBackend):
 
 __all__ = [
     "PRESETS",
-    "PoshijiBleBackend",
-    "PoshijiBluetoothDeviceData",
-    "is_poshiji_advertisement",
+    "XteBleBackend",
+    "XteBluetoothDeviceData",
+    "is_xte_advertisement",
     "preset_for_advertisement",
 ]
