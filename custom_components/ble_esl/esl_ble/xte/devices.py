@@ -44,15 +44,18 @@ PSJ_213 = DevicePreset(
 )
 
 # Size-only entries for the rest of the family. Resolutions follow the
-# listed panel sizes; device numbers and buffer orientation are unknown
-# until a tag of that size is seen (an unknown device number is logged once
-# per address). Keys follow the PSJ-<size> naming of the captured models.
+# listed panel sizes; device numbers are unknown until a tag of that size is
+# seen (an unknown device number is logged once per address). Panels up to
+# 2.9" scan along their short edge like the PSJ-213, so their buffer is
+# portrait (rotation 90); the larger ones are assumed landscape like the
+# PSJ-420 until a tag shows otherwise. Keys follow the PSJ-<size> naming of
+# the captured models.
 _SIZE_ONLY = (
-    ("psj-154", '1.54" BWRY', 200, 200),
-    ("psj-266", '2.66" BWRY', 296, 152),
-    ("psj-290", '2.9" BWRY', 296, 128),
-    ("psj-350", '3.5" BWRY', 384, 184),
-    ("psj-370", '3.7" BWRY', 416, 240),
+    ("psj-154", '1.54" BWRY', 200, 200, 90),
+    ("psj-266", '2.66" BWRY', 296, 152, 90),
+    ("psj-290", '2.9" BWRY', 296, 128, 90),
+    ("psj-350", '3.5" BWRY', 384, 184, 0),
+    ("psj-370", '3.7" BWRY', 416, 240, 0),
 )
 
 PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420, PSJ_213)}
@@ -65,8 +68,9 @@ PRESETS.update(
             height=height,
             colors="BWRY",
             confidence=CONFIDENCE_ESTIMATED,
+            extra={"rotation": rotation} if rotation else {},
         )
-        for key, name, width, height in _SIZE_ONLY
+        for key, name, width, height, rotation in _SIZE_ONLY
     }
 )
 

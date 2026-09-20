@@ -20,7 +20,7 @@ from custom_components.ble_esl.esl_ble.xte.devices import (
     PSJ_420,
     preset_for_advertisement,
 )
-from custom_components.ble_esl.esl_ble.xte.protocol import encode_rle, make_blocks
+from custom_components.ble_esl.esl_ble.xte.protocol import buffer_size, encode_rle, make_blocks
 
 
 def advertisement(tail=0x1B, payload=None):
@@ -117,11 +117,19 @@ def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(capl
 
 def test_size_only_presets_pack_at_their_resolution():
     """Size-only entries have no device number but are complete for a manual pick."""
-    for key in ("psj-154", "psj-266", "psj-290", "psj-350", "psj-370"):
+    expected_buffers = {
+        "psj-154": (200, 200),  # up to 2.9": portrait buffer like the PSJ-213
+        "psj-266": (152, 296),
+        "psj-290": (128, 296),
+        "psj-350": (384, 184),  # larger: landscape like the PSJ-420
+        "psj-370": (416, 240),
+    }
+    for key, (buf_w, buf_h) in expected_buffers.items():
         preset = devices.PRESETS[key]
         assert "device_number" not in preset.extra and not preset.verified
+        assert buffer_size(preset) == (buf_w, buf_h)
         obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
-        assert obj[25:33] == preset.width.to_bytes(4, "big") + preset.height.to_bytes(4, "big")
+        assert obj[25:33] == buf_w.to_bytes(4, "big") + buf_h.to_bytes(4, "big")
 
 
 def test_catalog_entries_are_complete_and_disjoint():

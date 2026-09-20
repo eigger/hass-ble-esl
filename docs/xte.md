@@ -127,15 +127,17 @@ Catalog (`esl_ble/xte/devices.py`):
 |---|---|---|---|---|
 | PSJ-420 | 153 | 400×300 landscape | 400×300 | reported (owner-verified with this integration) |
 | PSJ-213 | 140 | 250×122 landscape | 122×250 portrait (`rotation: 90`, rows padded to 124 px) | community (pushed successfully with the same transaction elsewhere; not re-tested here) |
-| psj-154 | — | 200×200 | 200×200 | estimated (size only, manual pick) |
-| psj-266 | — | 296×152 | 296×152 | estimated (size only, manual pick) |
-| psj-290 | — | 296×128 | 296×128 | estimated (size only, manual pick) |
-| psj-350 | — | 384×184 | 384×184 | estimated (size only, manual pick) |
-| psj-370 | — | 416×240 | 416×240 | estimated (size only, manual pick) |
+| psj-154 | — | 200×200 | 200×200 portrait (`rotation: 90`) | estimated (size only, manual pick) |
+| psj-266 | — | 296×152 | 152×296 portrait (`rotation: 90`) | estimated (size only, manual pick) |
+| psj-290 | — | 296×128 | 128×296 portrait (`rotation: 90`) | estimated (size only, manual pick) |
+| psj-350 | — | 384×184 | 384×184 landscape | estimated (size only, manual pick) |
+| psj-370 | — | 416×240 | 416×240 landscape | estimated (size only, manual pick) |
 
-The size-only entries assume a landscape buffer. If a manually picked size
-displays as diagonal stripes (shear), the panel scans along its short edge
-like the PSJ-213; report it and the preset gets `extra={"rotation": 90}`.
+Panels up to 2.9" are assumed to scan along their short edge like the
+PSJ-213 (portrait buffer); the larger sizes are assumed landscape like the
+PSJ-420. If a manually picked size displays as diagonal stripes (shear), the
+orientation assumption is wrong for that panel; report it and the preset's
+`rotation` is flipped.
 Promoting a size-only entry is filling in its `device_number`; the key stays,
 so existing config entries keep working.
 
