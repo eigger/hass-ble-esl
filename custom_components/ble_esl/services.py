@@ -124,7 +124,7 @@ class WriteOutcome:
     attempts: int | None = None
     duration_s: float | None = None
     delay_ms: int | None = None
-    timing: dict[str, float | int] | None = None
+    timing: dict[str, float | int | bool] | None = None
 
     def as_response(self) -> dict[str, Any]:
         return {k: v for k, v in dataclasses.asdict(self).items() if v is not None}

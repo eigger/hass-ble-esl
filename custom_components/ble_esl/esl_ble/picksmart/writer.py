@@ -87,7 +87,7 @@ class PickSmartClient:
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
-        timing: dict[str, float | int] = {"settle_s": NOTIFY_SETTLE_S}
+        timing: dict[str, float | int | bool] = {"settle_s": NOTIFY_SETTLE_S}
         try:
             return await self._transfer(payload, compression2, timing)
         except Exception as exc:
@@ -96,7 +96,7 @@ class PickSmartClient:
             raise
 
     async def _transfer(
-        self, payload: bytes, compression2: bool, timing: dict[str, float | int]
+        self, payload: bytes, compression2: bool, timing: dict[str, float | int | bool]
     ) -> WriteResult:
         packet_size = len(payload)
         t0 = time.monotonic()
@@ -150,7 +150,7 @@ class PickSmartClient:
             if (
                 len(img_start_resp) < 6
                 or img_start_resp[0] != RESP_IMAGE_DATA
-                or img_start_resp[1] != 0x00
+                or img_start_resp[1] != RESP_STATUS_NEXT_PART
             ):
                 raise PickSmartError(f"Unexpected image start response: {img_start_resp.hex()}")
 

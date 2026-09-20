@@ -159,7 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         connectivity_coordinator=coordinator("connectivity", False),
         duration_coordinator=coordinator("duration", 0.0),
         failure_coordinator=coordinator("failures", 0),
-        last_failure_coordinator=coordinator("last failure", None),
+        last_failure_coordinator=coordinator("last_failure", None),
         battery_coordinator=coordinator("battery", None),
         temperature_coordinator=coordinator("temperature", None),
         # Seeded from the persisted switch state so a write arriving before

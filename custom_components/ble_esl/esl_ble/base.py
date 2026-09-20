@@ -473,7 +473,7 @@ class BleBackend(ABC):
             # protocol measured before raising (it may attach `timing` to
             # the exception) plus the connect/session split.
             now = time.monotonic()
-            timing: dict[str, float | int] = {
+            timing: dict[str, float | int | bool] = {
                 "connect_s": round((connected or now) - started, 3),
                 **getattr(exc, "timing", {}),
             }
