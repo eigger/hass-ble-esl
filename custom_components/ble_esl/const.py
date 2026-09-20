@@ -6,6 +6,8 @@ from asyncio import Lock
 
 from homeassistant.util.hass_dict import HassKey
 
+from .esl_ble.base import BATTERY_MAX_VOLTAGE, BATTERY_MIN_VOLTAGE
+
 DOMAIN = "ble_esl"
 
 SERVICE_WRITE = "write"
@@ -31,10 +33,10 @@ DEFAULT_WRITE_DELAY_MS = 0
 DEFAULT_PREVENT_DUPLICATE_SEND = False
 DEFAULT_DEBOUNCE_MS = 0
 
-# Session-polled battery (e.g. easyTag): % is a linear map of the voltage over
-# min-max, and at or below min the battery-low binary sensor turns on.
-SESSION_MIN_VOLTAGE = 2.2
-SESSION_MAX_VOLTAGE = 3.0
+# Session-polled battery (easyTag, WOLINK): the same voltage range as the
+# advertised readings, so percentages are comparable across backends.
+SESSION_MIN_VOLTAGE = BATTERY_MIN_VOLTAGE
+SESSION_MAX_VOLTAGE = BATTERY_MAX_VOLTAGE
 
 #: Config-entry data key under which the write-lock switch persists its state.
 WRITE_LOCK = "write_lock"
