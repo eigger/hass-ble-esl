@@ -76,6 +76,11 @@ async def test_write_sends_rendered_image_and_updates_image_entity(
     assert tag_writer.write_prepared.await_count == 1
     assert tag_writer.sent_image().size == (296, 128)
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state != "unknown"
+    assert wolink_entry.runtime_data.last_write_timing == {
+        "attempt": 1,
+        "success": True,
+        "transfer_s": 0.1,
+    }
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "on"
     assert sensor(hass, "failure_count") == "0"
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"

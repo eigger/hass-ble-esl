@@ -52,6 +52,8 @@ class BleEslRuntimeData:
     """Bumped whenever a pending write is cancelled; a debounced write that
     already fired but is still queued on the BLE lock is dropped if its
     generation no longer matches."""
+    last_write_timing: dict[str, float | int] | None = None
+    """Per-stage timings of the most recent write attempt (see WriteResult.timing)."""
 
     @property
     def identifier(self) -> str:

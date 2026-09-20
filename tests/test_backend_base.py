@@ -300,3 +300,26 @@ def test_preset_for_falls_back_to_first_preset():
     assert backend.preset_for("p") is PRESET
     assert backend.preset_for("290") is PRESET  # foreign/stale key
     assert backend.preset_for(None) is PRESET
+
+
+def test_write_prepared_records_connect_and_session_timing(monkeypatch):
+    class Backend(_Backend):
+        id = "t3"
+
+        async def write_session(self, client, address, preset, prepared, **kwargs):
+            await prepared
+            return WriteResult(success=True, timing={"transfer_s": 0.5})
+
+    async def _test():
+        client = MagicMock(is_connected=True, disconnect=AsyncMock())
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        result = await Backend().write_prepared(
+            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+        )
+        assert result.success
+        assert list(result.timing) == ["connect_s", "transfer_s", "session_s"]
+        assert all(v >= 0 for v in result.timing.values())
+
+    asyncio.run(_test())

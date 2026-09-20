@@ -8,6 +8,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 import contextlib
 from dataclasses import dataclass, field
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
@@ -82,6 +83,10 @@ class WriteResult:
     battery_mv: int | None = None
     temperature_c: int | None = None
     error: str | None = None
+    timing: dict[str, float | int] = field(default_factory=dict)
+    """Per-stage timings in seconds (and counts) for the diagnostics download
+    and debug log: `connect_s`/`session_s` from write_prepared(), the rest
+    protocol-specific (e.g. PickSmart's settle, START probes, chunk round trip)."""
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:
@@ -441,9 +446,11 @@ class BleBackend(ABC):
         retry. Every failure, including connecting, becomes a failed
         WriteResult so it counts toward retries and the failure sensors.
         """
+        started = time.monotonic()
         try:
             async with ble_session(ble_device) as client:
-                return await self.write_session(
+                connected = time.monotonic()
+                result = await self.write_session(
                     client,
                     ble_device.address,
                     preset,
@@ -451,6 +458,12 @@ class BleBackend(ABC):
                     attempt=attempt,
                     write_delay_ms=write_delay_ms,
                 )
+            result.timing = {
+                "connect_s": round(connected - started, 3),
+                **result.timing,
+                "session_s": round(time.monotonic() - connected, 3),
+            }
+            return result
         except Exception as exc:
             # The caller logs each failed attempt and raises after the last
             # one; keep the traceback at debug level without a second ERROR.

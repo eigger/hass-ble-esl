@@ -171,13 +171,68 @@ def test_picksmart_recovers_from_resend_requests(monkeypatch):
     asyncio.run(_test())
 
 
-def test_picksmart_timeout_error_is_descriptive(monkeypatch):
-    """A tag that stops answering yields a message naming the step, not ''."""
+WRITER = "custom_components.ble_esl.esl_ble.picksmart.writer"
+
+
+def _fast_probe(monkeypatch, timeout=0.02, attempts=3, settle=0.0):
+    monkeypatch.setattr(f"{WRITER}.START_PROBE_TIMEOUT_S", timeout)
+    monkeypatch.setattr(f"{WRITER}.START_PROBE_ATTEMPTS", attempts)
+    monkeypatch.setattr(f"{WRITER}.NOTIFY_SETTLE_S", settle)
+
+
+def test_picksmart_start_is_probed_until_the_tag_answers(monkeypatch):
+    """A START the tag drops (not ready after subscribing) is resent; the
+    first answered one proves subscription and readiness end to end."""
 
     async def _test():
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.picksmart.writer.FEEDBACK_TIMEOUT", 0.05
+        _fast_probe(monkeypatch)
+        mock_client = MagicMock()
+        starts = 0
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            nonlocal starts
+            if char == CMD_UUID and data[0] == 0x01:
+                starts += 1
+                if starts < 3:
+                    return  # dropped: tag not ready yet
+                mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+            elif char == CMD_UUID and data[0] == 0x02:
+                mock_client._handler(None, bytearray([0x02]))
+            elif char == CMD_UUID and data[0] == 0x03:
+                mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
+            elif char == IMG_UUID:
+                part = int.from_bytes(data[0:4], "little")
+                mock_client._handler(
+                    None, bytearray([0x05, 0x00]) + (part + 1).to_bytes(4, "little")
+                )
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        result = await client.write_payload(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
         )
+
+        assert result.success is True
+        assert starts == 3
+        assert result.timing["start_probes"] == 3
+        assert result.timing["parts"] == 40 and result.timing["resends"] == 0
+        assert {"settle_s", "start_s", "transfer_s", "round_trip_ms"} <= result.timing.keys()
+
+    asyncio.run(_test())
+
+
+def test_picksmart_start_probes_exhausted_is_descriptive(monkeypatch):
+    """A tag that never answers START fails after the probe budget with a
+    message naming what was tried, not ''."""
+
+    async def _test():
+        _fast_probe(monkeypatch)
         mock_client = MagicMock()
         mock_client.start_notify = AsyncMock()
         mock_client.stop_notify = AsyncMock()
@@ -185,7 +240,40 @@ def test_picksmart_timeout_error_is_descriptive(monkeypatch):
 
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
         with pytest.raises(
-            NotificationTimeout, match=r"No response from tag within 0\.05s after START"
+            NotificationTimeout, match=r"No response from tag to START after 3 probes"
+        ):
+            await client.write_payload(
+                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+            )
+        starts = [c for c in mock_client.write_gatt_char.await_args_list if c.args[1][0] == 0x01]
+        assert len(starts) == 3
+
+    asyncio.run(_test())
+
+
+def test_picksmart_timeout_after_start_is_descriptive(monkeypatch):
+    """Once START is answered, a later step that times out names that step."""
+
+    async def _test():
+        _fast_probe(monkeypatch)
+        monkeypatch.setattr(f"{WRITER}.FEEDBACK_TIMEOUT", 0.05)
+        mock_client = MagicMock()
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            if char == CMD_UUID and data[0] == 0x01:
+                mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+            # SIZE is never answered
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        with pytest.raises(
+            NotificationTimeout, match=r"No response from tag within 0\.05s after SIZE"
         ):
             await client.write_payload(
                 prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)

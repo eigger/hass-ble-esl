@@ -5,20 +5,24 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 
-from ..base import DevicePreset, Notifications, WriteResult
+from ..base import DevicePreset, Notifications, NotificationTimeout, WriteResult
 from .const import (
     CMD_IMAGE,
     CMD_SIZE,
     CMD_START,
     FEEDBACK_TIMEOUT,
     MAX_SAME_PART_REQUESTS,
+    NOTIFY_SETTLE_S,
     RESEND_BACKOFF_S,
     RESP_IMAGE_DATA,
     SERVICE_UUID_PREFIX,
+    START_PROBE_ATTEMPTS,
+    START_PROBE_TIMEOUT_S,
 )
 from .protocol import (
     encode_image,
@@ -83,15 +87,32 @@ class PickSmartClient:
         compression2 = bool(self.preset.extra.get("compression2", False))
         packet_size = len(payload)
 
-        # 1 s settle after start_notify matches hass-gicisky.
-        async with Notifications(self.client, self.cmd_uuid, settle=1.0) as replies:
+        timing: dict[str, float | int] = {"settle_s": NOTIFY_SETTLE_S}
+        t0 = time.monotonic()
+        async with Notifications(self.client, self.cmd_uuid, settle=NOTIFY_SETTLE_S) as replies:
             self._replies = replies
-            # Step 1: START (0x01) -> [01 F4 00]
-            start_resp = await self._write_with_response(
-                self.cmd_uuid,
-                make_cmd_packet(CMD_START, packet_size, compression2),
-                "START",
-            )
+            # Step 1: START (0x01) -> [01 F4 00], probed (see const.py).
+            start_packet = make_cmd_packet(CMD_START, packet_size, compression2)
+            for probe in range(1, START_PROBE_ATTEMPTS + 1):
+                try:
+                    start_resp = await self._write_with_response(
+                        self.cmd_uuid, start_packet, "START", timeout=START_PROBE_TIMEOUT_S
+                    )
+                    break
+                except NotificationTimeout:
+                    if probe == START_PROBE_ATTEMPTS:
+                        raise NotificationTimeout(
+                            f"No response from tag to START after {probe} probes "
+                            f"({START_PROBE_TIMEOUT_S:g}s each)"
+                        ) from None
+                    _LOGGER.debug(
+                        "%s: START unanswered (%d/%d), resending",
+                        self.address,
+                        probe,
+                        START_PROBE_ATTEMPTS,
+                    )
+            timing["start_probes"] = probe
+            timing["start_s"] = round(time.monotonic() - t0 - NOTIFY_SETTLE_S, 3)
             if (
                 len(start_resp) < 3
                 or start_resp[0] != 0x01
@@ -129,8 +150,11 @@ class PickSmartClient:
             last_part = -1
             same_part_count = 0
             total_parts = (packet_size + 239) // 240
+            sends = resends = 0
+            transfer_started = time.monotonic()
 
             while part * 240 < packet_size:
+                sends += 1
                 data_packet = make_size_packet(part, payload)
                 resp = await self._write_with_response(
                     self.img_uuid, data_packet, f"part {part}/{total_parts}"
@@ -156,6 +180,7 @@ class PickSmartClient:
                 new_part = int.from_bytes(resp[2:6], "little")
                 if new_part == last_part:
                     same_part_count += 1
+                    resends += 1
                     if same_part_count >= MAX_SAME_PART_REQUESTS:
                         raise PickSmartError(
                             f"Transfer stalled: part {new_part}/{total_parts} "
@@ -179,7 +204,16 @@ class PickSmartClient:
 
                 part = new_part
 
-            return WriteResult(success=True)
+            transfer_s = time.monotonic() - transfer_started
+            timing.update(
+                {
+                    "parts": total_parts,
+                    "resends": resends,
+                    "transfer_s": round(transfer_s, 3),
+                    "round_trip_ms": round(transfer_s / sends * 1000) if sends else 0,
+                }
+            )
+            return WriteResult(success=True, timing=timing)
 
 
 async def write_session(
