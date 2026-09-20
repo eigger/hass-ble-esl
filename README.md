@@ -109,6 +109,8 @@ Availability varies by country. AliExpress listings by protocol family:
 
 ## Installation
 
+Requires Home Assistant **2025.12** or newer.
+
 1. Install via **HACS** (custom repository), or copy this repository into `custom_components/ble_esl`.
 2. Restart Home Assistant.
 3. Add the integration via **Settings** → **Devices & Services** → **Add Integration** → **BLE ESL** (or auto-discover via Bluetooth).
