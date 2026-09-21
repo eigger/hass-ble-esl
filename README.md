@@ -139,6 +139,7 @@ What this integration adds on top:
 
 ## Feedback & support
 
+- A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
 - Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the backend, preset, firmware, options, last advertisement and failure counters (MAC redacted).
 - Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
