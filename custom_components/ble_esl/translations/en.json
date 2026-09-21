@@ -132,14 +132,12 @@
         "data": {
           "model": "Model",
           "retry_count": "Retry Count",
-          "write_delay_ms": "Write Delay (ms)",
           "prevent_duplicate_send": "Prevent Duplicate Send",
           "debounce_ms": "Debounce Delay (ms)"
         },
         "data_description": {
           "model": "ESL display resolution and model type.",
           "retry_count": "Number of times to retry writing to the device before giving up.",
-          "write_delay_ms": "Delay between each chunk written to the device. Increase if writes are unreliable.",
           "prevent_duplicate_send": "Skip writing when the new image is identical to the last one sent.",
           "debounce_ms": "Delay before writing to device. New writes cancel pending ones. 0 = disabled (immediate write)."
         }

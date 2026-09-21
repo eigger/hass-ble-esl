@@ -35,13 +35,11 @@ from .const import (
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
     CONF_RETRY_COUNT,
-    CONF_WRITE_DELAY_MS,
     DEFAULT_DEBOUNCE_MS,
     DEFAULT_MODEL,
     DEFAULT_PREVENT_DUPLICATE_SEND,
     DEFAULT_PROTOCOL,
     DEFAULT_RETRY_COUNT,
-    DEFAULT_WRITE_DELAY_MS,
     DOMAIN,
 )
 from .esl_ble import (
@@ -103,15 +101,6 @@ def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]
                     max=10,
                     step=1,
                     mode=NumberSelectorMode.BOX,
-                )
-            ),
-            vol.Required(CONF_WRITE_DELAY_MS, default=DEFAULT_WRITE_DELAY_MS): NumberSelector(
-                NumberSelectorConfig(
-                    min=0,
-                    max=1000,
-                    step=1,
-                    mode=NumberSelectorMode.BOX,
-                    unit_of_measurement="ms",
                 )
             ),
             vol.Required(

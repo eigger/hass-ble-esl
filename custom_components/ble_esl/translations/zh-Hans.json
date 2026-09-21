@@ -132,14 +132,12 @@
         "data": {
           "model": "型号",
           "retry_count": "重试次数",
-          "write_delay_ms": "写入延迟 (ms)",
           "prevent_duplicate_send": "防止重复发送",
           "debounce_ms": "防抖延迟 (ms)"
         },
         "data_description": {
           "model": "ESL 屏幕分辨率和型号类型。",
           "retry_count": "放弃之前重试写入的次数。",
-          "write_delay_ms": "写入设备的每个数据块之间的间隔。写入不稳定时请增大。",
           "prevent_duplicate_send": "当新图像与上次发送的图像相同时跳过写入。",
           "debounce_ms": "写入前的等待时间。新请求会取消待处理的请求。0 = 禁用（立即写入）。"
         }

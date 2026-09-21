@@ -132,14 +132,12 @@
         "data": {
           "model": "モデル",
           "retry_count": "再試行回数",
-          "write_delay_ms": "書き込み遅延 (ms)",
           "prevent_duplicate_send": "重複送信の防止",
           "debounce_ms": "デバウンス遅延 (ms)"
         },
         "data_description": {
           "model": "ESL の画面解像度とモデルの種類です。",
           "retry_count": "書き込みを諦めるまでに再試行する回数です。",
-          "write_delay_ms": "デバイスに書き込む各データ片の間隔です。書き込みが不安定な場合は増やしてください。",
           "prevent_duplicate_send": "新しい画像が最後に送信した画像と同一の場合、書き込みをスキップします。",
           "debounce_ms": "書き込み前の待機時間です。新しい要求は待機中の要求を取り消します。0 = 無効（即時書き込み）。"
         }

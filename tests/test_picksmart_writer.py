@@ -61,7 +61,6 @@ def test_picksmart_handshake_flow():
             PRESETS["0x0033"],
             MAC,
             attempt=1,
-            write_delay_ms=0,
         )
         img = Image.new("RGB", (296, 128), "white")
         result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
@@ -103,7 +102,6 @@ def test_picksmart_stall_detection():
             PRESETS["0x0033"],
             MAC,
             attempt=1,
-            write_delay_ms=0,
         )
         img = Image.new("RGB", (296, 128), "white")
 
