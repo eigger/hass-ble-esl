@@ -8,9 +8,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
+from blesession import Notifications, SessionTrace
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
     AES_KEY,
     AUTH_CHAR,
@@ -116,7 +117,7 @@ class WolinkClient:
     async def _write_chunked(
         self,
         payload: bytes,
-        timing: WriteTiming,
+        trace: SessionTrace,
         chunk_size: int = 200,
         pacing_s: float = 0.0,
     ) -> None:
@@ -127,27 +128,30 @@ class WolinkClient:
         """
         delay = CHUNK_DELAY_S + pacing_s
         offset = 0
-        timing["parts"] = (len(payload) + chunk_size - 1) // chunk_size
-        timing["sends"] = 0
-        while offset < len(payload):
-            chunk = payload[offset : offset + chunk_size]
-            cmd = cmd_load_image_chunk(offset, chunk)
-            await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
-            offset += len(chunk)
-            timing["sends"] += 1
-            await asyncio.sleep(delay)
+        sends = 0
+        trace.note(parts=(len(payload) + chunk_size - 1) // chunk_size, sends=sends)
+        try:
+            while offset < len(payload):
+                chunk = payload[offset : offset + chunk_size]
+                cmd = cmd_load_image_chunk(offset, chunk)
+                await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
+                offset += len(chunk)
+                sends += 1
+                await asyncio.sleep(delay)
+        finally:
+            trace.note(sends=sends)
 
     async def write_prepared(
         self,
         prepared: PreparedImage,
         *,
         pacing_s: float = 0.0,
-        timing: WriteTiming | None = None,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Send an already-encoded image and trigger the refresh.
 
-        `timing` lets the caller add the stages before this one (authentication)
-        and is the caller's to hang on a failure (see write_session).
+        `trace` carries the stages before this one (authentication) when the
+        caller timed them (see write_session).
         """
         payload, raw_len = prepared
         refresh = cmd_refresh_compressed(len(payload))
@@ -162,24 +166,26 @@ class WolinkClient:
                 est_seconds,
             )
         timeout = self._completion_timeout(raw_len)
-        if timing is None:
-            timing = WriteTiming()
-        timing["bytes"] = len(payload)
+        if trace is None:
+            trace = SessionTrace()
+        trace.note(bytes=len(payload))
 
         async with Notifications(self.client, STATUS_CHAR) as status:
-            with timing.stage("transfer_s"):
-                await self._write_chunked(payload, timing, pacing_s=pacing_s)
-            # Status frames during the upload are only busy indications, but an
-            # error reported before the refresh is still an error.
-            for frame in status.clear():
-                if err := self._status_error(frame):
-                    raise WolinkError(err)
-            # finish_s is the panel refresh: the tag reports idle once the
-            # e-paper has been redrawn, seconds to a minute by panel size.
-            with timing.stage("finish_s"):
+            with trace.timed(STAGE_TRANSFER):
+                await self._write_chunked(payload, trace, pacing_s=pacing_s)
+                # Status frames during the upload are only busy indications,
+                # but an error reported before the refresh is still an error
+                # — of the transfer, so it is raised inside its stage: the
+                # trace attributes a failure to the block it escapes from.
+                for frame in status.clear():
+                    if err := self._status_error(frame):
+                        raise WolinkError(err)
+            # The finish stage is the panel refresh: the tag reports idle once
+            # the e-paper has been redrawn, seconds to a minute by panel size.
+            with trace.timed(STAGE_FINISH):
                 await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
                 await status.wait_for(self._completed, timeout, step="refresh")
-        return WriteResult(success=True, timing=timing)
+        return WriteResult(success=True)
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> PreparedImage:
@@ -202,6 +208,7 @@ async def write_session(
     prepared: Awaitable[PreparedImage],
     *,
     pacing_s: float = 0.0,
+    trace: SessionTrace,
 ) -> WriteResult:
     """Authenticate and send an encode over an open link.
 
@@ -210,8 +217,6 @@ async def write_session(
     """
     payload = await prepared
     wolink = WolinkClient(client, preset, address)
-    timing = WriteTiming()
-    with timing.reported():
-        with timing.stage("start_s"):
-            await wolink.authenticate()
-        return await wolink.write_prepared(payload, pacing_s=pacing_s, timing=timing)
+    with trace.timed(STAGE_HANDSHAKE):
+        await wolink.authenticate()
+    return await wolink.write_prepared(payload, pacing_s=pacing_s, trace=trace)

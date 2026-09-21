@@ -8,14 +8,9 @@ import logging
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
+from blesession import Notifications, NotificationTimeout, SessionTrace
 
-from ..base import (
-    DevicePreset,
-    Notifications,
-    NotificationTimeout,
-    WriteResult,
-    WriteTiming,
-)
+from ..base import STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
     CMD_IMAGE,
     CMD_SIZE,
@@ -63,6 +58,7 @@ class PickSmartClient:
         preset: DevicePreset,
         address: str,
         pacing_s: float = 0.0,
+        trace: SessionTrace | None = None,
     ) -> None:
         self.client = client
         self.cmd_uuid = cmd_uuid
@@ -70,6 +66,7 @@ class PickSmartClient:
         self.preset = preset
         self.address = address
         self.pacing_s = pacing_s
+        self.trace = trace if trace is not None else SessionTrace()
         self._replies: Notifications | None = None
 
     async def _write_with_response(
@@ -91,17 +88,15 @@ class PickSmartClient:
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
-        timing = WriteTiming(settle_s=NOTIFY_SETTLE_S, bytes=len(payload))
-        # Let the caller report how far the attempt got (see write_prepared).
-        with timing.reported():
-            return await self._transfer(payload, compression2, timing)
+        self.trace.note(settle_s=NOTIFY_SETTLE_S, bytes=len(payload))
+        return await self._transfer(payload, compression2)
 
-    async def _handshake(self, packet_size: int, compression2: bool, timing: WriteTiming) -> int:
+    async def _handshake(self, packet_size: int, compression2: bool) -> int:
         """Steps 1-3: START (probed), SIZE, IMAGE START. Returns the first part wanted."""
         # Step 1: START (0x01) -> [01 F4 00], probed (see const.py).
         start_packet = make_cmd_packet(CMD_START, packet_size, compression2)
         for probe in range(1, START_PROBE_ATTEMPTS + 1):
-            timing["start_probes"] = probe
+            self.trace.note(start_probes=probe)
             try:
                 start_resp = await self._write_with_response(
                     self.cmd_uuid, start_packet, "START", timeout=START_PROBE_TIMEOUT_S
@@ -110,8 +105,12 @@ class PickSmartClient:
             except NotificationTimeout:
                 if probe == START_PROBE_ATTEMPTS:
                     raise NotificationTimeout(
-                        f"No response from tag to START after {probe} probes "
-                        f"({START_PROBE_TIMEOUT_S:g}s each)"
+                        START_PROBE_TIMEOUT_S,
+                        step="START",
+                        message=(
+                            f"No response from tag to START after {probe} probes "
+                            f"({START_PROBE_TIMEOUT_S:g}s each)"
+                        ),
                     ) from None
                 _LOGGER.debug(
                     "%s: START unanswered (%d/%d), resending",
@@ -150,37 +149,33 @@ class PickSmartClient:
             raise PickSmartError(f"Unexpected image start response: {img_start_resp.hex()}")
         return int.from_bytes(img_start_resp[2:6], "little")
 
-    async def _transfer(
-        self, payload: bytes, compression2: bool, timing: WriteTiming
-    ) -> WriteResult:
+    async def _transfer(self, payload: bytes, compression2: bool) -> WriteResult:
         packet_size = len(payload)
         async with Notifications(self.client, self.cmd_uuid, settle=NOTIFY_SETTLE_S) as replies:
             self._replies = replies
-            with timing.stage("start_s"):
-                part = await self._handshake(packet_size, compression2, timing)
+            with self.trace.timed(STAGE_HANDSHAKE):
+                part = await self._handshake(packet_size, compression2)
 
             # Step 4: IMAGE_DATA chunk loop.
             total_parts = (packet_size + 239) // 240
-            timing["parts"] = total_parts
-            await self._send_parts(payload, part, total_parts, timing)
-            return WriteResult(success=True, timing=timing)
+            self.trace.note(parts=total_parts)
+            await self._send_parts(payload, part, total_parts)
+            return WriteResult(success=True)
 
-    async def _send_parts(
-        self, payload: bytes, part: int, total_parts: int, timing: WriteTiming
-    ) -> None:
+    async def _send_parts(self, payload: bytes, part: int, total_parts: int) -> None:
         """Step 4: the IMAGE_DATA loop.
 
         The tag drives the transfer by answering each chunk with the part it
         wants next; asking for the same part again is its way of requesting a
-        resend. The counters land in `timing` even when the loop raises.
+        resend. The counters land on the trace even when the loop raises.
         """
         packet_size = len(payload)
         last_part = -1
         same_part_count = 0
         sends = resends = 0
-        timing["completed_by_tag"] = False
+        completed_by_tag = False
         try:
-            with timing.stage("transfer_s"):
+            with self.trace.timed(STAGE_TRANSFER):
                 while part * 240 < packet_size:
                     sends += 1
                     data_packet = make_size_packet(part, payload)
@@ -200,7 +195,7 @@ class PickSmartClient:
                             raise PickSmartError(
                                 f"Tag reported completion after part {part}/{total_parts}"
                             )
-                        timing["completed_by_tag"] = True
+                        completed_by_tag = True
                         break
                     if (
                         len(resp) < 6
@@ -242,9 +237,13 @@ class PickSmartClient:
             # A stalled transfer is exactly when the counters matter, so they
             # are filled in whether or not the loop finished.
             # sends = parts + resends; round_trip_ms * sends ~= transfer_s
-            timing["sends"], timing["resends"] = sends, resends
-            transfer_s = float(timing.get("transfer_s", 0.0))
-            timing["round_trip_ms"] = round(transfer_s / sends * 1000) if sends else 0
+            transfer_s = self.trace.timings.get(STAGE_TRANSFER, 0.0)
+            self.trace.note(
+                completed_by_tag=completed_by_tag,
+                sends=sends,
+                resends=resends,
+                round_trip_ms=round(transfer_s / sends * 1000) if sends else 0,
+            )
 
 
 async def write_session(
@@ -254,6 +253,7 @@ async def write_session(
     prepared: Awaitable[bytes],
     *,
     pacing_s: float = 0.0,
+    trace: SessionTrace,
 ) -> WriteResult:
     """Resolve the command/image characteristics and run the transfer handshake."""
     char_uuids = [
@@ -263,7 +263,8 @@ async def write_session(
         for c in svc.characteristics
     ]
     if len(char_uuids) < 2:
-        return WriteResult(success=False, error=f"Insufficient characteristics: {char_uuids}")
+        # Before any protocol stage: reported as a `session` failure.
+        raise PickSmartError(f"Insufficient characteristics: {char_uuids}")
     cmd_uuid, img_uuid = sorted(char_uuids, key=lambda x: int(x[4:8], 16))[:2]
 
     picksmart = PickSmartClient(
@@ -273,5 +274,6 @@ async def write_session(
         preset,
         address,
         pacing_s=pacing_s,
+        trace=trace,
     )
     return await picksmart.write_payload(await prepared)

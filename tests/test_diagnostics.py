@@ -14,9 +14,9 @@ from pytest_homeassistant_custom_component.components.diagnostics import (
     get_diagnostics_for_config_entry,
 )
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
+from writes import fail, ok
 
 from custom_components.ble_esl.const import CONF_RETRY_COUNT, DOMAIN
-from custom_components.ble_esl.esl_ble.base import WriteResult
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 
 
@@ -52,30 +52,39 @@ async def test_diagnostics_content_and_redaction(
     assert result["write_state"]["write_lock"] is False
     assert result["write_state"]["in_progress"] is False
     assert result["write_state"]["last_image_png_bytes"] > 0
-    assert result["write_state"]["last_write"] == {"attempt": 1, "success": True, "transfer_s": 0.1}
+    last_write = result["write_state"]["last_write"]
+    assert (last_write["attempt"], last_write["success"], last_write["transfer_s"]) == (
+        1,
+        True,
+        0.1,
+    )
     assert result["write_state"]["last_failure_write"] is None
     assert result["sensors"]["failure_count"] == 0
     assert result["sensors"]["connectivity"] is False
 
     # After a failed write the diagnostics carry its breakdown too, and keep
     # it once a later write has succeeded.
-    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
+    tag_writer.write_result = fail("boom", connect=0.5)
     with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
             DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
         )
-    tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1})
+    tag_writer.write_result = ok(transfer=0.1)
     await hass.services.async_call(
         DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
     )
     result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
     assert result["write_state"]["last_write"]["success"] is True
-    assert result["write_state"]["last_failure_write"] == {
-        "attempt": 2,
+    failure = result["write_state"]["last_failure_write"]
+    assert failure == {
+        "operation": "write",
         "success": False,
         "error": "boom",
         "failed_stage": "connect",
         "likely_cause": "The BLE link could not be established.",
+        "attempt": 2,
+        "attempts": 2,
+        "paths": failure["paths"],
         "connect_s": 0.5,
     }
     assert result["sensors"]["failure_count"] == 1

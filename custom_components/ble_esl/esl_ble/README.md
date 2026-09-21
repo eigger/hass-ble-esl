@@ -63,7 +63,7 @@ class FooBleBackend(BleBackend):
 | `parse_advertisement()` | yes | battery / versions / `model_key` from the advertisement, or `None` |
 | `prepare_image()` + `write_session()` | yes\* | \*or override `write_image()` wholesale |
 | `refine_preset(preset, info)` | when `model_detection=True` identifies more than one model | e.g. PickSmart's firmware quirks |
-| `write_prepared()` | rarely | to refuse before connecting (XTE) |
+| `write_prepared()` | rarely | to refuse before connecting (raise `WriteRefused`; XTE) |
 | `read_status()` | optional | status query without a write |
 
 `presets()`, `preset_for()`, `supported()`, `create_parser()` and `brand` are
@@ -72,34 +72,42 @@ derived from the class attributes — do not override them.
 ## Write path (provided by the base)
 
 ```
-BleBackend.write_image(ble_device, preset, image)
-  └─ encode task: to_thread(prepare_image)          ┐ overlap
-  └─ write_prepared(ble_device, preset, encode)      ┘
-       └─ ble_session(ble_device)   connect … finally disconnect
-            └─ write_session(client, address, preset, prepared)   ← your code
+BleBackend.write_image(ble_device, preset, image, trace=)
+  └─ encode task: to_thread(prepare_image)                 ┐ overlap
+  └─ write_prepared(ble_device, preset, encode, trace=)     ┘
+       └─ blesession.ble_session(ble_device, trace=)   connect … finally disconnect
+            └─ write_session(client, address, preset, prepared, trace=)   ← your code
 ```
+
+The session skeleton comes from [`blesession`](https://github.com/eigger/blesession):
+`ble_session()` connects inside the block and disconnects in `finally`,
+`Notifications` queues the replies of one characteristic, and `SessionTrace`
+records where the time went and where a failure hit. The integration's
+attempt loop (`services.execute_write`, on `blesession.run_attempts`) owns
+the BLE lock, the attempt bound, the retries and the report.
 
 * `prepare_image` is CPU-bound and synchronous; the integration runs it once
   per write in the executor **before** taking the BLE lock and reuses the
   result across retries.
 * `write_session` receives the encode as an awaitable. Await it only once the
   handshake that does not need it is done, so encoding overlaps connecting.
-  Raise on any protocol error — `write_prepared` turns every exception
-  (including connect failures) into a failed `WriteResult` with
-  `str(exc) or type name`, which the retry loop and failure sensors use.
-  Read replies through `base.Notifications`; its timeouts already carry the step
+  Raise on any protocol error — `write_prepared` lets every exception through
+  (connect failures are `blesession.ConnectFailed`), and the attempt loop
+  turns it into the retry decision and the failure sensors. Read replies
+  through `blesession.Notifications`; its timeouts already carry the step
   (`asyncio.TimeoutError` alone has no message).
 * Add `pacing_s` to whatever pause the protocol already has between data packets;
   the integration passes a value above 0 only after an earlier attempt failed
-  during the transfer (`WriteResult.failed_in_transfer`, read from the timing).
-* Time the session with `base.WriteTiming` and return it as `WriteResult.timing`:
-  `with timing.stage("start_s"): ...` around the handshake, `"transfer_s"`
-  around the data, `"finish_s"` around the completion wait, plus `parts`
-  and `bytes`; wrap the whole session in `with timing.reported():` so a
-  failed attempt still shows how far it got. The keys are shared across
-  protocols (see the `WriteTiming` docstring) and surface as the Write
-  Duration sensor's attributes; add protocol-specific counters to the same
-  dict.
+  in the `transfer` stage.
+* Time the session on the `trace` you are handed: `with trace.timed(STAGE_HANDSHAKE):`
+  around the handshake, `STAGE_TRANSFER` around the data, `STAGE_FINISH`
+  around the completion wait (the constants are in `base`), and
+  `trace.note(parts=..., bytes=..., settle_s=...)` for the facts. A stage
+  records its time whether it returns or raises, and the innermost stage an
+  exception escapes from is the one the report names. The stage names are
+  shared across protocols (see the comment above `STAGE_MAP` in `base.py`)
+  and surface as the Write Duration sensor's attributes; note
+  protocol-specific counters on the same trace.
 * Never catch exceptions to return `success=True`; never leave the link
   subscribed to notifications (unsubscribe in `finally`, suppressing errors on
   a dropped link).

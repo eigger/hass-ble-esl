@@ -30,7 +30,7 @@ Start with `failed_stage` on Last Failure Time: it says how far the attempt got.
 ### `unreachable`
 
 No radio currently sees the tag's advertisement; nothing was tried.
-- *Check:* `error` says *out of range or adapter down*. Is the proxy/adapter itself up in HA?
+- *Check:* `error` says *No connectable radio sees …*. Is the proxy/adapter itself up in HA?
 - *Do:* Move closer, replace the battery (see the **Battery** sensor), check the proxy is online.
 
 ### `connect`
@@ -45,9 +45,9 @@ Connected, but the tag dropped or refused the session before the protocol starte
 - *Check:* Does it repeat every time?
 - *Do:* Once: ignore. Every time: the protocol or model may not match — check the preset in the diagnostics and the model table in [models.md](models.md).
 
-### `handshake`
+### `auth` (`failed_detail: handshake`)
 
-The tag did not answer, or answered wrongly, before any image data was sent.
+The tag did not answer, or answered wrongly, before any image data was sent. `auth` is the shared name for this stage across BLE integrations; `failed_detail` gives the tag's own name for it.
 - *Check:* PickSmart `start_probes: 3` = it never answered START. WOLINK *device error 5* = authentication refused. *No response … after command 0x01* (XTE) = no reply to the size command.
 - *Do:* Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this backend knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model.
 
@@ -65,7 +65,7 @@ The image was sent; the tag did not confirm.
 
 ### Quick checks
 
-- **`error: Attempt timed out after 600s`** — the attempt hung (usually a proxy that died mid-write; GATT writes have no timeout of their own) and was cut at the 10-minute bound. `failed_stage` says where. It is **not retried** — the transport is dead, and the next automation run is the real retry — so a dead proxy costs one bound, not one per retry. Other tags wait at most for that one attempt: the BLE lock covers one attempt, and a tag that is retrying lets the others go first.
+- **`error: Attempt timed out after 600s …`** (`timed_out: true`) — the attempt hung (usually a proxy that died mid-write; GATT writes have no timeout of their own) and was cut at the 10-minute bound. `failed_stage` says where. It is **not retried** — the transport is dead, and the next automation run is the real retry — so a dead proxy costs one bound, not one per retry. Other tags wait at most for that one attempt: the BLE lock covers one attempt, and a tag that is retrying lets the others go first.
 
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used.
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.

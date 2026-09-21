@@ -5,10 +5,11 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from blesession import ConnectFailed, SessionTrace, session as session_mod
 from PIL import Image
+import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.easytag.const import (
     KEY_INDEX_NOTIFY,
     NOTIFY_UUID,
@@ -18,6 +19,7 @@ from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
 from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
+    EasyTagError,
     prepare,
 )
 
@@ -58,7 +60,8 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
         mock_client.stop_notify = AsyncMock(side_effect=mock_stop_notify)
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = EasyTagClient(mock_client, PRESETS["3D"], MAC)
+        trace = SessionTrace()
+        client = EasyTagClient(mock_client, PRESETS["3D"], MAC, trace)
         img = Image.new("RGB", (296, 128), "white")
         frames = prepare(PRESETS["3D"], img, MAC)
         result = await client.write_frames(frames)
@@ -67,10 +70,11 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
         assert result.battery_mv == 3000
         assert result.temperature_c == 22
         assert len(written_frames) >= 2  # Header + data packets
-        # Frames are unacknowledged, so the reply wait (finish_s) is the refresh.
-        assert result.timing["parts"] == len(frames) == len(written_frames)
-        assert result.timing["bytes"] == sum(map(len, frames))
-        assert {"settle_s", "transfer_s", "finish_s"} <= result.timing.keys()
+        # Frames are unacknowledged, so the reply wait (finish) is the refresh.
+        assert trace.facts["parts"] == len(frames) == len(written_frames)
+        assert trace.facts["bytes"] == sum(map(len, frames))
+        assert "settle_s" in trace.facts
+        assert list(trace.timings) == ["transfer", "finish"]
 
     asyncio.run(_test())
 
@@ -100,10 +104,7 @@ def test_easytag_update_image_entrypoint(monkeypatch):
         async def mock_establish(*args, **kwargs):
             return mock_client
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
         result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], img)
@@ -116,8 +117,8 @@ def test_easytag_update_image_entrypoint(monkeypatch):
     asyncio.run(_test())
 
 
-def test_connection_failure_is_reported_not_raised(monkeypatch):
-    """establish_connection errors become a failed WriteResult so retries/counters apply."""
+def test_connection_failure_raises_connect_failed(monkeypatch):
+    """establish_connection errors surface as ConnectFailed, stage `connect`."""
 
     async def _test():
         mock_ble_device = MagicMock()
@@ -126,16 +127,15 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
         async def mock_establish(*args, **kwargs):
             raise OSError("unavailable")
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await esl_ble.get("easytag").write_image(mock_ble_device, PRESETS["3D"], img)
-
-        assert result.success is False
-        assert result.error == "unavailable"
+        trace = SessionTrace()
+        with pytest.raises(ConnectFailed, match="unavailable"):
+            await esl_ble.get("easytag").write_image(
+                mock_ble_device, PRESETS["3D"], img, trace=trace
+            )
+        assert trace.failed_stage == "connect"
 
     asyncio.run(_test())
 
@@ -162,16 +162,42 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
             raise OSError("stop here")
 
         monkeypatch.setattr(esl_ble.get("easytag"), "prepare_image", slow_prepare)
-        monkeypatch.setattr(base, "establish_connection", connect)
+        monkeypatch.setattr(session_mod, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await esl_ble.get("easytag").write_image(
-            mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128))
-        )
+        with pytest.raises(ConnectFailed, match="stop here"):
+            await esl_ble.get("easytag").write_image(
+                mock_ble_device, PRESETS["3D"], Image.new("RGB", (296, 128))
+            )
         await asyncio.sleep(0.2)  # let the encode thread finish
 
-        assert result.success is False
         assert connect_started_at < encode_done_at
+
+    asyncio.run(_test())
+
+
+def test_empty_reply_is_a_finish_failure():
+    """An empty completion notify fails the wait it belongs to, not the session."""
+
+    async def _test():
+        mock_client = MagicMock()
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            mock_client._handler(None, bytearray())
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        trace = SessionTrace()
+        client = EasyTagClient(mock_client, PRESETS["3D"], MAC, trace)
+        frames = prepare(PRESETS["3D"], Image.new("RGB", (296, 128), "white"), MAC)
+        with pytest.raises(EasyTagError, match="Empty notify payload"):
+            await client.write_frames(frames)
+        assert trace.failed_stage == "finish"
 
     asyncio.run(_test())

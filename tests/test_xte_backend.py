@@ -6,13 +6,17 @@ import logging
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
+from blesession import ConnectFailed, SessionTrace, session as session_mod
 from bt import binary_values, sensor_values, service_info, update_device
 from PIL import Image
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import CONFIDENCE_COMMUNITY, CONFIDENCE_REPORTED
+from custom_components.ble_esl.esl_ble.base import (
+    CONFIDENCE_COMMUNITY,
+    CONFIDENCE_REPORTED,
+    WriteRefused,
+)
 from custom_components.ble_esl.esl_ble.xte import devices, writer
 from custom_components.ble_esl.esl_ble.xte.const import PALETTES
 from custom_components.ble_esl.esl_ble.xte.devices import (
@@ -184,10 +188,10 @@ def test_new_model_is_one_catalog_entry(monkeypatch):
 
 def test_foreign_preset_is_refused_before_connecting(monkeypatch):
     connect = AsyncMock(side_effect=AssertionError("must not connect"))
-    monkeypatch.setattr(base, "establish_connection", connect)
+    monkeypatch.setattr(session_mod, "establish_connection", connect)
     foreign = dataclasses.replace(PSJ_420, width=296, height=128)
-    result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
-    assert not result.success and result.error == "Unsupported XTE preset"
+    with pytest.raises(WriteRefused, match="Unsupported XTE preset"):
+        asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
     connect.assert_not_awaited()
 
 
@@ -195,15 +199,15 @@ def test_foreign_preset_is_refused_before_connecting(monkeypatch):
 def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, number):
     """A hand-picked size on a tag type with another pixel layout never gets a bad image."""
     connect = AsyncMock(side_effect=AssertionError("must not connect"))
-    monkeypatch.setattr(base, "establish_connection", connect)
+    monkeypatch.setattr(session_mod, "establish_connection", connect)
     backend = esl_ble.get("xte")
     payload = (
         bytes.fromhex("fd024002") + number.to_bytes(2, "big") + bytes.fromhex("63060102ffff1c")
     )
     adv = backend.parse_advertisement(advertisement(payload=payload))
     preset = backend.refine_preset(devices.PRESETS["psj-290"], adv)
-    result = asyncio.run(backend.write_image(advertisement(), preset, object()))
-    assert not result.success and f"device number {number}" in result.error
+    with pytest.raises(WriteRefused, match=f"device number {number}"):
+        asyncio.run(backend.write_image(advertisement(), preset, object()))
     connect.assert_not_awaited()
     # Any other seen device number writes normally (the stamp is not a rejection).
     other = backend.refine_preset(
@@ -212,46 +216,47 @@ def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, nu
             advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
         ),
     )
-    monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("down")))
-    result = asyncio.run(backend.write_image(advertisement(), other, object()))
-    assert result.error == "down"
+    monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(side_effect=OSError("down")))
+    with pytest.raises(ConnectFailed, match="down"):
+        asyncio.run(backend.write_image(advertisement(), other, object()))
 
 
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
-    monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-    transport = SimpleNamespace(
-        write_object=AsyncMock(return_value={"transfer_s": 0.2}, side_effect=error)
-    )
+    monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(return_value=client))
+    transport = SimpleNamespace(write_object=AsyncMock(side_effect=error))
     factory = MagicMock(return_value=transport)
     monkeypatch.setattr(writer, "XteClient", factory)
     image, encoded = object(), b"XTEK-encoded"
     prepare = MagicMock(return_value=encoded)
     monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", prepare)
-    result = asyncio.run(
-        esl_ble.get("xte").write_image(
-            advertisement(),
-            PSJ_420,
-            image,
-            pacing_s=0.05,
+    trace = SessionTrace()
+
+    async def run():
+        return await esl_ble.get("xte").write_image(
+            advertisement(), PSJ_420, image, pacing_s=0.05, trace=trace
         )
-    )
-    # Encoded before connecting, in a worker thread, then handed to the session.
+
+    if error is None:
+        result = asyncio.run(run())
+        assert result.success and result.battery_mv is None
+    else:
+        with pytest.raises(type(error)):
+            asyncio.run(run())
+        assert trace.failed_primary == "session"  # the stand-in timed no stage
+    # Encoded before connecting, in a worker thread, then handed to the session
+    # together with the trace.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
-    factory.assert_called_once_with(client, 0.05)
+    factory.assert_called_once_with(client, 0.05, trace)
     transport.write_object.assert_awaited_once_with(encoded)
     client.disconnect.assert_awaited_once()
-    assert result.success is (error is None)
-    assert result.battery_mv is None
-    if error is None:
-        assert result.timing["transfer_s"] == 0.2
-    if error is not None:
-        assert result.error == (str(error) or type(error).__name__)
 
 
-def test_connection_failure_is_reported(monkeypatch):
-    monkeypatch.setattr(base, "establish_connection", AsyncMock(side_effect=OSError("unavailable")))
+def test_connection_failure_raises_connect_failed(monkeypatch):
+    monkeypatch.setattr(
+        session_mod, "establish_connection", AsyncMock(side_effect=OSError("unavailable"))
+    )
     monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", MagicMock(return_value=b""))
-    result = asyncio.run(esl_ble.get("xte").write_image(advertisement(), PSJ_420, object()))
-    assert not result.success and result.error == "unavailable"
+    with pytest.raises(ConnectFailed, match="unavailable"):
+        asyncio.run(esl_ble.get("xte").write_image(advertisement(), PSJ_420, object()))

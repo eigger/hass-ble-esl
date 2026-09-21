@@ -6,7 +6,14 @@ from collections.abc import Awaitable
 import dataclasses
 from typing import TYPE_CHECKING
 
-from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset, WriteResult
+from ..base import (
+    AdvertisementInfo,
+    BleBackend,
+    Capabilities,
+    DevicePreset,
+    WriteRefused,
+    WriteResult,
+)
 from . import writer
 from .const import MANUFACTURER_ID, PALETTES, UNSUPPORTED_PACKING_DEVICE_NUMBERS
 from .devices import PRESETS, preset_for_advertisement
@@ -15,6 +22,7 @@ from .protocol import parse_advertisement
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
+    from blesession import SessionTrace
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
@@ -85,6 +93,7 @@ class XteBleBackend(BleBackend):
         prepared: Awaitable[bytes],
         *,
         pacing_s: float = 0.0,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         # Only catalog geometry is packed correctly; refuse anything else, and
         # the tag types with an unimplemented pixel layout, before connecting.
@@ -94,14 +103,15 @@ class XteBleBackend(BleBackend):
             catalog.height,
             catalog.colors,
         ):
-            return WriteResult(success=False, error="Unsupported XTE preset")
+            raise WriteRefused("Unsupported XTE preset")
         seen = preset.extra.get("seen_device_number")
         if seen in UNSUPPORTED_PACKING_DEVICE_NUMBERS:
-            return WriteResult(
-                success=False,
-                error=f"XTE device number {seen} uses a pixel layout that is not implemented",
+            raise WriteRefused(
+                f"XTE device number {seen} uses a pixel layout that is not implemented"
             )
-        return await super().write_prepared(ble_device, preset, prepared, pacing_s=pacing_s)
+        return await super().write_prepared(
+            ble_device, preset, prepared, pacing_s=pacing_s, trace=trace
+        )
 
 
 __all__ = [
