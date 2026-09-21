@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from bleak import BleakClient
 
 from ..base import (
-    RETRY_BACKOFF_S,
     DevicePreset,
     Notifications,
     NotificationTimeout,
@@ -63,14 +62,14 @@ class PickSmartClient:
         img_uuid: str,
         preset: DevicePreset,
         address: str,
-        attempt: int = 1,
+        pacing_s: float = 0.0,
     ) -> None:
         self.client = client
         self.cmd_uuid = cmd_uuid
         self.img_uuid = img_uuid
         self.preset = preset
         self.address = address
-        self.attempt = attempt
+        self.pacing_s = pacing_s
         self._replies: Notifications | None = None
 
     async def _write_with_response(
@@ -82,10 +81,9 @@ class PickSmartClient:
     ) -> bytes:
         assert self._replies is not None, "inside write_payload()'s notification session"
         self._replies.clear()
-        delay = RETRY_BACKOFF_S * (self.attempt - 1)
         await self.client.write_gatt_char(uuid, packet, response=False)
-        if delay > 0:
-            await asyncio.sleep(delay)
+        if self.pacing_s > 0:
+            await asyncio.sleep(self.pacing_s)
         return await self._replies.next(FEEDBACK_TIMEOUT if timeout is None else timeout, step=step)
 
     async def write_payload(self, payload: bytes) -> WriteResult:
@@ -253,7 +251,7 @@ async def write_session(
     preset: DevicePreset,
     prepared: Awaitable[bytes],
     *,
-    attempt: int = 1,
+    pacing_s: float = 0.0,
 ) -> WriteResult:
     """Resolve the command/image characteristics and run the transfer handshake."""
     char_uuids = [
@@ -272,6 +270,6 @@ async def write_session(
         img_uuid,
         preset,
         address,
-        attempt=attempt,
+        pacing_s=pacing_s,
     )
     return await picksmart.write_payload(await prepared)

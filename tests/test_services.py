@@ -205,6 +205,49 @@ async def test_failed_write_after_retries(
     assert (attrs["attempt"], attrs["success"], attrs["error"]) == (3, False, "boom")
 
 
+async def test_retry_pacing_follows_only_transfer_failures(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """Packets are paced more only after an attempt that failed mid-transfer.
+
+    Attempt 1 fails to connect (no transfer stage): attempt 2 runs at full
+    speed. Attempt 2 fails during the transfer: attempt 3 is paced. The
+    pacing is reported on the attempt it applied to.
+    """
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 4})
+    outcomes = iter(
+        [
+            WriteResult(success=False, error="connect", timing={"connect_s": 0.4}),
+            WriteResult(
+                success=False,
+                error="stalled",
+                timing={"connect_s": 0.1, "start_s": 0.2, "transfer_s": 1.5, "session_s": 1.7},
+            ),
+            WriteResult(
+                success=False,
+                error="refresh timeout",
+                timing={"connect_s": 0.1, "transfer_s": 1.0, "finish_s": 30.0, "session_s": 31},
+            ),
+            WriteResult(success=True, timing={"transfer_s": 0.9}),
+        ]
+    )
+    pacing: list[float] = []
+
+    async def hook(ble_device, preset, image, **kwargs):
+        pacing.append(kwargs["pacing_s"])
+        return next(outcomes)
+
+    tag_writer.write_hook = hook
+    await call(hass, "write", device_id_of(hass))
+
+    # connect failure -> no pacing; transfer failure -> paced; the refresh
+    # timeout (panel, not link) adds nothing on top.
+    assert pacing == [0.0, 0.0, 0.05, 0.05]
+    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
+    assert attrs["attempt"] == 4 and attrs["pacing_s"] == 0.05
+    assert sensor(hass, "failure_count") == "0"
+
+
 async def test_encode_once_per_write_reused_across_retries(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:

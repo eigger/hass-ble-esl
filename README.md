@@ -115,7 +115,7 @@ Both actions can return a per-tag result via `response_variable`. Full reference
 | **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones |
 
 > [!TIP]
-> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. Unstable writes are retried with more pacing on each attempt; if they keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [docs/actions.md](docs/actions.md#write-breakdown).
+> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [docs/actions.md](docs/actions.md#write-breakdown).
 
 ## Payload & rendering
 

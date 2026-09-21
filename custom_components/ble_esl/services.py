@@ -59,7 +59,7 @@ from .const import (
 from .data import BleEslRuntimeData
 from .device import resolve_preset
 from .esl_ble import WriteResult
-from .esl_ble.base import DevicePreset
+from .esl_ble.base import RETRY_BACKOFF_S, DevicePreset
 from .renderer import render_image
 from .types import BleEslConfigEntry
 
@@ -317,7 +317,12 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     duration_task = asyncio.create_task(_update_duration_loop(data))
 
     try:
+        # Packets are paced more only after an attempt that failed *while
+        # transferring*: that is what a marginal link looks like. A failure
+        # to connect or to get through the handshake is retried at full speed.
+        transfer_failures = 0
         for attempt in range(1, job.max_retries + 1):
+            pacing_s = RETRY_BACKOFF_S * transfer_failures
             # Resolve the handle fresh each attempt: the one seen at service
             # call time may be stale after a debounce delay or a retry sleep.
             ble_device = async_ble_device_from_address(hass, address)
@@ -334,7 +339,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     ble_device,
                     job.preset,
                     job.prepared,
-                    attempt=attempt,
+                    pacing_s=pacing_s,
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.
@@ -342,6 +347,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             data.last_write_timing = {
                 "attempt": attempt,
                 "success": result.success,
+                **({"pacing_s": pacing_s} if pacing_s else {}),
                 **({"error": result.error} if not result.success and result.error else {}),
                 **timing,
             }
@@ -373,6 +379,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 result.error,
             )
             if attempt < job.max_retries:
+                transfer_failures += result.failed_in_transfer
                 await sleep(1)
                 continue
 

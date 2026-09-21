@@ -60,7 +60,6 @@ def test_picksmart_handshake_flow():
             IMG_UUID,
             PRESETS["0x0033"],
             MAC,
-            attempt=1,
         )
         img = Image.new("RGB", (296, 128), "white")
         result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
@@ -101,7 +100,6 @@ def test_picksmart_stall_detection():
             IMG_UUID,
             PRESETS["0x0033"],
             MAC,
-            attempt=1,
         )
         img = Image.new("RGB", (296, 128), "white")
 

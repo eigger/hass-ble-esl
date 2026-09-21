@@ -9,7 +9,7 @@ import logging
 from bleak import BleakClient
 from PIL import Image
 
-from ..base import RETRY_BACKOFF_S, DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
 from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from .protocol import buffer_size, make_blocks, make_command, make_image_object, pack_pixels
 
@@ -19,9 +19,9 @@ _LOGGER = logging.getLogger(__name__)
 class XteClient:
     """Send the observed transaction, requiring both application responses."""
 
-    def __init__(self, client, attempt: int = 1):
+    def __init__(self, client, pacing_s: float = 0.0):
         self.client = client
-        self.delay = RETRY_BACKOFF_S * max(0, attempt - 1)
+        self.delay = max(0.0, pacing_s)
         self.timeout = 5.0
         self.settle = NOTIFY_SETTLE_S
         self._replies: Notifications | None = None
@@ -132,8 +132,8 @@ async def write_session(
     preset: DevicePreset,
     prepared: Awaitable[bytes],
     *,
-    attempt: int = 1,
+    pacing_s: float = 0.0,
 ) -> WriteResult:
     """Send an encoded XTEK object over an open link."""
-    timing = await XteClient(client, attempt).write_object(await prepared)
+    timing = await XteClient(client, pacing_s).write_object(await prepared)
     return WriteResult(success=True, timing=timing)

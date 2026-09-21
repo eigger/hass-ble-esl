@@ -14,7 +14,7 @@ plus the package-layout ones against every registered backend.
 | `devices.py` | yes | `PRESETS: dict[str, DevicePreset]` — key must equal `preset.key` |
 | `protocol.py` | yes | Pure codecs: framing, CRC, quantization, compression. No BLE, no I/O — this is the part tested without hardware |
 | `parser.py` | yes | `is_<id>_advertisement(service_info)` and `<Id>BluetoothDeviceData(BleParser)` |
-| `writer.py` | yes | `prepare(preset, image, address)` and `write_session(client, address, preset, prepared, *, attempt)`; usually also a `Client` class holding the GATT session |
+| `writer.py` | yes | `prepare(preset, image, address)` and `write_session(client, address, preset, prepared, *, pacing_s)`; usually also a `Client` class holding the GATT session |
 | `__init__.py` | yes | `<Id>BleBackend(BleBackend)` — declarative, see below |
 
 ## Parser (`BleParser`)
@@ -89,6 +89,9 @@ BleBackend.write_image(ble_device, preset, image)
   `str(exc) or type name`, which the retry loop and failure sensors use.
   Read replies through `base.Notifications`; its timeouts already carry the step
   (`asyncio.TimeoutError` alone has no message).
+* Add `pacing_s` to whatever pause the protocol already has between data packets;
+  the integration passes a value above 0 only after an earlier attempt failed
+  during the transfer (`WriteResult.failed_in_transfer`, read from the timing).
 * Time the session with `base.WriteTiming` and return it as `WriteResult.timing`:
   `with timing.stage("start_s"): ...` around the handshake, `"transfer_s"`
   around the data, `"finish_s"` around the completion wait, plus `parts`

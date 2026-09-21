@@ -24,9 +24,14 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 RETRY_BACKOFF_S = 0.05
-"""Extra pause between packets per failed attempt: every writer paces a retry
-more than the attempt before it, so a marginal link gets slack without a
-user-facing knob."""
+"""Extra pause between packets, per earlier attempt that failed mid-transfer.
+
+A marginal link shows up as a failure *during* the data transfer (a stalled
+or unexpected reply, a dropped write); slowing the next attempt's packets
+gives it slack. A failure to connect, to get through the handshake or to
+see the panel finish is not helped by pacing, so those retries run at
+full speed. The integration turns this into `pacing_s` for the writers.
+"""
 
 # Battery % is a linear map of the cell voltage over this range, and at or
 # below the minimum the battery-low binary sensor turns on. Below 2.5 V
@@ -148,6 +153,16 @@ class WriteResult:
     """The scanner (local adapter or Bluetooth proxy) the link went through,
     when the client wrapper exposes it; opaque here, interpreted by the
     integration. None when unknown."""
+
+    @property
+    def failed_in_transfer(self) -> bool:
+        """Whether this attempt failed while sending the image data.
+
+        That is the one failure more packet pacing can help with: the
+        transfer stage was entered (`transfer_s` is recorded even when it
+        raises) but the completion wait was not.
+        """
+        return not self.success and "transfer_s" in self.timing and "finish_s" not in self.timing
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:
@@ -489,7 +504,7 @@ class BleBackend(ABC):
         preset: DevicePreset,
         prepared: Awaitable[Any],
         *,
-        attempt: int = 1,
+        pacing_s: float = 0.0,
     ) -> WriteResult:
         """Transfer an image over an open link.
 
@@ -509,7 +524,7 @@ class BleBackend(ABC):
         preset: DevicePreset,
         prepared: Awaitable[Any],
         *,
-        attempt: int = 1,
+        pacing_s: float = 0.0,
     ) -> WriteResult:
         """Connect and write an already-scheduled encode.
 
@@ -529,7 +544,7 @@ class BleBackend(ABC):
                     ble_device.address,
                     preset,
                     prepared,
-                    attempt=attempt,
+                    pacing_s=pacing_s,
                 )
             result.timing = {
                 "connect_s": round(connected - started, 3),
@@ -565,7 +580,7 @@ class BleBackend(ABC):
         preset: DevicePreset,
         image: Image.Image,
         *,
-        attempt: int = 1,
+        pacing_s: float = 0.0,
     ) -> WriteResult:
         """Encode and write an image in one step.
 
@@ -578,7 +593,7 @@ class BleBackend(ABC):
             asyncio.to_thread(self.prepare_image, preset, image, ble_device.address)
         )
         try:
-            return await self.write_prepared(ble_device, preset, encode, attempt=attempt)
+            return await self.write_prepared(ble_device, preset, encode, pacing_s=pacing_s)
         finally:
             encode.cancel()  # no-op once awaited; drops the result if connect failed
 
