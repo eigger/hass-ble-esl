@@ -389,6 +389,8 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             data.failure_coordinator.async_set_updated_data(
                 (data.failure_coordinator.data or 0) + 1
             )
+            # Kept until the next failure; the timestamp update publishes it.
+            data.last_failure_timing = data.last_write_timing
             data.last_failure_coordinator.async_set_updated_data(now())
             raise WriteFailed(
                 address,

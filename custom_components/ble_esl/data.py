@@ -56,6 +56,11 @@ class BleEslRuntimeData:
     """The most recent write attempt: attempt, success, error (if any) and the
     per-stage timings (see WriteResult.timing). Shown as the Write Duration
     sensor's attributes so it can be monitored without debug logging."""
+    last_failure_timing: dict[str, float | int | bool | str] | None = None
+    """The final attempt of the most recent *failed* write, in the same shape.
+    Shown as the Last Failure Time sensor's attributes: a later successful
+    write replaces last_write_timing but leaves this in place, so an
+    intermittent failure can still be read after the fact."""
 
     @property
     def identifier(self) -> str:

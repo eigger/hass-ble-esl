@@ -50,6 +50,7 @@ async def test_diagnostics_content_and_redaction(
     assert result["write_state"]["in_progress"] is False
     assert result["write_state"]["last_image_png_bytes"] > 0
     assert result["write_state"]["last_write"] == {"attempt": 1, "success": True, "transfer_s": 0.1}
+    assert result["write_state"]["last_failure_write"] is None
     assert result["sensors"]["failure_count"] == 0
     assert result["sensors"]["connectivity"] is False
 

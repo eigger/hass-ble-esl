@@ -203,6 +203,16 @@ async def test_failed_write_after_retries(
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert (attrs["attempt"], attrs["success"], attrs["error"]) == (3, False, "boom")
+    # The failed write's breakdown is also on Last Failure Time...
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert (failed["attempt"], failed["success"], failed["error"]) == (3, False, "boom")
+
+    # ...and stays there after a later write succeeds, while Write Duration moves on.
+    tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1})
+    await call(hass, "write", device_id_of(hass))
+    assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"] is True
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert (failed["attempt"], failed["success"], failed["error"]) == (3, False, "boom")
 
 
 async def test_retry_pacing_follows_only_transfer_failures(

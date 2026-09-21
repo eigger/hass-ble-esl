@@ -244,7 +244,7 @@ Every tag is one device with these entities:
 | Connectivity | binary sensor | Tag seen recently |
 | Display In Sync | binary sensor | Last write reached the tag |
 | Write Duration | sensor | Seconds of the last write; attributes describe the attempt |
-| Failure Count / Last Failure Time | sensor | Consecutive failed writes |
+| Failure Count / Last Failure Time | sensor | Failed writes so far, and when the last one happened — its attributes hold that write's [breakdown](#write-breakdown) |
 | Last Updated Content | image | Last image sent |
 | Preview Content | image | `dry_run` renders |
 | Alias | text | Free-form label for the tag |
@@ -255,7 +255,7 @@ Every tag is one device with these entities:
 
 ## Write breakdown
 
-Every write attempt is recorded on the **Write Duration** sensor's attributes and returned in the action's `timing` (with `response_variable`), so a slow or flaky tag can be diagnosed without debug logging.
+Every write attempt is recorded on the **Write Duration** sensor's attributes and returned in the action's `timing` (with `response_variable`), so a slow or flaky tag can be diagnosed without debug logging. When a write fails (every retry exhausted), the same breakdown of its final attempt is also kept on the **Last Failure Time** sensor's attributes until the next failure — so an intermittent failure can still be read after later writes have succeeded.
 
 | Attribute | Meaning |
 |---|---|
