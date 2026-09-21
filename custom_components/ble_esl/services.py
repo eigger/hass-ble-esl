@@ -429,66 +429,6 @@ async def _attempt(hass: HomeAssistant, job: WriteJob, pacing_s: float) -> Write
     return result
 
 
-def _guard(job: WriteJob) -> WriteOutcome | None:
-    """The checks that can change while a write waits for its turn.
-
-    Run under the BLE lock before every attempt: the write lock, whether a
-    debounced write has been superseded, and the duplicate guard (a write of
-    the same payload may have just finished ahead of us — which is exactly
-    the case the guard is for).
-    """
-    data = job.data
-    if data.write_lock:
-        _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-        return WriteOutcome("locked")
-    if job.generation is not None and job.generation != data.write_generation:
-        _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
-        return WriteOutcome("dropped")
-    if job.prevent_duplicate_send and job.image_png == data.last_image_data:
-        _LOGGER.info("Skipping duplicate image for %s", job.address)
-        return WriteOutcome("duplicate")
-    return None
-
-
-async def _attempt(hass: HomeAssistant, job: WriteJob, pacing_s: float) -> WriteResult:
-    """One BLE attempt: resolve the handle, write, record the breakdown."""
-    data = job.data
-    address = job.address
-    assert job.prepared is not None, "run_ble_write() schedules the encode"
-    # Resolve the handle fresh each attempt: the one seen at service call
-    # time may be stale after a debounce delay or a retry sleep.
-    ble_device = async_ble_device_from_address(hass, address)
-    if ble_device is None:
-        result = WriteResult(
-            success=False,
-            error="BLE device handle is unavailable (out of range or adapter down)",
-        )
-    else:
-        # The encode was started before the BLE lock was taken; the backend
-        # awaits it once the link is up, and a retry awaits the same future
-        # again instead of re-encoding.
-        result = await data.backend.write_prepared(
-            ble_device,
-            job.preset,
-            job.prepared,
-            pacing_s=pacing_s,
-        )
-    via = _transport(hass, address, result.scanner)
-    failure: dict[str, str] = {}
-    if not result.success and (stage := result.failed_stage):
-        failure = {
-            "failed_stage": stage,
-            "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
-        }
-    result.timing = {
-        **failure,
-        **({"pacing_s": pacing_s} if pacing_s else {}),
-        **via,
-        **result.timing,
-    }
-    return result
-
-
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Write with retries, tracking duration/connectivity and the result sensors.
 

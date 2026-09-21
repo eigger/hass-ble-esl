@@ -223,7 +223,7 @@ Both actions can return what happened to each target. Ask for it with `response_
 
 | `status` | Meaning | Extra fields |
 |---|---|---|
-| `written` | Image is on the tag | `attempts`, `duration_s`, `timing` (the [write breakdown](#write-breakdown) of the attempt) |
+| `written` | Image is on the tag | `attempts`, `duration_s` (whole write, including time spent queued behind other tags between attempts), `timing` (the [write breakdown](#write-breakdown) of the attempt) |
 | `failed` | Every attempt failed | `error`, `attempts`, `duration_s`, `timing` of the last attempt |
 | `scheduled` | `write_guarded` debounced the write; it runs in the background after the quiet period (`delay_ms`). **Its result is not part of this response** — check the *Display In Sync* / *Failure Count* entities if you need it | `delay_ms` |
 | `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
