@@ -59,7 +59,7 @@ bluetooth_proxy:
 ```
 
 > [!TIP]
-> Hardware suggestions: [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31)
+> Hardware suggestions: the [Seeed Studio XIAO W5500](https://ko.aliexpress.com/item/1005009310322353.html) (XIAO ESP32 with wired Ethernet) is a good proxy — Ethernet keeps the radio free for BLE, and the community thread [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31) covers other boards.
 
 Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
 
