@@ -78,11 +78,13 @@ class PickSmartClient:
         packet: bytes,
         step: str,
         timeout: float | None = None,
+        pace: bool = False,
     ) -> bytes:
+        """Write `packet` and return the tag's reply; `pace` adds the retry pacing."""
         assert self._replies is not None, "inside write_payload()'s notification session"
         self._replies.clear()
         await self.client.write_gatt_char(uuid, packet, response=False)
-        if self.pacing_s > 0:
+        if pace and self.pacing_s > 0:
             await asyncio.sleep(self.pacing_s)
         return await self._replies.next(FEEDBACK_TIMEOUT if timeout is None else timeout, step=step)
 
@@ -183,7 +185,7 @@ class PickSmartClient:
                     sends += 1
                     data_packet = make_size_packet(part, payload)
                     resp = await self._write_with_response(
-                        self.img_uuid, data_packet, f"part {part}/{total_parts}"
+                        self.img_uuid, data_packet, f"part {part}/{total_parts}", pace=True
                     )
 
                     if (

@@ -343,11 +343,14 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.
-            timing = {**_transport(hass, address, result.scanner), **result.timing}
+            timing = {
+                **({"pacing_s": pacing_s} if pacing_s else {}),
+                **_transport(hass, address, result.scanner),
+                **result.timing,
+            }
             data.last_write_timing = {
                 "attempt": attempt,
                 "success": result.success,
-                **({"pacing_s": pacing_s} if pacing_s else {}),
                 **({"error": result.error} if not result.success and result.error else {}),
                 **timing,
             }

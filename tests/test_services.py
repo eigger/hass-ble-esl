@@ -247,6 +247,16 @@ async def test_retry_pacing_follows_only_transfer_failures(
     assert attrs["attempt"] == 4 and attrs["pacing_s"] == 0.05
     assert sensor(hass, "failure_count") == "0"
 
+    # The action's response carries the same breakdown, pacing included.
+    outcomes = iter(
+        [
+            WriteResult(success=False, error="stalled", timing={"transfer_s": 1.0}),
+            WriteResult(success=True, timing={"transfer_s": 1.0}),
+        ]
+    )
+    response = await respond(hass, "write", device_id_of(hass))
+    assert response[device_id_of(hass)]["timing"] == {"pacing_s": 0.05, "transfer_s": 1.0}
+
 
 async def test_encode_once_per_write_reused_across_retries(
     hass: HomeAssistant, enable_bluetooth, tag_writer

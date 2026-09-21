@@ -160,7 +160,12 @@ class WriteResult:
 
         That is the one failure more packet pacing can help with: the
         transfer stage was entered (`transfer_s` is recorded even when it
-        raises) but the completion wait was not.
+        raises) but the completion wait was not. PickSmart has no separate
+        completion wait (the last part's reply is the completion), so any
+        failure after its handshake counts. On WOLINK and easyTag the wait
+        is the panel refresh, which pacing cannot help; XTE's is its
+        end-command reply, a link failure this deliberately does not pace
+        either — a retry is never slower than it was before.
         """
         return not self.success and "transfer_s" in self.timing and "finish_s" not in self.timing
 
