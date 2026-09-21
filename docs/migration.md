@@ -144,9 +144,8 @@ Also update:
 - **Blueprints / packages** that hard-code `gicisky.` as the domain.
 
 Everything under `payload:` (elements, fonts, `dlimg` URLs, `plot` entities,
-`dither`) works without modification. The [tools](../README.md#tools) and
-[examples](../README.md#examples) that were written for Gicisky tags are the same
-ones this repository ships.
+`dither`) works without modification. The [examples](../examples/README.md) and
+web tools that were written for Gicisky tags are the same ones this repository ships.
 
 ### Step 7 — Verify
 
@@ -171,7 +170,7 @@ the same advertisement and will compete for the tag. Remove the old one first.
 
 **Is the image sent any differently?** No. The PickSmart writer, compression and
 presets were carried over from `hass-gicisky` and are the only backend verified
-on real hardware; see the model table in the [README](../README.md#supported-models).
+on real hardware; see the model table in [models.md](models.md).
 
 **What about history?** Recorder history is keyed by entity ID. When the new
 entity gets the same ID as the old one, long-term statistics continue; otherwise
