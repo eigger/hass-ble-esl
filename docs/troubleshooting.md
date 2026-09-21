@@ -27,16 +27,43 @@ Two more entities help, but read them for what they are:
 
 Start with `failed_stage` on Last Failure Time: it says how far the attempt got. `likely_cause` is a one-sentence reading of the stage, the error text and the radio situation; `error` is the exact message.
 
-| `failed_stage` | What happened | Check | Do |
-|---|---|---|---|
-| `unreachable` | No radio currently sees the tag's advertisement; nothing was tried. | `error` says *out of range or adapter down*. Is the proxy/adapter itself up in HA? | Move closer, replace the battery (see the **Battery** sensor), check the proxy is online. |
-| `connect` | The link never came up (the tag advertised but did not accept a connection). | `rssi` and `paths` (how many radios reach the tag). `error` with *slot* = the proxy's connection slots are all in use. | Weak `rssi` (below about −85 dBm): move the tag or add a proxy near it — with `paths: 1` there is also no other radio to fall back to. *slot*: fewer BLE devices per proxy, or another proxy. Otherwise usually transient — the retries cover it. |
-| `session` | Connected, but the tag dropped or refused the session before the protocol started. | Repeats every time? | Once: ignore. Every time: the protocol or model may not match — check the preset in the diagnostics and the model table in [models.md](models.md). |
-| `handshake` | The tag did not answer, or answered wrongly, before any image data was sent. | PickSmart `start_probes: 3` = it never answered START. WOLINK *device error 5* = authentication refused. *No response … after command 0x01* (XTE) = no reply to the size command. | Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this backend knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model. |
-| `transfer` | Failed while sending the image data. This is the one case that points at link quality. | `resends` / `round_trip_ms` (PickSmart), `sends` vs `parts` (how far it got), `chunk_size` (XTE: 20 means the proxy only allows tiny writes), `rssi`, `via` (which radio). | Move the tag or the proxy it actually used (`via`), or add one. The next retry is automatically paced slower (`pacing_s`). |
-| `finish` | The image was sent; the tag did not confirm. | On WOLINK / easyTag this is the **panel refresh** — `finish_s` is how long it waited. On XTE it is the end-command acknowledgement. *device error N* = the tag reported a problem. | Panel: a cold or large panel is slow; usually the image still appears — check the tag. Repeated *device error*: the tag rejected the image (wrong model/packing) — compare the preset with the tag's label. |
+### `unreachable`
 
-Some shortcuts:
+No radio currently sees the tag's advertisement; nothing was tried.
+- *Check:* `error` says *out of range or adapter down*. Is the proxy/adapter itself up in HA?
+- *Do:* Move closer, replace the battery (see the **Battery** sensor), check the proxy is online.
+
+### `connect`
+
+The link never came up (the tag advertised but did not accept a connection).
+- *Check:* `rssi` and `paths` (how many radios reach the tag). `error` with *slot* = the proxy's connection slots are all in use.
+- *Do:* Weak `rssi` (below about −85 dBm): move the tag or add a proxy near it — with `paths: 1` there is also no other radio to fall back to. *slot*: fewer BLE devices per proxy, or another proxy. Otherwise usually transient — the retries cover it.
+
+### `session`
+
+Connected, but the tag dropped or refused the session before the protocol started.
+- *Check:* Does it repeat every time?
+- *Do:* Once: ignore. Every time: the protocol or model may not match — check the preset in the diagnostics and the model table in [models.md](models.md).
+
+### `handshake`
+
+The tag did not answer, or answered wrongly, before any image data was sent.
+- *Check:* PickSmart `start_probes: 3` = it never answered START. WOLINK *device error 5* = authentication refused. *No response … after command 0x01* (XTE) = no reply to the size command.
+- *Do:* Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this backend knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model.
+
+### `transfer`
+
+Failed while sending the image data. This is the one case that points at link quality.
+- *Check:* `resends` / `round_trip_ms` (PickSmart), `sends` vs `parts` (how far it got), `chunk_size` (XTE: 20 means the proxy only allows tiny writes), `rssi`, `via` (which radio).
+- *Do:* Move the tag or the proxy it actually used (`via`), or add one. The next retry is automatically paced slower (`pacing_s`).
+
+### `finish`
+
+The image was sent; the tag did not confirm.
+- *Check:* On WOLINK / easyTag this is the **panel refresh** — `finish_s` is how long it waited. On XTE it is the end-command acknowledgement. *device error N* = the tag reported a problem.
+- *Do:* Panel: a cold or large panel is slow; usually the image still appears — check the tag. Repeated *device error*: the tag rejected the image (wrong model/packing) — compare the preset with the tag's label.
+
+### Quick checks
 
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used.
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
