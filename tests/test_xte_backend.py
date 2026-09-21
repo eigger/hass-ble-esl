@@ -221,7 +221,9 @@ def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, nu
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
     monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-    transport = SimpleNamespace(write_object=AsyncMock(return_value=True, side_effect=error))
+    transport = SimpleNamespace(
+        write_object=AsyncMock(return_value={"transfer_s": 0.2}, side_effect=error)
+    )
     factory = MagicMock(return_value=transport)
     monkeypatch.setattr(writer, "XteClient", factory)
     image, encoded = object(), b"XTEK-encoded"
@@ -243,6 +245,8 @@ def test_session_result_and_disconnect(monkeypatch, error):
     client.disconnect.assert_awaited_once()
     assert result.success is (error is None)
     assert result.battery_mv is None
+    if error is None:
+        assert result.timing["transfer_s"] == 0.2
     if error is not None:
         assert result.error == (str(error) or type(error).__name__)
 

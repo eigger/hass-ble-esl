@@ -89,6 +89,14 @@ BleBackend.write_image(ble_device, preset, image)
   `str(exc) or type name`, which the retry loop and failure sensors use.
   Read replies through `base.Notifications`; its timeouts already carry the step
   (`asyncio.TimeoutError` alone has no message).
+* Time the session with `base.WriteTiming` and return it as `WriteResult.timing`:
+  `with timing.stage("start_s"): ...` around the handshake, `"transfer_s"`
+  around the data, `"finish_s"` around the completion wait, plus `parts`
+  and `bytes`; wrap the whole session in `with timing.reported():` so a
+  failed attempt still shows how far it got. The keys are shared across
+  protocols (see the `WriteTiming` docstring) and surface as the Write
+  Duration sensor's attributes; add protocol-specific counters to the same
+  dict.
 * Never catch exceptions to return `success=True`; never leave the link
   subscribed to notifications (unsubscribe in `finally`, suppressing errors on
   a dropped link).

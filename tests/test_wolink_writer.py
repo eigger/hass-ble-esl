@@ -116,13 +116,16 @@ def test_wolink_write_image_flow_with_status_notification():
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_prepared(
-            prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1
-        )
+        prepared = prepare(PRESETS["290"], img, MAC)
+        result = await client.write_prepared(prepared, write_delay_ms=0, attempt=1)
 
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
         assert notification_active is False  # Stopped after session
+        # The breakdown: every chunk is a part, the refresh wait is finish_s.
+        assert result.timing["parts"] == len(written_data) - 1
+        assert result.timing["bytes"] == len(prepared[0])
+        assert {"transfer_s", "finish_s"} <= result.timing.keys()
 
     asyncio.run(_test())
 
@@ -224,6 +227,17 @@ def test_write_image_entrypoint(monkeypatch):
         assert result.success is True
         assert result.battery_mv is None  # No redundant GATT battery read
         assert mock_client.disconnect.called
+        # Authentication is the handshake stage; the common connect/session
+        # split wraps the protocol's own stages.
+        assert list(result.timing) == [
+            "connect_s",
+            "start_s",
+            "bytes",
+            "parts",
+            "transfer_s",
+            "finish_s",
+            "session_s",
+        ]
 
     asyncio.run(_test())
 

@@ -21,7 +21,14 @@ import logging
 import time
 from typing import Any
 
-from homeassistant.components.bluetooth import async_ble_device_from_address
+from homeassistant.components.bluetooth import (
+    BaseHaRemoteScanner,
+    BaseHaScanner,
+    async_ble_device_from_address,
+    async_last_service_info,
+    async_scanner_by_source,
+    async_scanner_devices_by_address,
+)
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -273,6 +280,31 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
         await asyncio.sleep(1)
 
 
+def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str | int]:
+    """Which radio the write went through, for the Write Duration attributes.
+
+    `scanner` is what the backend saw on the client after connecting (newer
+    habluetooth records it). When that is unavailable, the scanner holding
+    the strongest advertisement is reported instead: it is the one the
+    client wrapper tries first, so it is right except after a failover.
+    """
+    if not isinstance(scanner, BaseHaScanner):
+        info = async_last_service_info(hass, address, connectable=True)
+        scanner = async_scanner_by_source(hass, info.source) if info else None
+        if scanner is None:
+            return {}
+    via: dict[str, str | int] = {
+        "via": scanner.name,
+        "via_type": "proxy" if isinstance(scanner, BaseHaRemoteScanner) else "adapter",
+        "via_source": scanner.source,
+    }
+    if seen := scanner.get_discovered_device_advertisement_data(address):
+        via["rssi"] = seen[1].rssi
+    # How many connectable radios currently see the tag: 1 means no failover.
+    via["paths"] = len(async_scanner_devices_by_address(hass, address, connectable=True))
+    return via
+
+
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Write with retries, tracking duration/connectivity and the result sensors.
 
@@ -311,11 +343,12 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.
+            timing = {**_transport(hass, address, result.scanner), **result.timing}
             data.last_write_timing = {
                 "attempt": attempt,
                 "success": result.success,
                 **({"error": result.error} if not result.success and result.error else {}),
-                **result.timing,
+                **timing,
             }
             _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
             if result.success:
@@ -334,7 +367,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     "written",
                     attempts=attempt,
                     duration_s=round(time.monotonic() - data.start_time, 2),
-                    timing=result.timing or None,
+                    timing=timing or None,
                 )
 
             _LOGGER.warning(
@@ -359,7 +392,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     error=result.error or "unknown error",
                     attempts=attempt,
                     duration_s=round(time.monotonic() - data.start_time, 2),
-                    timing=result.timing or None,
+                    timing=timing or None,
                 ),
             )
     finally:
