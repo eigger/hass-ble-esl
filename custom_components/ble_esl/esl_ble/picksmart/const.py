@@ -20,7 +20,6 @@ RESP_IMAGE_DATA = 0x05
 RESP_STATUS_NEXT_PART = 0x00
 RESP_STATUS_COMPLETE = 0x08
 
-CONNECT_TIMEOUT = 30.0
 FEEDBACK_TIMEOUT = 10.0
 
 # After subscribing to notifications the tag may not be ready for commands
