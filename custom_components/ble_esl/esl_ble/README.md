@@ -14,7 +14,7 @@ plus the package-layout ones against every registered backend.
 | `devices.py` | yes | `PRESETS: dict[str, DevicePreset]` — key must equal `preset.key` |
 | `protocol.py` | yes | Pure codecs: framing, CRC, quantization, compression. No BLE, no I/O — this is the part tested without hardware |
 | `parser.py` | yes | `is_<id>_advertisement(service_info)` and `<Id>BluetoothDeviceData(BleParser)` |
-| `writer.py` | yes | `prepare(preset, image, address)` and `write_session(client, address, preset, prepared, *, attempt, write_delay_ms)`; usually also a `Client` class holding the GATT session |
+| `writer.py` | yes | `prepare(preset, image, address)` and `write_session(client, address, preset, prepared, *, attempt)`; usually also a `Client` class holding the GATT session |
 | `__init__.py` | yes | `<Id>BleBackend(BleBackend)` — declarative, see below |
 
 ## Parser (`BleParser`)

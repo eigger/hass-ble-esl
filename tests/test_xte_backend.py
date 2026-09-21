@@ -235,12 +235,11 @@ def test_session_result_and_disconnect(monkeypatch, error):
             PSJ_420,
             image,
             attempt=2,
-            write_delay_ms=30,
         )
     )
     # Encoded before connecting, in a worker thread, then handed to the session.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
-    factory.assert_called_once_with(client, 2, 30)
+    factory.assert_called_once_with(client, 2)
     transport.write_object.assert_awaited_once_with(encoded)
     client.disconnect.assert_awaited_once()
     assert result.success is (error is None)

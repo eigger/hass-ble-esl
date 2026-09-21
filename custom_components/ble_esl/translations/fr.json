@@ -132,14 +132,12 @@
         "data": {
           "model": "Modèle",
           "retry_count": "Nombre de tentatives",
-          "write_delay_ms": "Délai d'écriture (ms)",
           "prevent_duplicate_send": "Empêcher les envois en double",
           "debounce_ms": "Délai anti-rebond (ms)"
         },
         "data_description": {
           "model": "Résolution de l'écran et type de modèle ESL.",
           "retry_count": "Nombre de nouvelles tentatives d'écriture avant d'abandonner.",
-          "write_delay_ms": "Pause entre chaque bloc écrit sur l'appareil. À augmenter si les écritures sont instables.",
           "prevent_duplicate_send": "Ignore l'écriture si la nouvelle image est identique à la dernière envoyée.",
           "debounce_ms": "Attente avant l'écriture. Une nouvelle demande annule celle en attente. 0 = désactivé (écriture immédiate)."
         }

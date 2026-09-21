@@ -132,14 +132,12 @@
         "data": {
           "model": "Modelo",
           "retry_count": "Tentativas",
-          "write_delay_ms": "Atraso de escrita (ms)",
           "prevent_duplicate_send": "Evitar envio duplicado",
           "debounce_ms": "Atraso de debounce (ms)"
         },
         "data_description": {
           "model": "Resolução da tela e tipo de modelo do ESL.",
           "retry_count": "Quantas vezes tentar escrever novamente antes de desistir.",
-          "write_delay_ms": "Pausa entre cada bloco escrito no dispositivo. Aumente se as escritas forem instáveis.",
           "prevent_duplicate_send": "Ignora a escrita se a nova imagem for idêntica à última enviada.",
           "debounce_ms": "Espera antes de escrever. Uma nova solicitação cancela a pendente. 0 = desativado (escrita imediata)."
         }

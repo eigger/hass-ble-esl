@@ -132,14 +132,12 @@
         "data": {
           "model": "Modelo",
           "retry_count": "Reintentos",
-          "write_delay_ms": "Retardo de escritura (ms)",
           "prevent_duplicate_send": "Evitar envíos duplicados",
           "debounce_ms": "Retardo antirrebote (ms)"
         },
         "data_description": {
           "model": "Resolución de pantalla y tipo de modelo ESL.",
           "retry_count": "Número de reintentos de escritura antes de abandonar.",
-          "write_delay_ms": "Pausa entre cada bloque escrito en el dispositivo. Auméntala si las escrituras fallan.",
           "prevent_duplicate_send": "Omite la escritura si la nueva imagen es idéntica a la última enviada.",
           "debounce_ms": "Espera antes de escribir. Una nueva solicitud cancela la pendiente. 0 = desactivado (escritura inmediata)."
         }

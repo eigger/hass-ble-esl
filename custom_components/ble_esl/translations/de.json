@@ -132,14 +132,12 @@
         "data": {
           "model": "Modell",
           "retry_count": "Wiederholungen",
-          "write_delay_ms": "Schreibverzögerung (ms)",
           "prevent_duplicate_send": "Doppeltes Senden verhindern",
           "debounce_ms": "Entprellverzögerung (ms)"
         },
         "data_description": {
           "model": "Displayauflösung und Modelltyp des ESL.",
           "retry_count": "Wie oft das Schreiben wiederholt wird, bevor aufgegeben wird.",
-          "write_delay_ms": "Pause zwischen den an das Gerät geschriebenen Datenblöcken. Erhöhen, wenn Schreibvorgänge unzuverlässig sind.",
           "prevent_duplicate_send": "Überspringt das Schreiben, wenn das neue Bild mit dem zuletzt gesendeten identisch ist.",
           "debounce_ms": "Wartezeit vor dem Schreiben. Neue Anforderungen brechen ausstehende ab. 0 = deaktiviert (sofort schreiben)."
         }

@@ -111,12 +111,11 @@ Both actions can return a per-tag result via `response_variable`. Full reference
 |--------|---------|-------|-------------|
 | **Model** | — | model list | Shown only for protocols that cannot report their model (WOLINK, easyTag) |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
-| **Write Delay (ms)** | 0 | 0–1000 | Extra pause between BLE write packets |
 | **Prevent Duplicate Send** | off | on/off | Skip sending when the image is unchanged |
 | **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones |
 
 > [!TIP]
-> Unstable writes: try **Write Delay** 50–100 ms. Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime.
+> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. Unstable writes are retried with more pacing on each attempt; if they keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [docs/actions.md](docs/actions.md#write-breakdown).
 
 ## Payload & rendering
 

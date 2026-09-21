@@ -17,7 +17,6 @@ from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
     CONF_RETRY_COUNT,
-    CONF_WRITE_DELAY_MS,
     DOMAIN,
 )
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PICKSMART_ID
@@ -176,14 +175,16 @@ async def test_user_flow_without_devices_aborts(hass: HomeAssistant, enable_blue
 
 
 async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_bluetooth) -> None:
-    entry = await setup_entry(hass)
+    # An entry saved by a release that still had the Write Delay option loads
+    # fine; the stale key is neither shown nor kept once options are saved.
+    entry = await setup_entry(hass, options={"write_delay_ms": 50})
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "init"
     fields = {str(key) for key in result["data_schema"].schema}
+    assert "write_delay_ms" not in fields
     assert {
         CONF_MODEL,
         CONF_RETRY_COUNT,
-        CONF_WRITE_DELAY_MS,
         CONF_PREVENT_DUPLICATE_SEND,
         CONF_DEBOUNCE_MS,
     } <= fields
@@ -193,7 +194,6 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
         user_input={
             CONF_MODEL: "350",
             CONF_RETRY_COUNT: 5,
-            CONF_WRITE_DELAY_MS: 50,
             CONF_PREVENT_DUPLICATE_SEND: True,
             CONF_DEBOUNCE_MS: 2000,
         },
@@ -203,7 +203,6 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     assert entry.options == {
         CONF_MODEL: "350",
         CONF_RETRY_COUNT: 5,
-        CONF_WRITE_DELAY_MS: 50,
         CONF_PREVENT_DUPLICATE_SEND: True,
         CONF_DEBOUNCE_MS: 2000,
     }

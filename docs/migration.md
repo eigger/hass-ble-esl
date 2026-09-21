@@ -32,7 +32,7 @@ what to note down beforehand, and how to verify the result.
 | Payload format | imagespec element list | **unchanged** |
 | Device name | `Gicisky <last 8 hex of MAC>` | `Gicisky <last 8 hex of MAC>` (same) |
 | Entities | Battery, Battery Voltage, Signal Strength, Connectivity, Display In Sync, Write Duration, Failure Count, Last Failure Time, Last Updated Content, Preview Content, Alias, Write Lock | same set; entity registry entries are new (unique IDs are prefixed `ble_esl_` instead of `gicisky_`) |
-| Options | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | same four (a **Model** option appears only for protocols without auto detection; PickSmart tags detect their model from the advertisement) |
+| Options | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay is gone (retries pace themselves); a **Model** option appears only for protocols without auto detection, PickSmart tags detect their model from the advertisement |
 | Model detection | from advertisement | from advertisement; unknown device numbers fall back to a manual model pick |
 | Fonts | `custom_components/gicisky/fonts/`, then `config/www/fonts/` | `custom_components/ble_esl/fonts/`, then `config/www/fonts/` |
 | Minimum Home Assistant | 2025.1 | **2025.12** |
@@ -43,7 +43,7 @@ what to note down beforehand, and how to verify the result.
 1. **Home Assistant 2025.12 or newer** is required.
 2. Note anything you customised on the old devices — it is not carried over:
    - the **Alias** text entity value,
-   - the **Options** (retry count, write delay, prevent duplicate send, debounce),
+   - the **Options** (retry count, prevent duplicate send, debounce),
    - renamed entity IDs, custom names, icons, and area assignments on the entities.
 3. Find every place that calls the old actions. In **Developer tools → Actions**
    or with a text search over your config, look for `gicisky.write` and
@@ -100,7 +100,7 @@ device page; if you had renamed entity IDs, rename them again.
 ### Step 5 — Re-apply the options
 
 **Settings → Devices & services → BLE ESL → the device → Configure** and set
-Retry Count, Write Delay, Prevent Duplicate Send and Debounce Delay to the values
+Retry Count, Prevent Duplicate Send and Debounce Delay to the values
 you noted. Set the **Alias** text entity and the **Write Lock** switch if you
 used them.
 

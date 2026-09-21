@@ -47,13 +47,11 @@ from .const import (
     CONF_MODEL,
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
-    CONF_WRITE_DELAY_MS,
     DATA_LOCK,
     DEFAULT_DEBOUNCE_MS,
     DEFAULT_MODEL,
     DEFAULT_PREVENT_DUPLICATE_SEND,
     DEFAULT_RETRY_COUNT,
-    DEFAULT_WRITE_DELAY_MS,
     DOMAIN,
     SERVICE_WRITE,
     SERVICE_WRITE_GUARDED,
@@ -211,7 +209,6 @@ class WriteJob:
     image: Image.Image
     image_png: bytes
     max_retries: int
-    write_delay_ms: int
     prevent_duplicate_send: bool = False
     generation: int | None = None
     """Set for debounced writes; compared under the lock (see run_ble_write)."""
@@ -264,7 +261,6 @@ async def build_write_job(
         image=image,
         image_png=image_png,
         max_retries=int(options.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT)),
-        write_delay_ms=int(options.get(CONF_WRITE_DELAY_MS, DEFAULT_WRITE_DELAY_MS)),
     )
 
 
@@ -339,7 +335,6 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     job.preset,
                     job.prepared,
                     attempt=attempt,
-                    write_delay_ms=job.write_delay_ms,
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.

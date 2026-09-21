@@ -132,14 +132,12 @@
         "data": {
           "model": "Model",
           "retry_count": "Aantal pogingen",
-          "write_delay_ms": "Schrijfvertraging (ms)",
           "prevent_duplicate_send": "Dubbel verzenden voorkomen",
           "debounce_ms": "Debouncevertraging (ms)"
         },
         "data_description": {
           "model": "Schermresolutie en modeltype van de ESL.",
           "retry_count": "Hoe vaak het schrijven opnieuw wordt geprobeerd voordat wordt opgegeven.",
-          "write_delay_ms": "Pauze tussen elk blok dat naar het apparaat wordt geschreven. Verhoog dit als schrijven onbetrouwbaar is.",
           "prevent_duplicate_send": "Slaat het schrijven over als de nieuwe afbeelding identiek is aan de laatst verzonden.",
           "debounce_ms": "Wachttijd voor het schrijven. Een nieuwe aanvraag annuleert de wachtende. 0 = uit (direct schrijven)."
         }

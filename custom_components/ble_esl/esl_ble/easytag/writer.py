@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 
-from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import RETRY_BACKOFF_S, DevicePreset, Notifications, WriteResult, WriteTiming
 from .const import (
     EVERY_5TH_BONUS,
     FEEDBACK_TIMEOUT,
@@ -45,9 +45,7 @@ class EasyTagClient:
         self.preset = preset
         self.address = address
 
-    async def _send_frames(
-        self, frames: list[bytes], *, attempt: int = 1, write_delay_ms: int = 0
-    ) -> WriteResult:
+    async def _send_frames(self, frames: list[bytes], *, attempt: int = 1) -> WriteResult:
         """Send header + data frames and read the battery/temperature reply."""
         settle = POST_CCCD_DELAY + PRE_HEADER_DELAY
         timing = WriteTiming(settle_s=settle, parts=len(frames), bytes=sum(map(len, frames)))
@@ -55,7 +53,7 @@ class EasyTagClient:
             async with Notifications(self.client, NOTIFY_UUID, settle=settle) as replies:
                 # Anything notified during the settle window is not our reply.
                 replies.clear()
-                base_delay = INTER_PACKET_DELAY + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1))
+                base_delay = INTER_PACKET_DELAY + RETRY_BACKOFF_S * (attempt - 1)
                 # Send header (frame 0) and data frames (frames 1..N). The tag
                 # does not acknowledge frames, so transfer_s is pacing only.
                 with timing.stage("transfer_s"):
@@ -83,10 +81,9 @@ class EasyTagClient:
         frames: list[bytes],
         *,
         attempt: int = 1,
-        write_delay_ms: int = 0,
     ) -> WriteResult:
         """Transmit already-built image frames."""
-        return await self._send_frames(frames, attempt=attempt, write_delay_ms=write_delay_ms)
+        return await self._send_frames(frames, attempt=attempt)
 
     async def read_status(self) -> WriteResult:
         """Send status query ping frame (0xF0) and await battery/temp notify."""
@@ -115,9 +112,8 @@ async def write_session(
     prepared: Awaitable[list[bytes]],
     *,
     attempt: int = 1,
-    write_delay_ms: int = 0,
 ) -> WriteResult:
     """Send pre-built frames over an open link and read the battery/temperature reply."""
     frames = await prepared
     easytag = EasyTagClient(client, preset, address)
-    return await easytag.write_frames(frames, attempt=attempt, write_delay_ms=write_delay_ms)
+    return await easytag.write_frames(frames, attempt=attempt)
