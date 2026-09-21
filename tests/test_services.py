@@ -774,3 +774,69 @@ async def test_no_target_still_raises_with_response(
 ) -> None:
     with pytest.raises(HomeAssistantError, match="No loaded BLE ESL device matches"):
         await respond(hass, "write", "not-a-device")
+
+
+# ── Persistence across restarts ──────────────────────────────────────────
+
+
+async def test_last_images_survive_a_reload(
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer, hass_storage
+) -> None:
+    """The last written and last rendered image are kept in .storage, so after
+    a restart Prevent Duplicate Send still knows the tag's image, the image
+    entities are not blank, and Display In Sync is right."""
+    device_id = device_id_of(hass)
+    await call(hass, "write", device_id)
+    # No wait for the delayed save: unloading flushes it, so a reload right
+    # after a write restores the new image, not the previous one.
+
+    key = f"{DOMAIN}.{wolink_entry.entry_id}.images"
+    await hass.config_entries.async_reload(wolink_entry.entry_id)
+    await hass.async_block_till_done()
+    stored = hass_storage[key]["data"]
+    assert stored["written"]["png"] == stored["preview"]["png"]
+    written_at = stored["written"]["at"]
+
+    data = wolink_entry.runtime_data
+    assert data.last_image_data is not None
+    image = hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content")
+    assert image.state == written_at  # restored with its original timestamp
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "on"
+
+    # The same payload after the restart is a duplicate: nothing is sent.
+    hass.config_entries.async_update_entry(
+        wolink_entry, options={CONF_PREVENT_DUPLICATE_SEND: True}
+    )
+    await hass.async_block_till_done()
+    response = await respond(hass, "write_guarded", device_id_of(hass))
+    assert response[device_id_of(hass)]["status"] == "duplicate"
+    assert tag_writer.write_prepared.await_count == 1  # only the write before the reload
+
+
+async def test_newer_preview_survives_a_reload_as_out_of_sync(
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer, hass_storage
+) -> None:
+    """A dry_run rendered after the last write is remembered as such."""
+    await call(hass, "write", device_id_of(hass))
+    await call(hass, "write", device_id_of(hass), dry_run=True, payload=[*PAYLOAD, *PAYLOAD])
+    await advance(hass, freezer, 2)
+
+    await hass.config_entries.async_reload(wolink_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "off"
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
+
+
+async def test_stored_images_are_removed_with_the_entry(
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer, hass_storage
+) -> None:
+    await call(hass, "write", device_id_of(hass))
+    await advance(hass, freezer, 2)
+    key = f"{DOMAIN}.{wolink_entry.entry_id}.images"
+    assert key in hass_storage
+
+    await hass.config_entries.async_remove(wolink_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert key not in hass_storage

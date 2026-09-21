@@ -13,6 +13,7 @@ from .esl_ble.base import BleBackend, BleParser, DevicePreset
 
 if TYPE_CHECKING:
     from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
+    from .storage import ImageStore
 
 
 @dataclass
@@ -38,6 +39,9 @@ class BleEslRuntimeData:
     last_failure_coordinator: DataUpdateCoordinator[datetime | None]
     battery_coordinator: DataUpdateCoordinator[float | None]
     temperature_coordinator: DataUpdateCoordinator[int | None]
+    image_store: ImageStore
+    """The last written and last rendered PNG, persisted across restarts.
+    Seeds image_coordinator / preview_coordinator / last_image_data on load."""
 
     # Write pipeline state (see services.py)
     write_lock: bool = False
@@ -45,7 +49,8 @@ class BleEslRuntimeData:
     start_time: float | None = None
     """monotonic() when the current BLE write started, for the duration sensor."""
     last_image_data: bytes | None = None
-    """PNG of the last image successfully written, for Prevent Duplicate Send."""
+    """PNG of the last image successfully written, for Prevent Duplicate Send.
+    Restored from image_store on load, so a restart does not rewrite every tag."""
     pending_write_cancel: CALLBACK_TYPE | None = None
     """Cancels the pending debounced write's timer, if one is scheduled."""
     write_generation: int = 0
