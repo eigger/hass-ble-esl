@@ -267,7 +267,6 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 | `rssi` | Signal strength of the tag's last advertisement as seen by that radio |
 | `paths` | How many connectable radios currently see the tag (1 = no failover possible) |
 | `connect_s` | Establishing the BLE link — includes any connection retries |
-| *(error `Attempt timed out after 300s`)* | The whole attempt, connecting included, is bounded at 5 minutes so a proxy dying mid-write cannot hold the BLE lock and block every other tag; `failed_stage` says where it hung |
 | `session_s` | Everything after the link was up (the stages below) |
 | `settle_s` | Fixed pause after subscribing to notifications |
 | `start_s` | Handshake before the image data: START/SIZE/IMAGE commands (PickSmart), AES authentication (WOLINK), the size command (XTE) |

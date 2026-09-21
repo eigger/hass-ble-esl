@@ -23,15 +23,15 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTEMPT_TIMEOUT_S = 300.0
+ATTEMPT_TIMEOUT_S = 600.0
 """Upper bound on one write attempt, connecting included.
 
 Every protocol step has its own timeout, but a GATT write has none: a
 proxy that dies mid-transfer can leave the attempt hanging, and since it
 holds the BLE lock, every other tag's writes hang with it. The bound is
-generous so it never cuts a legitimate write: connecting retries for up
-to about 1.5 minutes, the largest panels take about a minute to transfer
-and up to two to refresh.
+generous so it never cuts a legitimate write, even the slowest: connecting
+retries for up to ~1.5 min, a 13.3" WOLINK image takes ~1 min to transfer
+(more on a paced retry) and up to 2 min to refresh — about 5 min in all.
 """
 
 RETRY_BACKOFF_S = 0.05
