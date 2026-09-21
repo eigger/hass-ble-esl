@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/github/license/eigger/hass-ble-esl)](https://github.com/eigger/hass-ble-esl/blob/main/LICENSE)
 ![integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=%24.ble_esl.total)
 
+English | **[한국어](README.ko.md)**
+
 Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** One action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.

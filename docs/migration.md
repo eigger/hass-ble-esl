@@ -1,5 +1,7 @@
 # Migrating from hass-gicisky
 
+English | **[한국어](ko/migration.md)**
+
 [`hass-gicisky`](https://github.com/eigger/hass-gicisky) is archived; `hass-ble-esl`
 is its successor with the same PickSmart (Gicisky) protocol, payload format, options
 and entities. Only the integration **domain** changed (`gicisky` → `ble_esl`), and

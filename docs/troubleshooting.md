@@ -1,5 +1,7 @@
 # Troubleshooting
 
+English | **[한국어](ko/troubleshooting.md)**
+
 When a label does not update, the integration has usually already recorded why. This page is the order to look in: first the two sensors that hold the last write's breakdown, then the cases those sensors cannot see, then what to attach to an issue.
 
 ## Where to look
