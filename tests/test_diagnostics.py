@@ -7,13 +7,16 @@ from unittest.mock import patch
 from bt import inject_bluetooth_service_info, service_info
 from conftest import ADDRESS, IDENT, device_id_of, setup_entry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.setup import async_setup_component
+import pytest
 from pytest_homeassistant_custom_component.components.diagnostics import (
     get_diagnostics_for_config_entry,
 )
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 from custom_components.ble_esl.const import CONF_RETRY_COUNT, DOMAIN
+from custom_components.ble_esl.esl_ble.base import WriteResult
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 
 
@@ -53,6 +56,27 @@ async def test_diagnostics_content_and_redaction(
     assert result["write_state"]["last_failure_write"] is None
     assert result["sensors"]["failure_count"] == 0
     assert result["sensors"]["connectivity"] is False
+
+    # After a failed write the diagnostics carry its breakdown too, and keep
+    # it once a later write has succeeded.
+    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
+        )
+    tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1})
+    await hass.services.async_call(
+        DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
+    )
+    result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
+    assert result["write_state"]["last_write"]["success"] is True
+    assert result["write_state"]["last_failure_write"] == {
+        "attempt": 2,
+        "success": False,
+        "error": "boom",
+        "connect_s": 0.5,
+    }
+    assert result["sensors"]["failure_count"] == 1
 
 
 async def test_diagnostics_masks_mac_in_name_and_survives_parse_errors(
