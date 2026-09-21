@@ -122,18 +122,19 @@ class WolinkClient:
     ) -> None:
         """Write compressed image payload in chunks with cumulative delay and retry backoff.
 
-        `timing["parts"]` counts the chunks written so far, so a failure
-        mid-transfer still says how far it got.
+        `parts` is the chunk count of the image; `sends` counts the chunks
+        written so far, so a failure mid-transfer still says how far it got.
         """
         delay = 0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1))
         offset = 0
-        timing["parts"] = 0
+        timing["parts"] = (len(payload) + chunk_size - 1) // chunk_size
+        timing["sends"] = 0
         while offset < len(payload):
             chunk = payload[offset : offset + chunk_size]
             cmd = cmd_load_image_chunk(offset, chunk)
             await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
             offset += len(chunk)
-            timing["parts"] += 1
+            timing["sends"] += 1
             await asyncio.sleep(delay)
 
     async def write_prepared(
@@ -146,7 +147,8 @@ class WolinkClient:
     ) -> WriteResult:
         """Send an already-encoded image and trigger the refresh.
 
-        `timing` lets the caller add the stages before this one (authentication).
+        `timing` lets the caller add the stages before this one (authentication)
+        and is the caller's to hang on a failure (see write_session).
         """
         payload, raw_len = prepared
         refresh = cmd_refresh_compressed(len(payload))
@@ -167,22 +169,21 @@ class WolinkClient:
             timing = WriteTiming()
         timing["bytes"] = len(payload)
 
-        with timing.reported():
-            async with Notifications(self.client, STATUS_CHAR) as status:
-                with timing.stage("transfer_s"):
-                    await self._write_chunked(
-                        payload, timing, write_delay_ms=write_delay_ms, attempt=attempt
-                    )
-                # Status frames during the upload are only busy indications, but an
-                # error reported before the refresh is still an error.
-                for frame in status.clear():
-                    if err := self._status_error(frame):
-                        raise WolinkError(err)
-                # finish_s is the panel refresh: the tag reports idle once the
-                # e-paper has been redrawn, seconds to a minute by panel size.
-                with timing.stage("finish_s"):
-                    await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
-                    await status.wait_for(self._completed, timeout, step="refresh")
+        async with Notifications(self.client, STATUS_CHAR) as status:
+            with timing.stage("transfer_s"):
+                await self._write_chunked(
+                    payload, timing, write_delay_ms=write_delay_ms, attempt=attempt
+                )
+            # Status frames during the upload are only busy indications, but an
+            # error reported before the refresh is still an error.
+            for frame in status.clear():
+                if err := self._status_error(frame):
+                    raise WolinkError(err)
+            # finish_s is the panel refresh: the tag reports idle once the
+            # e-paper has been redrawn, seconds to a minute by panel size.
+            with timing.stage("finish_s"):
+                await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
+                await status.wait_for(self._completed, timeout, step="refresh")
         return WriteResult(success=True, timing=timing)
 
 
@@ -216,8 +217,9 @@ async def write_session(
     payload = await prepared
     wolink = WolinkClient(client, preset, address)
     timing = WriteTiming()
-    with timing.reported(), timing.stage("start_s"):
-        await wolink.authenticate()
-    return await wolink.write_prepared(
-        payload, attempt=attempt, write_delay_ms=write_delay_ms, timing=timing
-    )
+    with timing.reported():
+        with timing.stage("start_s"):
+            await wolink.authenticate()
+        return await wolink.write_prepared(
+            payload, attempt=attempt, write_delay_ms=write_delay_ms, timing=timing
+        )

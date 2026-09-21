@@ -122,8 +122,8 @@ def test_wolink_write_image_flow_with_status_notification():
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
         assert notification_active is False  # Stopped after session
-        # The breakdown: every chunk is a part, the refresh wait is finish_s.
-        assert result.timing["parts"] == len(written_data) - 1
+        # The breakdown: every chunk is a part (all sent), the refresh wait is finish_s.
+        assert result.timing["parts"] == len(written_data) - 1 == result.timing["sends"]
         assert result.timing["bytes"] == len(prepared[0])
         assert {"transfer_s", "finish_s"} <= result.timing.keys()
 
@@ -234,6 +234,7 @@ def test_write_image_entrypoint(monkeypatch):
             "start_s",
             "bytes",
             "parts",
+            "sends",
             "transfer_s",
             "finish_s",
             "session_s",

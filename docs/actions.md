@@ -267,7 +267,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 | `session_s` | Everything after the link was up (the stages below) |
 | `settle_s` | Fixed pause after subscribing to notifications |
 | `start_s` | Handshake before the image data: START/SIZE/IMAGE commands (PickSmart), AES authentication (WOLINK), the size command (XTE) |
-| `parts` / `bytes` | Number of frames the image was sent as, and its encoded size |
+| `parts` / `bytes` | Number of frames the image is sent as, and its encoded size. PickSmart and WOLINK also count `sends` — frames actually written, which on a failed attempt shows how far it got |
 | `transfer_s` | Sending the image data |
 | `finish_s` | From the last data frame until the tag confirms; for WOLINK and easyTag this is the e-paper refresh itself |
 

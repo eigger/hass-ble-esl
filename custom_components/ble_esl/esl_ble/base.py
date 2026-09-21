@@ -94,7 +94,7 @@ class WriteTiming(dict[str, float | int | bool | str]):
 
         settle_s     pause after subscribing to notifications
         start_s      handshake before the data (auth, START command, header)
-        parts        logical frames the data was sent as
+        parts        logical frames the data is sent as (the whole image)
         bytes        payload size sent
         transfer_s   sending the data
         finish_s     from the last data frame to the tag's completion reply
