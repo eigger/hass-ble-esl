@@ -107,13 +107,22 @@ def test_picksmart_stall_detection():
         )
         img = Image.new("RGB", (296, 128), "white")
 
-        with pytest.raises(PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"):
+        with pytest.raises(
+            PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"
+        ) as caught:
             await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
         # One send per request: the initial one plus five resends.
         img_writes = [
             c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID
         ]
         assert len(img_writes) == 6
+        # A stall is when the counters matter: they reach the failed
+        # WriteResult through the exception even though the loop never ended.
+        timing = caught.value.timing
+        assert timing["sends"] == 6 and timing["resends"] == 5
+        assert timing["completed_by_tag"] is False
+        assert timing["parts"] == 40 and timing["round_trip_ms"] >= 0
+        assert {"start_s", "transfer_s"} <= timing.keys()
 
     asyncio.run(_test())
 

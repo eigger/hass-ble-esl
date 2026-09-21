@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from datetime import timedelta
 
-from bt import register_proxy
+from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -123,6 +123,24 @@ async def test_write_reports_the_radio_it_went_through(
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via_source"] == "AA:BB:CC:00:00:01" and attrs["rssi"] == -71
     assert attrs["paths"] == 2
+
+
+async def test_write_reports_a_local_adapter(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """A tag reached through the host's own adapter is reported as such."""
+    hci0 = register_adapter(hass, "hci0", "00:1A:7D:DA:71:13")
+    hci0.inject_advertisement(wolink_service_info(rssi=-58))
+    await setup_entry(hass, advertise=False)
+
+    await call(hass, "write", device_id_of(hass))
+
+    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
+    assert attrs["via"] == "hci0 (00:1A:7D:DA:71:13)"
+    assert attrs["via_type"] == "adapter"
+    assert attrs["via_source"] == "00:1A:7D:DA:71:13"
+    assert attrs["rssi"] == -58
+    assert attrs["paths"] == 1
 
 
 async def test_dry_run_only_updates_preview(hass: HomeAssistant, wolink_entry, tag_writer) -> None:

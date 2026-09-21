@@ -68,9 +68,9 @@ class EasyTagClient:
                 with timing.stage("finish_s"):
                     reply = await replies.next(FEEDBACK_TIMEOUT, step="image frames")
 
-        if not reply:
-            raise EasyTagError("Empty notify payload from tag")
-        parsed = parse_notify(self.address, reply)
+            if not reply:
+                raise EasyTagError("Empty notify payload from tag")
+            parsed = parse_notify(self.address, reply)
         return WriteResult(
             success=True,
             battery_mv=parsed.get("battery_mv"),

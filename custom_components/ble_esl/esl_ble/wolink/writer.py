@@ -115,24 +115,26 @@ class WolinkClient:
     async def _write_chunked(
         self,
         payload: bytes,
+        timing: WriteTiming,
         chunk_size: int = 200,
         write_delay_ms: int = 0,
         attempt: int = 1,
-    ) -> int:
+    ) -> None:
         """Write compressed image payload in chunks with cumulative delay and retry backoff.
 
-        Returns the number of chunks written.
+        `timing["parts"]` counts the chunks written so far, so a failure
+        mid-transfer still says how far it got.
         """
         delay = 0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1))
-        offset = chunks = 0
+        offset = 0
+        timing["parts"] = 0
         while offset < len(payload):
             chunk = payload[offset : offset + chunk_size]
             cmd = cmd_load_image_chunk(offset, chunk)
             await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
             offset += len(chunk)
-            chunks += 1
+            timing["parts"] += 1
             await asyncio.sleep(delay)
-        return chunks
 
     async def write_prepared(
         self,
@@ -168,8 +170,8 @@ class WolinkClient:
         with timing.reported():
             async with Notifications(self.client, STATUS_CHAR) as status:
                 with timing.stage("transfer_s"):
-                    timing["parts"] = await self._write_chunked(
-                        payload, write_delay_ms=write_delay_ms, attempt=attempt
+                    await self._write_chunked(
+                        payload, timing, write_delay_ms=write_delay_ms, attempt=attempt
                     )
                 # Status frames during the upload are only busy indications, but an
                 # error reported before the refresh is still an error.

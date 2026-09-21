@@ -154,14 +154,27 @@ class PickSmartClient:
             with timing.stage("start_s"):
                 part = await self._handshake(packet_size, compression2, timing)
 
-            # Step 4: IMAGE_DATA chunk loop. The tag drives the transfer by
-            # answering each chunk with the part it wants next; asking for the
-            # same part again is its way of requesting a resend.
-            last_part = -1
-            same_part_count = 0
+            # Step 4: IMAGE_DATA chunk loop.
             total_parts = (packet_size + 239) // 240
-            sends = resends = 0
-            completed_by_tag = False
+            timing["parts"] = total_parts
+            await self._send_parts(payload, part, total_parts, timing)
+            return WriteResult(success=True, timing=timing)
+
+    async def _send_parts(
+        self, payload: bytes, part: int, total_parts: int, timing: WriteTiming
+    ) -> None:
+        """Step 4: the IMAGE_DATA loop.
+
+        The tag drives the transfer by answering each chunk with the part it
+        wants next; asking for the same part again is its way of requesting a
+        resend. The counters land in `timing` even when the loop raises.
+        """
+        packet_size = len(payload)
+        last_part = -1
+        same_part_count = 0
+        sends = resends = 0
+        timing["completed_by_tag"] = False
+        try:
             with timing.stage("transfer_s"):
                 while part * 240 < packet_size:
                     sends += 1
@@ -182,7 +195,7 @@ class PickSmartClient:
                             raise PickSmartError(
                                 f"Tag reported completion after part {part}/{total_parts}"
                             )
-                        completed_by_tag = True
+                        timing["completed_by_tag"] = True
                         break
                     if (
                         len(resp) < 6
@@ -220,17 +233,13 @@ class PickSmartClient:
 
                     part = new_part
 
-            transfer_s = float(timing["transfer_s"])
-            timing.update(
-                {
-                    "parts": total_parts,
-                    "sends": sends,  # parts + resends; round_trip_ms * sends ~= transfer_s
-                    "resends": resends,
-                    "round_trip_ms": round(transfer_s / sends * 1000) if sends else 0,
-                    "completed_by_tag": completed_by_tag,
-                }
-            )
-            return WriteResult(success=True, timing=timing)
+        finally:
+            # A stalled transfer is exactly when the counters matter, so they
+            # are filled in whether or not the loop finished.
+            # sends = parts + resends; round_trip_ms * sends ~= transfer_s
+            timing["sends"], timing["resends"] = sends, resends
+            transfer_s = float(timing.get("transfer_s", 0.0))
+            timing["round_trip_ms"] = round(transfer_s / sends * 1000) if sends else 0
 
 
 async def write_session(
