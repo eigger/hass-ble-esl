@@ -5,12 +5,11 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable
 import logging
-import time
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 
-from ..base import DevicePreset, Notifications, NotificationTimeout, WriteResult
+from ..base import DevicePreset, Notifications, NotificationTimeout, WriteResult, WriteTiming
 from .const import (
     CMD_IMAGE,
     CMD_SIZE,
@@ -87,149 +86,160 @@ class PickSmartClient:
     async def write_payload(self, payload: bytes) -> WriteResult:
         """Execute 4-step image transfer handshake with an encoded payload."""
         compression2 = bool(self.preset.extra.get("compression2", False))
-        timing: dict[str, float | int | bool] = {"settle_s": NOTIFY_SETTLE_S}
-        try:
+        timing = WriteTiming(settle_s=NOTIFY_SETTLE_S, bytes=len(payload))
+        # Let the caller report how far the attempt got (see write_prepared).
+        with timing.reported():
             return await self._transfer(payload, compression2, timing)
-        except Exception as exc:
-            # Let the caller report how far the attempt got (see write_prepared).
-            exc.timing = timing  # type: ignore[attr-defined]
-            raise
+
+    async def _handshake(self, packet_size: int, compression2: bool, timing: WriteTiming) -> int:
+        """Steps 1-3: START (probed), SIZE, IMAGE START. Returns the first part wanted."""
+        # Step 1: START (0x01) -> [01 F4 00], probed (see const.py).
+        start_packet = make_cmd_packet(CMD_START, packet_size, compression2)
+        for probe in range(1, START_PROBE_ATTEMPTS + 1):
+            timing["start_probes"] = probe
+            try:
+                start_resp = await self._write_with_response(
+                    self.cmd_uuid, start_packet, "START", timeout=START_PROBE_TIMEOUT_S
+                )
+                break
+            except NotificationTimeout:
+                if probe == START_PROBE_ATTEMPTS:
+                    raise NotificationTimeout(
+                        f"No response from tag to START after {probe} probes "
+                        f"({START_PROBE_TIMEOUT_S:g}s each)"
+                    ) from None
+                _LOGGER.debug(
+                    "%s: START unanswered (%d/%d), resending",
+                    self.address,
+                    probe,
+                    START_PROBE_ATTEMPTS,
+                )
+        if (
+            len(start_resp) < 3
+            or start_resp[0] != 0x01
+            or start_resp[1] != 0xF4
+            or start_resp[2] != 0x00
+        ):
+            raise PickSmartError(f"Unexpected start response: {start_resp.hex()}")
+
+        # Step 2: SIZE_DATA (0x02) -> [02]
+        size_resp = await self._write_with_response(
+            self.cmd_uuid,
+            make_cmd_packet(CMD_SIZE, packet_size, compression2),
+            "SIZE",
+        )
+        if len(size_resp) < 1 or size_resp[0] != 0x02:
+            raise PickSmartError(f"Unexpected size response: {size_resp.hex()}")
+
+        # Step 3: IMAGE START (0x03) -> [05 00 ... part]
+        img_start_resp = await self._write_with_response(
+            self.cmd_uuid,
+            make_cmd_packet(CMD_IMAGE, packet_size, compression2),
+            "IMAGE START",
+        )
+        if (
+            len(img_start_resp) < 6
+            or img_start_resp[0] != RESP_IMAGE_DATA
+            or img_start_resp[1] != RESP_STATUS_NEXT_PART
+        ):
+            raise PickSmartError(f"Unexpected image start response: {img_start_resp.hex()}")
+        return int.from_bytes(img_start_resp[2:6], "little")
 
     async def _transfer(
-        self, payload: bytes, compression2: bool, timing: dict[str, float | int | bool]
+        self, payload: bytes, compression2: bool, timing: WriteTiming
     ) -> WriteResult:
         packet_size = len(payload)
-        t0 = time.monotonic()
         async with Notifications(self.client, self.cmd_uuid, settle=NOTIFY_SETTLE_S) as replies:
             self._replies = replies
-            # Step 1: START (0x01) -> [01 F4 00], probed (see const.py).
-            start_packet = make_cmd_packet(CMD_START, packet_size, compression2)
-            for probe in range(1, START_PROBE_ATTEMPTS + 1):
-                timing["start_probes"] = probe
-                try:
-                    start_resp = await self._write_with_response(
-                        self.cmd_uuid, start_packet, "START", timeout=START_PROBE_TIMEOUT_S
-                    )
-                    break
-                except NotificationTimeout:
-                    if probe == START_PROBE_ATTEMPTS:
-                        raise NotificationTimeout(
-                            f"No response from tag to START after {probe} probes "
-                            f"({START_PROBE_TIMEOUT_S:g}s each)"
-                        ) from None
-                    _LOGGER.debug(
-                        "%s: START unanswered (%d/%d), resending",
-                        self.address,
-                        probe,
-                        START_PROBE_ATTEMPTS,
-                    )
-            timing["start_s"] = round(time.monotonic() - t0 - NOTIFY_SETTLE_S, 3)
-            if (
-                len(start_resp) < 3
-                or start_resp[0] != 0x01
-                or start_resp[1] != 0xF4
-                or start_resp[2] != 0x00
-            ):
-                raise PickSmartError(f"Unexpected start response: {start_resp.hex()}")
+            with timing.stage("start_s"):
+                part = await self._handshake(packet_size, compression2, timing)
 
-            # Step 2: SIZE_DATA (0x02) -> [02]
-            size_resp = await self._write_with_response(
-                self.cmd_uuid,
-                make_cmd_packet(CMD_SIZE, packet_size, compression2),
-                "SIZE",
-            )
-            if len(size_resp) < 1 or size_resp[0] != 0x02:
-                raise PickSmartError(f"Unexpected size response: {size_resp.hex()}")
-
-            # Step 3: IMAGE START (0x03) -> [05 00 ... part]
-            img_start_resp = await self._write_with_response(
-                self.cmd_uuid,
-                make_cmd_packet(CMD_IMAGE, packet_size, compression2),
-                "IMAGE START",
-            )
-            if (
-                len(img_start_resp) < 6
-                or img_start_resp[0] != RESP_IMAGE_DATA
-                or img_start_resp[1] != RESP_STATUS_NEXT_PART
-            ):
-                raise PickSmartError(f"Unexpected image start response: {img_start_resp.hex()}")
-
-            # Step 4: IMAGE_DATA chunk loop. The tag drives the transfer by
-            # answering each chunk with the part it wants next; asking for the
-            # same part again is its way of requesting a resend.
-            part = int.from_bytes(img_start_resp[2:6], "little")
-            last_part = -1
-            same_part_count = 0
+            # Step 4: IMAGE_DATA chunk loop.
             total_parts = (packet_size + 239) // 240
-            sends = resends = 0
-            completed_by_tag = False
-            transfer_started = time.monotonic()
-
-            while part * 240 < packet_size:
-                sends += 1
-                data_packet = make_size_packet(part, payload)
-                resp = await self._write_with_response(
-                    self.img_uuid, data_packet, f"part {part}/{total_parts}"
-                )
-
-                if (
-                    len(resp) >= 2
-                    and resp[0] == RESP_IMAGE_DATA
-                    and resp[1] == RESP_STATUS_COMPLETE
-                ):
-                    # The tag confirms it has everything (seen after the last
-                    # part on every tag tested); anything earlier is a short
-                    # transfer whatever the tag thinks.
-                    if (part + 1) * 240 < packet_size:
-                        raise PickSmartError(
-                            f"Tag reported completion after part {part}/{total_parts}"
-                        )
-                    completed_by_tag = True
-                    break
-                if len(resp) < 6 or resp[0] != RESP_IMAGE_DATA or resp[1] != RESP_STATUS_NEXT_PART:
-                    raise PickSmartError(
-                        f"Unexpected reply after part {part}/{total_parts}: {resp.hex()}"
-                    )
-
-                new_part = int.from_bytes(resp[2:6], "little")
-                if new_part == last_part:
-                    same_part_count += 1
-                    resends += 1
-                    if same_part_count >= MAX_SAME_PART_REQUESTS:
-                        raise PickSmartError(
-                            f"Transfer stalled: part {new_part}/{total_parts} "
-                            f"requested {same_part_count} times"
-                        )
-                    _LOGGER.debug(
-                        "%s: tag re-requested part %d/%d (%d/%d), resending",
-                        self.address,
-                        new_part,
-                        total_parts,
-                        same_part_count,
-                        MAX_SAME_PART_REQUESTS,
-                    )
-                    # Back off a little before resending; a tag that is still
-                    # committing the previous chunk tends to reject a resend
-                    # sent straight away, which is what hits the stall limit.
-                    await asyncio.sleep(RESEND_BACKOFF_S * (same_part_count - 1))
-                else:
-                    same_part_count = 1
-                    last_part = new_part
-
-                part = new_part
-
-            transfer_s = time.monotonic() - transfer_started
-            timing.update(
-                {
-                    "parts": total_parts,
-                    "sends": sends,  # parts + resends; round_trip_ms * sends ~= transfer_s
-                    "resends": resends,
-                    "transfer_s": round(transfer_s, 3),
-                    "round_trip_ms": round(transfer_s / sends * 1000) if sends else 0,
-                    "completed_by_tag": completed_by_tag,
-                }
-            )
+            timing["parts"] = total_parts
+            await self._send_parts(payload, part, total_parts, timing)
             return WriteResult(success=True, timing=timing)
+
+    async def _send_parts(
+        self, payload: bytes, part: int, total_parts: int, timing: WriteTiming
+    ) -> None:
+        """Step 4: the IMAGE_DATA loop.
+
+        The tag drives the transfer by answering each chunk with the part it
+        wants next; asking for the same part again is its way of requesting a
+        resend. The counters land in `timing` even when the loop raises.
+        """
+        packet_size = len(payload)
+        last_part = -1
+        same_part_count = 0
+        sends = resends = 0
+        timing["completed_by_tag"] = False
+        try:
+            with timing.stage("transfer_s"):
+                while part * 240 < packet_size:
+                    sends += 1
+                    data_packet = make_size_packet(part, payload)
+                    resp = await self._write_with_response(
+                        self.img_uuid, data_packet, f"part {part}/{total_parts}"
+                    )
+
+                    if (
+                        len(resp) >= 2
+                        and resp[0] == RESP_IMAGE_DATA
+                        and resp[1] == RESP_STATUS_COMPLETE
+                    ):
+                        # The tag confirms it has everything (seen after the last
+                        # part on every tag tested); anything earlier is a short
+                        # transfer whatever the tag thinks.
+                        if (part + 1) * 240 < packet_size:
+                            raise PickSmartError(
+                                f"Tag reported completion after part {part}/{total_parts}"
+                            )
+                        timing["completed_by_tag"] = True
+                        break
+                    if (
+                        len(resp) < 6
+                        or resp[0] != RESP_IMAGE_DATA
+                        or resp[1] != RESP_STATUS_NEXT_PART
+                    ):
+                        raise PickSmartError(
+                            f"Unexpected reply after part {part}/{total_parts}: {resp.hex()}"
+                        )
+
+                    new_part = int.from_bytes(resp[2:6], "little")
+                    if new_part == last_part:
+                        same_part_count += 1
+                        resends += 1
+                        if same_part_count >= MAX_SAME_PART_REQUESTS:
+                            raise PickSmartError(
+                                f"Transfer stalled: part {new_part}/{total_parts} "
+                                f"requested {same_part_count} times"
+                            )
+                        _LOGGER.debug(
+                            "%s: tag re-requested part %d/%d (%d/%d), resending",
+                            self.address,
+                            new_part,
+                            total_parts,
+                            same_part_count,
+                            MAX_SAME_PART_REQUESTS,
+                        )
+                        # Back off a little before resending; a tag that is still
+                        # committing the previous chunk tends to reject a resend
+                        # sent straight away, which is what hits the stall limit.
+                        await asyncio.sleep(RESEND_BACKOFF_S * (same_part_count - 1))
+                    else:
+                        same_part_count = 1
+                        last_part = new_part
+
+                    part = new_part
+
+        finally:
+            # A stalled transfer is exactly when the counters matter, so they
+            # are filled in whether or not the loop finished.
+            # sends = parts + resends; round_trip_ms * sends ~= transfer_s
+            timing["sends"], timing["resends"] = sends, resends
+            transfer_s = float(timing.get("transfer_s", 0.0))
+            timing["round_trip_ms"] = round(transfer_s / sends * 1000) if sends else 0
 
 
 async def write_session(

@@ -43,9 +43,13 @@ def auto_enable_custom_integrations(request: pytest.FixtureRequest) -> None:
         request.getfixturevalue("enable_custom_integrations")
 
 
-def wolink_service_info(address: str = ADDRESS, mfr_bytes: bytes = WOLINK_MFR_BYTES):
+def wolink_service_info(
+    address: str = ADDRESS, mfr_bytes: bytes = WOLINK_MFR_BYTES, *, rssi: int = -60
+):
     """A WOLINK tag's advertisement."""
-    return service_info(address, name="WOLINK", manufacturer_data={WOLINK_MFR_ID: mfr_bytes})
+    return service_info(
+        address, name="WOLINK", manufacturer_data={WOLINK_MFR_ID: mfr_bytes}, rssi=rssi
+    )
 
 
 async def setup_entry(

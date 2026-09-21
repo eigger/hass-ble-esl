@@ -216,10 +216,13 @@ class FakeClient:
 def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
-    assert asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
+    timing = asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
     obj = make_image_object(b"\x55" * 30000, 400, 300)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
+    assert timing["chunk_size"] == chunk_size
+    assert timing["bytes"] == len(obj)
+    assert {"settle_s", "start_s", "parts", "transfer_s", "finish_s"} <= timing.keys()
     for block in make_blocks(obj):
         expected.extend(block[i : i + chunk_size] for i in range(0, len(block), chunk_size))
     expected.append(make_command(b"\x04\x00"))

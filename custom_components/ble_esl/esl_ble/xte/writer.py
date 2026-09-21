@@ -9,7 +9,7 @@ import logging
 from bleak import BleakClient
 from PIL import Image
 
-from ..base import DevicePreset, Notifications, WriteResult
+from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
 from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from .protocol import buffer_size, make_blocks, make_command, make_image_object, pack_pixels
 
@@ -71,8 +71,8 @@ class XteClient:
             self._expecting(expected_payload), self.timeout, step=f"command {payload[0]:#04x}"
         )
 
-    async def write_object(self, image_object: bytes) -> bool:
-        """Send an already-encoded XTEK object."""
+    async def write_object(self, image_object: bytes) -> WriteTiming:
+        """Send an already-encoded XTEK object; returns the stage timings."""
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
             raise ValueError("XTE service missing")
@@ -93,18 +93,31 @@ class XteClient:
             raise ValueError(f"Invalid XTE write-without-response size: {chunk_size}")
         _LOGGER.debug("XTE write chunk size: %s bytes", chunk_size)
         blocks = make_blocks(image_object)
-        async with Notifications(self.client, notify_char, settle=self.settle) as replies:
-            self._replies = replies
-            await self._command(
-                write_char,
-                b"\x01" + len(image_object).to_bytes(4, "big"),
-                chunk_size,
-                bytes.fromhex("01ffbd"),
-            )
-            for block in blocks:
-                await self._write(write_char, block, chunk_size)
-            await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
-            return True
+        timing = WriteTiming(
+            settle_s=self.settle,
+            parts=len(blocks),
+            bytes=len(image_object),
+            chunk_size=chunk_size,
+        )
+        with timing.reported():
+            async with Notifications(self.client, notify_char, settle=self.settle) as replies:
+                self._replies = replies
+                with timing.stage("start_s"):
+                    await self._command(
+                        write_char,
+                        b"\x01" + len(image_object).to_bytes(4, "big"),
+                        chunk_size,
+                        bytes.fromhex("01ffbd"),
+                    )
+                # Blocks are not acknowledged individually, so transfer_s is
+                # pacing plus the backend's write-without-response throughput.
+                with timing.stage("transfer_s"):
+                    for block in blocks:
+                        await self._write(write_char, block, chunk_size)
+                # The end command is answered once the tag has taken the image.
+                with timing.stage("finish_s"):
+                    await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
+        return timing
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
@@ -123,5 +136,5 @@ async def write_session(
     write_delay_ms: int = 0,
 ) -> WriteResult:
     """Send an encoded XTEK object over an open link."""
-    success = await XteClient(client, attempt, write_delay_ms).write_object(await prepared)
-    return WriteResult(success=success)
+    timing = await XteClient(client, attempt, write_delay_ms).write_object(await prepared)
+    return WriteResult(success=True, timing=timing)

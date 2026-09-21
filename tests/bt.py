@@ -8,16 +8,23 @@ the BluetoothServiceInfoBleak the integration's parsers and backends consume.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 import time
 from typing import Any
+from unittest.mock import MagicMock
 
 from bleak.backends.scanner import AdvertisementData, BLEDevice
 from homeassistant.components.bluetooth import (
     SOURCE_LOCAL,
+    BaseHaRemoteScanner,
+    BaseHaScanner,
     BluetoothServiceInfoBleak,
+    HaBluetoothConnector,
     async_get_advertisement_callback,
+    async_register_scanner,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.core import Event, HomeAssistant, callback
 
 ADVERTISEMENT_DATA_DEFAULTS: dict[str, Any] = {
     "local_name": "",
@@ -81,6 +88,92 @@ def service_info(
 def inject_bluetooth_service_info(hass: HomeAssistant, info: BluetoothServiceInfoBleak) -> None:
     """Deliver an advertisement to the bluetooth manager as if a scanner saw it."""
     async_get_advertisement_callback(hass)(info)
+
+
+class FakeAdapterScanner(BaseHaScanner):
+    """A local Bluetooth adapter (hciN) as bluetooth registers one.
+
+    Advertisements are delivered through the manager with this scanner's
+    source, and looked up again through it for the write's `rssi`.
+    """
+
+    def __init__(self, hass: HomeAssistant, adapter: str, mac: str) -> None:
+        super().__init__(mac, adapter, HaBluetoothConnector(MagicMock, "fake", lambda: True), True)
+        self._hass = hass
+        self._seen: dict[str, tuple[BLEDevice, AdvertisementData]] = {}
+
+    def inject_advertisement(self, info: BluetoothServiceInfoBleak) -> None:
+        self._seen[info.address] = (info.device, info.advertisement)
+        info.source = self.source
+        inject_bluetooth_service_info(self._hass, info)
+
+    def get_discovered_device_advertisement_data(
+        self, address: str
+    ) -> tuple[BLEDevice, AdvertisementData] | None:
+        return self._seen.get(address)
+
+    @property
+    def discovered_addresses(self) -> Iterable[str]:
+        return self._seen
+
+    @property
+    def discovered_devices(self) -> list[BLEDevice]:
+        return [device for device, _ in self._seen.values()]
+
+    @property
+    def discovered_devices_and_advertisement_data(
+        self,
+    ) -> dict[str, tuple[BLEDevice, AdvertisementData]]:
+        return self._seen
+
+
+def register_adapter(hass: HomeAssistant, adapter: str, mac: str) -> FakeAdapterScanner:
+    """Register a connectable local adapter scanner; bluetooth names it "<adapter> (<mac>)"."""
+    scanner = FakeAdapterScanner(hass, adapter, mac)
+    _teardown_with_hass(hass, scanner.async_setup(), async_register_scanner(hass, scanner))
+    return scanner
+
+
+class FakeProxyScanner(BaseHaRemoteScanner):
+    """A Bluetooth proxy (ESPHome-style remote scanner) as bluetooth sees one.
+
+    Advertisements injected through it carry the proxy as their source, so
+    the integration can report which radio a write went through.
+    """
+
+    def inject_advertisement(self, info: BluetoothServiceInfoBleak) -> None:
+        self._async_on_advertisement(
+            info.address,
+            info.rssi,
+            info.name,
+            info.service_uuids,
+            info.service_data,
+            info.manufacturer_data,
+            info.tx_power,
+            {},
+            time.monotonic(),
+        )
+
+
+def register_proxy(hass: HomeAssistant, name: str, mac: str) -> FakeProxyScanner:
+    """Register a connectable proxy scanner named `name` with source `mac`.
+
+    bluetooth names it "<name> (<mac>)". It is torn down with Home Assistant
+    so its expiry timer does not linger past the test.
+    """
+    connector = HaBluetoothConnector(MagicMock, "fake", lambda: True)
+    scanner = FakeProxyScanner(mac, name, connector, True)
+    _teardown_with_hass(hass, scanner.async_setup(), async_register_scanner(hass, scanner))
+    return scanner
+
+
+def _teardown_with_hass(hass: HomeAssistant, *cancel: Callable[[], None]) -> None:
+    @callback
+    def _teardown(_event: Event) -> None:
+        for fn in cancel:
+            fn()
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _teardown)
 
 
 # ── Reading a parser's SensorUpdate ──────────────────────────────────────

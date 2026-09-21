@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping
 import contextlib
 from dataclasses import dataclass, field
 import logging
@@ -84,6 +84,49 @@ class AdvertisementInfo:
     raw: Mapping[str, Any] = field(default_factory=dict)
 
 
+class WriteTiming(dict[str, float | int | bool | str]):
+    """Per-stage breakdown of one write attempt, for WriteResult.timing.
+
+    Every protocol has the same shape — a notification settle, some
+    handshake before the data, the data transfer, and a wait for the tag to
+    confirm — so the writers share these keys and tuning advice carries
+    over between them:
+
+        settle_s     pause after subscribing to notifications
+        start_s      handshake before the data (auth, START command, header)
+        parts        logical frames the data is sent as (the whole image)
+        bytes        payload size sent
+        transfer_s   sending the data
+        finish_s     from the last data frame to the tag's completion reply
+
+    Protocol-specific extras (PickSmart's probe/resend counters, ...) go in
+    the same dict. A stage that raises still records its elapsed time, and
+    `reported()` hangs the dict on the exception so write_prepared() can
+    show how far a failed attempt got.
+
+        timing = WriteTiming(settle_s=0.5)
+        with timing.reported():
+            with timing.stage("start_s"):
+                await auth()
+    """
+
+    @contextlib.contextmanager
+    def stage(self, key: str) -> Iterator[None]:
+        started = time.monotonic()
+        try:
+            yield
+        finally:
+            self[key] = round(time.monotonic() - started, 3)
+
+    @contextlib.contextmanager
+    def reported(self) -> Iterator[None]:
+        try:
+            yield
+        except Exception as exc:
+            exc.timing = self  # type: ignore[attr-defined]
+            raise
+
+
 @dataclass
 class WriteResult:
     """Result of writing an image or querying status."""
@@ -92,10 +135,14 @@ class WriteResult:
     battery_mv: int | None = None
     temperature_c: int | None = None
     error: str | None = None
-    timing: dict[str, float | int | bool] = field(default_factory=dict)
+    timing: dict[str, float | int | bool | str] = field(default_factory=dict)
     """Per-stage timings in seconds (and counts) for the diagnostics download
     and debug log: `connect_s`/`session_s` from write_prepared(), the rest
-    protocol-specific (e.g. PickSmart's settle, START probes, chunk round trip)."""
+    from the protocol writer (see WriteTiming)."""
+    scanner: Any = None
+    """The scanner (local adapter or Bluetooth proxy) the link went through,
+    when the client wrapper exposes it; opaque here, interpreted by the
+    integration. None when unknown."""
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:
@@ -145,6 +192,16 @@ async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
         with contextlib.suppress(Exception):
             if client and client.is_connected:
                 await client.disconnect()
+
+
+def _connected_scanner(client: BleakClient) -> Any:
+    """The scanner Home Assistant's client wrapper connected through.
+
+    Newer habluetooth records it on the wrapper after a successful connect;
+    older versions do not, and test doubles are not wrappers at all, so this
+    is best effort and the caller must validate the type.
+    """
+    return getattr(client, "_connected_scanner", None)
 
 
 class NotificationTimeout(TimeoutError):
@@ -459,9 +516,11 @@ class BleBackend(ABC):
         """
         started = time.monotonic()
         connected: float | None = None
+        scanner: Any = None
         try:
             async with ble_session(ble_device) as client:
                 connected = time.monotonic()
+                scanner = _connected_scanner(client)
                 result = await self.write_session(
                     client,
                     ble_device.address,
@@ -475,6 +534,7 @@ class BleBackend(ABC):
                 **result.timing,
                 "session_s": round(time.monotonic() - connected, 3),
             }
+            result.scanner = scanner
             return result
         except Exception as exc:
             # The caller logs each failed attempt and raises after the last
@@ -490,7 +550,12 @@ class BleBackend(ABC):
             }
             if connected is not None:
                 timing["session_s"] = round(now - connected, 3)
-            return WriteResult(success=False, error=str(exc) or type(exc).__name__, timing=timing)
+            return WriteResult(
+                success=False,
+                error=str(exc) or type(exc).__name__,
+                timing=timing,
+                scanner=scanner,
+            )
 
     async def write_image(
         self,

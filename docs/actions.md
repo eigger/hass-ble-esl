@@ -223,7 +223,7 @@ Both actions can return what happened to each target. Ask for it with `response_
 
 | `status` | Meaning | Extra fields |
 |---|---|---|
-| `written` | Image is on the tag | `attempts`, `duration_s`, `timing` (per-stage seconds, protocol-specific) |
+| `written` | Image is on the tag | `attempts`, `duration_s`, `timing` (the [write breakdown](#write-breakdown) of the attempt) |
 | `failed` | Every attempt failed | `error`, `attempts`, `duration_s`, `timing` of the last attempt |
 | `scheduled` | `write_guarded` debounced the write; it runs in the background after the quiet period (`delay_ms`). **Its result is not part of this response** — check the *Display In Sync* / *Failure Count* entities if you need it | `delay_ms` |
 | `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
@@ -250,8 +250,30 @@ Every tag is one device with these entities:
 | Alias | text | Free-form label for the tag |
 | Write Lock | switch | On: nothing is sent to the tag; both actions only update the preview |
 
-- **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt — `attempt`, `success`, `error`, and the per-stage timings (`connect_s`, `session_s`; PickSmart also `start_probes`, `parts`, `resends`, `round_trip_ms`, `transfer_s`, `completed_by_tag`). Watch `start_probes` (should mostly be 1) and `round_trip_ms` (path quality) without turning on debug logging; the same data is in the diagnostics download.
+- **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt (see [Write breakdown](#write-breakdown)); the same data is in the diagnostics download.
 - **Battery:** the tag voltage is mapped linearly to **Battery** (%) over 2.5–2.9 V for every backend that reports a voltage (PickSmart and WOLINK from the advertisement, easyTag from the write session), and a **Battery** binary sensor (low battery) turns on at 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
+
+## Write breakdown
+
+Every write attempt is recorded on the **Write Duration** sensor's attributes and returned in the action's `timing` (with `response_variable`), so a slow or flaky tag can be diagnosed without debug logging.
+
+| Attribute | Meaning |
+|---|---|
+| `attempt` / `success` / `error` | Which retry this was and how it ended |
+| `via` / `via_type` / `via_source` | The radio the write went through: a Bluetooth **proxy** (its ESPHome name and MAC) or a local **adapter** (`hci0` and its MAC) |
+| `rssi` | Signal strength of the tag's last advertisement as seen by that radio |
+| `paths` | How many connectable radios currently see the tag (1 = no failover possible) |
+| `connect_s` | Establishing the BLE link — includes any connection retries |
+| `session_s` | Everything after the link was up (the stages below) |
+| `settle_s` | Fixed pause after subscribing to notifications |
+| `start_s` | Handshake before the image data: START/SIZE/IMAGE commands (PickSmart), AES authentication (WOLINK), the size command (XTE) |
+| `parts` / `bytes` | Number of frames the image is sent as, and its encoded size. PickSmart and WOLINK also count `sends` — frames actually written, which on a failed attempt shows how far it got |
+| `transfer_s` | Sending the image data |
+| `finish_s` | From the last data frame until the tag confirms; for WOLINK and easyTag this is the e-paper refresh itself |
+
+Protocol-specific extras: PickSmart adds `start_probes` (how many START commands were needed — should mostly be 1), `sends` / `resends` (chunks the tag asked for again), `round_trip_ms` (per-chunk round trip; the best measure of path quality) and `completed_by_tag`; XTE adds `chunk_size` (the ATT write size the backend allowed — 20 on some proxies, 244 on others, which dominates `transfer_s`).
+
+Reading it: a large `connect_s` with a low `rssi` or `paths: 1` points at placement or a missing proxy; `resends` or `start_probes` above 1 point at a marginal link (try **Write Delay**); a large `finish_s` on WOLINK/easyTag is the panel refresh, which grows with panel size and cold temperature and is not a transport problem. `via` tells you which proxy the tag actually used, which is what to move or replace.
 
 ## Fonts
 

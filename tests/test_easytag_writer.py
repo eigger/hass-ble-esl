@@ -60,12 +60,17 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
 
         client = EasyTagClient(mock_client, PRESETS["3D"], MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_frames(prepare(PRESETS["3D"], img, MAC))
+        frames = prepare(PRESETS["3D"], img, MAC)
+        result = await client.write_frames(frames)
 
         assert result.success is True
         assert result.battery_mv == 3000
         assert result.temperature_c == 22
         assert len(written_frames) >= 2  # Header + data packets
+        # Frames are unacknowledged, so the reply wait (finish_s) is the refresh.
+        assert result.timing["parts"] == len(frames) == len(written_frames)
+        assert result.timing["bytes"] == sum(map(len, frames))
+        assert {"settle_s", "transfer_s", "finish_s"} <= result.timing.keys()
 
     asyncio.run(_test())
 

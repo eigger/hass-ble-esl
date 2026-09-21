@@ -17,6 +17,7 @@ from custom_components.ble_esl.esl_ble.base import (
     DevicePreset,
     ProtocolContractError,
     WriteResult,
+    WriteTiming,
     battery_percent,
 )
 
@@ -324,3 +325,66 @@ def test_write_prepared_records_connect_and_session_timing(monkeypatch):
         assert all(v >= 0 for v in result.timing.values())
 
     asyncio.run(_test())
+
+
+def test_write_timing_stages_record_success_and_failure():
+    """A stage records its elapsed time whether it returns or raises, and
+    reported() hangs the whole dict on the exception for write_prepared()."""
+    timing = WriteTiming(settle_s=0.5)
+    with timing.stage("start_s"):
+        pass
+    with pytest.raises(ValueError) as caught, timing.reported(), timing.stage("transfer_s"):
+        raise ValueError("boom")
+    assert caught.value.timing is timing
+    assert list(timing) == ["settle_s", "start_s", "transfer_s"]
+    assert timing["start_s"] >= 0 and timing["transfer_s"] >= 0
+
+
+def test_write_prepared_passes_on_the_connected_scanner(monkeypatch):
+    """The scanner the client wrapper connected through is handed to the
+    integration on success and failure; a client without one yields None."""
+
+    class Backend(_Backend):
+        id = "t4"
+
+        async def write_session(self, client, address, preset, prepared, **kwargs):
+            await prepared
+            if client.fail:
+                raise OSError("gone")
+            return WriteResult(success=True)
+
+    async def _test(fail):
+        scanner = object()
+        client = MagicMock(is_connected=True, disconnect=AsyncMock(), fail=fail)
+        client._connected_scanner = scanner
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        result = await Backend().write_prepared(
+            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+        )
+        assert result.success is (not fail)
+        assert result.scanner is scanner
+
+    asyncio.run(_test(False))
+    asyncio.run(_test(True))
+
+    async def _no_handle():
+        client = MagicMock(
+            is_connected=True, disconnect=AsyncMock(), spec=["is_connected", "disconnect"]
+        )
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        backend = Backend()
+
+        async def ok(client, address, preset, prepared, **kwargs):
+            return WriteResult(success=True)
+
+        backend.write_session = ok
+        result = await backend.write_prepared(
+            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+        )
+        assert result.scanner is None
+
+    asyncio.run(_no_handle())
