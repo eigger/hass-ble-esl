@@ -406,3 +406,93 @@ def test_write_prepared_passes_on_the_connected_scanner(monkeypatch):
         assert result.scanner is None
 
     asyncio.run(_no_handle())
+
+
+def test_attempt_that_hangs_is_bounded_and_keeps_its_stages(monkeypatch):
+    """A session that never returns (a proxy dying mid-write) ends as a failed
+    attempt after ATTEMPT_TIMEOUT_S with the stages it did record, so the BLE
+    lock is released and the retry loop and failure sensors see it."""
+    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
+
+    class Backend(_Backend):
+        id = "t5"
+
+        async def write_session(self, client, address, preset, prepared, **kwargs):
+            await prepared
+            timing = WriteTiming(settle_s=0.0)
+            with timing.reported(), timing.stage("start_s"):
+                pass
+            with timing.reported(), timing.stage("transfer_s"):
+                await asyncio.Event().wait()  # hangs forever
+            return WriteResult(success=True, timing=timing)
+
+    async def _test():
+        client = MagicMock(is_connected=True, disconnect=AsyncMock())
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        result = await Backend().write_prepared(
+            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+        )
+        assert result.success is False
+        assert result.error == "Attempt timed out after 0.05s"
+        assert {"connect_s", "start_s", "transfer_s", "session_s"} <= result.timing.keys()
+        assert result.failed_stage == "transfer"
+        client.disconnect.assert_awaited_once()  # the link is not left open
+
+    asyncio.run(_test())
+
+
+def test_attempt_timeout_covers_connecting(monkeypatch):
+    """Connecting is inside the bound too: a connect that never returns fails."""
+    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
+
+    class Backend(_Backend):
+        id = "t6"
+
+    async def _test():
+        async def hang(*args, **kwargs):
+            await asyncio.Event().wait()
+
+        monkeypatch.setattr(base, "establish_connection", hang)
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        result = await Backend().write_prepared(
+            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+        )
+        assert result.success is False
+        assert result.error == "Attempt timed out after 0.05s"
+        assert result.failed_stage == "connect"
+
+    asyncio.run(_test())
+
+
+def test_hung_disconnect_does_not_hold_the_attempt(monkeypatch):
+    """After a timed-out attempt the disconnect can hang on the same dead
+    proxy; it is bounded separately so the attempt still returns."""
+    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
+    monkeypatch.setattr(base, "DISCONNECT_TIMEOUT_S", 0.05)
+
+    class Backend(_Backend):
+        id = "t7"
+
+        async def write_session(self, client, address, preset, prepared, **kwargs):
+            await asyncio.Event().wait()
+
+    async def _test():
+        async def hang(*args, **kwargs):
+            await asyncio.Event().wait()
+
+        client = MagicMock(is_connected=True, disconnect=AsyncMock(side_effect=hang))
+        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
+        prepared = asyncio.get_running_loop().create_future()
+        prepared.set_result(b"x")
+        result = await asyncio.wait_for(
+            Backend().write_prepared(MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared),
+            timeout=1,
+        )
+        assert result.success is False
+        assert result.error == "Attempt timed out after 0.05s"
+        client.disconnect.assert_awaited_once()
+
+    asyncio.run(_test())

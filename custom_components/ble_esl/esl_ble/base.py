@@ -23,6 +23,21 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+ATTEMPT_TIMEOUT_S = 600.0
+"""Upper bound on one write attempt, connecting included.
+
+Every protocol step has its own timeout, but a GATT write has none: a
+proxy that dies mid-transfer can leave the attempt hanging, and since it
+holds the BLE lock, every other tag's writes hang with it. The bound is
+generous so it never cuts a legitimate write, even the slowest: connecting
+retries for up to ~1.5 min, a 13.3" WOLINK image takes ~1 min to transfer
+(more on a paced retry) and up to 2 min to refresh — about 5 min in all.
+"""
+
+DISCONNECT_TIMEOUT_S = 10.0
+"""Bound on the disconnect after a session, which runs outside the attempt
+bound (see ble_session)."""
+
 RETRY_BACKOFF_S = 0.05
 """Extra pause between packets, per earlier attempt that failed mid-transfer.
 
@@ -132,7 +147,9 @@ class WriteTiming(dict[str, float | int | bool | str]):
     def reported(self) -> Iterator[None]:
         try:
             yield
-        except Exception as exc:
+        except BaseException as exc:
+            # BaseException so a cancellation (the attempt timeout) carries
+            # the stages too; the exception is re-raised untouched.
             exc.timing = self  # type: ignore[attr-defined]
             raise
 
@@ -245,9 +262,13 @@ async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
         yield client
     finally:
+        # The disconnect runs after the attempt bound has fired, so it gets
+        # its own: a proxy that hung the write can hang the disconnect too,
+        # and the link is dropped anyway when the proxy comes back.
         with contextlib.suppress(Exception):
             if client and client.is_connected:
-                await client.disconnect()
+                async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                    await client.disconnect()
 
 
 def _connected_scanner(client: BleakClient) -> Any:
@@ -571,8 +592,9 @@ class BleBackend(ABC):
         started = time.monotonic()
         connected: float | None = None
         scanner: Any = None
+        attempt_timeout = asyncio.timeout(ATTEMPT_TIMEOUT_S)
         try:
-            async with ble_session(ble_device) as client:
+            async with attempt_timeout, ble_session(ble_device) as client:
                 connected = time.monotonic()
                 scanner = _connected_scanner(client)
                 result = await self.write_session(
@@ -597,18 +619,18 @@ class BleBackend(ABC):
             # protocol measured before raising (it may attach `timing` to
             # the exception) plus the connect/session split.
             now = time.monotonic()
+            # asyncio.timeout raises a bare TimeoutError from the CancelledError
+            # it threw into the session; the stages hang on that cause.
             timing: dict[str, float | int | bool | str] = {
                 "connect_s": round((connected or now) - started, 3),
-                **getattr(exc, "timing", {}),
+                **(getattr(exc, "timing", None) or getattr(exc.__cause__, "timing", {})),
             }
             if connected is not None:
                 timing["session_s"] = round(now - connected, 3)
-            return WriteResult(
-                success=False,
-                error=str(exc) or type(exc).__name__,
-                timing=timing,
-                scanner=scanner,
-            )
+            error = str(exc) or type(exc).__name__
+            if attempt_timeout.expired():
+                error = f"Attempt timed out after {ATTEMPT_TIMEOUT_S:g}s"
+            return WriteResult(success=False, error=error, timing=timing, scanner=scanner)
 
     async def write_image(
         self,
