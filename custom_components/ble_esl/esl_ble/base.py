@@ -34,6 +34,10 @@ retries for up to ~1.5 min, a 13.3" WOLINK image takes ~1 min to transfer
 (more on a paced retry) and up to 2 min to refresh — about 5 min in all.
 """
 
+DISCONNECT_TIMEOUT_S = 10.0
+"""Bound on the disconnect after a session, which runs outside the attempt
+bound (see ble_session)."""
+
 RETRY_BACKOFF_S = 0.05
 """Extra pause between packets, per earlier attempt that failed mid-transfer.
 
@@ -258,9 +262,13 @@ async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
         client = await establish_connection(BleakClient, ble_device, ble_device.address)
         yield client
     finally:
+        # The disconnect runs after the attempt bound has fired, so it gets
+        # its own: a proxy that hung the write can hang the disconnect too,
+        # and the link is dropped anyway when the proxy comes back.
         with contextlib.suppress(Exception):
             if client and client.is_connected:
-                await client.disconnect()
+                async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
+                    await client.disconnect()
 
 
 def _connected_scanner(client: BleakClient) -> Any:
