@@ -74,6 +74,8 @@ async def test_diagnostics_content_and_redaction(
         "attempt": 2,
         "success": False,
         "error": "boom",
+        "failed_stage": "connect",
+        "likely_cause": "The BLE link could not be established.",
         "connect_s": 0.5,
     }
     assert result["sensors"]["failure_count"] == 1

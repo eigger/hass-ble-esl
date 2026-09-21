@@ -300,6 +300,63 @@ def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str
     return via
 
 
+def _likely_cause(stage: str, error: str | None, via: dict[str, str | int]) -> str:
+    """One sentence on what a failed attempt most likely means.
+
+    Read from where it died (`stage`), the error text and the radio
+    situation, so the failure sensors can be understood without the code
+    or the logs. Best effort — `error` keeps the exact detail.
+    """
+    err = (error or "").lower()
+    rssi, paths = via.get("rssi"), via.get("paths")
+    signal = []
+    if isinstance(rssi, int) and rssi <= -85:
+        signal.append(f"the signal is weak ({rssi} dBm via {via.get('via')})")
+    if paths == 1:
+        signal.append("only one radio reaches the tag")
+    placement = ""
+    if signal:
+        sentence = " and ".join(signal)
+        placement = f" {sentence[0].upper()}{sentence[1:]} — move the tag or add a proxy."
+    if stage == "unreachable":
+        return "No radio currently sees the tag: out of range, asleep, or its battery is flat."
+    if stage == "connect":
+        if "slot" in err:
+            return "The proxy has no free connection slot; add a proxy or reduce other BLE connections."
+        return f"The BLE link could not be established.{placement}"
+    if stage == "session":
+        return (
+            "Connected, but the tag dropped or refused the session before the protocol "
+            "started (service discovery / notifications); usually transient — if it "
+            "repeats, the protocol or model may not match this tag."
+        )
+    if stage == "handshake":
+        if "probes" in err:
+            return (
+                "The tag did not answer START after connecting (not ready yet); usually transient."
+            )
+        if "device error 5" in err or "auth" in err:
+            return "The tag rejected authentication: not a WOLINK tag, or different firmware."
+        return "The tag answered the handshake unexpectedly; the protocol or model may not match."
+    if stage == "transfer":
+        if "stalled" in err:
+            return f"The tag kept asking for the same part: a marginal link.{placement}"
+        if "no response" in err:
+            return f"The tag stopped answering mid-transfer: link dropped or tag reset.{placement}"
+        if "unexpected" in err:
+            return "Unexpected reply mid-transfer; the protocol or model may not match this tag."
+        return f"The transfer failed: {error or 'unknown error'}.{placement}"
+    # finish
+    if "no response" in err:
+        return (
+            "The tag took the image but did not report the refresh done in time: "
+            "a slow panel (cold, large) or a tag-side error."
+        )
+    if "device error" in err:
+        return f"The tag reported an error after the transfer: {error}."
+    return f"The completion wait failed: {error or 'unknown error'}."
+
+
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Write with retries, tracking duration/connectivity and the result sensors.
 
@@ -342,9 +399,17 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.
+            via = _transport(hass, address, result.scanner)
+            failure: dict[str, str] = {}
+            if not result.success and (stage := result.failed_stage):
+                failure = {
+                    "failed_stage": stage,
+                    "likely_cause": _likely_cause(stage, result.error, via),
+                }
             timing = {
+                **failure,
                 **({"pacing_s": pacing_s} if pacing_s else {}),
-                **_transport(hass, address, result.scanner),
+                **via,
                 **result.timing,
             }
             data.last_write_timing = {

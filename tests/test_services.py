@@ -124,6 +124,40 @@ async def test_write_reports_the_radio_it_went_through(
     assert attrs["paths"] == 2
 
 
+async def test_likely_cause_reads_stage_error_and_radio(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """The failure sensors explain a failure in one sentence, using the
+    radio situation when it is the likely reason."""
+    proxy = register_proxy(hass, "esp-kitchen", "AA:BB:CC:00:00:09")
+    proxy.inject_advertisement(wolink_service_info(rssi=-91))
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 1}, advertise=False)
+    tag_writer.write_result = WriteResult(
+        success=False,
+        error="Transfer stalled: part 3/40 requested 6 times",
+        timing={"connect_s": 0.2, "start_s": 0.3, "transfer_s": 4.0, "resends": 5},
+    )
+
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "write", device_id_of(hass))
+
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert failed["failed_stage"] == "transfer"
+    assert failed["likely_cause"] == (
+        "The tag kept asking for the same part: a marginal link. "
+        "The signal is weak (-91 dBm via esp-kitchen (AA:BB:CC:00:00:09)) "
+        "and only one radio reaches the tag — move the tag or add a proxy."
+    )
+
+    # No handle at all: nothing was tried, and the sentence says so.
+    tag_writer.available = False
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "write", device_id_of(hass))
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert failed["failed_stage"] == "unreachable"
+    assert failed["likely_cause"].startswith("No radio currently sees the tag")
+
+
 async def test_write_reports_a_local_adapter(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
@@ -191,7 +225,7 @@ async def test_failed_write_after_retries(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
     await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
-    tag_writer.write_result = WriteResult(success=False, error="boom")
+    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
 
     with pytest.raises(HomeAssistantError, match="after 3 attempts: boom"):
         await call(hass, "write", device_id_of(hass))
@@ -201,9 +235,12 @@ async def test_failed_write_after_retries(
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert (attrs["attempt"], attrs["success"], attrs["error"]) == (3, False, "boom")
+    assert attrs["failed_stage"] == "connect"  # the stub reports no session
+    assert attrs["likely_cause"].startswith("The BLE link could not be established.")
     # The failed write's breakdown is also on Last Failure Time...
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
     assert (failed["attempt"], failed["success"], failed["error"]) == (3, False, "boom")
+    assert failed["failed_stage"] == "connect"
 
     # ...and stays there after a later write succeeds, while Write Duration moves on.
     tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1})
@@ -621,7 +658,11 @@ async def test_response_reports_failure_instead_of_raising(
     assert outcome["status"] == "failed"
     assert outcome["error"] == "boom"
     assert outcome["attempts"] == 2
-    assert outcome["timing"] == {"connect_s": 0.5}
+    assert outcome["timing"] == {
+        "failed_stage": "connect",
+        "likely_cause": "The BLE link could not be established.",
+        "connect_s": 0.5,
+    }
     assert sensor(hass, "failure_count") == "1"  # sensors still updated
 
 
