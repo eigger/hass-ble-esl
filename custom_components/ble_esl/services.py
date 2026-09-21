@@ -254,6 +254,7 @@ async def build_write_job(
     image.save(buffer, "PNG")
     image_png = buffer.getvalue()
     data.preview_coordinator.async_set_updated_data(image_png)
+    data.image_store.set_preview(image_png, now())
 
     return WriteJob(
         data=data,
@@ -442,6 +443,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 # failed or locked-out write must not suppress a retry of
                 # the same payload.
                 data.last_image_data = job.image_png
+                data.image_store.set_written(job.image_png, now())
                 return WriteOutcome(
                     "written",
                     attempts=attempt,

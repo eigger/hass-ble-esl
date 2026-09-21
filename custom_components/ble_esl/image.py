@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .entity import BleEslCoordinatorEntity
+from .storage import StoredImage
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +47,13 @@ class _BleEslImageBase(BleEslCoordinatorEntity[bytes], ImageEntity):
         super().__init__(hass, entry, coordinator)
         ImageEntity.__init__(self, hass)
         self._cached_image = Image(content_type="image/png", content=coordinator.data)
+        if (stored := self._stored()) is not None:
+            # Restored from the previous run: keep when it was really produced.
+            self._attr_image_last_updated = stored.at
+
+    def _stored(self) -> StoredImage | None:
+        """The persisted image this entity shows, if any (set by subclasses)."""
+        return None
 
     def image(self) -> bytes | None:
         """Return bytes of image."""
@@ -66,6 +74,9 @@ class BleEslImageEntity(_BleEslImageBase):
     _key = "last_updated_content"
     _attr_translation_key = "last_updated_content"
 
+    def _stored(self) -> StoredImage | None:
+        return self._data.image_store.images.written
+
 
 class BleEslPreviewImageEntity(_BleEslImageBase):
     """Representation of preview image content."""
@@ -73,3 +84,6 @@ class BleEslPreviewImageEntity(_BleEslImageBase):
     _key = "preview_content_image"
     _attr_translation_key = "preview_content"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def _stored(self) -> StoredImage | None:
+        return self._data.image_store.images.preview

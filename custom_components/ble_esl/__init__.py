@@ -37,6 +37,7 @@ from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
 from .device import format_model_name, resolve_preset
 from .services import async_setup_services, cancel_pending_write
+from .storage import ImageStore
 from .types import BleEslConfigEntry
 
 PLATFORMS: list[Platform] = [
@@ -136,6 +137,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         hw_version=hw_version,
     )
 
+    # The last written / rendered images from the previous run, so the tag
+    # is not rewritten with an unchanged image after a restart and the
+    # image entities are not blank until the next write.
+    image_store = ImageStore(hass, entry.entry_id)
+    images = await image_store.async_load()
+
     bt_coordinator = BleEslPassiveBluetoothProcessorCoordinator(
         hass,
         _LOGGER,
@@ -165,14 +172,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         sw_version=sw_version,
         hw_version=hw_version,
         bt_coordinator=bt_coordinator,
-        image_coordinator=coordinator("image", None),
-        preview_coordinator=coordinator("preview", None),
+        image_coordinator=coordinator("image", images.written.png if images.written else None),
+        preview_coordinator=coordinator("preview", images.preview.png if images.preview else None),
         connectivity_coordinator=coordinator("connectivity", False),
         duration_coordinator=coordinator("duration", 0.0),
         failure_coordinator=coordinator("failures", 0),
         last_failure_coordinator=coordinator("last_failure", None),
         battery_coordinator=coordinator("battery", None),
         temperature_coordinator=coordinator("temperature", None),
+        image_store=image_store,
+        last_image_data=images.written.png if images.written else None,
         # Seeded from the persisted switch state so a write arriving before
         # the switch entity is added is already gated.
         write_lock=bool(entry.data.get(WRITE_LOCK, False)),
@@ -181,6 +190,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(bt_coordinator.async_start())
     return True
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> None:
+    """Delete the entry's stored images along with the entry."""
+    await ImageStore(hass, entry.entry_id).async_remove()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:

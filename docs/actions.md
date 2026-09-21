@@ -245,8 +245,8 @@ Every tag is one device with these entities:
 | Display In Sync | binary sensor | The last rendered image is the one the tag received; off after a `dry_run` or a failed write |
 | Write Duration | sensor | Seconds of the last write; attributes describe the attempt |
 | Failure Count / Last Failure Time | sensor | Failed writes so far, and when the last one happened — its attributes hold that write's [breakdown](#write-breakdown) |
-| Last Updated Content | image | Last image sent |
-| Preview Content | image | `dry_run` renders |
+| Last Updated Content | image | Last image the tag received; kept across restarts (`.storage`), as is what **Prevent Duplicate Send** compares against |
+| Preview Content | image | Last image rendered, sent or not (`dry_run` too); kept across restarts |
 | Alias | text | Free-form label for the tag |
 | Write Lock | switch | On: nothing is sent to the tag; both actions only update the preview |
 
