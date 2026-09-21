@@ -276,3 +276,10 @@ class BleEslLastFailureTimeSensorEntity(BleEslCoordinatorEntity[datetime | None]
     @property
     def native_value(self) -> datetime | None:
         return self.coordinator.data
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """The breakdown of the write that failed at this time (same keys as
+        Write Duration's), kept until the next failure so a successful write
+        in between does not erase it."""
+        return self._data.last_failure_timing

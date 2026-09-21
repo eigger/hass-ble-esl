@@ -244,7 +244,7 @@ Every tag is one device with these entities:
 | Connectivity | binary sensor | Tag seen recently |
 | Display In Sync | binary sensor | Last write reached the tag |
 | Write Duration | sensor | Seconds of the last write; attributes describe the attempt |
-| Failure Count / Last Failure Time | sensor | Consecutive failed writes |
+| Failure Count / Last Failure Time | sensor | Failed writes so far, and when the last one happened — its attributes hold that write's [breakdown](#write-breakdown) |
 | Last Updated Content | image | Last image sent |
 | Preview Content | image | `dry_run` renders |
 | Alias | text | Free-form label for the tag |
@@ -255,13 +255,15 @@ Every tag is one device with these entities:
 
 ## Write breakdown
 
-Every write attempt is recorded on the **Write Duration** sensor's attributes and returned in the action's `timing` (with `response_variable`), so a slow or flaky tag can be diagnosed without debug logging.
+Every write attempt is recorded on the **Write Duration** sensor's attributes and returned in the action's `timing` (with `response_variable`), so a slow or flaky tag can be diagnosed without debug logging. When a write fails (every retry exhausted), the same breakdown of its final attempt is also kept on the **Last Failure Time** sensor's attributes until the next failure — so an intermittent failure can still be read after later writes have succeeded.
 
 | Attribute | Meaning |
 |---|---|
 | `attempt` / `success` / `error` | Which retry this was and how it ended |
+| `likely_cause` | On a failure, one sentence on what it most likely means, from the stage, the error and the radio situation (e.g. *"The tag kept asking for the same part: a marginal link. The signal is weak (-91 dBm via esp-kitchen (…)) and no other radio reaches the tag — move the tag or add a proxy."*). Best effort; `error` keeps the exact detail |
+| `failed_stage` | On a failure, where it died: `unreachable` (no radio saw the tag), `connect` (link never came up), `session` (connected, failed before the protocol's first stage), `handshake` (START / auth / size command), `transfer` (sending the image), `finish` (completion wait — the panel refresh on WOLINK/easyTag, the end-command reply on XTE). `error` has the detail |
 | `pacing_s` | Present when this attempt was sent slower than usual: 0.05 s per earlier attempt that failed mid-transfer |
-| `via` / `via_type` / `via_source` | The radio the write went through: a Bluetooth **proxy** (its ESPHome name and MAC) or a local **adapter** (`hci0` and its MAC) |
+| `via` / `via_type` | The radio the write went through, as `name (MAC)`: a Bluetooth **proxy** (`esp-livingroom (AA:BB:…)`) or a local **adapter** (`hci0 (00:1A:…)`) |
 | `rssi` | Signal strength of the tag's last advertisement as seen by that radio |
 | `paths` | How many connectable radios currently see the tag (1 = no failover possible) |
 | `connect_s` | Establishing the BLE link — includes any connection retries |
@@ -274,7 +276,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 
 Protocol-specific extras: PickSmart adds `start_probes` (how many START commands were needed — should mostly be 1), `sends` / `resends` (chunks the tag asked for again), `round_trip_ms` (per-chunk round trip; the best measure of path quality) and `completed_by_tag`; XTE adds `chunk_size` (the ATT write size the backend allowed — 20 on some proxies, 244 on others, which dominates `transfer_s`).
 
-Reading it: a large `connect_s` with a low `rssi` or `paths: 1` points at placement or a missing proxy; `resends` or `start_probes` above 1 point at a marginal link (a retry after a failure *during* the transfer is automatically paced slower — `pacing_s` — while a retry after a connect or handshake failure runs at full speed; if the counters stay high, move the tag or proxy); a large `finish_s` on WOLINK/easyTag is the panel refresh, which grows with panel size and cold temperature and is not a transport problem. `via` tells you which proxy the tag actually used, which is what to move or replace.
+Reading it: start with `failed_stage`. `unreachable` / `connect` with a low `rssi` or `paths: 1` points at placement or a missing proxy; `handshake` is the tag not answering after the link is up (PickSmart `start_probes: 3`, a WOLINK auth error); `finish` is the panel, not the link. Within a `transfer` failure, `resends` or `start_probes` above 1 point at a marginal link (a retry after a failure *during* the transfer is automatically paced slower — `pacing_s` — while a retry after a connect or handshake failure runs at full speed; if the counters stay high, move the tag or proxy); a large `finish_s` on WOLINK/easyTag is the panel refresh, which grows with panel size and cold temperature and is not a transport problem. `via` tells you which proxy the tag actually used, which is what to move or replace.
 
 ## Fonts
 

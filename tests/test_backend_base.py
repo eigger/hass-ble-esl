@@ -328,17 +328,21 @@ def test_write_prepared_records_connect_and_session_timing(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("success", "timing", "expected"),
+    ("success", "timing", "stage"),
     [
-        (False, {"connect_s": 0.5}, False),  # never connected
-        (False, {"connect_s": 0.1, "start_s": 0.3}, False),  # handshake
-        (False, {"connect_s": 0.1, "start_s": 0.3, "transfer_s": 2.0}, True),  # mid-transfer
-        (False, {"connect_s": 0.1, "transfer_s": 2.0, "finish_s": 30.0}, False),  # panel
-        (True, {"connect_s": 0.1, "transfer_s": 2.0}, False),
+        (False, {}, "unreachable"),  # no handle: nothing was tried
+        (False, {"connect_s": 0.5}, "connect"),  # never connected
+        (False, {"connect_s": 0.1, "session_s": 0.2}, "session"),  # before the first stage
+        (False, {"connect_s": 0.1, "start_s": 0.3, "session_s": 0.4}, "handshake"),
+        (False, {"connect_s": 0.1, "start_s": 0.3, "transfer_s": 2.0}, "transfer"),
+        (False, {"connect_s": 0.1, "transfer_s": 2.0, "finish_s": 30.0}, "finish"),  # panel
+        (True, {"connect_s": 0.1, "transfer_s": 2.0}, None),
     ],
 )
-def test_failed_in_transfer_reads_the_stages(success, timing, expected):
-    assert WriteResult(success=success, timing=timing).failed_in_transfer is expected
+def test_failed_stage_reads_the_stages(success, timing, stage):
+    result = WriteResult(success=success, timing=timing)
+    assert result.failed_stage == stage
+    assert result.failed_in_transfer is (stage == "transfer")
 
 
 def test_write_timing_stages_record_success_and_failure():

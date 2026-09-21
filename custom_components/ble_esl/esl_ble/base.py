@@ -155,19 +155,50 @@ class WriteResult:
     integration. None when unknown."""
 
     @property
+    def failed_stage(self) -> str | None:
+        """Where a failed attempt died, read from which stages it recorded.
+
+        Stages record their time even when they raise, so the furthest one
+        present is where the failure happened:
+
+            unreachable  no radio saw the tag; nothing was tried
+            connect      the BLE link never came up
+            session      connected, but failed before the protocol's first
+                         stage (service discovery, notification subscribe)
+            handshake    START / authentication / size command
+            transfer     sending the image data
+            finish       the completion wait: the panel refresh on WOLINK
+                         and easyTag, the end-command reply on XTE
+
+        None on success.
+        """
+        if self.success:
+            return None
+        for key, stage in (
+            ("finish_s", "finish"),
+            ("transfer_s", "transfer"),
+            ("start_s", "handshake"),
+        ):
+            if key in self.timing:
+                return stage
+        if "session_s" in self.timing:
+            return "session"
+        if "connect_s" in self.timing:
+            return "connect"
+        return "unreachable"
+
+    @property
     def failed_in_transfer(self) -> bool:
         """Whether this attempt failed while sending the image data.
 
-        That is the one failure more packet pacing can help with: the
-        transfer stage was entered (`transfer_s` is recorded even when it
-        raises) but the completion wait was not. PickSmart has no separate
-        completion wait (the last part's reply is the completion), so any
-        failure after its handshake counts. On WOLINK and easyTag the wait
-        is the panel refresh, which pacing cannot help; XTE's is its
-        end-command reply, a link failure this deliberately does not pace
-        either — a retry is never slower than it was before.
+        That is the one failure more packet pacing can help with. PickSmart
+        has no separate completion wait (the last part's reply is the
+        completion), so any failure after its handshake counts. On WOLINK
+        and easyTag the wait is the panel refresh, which pacing cannot help;
+        XTE's is its end-command reply, a link failure this deliberately
+        does not pace either — a retry is never slower than it was before.
         """
-        return not self.success and "transfer_s" in self.timing and "finish_s" not in self.timing
+        return self.failed_stage == "transfer"
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:

@@ -292,13 +292,80 @@ def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str
     via: dict[str, str | int] = {
         "via": scanner.name,
         "via_type": "proxy" if isinstance(scanner, BaseHaRemoteScanner) else "adapter",
-        "via_source": scanner.source,
     }
     if seen := scanner.get_discovered_device_advertisement_data(address):
         via["rssi"] = seen[1].rssi
     # How many connectable radios currently see the tag: 1 means no failover.
     via["paths"] = len(async_scanner_devices_by_address(hass, address, connectable=True))
     return via
+
+
+def _likely_cause(stage: str, error: str | None, via: dict[str, str | int], backend_id: str) -> str:
+    """One sentence on what a failed attempt most likely means.
+
+    Read from where it died (`stage`), the error text, the radio situation
+    and the protocol, so the failure sensors can be understood without the
+    code or the logs. Best effort — `error` keeps the exact detail.
+    """
+    err = (error or "").lower()
+    no_reply = "no response" in err
+    # Placement advice only when the signal is actually weak; a single
+    # radio is the normal case and on its own says nothing about the cause.
+    placement = ""
+    rssi = via.get("rssi")
+    if isinstance(rssi, int) and rssi <= -85:
+        placement = f" The signal is weak ({rssi} dBm via {via.get('via')})"
+        if via.get("paths") == 1:
+            placement += " and no other radio reaches the tag"
+        placement += " — move the tag or add a proxy."
+    if stage == "unreachable":
+        return (
+            "No radio currently sees the tag: out of range, asleep, its battery flat, "
+            "or the adapter / proxy is down."
+        )
+    if stage == "connect":
+        if "slot" in err:
+            return "The proxy has no free connection slot; add a proxy or reduce other BLE connections."
+        return f"The BLE link could not be established.{placement}"
+    if stage == "session":
+        return (
+            "Connected, but the tag dropped or refused the session before the protocol "
+            "started (service discovery / notifications); usually transient — if it "
+            "repeats, the protocol or model may not match this tag."
+        )
+    if stage == "handshake":
+        if "probes" in err:
+            return (
+                "The tag did not answer START after connecting (not ready yet); usually transient."
+            )
+        if no_reply:
+            return (
+                f"The tag did not answer the handshake: not ready, or the link dropped.{placement}"
+            )
+        if "device error 5" in err:
+            return "The tag rejected authentication: not a WOLINK tag, or different firmware."
+        return "The tag answered the handshake unexpectedly; the protocol or model may not match."
+    if stage == "transfer":
+        if "stalled" in err:
+            return f"The tag kept asking for the same part: a marginal link.{placement}"
+        if no_reply:
+            return f"The tag stopped answering mid-transfer: link dropped or tag reset.{placement}"
+        if "unexpected" in err:
+            return "Unexpected reply mid-transfer; the protocol or model may not match this tag."
+        return f"The transfer failed: {error or 'unknown error'}.{placement}"
+    # finish: what the tag was expected to say depends on the protocol.
+    if "device error" in err:
+        return f"The tag reported an error after the transfer: {error}."
+    if backend_id == "xte":
+        if no_reply:
+            return f"The tag took the image but did not acknowledge the end command.{placement}"
+        return f"The end of the transfer failed: {error or 'unknown error'}."
+    if no_reply:
+        return (
+            "The tag took the image but did not report the refresh done in time: "
+            "a slow panel (cold, large) or a tag-side error."
+        )
+    return f"The completion wait failed: {error or 'unknown error'}."
 
 
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
@@ -343,9 +410,17 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 )
             # Every attempt is recorded (with whatever the backend timed) so the
             # Write Duration sensor's attributes always describe the last one.
+            via = _transport(hass, address, result.scanner)
+            failure: dict[str, str] = {}
+            if not result.success and (stage := result.failed_stage):
+                failure = {
+                    "failed_stage": stage,
+                    "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
+                }
             timing = {
+                **failure,
                 **({"pacing_s": pacing_s} if pacing_s else {}),
-                **_transport(hass, address, result.scanner),
+                **via,
                 **result.timing,
             }
             data.last_write_timing = {
@@ -389,6 +464,10 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             data.failure_coordinator.async_set_updated_data(
                 (data.failure_coordinator.data or 0) + 1
             )
+            # Kept until the next failure; the timestamp update publishes it.
+            # A copy, so nothing that later touches last_write_timing in
+            # place can change the failure record.
+            data.last_failure_timing = dict(data.last_write_timing or {})
             data.last_failure_coordinator.async_set_updated_data(now())
             raise WriteFailed(
                 address,
