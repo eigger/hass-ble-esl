@@ -260,7 +260,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 | Attribute | Meaning |
 |---|---|
 | `attempt` / `success` / `error` | Which retry this was and how it ended |
-| `likely_cause` | On a failure, one sentence on what it most likely means, from the stage, the error and the radio situation (e.g. *"The tag kept asking for the same part: a marginal link. The signal is weak (-91 dBm via esp-kitchen (…)) — move the tag or add a proxy."*). Best effort; `error` keeps the exact detail |
+| `likely_cause` | On a failure, one sentence on what it most likely means, from the stage, the error and the radio situation (e.g. *"The tag kept asking for the same part: a marginal link. The signal is weak (-91 dBm via esp-kitchen (…)) and no other radio reaches the tag — move the tag or add a proxy."*). Best effort; `error` keeps the exact detail |
 | `failed_stage` | On a failure, where it died: `unreachable` (no radio saw the tag), `connect` (link never came up), `session` (connected, failed before the protocol's first stage), `handshake` (START / auth / size command), `transfer` (sending the image), `finish` (completion wait — the panel refresh on WOLINK/easyTag, the end-command reply on XTE). `error` has the detail |
 | `pacing_s` | Present when this attempt was sent slower than usual: 0.05 s per earlier attempt that failed mid-transfer |
 | `via` / `via_type` | The radio the write went through, as `name (MAC)`: a Bluetooth **proxy** (`esp-livingroom (AA:BB:…)`) or a local **adapter** (`hci0 (00:1A:…)`) |

@@ -25,6 +25,7 @@ from custom_components.ble_esl.const import (
     DOMAIN,
 )
 from custom_components.ble_esl.esl_ble.base import WriteResult
+from custom_components.ble_esl.services import _likely_cause
 
 PAYLOAD = [{"type": "text", "value": "hi", "x": 0, "y": 0}]
 
@@ -146,7 +147,7 @@ async def test_likely_cause_reads_stage_error_and_radio(
     assert failed["likely_cause"] == (
         "The tag kept asking for the same part: a marginal link. "
         "The signal is weak (-91 dBm via esp-kitchen (AA:BB:CC:00:00:09)) "
-        "and only one radio reaches the tag — move the tag or add a proxy."
+        "and no other radio reaches the tag — move the tag or add a proxy."
     )
 
     # No handle at all: nothing was tried, and the sentence says so.
@@ -156,6 +157,61 @@ async def test_likely_cause_reads_stage_error_and_radio(
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
     assert failed["failed_stage"] == "unreachable"
     assert failed["likely_cause"].startswith("No radio currently sees the tag")
+
+
+@pytest.mark.parametrize(
+    ("stage", "error", "via", "backend", "expected"),
+    [
+        # A single radio with a fine signal is the normal case: no placement advice.
+        (
+            "connect",
+            "timeout",
+            {"rssi": -60, "paths": 1},
+            "wolink",
+            "The BLE link could not be established.",
+        ),
+        # A handshake that goes unanswered is not an unexpected answer.
+        (
+            "handshake",
+            "No response from tag within 5s after command 0x01",
+            {},
+            "xte",
+            "The tag did not answer the handshake: not ready, or the link dropped.",
+        ),
+        (
+            "handshake",
+            "device error 5: unlock (auth) failed",
+            {},
+            "wolink",
+            "The tag rejected authentication: not a WOLINK tag, or different firmware.",
+        ),
+        # The completion wait is the panel on WOLINK/easyTag, the end-command ack on XTE.
+        (
+            "finish",
+            "No response from tag within 30s after refresh",
+            {},
+            "wolink",
+            "The tag took the image but did not report the refresh done in time: "
+            "a slow panel (cold, large) or a tag-side error.",
+        ),
+        (
+            "finish",
+            "No response from tag within 5s after command 0x04",
+            {},
+            "xte",
+            "The tag took the image but did not acknowledge the end command.",
+        ),
+        (
+            "finish",
+            "device error 2: epd write error",
+            {},
+            "wolink",
+            "The tag reported an error after the transfer: device error 2: epd write error.",
+        ),
+    ],
+)
+def test_likely_cause_wording(stage, error, via, backend, expected) -> None:
+    assert _likely_cause(stage, error, via, backend) == expected
 
 
 async def test_write_reports_a_local_adapter(

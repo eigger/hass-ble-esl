@@ -300,26 +300,29 @@ def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str
     return via
 
 
-def _likely_cause(stage: str, error: str | None, via: dict[str, str | int]) -> str:
+def _likely_cause(stage: str, error: str | None, via: dict[str, str | int], backend_id: str) -> str:
     """One sentence on what a failed attempt most likely means.
 
-    Read from where it died (`stage`), the error text and the radio
-    situation, so the failure sensors can be understood without the code
-    or the logs. Best effort — `error` keeps the exact detail.
+    Read from where it died (`stage`), the error text, the radio situation
+    and the protocol, so the failure sensors can be understood without the
+    code or the logs. Best effort — `error` keeps the exact detail.
     """
     err = (error or "").lower()
-    rssi, paths = via.get("rssi"), via.get("paths")
-    signal = []
-    if isinstance(rssi, int) and rssi <= -85:
-        signal.append(f"the signal is weak ({rssi} dBm via {via.get('via')})")
-    if paths == 1:
-        signal.append("only one radio reaches the tag")
+    no_reply = "no response" in err
+    # Placement advice only when the signal is actually weak; a single
+    # radio is the normal case and on its own says nothing about the cause.
     placement = ""
-    if signal:
-        sentence = " and ".join(signal)
-        placement = f" {sentence[0].upper()}{sentence[1:]} — move the tag or add a proxy."
+    rssi = via.get("rssi")
+    if isinstance(rssi, int) and rssi <= -85:
+        placement = f" The signal is weak ({rssi} dBm via {via.get('via')})"
+        if via.get("paths") == 1:
+            placement += " and no other radio reaches the tag"
+        placement += " — move the tag or add a proxy."
     if stage == "unreachable":
-        return "No radio currently sees the tag: out of range, asleep, or its battery is flat."
+        return (
+            "No radio currently sees the tag: out of range, asleep, its battery flat, "
+            "or the adapter / proxy is down."
+        )
     if stage == "connect":
         if "slot" in err:
             return "The proxy has no free connection slot; add a proxy or reduce other BLE connections."
@@ -335,25 +338,33 @@ def _likely_cause(stage: str, error: str | None, via: dict[str, str | int]) -> s
             return (
                 "The tag did not answer START after connecting (not ready yet); usually transient."
             )
-        if "device error 5" in err or "auth" in err:
+        if no_reply:
+            return (
+                f"The tag did not answer the handshake: not ready, or the link dropped.{placement}"
+            )
+        if "device error 5" in err:
             return "The tag rejected authentication: not a WOLINK tag, or different firmware."
         return "The tag answered the handshake unexpectedly; the protocol or model may not match."
     if stage == "transfer":
         if "stalled" in err:
             return f"The tag kept asking for the same part: a marginal link.{placement}"
-        if "no response" in err:
+        if no_reply:
             return f"The tag stopped answering mid-transfer: link dropped or tag reset.{placement}"
         if "unexpected" in err:
             return "Unexpected reply mid-transfer; the protocol or model may not match this tag."
         return f"The transfer failed: {error or 'unknown error'}.{placement}"
-    # finish
-    if "no response" in err:
+    # finish: what the tag was expected to say depends on the protocol.
+    if "device error" in err:
+        return f"The tag reported an error after the transfer: {error}."
+    if backend_id == "xte":
+        if no_reply:
+            return f"The tag took the image but did not acknowledge the end command.{placement}"
+        return f"The end of the transfer failed: {error or 'unknown error'}."
+    if no_reply:
         return (
             "The tag took the image but did not report the refresh done in time: "
             "a slow panel (cold, large) or a tag-side error."
         )
-    if "device error" in err:
-        return f"The tag reported an error after the transfer: {error}."
     return f"The completion wait failed: {error or 'unknown error'}."
 
 
@@ -404,7 +415,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             if not result.success and (stage := result.failed_stage):
                 failure = {
                     "failed_stage": stage,
-                    "likely_cause": _likely_cause(stage, result.error, via),
+                    "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
                 }
             timing = {
                 **failure,
