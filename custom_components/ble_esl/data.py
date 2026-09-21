@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from asyncio import Lock
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -44,6 +45,9 @@ class BleEslRuntimeData:
     Seeds image_coordinator / preview_coordinator / last_image_data on load."""
 
     # Write pipeline state (see services.py)
+    write_serial: Lock = field(default_factory=Lock)
+    """Held for a whole write (all its attempts) so two writes to this tag
+    never interleave; the domain-wide BLE lock is taken per attempt."""
     write_lock: bool = False
     """Physical writes are skipped while set (the write-lock switch)."""
     start_time: float | None = None

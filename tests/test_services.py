@@ -840,3 +840,95 @@ async def test_stored_images_are_removed_with_the_entry(
     await hass.async_block_till_done()
 
     assert key not in hass_storage
+
+
+# ── Lock scope: one attempt at a time, one write per tag ─────────────────
+
+
+async def test_other_tags_write_between_a_failing_tags_attempts(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """The BLE lock covers one attempt, not a whole retry sequence: while a
+    failing tag pauses before its retry, the tags queued behind it write."""
+    a, b = "66:66:54:20:00:01", "66:66:54:20:00:02"
+    await setup_entry(hass, address=a, options={CONF_RETRY_COUNT: 2})
+    await setup_entry(hass, address=b, options={CONF_RETRY_COUNT: 2})
+    order: list[str] = []
+
+    async def hook(ble_device, preset, image, **kwargs):
+        order.append(ble_device.address[-2:])
+        if ble_device.address == a and order.count("01") == 1:
+            return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
+        return WriteResult(success=True, timing={"transfer_s": 0.1})
+
+    tag_writer.write_hook = hook
+    response = await respond(hass, "write", [device_id_of(hass, a), device_id_of(hass, b)])
+
+    assert response[device_id_of(hass, a)]["status"] == "written"
+    assert response[device_id_of(hass, b)]["status"] == "written"
+    assert order == ["01", "02", "01"]  # b went first while a waited to retry
+
+
+async def test_two_writes_to_one_tag_do_not_interleave(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """The per-tag lock keeps a second write to the same tag behind the first
+    one's retries, so the tag's write state is never shared by two writes."""
+    order: list[str] = []
+    calls = 0
+
+    async def hook(ble_device, preset, image, **kwargs):
+        nonlocal calls
+        calls += 1
+        order.append(f"w{image.getpixel((0, 0))[0]}")
+        if calls == 1:
+            return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
+        return WriteResult(success=True, timing={"transfer_s": 0.1})
+
+    tag_writer.write_hook = hook
+    device_id = device_id_of(hass)
+    first = hass.async_create_task(call(hass, "write", device_id))
+    await asyncio.sleep(0)  # let the first write take the tag's lock
+    second = hass.async_create_task(call(hass, "write", device_id, payload=[*PAYLOAD, *PAYLOAD]))
+    await asyncio.gather(first, second)
+
+    # first write: two attempts back to back; then the second write.
+    assert order[0] == order[1] and order[2] != order[0]
+
+
+async def test_guards_are_rechecked_before_a_retry(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """Turning the Write Lock on while a write waits to retry stops it."""
+    data = wolink_entry.runtime_data
+
+    async def hook(ble_device, preset, image, **kwargs):
+        data.write_lock = True  # flipped during attempt 1
+        return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
+
+    tag_writer.write_hook = hook
+    response = await respond(hass, "write", device_id_of(hass))
+
+    assert response[device_id_of(hass)]["status"] == "locked"
+    assert tag_writer.write_prepared.await_count == 1  # no second attempt
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
+
+
+async def test_timed_out_attempt_is_not_retried(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """An attempt that hit the bound means a dead transport; the write fails
+    without spending the remaining retries on the same path."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
+    tag_writer.write_result = WriteResult(
+        success=False,
+        error="Attempt timed out after 600s",
+        timing={"connect_s": 0.2, "transfer_s": 599.0},
+        timed_out=True,
+    )
+
+    with pytest.raises(HomeAssistantError, match="after 1 attempts: Attempt timed out"):
+        await call(hass, "write", device_id_of(hass))
+
+    assert tag_writer.write_prepared.await_count == 1
+    assert sensor(hass, "failure_count") == "1"

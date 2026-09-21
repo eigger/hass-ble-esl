@@ -170,6 +170,9 @@ class WriteResult:
     """The scanner (local adapter or Bluetooth proxy) the link went through,
     when the client wrapper exposes it; opaque here, interpreted by the
     integration. None when unknown."""
+    timed_out: bool = False
+    """The attempt hit ATTEMPT_TIMEOUT_S: the transport is dead rather than
+    the tag unwilling, so the integration does not retry it."""
 
     @property
     def failed_stage(self) -> str | None:
@@ -628,9 +631,12 @@ class BleBackend(ABC):
             if connected is not None:
                 timing["session_s"] = round(now - connected, 3)
             error = str(exc) or type(exc).__name__
-            if attempt_timeout.expired():
+            timed_out = attempt_timeout.expired()
+            if timed_out:
                 error = f"Attempt timed out after {ATTEMPT_TIMEOUT_S:g}s"
-            return WriteResult(success=False, error=error, timing=timing, scanner=scanner)
+            return WriteResult(
+                success=False, error=error, timing=timing, scanner=scanner, timed_out=timed_out
+            )
 
     async def write_image(
         self,

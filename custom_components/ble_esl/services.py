@@ -9,7 +9,7 @@ async_setup(); handlers look up the targeted config entries at call time.
 from __future__ import annotations
 
 import asyncio
-from asyncio import Future, sleep
+from asyncio import Future, Lock, sleep
 from collections.abc import Awaitable, Callable
 import contextlib
 import dataclasses
@@ -369,162 +369,258 @@ def _likely_cause(stage: str, error: str | None, via: dict[str, str | int], back
     return f"The completion wait failed: {error or 'unknown error'}."
 
 
-async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
-    """Write with retries, tracking duration/connectivity and the result sensors.
+def _guard(job: WriteJob) -> WriteOutcome | None:
+    """The checks that can change while a write waits for its turn.
 
-    Returns the "written" outcome; raises WriteFailed after the last failed
-    attempt (a HomeAssistantError carrying the "failed" outcome).
+    Run under the BLE lock before every attempt: the write lock, whether a
+    debounced write has been superseded, and the duplicate guard (a write of
+    the same payload may have just finished ahead of us — which is exactly
+    the case the guard is for).
     """
+    data = job.data
+    if data.write_lock:
+        _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
+        return WriteOutcome("locked")
+    if job.generation is not None and job.generation != data.write_generation:
+        _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
+        return WriteOutcome("dropped")
+    if job.prevent_duplicate_send and job.image_png == data.last_image_data:
+        _LOGGER.info("Skipping duplicate image for %s", job.address)
+        return WriteOutcome("duplicate")
+    return None
+
+
+async def _attempt(hass: HomeAssistant, job: WriteJob, pacing_s: float) -> WriteResult:
+    """One BLE attempt: resolve the handle, write, record the breakdown."""
     data = job.data
     address = job.address
     assert job.prepared is not None, "run_ble_write() schedules the encode"
-
-    data.start_time = time.monotonic()
-    data.duration_coordinator.async_set_updated_data(0.0)
-    data.connectivity_coordinator.async_set_updated_data(True)
-    duration_task = asyncio.create_task(_update_duration_loop(data))
-
-    try:
-        # Packets are paced more only after an attempt that failed *while
-        # transferring*: that is what a marginal link looks like. A failure
-        # to connect or to get through the handshake is retried at full speed.
-        transfer_failures = 0
-        for attempt in range(1, job.max_retries + 1):
-            pacing_s = RETRY_BACKOFF_S * transfer_failures
-            # Resolve the handle fresh each attempt: the one seen at service
-            # call time may be stale after a debounce delay or a retry sleep.
-            ble_device = async_ble_device_from_address(hass, address)
-            if ble_device is None:
-                result = WriteResult(
-                    success=False,
-                    error="BLE device handle is unavailable (out of range or adapter down)",
-                )
-            else:
-                # The encode was started before the BLE lock was taken; the
-                # backend awaits it once the link is up, and a retry awaits
-                # the same future again instead of re-encoding.
-                result = await data.backend.write_prepared(
-                    ble_device,
-                    job.preset,
-                    job.prepared,
-                    pacing_s=pacing_s,
-                )
-            # Every attempt is recorded (with whatever the backend timed) so the
-            # Write Duration sensor's attributes always describe the last one.
-            via = _transport(hass, address, result.scanner)
-            failure: dict[str, str] = {}
-            if not result.success and (stage := result.failed_stage):
-                failure = {
-                    "failed_stage": stage,
-                    "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
-                }
-            timing = {
-                **failure,
-                **({"pacing_s": pacing_s} if pacing_s else {}),
-                **via,
-                **result.timing,
-            }
-            data.last_write_timing = {
-                "attempt": attempt,
-                "success": result.success,
-                **({"error": result.error} if not result.success and result.error else {}),
-                **timing,
-            }
-            _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
-            if result.success:
-                # Session-based protocols (e.g. easyTag) report battery/temp
-                # in the write result; others update passively from adverts.
-                if result.battery_mv is not None:
-                    data.battery_coordinator.async_set_updated_data(result.battery_mv / 1000.0)
-                if result.temperature_c is not None:
-                    data.temperature_coordinator.async_set_updated_data(result.temperature_c)
-                data.image_coordinator.async_set_updated_data(job.image_png)
-                # Only a successful write counts for duplicate detection; a
-                # failed or locked-out write must not suppress a retry of
-                # the same payload.
-                data.last_image_data = job.image_png
-                data.image_store.set_written(job.image_png, now())
-                return WriteOutcome(
-                    "written",
-                    attempts=attempt,
-                    duration_s=round(time.monotonic() - data.start_time, 2),
-                    timing=timing or None,
-                )
-
-            _LOGGER.warning(
-                "Write failed to %s (attempt %d/%d): %s",
-                address,
-                attempt,
-                job.max_retries,
-                result.error,
-            )
-            if attempt < job.max_retries:
-                transfer_failures += result.failed_in_transfer
-                await sleep(1)
-                continue
-
-            data.failure_coordinator.async_set_updated_data(
-                (data.failure_coordinator.data or 0) + 1
-            )
-            # Kept until the next failure; the timestamp update publishes it.
-            # A copy, so nothing that later touches last_write_timing in
-            # place can change the failure record.
-            data.last_failure_timing = dict(data.last_write_timing or {})
-            data.last_failure_coordinator.async_set_updated_data(now())
-            raise WriteFailed(
-                address,
-                WriteOutcome(
-                    "failed",
-                    error=result.error or "unknown error",
-                    attempts=attempt,
-                    duration_s=round(time.monotonic() - data.start_time, 2),
-                    timing=timing or None,
-                ),
-            )
-    finally:
-        duration_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await duration_task
-        if data.start_time is not None:
-            data.duration_coordinator.async_set_updated_data(
-                round(time.monotonic() - data.start_time, 2)
-            )
-        data.start_time = None
-        data.connectivity_coordinator.async_set_updated_data(False)
+    # Resolve the handle fresh each attempt: the one seen at service call
+    # time may be stale after a debounce delay or a retry sleep.
+    ble_device = async_ble_device_from_address(hass, address)
+    if ble_device is None:
+        result = WriteResult(
+            success=False,
+            error="BLE device handle is unavailable (out of range or adapter down)",
+        )
+    else:
+        # The encode was started before the BLE lock was taken; the backend
+        # awaits it once the link is up, and a retry awaits the same future
+        # again instead of re-encoding.
+        result = await data.backend.write_prepared(
+            ble_device,
+            job.preset,
+            job.prepared,
+            pacing_s=pacing_s,
+        )
+    via = _transport(hass, address, result.scanner)
+    failure: dict[str, str] = {}
+    if not result.success and (stage := result.failed_stage):
+        failure = {
+            "failed_stage": stage,
+            "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
+        }
+    result.timing = {
+        **failure,
+        **({"pacing_s": pacing_s} if pacing_s else {}),
+        **via,
+        **result.timing,
+    }
+    return result
 
 
-async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
-    """Encode, then write under the BLE lock.
+def _guard(job: WriteJob) -> WriteOutcome | None:
+    """The checks that can change while a write waits for its turn.
 
-    The encode runs once per write, in HA's executor, *before* queueing on
-    the lock: tags waiting their turn encode while another transfers, and
-    the CPU-bound work never runs on the event loop. The backend awaits the
-    future only once its link is up (overlapping connect), and every retry
-    attempt reuses the same result.
+    Run under the BLE lock before every attempt: the write lock, whether a
+    debounced write has been superseded, and the duplicate guard (a write of
+    the same payload may have just finished ahead of us — which is exactly
+    the case the guard is for).
+    """
+    data = job.data
+    if data.write_lock:
+        _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
+        return WriteOutcome("locked")
+    if job.generation is not None and job.generation != data.write_generation:
+        _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
+        return WriteOutcome("dropped")
+    if job.prevent_duplicate_send and job.image_png == data.last_image_data:
+        _LOGGER.info("Skipping duplicate image for %s", job.address)
+        return WriteOutcome("duplicate")
+    return None
 
-    Checks that can change while waiting for the lock are repeated under it:
-    the write lock, whether this debounced write has been superseded, and
-    the duplicate guard (a write of the same payload may have just finished
-    ahead of us, which is exactly the case the guard is for).
+
+async def _attempt(hass: HomeAssistant, job: WriteJob, pacing_s: float) -> WriteResult:
+    """One BLE attempt: resolve the handle, write, record the breakdown."""
+    data = job.data
+    address = job.address
+    assert job.prepared is not None, "run_ble_write() schedules the encode"
+    # Resolve the handle fresh each attempt: the one seen at service call
+    # time may be stale after a debounce delay or a retry sleep.
+    ble_device = async_ble_device_from_address(hass, address)
+    if ble_device is None:
+        result = WriteResult(
+            success=False,
+            error="BLE device handle is unavailable (out of range or adapter down)",
+        )
+    else:
+        # The encode was started before the BLE lock was taken; the backend
+        # awaits it once the link is up, and a retry awaits the same future
+        # again instead of re-encoding.
+        result = await data.backend.write_prepared(
+            ble_device,
+            job.preset,
+            job.prepared,
+            pacing_s=pacing_s,
+        )
+    via = _transport(hass, address, result.scanner)
+    failure: dict[str, str] = {}
+    if not result.success and (stage := result.failed_stage):
+        failure = {
+            "failed_stage": stage,
+            "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
+        }
+    result.timing = {
+        **failure,
+        **({"pacing_s": pacing_s} if pacing_s else {}),
+        **via,
+        **result.timing,
+    }
+    return result
+
+
+async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
+    """Write with retries, tracking duration/connectivity and the result sensors.
+
+    Two locks: the tag's own `write_serial` for the whole write, so two
+    writes to one tag never interleave their attempts and sensor state, and
+    the domain-wide BLE lock for **one attempt at a time**. Between attempts
+    (the retry pause, or after an attempt hit its bound) the BLE lock is
+    free, so a tag that is failing does not hold up every other tag for its
+    whole retry sequence.
+
+    Returns the "written" outcome (or a guard's outcome); raises WriteFailed
+    after the last failed attempt (a HomeAssistantError carrying the
+    "failed" outcome).
     """
     data = job.data
     address = job.address
+    ble_lock: Lock = hass.data[DATA_LOCK]
+    started = False
+    duration_task: asyncio.Task[None] | None = None
+
+    async with data.write_serial:
+        try:
+            # Packets are paced more only after an attempt that failed *while
+            # transferring*: that is what a marginal link looks like. A
+            # failure to connect or to get through the handshake is retried
+            # at full speed.
+            transfer_failures = 0
+            for attempt in range(1, job.max_retries + 1):
+                async with ble_lock:
+                    if (skipped := _guard(job)) is not None:
+                        return skipped
+                    if not started:
+                        started = True
+                        data.start_time = time.monotonic()
+                        data.duration_coordinator.async_set_updated_data(0.0)
+                        data.connectivity_coordinator.async_set_updated_data(True)
+                        duration_task = asyncio.create_task(_update_duration_loop(data))
+                    result = await _attempt(hass, job, RETRY_BACKOFF_S * transfer_failures)
+                # Every attempt is recorded (with whatever the backend timed)
+                # so the Write Duration sensor's attributes always describe
+                # the last one.
+                data.last_write_timing = {
+                    "attempt": attempt,
+                    "success": result.success,
+                    **({"error": result.error} if not result.success and result.error else {}),
+                    **result.timing,
+                }
+                _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
+                if result.success:
+                    # Session-based protocols (e.g. easyTag) report battery/temp
+                    # in the write result; others update passively from adverts.
+                    if result.battery_mv is not None:
+                        data.battery_coordinator.async_set_updated_data(result.battery_mv / 1000.0)
+                    if result.temperature_c is not None:
+                        data.temperature_coordinator.async_set_updated_data(result.temperature_c)
+                    data.image_coordinator.async_set_updated_data(job.image_png)
+                    # Only a successful write counts for duplicate detection; a
+                    # failed or locked-out write must not suppress a retry of
+                    # the same payload.
+                    data.last_image_data = job.image_png
+                    data.image_store.set_written(job.image_png, now())
+                    return WriteOutcome(
+                        "written",
+                        attempts=attempt,
+                        duration_s=round(time.monotonic() - data.start_time, 2),
+                        timing=result.timing or None,
+                    )
+
+                _LOGGER.warning(
+                    "Write failed to %s (attempt %d/%d): %s",
+                    address,
+                    attempt,
+                    job.max_retries,
+                    result.error,
+                )
+                if attempt < job.max_retries and not result.timed_out:
+                    # A timed-out attempt is a dead transport (a proxy gone
+                    # mid-write); another 10 minutes on the same path helps
+                    # nobody, and the next automation run is the real retry.
+                    transfer_failures += result.failed_in_transfer
+                    await sleep(1)  # BLE lock released: other tags go first
+                    continue
+
+                data.failure_coordinator.async_set_updated_data(
+                    (data.failure_coordinator.data or 0) + 1
+                )
+                # Kept until the next failure; the timestamp update publishes it.
+                # A copy, so nothing that later touches last_write_timing in
+                # place can change the failure record.
+                data.last_failure_timing = dict(data.last_write_timing or {})
+                data.last_failure_coordinator.async_set_updated_data(now())
+                raise WriteFailed(
+                    address,
+                    WriteOutcome(
+                        "failed",
+                        error=result.error or "unknown error",
+                        attempts=attempt,
+                        duration_s=round(time.monotonic() - data.start_time, 2),
+                        timing=result.timing or None,
+                    ),
+                )
+            raise AssertionError("unreachable: max_retries is at least 1")
+        finally:
+            if started:
+                assert duration_task is not None
+                duration_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await duration_task
+                if data.start_time is not None:
+                    data.duration_coordinator.async_set_updated_data(
+                        round(time.monotonic() - data.start_time, 2)
+                    )
+                data.start_time = None
+                data.connectivity_coordinator.async_set_updated_data(False)
+
+
+async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
+    """Encode, then write.
+
+    The encode runs once per write, in HA's executor, *before* queueing on
+    the locks: tags waiting their turn encode while another transfers, and
+    the CPU-bound work never runs on the event loop. The backend awaits the
+    future only once its link is up (overlapping connect), and every retry
+    attempt reuses the same result.
+    """
+    data = job.data
     prepared = hass.async_add_executor_job(
-        data.backend.prepare_image, job.preset, job.image, address
+        data.backend.prepare_image, job.preset, job.image, data.address
     )
     job.prepared = prepared
     try:
-        async with hass.data[DATA_LOCK]:
-            if data.write_lock:
-                _LOGGER.info("Write lock active for %s — skipping BLE write", address)
-                return WriteOutcome("locked")
-            if job.generation is not None and job.generation != data.write_generation:
-                _LOGGER.debug("Superseded debounced write for %s dropped", address)
-                return WriteOutcome("dropped")
-            if job.prevent_duplicate_send and job.image_png == data.last_image_data:
-                _LOGGER.info("Skipping duplicate image for %s", address)
-                return WriteOutcome("duplicate")
-            return await execute_write(hass, job)
+        return await execute_write(hass, job)
     finally:
         # Skipped or failed before the encode was awaited: drop it without
         # a "Future exception was never retrieved" warning.
