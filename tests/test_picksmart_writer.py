@@ -60,7 +60,6 @@ def test_picksmart_handshake_flow():
             IMG_UUID,
             PRESETS["0x0033"],
             MAC,
-            attempt=1,
         )
         img = Image.new("RGB", (296, 128), "white")
         result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
@@ -101,7 +100,6 @@ def test_picksmart_stall_detection():
             IMG_UUID,
             PRESETS["0x0033"],
             MAC,
-            attempt=1,
         )
         img = Image.new("RGB", (296, 128), "white")
 
@@ -523,5 +521,57 @@ def test_failed_start_probes_carry_timing(monkeypatch):
         assert result.timing["start_probes"] == 3
         assert result.timing["settle_s"] == 0.0
         assert {"connect_s", "session_s"} <= result.timing.keys()
+
+    asyncio.run(_test())
+
+
+def test_pacing_applies_to_image_parts_not_the_handshake(monkeypatch):
+    """A paced retry slows the IMAGE_DATA parts only; START/SIZE/IMAGE START
+    are replied to by the tag and gain nothing from a pause."""
+
+    async def _test():
+        _fast_probe(monkeypatch)
+        sleeps: list[float] = []
+        real_sleep = asyncio.sleep
+
+        async def fake_sleep(seconds):
+            sleeps.append(seconds)
+            await real_sleep(0)
+
+        monkeypatch.setattr(
+            "custom_components.ble_esl.esl_ble.picksmart.writer.asyncio.sleep", fake_sleep
+        )
+        mock_client = MagicMock()
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            if char == CMD_UUID:
+                if data[0] == 0x01:
+                    mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+                elif data[0] == 0x02:
+                    mock_client._handler(None, bytearray([0x02]))
+                elif data[0] == 0x03:
+                    mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
+            elif char == IMG_UUID:
+                part = int.from_bytes(data[0:4], "little")
+                mock_client._handler(
+                    None, bytearray([0x05, 0x00]) + (part + 1).to_bytes(4, "little")
+                )
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartClient(
+            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, pacing_s=0.05
+        )
+        result = await client.write_payload(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+        )
+
+        assert result.success is True
+        assert sleeps == [0.05] * result.timing["parts"]  # one per part, none for the handshake
 
     asyncio.run(_test())

@@ -289,7 +289,7 @@ def test_write_failure_after_disconnect_keeps_original_error():
     assert not client.stopped  # stop_notify skipped on a dropped link
 
 
-def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
+def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
     sleeps = []
 
     async def fake_sleep(seconds):
@@ -298,10 +298,10 @@ def test_settle_then_delay_per_frame_not_per_chunk(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
     client = FakeClient(mtu_payload=20)
     assert asyncio.run(
-        XteClient(client, attempt=2).write_object(
+        XteClient(client, pacing_s=0.05).write_object(
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
         )
     )
     frames = 2 + len(make_blocks(make_image_object(b"\x55" * 30000, 400, 300)))
-    # One settle after start_notify, then one retry delay per XTE frame.
+    # One settle after start_notify, then the pacing once per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames

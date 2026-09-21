@@ -84,7 +84,7 @@ class XteBleBackend(BleBackend):
         preset: DevicePreset,
         prepared: Awaitable[bytes],
         *,
-        attempt: int = 1,
+        pacing_s: float = 0.0,
     ) -> WriteResult:
         # Only catalog geometry is packed correctly; refuse anything else, and
         # the tag types with an unimplemented pixel layout, before connecting.
@@ -101,7 +101,7 @@ class XteBleBackend(BleBackend):
                 success=False,
                 error=f"XTE device number {seen} uses a pixel layout that is not implemented",
             )
-        return await super().write_prepared(ble_device, preset, prepared, attempt=attempt)
+        return await super().write_prepared(ble_device, preset, prepared, pacing_s=pacing_s)
 
 
 __all__ = [

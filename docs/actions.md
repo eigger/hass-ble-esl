@@ -260,6 +260,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 | Attribute | Meaning |
 |---|---|
 | `attempt` / `success` / `error` | Which retry this was and how it ended |
+| `pacing_s` | Present when this attempt was sent slower than usual: 0.05 s per earlier attempt that failed mid-transfer |
 | `via` / `via_type` / `via_source` | The radio the write went through: a Bluetooth **proxy** (its ESPHome name and MAC) or a local **adapter** (`hci0` and its MAC) |
 | `rssi` | Signal strength of the tag's last advertisement as seen by that radio |
 | `paths` | How many connectable radios currently see the tag (1 = no failover possible) |
@@ -273,7 +274,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 
 Protocol-specific extras: PickSmart adds `start_probes` (how many START commands were needed — should mostly be 1), `sends` / `resends` (chunks the tag asked for again), `round_trip_ms` (per-chunk round trip; the best measure of path quality) and `completed_by_tag`; XTE adds `chunk_size` (the ATT write size the backend allowed — 20 on some proxies, 244 on others, which dominates `transfer_s`).
 
-Reading it: a large `connect_s` with a low `rssi` or `paths: 1` points at placement or a missing proxy; `resends` or `start_probes` above 1 point at a marginal link (each retry already paces packets more; if the counters stay high, move the tag or proxy); a large `finish_s` on WOLINK/easyTag is the panel refresh, which grows with panel size and cold temperature and is not a transport problem. `via` tells you which proxy the tag actually used, which is what to move or replace.
+Reading it: a large `connect_s` with a low `rssi` or `paths: 1` points at placement or a missing proxy; `resends` or `start_probes` above 1 point at a marginal link (a retry after a failure *during* the transfer is automatically paced slower — `pacing_s` — while a retry after a connect or handshake failure runs at full speed; if the counters stay high, move the tag or proxy); a large `finish_s` on WOLINK/easyTag is the panel refresh, which grows with panel size and cold temperature and is not a transport problem. `via` tells you which proxy the tag actually used, which is what to move or replace.
 
 ## Fonts
 

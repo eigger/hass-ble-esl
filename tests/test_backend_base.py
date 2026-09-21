@@ -327,6 +327,20 @@ def test_write_prepared_records_connect_and_session_timing(monkeypatch):
     asyncio.run(_test())
 
 
+@pytest.mark.parametrize(
+    ("success", "timing", "expected"),
+    [
+        (False, {"connect_s": 0.5}, False),  # never connected
+        (False, {"connect_s": 0.1, "start_s": 0.3}, False),  # handshake
+        (False, {"connect_s": 0.1, "start_s": 0.3, "transfer_s": 2.0}, True),  # mid-transfer
+        (False, {"connect_s": 0.1, "transfer_s": 2.0, "finish_s": 30.0}, False),  # panel
+        (True, {"connect_s": 0.1, "transfer_s": 2.0}, False),
+    ],
+)
+def test_failed_in_transfer_reads_the_stages(success, timing, expected):
+    assert WriteResult(success=success, timing=timing).failed_in_transfer is expected
+
+
 def test_write_timing_stages_record_success_and_failure():
     """A stage records its elapsed time whether it returns or raises, and
     reported() hangs the whole dict on the exception for write_prepared()."""
