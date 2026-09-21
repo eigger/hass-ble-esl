@@ -8,8 +8,9 @@ import logging
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
+from blesession import Notifications, SessionTrace
 
-from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import STAGE_FINISH, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
     EVERY_5TH_BONUS,
     FEEDBACK_TIMEOUT,
@@ -40,40 +41,46 @@ class EasyTagError(Exception):
 class EasyTagClient:
     """Client handling a single connected easyTag BLE session."""
 
-    def __init__(self, client: BleakClient, preset: DevicePreset, address: str) -> None:
+    def __init__(
+        self,
+        client: BleakClient,
+        preset: DevicePreset,
+        address: str,
+        trace: SessionTrace | None = None,
+    ) -> None:
         self.client = client
         self.preset = preset
         self.address = address
+        self.trace = trace if trace is not None else SessionTrace()
 
     async def _send_frames(self, frames: list[bytes], *, pacing_s: float = 0.0) -> WriteResult:
         """Send header + data frames and read the battery/temperature reply."""
         settle = POST_CCCD_DELAY + PRE_HEADER_DELAY
-        timing = WriteTiming(settle_s=settle, parts=len(frames), bytes=sum(map(len, frames)))
-        with timing.reported():
-            async with Notifications(self.client, NOTIFY_UUID, settle=settle) as replies:
-                # Anything notified during the settle window is not our reply.
-                replies.clear()
-                base_delay = INTER_PACKET_DELAY + pacing_s
-                # Send header (frame 0) and data frames (frames 1..N). The tag
-                # does not acknowledge frames, so transfer_s is pacing only.
-                with timing.stage("transfer_s"):
-                    for idx, frame in enumerate(frames):
-                        await self.client.write_gatt_char(WRITE_UUID, frame, response=False)
-                        await asyncio.sleep(base_delay + (EVERY_5TH_BONUS if idx % 5 == 0 else 0))
+        trace = self.trace
+        trace.note(settle_s=settle, parts=len(frames), bytes=sum(map(len, frames)))
+        async with Notifications(self.client, NOTIFY_UUID, settle=settle) as replies:
+            # Anything notified during the settle window is not our reply.
+            replies.clear()
+            base_delay = INTER_PACKET_DELAY + pacing_s
+            # Send header (frame 0) and data frames (frames 1..N). The tag
+            # does not acknowledge frames, so the transfer stage is pacing only.
+            with trace.timed(STAGE_TRANSFER):
+                for idx, frame in enumerate(frames):
+                    await self.client.write_gatt_char(WRITE_UUID, frame, response=False)
+                    await asyncio.sleep(base_delay + (EVERY_5TH_BONUS if idx % 5 == 0 else 0))
 
-                # The only acknowledgement is the status reply after the panel
-                # has redrawn, so finish_s covers the refresh.
-                with timing.stage("finish_s"):
-                    reply = await replies.next(FEEDBACK_TIMEOUT, step="image frames")
+            # The only acknowledgement is the status reply after the panel
+            # has redrawn, so the finish stage covers the refresh.
+            with trace.timed(STAGE_FINISH):
+                reply = await replies.next(FEEDBACK_TIMEOUT, step="image frames")
 
-            if not reply:
-                raise EasyTagError("Empty notify payload from tag")
-            parsed = parse_notify(self.address, reply)
+        if not reply:
+            raise EasyTagError("Empty notify payload from tag")
+        parsed = parse_notify(self.address, reply)
         return WriteResult(
             success=True,
             battery_mv=parsed.get("battery_mv"),
             temperature_c=parsed.get("temperature_c"),
-            timing=timing,
         )
 
     async def write_frames(
@@ -112,8 +119,9 @@ async def write_session(
     prepared: Awaitable[list[bytes]],
     *,
     pacing_s: float = 0.0,
+    trace: SessionTrace,
 ) -> WriteResult:
     """Send pre-built frames over an open link and read the battery/temperature reply."""
     frames = await prepared
-    easytag = EasyTagClient(client, preset, address)
+    easytag = EasyTagClient(client, preset, address, trace)
     return await easytag.write_frames(frames, pacing_s=pacing_s)

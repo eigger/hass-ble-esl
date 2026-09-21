@@ -5,13 +5,12 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from blesession import ConnectFailed, NotificationTimeout, SessionTrace, session as session_mod
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from PIL import Image
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.wolink.const import (
     AES_KEY,
     AUTH_CHAR,
@@ -117,15 +116,16 @@ def test_wolink_write_image_flow_with_status_notification():
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
         prepared = prepare(PRESETS["290"], img, MAC)
-        result = await client.write_prepared(prepared)
+        trace = SessionTrace()
+        result = await client.write_prepared(prepared, trace=trace)
 
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
         assert notification_active is False  # Stopped after session
-        # The breakdown: every chunk is a part (all sent), the refresh wait is finish_s.
-        assert result.timing["parts"] == len(written_data) - 1 == result.timing["sends"]
-        assert result.timing["bytes"] == len(prepared[0])
-        assert {"transfer_s", "finish_s"} <= result.timing.keys()
+        # The breakdown: every chunk is a part (all sent), the refresh wait is the finish.
+        assert trace.facts["parts"] == len(written_data) - 1 == trace.facts["sends"]
+        assert trace.facts["bytes"] == len(prepared[0])
+        assert list(trace.timings) == ["transfer", "finish"]
 
     asyncio.run(_test())
 
@@ -212,14 +212,12 @@ def test_write_image_entrypoint(monkeypatch):
         async def mock_establish(*args, **kwargs):
             return mock_client
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
+        trace = esl_ble.get("wolink").new_trace()
         result = await esl_ble.get("wolink").write_image(
-            mock_ble_device, PRESETS["290"], img, pacing_s=0.05
+            mock_ble_device, PRESETS["290"], img, pacing_s=0.05, trace=trace
         )
 
         assert result.success is True
@@ -227,22 +225,21 @@ def test_write_image_entrypoint(monkeypatch):
         assert mock_client.disconnect.called
         # Authentication is the handshake stage; the common connect/session
         # split wraps the protocol's own stages.
-        assert list(result.timing) == [
-            "connect_s",
-            "start_s",
-            "bytes",
-            "parts",
-            "sends",
-            "transfer_s",
-            "finish_s",
-            "session_s",
+        assert list(trace.timings) == [
+            "connect",
+            "handshake",
+            "transfer",
+            "finish",
+            "session",
+            "disconnect",
         ]
+        assert list(trace.facts) == ["bytes", "parts", "sends"]
 
     asyncio.run(_test())
 
 
-def test_connection_failure_is_reported_not_raised(monkeypatch):
-    """establish_connection errors become a failed WriteResult so retries/counters apply."""
+def test_connection_failure_raises_connect_failed(monkeypatch):
+    """establish_connection errors surface as ConnectFailed, stage `connect`."""
 
     async def _test():
         mock_ble_device = MagicMock()
@@ -251,16 +248,15 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
         async def mock_establish(*args, **kwargs):
             raise OSError("unavailable")
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await esl_ble.get("wolink").write_image(mock_ble_device, PRESETS["290"], img)
-
-        assert result.success is False
-        assert result.error == "unavailable"
+        trace = SessionTrace()
+        with pytest.raises(ConnectFailed, match="unavailable"):
+            await esl_ble.get("wolink").write_image(
+                mock_ble_device, PRESETS["290"], img, trace=trace
+            )
+        assert trace.failed_stage == "connect"
 
     asyncio.run(_test())
 
@@ -298,17 +294,17 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
             return mock_client
 
         monkeypatch.setattr(esl_ble.get("wolink"), "prepare_image", slow_prepare)
-        monkeypatch.setattr(base, "establish_connection", connect)
+        monkeypatch.setattr(session_mod, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
         task = asyncio.create_task(ticker())
-        result = await esl_ble.get("wolink").write_image(
-            mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
-        )
+        with pytest.raises(OSError, match="stop at auth"):
+            await esl_ble.get("wolink").write_image(
+                mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
+            )
         task.cancel()
 
-        assert result.success is False and result.error == "stop at auth"
         assert connect_started_at < encode_done_at  # radio not delayed by the encode
         assert ticks >= 10  # loop was not blocked during the 300 ms encode
         assert mock_client.disconnect.await_count == 1
@@ -334,14 +330,14 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
             raise OSError("no link")
 
         monkeypatch.setattr(writer.asyncio, "to_thread", slow_encode)
-        monkeypatch.setattr(base, "establish_connection", failing_connect)
+        monkeypatch.setattr(session_mod, "establish_connection", failing_connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await esl_ble.get("wolink").write_image(
-            mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
-        )
-        assert result.success is False and result.error == "no link"
+        with pytest.raises(ConnectFailed, match="no link"):
+            await esl_ble.get("wolink").write_image(
+                mock_ble_device, PRESETS["290"], Image.new("RGB", (296, 128))
+            )
         assert started.is_set()
         await asyncio.sleep(0)
         pending = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
@@ -351,8 +347,7 @@ def test_connect_failure_does_not_leak_encode_task(monkeypatch):
 
 
 def test_wolink_completion_timeout_has_message(monkeypatch):
-    """A tag that never confirms the refresh raises a descriptive timeout (the
-    backend turns it into the WriteResult error)."""
+    """A tag that never confirms the refresh raises a descriptive timeout."""
 
     async def _test():
         mock_client = MagicMock()
@@ -364,7 +359,7 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         monkeypatch.setattr(WolinkClient, "_completion_timeout", staticmethod(lambda raw_len: 0.05))
         with pytest.raises(
-            NotificationTimeout, match=r"No response from tag within 0\.05s after refresh"
+            NotificationTimeout, match=r"No response from device within 0\.05s after refresh"
         ):
             await client.write_prepared(
                 prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC)
@@ -386,17 +381,15 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
             prepared.set_result((b"", 0))
             return MagicMock(is_connected=False)
 
-        monkeypatch.setattr(base, "establish_connection", connect)
+        monkeypatch.setattr(session_mod, "establish_connection", connect)
         monkeypatch.setattr(
             writer.WolinkClient, "authenticate", AsyncMock(side_effect=OSError("stop"))
         )
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
-        result = await esl_ble.get("wolink").write_prepared(
-            mock_ble_device, PRESETS["290"], prepared
-        )
+        with pytest.raises(OSError, match="stop"):
+            await esl_ble.get("wolink").write_prepared(mock_ble_device, PRESETS["290"], prepared)
 
-        assert result.success is False and result.error == "stop"
         assert order == ["connect"]
         assert prepared.done() and not prepared.cancelled()
         assert prepared.result() == (b"", 0)  # still usable for a retry

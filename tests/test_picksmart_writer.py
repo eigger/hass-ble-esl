@@ -5,12 +5,11 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+from blesession import ConnectFailed, NotificationTimeout, SessionTrace, session as session_mod
 from PIL import Image
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
-from custom_components.ble_esl.esl_ble.base import NotificationTimeout
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
     PickSmartClient,
@@ -94,31 +93,32 @@ def test_picksmart_stall_detection():
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
+        trace = SessionTrace()
         client = PickSmartClient(
             mock_client,
             CMD_UUID,
             IMG_UUID,
             PRESETS["0x0033"],
             MAC,
+            trace=trace,
         )
         img = Image.new("RGB", (296, 128), "white")
 
-        with pytest.raises(
-            PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"
-        ) as caught:
+        with pytest.raises(PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"):
             await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
         # One send per request: the initial one plus five resends.
         img_writes = [
             c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID
         ]
         assert len(img_writes) == 6
-        # A stall is when the counters matter: they reach the failed
-        # WriteResult through the exception even though the loop never ended.
-        timing = caught.value.timing
-        assert timing["sends"] == 6 and timing["resends"] == 5
-        assert timing["completed_by_tag"] is False
-        assert timing["parts"] == 40 and timing["round_trip_ms"] >= 0
-        assert {"start_s", "transfer_s"} <= timing.keys()
+        # A stall is when the counters matter: they land on the trace even
+        # though the loop never ended.
+        facts = trace.facts
+        assert facts["sends"] == 6 and facts["resends"] == 5
+        assert facts["completed_by_tag"] is False
+        assert facts["parts"] == 40 and facts["round_trip_ms"] >= 0
+        assert {"handshake", "transfer"} <= trace.timings.keys()
+        assert trace.failed_stage == "transfer"
 
     asyncio.run(_test())
 
@@ -218,17 +218,21 @@ def test_picksmart_start_is_probed_until_the_tag_answers(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        trace = SessionTrace()
+        client = PickSmartClient(
+            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, trace=trace
+        )
         result = await client.write_payload(
             prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
         )
 
         assert result.success is True
         assert starts == 3
-        assert result.timing["start_probes"] == 3
-        assert result.timing["parts"] == 40 == result.timing["sends"]
-        assert result.timing["resends"] == 0
-        assert {"settle_s", "start_s", "transfer_s", "round_trip_ms"} <= result.timing.keys()
+        assert trace.facts["start_probes"] == 3
+        assert trace.facts["parts"] == 40 == trace.facts["sends"]
+        assert trace.facts["resends"] == 0
+        assert {"settle_s", "round_trip_ms"} <= trace.facts.keys()
+        assert {"handshake", "transfer"} <= trace.timings.keys()
 
     asyncio.run(_test())
 
@@ -254,18 +258,19 @@ def test_picksmart_start_probes_exhausted_is_descriptive(monkeypatch):
         starts = [c for c in mock_client.write_gatt_char.await_args_list if c.args[1][0] == 0x01]
         assert len(starts) == 3
 
-        # The failed attempt still reports how far it got, via the backend.
-        from custom_components.ble_esl import esl_ble
-        from custom_components.ble_esl.esl_ble import base
-
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=mock_client))
-        mock_client.services = []
-        result = await esl_ble.get("picksmart").write_prepared(
-            MagicMock(address=MAC), PRESETS["0x0033"], _done(b"")
+        # A tag without the two characteristics fails before any protocol
+        # stage: the trace says the session itself is where it died.
+        monkeypatch.setattr(
+            session_mod, "establish_connection", AsyncMock(return_value=mock_client)
         )
-        assert result.success is False
-        assert "Insufficient characteristics" in result.error
-        assert {"connect_s", "session_s"} <= result.timing.keys()
+        mock_client.services = []
+        trace = SessionTrace()
+        with pytest.raises(PickSmartError, match="Insufficient characteristics"):
+            await esl_ble.get("picksmart").write_prepared(
+                MagicMock(address=MAC), PRESETS["0x0033"], _done(b""), trace=trace
+            )
+        assert trace.failed_primary == "session"
+        assert {"connect", "session"} <= trace.timings.keys()
 
     asyncio.run(_test())
 
@@ -292,7 +297,7 @@ def test_picksmart_timeout_after_start_is_descriptive(monkeypatch):
 
         client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
         with pytest.raises(
-            NotificationTimeout, match=r"No response from tag within 0\.05s after SIZE"
+            NotificationTimeout, match=r"No response from device within 0\.05s after SIZE"
         ):
             await client.write_payload(
                 prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
@@ -346,10 +351,7 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
         async def mock_establish(*args, **kwargs):
             return mock_client
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
         result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0033"], img)
@@ -360,8 +362,8 @@ def test_picksmart_update_image_entrypoint(monkeypatch):
     asyncio.run(_test())
 
 
-def test_connection_failure_is_reported_not_raised(monkeypatch):
-    """establish_connection errors become a failed WriteResult so retries/counters apply."""
+def test_connection_failure_raises_connect_failed(monkeypatch):
+    """establish_connection errors surface as ConnectFailed, stage `connect`."""
 
     async def _test():
         mock_ble_device = MagicMock()
@@ -370,16 +372,15 @@ def test_connection_failure_is_reported_not_raised(monkeypatch):
         async def mock_establish(*args, **kwargs):
             raise OSError("unavailable")
 
-        monkeypatch.setattr(
-            "custom_components.ble_esl.esl_ble.base.establish_connection",
-            mock_establish,
-        )
+        monkeypatch.setattr(session_mod, "establish_connection", mock_establish)
 
         img = Image.new("RGB", (296, 128), "white")
-        result = await esl_ble.get("picksmart").write_image(mock_ble_device, PRESETS["0x0028"], img)
-
-        assert result.success is False
-        assert result.error == "unavailable"
+        trace = SessionTrace()
+        with pytest.raises(ConnectFailed, match="unavailable"):
+            await esl_ble.get("picksmart").write_image(
+                mock_ble_device, PRESETS["0x0028"], img, trace=trace
+            )
+        assert trace.failed_stage == "connect"
 
     asyncio.run(_test())
 
@@ -406,16 +407,16 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
             raise OSError("stop here")
 
         monkeypatch.setattr(esl_ble.get("picksmart"), "prepare_image", slow_prepare)
-        monkeypatch.setattr(base, "establish_connection", connect)
+        monkeypatch.setattr(session_mod, "establish_connection", connect)
 
         mock_ble_device = MagicMock()
         mock_ble_device.address = "AA:BB:CC:DD:EE:FF"
-        result = await esl_ble.get("picksmart").write_image(
-            mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128))
-        )
+        with pytest.raises(ConnectFailed, match="stop here"):
+            await esl_ble.get("picksmart").write_image(
+                mock_ble_device, PRESETS["0x0028"], Image.new("RGB", (296, 128))
+            )
         await asyncio.sleep(0.2)  # let the encode thread finish
 
-        assert result.success is False
         assert connect_started_at < encode_done_at
 
     asyncio.run(_test())
@@ -473,12 +474,15 @@ def test_picksmart_transfer_end_frames(frame, at, expect):
 
         img = Image.new("RGB", (296, 128), "white")
         payload_parts = (len(encode_image(img, PRESETS["0x0033"])) + 239) // 240
-        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        trace = SessionTrace()
+        client = PickSmartClient(
+            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, trace=trace
+        )
 
         if expect == "completed":
             result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
             assert result.success is True
-            assert result.timing["completed_by_tag"] is True
+            assert trace.facts["completed_by_tag"] is True
         else:
             with pytest.raises(PickSmartError, match=expect):
                 await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
@@ -493,9 +497,8 @@ def _done(value):
 
 
 def test_failed_start_probes_carry_timing(monkeypatch):
-    """When every START goes unanswered, the failed WriteResult still says
-    how many probes were sent, so the settle/probe budget can be tuned."""
-    from custom_components.ble_esl.esl_ble import base
+    """When every START goes unanswered, the trace still says how many
+    probes were sent, so the settle/probe budget can be tuned."""
 
     async def _test():
         _fast_probe(monkeypatch)
@@ -508,19 +511,22 @@ def test_failed_start_probes_carry_timing(monkeypatch):
         mock_client.services = [
             MagicMock(uuid="0000fef0-0000-1000-8000-00805f9b34fb", characteristics=[char, char2])
         ]
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=mock_client))
+        monkeypatch.setattr(
+            session_mod, "establish_connection", AsyncMock(return_value=mock_client)
+        )
 
         prepared = asyncio.get_running_loop().create_future()
         prepared.set_result(b"\x00" * 480)
-        result = await esl_ble.get("picksmart").write_prepared(
-            MagicMock(address=MAC), PRESETS["0x0033"], prepared
-        )
+        trace = esl_ble.get("picksmart").new_trace()
+        with pytest.raises(NotificationTimeout, match="after 3 probes"):
+            await esl_ble.get("picksmart").write_prepared(
+                MagicMock(address=MAC), PRESETS["0x0033"], prepared, trace=trace
+            )
 
-        assert result.success is False
-        assert "after 3 probes" in result.error
-        assert result.timing["start_probes"] == 3
-        assert result.timing["settle_s"] == 0.0
-        assert {"connect_s", "session_s"} <= result.timing.keys()
+        assert trace.facts["start_probes"] == 3
+        assert trace.facts["settle_s"] == 0.0
+        assert {"connect", "handshake", "session"} <= trace.timings.keys()
+        assert (trace.failed_primary, trace.failed_detail) == ("auth", "handshake")
 
     asyncio.run(_test())
 
@@ -564,14 +570,15 @@ def test_pacing_applies_to_image_parts_not_the_handshake(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
+        trace = SessionTrace()
         client = PickSmartClient(
-            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, pacing_s=0.05
+            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, pacing_s=0.05, trace=trace
         )
         result = await client.write_payload(
             prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
         )
 
         assert result.success is True
-        assert sleeps == [0.05] * result.timing["parts"]  # one per part, none for the handshake
+        assert sleeps == [0.05] * trace.facts["parts"]  # one per part, none for the handshake
 
     asyncio.run(_test())

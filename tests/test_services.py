@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+from unittest.mock import patch
 
+from blesession import LinkInfo, generic_cause
 from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
@@ -17,6 +19,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
+from writes import fail, ok
 
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
@@ -78,11 +81,16 @@ async def test_write_sends_rendered_image_and_updates_image_entity(
     assert tag_writer.write_prepared.await_count == 1
     assert tag_writer.sent_image().size == (296, 128)
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state != "unknown"
-    assert wolink_entry.runtime_data.last_write_timing == {
-        "attempt": 1,
+    report = wolink_entry.runtime_data.last_write_timing
+    radio = {k: report.pop(k) for k in ("via", "via_type", "rssi", "paths") if k in report}
+    assert report == {
+        "operation": "write",
         "success": True,
+        "attempt": 1,
+        "attempts": 3,
         "transfer_s": 0.1,
     }
+    assert "paths" in radio  # the radio itself is covered by the tests below
     # ...and the Write Duration sensor carries it as attributes for monitoring.
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["attempt"] == 1 and attrs["success"] is True and attrs["transfer_s"] == 0.1
@@ -117,12 +125,14 @@ async def test_write_reports_the_radio_it_went_through(
     # even when another radio holds the stronger advertisement.
     other = register_proxy(hass, "esp-kitchen", "AA:BB:CC:00:00:02")
     other.inject_advertisement(wolink_service_info(rssi=-50))
-    tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1}, scanner=proxy)
+    tag_writer.write_result = ok(transfer=0.1, link=LinkInfo(via=proxy))
     await call(hass, "write", device_id_of(hass))
 
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via"] == "esp-livingroom (AA:BB:CC:00:00:01)" and attrs["rssi"] == -71
     assert attrs["paths"] == 2
+    # The radio with the strongest advertisement is named when it is not the one used.
+    assert attrs["advertised_via"] == "esp-kitchen (AA:BB:CC:00:00:02)"
 
 
 async def test_likely_cause_reads_stage_error_and_radio(
@@ -133,10 +143,8 @@ async def test_likely_cause_reads_stage_error_and_radio(
     proxy = register_proxy(hass, "esp-kitchen", "AA:BB:CC:00:00:09")
     proxy.inject_advertisement(wolink_service_info(rssi=-91))
     await setup_entry(hass, options={CONF_RETRY_COUNT: 1}, advertise=False)
-    tag_writer.write_result = WriteResult(
-        success=False,
-        error="Transfer stalled: part 3/40 requested 6 times",
-        timing={"connect_s": 0.2, "start_s": 0.3, "transfer_s": 4.0, "resends": 5},
+    tag_writer.write_result = fail(
+        "Transfer stalled: part 3/40 requested 6 times", connect=0.2, handshake=0.3, transfer=4.0
     )
 
     with pytest.raises(HomeAssistantError):
@@ -172,14 +180,14 @@ async def test_likely_cause_reads_stage_error_and_radio(
         ),
         # A handshake that goes unanswered is not an unexpected answer.
         (
-            "handshake",
-            "No response from tag within 5s after command 0x01",
+            "auth",
+            "No response from device within 5s after command 0x01",
             {},
             "xte",
             "The tag did not answer the handshake: not ready, or the link dropped.",
         ),
         (
-            "handshake",
+            "auth",
             "device error 5: unlock (auth) failed",
             {},
             "wolink",
@@ -188,7 +196,7 @@ async def test_likely_cause_reads_stage_error_and_radio(
         # The completion wait is the panel on WOLINK/easyTag, the end-command ack on XTE.
         (
             "finish",
-            "No response from tag within 30s after refresh",
+            "No response from device within 30s after refresh",
             {},
             "wolink",
             "The tag took the image but did not report the refresh done in time: "
@@ -196,7 +204,7 @@ async def test_likely_cause_reads_stage_error_and_radio(
         ),
         (
             "finish",
-            "No response from tag within 5s after command 0x04",
+            "No response from device within 5s after command 0x04",
             {},
             "xte",
             "The tag took the image but did not acknowledge the end command.",
@@ -211,7 +219,11 @@ async def test_likely_cause_reads_stage_error_and_radio(
     ],
 )
 def test_likely_cause_wording(stage, error, via, backend, expected) -> None:
-    assert _likely_cause(stage, error, via, backend) == expected
+    """The tag's own sentences first; blesession's generic ones where it has none."""
+    sentence = _likely_cause(stage, error, via, backend)
+    if sentence is None:
+        sentence = generic_cause(stage, error, via, noun="tag")
+    assert sentence == expected
 
 
 async def test_write_reports_a_local_adapter(
@@ -246,7 +258,7 @@ async def test_unavailable_handle_counts_as_failed_attempts(
     await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
     tag_writer.available = False
 
-    with pytest.raises(HomeAssistantError, match="unavailable"):
+    with pytest.raises(HomeAssistantError, match="No connectable radio sees"):
         await call(hass, "write", device_id_of(hass))
 
     assert tag_writer.write_prepared.await_count == 0
@@ -265,12 +277,12 @@ async def test_ble_handle_resolved_per_attempt(
         return WriteResult(success=True)
 
     tag_writer.write_hook = become_available
-    from custom_components.ble_esl import services as svc
+    from blesession import attempts as attempts_mod
 
     async def sleep_then_available(*args, **kwargs):
         tag_writer.available = True
 
-    svc.sleep.side_effect = sleep_then_available  # the retry backoff (already stubbed)
+    attempts_mod.sleep.side_effect = sleep_then_available  # the retry pause (already stubbed)
 
     await call(hass, "write", device_id_of(hass))
     assert tag_writer.write_prepared.await_count == 1
@@ -281,7 +293,7 @@ async def test_failed_write_after_retries(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
     await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
-    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
+    tag_writer.write_result = fail("boom", connect=0.5)
 
     with pytest.raises(HomeAssistantError, match="after 3 attempts: boom"):
         await call(hass, "write", device_id_of(hass))
@@ -291,7 +303,7 @@ async def test_failed_write_after_retries(
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert (attrs["attempt"], attrs["success"], attrs["error"]) == (3, False, "boom")
-    assert attrs["failed_stage"] == "connect"  # the stub reports no session
+    assert attrs["failed_stage"] == "connect"  # the stub died in `connect`
     assert attrs["likely_cause"].startswith("The BLE link could not be established.")
     # The failed write's breakdown is also on Last Failure Time...
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
@@ -299,7 +311,7 @@ async def test_failed_write_after_retries(
     assert failed["failed_stage"] == "connect"
 
     # ...and stays there after a later write succeeds, while Write Duration moves on.
-    tag_writer.write_result = WriteResult(success=True, timing={"transfer_s": 0.1})
+    tag_writer.write_result = ok(transfer=0.1)
     await call(hass, "write", device_id_of(hass))
     assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"] is True
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
@@ -318,18 +330,10 @@ async def test_retry_pacing_follows_only_transfer_failures(
     await setup_entry(hass, options={CONF_RETRY_COUNT: 4})
     outcomes = iter(
         [
-            WriteResult(success=False, error="connect", timing={"connect_s": 0.4}),
-            WriteResult(
-                success=False,
-                error="stalled",
-                timing={"connect_s": 0.1, "start_s": 0.2, "transfer_s": 1.5, "session_s": 1.7},
-            ),
-            WriteResult(
-                success=False,
-                error="refresh timeout",
-                timing={"connect_s": 0.1, "transfer_s": 1.0, "finish_s": 30.0, "session_s": 31},
-            ),
-            WriteResult(success=True, timing={"transfer_s": 0.9}),
+            fail("connect", connect=0.4),
+            fail("stalled", connect=0.1, handshake=0.2, transfer=1.5),
+            fail("refresh timeout", connect=0.1, transfer=1.0, finish=30.0),
+            ok(transfer=0.9),
         ]
     )
     pacing: list[float] = []
@@ -349,14 +353,10 @@ async def test_retry_pacing_follows_only_transfer_failures(
     assert sensor(hass, "failure_count") == "0"
 
     # The action's response carries the same breakdown, pacing included.
-    outcomes = iter(
-        [
-            WriteResult(success=False, error="stalled", timing={"transfer_s": 1.0}),
-            WriteResult(success=True, timing={"transfer_s": 1.0}),
-        ]
-    )
+    outcomes = iter([fail("stalled", transfer=1.0), ok(transfer=1.0)])
     response = await respond(hass, "write", device_id_of(hass))
-    assert response[device_id_of(hass)]["timing"] == {"pacing_s": 0.05, "transfer_s": 1.0}
+    timing = response[device_id_of(hass)]["timing"]
+    assert (timing["attempt"], timing["transfer_s"], timing["pacing_s"]) == (2, 1.0, 0.05)
 
 
 async def test_encode_once_per_write_reused_across_retries(
@@ -640,14 +640,20 @@ async def test_unexpected_error_keeps_other_targets_failures_as_note(
     await setup_entry(hass, address="66:66:54:20:00:01", options={CONF_RETRY_COUNT: 1})
     await setup_entry(hass, address="66:66:54:20:00:02", options={CONF_RETRY_COUNT: 1})
 
-    async def hook(ble_device, preset, image, **kwargs):
-        if tag_writer.write_prepared.await_count == 1:
-            raise ValueError("bug")
-        return WriteResult(success=False, error="boom")
+    """A bug in the pipeline itself (not a failed attempt: anything the
+    attempt raises is one) keeps its traceback and the other tags' failures."""
+    from custom_components.ble_esl import services as svc
 
-    tag_writer.write_hook = hook
+    real_report = svc._report
+
+    def report(hass, job, attempt):
+        if job.address == "66:66:54:20:00:01":
+            raise ValueError("bug")
+        return real_report(hass, job, attempt)
+
+    tag_writer.write_result = fail("boom")
     targets = [device_id_of(hass, "66:66:54:20:00:01"), device_id_of(hass, "66:66:54:20:00:02")]
-    with pytest.raises(ValueError, match="bug") as excinfo:
+    with patch.object(svc, "_report", report), pytest.raises(ValueError, match="bug") as excinfo:
         await call(hass, "write", targets)
     assert any("boom" in note for note in getattr(excinfo.value, "__notes__", []))
 
@@ -698,7 +704,7 @@ async def test_response_written(hass: HomeAssistant, wolink_entry, tag_writer) -
     assert outcome["status"] == "written"
     assert outcome["attempts"] == 1
     assert outcome["duration_s"] >= 0
-    assert outcome["timing"] == {"transfer_s": 0.1}
+    assert outcome["timing"]["success"] is True and outcome["timing"]["transfer_s"] == 0.1
 
 
 async def test_response_reports_failure_instead_of_raising(
@@ -706,7 +712,7 @@ async def test_response_reports_failure_instead_of_raising(
 ) -> None:
     """With a response requested, a failed tag is reported, not raised."""
     await setup_entry(hass, options={CONF_RETRY_COUNT: 2})
-    tag_writer.write_result = WriteResult(success=False, error="boom", timing={"connect_s": 0.5})
+    tag_writer.write_result = fail("boom", connect=0.5)
 
     response = await respond(hass, "write", device_id_of(hass))
 
@@ -714,11 +720,18 @@ async def test_response_reports_failure_instead_of_raising(
     assert outcome["status"] == "failed"
     assert outcome["error"] == "boom"
     assert outcome["attempts"] == 2
-    assert outcome["timing"] == {
-        "failed_stage": "connect",
-        "likely_cause": "The BLE link could not be established.",
-        "connect_s": 0.5,
-    }
+    timing = outcome["timing"]
+    assert list(timing)[:6] == [
+        "operation",
+        "success",
+        "error",
+        "failed_stage",
+        "likely_cause",
+        "attempt",
+    ]
+    assert timing["failed_stage"] == "connect"
+    assert timing["likely_cause"] == "The BLE link could not be established."
+    assert timing["connect_s"] == 0.5
     assert sensor(hass, "failure_count") == "1"  # sensors still updated
 
 
@@ -858,8 +871,8 @@ async def test_other_tags_write_between_a_failing_tags_attempts(
     async def hook(ble_device, preset, image, **kwargs):
         order.append(ble_device.address[-2:])
         if ble_device.address == a and order.count("01") == 1:
-            return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
-        return WriteResult(success=True, timing={"transfer_s": 0.1})
+            return fail("first try", connect=0.1)
+        return ok(transfer=0.1)
 
     tag_writer.write_hook = hook
     response = await respond(hass, "write", [device_id_of(hass, a), device_id_of(hass, b)])
@@ -882,8 +895,8 @@ async def test_two_writes_to_one_tag_do_not_interleave(
         calls += 1
         order.append(f"w{image.getpixel((0, 0))[0]}")
         if calls == 1:
-            return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
-        return WriteResult(success=True, timing={"transfer_s": 0.1})
+            return fail("first try", connect=0.1)
+        return ok(transfer=0.1)
 
     tag_writer.write_hook = hook
     device_id = device_id_of(hass)
@@ -904,7 +917,7 @@ async def test_guards_are_rechecked_before_a_retry(
 
     async def hook(ble_device, preset, image, **kwargs):
         data.write_lock = True  # flipped during attempt 1
-        return WriteResult(success=False, error="first try", timing={"connect_s": 0.1})
+        return fail("first try", connect=0.1)
 
     tag_writer.write_hook = hook
     response = await respond(hass, "write", device_id_of(hass))
@@ -915,20 +928,25 @@ async def test_guards_are_rechecked_before_a_retry(
 
 
 async def test_timed_out_attempt_is_not_retried(
-    hass: HomeAssistant, enable_bluetooth, tag_writer
+    hass: HomeAssistant, enable_bluetooth, tag_writer, monkeypatch
 ) -> None:
     """An attempt that hit the bound means a dead transport; the write fails
     without spending the remaining retries on the same path."""
     await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
-    tag_writer.write_result = WriteResult(
-        success=False,
-        error="Attempt timed out after 600s",
-        timing={"connect_s": 0.2, "transfer_s": 599.0},
-        timed_out=True,
-    )
+    from custom_components.ble_esl import services as svc
 
+    monkeypatch.setattr(svc, "ATTEMPT_TIMEOUT_S", 0.05)
+
+    async def hang(ble_device, preset, image, *, trace, **kwargs):
+        with trace.timed("transfer"):
+            await asyncio.Event().wait()
+
+    tag_writer.write_hook = hang
     with pytest.raises(HomeAssistantError, match="after 1 attempts: Attempt timed out"):
         await call(hass, "write", device_id_of(hass))
 
     assert tag_writer.write_prepared.await_count == 1
     assert sensor(hass, "failure_count") == "1"
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert failed["timed_out"] is True and failed["failed_stage"] == "transfer"
+    assert "cut at its bound" in failed["likely_cause"]

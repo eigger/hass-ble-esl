@@ -3,21 +3,23 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
 
+from blesession import session as session_mod
+from blesession.testing import FakeClient, FakeDevice, fake_connect
 from bt import service_info, update_device
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble import base
 from custom_components.ble_esl.esl_ble.base import (
+    STAGE_HANDSHAKE,
+    STAGE_MAP,
+    STAGE_TRANSFER,
     BleBackend,
     BleParser,
     Capabilities,
     DevicePreset,
     ProtocolContractError,
     WriteResult,
-    WriteTiming,
     battery_percent,
 )
 
@@ -170,133 +172,6 @@ def test_registry_rejects_duplicate_ids(monkeypatch):
         esl_ble.register(type("Dup", (_Backend,), {})())
 
 
-def test_write_prepared_wraps_session_errors_and_disconnects(monkeypatch):
-    """Errors raised inside write_session become a failed WriteResult; the
-    link is closed either way; the caller-owned encode future is untouched."""
-
-    class Backend(_Backend):
-        id = "t2"
-
-        async def write_session(self, client, address, preset, prepared, **kwargs):
-            assert address == "AA:BB:CC:DD:EE:FF"
-            await prepared
-            raise TimeoutError()  # empty str(): falls back to the type name
-
-    async def _test():
-        client = MagicMock(is_connected=True, disconnect=AsyncMock())
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        device = MagicMock(address="AA:BB:CC:DD:EE:FF")
-
-        result = await Backend().write_prepared(device, PRESET, prepared)
-
-        assert (result.success, result.error) == (False, "TimeoutError")
-        assert set(result.timing) == {"connect_s", "session_s"}  # failures are timed too
-        client.disconnect.assert_awaited_once()
-        assert prepared.done() and not prepared.cancelled()
-
-    asyncio.run(_test())
-
-
-# ── Notifications ────────────────────────────────────────────────────────
-
-
-def _notifying_client(*, connected=True, stop_fails=False):
-    client = MagicMock(is_connected=connected)
-    client.handler = None
-
-    async def start_notify(char, handler):
-        client.handler = handler
-
-    client.start_notify = AsyncMock(side_effect=start_notify)
-    client.stop_notify = AsyncMock(side_effect=OSError("gone") if stop_fails else None)
-    return client
-
-
-def test_notifications_next_and_clear():
-    from custom_components.ble_esl.esl_ble.base import Notifications
-
-    async def _test():
-        client = _notifying_client()
-        async with Notifications(client, "char") as replies:
-            client.handler(None, bytearray(b"a"))
-            client.handler(None, bytearray(b"b"))
-            assert replies.clear() == [b"a", b"b"]
-            client.handler(None, bytearray(b"c"))
-            assert await replies.next(0.1, step="cmd") == b"c"
-        client.stop_notify.assert_awaited_once_with("char")
-
-    asyncio.run(_test())
-
-
-def test_notifications_timeout_names_the_step():
-    from custom_components.ble_esl.esl_ble.base import Notifications, NotificationTimeout
-
-    async def _test():
-        async with Notifications(_notifying_client(), "char") as replies:
-            with pytest.raises(
-                NotificationTimeout, match=r"No response from tag within 0\.05s after START"
-            ):
-                await replies.next(0.05, step="START")
-            with pytest.raises(NotificationTimeout, match="after DONE"):
-                await replies.wait_for(lambda d: False, 0.05, step="DONE")
-
-    asyncio.run(_test())
-
-
-def test_notifications_wait_for_skips_and_can_raise():
-    from custom_components.ble_esl.esl_ble.base import Notifications
-
-    def accept(data):
-        if data == b"err":
-            raise ValueError("device error")
-        return data == b"ok"
-
-    async def _test():
-        client = _notifying_client()
-        async with Notifications(client, "char") as replies:
-            client.handler(None, bytearray(b"busy"))
-            client.handler(None, bytearray(b"ok"))
-            assert await replies.wait_for(accept, 0.1, step="x") == b"ok"
-            client.handler(None, bytearray(b"err"))
-            with pytest.raises(ValueError, match="device error"):
-                await replies.wait_for(accept, 0.1, step="x")
-
-    asyncio.run(_test())
-
-
-@pytest.mark.parametrize("connected,stop_fails", [(True, True), (False, False)])
-def test_notifications_unsubscribe_never_masks_the_session_error(connected, stop_fails):
-    from custom_components.ble_esl.esl_ble.base import Notifications
-
-    async def _test():
-        client = _notifying_client(connected=connected, stop_fails=stop_fails)
-        with pytest.raises(RuntimeError, match="transfer failed"):
-            async with Notifications(client, "char"):
-                raise RuntimeError("transfer failed")
-        assert client.stop_notify.await_count == (1 if connected else 0)
-
-    asyncio.run(_test())
-
-
-def test_notifications_settle_after_subscribe(monkeypatch):
-    from custom_components.ble_esl.esl_ble import base
-
-    async def _test():
-        order = []
-        client = _notifying_client()
-        client.start_notify = AsyncMock(side_effect=lambda *a: order.append("subscribe"))
-        monkeypatch.setattr(
-            base.asyncio, "sleep", AsyncMock(side_effect=lambda s: order.append(f"sleep {s}"))
-        )
-        async with base.Notifications(client, "char", settle=0.5):
-            order.append("body")
-        assert order == ["subscribe", "sleep 0.5", "body"]
-
-    asyncio.run(_test())
-
-
 def test_preset_for_falls_back_to_first_preset():
     backend = _Backend()
     assert backend.preset_for("p") is PRESET
@@ -304,195 +179,122 @@ def test_preset_for_falls_back_to_first_preset():
     assert backend.preset_for(None) is PRESET
 
 
-def test_write_prepared_records_connect_and_session_timing(monkeypatch):
-    class Backend(_Backend):
-        id = "t3"
+# ── Write path ───────────────────────────────────────────────────────────
+#
+# The session skeleton (connect / disconnect / notifications / the attempt
+# bound) is blesession's and tested there; these cover what base.py adds:
+# the trace it hands the writer and how a failure comes back.
 
-        async def write_session(self, client, address, preset, prepared, **kwargs):
+
+def _prepared():
+    prepared = asyncio.get_running_loop().create_future()
+    prepared.set_result(b"x")
+    return prepared
+
+
+def _connected(monkeypatch, client=None):
+    client = client or FakeClient()
+    monkeypatch.setattr(session_mod, "establish_connection", fake_connect(client))
+    return client
+
+
+def test_write_prepared_propagates_session_errors_and_disconnects(monkeypatch):
+    """Errors raised inside write_session propagate with the stage on the
+    trace; the link is closed either way; the caller-owned encode future is
+    untouched."""
+
+    class Backend(_Backend):
+        id = "t2"
+
+        async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
+            assert address == "AA:BB:CC:DD:EE:FF"
             await prepared
-            return WriteResult(success=True, timing={"transfer_s": 0.5})
+            raise TimeoutError()
 
     async def _test():
-        client = MagicMock(is_connected=True, disconnect=AsyncMock())
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        result = await Backend().write_prepared(
-            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
-        )
-        assert result.success
-        assert list(result.timing) == ["connect_s", "transfer_s", "session_s"]
-        assert all(v >= 0 for v in result.timing.values())
+        client = _connected(monkeypatch)
+        prepared = _prepared()
+        trace = Backend().new_trace()
+
+        with pytest.raises(TimeoutError):
+            await Backend().write_prepared(FakeDevice(), PRESET, prepared, trace=trace)
+
+        # Before any protocol stage: the session itself is where it died.
+        assert trace.failed_primary == "session"
+        assert set(trace.timings) == {"connect", "session", "disconnect"}
+        assert client.disconnects == 1
+        assert prepared.done() and not prepared.cancelled()
 
     asyncio.run(_test())
 
 
-@pytest.mark.parametrize(
-    ("success", "timing", "stage"),
-    [
-        (False, {}, "unreachable"),  # no handle: nothing was tried
-        (False, {"connect_s": 0.5}, "connect"),  # never connected
-        (False, {"connect_s": 0.1, "session_s": 0.2}, "session"),  # before the first stage
-        (False, {"connect_s": 0.1, "start_s": 0.3, "session_s": 0.4}, "handshake"),
-        (False, {"connect_s": 0.1, "start_s": 0.3, "transfer_s": 2.0}, "transfer"),
-        (False, {"connect_s": 0.1, "transfer_s": 2.0, "finish_s": 30.0}, "finish"),  # panel
-        (True, {"connect_s": 0.1, "transfer_s": 2.0}, None),
-    ],
-)
-def test_failed_stage_reads_the_stages(success, timing, stage):
-    result = WriteResult(success=success, timing=timing)
-    assert result.failed_stage == stage
-    assert result.failed_in_transfer is (stage == "transfer")
+def test_write_prepared_times_connect_and_session_around_the_writer(monkeypatch):
+    class Backend(_Backend):
+        id = "t3"
+
+        async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
+            await prepared
+            with trace.timed(STAGE_HANDSHAKE):
+                pass
+            with trace.timed(STAGE_TRANSFER):
+                pass
+            return WriteResult(success=True)
+
+    async def _test():
+        _connected(monkeypatch)
+        trace = Backend().new_trace()
+        result = await Backend().write_prepared(FakeDevice(), PRESET, _prepared(), trace=trace)
+        assert result.success
+        assert list(trace.timings) == ["connect", "handshake", "transfer", "session", "disconnect"]
+        assert trace.failed_stage is None
+
+    asyncio.run(_test())
 
 
-def test_write_timing_stages_record_success_and_failure():
-    """A stage records its elapsed time whether it returns or raises, and
-    reported() hangs the whole dict on the exception for write_prepared()."""
-    timing = WriteTiming(settle_s=0.5)
-    with timing.stage("start_s"):
-        pass
-    with pytest.raises(ValueError) as caught, timing.reported(), timing.stage("transfer_s"):
-        raise ValueError("boom")
-    assert caught.value.timing is timing
-    assert list(timing) == ["settle_s", "start_s", "transfer_s"]
-    assert timing["start_s"] >= 0 and timing["transfer_s"] >= 0
+def test_new_trace_maps_the_handshake_to_auth():
+    trace = _Backend().new_trace()
+    with pytest.raises(ValueError), trace.timed(STAGE_HANDSHAKE):
+        raise ValueError
+    assert trace.failed_stage == "handshake"
+    assert trace.failed_primary == "auth"
+    assert trace.failed_detail == "handshake"
 
 
-def test_write_prepared_passes_on_the_connected_scanner(monkeypatch):
-    """The scanner the client wrapper connected through is handed to the
-    integration on success and failure; a client without one yields None."""
+def test_write_prepared_records_the_link(monkeypatch):
+    """Which radio the link took is on the trace for the integration to name."""
 
     class Backend(_Backend):
         id = "t4"
 
-        async def write_session(self, client, address, preset, prepared, **kwargs):
+        async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
             await prepared
-            if client.fail:
-                raise OSError("gone")
             return WriteResult(success=True)
 
-    async def _test(fail):
-        scanner = object()
-        client = MagicMock(is_connected=True, disconnect=AsyncMock(), fail=fail)
-        client._connected_scanner = scanner
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        result = await Backend().write_prepared(
-            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
+    async def _test():
+        client = FakeClient()
+        client._connected_scanner = scanner = object()
+        _connected(monkeypatch, client)
+        trace = Backend().new_trace()
+        await Backend().write_prepared(
+            FakeDevice(details={"source": "AA:11"}), PRESET, _prepared(), trace=trace
         )
-        assert result.success is (not fail)
-        assert result.scanner is scanner
+        assert trace.link is not None
+        assert trace.link.via is scanner and trace.link.source == "AA:11"
 
-    asyncio.run(_test(False))
-    asyncio.run(_test(True))
-
-    async def _no_handle():
-        client = MagicMock(
-            is_connected=True, disconnect=AsyncMock(), spec=["is_connected", "disconnect"]
-        )
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        backend = Backend()
-
-        async def ok(client, address, preset, prepared, **kwargs):
-            return WriteResult(success=True)
-
-        backend.write_session = ok
-        result = await backend.write_prepared(
-            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
-        )
-        assert result.scanner is None
-
-    asyncio.run(_no_handle())
+    asyncio.run(_test())
 
 
-def test_attempt_that_hangs_is_bounded_and_keeps_its_stages(monkeypatch):
-    """A session that never returns (a proxy dying mid-write) ends as a failed
-    attempt after ATTEMPT_TIMEOUT_S with the stages it did record, so the BLE
-    lock is released and the retry loop and failure sensors see it."""
-    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
-
+def test_write_prepared_without_a_trace_makes_its_own(monkeypatch):
     class Backend(_Backend):
         id = "t5"
 
-        async def write_session(self, client, address, preset, prepared, **kwargs):
+        async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
             await prepared
-            timing = WriteTiming(settle_s=0.0)
-            with timing.reported(), timing.stage("start_s"):
-                pass
-            with timing.reported(), timing.stage("transfer_s"):
-                await asyncio.Event().wait()  # hangs forever
-            return WriteResult(success=True, timing=timing)
+            assert trace.stage_map == STAGE_MAP
+            return WriteResult(success=True)
 
     async def _test():
-        client = MagicMock(is_connected=True, disconnect=AsyncMock())
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        result = await Backend().write_prepared(
-            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
-        )
-        assert result.success is False
-        assert result.error == "Attempt timed out after 0.05s"
-        assert {"connect_s", "start_s", "transfer_s", "session_s"} <= result.timing.keys()
-        assert result.failed_stage == "transfer"
-        client.disconnect.assert_awaited_once()  # the link is not left open
-
-    asyncio.run(_test())
-
-
-def test_attempt_timeout_covers_connecting(monkeypatch):
-    """Connecting is inside the bound too: a connect that never returns fails."""
-    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
-
-    class Backend(_Backend):
-        id = "t6"
-
-    async def _test():
-        async def hang(*args, **kwargs):
-            await asyncio.Event().wait()
-
-        monkeypatch.setattr(base, "establish_connection", hang)
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        result = await Backend().write_prepared(
-            MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared
-        )
-        assert result.success is False
-        assert result.error == "Attempt timed out after 0.05s"
-        assert result.failed_stage == "connect"
-
-    asyncio.run(_test())
-
-
-def test_hung_disconnect_does_not_hold_the_attempt(monkeypatch):
-    """After a timed-out attempt the disconnect can hang on the same dead
-    proxy; it is bounded separately so the attempt still returns."""
-    monkeypatch.setattr(base, "ATTEMPT_TIMEOUT_S", 0.05)
-    monkeypatch.setattr(base, "DISCONNECT_TIMEOUT_S", 0.05)
-
-    class Backend(_Backend):
-        id = "t7"
-
-        async def write_session(self, client, address, preset, prepared, **kwargs):
-            await asyncio.Event().wait()
-
-    async def _test():
-        async def hang(*args, **kwargs):
-            await asyncio.Event().wait()
-
-        client = MagicMock(is_connected=True, disconnect=AsyncMock(side_effect=hang))
-        monkeypatch.setattr(base, "establish_connection", AsyncMock(return_value=client))
-        prepared = asyncio.get_running_loop().create_future()
-        prepared.set_result(b"x")
-        result = await asyncio.wait_for(
-            Backend().write_prepared(MagicMock(address="AA:BB:CC:DD:EE:FF"), PRESET, prepared),
-            timeout=1,
-        )
-        assert result.success is False
-        assert result.error == "Attempt timed out after 0.05s"
-        client.disconnect.assert_awaited_once()
+        _connected(monkeypatch)
+        assert (await Backend().write_prepared(FakeDevice(), PRESET, _prepared())).success
 
     asyncio.run(_test())

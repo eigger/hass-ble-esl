@@ -15,6 +15,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 from bleak.backends.device import BLEDevice
+from blesession import attempts as attempts_mod
 from bt import inject_bluetooth_service_info, service_info
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -22,6 +23,7 @@ from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH
 from PIL import Image
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from writes import Scripted, ok, play
 
 from custom_components.ble_esl import services as svc
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL, DOMAIN
@@ -100,17 +102,18 @@ async def wolink_entry(hass: HomeAssistant, enable_bluetooth: None) -> MockConfi
 class TagWriter:
     """Stubbed write path of the WOLINK backend, steerable per test.
 
-    The real pipeline (services, lock, debounce, retries, sensors) runs; only
-    the encode and the BLE transfer are replaced. Like a real backend, the
-    stub awaits the encode future before "writing".
+    The real pipeline (services, lock, debounce, retries, the report, sensors)
+    runs; only the encode and the BLE transfer are replaced. Like a real
+    backend, the stub awaits the encode future before "writing", times its
+    stages on the trace it is handed and raises on failure — from
+    `write_result` (a `writes.Scripted`, or a WriteResult) or `write_hook`
+    (called with the trace; may return either or raise itself).
     """
 
     write_prepared: AsyncMock
     available: bool = True
-    write_result: WriteResult = field(
-        default_factory=lambda: WriteResult(success=True, timing={"transfer_s": 0.1})
-    )
-    write_hook: Callable[..., Awaitable[WriteResult]] | None = None
+    write_result: Scripted | WriteResult = field(default_factory=lambda: ok(transfer=0.1))
+    write_hook: Callable[..., Awaitable[Scripted | WriteResult]] | None = None
     encoded: list[str] = field(default_factory=list)
     """Addresses whose image has been encoded (prepare_image ran), in order."""
 
@@ -127,8 +130,10 @@ def tag_writer() -> TagWriter:
     async def fake_write_prepared(ble_device, preset, prepared, **kwargs):
         image = await prepared
         if writer.write_hook is not None:
-            return await writer.write_hook(ble_device, preset, image, **kwargs)
-        return writer.write_result
+            outcome = await writer.write_hook(ble_device, preset, image, **kwargs)
+        else:
+            outcome = writer.write_result
+        return play(outcome, kwargs["trace"])
 
     writer.write_prepared.side_effect = fake_write_prepared
 
@@ -153,6 +158,6 @@ def tag_writer() -> TagWriter:
             "async_ble_device_from_address",
             lambda hass, address: BLEDevice(address, "WOLINK", {}) if writer.available else None,
         ),
-        patch.object(svc, "sleep", AsyncMock()),  # retry backoff
+        patch.object(attempts_mod, "sleep", AsyncMock()),  # the retry pause
     ):
         yield writer

@@ -62,9 +62,10 @@ class BleEslRuntimeData:
     already fired but is still queued on the BLE lock is dropped if its
     generation no longer matches."""
     last_write_timing: dict[str, float | int | bool | str] | None = None
-    """The most recent write attempt: attempt, success, error (if any) and the
-    per-stage timings (see WriteResult.timing). Shown as the Write Duration
-    sensor's attributes so it can be monitored without debug logging."""
+    """The most recent write attempt as blesession's report: outcome, where it
+    failed and why, the radio, the per-stage timings (see services._report).
+    Shown as the Write Duration sensor's attributes so it can be monitored
+    without debug logging."""
     last_failure_timing: dict[str, float | int | bool | str] | None = None
     """The final attempt of the most recent *failed* write, in the same shape.
     Shown as the Last Failure Time sensor's attributes: a later successful

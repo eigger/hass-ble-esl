@@ -4,6 +4,7 @@ import asyncio
 import dataclasses
 from types import SimpleNamespace
 
+from blesession import SessionTrace
 from PIL import Image
 import pytest
 
@@ -216,13 +217,15 @@ class FakeClient:
 def test_transport_sequence(write_limit):
     client = FakeClient(mtu_payload=write_limit)
     image = Image.new("RGB", (400, 300), "white")
-    timing = asyncio.run(_client(client).write_object(prepare(PSJ_420, image, "")))
+    trace = SessionTrace()
+    asyncio.run(_client(client, trace=trace).write_object(prepare(PSJ_420, image, "")))
     obj = make_image_object(b"\x55" * 30000, 400, 300)
     expected = [make_command(b"\x01" + len(obj).to_bytes(4, "big"))]
     chunk_size = min(244, write_limit)
-    assert timing["chunk_size"] == chunk_size
-    assert timing["bytes"] == len(obj)
-    assert {"settle_s", "start_s", "parts", "transfer_s", "finish_s"} <= timing.keys()
+    assert trace.facts["chunk_size"] == chunk_size
+    assert trace.facts["bytes"] == len(obj)
+    assert {"settle_s", "parts"} <= trace.facts.keys()
+    assert list(trace.timings) == ["handshake", "transfer", "finish"]
     for block in make_blocks(obj):
         expected.extend(block[i : i + chunk_size] for i in range(0, len(block), chunk_size))
     expected.append(make_command(b"\x04\x00"))
@@ -297,7 +300,7 @@ def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
 
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
     client = FakeClient(mtu_payload=20)
-    assert asyncio.run(
+    asyncio.run(
         XteClient(client, pacing_s=0.05).write_object(
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
         )

@@ -9,7 +9,7 @@ async_setup(); handlers look up the targeted config entries at call time.
 from __future__ import annotations
 
 import asyncio
-from asyncio import Future, Lock, sleep
+from asyncio import Future, Lock
 from collections.abc import Awaitable, Callable
 import contextlib
 import dataclasses
@@ -21,14 +21,9 @@ import logging
 import time
 from typing import Any
 
-from homeassistant.components.bluetooth import (
-    BaseHaRemoteScanner,
-    BaseHaScanner,
-    async_ble_device_from_address,
-    async_last_service_info,
-    async_scanner_by_source,
-    async_scanner_devices_by_address,
-)
+from blesession import Attempt, Unreachable, placement, report_attempt, run_attempts, stages
+from blesession.hass import radio_facts
+from homeassistant.components.bluetooth import async_ble_device_from_address
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -59,7 +54,7 @@ from .const import (
 from .data import BleEslRuntimeData
 from .device import resolve_preset
 from .esl_ble import WriteResult
-from .esl_ble.base import RETRY_BACKOFF_S, DevicePreset
+from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset, WriteRefused
 from .renderer import render_image
 from .types import BleEslConfigEntry
 
@@ -277,96 +272,66 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
         await asyncio.sleep(1)
 
 
-def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str | int]:
-    """Which radio the write went through, for the Write Duration attributes.
+def _likely_cause(
+    stage: str | None, error: str, facts: dict[str, Any], backend_id: str
+) -> str | None:
+    """The tag's own reading of a failure, or None for blesession's generic one.
 
-    `scanner` is what the backend saw on the client after connecting (newer
-    habluetooth records it). When that is unavailable, the scanner holding
-    the strongest advertisement is reported instead: it is the one the
-    client wrapper tries first, so it is right except after a failover.
+    Keyed on where the attempt died (`stage`, blesession's primary
+    vocabulary), the error text and the protocol. The generic sentences
+    (no radio sees the tag, the link never came up, a weak signal) come
+    from the library; only what is specific to these tags lives here.
     """
-    if not isinstance(scanner, BaseHaScanner):
-        info = async_last_service_info(hass, address, connectable=True)
-        scanner = async_scanner_by_source(hass, info.source) if info else None
-        if scanner is None:
-            return {}
-    via: dict[str, str | int] = {
-        "via": scanner.name,
-        "via_type": "proxy" if isinstance(scanner, BaseHaRemoteScanner) else "adapter",
-    }
-    if seen := scanner.get_discovered_device_advertisement_data(address):
-        via["rssi"] = seen[1].rssi
-    # How many connectable radios currently see the tag: 1 means no failover.
-    via["paths"] = len(async_scanner_devices_by_address(hass, address, connectable=True))
-    return via
-
-
-def _likely_cause(stage: str, error: str | None, via: dict[str, str | int], backend_id: str) -> str:
-    """One sentence on what a failed attempt most likely means.
-
-    Read from where it died (`stage`), the error text, the radio situation
-    and the protocol, so the failure sensors can be understood without the
-    code or the logs. Best effort — `error` keeps the exact detail.
-    """
-    err = (error or "").lower()
+    err = error.lower()
     no_reply = "no response" in err
-    # Placement advice only when the signal is actually weak; a single
-    # radio is the normal case and on its own says nothing about the cause.
-    placement = ""
-    rssi = via.get("rssi")
-    if isinstance(rssi, int) and rssi <= -85:
-        placement = f" The signal is weak ({rssi} dBm via {via.get('via')})"
-        if via.get("paths") == 1:
-            placement += " and no other radio reaches the tag"
-        placement += " — move the tag or add a proxy."
-    if stage == "unreachable":
-        return (
-            "No radio currently sees the tag: out of range, asleep, its battery flat, "
-            "or the adapter / proxy is down."
-        )
-    if stage == "connect":
-        if "slot" in err:
-            return "The proxy has no free connection slot; add a proxy or reduce other BLE connections."
-        return f"The BLE link could not be established.{placement}"
-    if stage == "session":
-        return (
-            "Connected, but the tag dropped or refused the session before the protocol "
-            "started (service discovery / notifications); usually transient — if it "
-            "repeats, the protocol or model may not match this tag."
-        )
-    if stage == "handshake":
+    where = placement(facts, noun="tag")
+    if stage == stages.AUTH:
         if "probes" in err:
             return (
                 "The tag did not answer START after connecting (not ready yet); usually transient."
             )
         if no_reply:
-            return (
-                f"The tag did not answer the handshake: not ready, or the link dropped.{placement}"
-            )
+            return None
         if "device error 5" in err:
             return "The tag rejected authentication: not a WOLINK tag, or different firmware."
         return "The tag answered the handshake unexpectedly; the protocol or model may not match."
-    if stage == "transfer":
+    if stage == stages.TRANSFER:
         if "stalled" in err:
-            return f"The tag kept asking for the same part: a marginal link.{placement}"
+            return f"The tag kept asking for the same part: a marginal link.{where}"
         if no_reply:
-            return f"The tag stopped answering mid-transfer: link dropped or tag reset.{placement}"
+            return None
         if "unexpected" in err:
             return "Unexpected reply mid-transfer; the protocol or model may not match this tag."
-        return f"The transfer failed: {error or 'unknown error'}.{placement}"
-    # finish: what the tag was expected to say depends on the protocol.
-    if "device error" in err:
-        return f"The tag reported an error after the transfer: {error}."
-    if backend_id == "xte":
+        return f"The transfer failed: {error or 'unknown error'}.{where}"
+    if stage == stages.FINISH:
+        # What the tag was expected to say depends on the protocol.
+        if "device error" in err:
+            return f"The tag reported an error after the transfer: {error}."
+        if backend_id == "xte":
+            if no_reply:
+                return f"The tag took the image but did not acknowledge the end command.{where}"
+            return f"The end of the transfer failed: {error or 'unknown error'}."
         if no_reply:
-            return f"The tag took the image but did not acknowledge the end command.{placement}"
-        return f"The end of the transfer failed: {error or 'unknown error'}."
-    if no_reply:
-        return (
-            "The tag took the image but did not report the refresh done in time: "
-            "a slow panel (cold, large) or a tag-side error."
-        )
-    return f"The completion wait failed: {error or 'unknown error'}."
+            return (
+                "The tag took the image but did not report the refresh done in time: "
+                "a slow panel (cold, large) or a tag-side error."
+            )
+        return f"The completion wait failed: {error or 'unknown error'}."
+    return None
+
+
+def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -> dict[str, Any]:
+    """The breakdown of one attempt, as the Write Duration / Last Failure
+    Time attributes, the diagnostics download and the service response show it."""
+    backend_id = job.data.backend.id
+    return report_attempt(
+        attempt,
+        operation="write",
+        facts=radio_facts(hass, job.address, attempt.trace.link),
+        cause=lambda stage, _detail, error, facts: _likely_cause(stage, error, facts, backend_id),
+        noun="tag",
+        attempts=job.max_retries,
+    )
 
 
 def _guard(job: WriteJob) -> WriteOutcome | None:
@@ -390,43 +355,48 @@ def _guard(job: WriteJob) -> WriteOutcome | None:
     return None
 
 
-async def _attempt(hass: HomeAssistant, job: WriteJob, pacing_s: float) -> WriteResult:
-    """One BLE attempt: resolve the handle, write, record the breakdown."""
-    data = job.data
+async def _attempt(
+    hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]
+) -> WriteResult:
+    """One BLE attempt: resolve the handle and write; every failure raises."""
     address = job.address
     assert job.prepared is not None, "run_ble_write() schedules the encode"
     # Resolve the handle fresh each attempt: the one seen at service call
     # time may be stale after a debounce delay or a retry sleep.
     ble_device = async_ble_device_from_address(hass, address)
     if ble_device is None:
-        result = WriteResult(
-            success=False,
-            error="BLE device handle is unavailable (out of range or adapter down)",
-        )
-    else:
-        # The encode was started before the BLE lock was taken; the backend
-        # awaits it once the link is up, and a retry awaits the same future
-        # again instead of re-encoding.
-        result = await data.backend.write_prepared(
-            ble_device,
-            job.preset,
-            job.prepared,
-            pacing_s=pacing_s,
-        )
-    via = _transport(hass, address, result.scanner)
-    failure: dict[str, str] = {}
-    if not result.success and (stage := result.failed_stage):
-        failure = {
-            "failed_stage": stage,
-            "likely_cause": _likely_cause(stage, result.error, via, data.backend.id),
-        }
-    result.timing = {
-        **failure,
-        **({"pacing_s": pacing_s} if pacing_s else {}),
-        **via,
-        **result.timing,
-    }
-    return result
+        raise Unreachable(address)
+    # Packets are paced more only after an attempt that failed *while
+    # transferring*: that is what a marginal link looks like. A failure to
+    # connect or to get through the handshake is retried at full speed.
+    pacing_s = RETRY_BACKOFF_S * attempt.state.get("transfer_failures", 0)
+    if pacing_s:
+        attempt.trace.note(pacing_s=pacing_s)
+    # The encode was started before the BLE lock was taken; the backend
+    # awaits it once the link is up, and a retry awaits the same future
+    # again instead of re-encoding.
+    return await job.data.backend.write_prepared(
+        ble_device,
+        job.preset,
+        job.prepared,
+        pacing_s=pacing_s,
+        trace=attempt.trace,
+    )
+
+
+def _retry(attempt: Attempt[WriteResult]) -> bool:
+    """Whether a failed attempt deserves another; also books the pacing."""
+    if attempt.timed_out:
+        # A timed-out attempt is a dead transport (a proxy gone mid-write);
+        # another 10 minutes on the same path helps nobody, and the next
+        # automation run is the real retry.
+        return False
+    if isinstance(attempt.error, WriteRefused):
+        # The backend declined before connecting; nothing about a retry changes that.
+        return False
+    if attempt.failed_stage == stages.TRANSFER:
+        attempt.state["transfer_failures"] = attempt.state.get("transfer_failures", 0) + 1
+    return True
 
 
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
@@ -434,10 +404,10 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
 
     Two locks: the tag's own `write_serial` for the whole write, so two
     writes to one tag never interleave their attempts and sensor state, and
-    the domain-wide BLE lock for **one attempt at a time**. Between attempts
-    (the retry pause, or after an attempt hit its bound) the BLE lock is
-    free, so a tag that is failing does not hold up every other tag for its
-    whole retry sequence.
+    the domain-wide BLE lock for **one attempt at a time** (blesession's
+    run_attempts). Between attempts (the retry pause, or after an attempt
+    hit its bound) the BLE lock is free, so a tag that is failing does not
+    hold up every other tag for its whole retry sequence.
 
     Returns the "written" outcome (or a guard's outcome); raises WriteFailed
     after the last failed attempt (a HomeAssistantError carrying the
@@ -449,88 +419,92 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     started = False
     duration_task: asyncio.Task[None] | None = None
 
+    async def guard() -> WriteOutcome | None:
+        """Under the BLE lock, before each attempt: the guards, then the
+        duration / connectivity sensors on the first attempt that runs."""
+        nonlocal started, duration_task
+        if (skipped := _guard(job)) is not None:
+            return skipped
+        if not started:
+            started = True
+            data.start_time = time.monotonic()
+            data.duration_coordinator.async_set_updated_data(0.0)
+            data.connectivity_coordinator.async_set_updated_data(True)
+            duration_task = asyncio.create_task(_update_duration_loop(data))
+        return None
+
+    def on_attempt(attempt: Attempt[WriteResult]) -> None:
+        # Every attempt is recorded (with whatever the backend timed) so the
+        # Write Duration sensor's attributes always describe the last one.
+        data.last_write_timing = _report(hass, job, attempt)
+        _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
+        if not attempt.ok:
+            _LOGGER.warning(
+                "Write failed to %s (attempt %d/%d): %s",
+                address,
+                attempt.number,
+                job.max_retries,
+                attempt.error,
+            )
+
     async with data.write_serial:
         try:
-            # Packets are paced more only after an attempt that failed *while
-            # transferring*: that is what a marginal link looks like. A
-            # failure to connect or to get through the handshake is retried
-            # at full speed.
-            transfer_failures = 0
-            for attempt in range(1, job.max_retries + 1):
-                async with ble_lock:
-                    if (skipped := _guard(job)) is not None:
-                        return skipped
-                    if not started:
-                        started = True
-                        data.start_time = time.monotonic()
-                        data.duration_coordinator.async_set_updated_data(0.0)
-                        data.connectivity_coordinator.async_set_updated_data(True)
-                        duration_task = asyncio.create_task(_update_duration_loop(data))
-                    result = await _attempt(hass, job, RETRY_BACKOFF_S * transfer_failures)
-                # Every attempt is recorded (with whatever the backend timed)
-                # so the Write Duration sensor's attributes always describe
-                # the last one.
-                data.last_write_timing = {
-                    "attempt": attempt,
-                    "success": result.success,
-                    **({"error": result.error} if not result.success and result.error else {}),
-                    **result.timing,
-                }
-                _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
-                if result.success:
-                    # Session-based protocols (e.g. easyTag) report battery/temp
-                    # in the write result; others update passively from adverts.
-                    if result.battery_mv is not None:
-                        data.battery_coordinator.async_set_updated_data(result.battery_mv / 1000.0)
-                    if result.temperature_c is not None:
-                        data.temperature_coordinator.async_set_updated_data(result.temperature_c)
-                    data.image_coordinator.async_set_updated_data(job.image_png)
-                    # Only a successful write counts for duplicate detection; a
-                    # failed or locked-out write must not suppress a retry of
-                    # the same payload.
-                    data.last_image_data = job.image_png
-                    data.image_store.set_written(job.image_png, now())
-                    return WriteOutcome(
-                        "written",
-                        attempts=attempt,
-                        duration_s=round(time.monotonic() - data.start_time, 2),
-                        timing=result.timing or None,
-                    )
+            last = await run_attempts(
+                partial(_attempt, hass, job),
+                lock=ble_lock,
+                max_attempts=job.max_retries,
+                attempt_timeout_s=ATTEMPT_TIMEOUT_S,
+                pause_s=1.0,
+                retry_if=_retry,
+                guard=guard,
+                on_attempt=on_attempt,
+                stage_map=STAGE_MAP,
+                name=f"write to {address}",
+            )
+            if last.skipped is not None:
+                return last.skipped
+            timing = data.last_write_timing
+            if last.ok:
+                result = last.result
+                assert result is not None
+                # Session-based protocols (e.g. easyTag) report battery/temp
+                # in the write result; others update passively from adverts.
+                if result.battery_mv is not None:
+                    data.battery_coordinator.async_set_updated_data(result.battery_mv / 1000.0)
+                if result.temperature_c is not None:
+                    data.temperature_coordinator.async_set_updated_data(result.temperature_c)
+                data.image_coordinator.async_set_updated_data(job.image_png)
+                # Only a successful write counts for duplicate detection; a
+                # failed or locked-out write must not suppress a retry of
+                # the same payload.
+                data.last_image_data = job.image_png
+                data.image_store.set_written(job.image_png, now())
+                return WriteOutcome(
+                    "written",
+                    attempts=last.number,
+                    duration_s=round(time.monotonic() - data.start_time, 2),
+                    timing=timing,
+                )
 
-                _LOGGER.warning(
-                    "Write failed to %s (attempt %d/%d): %s",
-                    address,
-                    attempt,
-                    job.max_retries,
-                    result.error,
-                )
-                if attempt < job.max_retries and not result.timed_out:
-                    # A timed-out attempt is a dead transport (a proxy gone
-                    # mid-write); another 10 minutes on the same path helps
-                    # nobody, and the next automation run is the real retry.
-                    transfer_failures += result.failed_in_transfer
-                    await sleep(1)  # BLE lock released: other tags go first
-                    continue
-
-                data.failure_coordinator.async_set_updated_data(
-                    (data.failure_coordinator.data or 0) + 1
-                )
-                # Kept until the next failure; the timestamp update publishes it.
-                # A copy, so nothing that later touches last_write_timing in
-                # place can change the failure record.
-                data.last_failure_timing = dict(data.last_write_timing or {})
-                data.last_failure_coordinator.async_set_updated_data(now())
-                raise WriteFailed(
-                    address,
-                    WriteOutcome(
-                        "failed",
-                        error=result.error or "unknown error",
-                        attempts=attempt,
-                        duration_s=round(time.monotonic() - data.start_time, 2),
-                        timing=result.timing or None,
-                    ),
-                )
-            raise AssertionError("unreachable: max_retries is at least 1")
+            data.failure_coordinator.async_set_updated_data(
+                (data.failure_coordinator.data or 0) + 1
+            )
+            # Kept until the next failure; the timestamp update publishes it.
+            # A copy, so nothing that later touches last_write_timing in
+            # place can change the failure record.
+            data.last_failure_timing = dict(timing or {})
+            data.last_failure_coordinator.async_set_updated_data(now())
+            assert last.error is not None
+            raise WriteFailed(
+                address,
+                WriteOutcome(
+                    "failed",
+                    error=str(last.error) or type(last.error).__name__,
+                    attempts=last.number,
+                    duration_s=round(time.monotonic() - data.start_time, 2),
+                    timing=timing,
+                ),
+            )
         finally:
             if started:
                 assert duration_task is not None

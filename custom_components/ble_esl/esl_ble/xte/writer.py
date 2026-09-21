@@ -7,9 +7,10 @@ from collections.abc import Awaitable
 import logging
 
 from bleak import BleakClient
+from blesession import Notifications, SessionTrace
 from PIL import Image
 
-from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from .protocol import buffer_size, make_blocks, make_command, make_image_object, pack_pixels
 
@@ -19,11 +20,12 @@ _LOGGER = logging.getLogger(__name__)
 class XteClient:
     """Send the observed transaction, requiring both application responses."""
 
-    def __init__(self, client, pacing_s: float = 0.0):
+    def __init__(self, client, pacing_s: float = 0.0, trace: SessionTrace | None = None):
         self.client = client
         self.delay = max(0.0, pacing_s)
         self.timeout = 5.0
         self.settle = NOTIFY_SETTLE_S
+        self.trace = trace if trace is not None else SessionTrace()
         self._replies: Notifications | None = None
 
     async def _write(self, characteristic, data: bytes, chunk_size: int) -> None:
@@ -71,8 +73,8 @@ class XteClient:
             self._expecting(expected_payload), self.timeout, step=f"command {payload[0]:#04x}"
         )
 
-    async def write_object(self, image_object: bytes) -> WriteTiming:
-        """Send an already-encoded XTEK object; returns the stage timings."""
+    async def write_object(self, image_object: bytes) -> None:
+        """Send an already-encoded XTEK object; the stages land on `self.trace`."""
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
             raise ValueError("XTE service missing")
@@ -93,31 +95,30 @@ class XteClient:
             raise ValueError(f"Invalid XTE write-without-response size: {chunk_size}")
         _LOGGER.debug("XTE write chunk size: %s bytes", chunk_size)
         blocks = make_blocks(image_object)
-        timing = WriteTiming(
+        trace = self.trace
+        trace.note(
             settle_s=self.settle,
             parts=len(blocks),
             bytes=len(image_object),
             chunk_size=chunk_size,
         )
-        with timing.reported():
-            async with Notifications(self.client, notify_char, settle=self.settle) as replies:
-                self._replies = replies
-                with timing.stage("start_s"):
-                    await self._command(
-                        write_char,
-                        b"\x01" + len(image_object).to_bytes(4, "big"),
-                        chunk_size,
-                        bytes.fromhex("01ffbd"),
-                    )
-                # Blocks are not acknowledged individually, so transfer_s is
-                # pacing plus the backend's write-without-response throughput.
-                with timing.stage("transfer_s"):
-                    for block in blocks:
-                        await self._write(write_char, block, chunk_size)
-                # The end command is answered once the tag has taken the image.
-                with timing.stage("finish_s"):
-                    await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
-        return timing
+        async with Notifications(self.client, notify_char, settle=self.settle) as replies:
+            self._replies = replies
+            with trace.timed(STAGE_HANDSHAKE):
+                await self._command(
+                    write_char,
+                    b"\x01" + len(image_object).to_bytes(4, "big"),
+                    chunk_size,
+                    bytes.fromhex("01ffbd"),
+                )
+            # Blocks are not acknowledged individually, so the transfer stage
+            # is pacing plus the backend's write-without-response throughput.
+            with trace.timed(STAGE_TRANSFER):
+                for block in blocks:
+                    await self._write(write_char, block, chunk_size)
+            # The end command is answered once the tag has taken the image.
+            with trace.timed(STAGE_FINISH):
+                await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
@@ -133,7 +134,8 @@ async def write_session(
     prepared: Awaitable[bytes],
     *,
     pacing_s: float = 0.0,
+    trace: SessionTrace,
 ) -> WriteResult:
     """Send an encoded XTEK object over an open link."""
-    timing = await XteClient(client, pacing_s).write_object(await prepared)
-    return WriteResult(success=True, timing=timing)
+    await XteClient(client, pacing_s, trace).write_object(await prepared)
+    return WriteResult(success=True)

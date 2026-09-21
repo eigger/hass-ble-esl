@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from abc import ABC
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping
-import contextlib
+from collections.abc import Awaitable, Mapping
 from dataclasses import dataclass, field
 import logging
-import time
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
-from bleak_retry_connector import establish_connection
+from blesession import SessionTrace, ble_session, stages
 from bluetooth_sensor_state_data import BluetoothData
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
@@ -24,7 +22,8 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 ATTEMPT_TIMEOUT_S = 600.0
-"""Upper bound on one write attempt, connecting included.
+"""Upper bound on one write attempt, connecting included (applied by the
+integration's run_attempts()).
 
 Every protocol step has its own timeout, but a GATT write has none: a
 proxy that dies mid-transfer can leave the attempt hanging, and since it
@@ -34,9 +33,27 @@ retries for up to ~1.5 min, a 13.3" WOLINK image takes ~1 min to transfer
 (more on a paced retry) and up to 2 min to refresh — about 5 min in all.
 """
 
-DISCONNECT_TIMEOUT_S = 10.0
-"""Bound on the disconnect after a session, which runs outside the attempt
-bound (see ble_session)."""
+# The stages a write goes through, as the writers time them on the
+# SessionTrace. `connect`, `session` and `disconnect` come from
+# blesession.ble_session(); the rest are the protocol's own. Every protocol
+# has the same shape — a handshake before the data, the data transfer, and
+# a wait for the tag to confirm — so tuning advice carries over between
+# them:
+#
+#     handshake   START / authentication / size command
+#     transfer    sending the image data
+#     finish      from the last data frame to the tag's completion reply:
+#                 the panel refresh on WOLINK and easyTag, the end-command
+#                 reply on XTE
+#
+# `handshake` is the tag's name for blesession's `auth` stage; the report
+# shows `failed_stage: auth, failed_detail: handshake`. Facts the writers
+# note beside the stages: `settle_s` (pause after subscribing), `parts`,
+# `bytes`, and protocol extras (PickSmart's probe/resend counters, ...).
+STAGE_HANDSHAKE = "handshake"
+STAGE_TRANSFER = stages.TRANSFER
+STAGE_FINISH = stages.FINISH
+STAGE_MAP = {STAGE_HANDSHAKE: stages.AUTH}
 
 RETRY_BACKOFF_S = 0.05
 """Extra pause between packets, per earlier attempt that failed mid-transfer.
@@ -109,116 +126,24 @@ class AdvertisementInfo:
     raw: Mapping[str, Any] = field(default_factory=dict)
 
 
-class WriteTiming(dict[str, float | int | bool | str]):
-    """Per-stage breakdown of one write attempt, for WriteResult.timing.
-
-    Every protocol has the same shape — a notification settle, some
-    handshake before the data, the data transfer, and a wait for the tag to
-    confirm — so the writers share these keys and tuning advice carries
-    over between them:
-
-        settle_s     pause after subscribing to notifications
-        start_s      handshake before the data (auth, START command, header)
-        parts        logical frames the data is sent as (the whole image)
-        bytes        payload size sent
-        transfer_s   sending the data
-        finish_s     from the last data frame to the tag's completion reply
-
-    Protocol-specific extras (PickSmart's probe/resend counters, ...) go in
-    the same dict. A stage that raises still records its elapsed time, and
-    `reported()` hangs the dict on the exception so write_prepared() can
-    show how far a failed attempt got.
-
-        timing = WriteTiming(settle_s=0.5)
-        with timing.reported():
-            with timing.stage("start_s"):
-                await auth()
-    """
-
-    @contextlib.contextmanager
-    def stage(self, key: str) -> Iterator[None]:
-        started = time.monotonic()
-        try:
-            yield
-        finally:
-            self[key] = round(time.monotonic() - started, 3)
-
-    @contextlib.contextmanager
-    def reported(self) -> Iterator[None]:
-        try:
-            yield
-        except BaseException as exc:
-            # BaseException so a cancellation (the attempt timeout) carries
-            # the stages too; the exception is re-raised untouched.
-            exc.timing = self  # type: ignore[attr-defined]
-            raise
-
-
 @dataclass
 class WriteResult:
-    """Result of writing an image or querying status."""
+    """What a successful write (or a status query) reported.
+
+    Where the time went and, on a failure, where it died is on the
+    SessionTrace the caller passed in, not here: a failed write raises.
+    """
 
     success: bool
     battery_mv: int | None = None
     temperature_c: int | None = None
     error: str | None = None
-    timing: dict[str, float | int | bool | str] = field(default_factory=dict)
-    """Per-stage timings in seconds (and counts) for the diagnostics download
-    and debug log: `connect_s`/`session_s` from write_prepared(), the rest
-    from the protocol writer (see WriteTiming)."""
-    scanner: Any = None
-    """The scanner (local adapter or Bluetooth proxy) the link went through,
-    when the client wrapper exposes it; opaque here, interpreted by the
-    integration. None when unknown."""
-    timed_out: bool = False
-    """The attempt hit ATTEMPT_TIMEOUT_S: the transport is dead rather than
-    the tag unwilling, so the integration does not retry it."""
+    """Only for read_status() on a protocol without one ("not supported")."""
 
-    @property
-    def failed_stage(self) -> str | None:
-        """Where a failed attempt died, read from which stages it recorded.
 
-        Stages record their time even when they raise, so the furthest one
-        present is where the failure happened:
-
-            unreachable  no radio saw the tag; nothing was tried
-            connect      the BLE link never came up
-            session      connected, but failed before the protocol's first
-                         stage (service discovery, notification subscribe)
-            handshake    START / authentication / size command
-            transfer     sending the image data
-            finish       the completion wait: the panel refresh on WOLINK
-                         and easyTag, the end-command reply on XTE
-
-        None on success.
-        """
-        if self.success:
-            return None
-        for key, stage in (
-            ("finish_s", "finish"),
-            ("transfer_s", "transfer"),
-            ("start_s", "handshake"),
-        ):
-            if key in self.timing:
-                return stage
-        if "session_s" in self.timing:
-            return "session"
-        if "connect_s" in self.timing:
-            return "connect"
-        return "unreachable"
-
-    @property
-    def failed_in_transfer(self) -> bool:
-        """Whether this attempt failed while sending the image data.
-
-        That is the one failure more packet pacing can help with. PickSmart
-        has no separate completion wait (the last part's reply is the
-        completion), so any failure after its handshake counts. On WOLINK
-        and easyTag the wait is the panel refresh, which pacing cannot help;
-        XTE's is its end-command reply, a link failure this deliberately
-        does not pace either — a retry is never slower than it was before.
-        """
-        return self.failed_stage == "transfer"
+class WriteRefused(Exception):
+    """A backend declined the write before connecting (see XTE): a preset or
+    tag it cannot encode for. Not a BLE failure, and not worth retrying."""
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:
@@ -248,115 +173,6 @@ def _missing_attrs(cls: type, names: tuple[str, ...]) -> list[str]:
 
 def _overrides(cls: type, base: type, name: str) -> bool:
     return getattr(cls, name) is not getattr(base, name)
-
-
-@contextlib.asynccontextmanager
-async def ble_session(ble_device: BLEDevice) -> AsyncIterator[BleakClient]:
-    """Connect to the tag for the duration of the block, then disconnect.
-
-    Connecting happens inside the context so a connection failure raises
-    out of the block like any other session error; BleBackend.write_prepared
-    turns it into a failed WriteResult that counts toward retries.
-    Disconnect failures on an already-dropped link are suppressed so they
-    never mask the original error.
-    """
-    client: BleakClient | None = None
-    try:
-        client = await establish_connection(BleakClient, ble_device, ble_device.address)
-        yield client
-    finally:
-        # The disconnect runs after the attempt bound has fired, so it gets
-        # its own: a proxy that hung the write can hang the disconnect too,
-        # and the link is dropped anyway when the proxy comes back.
-        with contextlib.suppress(Exception):
-            if client and client.is_connected:
-                async with asyncio.timeout(DISCONNECT_TIMEOUT_S):
-                    await client.disconnect()
-
-
-def _connected_scanner(client: BleakClient) -> Any:
-    """The scanner Home Assistant's client wrapper connected through.
-
-    Newer habluetooth records it on the wrapper after a successful connect;
-    older versions do not, and test doubles are not wrappers at all, so this
-    is best effort and the caller must validate the type.
-    """
-    return getattr(client, "_connected_scanner", None)
-
-
-class NotificationTimeout(TimeoutError):
-    """No notification arrived in time. Carries a message (asyncio's does not)."""
-
-
-class Notifications:
-    """Notifications from one characteristic, queued for the session's duration.
-
-    Every protocol client needs the same thing around its transfer:
-    subscribe, optionally let the link settle, read replies with a timeout,
-    and unsubscribe in `finally` even when the link has dropped. Only the
-    interpretation of the replies is protocol-specific.
-
-        async with Notifications(client, NOTIFY_UUID, settle=0.5) as replies:
-            await client.write_gatt_char(WRITE_UUID, cmd, response=False)
-            reply = await replies.next(timeout=5, step="START")
-    """
-
-    def __init__(self, client: BleakClient, characteristic: Any, *, settle: float = 0.0) -> None:
-        self._client = client
-        self._characteristic = characteristic
-        self._settle = settle
-        self._queue: asyncio.Queue[bytes] = asyncio.Queue()
-
-    async def __aenter__(self) -> Notifications:
-        await self._client.start_notify(self._characteristic, self._on_notify)
-        if self._settle:
-            # Some adapters/proxies drop a write issued right after the CCCD write.
-            await asyncio.sleep(self._settle)
-        return self
-
-    async def __aexit__(self, *exc_info: Any) -> None:
-        # Never let an unsubscribe failure on a dropped link mask the
-        # original error; ble_session() still disconnects.
-        with contextlib.suppress(Exception):
-            if self._client.is_connected:
-                await self._client.stop_notify(self._characteristic)
-
-    def _on_notify(self, _sender: Any, data: bytearray) -> None:
-        self._queue.put_nowait(bytes(data))
-
-    def clear(self) -> list[bytes]:
-        """Drop (and return) notifications received so far."""
-        dropped = []
-        while not self._queue.empty():
-            dropped.append(self._queue.get_nowait())
-        return dropped
-
-    async def next(self, timeout: float, *, step: str) -> bytes:
-        """The next notification, or NotificationTimeout naming `step`."""
-        try:
-            return await asyncio.wait_for(self._queue.get(), timeout)
-        except TimeoutError as exc:
-            raise NotificationTimeout(
-                f"No response from tag within {timeout:g}s after {step}"
-            ) from exc
-
-    async def wait_for(
-        self, accept: Callable[[bytes], bool], timeout: float, *, step: str
-    ) -> bytes:
-        """The first notification `accept` returns True for, within `timeout` overall.
-
-        `accept` may raise to turn an error frame into the session's failure.
-        """
-        try:
-            async with asyncio.timeout(timeout):
-                while True:
-                    data = await self._queue.get()
-                    if accept(data):
-                        return data
-        except TimeoutError as exc:
-            raise NotificationTimeout(
-                f"No response from tag within {timeout:g}s after {step}"
-            ) from exc
 
 
 class BleParser(BluetoothData, ABC):
@@ -455,7 +271,7 @@ class BleBackend(ABC):
                     write_image() wholesale
       optional (defaults provided)
         refine_preset()   when the advertisement identifies the model
-        write_prepared()  to refuse before connecting (see XTE)
+        write_prepared()  to refuse before connecting (raise WriteRefused; see XTE)
         read_status()     status query without a write
 
     presets() / preset_for() / supported() / create_parser() / brand are
@@ -565,18 +381,24 @@ class BleBackend(ABC):
         prepared: Awaitable[Any],
         *,
         pacing_s: float = 0.0,
+        trace: SessionTrace,
     ) -> WriteResult:
         """Transfer an image over an open link.
 
         `prepared` is the encode; await it only once any pre-transfer
         handshake that can be done without it is finished, so encoding
-        overlaps connecting. Raise on protocol errors; write_prepared()
-        converts exceptions to a failed WriteResult. Usually
+        overlaps connecting. Time the protocol's stages on `trace`
+        (STAGE_HANDSHAKE / STAGE_TRANSFER / STAGE_FINISH) and note its
+        facts there; raise on protocol errors. Usually
         `write_session = staticmethod(writer.write_session)`.
         """
         raise NotImplementedError
 
     # ── Write path (shared) ──────────────────────────────────────────────
+
+    def new_trace(self) -> SessionTrace:
+        """A trace that knows this protocol's stage names."""
+        return SessionTrace(STAGE_MAP)
 
     async def write_prepared(
         self,
@@ -585,57 +407,24 @@ class BleBackend(ABC):
         prepared: Awaitable[Any],
         *,
         pacing_s: float = 0.0,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Connect and write an already-scheduled encode.
 
         `prepared` is owned by the caller and may be awaited again on a
-        retry. Every failure, including connecting, becomes a failed
-        WriteResult so it counts toward retries and the failure sensors.
+        retry. Every failure raises — connecting included — with the stage
+        it happened in recorded on `trace`; the integration's attempt loop
+        turns that into the failure sensors and decides about a retry.
         """
-        started = time.monotonic()
-        connected: float | None = None
-        scanner: Any = None
-        attempt_timeout = asyncio.timeout(ATTEMPT_TIMEOUT_S)
-        try:
-            async with attempt_timeout, ble_session(ble_device) as client:
-                connected = time.monotonic()
-                scanner = _connected_scanner(client)
-                result = await self.write_session(
-                    client,
-                    ble_device.address,
-                    preset,
-                    prepared,
-                    pacing_s=pacing_s,
-                )
-            result.timing = {
-                "connect_s": round(connected - started, 3),
-                **result.timing,
-                "session_s": round(time.monotonic() - connected, 3),
-            }
-            result.scanner = scanner
-            return result
-        except Exception as exc:
-            # The caller logs each failed attempt and raises after the last
-            # one; keep the traceback at debug level without a second ERROR.
-            _LOGGER.debug("Write to %s failed", ble_device.address, exc_info=exc)
-            # A failed attempt is the one worth tuning from: keep what the
-            # protocol measured before raising (it may attach `timing` to
-            # the exception) plus the connect/session split.
-            now = time.monotonic()
-            # asyncio.timeout raises a bare TimeoutError from the CancelledError
-            # it threw into the session; the stages hang on that cause.
-            timing: dict[str, float | int | bool | str] = {
-                "connect_s": round((connected or now) - started, 3),
-                **(getattr(exc, "timing", None) or getattr(exc.__cause__, "timing", {})),
-            }
-            if connected is not None:
-                timing["session_s"] = round(now - connected, 3)
-            error = str(exc) or type(exc).__name__
-            timed_out = attempt_timeout.expired()
-            if timed_out:
-                error = f"Attempt timed out after {ATTEMPT_TIMEOUT_S:g}s"
-            return WriteResult(
-                success=False, error=error, timing=timing, scanner=scanner, timed_out=timed_out
+        trace = trace if trace is not None else self.new_trace()
+        async with ble_session(ble_device, trace=trace) as client:
+            return await self.write_session(
+                client,
+                ble_device.address,
+                preset,
+                prepared,
+                pacing_s=pacing_s,
+                trace=trace,
             )
 
     async def write_image(
@@ -645,6 +434,7 @@ class BleBackend(ABC):
         image: Image.Image,
         *,
         pacing_s: float = 0.0,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Encode and write an image in one step.
 
@@ -657,7 +447,9 @@ class BleBackend(ABC):
             asyncio.to_thread(self.prepare_image, preset, image, ble_device.address)
         )
         try:
-            return await self.write_prepared(ble_device, preset, encode, pacing_s=pacing_s)
+            return await self.write_prepared(
+                ble_device, preset, encode, pacing_s=pacing_s, trace=trace
+            )
         finally:
             encode.cancel()  # no-op once awaited; drops the result if connect failed
 
