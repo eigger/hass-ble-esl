@@ -65,7 +65,7 @@ The image was sent; the tag did not confirm.
 
 ### Quick checks
 
-- **`error: Attempt timed out after 600s`** — the attempt hung (usually a proxy that died mid-write; GATT writes have no timeout of their own) and was cut at the 10-minute bound. `failed_stage` says where. Retries follow as for any failure; the BLE lock is held for the whole write, retries included, so other tags wait until it ends.
+- **`error: Attempt timed out after 600s`** — the attempt hung (usually a proxy that died mid-write; GATT writes have no timeout of their own) and was cut at the 10-minute bound. `failed_stage` says where. It is **not retried** — the transport is dead, and the next automation run is the real retry — so a dead proxy costs one bound, not one per retry. Other tags wait at most for that one attempt: the BLE lock covers one attempt, and a tag that is retrying lets the others go first.
 
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used.
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
