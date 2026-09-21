@@ -261,7 +261,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 |---|---|
 | `attempt` / `success` / `error` | Which retry this was and how it ended |
 | `pacing_s` | Present when this attempt was sent slower than usual: 0.05 s per earlier attempt that failed mid-transfer |
-| `via` / `via_type` / `via_source` | The radio the write went through: a Bluetooth **proxy** (its ESPHome name and MAC) or a local **adapter** (`hci0` and its MAC) |
+| `via` / `via_type` | The radio the write went through, as `name (MAC)`: a Bluetooth **proxy** (`esp-livingroom (AA:BB:…)`) or a local **adapter** (`hci0 (00:1A:…)`) |
 | `rssi` | Signal strength of the tag's last advertisement as seen by that radio |
 | `paths` | How many connectable radios currently see the tag (1 = no failover possible) |
 | `connect_s` | Establishing the BLE link — includes any connection retries |

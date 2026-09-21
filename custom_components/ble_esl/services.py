@@ -292,7 +292,6 @@ def _transport(hass: HomeAssistant, address: str, scanner: Any) -> dict[str, str
     via: dict[str, str | int] = {
         "via": scanner.name,
         "via_type": "proxy" if isinstance(scanner, BaseHaRemoteScanner) else "adapter",
-        "via_source": scanner.source,
     }
     if seen := scanner.get_discovered_device_advertisement_data(address):
         via["rssi"] = seen[1].rssi

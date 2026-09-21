@@ -108,7 +108,6 @@ async def test_write_reports_the_radio_it_went_through(
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via"] == "esp-livingroom (AA:BB:CC:00:00:01)"
     assert attrs["via_type"] == "proxy"
-    assert attrs["via_source"] == "AA:BB:CC:00:00:01"
     assert attrs["rssi"] == -71
     assert attrs["paths"] == 1
     assert attrs["transfer_s"] == 0.1  # the protocol's own stages follow
@@ -121,7 +120,7 @@ async def test_write_reports_the_radio_it_went_through(
     await call(hass, "write", device_id_of(hass))
 
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
-    assert attrs["via_source"] == "AA:BB:CC:00:00:01" and attrs["rssi"] == -71
+    assert attrs["via"] == "esp-livingroom (AA:BB:CC:00:00:01)" and attrs["rssi"] == -71
     assert attrs["paths"] == 2
 
 
@@ -138,7 +137,6 @@ async def test_write_reports_a_local_adapter(
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via"] == "hci0 (00:1A:7D:DA:71:13)"
     assert attrs["via_type"] == "adapter"
-    assert attrs["via_source"] == "00:1A:7D:DA:71:13"
     assert attrs["rssi"] == -58
     assert attrs["paths"] == 1
 
