@@ -12,14 +12,14 @@ Open the tag's device page (**Settings → Devices & services → BLE ESL → th
 | **Write Duration** | Seconds of the **most recent** write, success or not. Its *attributes* are the same breakdown for that attempt. Use it when the write you are debugging is the last one. |
 | **Failure Count** | How many writes have failed since the integration was (re)loaded. Rising while labels look fine means writes are failing inside an automation nobody is watching. |
 
-To see the attributes: click the entity → ⋮ → **Attributes**, or in **Developer tools → States** search for the entity. In a template: `{{ state_attr('sensor.gicisky_a1b2c3d4_last_failure_time', 'likely_cause') }}`.
+To see the attributes: click the entity → ⋮ → **Attributes**, or in **Developer tools → States** search for the entity. In a template: `{{ state_attr('sensor.<brand>_<id>_last_failure_time', 'likely_cause') }}` — e.g. `sensor.gicisky_a1b2c3d4_…` for a PickSmart tag, `sensor.zhsunyco_a1b2c3d4_…` for WOLINK / easyTag, `sensor.poshiji_a1b2c3d4_…` for XTE (the id is the last 8 hex digits of the MAC).
 
 The same breakdown is in the **diagnostics download** (device page → ⋮ → *Download diagnostics*, `write_state.last_write` and `write_state.last_failure_write`) and, when an automation asks for it, in the action's response (`response_variable` → `timing`).
 
 Two more entities help, but read them for what they are:
 
-- **Display In Sync** (binary) — on when the last image *rendered* is the one the tag *received*. Off after a `dry_run`, or after a write that failed following a new render. It does not know what the panel physically shows.
-- **Connectivity** (binary) — on **while a write is in progress**; off otherwise. It is not "the tag is nearby".
+- **Display In Sync** (binary) — on when the last image *rendered* is the one the tag *received*. Off after a `dry_run`, or after a write that failed following a new render; `unknown` until the tag has received an image at all. It does not know what the panel physically shows.
+- **Connectivity** (binary) — on **while a write is in progress**, from the first attempt to the final result, including connection retries; off otherwise. It is not "the tag is nearby", nor "the link is up".
 
 ## Reading a failure
 
@@ -28,7 +28,7 @@ Start with `failed_stage` on Last Failure Time: it says how far the attempt got.
 | `failed_stage` | What happened | Check | Do |
 |---|---|---|---|
 | `unreachable` | No radio currently sees the tag's advertisement; nothing was tried. | `error` says *out of range or adapter down*. Is the proxy/adapter itself up in HA? | Move closer, replace the battery (see the **Battery** sensor), check the proxy is online. |
-| `connect` | The link never came up (the tag advertised but did not accept a connection). | `rssi` and `paths` (how many radios reach the tag). `error` with *slot* = the proxy's connection slots are all in use. | Weak `rssi` (below about −85 dBm) or `paths: 1`: move the tag or add a proxy near it. *slot*: fewer BLE devices per proxy, or another proxy. Otherwise usually transient — the retries cover it. |
+| `connect` | The link never came up (the tag advertised but did not accept a connection). | `rssi` and `paths` (how many radios reach the tag). `error` with *slot* = the proxy's connection slots are all in use. | Weak `rssi` (below about −85 dBm): move the tag or add a proxy near it — with `paths: 1` there is also no other radio to fall back to. *slot*: fewer BLE devices per proxy, or another proxy. Otherwise usually transient — the retries cover it. |
 | `session` | Connected, but the tag dropped or refused the session before the protocol started. | Repeats every time? | Once: ignore. Every time: the protocol or model may not match — check the preset in the diagnostics and the model table in [models.md](models.md). |
 | `handshake` | The tag did not answer, or answered wrongly, before any image data was sent. | PickSmart `start_probes: 3` = it never answered START. WOLINK *device error 5* = authentication refused. *No response … after command 0x01* (XTE) = no reply to the size command. | Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this backend knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model. |
 | `transfer` | Failed while sending the image data. This is the one case that points at link quality. | `resends` / `round_trip_ms` (PickSmart), `sends` vs `parts` (how far it got), `chunk_size` (XTE: 20 means the proxy only allows tiny writes), `rssi`, `via` (which radio). | Move the tag or the proxy it actually used (`via`), or add one. The next retry is automatically paced slower (`pacing_s`). |
@@ -45,7 +45,7 @@ Some shortcuts:
 
 Three kinds of problem never reach the failure sensors, because the write did not fail — or never happened.
 
-**The write succeeded but the panel shows something else.** `success: true`, `completed_by_tag: true`, and yet the label is unchanged, striped or mirrored. The image reached the tag; the tag decoded it with the wrong geometry or color order — a preset that does not match the hardware. This is where the untested WOLINK / easyTag presets and the size-only XTE presets can be wrong. Compare **Last Updated Content** (what was sent) with a photo of the tag, and check the preset in the diagnostics against the label printed on the tag ([models.md](models.md)). Please [open an issue](https://github.com/eigger/hass-ble-esl/issues) with both — that is how presets get fixed.
+**The write succeeded but the panel shows something else.** `success: true`, and yet the label is unchanged, striped or mirrored. The image reached the tag; the tag decoded it with the wrong geometry or color order — a preset that does not match the hardware. This is where the untested WOLINK / easyTag presets and the size-only XTE presets can be wrong. Compare **Last Updated Content** (what was sent) with a photo of the tag, and check the preset in the diagnostics against the label printed on the tag ([models.md](models.md)). Please [open an issue](https://github.com/eigger/hass-ble-esl/issues) with both — that is how presets get fixed.
 
 **The action itself errored before any BLE traffic.** A template that does not render, a font file that does not exist, a `dlimg` URL that cannot be fetched: the action fails immediately with that message, and nothing is recorded on the write sensors. Reproduce with `dry_run: true` from **Developer tools → Actions** and look at **Preview Content** — if the preview is right, the payload is fine.
 

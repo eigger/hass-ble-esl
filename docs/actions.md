@@ -241,7 +241,7 @@ Every tag is one device with these entities:
 | Battery / Battery Voltage | sensor | See below; a **Battery** binary sensor turns on when low |
 | Temperature | sensor | Only on protocols that report it in the write session (easyTag) |
 | Signal Strength | sensor | RSSI of the last advertisement |
-| Connectivity | binary sensor | On while a write is in progress (the link is up) |
+| Connectivity | binary sensor | On while a write is in progress, including its retries |
 | Display In Sync | binary sensor | The last rendered image is the one the tag received; off after a `dry_run` or a failed write |
 | Write Duration | sensor | Seconds of the last write; attributes describe the attempt |
 | Failure Count / Last Failure Time | sensor | Failed writes so far, and when the last one happened — its attributes hold that write's [breakdown](#write-breakdown) |
