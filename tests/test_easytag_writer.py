@@ -19,6 +19,7 @@ from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
 from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagClient,
+    EasyTagError,
     prepare,
 )
 
@@ -172,5 +173,31 @@ def test_connection_starts_before_encode_finishes(monkeypatch):
         await asyncio.sleep(0.2)  # let the encode thread finish
 
         assert connect_started_at < encode_done_at
+
+    asyncio.run(_test())
+
+
+def test_empty_reply_is_a_finish_failure():
+    """An empty completion notify fails the wait it belongs to, not the session."""
+
+    async def _test():
+        mock_client = MagicMock()
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            mock_client._handler(None, bytearray())
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        trace = SessionTrace()
+        client = EasyTagClient(mock_client, PRESETS["3D"], MAC, trace)
+        frames = prepare(PRESETS["3D"], Image.new("RGB", (296, 128), "white"), MAC)
+        with pytest.raises(EasyTagError, match="Empty notify payload"):
+            await client.write_frames(frames)
+        assert trace.failed_stage == "finish"
 
     asyncio.run(_test())

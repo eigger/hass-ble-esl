@@ -173,11 +173,13 @@ class WolinkClient:
         async with Notifications(self.client, STATUS_CHAR) as status:
             with trace.timed(STAGE_TRANSFER):
                 await self._write_chunked(payload, trace, pacing_s=pacing_s)
-            # Status frames during the upload are only busy indications, but an
-            # error reported before the refresh is still an error.
-            for frame in status.clear():
-                if err := self._status_error(frame):
-                    raise WolinkError(err)
+                # Status frames during the upload are only busy indications,
+                # but an error reported before the refresh is still an error
+                # — of the transfer, so it is raised inside its stage: the
+                # trace attributes a failure to the block it escapes from.
+                for frame in status.clear():
+                    if err := self._status_error(frame):
+                        raise WolinkError(err)
             # The finish stage is the panel refresh: the tag reports idle once
             # the e-paper has been redrawn, seconds to a minute by panel size.
             with trace.timed(STAGE_FINISH):

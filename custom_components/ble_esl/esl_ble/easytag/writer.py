@@ -73,9 +73,10 @@ class EasyTagClient:
             # has redrawn, so the finish stage covers the refresh.
             with trace.timed(STAGE_FINISH):
                 reply = await replies.next(FEEDBACK_TIMEOUT, step="image frames")
-
-        if not reply:
-            raise EasyTagError("Empty notify payload from tag")
+                # An empty reply is the completion wait failing, so it is
+                # raised inside that stage.
+                if not reply:
+                    raise EasyTagError("Empty notify payload from tag")
         parsed = parse_notify(self.address, reply)
         return WriteResult(
             success=True,

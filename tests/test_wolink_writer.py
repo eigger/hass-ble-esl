@@ -152,11 +152,15 @@ def test_wolink_error_during_upload_fails_before_refresh():
 
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
+        trace = SessionTrace()
         with pytest.raises(WolinkError, match="device error 1: epd initialization error"):
-            await client.write_prepared(prepare(PRESETS["290"], img, MAC))
+            await client.write_prepared(prepare(PRESETS["290"], img, MAC), trace=trace)
 
         assert b"\x02\xa5" not in sent  # refresh (0xA502) never sent
         mock_client.stop_notify.assert_awaited_once()
+        # The chunks went out: it is the transfer that failed, and the next
+        # attempt is paced accordingly.
+        assert trace.failed_stage == "transfer"
 
     asyncio.run(_test())
 
