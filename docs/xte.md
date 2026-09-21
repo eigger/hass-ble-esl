@@ -79,8 +79,8 @@ After enabling notifications the writer waits 0.5 s before the prepare
 command, like the other backends. Writes use the smaller of 244 bytes and
 the backend's reported write limit.
 20-byte limits are accepted without changing logical XTE block contents.
-Retry Count and Write Delay options apply to the Poshiji backend; the delay is
-applied once per XTE command or block, not per ATT chunk.
+The Retry Count option applies to the Poshiji backend; a retry paces each XTE
+command or block a little more than the attempt before, never per ATT chunk.
 
 ## Advertisement
 

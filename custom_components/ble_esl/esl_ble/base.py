@@ -23,6 +23,11 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+RETRY_BACKOFF_S = 0.05
+"""Extra pause between packets per failed attempt: every writer paces a retry
+more than the attempt before it, so a marginal link gets slack without a
+user-facing knob."""
+
 # Battery % is a linear map of the cell voltage over this range, and at or
 # below the minimum the battery-low binary sensor turns on. Below 2.5 V
 # e-paper refresh becomes unreliable even though BLE still works; the same
@@ -485,7 +490,6 @@ class BleBackend(ABC):
         prepared: Awaitable[Any],
         *,
         attempt: int = 1,
-        write_delay_ms: int = 0,
     ) -> WriteResult:
         """Transfer an image over an open link.
 
@@ -506,7 +510,6 @@ class BleBackend(ABC):
         prepared: Awaitable[Any],
         *,
         attempt: int = 1,
-        write_delay_ms: int = 0,
     ) -> WriteResult:
         """Connect and write an already-scheduled encode.
 
@@ -527,7 +530,6 @@ class BleBackend(ABC):
                     preset,
                     prepared,
                     attempt=attempt,
-                    write_delay_ms=write_delay_ms,
                 )
             result.timing = {
                 "connect_s": round(connected - started, 3),
@@ -564,7 +566,6 @@ class BleBackend(ABC):
         image: Image.Image,
         *,
         attempt: int = 1,
-        write_delay_ms: int = 0,
     ) -> WriteResult:
         """Encode and write an image in one step.
 
@@ -577,9 +578,7 @@ class BleBackend(ABC):
             asyncio.to_thread(self.prepare_image, preset, image, ble_device.address)
         )
         try:
-            return await self.write_prepared(
-                ble_device, preset, encode, attempt=attempt, write_delay_ms=write_delay_ms
-            )
+            return await self.write_prepared(ble_device, preset, encode, attempt=attempt)
         finally:
             encode.cancel()  # no-op once awaited; drops the result if connect failed
 

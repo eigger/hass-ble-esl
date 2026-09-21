@@ -132,14 +132,12 @@
         "data": {
           "model": "모델",
           "retry_count": "재시도 횟수",
-          "write_delay_ms": "쓰기 지연 (ms)",
           "prevent_duplicate_send": "중복 전송 방지",
           "debounce_ms": "디바운스 지연 (ms)"
         },
         "data_description": {
           "model": "ESL 화면 해상도 및 모델 유형입니다.",
           "retry_count": "기기에 쓰기를 포기하기 전까지 재시도할 횟수입니다.",
-          "write_delay_ms": "기기에 각 데이터 조각을 쓸 때마다의 지연 시간입니다. 쓰기가 불안정하면 늘리세요.",
           "prevent_duplicate_send": "새 이미지가 마지막으로 전송한 이미지와 동일하면 쓰기를 건너뜁니다.",
           "debounce_ms": "기기에 쓰기 전 대기 시간입니다. 새 쓰기 요청이 대기 중인 요청을 취소합니다. 0 = 비활성화(즉시 쓰기)."
         }

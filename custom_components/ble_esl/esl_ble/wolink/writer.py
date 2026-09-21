@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING
 from bleak import BleakClient
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from ..base import DevicePreset, Notifications, WriteResult, WriteTiming
+from ..base import RETRY_BACKOFF_S, DevicePreset, Notifications, WriteResult, WriteTiming
 from .const import (
     AES_KEY,
     AUTH_CHAR,
     BATTERY_CHAR,
+    CHUNK_DELAY_S,
     DATA_CHAR,
     ERROR_MESSAGES,
     STATUS_CHAR,
@@ -117,15 +118,14 @@ class WolinkClient:
         payload: bytes,
         timing: WriteTiming,
         chunk_size: int = 200,
-        write_delay_ms: int = 0,
         attempt: int = 1,
     ) -> None:
-        """Write compressed image payload in chunks with cumulative delay and retry backoff.
+        """Write compressed image payload in chunks, pacing more on each retry.
 
         `parts` is the chunk count of the image; `sends` counts the chunks
         written so far, so a failure mid-transfer still says how far it got.
         """
-        delay = 0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1))
+        delay = CHUNK_DELAY_S + RETRY_BACKOFF_S * (attempt - 1)
         offset = 0
         timing["parts"] = (len(payload) + chunk_size - 1) // chunk_size
         timing["sends"] = 0
@@ -142,7 +142,6 @@ class WolinkClient:
         prepared: PreparedImage,
         *,
         attempt: int = 1,
-        write_delay_ms: int = 0,
         timing: WriteTiming | None = None,
     ) -> WriteResult:
         """Send an already-encoded image and trigger the refresh.
@@ -155,7 +154,7 @@ class WolinkClient:
 
         if raw_len > 100000:
             est_seconds = int(
-                (len(payload) / 200) * (0.03 + (write_delay_ms / 1000.0) + (0.05 * (attempt - 1)))
+                (len(payload) / 200) * (CHUNK_DELAY_S + RETRY_BACKOFF_S * (attempt - 1))
             )
             _LOGGER.info(
                 "Sending large image (%d bytes, %d chunks) to %s — estimated transfer time: ~%ds",
@@ -171,9 +170,7 @@ class WolinkClient:
 
         async with Notifications(self.client, STATUS_CHAR) as status:
             with timing.stage("transfer_s"):
-                await self._write_chunked(
-                    payload, timing, write_delay_ms=write_delay_ms, attempt=attempt
-                )
+                await self._write_chunked(payload, timing, attempt=attempt)
             # Status frames during the upload are only busy indications, but an
             # error reported before the refresh is still an error.
             for frame in status.clear():
@@ -207,7 +204,6 @@ async def write_session(
     prepared: Awaitable[PreparedImage],
     *,
     attempt: int = 1,
-    write_delay_ms: int = 0,
 ) -> WriteResult:
     """Authenticate and send an encode over an open link.
 
@@ -220,6 +216,4 @@ async def write_session(
     with timing.reported():
         with timing.stage("start_s"):
             await wolink.authenticate()
-        return await wolink.write_prepared(
-            payload, attempt=attempt, write_delay_ms=write_delay_ms, timing=timing
-        )
+        return await wolink.write_prepared(payload, attempt=attempt, timing=timing)

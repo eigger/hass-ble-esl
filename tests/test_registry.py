@@ -132,7 +132,7 @@ def test_registry_custom_backend(monkeypatch):
         def parse_advertisement(self, service_info):
             return None
 
-        async def write_image(self, ble_device, preset, image, *, attempt=1, write_delay_ms=0):
+        async def write_image(self, ble_device, preset, image, *, attempt=1):
             return MagicMock()
 
     mock_backend = MockTestBackend()

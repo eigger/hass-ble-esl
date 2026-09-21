@@ -132,14 +132,12 @@
         "data": {
           "model": "Model",
           "retry_count": "Liczba ponowień",
-          "write_delay_ms": "Opóźnienie zapisu (ms)",
           "prevent_duplicate_send": "Zapobiegaj podwójnemu wysyłaniu",
           "debounce_ms": "Opóźnienie odbicia (ms)"
         },
         "data_description": {
           "model": "Rozdzielczość ekranu i typ modelu ESL.",
           "retry_count": "Ile razy ponawiać zapis, zanim nastąpi rezygnacja.",
-          "write_delay_ms": "Przerwa między kolejnymi blokami zapisywanymi na urządzeniu. Zwiększ, jeśli zapisy są niestabilne.",
           "prevent_duplicate_send": "Pomija zapis, gdy nowy obraz jest identyczny z ostatnio wysłanym.",
           "debounce_ms": "Oczekiwanie przed zapisem. Nowe żądanie anuluje oczekujące. 0 = wyłączone (zapis natychmiastowy)."
         }

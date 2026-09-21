@@ -117,7 +117,7 @@ def test_wolink_write_image_flow_with_status_notification():
         client = WolinkClient(mock_client, PRESETS["290"], MAC)
         img = Image.new("RGB", (296, 128), "white")
         prepared = prepare(PRESETS["290"], img, MAC)
-        result = await client.write_prepared(prepared, write_delay_ms=0, attempt=1)
+        result = await client.write_prepared(prepared, attempt=1)
 
         assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
@@ -183,9 +183,7 @@ def test_wolink_write_image_error_notification():
         img = Image.new("RGB", (296, 128), "white")
 
         with pytest.raises(WolinkError, match="device error 2: epd write error"):
-            await client.write_prepared(
-                prepare(PRESETS["290"], img, MAC), write_delay_ms=0, attempt=1
-            )
+            await client.write_prepared(prepare(PRESETS["290"], img, MAC), attempt=1)
 
     asyncio.run(_test())
 
@@ -221,7 +219,7 @@ def test_write_image_entrypoint(monkeypatch):
 
         img = Image.new("RGB", (296, 128), "white")
         result = await esl_ble.get("wolink").write_image(
-            mock_ble_device, PRESETS["290"], img, attempt=2, write_delay_ms=50
+            mock_ble_device, PRESETS["290"], img, attempt=2
         )
 
         assert result.success is True

@@ -132,14 +132,12 @@
         "data": {
           "model": "型號",
           "retry_count": "重試次數",
-          "write_delay_ms": "寫入延遲 (ms)",
           "prevent_duplicate_send": "防止重複傳送",
           "debounce_ms": "防彈跳延遲 (ms)"
         },
         "data_description": {
           "model": "ESL 螢幕解析度與型號類型。",
           "retry_count": "放棄之前重試寫入的次數。",
-          "write_delay_ms": "寫入裝置的每個資料區塊之間的間隔。寫入不穩定時請增加。",
           "prevent_duplicate_send": "當新影像與上次傳送的影像相同時略過寫入。",
           "debounce_ms": "寫入前的等待時間。新的請求會取消待處理的請求。0 = 停用（立即寫入）。"
         }
