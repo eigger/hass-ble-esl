@@ -205,4 +205,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
         # debounced write that already fired but is still queued on the BLE
         # lock is dropped instead of writing to an unloaded entry's tag.
         cancel_pending_write(entry.runtime_data)
+        # The images are saved with a delay; a reload must not race it.
+        await entry.runtime_data.image_store.async_flush()
     return unload_ok

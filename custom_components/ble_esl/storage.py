@@ -77,6 +77,10 @@ class ImageStore:
         self._images.preview = StoredImage(png, at)
         self._schedule_save()
 
+    async def async_flush(self) -> None:
+        """Write now; for unload, so a reload inside the save delay loses nothing."""
+        await self._store.async_save(self._as_dict())
+
     async def async_remove(self) -> None:
         """Delete the file; for when the config entry is removed."""
         await self._store.async_remove()
@@ -104,7 +108,7 @@ def _decode(raw: Any) -> StoredImage | None:
         png = base64.b64decode(raw["png"])
         at = dt_util.parse_datetime(raw["at"])
     except (KeyError, TypeError, ValueError):
-        _LOGGER.debug("Ignoring an unreadable stored image: %s", raw)
+        _LOGGER.debug("Ignoring an unreadable stored image (keys: %s)", sorted(raw))
         return None
     if at is None or not png:
         return None

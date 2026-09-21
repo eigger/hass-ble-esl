@@ -787,15 +787,15 @@ async def test_last_images_survive_a_reload(
     entities are not blank, and Display In Sync is right."""
     device_id = device_id_of(hass)
     await call(hass, "write", device_id)
-    await advance(hass, freezer, 2)  # the delayed save
+    # No wait for the delayed save: unloading flushes it, so a reload right
+    # after a write restores the new image, not the previous one.
 
     key = f"{DOMAIN}.{wolink_entry.entry_id}.images"
+    await hass.config_entries.async_reload(wolink_entry.entry_id)
+    await hass.async_block_till_done()
     stored = hass_storage[key]["data"]
     assert stored["written"]["png"] == stored["preview"]["png"]
     written_at = stored["written"]["at"]
-
-    await hass.config_entries.async_reload(wolink_entry.entry_id)
-    await hass.async_block_till_done()
 
     data = wolink_entry.runtime_data
     assert data.last_image_data is not None
