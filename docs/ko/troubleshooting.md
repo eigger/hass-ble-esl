@@ -69,6 +69,8 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 - **`error: Attempt timed out after 600s …`** (`timed_out: true`) — 시도가 멈춰서(대개 쓰기 도중 죽은 프록시; GATT 쓰기 자체에는 타임아웃이 없음) 10분 상한에서 잘린 것. `failed_stage`가 어디서 멈췄는지 알려줍니다. 이 경우는 **재시도하지 않습니다** — 전송 매체가 죽은 것이라 같은 경로 재시도는 의미가 없고, 다음 자동화 주기가 실제 재시도입니다. 그래서 죽은 프록시의 비용은 재시도마다가 아니라 한 번의 상한입니다. 다른 태그가 기다리는 것도 그 한 시도까지입니다: BLE 락은 시도 하나 단위로 잡히고, 재시도 중인 태그는 다른 태그를 먼저 보냅니다.
 
+- **`error`가 *The link dropped …*으로 시작** (`likely_cause_key: link_lost`) — 세션 도중 링크가 끊긴 것: 범위를 벗어났거나, 전송 부하에서 배터리가 버티지 못했거나, 프록시/어댑터가 리셋된 경우입니다. 해당 단계의 타임아웃을 끝까지 기다리지 않고 링크가 끊긴 순간 대기가 끝나므로, `transfer_s` / `finish_s`는 타임아웃 전체가 아니라 끊긴 시점을 보여주고 재시도도 바로 시작됩니다. 범위 경계에서 가끔 나오는 것은 정상이지만, 반복되면 `rssi`와 `via`를 보고 태그나 프록시를 옮기세요.
+
 - **`rssi`는 낮은데 `paths`가 2 이상** — 다른 라디오가 더 나을 수 있습니다; HA는 가장 강한 광고를 낸 라디오로 연결하고, 다른 라디오는 실패한 뒤에야 씁니다. `via`로 어느 것이 쓰였는지 보세요.
 - **프록시를 추가한 직후 전부 `connect`에서 실패** — 프록시는 `esp32_ble_tracker`와 `bluetooth_proxy` 둘 다 `active: true`여야 합니다([README](../../README.ko.md#설치) 참고); 패시브 프록시는 태그를 보기만 하고 연결은 못 합니다.
 - **성공한 쓰기인데 `start_probes`가 1보다 큼** (PickSmart) — 연결 후 태그가 느리게 응답한 것. 가끔이면 무해하지만, 한계 링크가 가장 먼저 드러나는 곳입니다; 대부분의 쓰기에서 2–3이면 `transfer` 문제처럼 다루세요.
@@ -82,7 +84,7 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 **BLE 통신 전에 액션 자체가 에러.** 렌더링되지 않는 템플릿, 없는 폰트 파일, 받을 수 없는 `dlimg` URL: 액션이 그 메시지와 함께 즉시 실패하고 쓰기 센서에는 아무것도 기록되지 않습니다. **개발자 도구 → 액션**에서 `dry_run: true`로 재현하고 **Preview Content**를 보세요 — 미리보기가 맞으면 페이로드는 문제없습니다.
 
-**쓰기가 시도되지 않음.** 액션은 `locked`(**Write Lock** 스위치가 켜짐 — `ble_esl.write`도 막습니다)로 끝나거나, `ble_esl.write_guarded`의 경우 `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 쓰기 센서를 건드리지 않습니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](../actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요.
+**쓰기가 시도되지 않음.** 액션은 `locked`(**Write Lock** 스위치가 켜짐 — `ble_esl.write`도 막습니다)로 끝나거나, `ble_esl.write_guarded`의 경우 `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 실패로 치지 않습니다: Failure Count와 Last Failure Time은 그대로입니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](../actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요. BLE 락까지 갔다가 멈춘 쓰기는 **Write Duration** 속성에 `success: false`와 `skipped: locked` / `duplicate` / `dropped`를 남깁니다 — 자동화 트레이스는 액션이 실행됐다고 하는데 태그는 그대로일 때 확인할 곳입니다. Write Lock 스위치에 막힌 모든 `ble_esl.write`(큐에 넣기 전에 검사하지 않습니다)와, 순서를 기다리는 동안 조건이 바뀐 guarded 쓰기가 여기 해당합니다. `ble_esl.write_guarded`는 큐에 넣기 전에도 검사하므로, 평범한 중복은 아무것도 기록하지 않고 반환됩니다.
 
 ## 간헐적 실패
 

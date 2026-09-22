@@ -82,6 +82,7 @@ async def test_diagnostics_content_and_redaction(
         "error": "boom",
         "failed_stage": "connect",
         "likely_cause": "The BLE link could not be established.",
+        "likely_cause_key": "connect.failed",
         "attempt": 2,
         "attempts": 2,
         "paths": failure["paths"],

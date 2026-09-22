@@ -95,7 +95,10 @@ the BLE lock, the attempt bound, the retries and the report.
   (connect failures are `blesession.ConnectFailed`), and the attempt loop
   turns it into the retry decision and the failure sensors. Read replies
   through `blesession.Notifications`; its timeouts already carry the step
-  (`asyncio.TimeoutError` alone has no message).
+  (`asyncio.TimeoutError` alone has no message). A wait also ends the moment
+  the link drops, as `blesession.SessionDropped` rather than the step's full
+  timeout — so a re-probe loop of your own must catch `NotificationTimeout`,
+  not every error, or it will keep probing a link that is already gone.
 * Add `pacing_s` to whatever pause the protocol already has between data packets;
   the integration passes a value above 0 only after an earlier attempt failed
   in the `transfer` stage.

@@ -21,9 +21,8 @@ import logging
 import time
 from typing import Any
 
-from blesession import Attempt, Unreachable, placement, report_attempt, run_attempts, stages
-from blesession.hass import radio_facts
-from homeassistant.components.bluetooth import async_ble_device_from_address
+from blesession import Attempt, placement, report_attempt, run_attempts, stages
+from blesession.hass import ble_device_or_raise, radio_facts
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -283,6 +282,11 @@ def _likely_cause(
     from the library; only what is specific to these tags lives here.
     """
     err = error.lower()
+    if "link dropped" in err:
+        # The link went away mid-session (blesession ends the wait the moment
+        # it does, rather than running the step's timeout out). Nothing about
+        # the protocol reads that better than the generic `link_lost`.
+        return None
     no_reply = "no response" in err
     where = placement(facts, noun="tag")
     if stage == stages.AUTH:
@@ -334,24 +338,29 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
     )
 
 
-def _guard(job: WriteJob) -> WriteOutcome | None:
+def _guard(job: WriteJob) -> str | None:
     """The checks that can change while a write waits for its turn.
 
     Run under the BLE lock before every attempt: the write lock, whether a
     debounced write has been superseded, and the duplicate guard (a write of
     the same payload may have just finished ahead of us — which is exactly
     the case the guard is for).
+
+    Returns the WriteOutcome status that declining produces, not the outcome
+    itself: blesession puts it on the attempt as `skipped` and from there
+    into the report, which has to stay JSON-serialisable for the entity
+    attributes and the diagnostics download.
     """
     data = job.data
     if data.write_lock:
         _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-        return WriteOutcome("locked")
+        return "locked"
     if job.generation is not None and job.generation != data.write_generation:
         _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
-        return WriteOutcome("dropped")
+        return "dropped"
     if job.prevent_duplicate_send and job.image_png == data.last_image_data:
         _LOGGER.info("Skipping duplicate image for %s", job.address)
-        return WriteOutcome("duplicate")
+        return "duplicate"
     return None
 
 
@@ -362,10 +371,10 @@ async def _attempt(
     address = job.address
     assert job.prepared is not None, "run_ble_write() schedules the encode"
     # Resolve the handle fresh each attempt: the one seen at service call
-    # time may be stale after a debounce delay or a retry sleep.
-    ble_device = async_ble_device_from_address(hass, address)
-    if ble_device is None:
-        raise Unreachable(address)
+    # time may be stale after a debounce delay or a retry sleep. A tag no
+    # radio sees raises Unreachable, so it reaches the report with a stage
+    # and a likely cause like any other failure.
+    ble_device = ble_device_or_raise(hass, address)
     # Packets are paced more only after an attempt that failed *while
     # transferring*: that is what a marginal link looks like. A failure to
     # connect or to get through the handshake is retried at full speed.
@@ -419,7 +428,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     started = False
     duration_task: asyncio.Task[None] | None = None
 
-    async def guard() -> WriteOutcome | None:
+    async def guard() -> str | None:
         """Under the BLE lock, before each attempt: the guards, then the
         duration / connectivity sensors on the first attempt that runs."""
         nonlocal started, duration_task
@@ -435,10 +444,15 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
 
     def on_attempt(attempt: Attempt[WriteResult]) -> None:
         # Every attempt is recorded (with whatever the backend timed) so the
-        # Write Duration sensor's attributes always describe the last one.
-        data.last_write_timing = _report(hass, job, attempt)
-        _LOGGER.debug("Write to %s timing: %s", address, data.last_write_timing)
-        if not attempt.ok:
+        # Write Duration sensor's attributes always describe the last one —
+        # including an attempt a guard declined, which reports as
+        # `success: false` with `skipped: locked` / `duplicate` / `dropped`
+        # and so says why nothing was sent.
+        data.reports.last = _report(hass, job, attempt)
+        _LOGGER.debug("Write to %s timing: %s", address, data.reports.last)
+        if attempt.error is not None:
+            # Not `attempt.ok`: a declined attempt is not a failure, and the
+            # guard has already said why it was skipped.
             _LOGGER.warning(
                 "Write failed to %s (attempt %d/%d): %s",
                 address,
@@ -462,8 +476,20 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 name=f"write to {address}",
             )
             if last.skipped is not None:
-                return last.skipped
-            timing = data.last_write_timing
+                if not started:
+                    # Declined on arrival — no attempt ran, so nothing here
+                    # touched the duration sensor, and the entity rewrites
+                    # its attributes only when its coordinator fires. Wake it
+                    # once with the value it already has: `async_set_updated_data`
+                    # notifies listeners whether or not the value changed, so
+                    # the `skipped` report on_attempt just filed reaches the
+                    # entity instead of sitting in reports.last, where only
+                    # the diagnostics download would find it. The state stays
+                    # the last real write's duration; nothing was written now.
+                    duration = data.duration_coordinator
+                    duration.async_set_updated_data(duration.data)
+                return WriteOutcome(last.skipped)
+            timing = data.reports.last
             if last.ok:
                 result = last.result
                 assert result is not None
@@ -489,10 +515,11 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             data.failure_coordinator.async_set_updated_data(
                 (data.failure_coordinator.data or 0) + 1
             )
-            # Kept until the next failure; the timestamp update publishes it.
-            # A copy, so nothing that later touches last_write_timing in
-            # place can change the failure record.
-            data.last_failure_timing = dict(timing or {})
+            # Filed in both slots here, not from on_attempt: `last_failure`
+            # means the write that failed with every retry exhausted, which
+            # is what the timestamp beside it records. A copy, so nothing
+            # that later touches the report in place can change it.
+            data.reports.record(dict(timing or {}))
             data.last_failure_coordinator.async_set_updated_data(now())
             assert last.error is not None
             raise WriteFailed(

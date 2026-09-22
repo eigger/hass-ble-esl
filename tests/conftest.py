@@ -15,7 +15,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 from bleak.backends.device import BLEDevice
-from blesession import attempts as attempts_mod
+from blesession import Unreachable, attempts as attempts_mod
 from bt import inject_bluetooth_service_info, service_info
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -144,6 +144,12 @@ def tag_writer() -> TagWriter:
         writer.encoded.append(address)
         return image
 
+    def fake_ble_device(hass, address, **kwargs):
+        """blesession.hass.ble_device_or_raise, as the integration imported it."""
+        if not writer.available:
+            raise Unreachable(address)
+        return BLEDevice(address, "WOLINK", {})
+
     def fake_render(hass, preset, payload, *, rotate=0, background="white"):
         img = Image.new("RGB", (preset.width, preset.height), "white")
         img.putpixel((0, 0), (len(str(payload)) % 256, 0, 0))
@@ -153,11 +159,7 @@ def tag_writer() -> TagWriter:
         patch.object(WolinkBleBackend, "write_prepared", writer.write_prepared),
         patch.object(WolinkBleBackend, "prepare_image", staticmethod(identity_prepare)),
         patch.object(svc, "render_image", fake_render),
-        patch.object(
-            svc,
-            "async_ble_device_from_address",
-            lambda hass, address: BLEDevice(address, "WOLINK", {}) if writer.available else None,
-        ),
+        patch.object(svc, "ble_device_or_raise", fake_ble_device),
         patch.object(attempts_mod, "sleep", AsyncMock()),  # the retry pause
     ):
         yield writer
