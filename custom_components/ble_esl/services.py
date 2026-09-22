@@ -476,6 +476,18 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 name=f"write to {address}",
             )
             if last.skipped is not None:
+                if not started:
+                    # Declined on arrival — no attempt ran, so nothing here
+                    # touched the duration sensor, and the entity rewrites
+                    # its attributes only when its coordinator fires. Wake it
+                    # once with the value it already has: `async_set_updated_data`
+                    # notifies listeners whether or not the value changed, so
+                    # the `skipped` report on_attempt just filed reaches the
+                    # entity instead of sitting in reports.last, where only
+                    # the diagnostics download would find it. The state stays
+                    # the last real write's duration; nothing was written now.
+                    duration = data.duration_coordinator
+                    duration.async_set_updated_data(duration.data)
                 return WriteOutcome(last.skipped)
             timing = data.reports.last
             if last.ok:

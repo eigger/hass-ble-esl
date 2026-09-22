@@ -240,7 +240,10 @@ class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
         """The last write attempt's breakdown (attempt, success, error, and the
         per-stage timings such as connect_s / start_probes / round_trip_ms), so
         the write path can be monitored from the entity instead of debug logs.
-        Each write's final duration update publishes it."""
+
+        Published by each write's final duration update — and, for a write a
+        guard stopped before any attempt ran, by the one execute_write fires
+        in its place, since only a coordinator update rewrites attributes."""
         return self._data.reports.last
 
     @callback

@@ -999,6 +999,40 @@ async def test_declined_attempt_is_reported_as_skipped(
     assert sensor(hass, "last_failure_time") == "unknown"
 
 
+async def test_write_declined_before_any_attempt_reaches_the_entity(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """A write the guard stops on arrival still publishes its `skipped`.
+
+    `ble_esl.write` does not look at the write lock before queueing, so the
+    guard declines attempt 1 and nothing ever runs — the duration sensor is
+    not touched by the write itself, and the entity only rewrites its
+    attributes when its coordinator fires. Without a nudge the skip would
+    sit in `reports.last`, visible in the diagnostics download while the
+    entity still showed the previous write.
+    """
+    data = wolink_entry.runtime_data
+    await call(hass, "write", device_id_of(hass))  # a successful write first
+    assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"]
+
+    written_duration = sensor(hass, "write_duration")
+
+    data.write_lock = True
+    assert (await respond(hass, "write", device_id_of(hass)))[device_id_of(hass)] == {
+        "status": "locked"
+    }
+
+    assert tag_writer.write_prepared.await_count == 1  # the first write only
+    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
+    assert (attrs["success"], attrs["skipped"]) == (False, "locked")
+    assert "error" not in attrs
+    # Only the attributes moved: the state is still the last real write's
+    # duration, because nothing was written this time.
+    assert sensor(hass, "write_duration") == written_duration
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
+    assert sensor(hass, "failure_count") == "0"
+
+
 async def test_a_dropped_link_mid_transfer_reads_as_a_lost_link(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
