@@ -67,6 +67,8 @@ The image was sent; the tag did not confirm.
 
 - **`error: Attempt timed out after 600s …`** (`timed_out: true`) — the attempt hung (usually a proxy that died mid-write; GATT writes have no timeout of their own) and was cut at the 10-minute bound. `failed_stage` says where. It is **not retried** — the transport is dead, and the next automation run is the real retry — so a dead proxy costs one bound, not one per retry. Other tags wait at most for that one attempt: the BLE lock covers one attempt, and a tag that is retrying lets the others go first.
 
+- **`error` starts with *The link dropped …*** (`likely_cause_key: link_lost`) — the tag went away mid-session: out of range, the battery gave out under load, or the proxy/adapter reset. The wait ends the moment the link goes rather than running the step's timeout out, so `transfer_s` / `finish_s` show when it happened and the retry starts straight away. Once in a while is normal at the edge of range; repeatedly means `rssi` and `via` — move the tag or the proxy.
+
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used.
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
 - **`start_probes` above 1 on successful writes** (PickSmart) — the tag was slow to answer after connecting. Harmless once in a while, but it is where a marginal link shows first; if it is 2–3 on most writes, treat it like a `transfer` problem.
@@ -80,7 +82,7 @@ Three kinds of problem never reach the failure sensors, because the write did no
 
 **The action itself errored before any BLE traffic.** A template that does not render, a font file that does not exist, a `dlimg` URL that cannot be fetched: the action fails immediately with that message, and nothing is recorded on the write sensors. Reproduce with `dry_run: true` from **Developer tools → Actions** and look at **Preview Content** — if the preview is right, the payload is fine.
 
-**No write was attempted.** The action can end as `locked` (the **Write Lock** switch is on — this stops `ble_esl.write` too) or, with `ble_esl.write_guarded`, as `duplicate` (image unchanged and *Prevent Duplicate Send* is on) or `scheduled` (debounced; it runs later). None of these touch the write sensors. The action's response `status` says which ([actions.md](actions.md#response-data)); for an automation that "does nothing", check its trace first.
+**No write was attempted.** The action can end as `locked` (the **Write Lock** switch is on — this stops `ble_esl.write` too) or, with `ble_esl.write_guarded`, as `duplicate` (image unchanged and *Prevent Duplicate Send* is on) or `scheduled` (debounced; it runs later). None of these count as a failure: Failure Count and Last Failure Time are untouched. The action's response `status` says which ([actions.md](actions.md#response-data)); for an automation that "does nothing", check its trace first. These checks are made again once the write reaches the BLE lock — the switch may have been flipped while it queued — and a write stopped there leaves `success: false` with `skipped: locked` / `duplicate` / `dropped` on the **Write Duration** attributes, which is where to look when an automation's trace says the action ran.
 
 ## Intermittent failures
 

@@ -104,8 +104,8 @@ async def async_get_config_entry_diagnostics(
             "debounce_pending": data.pending_write_cancel is not None,
             "write_generation": data.write_generation,
             "last_image_png_bytes": len(data.last_image_data) if data.last_image_data else None,
-            "last_write": data.last_write_timing,
-            "last_failure_write": data.last_failure_timing,
+            "last_write": data.reports.last,
+            "last_failure_write": data.reports.last_failure,
         },
         "sensors": {
             "connectivity": data.connectivity_coordinator.data,

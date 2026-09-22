@@ -11,7 +11,7 @@ import asyncio
 from datetime import timedelta
 from unittest.mock import patch
 
-from blesession import LinkInfo, generic_cause
+from blesession import LinkInfo, SessionDropped, generic_cause
 from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
@@ -81,7 +81,7 @@ async def test_write_sends_rendered_image_and_updates_image_entity(
     assert tag_writer.write_prepared.await_count == 1
     assert tag_writer.sent_image().size == (296, 128)
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state != "unknown"
-    report = wolink_entry.runtime_data.last_write_timing
+    report = wolink_entry.runtime_data.reports.last
     radio = {k: report.pop(k) for k in ("via", "via_type", "rssi", "paths") if k in report}
     assert report == {
         "operation": "write",
@@ -216,6 +216,24 @@ async def test_likely_cause_reads_stage_error_and_radio(
             "wolink",
             "The tag reported an error after the transfer: device error 2: epd write error.",
         ),
+        # A link that went away mid-session is blesession's `link_lost`, not
+        # a protocol failure: no per-stage reading of ours improves on it.
+        (
+            "transfer",
+            "The link dropped while waiting for part 12",
+            {},
+            "wolink",
+            "The link to the tag went away mid-session: out of range, powered "
+            "down, or the adapter / proxy reset.",
+        ),
+        (
+            "finish",
+            "The link dropped while waiting for refresh",
+            {},
+            "xte",
+            "The link to the tag went away mid-session: out of range, powered "
+            "down, or the adapter / proxy reset.",
+        ),
     ],
 )
 def test_likely_cause_wording(stage, error, via, backend, expected) -> None:
@@ -316,6 +334,33 @@ async def test_failed_write_after_retries(
     assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"] is True
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
     assert (failed["attempt"], failed["success"], failed["error"]) == (3, False, "boom")
+
+
+async def test_recovered_attempt_is_not_a_write_failure(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """An attempt a retry recovered from does not become the last failure.
+
+    `last_failure` is the write that failed with every retry exhausted, which
+    is what the Last Failure Time timestamp beside it records; filing each
+    failed attempt would leave the attributes describing an event the state
+    does not.
+    """
+    data = wolink_entry.runtime_data
+    calls = 0
+
+    async def hook(ble_device, preset, image, **kwargs):
+        nonlocal calls
+        calls += 1
+        return fail("first try", connect=0.1) if calls == 1 else ok(transfer=0.1)
+
+    tag_writer.write_hook = hook
+    await call(hass, "write", device_id_of(hass))
+
+    assert data.reports.last["success"] is True  # attempt 2
+    assert data.reports.last_failure is None
+    assert sensor(hass, "failure_count") == "0"
+    assert sensor(hass, "last_failure_time") == "unknown"
 
 
 async def test_retry_pacing_follows_only_transfer_failures(
@@ -721,16 +766,19 @@ async def test_response_reports_failure_instead_of_raising(
     assert outcome["error"] == "boom"
     assert outcome["attempts"] == 2
     timing = outcome["timing"]
-    assert list(timing)[:6] == [
+    assert list(timing)[:7] == [
         "operation",
         "success",
         "error",
         "failed_stage",
         "likely_cause",
+        "likely_cause_key",
         "attempt",
     ]
     assert timing["failed_stage"] == "connect"
     assert timing["likely_cause"] == "The BLE link could not be established."
+    # The stable name of that generic sentence, for a translated rendering.
+    assert timing["likely_cause_key"] == "connect.failed"
     assert timing["connect_s"] == 0.5
     assert sensor(hass, "failure_count") == "1"  # sensors still updated
 
@@ -925,6 +973,53 @@ async def test_guards_are_rechecked_before_a_retry(
     assert response[device_id_of(hass)]["status"] == "locked"
     assert tag_writer.write_prepared.await_count == 1  # no second attempt
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
+
+
+async def test_declined_attempt_is_reported_as_skipped(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """A guard that declines under the lock says so on the breakdown, and is
+    not counted or published as a failure."""
+    data = wolink_entry.runtime_data
+
+    async def hook(ble_device, preset, image, **kwargs):
+        data.write_lock = True  # flipped during attempt 1
+        return fail("first try", connect=0.1)
+
+    tag_writer.write_hook = hook
+    await respond(hass, "write", device_id_of(hass))
+
+    report = data.reports.last
+    assert report["success"] is False
+    assert report["skipped"] == "locked"  # a scalar: it goes on the entity
+    assert "error" not in report
+    # Declining is not failing: the write ends as "locked", so the failure
+    # sensors stay where they were.
+    assert sensor(hass, "failure_count") == "0"
+    assert sensor(hass, "last_failure_time") == "unknown"
+
+
+async def test_a_dropped_link_mid_transfer_reads_as_a_lost_link(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """blesession ends a wait the moment the link goes; the breakdown names
+    the stage it died in and gives the generic `link_lost` reading."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 1})
+    tag_writer.write_result = fail(
+        "The link dropped while waiting for part 12",
+        exc=SessionDropped,
+        connect=0.2,
+        handshake=0.1,
+        transfer=0.4,
+    )
+
+    with pytest.raises(HomeAssistantError, match="The link dropped"):
+        await call(hass, "write", device_id_of(hass))
+
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert failed["failed_stage"] == "transfer"
+    assert failed["likely_cause"].startswith("The link to the tag went away mid-session")
+    assert failed["likely_cause_key"] == "link_lost"
 
 
 async def test_timed_out_attempt_is_not_retried(

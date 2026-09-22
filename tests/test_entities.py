@@ -136,7 +136,7 @@ async def test_easytag_session_battery_and_temperature(
         patch.object(EasyTagBleBackend, "prepare_image", staticmethod(lambda p, i, a: i)),
         patch("custom_components.ble_esl.services.render_image") as render,
         patch(
-            "custom_components.ble_esl.services.async_ble_device_from_address",
+            "custom_components.ble_esl.services.ble_device_or_raise",
             return_value=object(),
         ),
     ):

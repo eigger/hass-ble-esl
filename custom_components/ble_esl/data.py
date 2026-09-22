@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from blesession import SessionReports
 from homeassistant.core import CALLBACK_TYPE
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -61,16 +62,28 @@ class BleEslRuntimeData:
     """Bumped whenever a pending write is cancelled; a debounced write that
     already fired but is still queued on the BLE lock is dropped if its
     generation no longer matches."""
-    last_write_timing: dict[str, float | int | bool | str] | None = None
-    """The most recent write attempt as blesession's report: outcome, where it
-    failed and why, the radio, the per-stage timings (see services._report).
-    Shown as the Write Duration sensor's attributes so it can be monitored
-    without debug logging."""
-    last_failure_timing: dict[str, float | int | bool | str] | None = None
-    """The final attempt of the most recent *failed* write, in the same shape.
-    Shown as the Last Failure Time sensor's attributes: a later successful
-    write replaces last_write_timing but leaves this in place, so an
-    intermittent failure can still be read after the fact."""
+    reports: SessionReports = field(default_factory=SessionReports)
+    """blesession's two report slots, filled by services.execute_write.
+
+    `last` is the most recent write *attempt* as blesession's report: outcome,
+    where it failed and why, the radio, the per-stage timings (see
+    services._report). Shown as the Write Duration sensor's attributes so the
+    write path can be monitored without debug logging. An attempt a guard
+    declined under the BLE lock is recorded too, as `skipped` (`locked` /
+    `duplicate` / `dropped`) rather than an error, so "nothing was sent" is as
+    readable as a failure.
+
+    `last_failure` is the final attempt of the most recent failed *write* —
+    every retry exhausted — shown as the Last Failure Time sensor's
+    attributes. A later successful write replaces `last` but leaves it in
+    place, so an intermittent failure can still be read after the fact.
+
+    Per write rather than per attempt: that is what the Last Failure Time
+    timestamp and the Failure Count sensor beside it count, so recording an
+    attempt that a later retry recovered from would leave the attributes
+    describing a different event than the state. blesession's own
+    `SessionReports` docstring calls this the case for filing the attempt
+    `run_attempts()` returns instead of every one."""
 
     @property
     def identifier(self) -> str:
