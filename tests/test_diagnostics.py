@@ -47,7 +47,9 @@ async def test_diagnostics_content_and_redaction(
     adv = result["advertisement"]
     assert adv["manufacturer_data"] == {f"0x{MANUFACTURER_ID:04X}": "12340201040306050bb8"}
     assert adv["parsed"]["battery_mv"] == 3000
-    assert adv["parsed"]["sw_version"] == "258"
+    assert adv["parsed"]["sw_version"] == "513"
+    assert adv["parsed"]["raw"]["hw_ver"] == 0x0403
+    assert adv["parsed"]["raw"]["disp_ver"] == 0x0605
 
     assert result["write_state"]["write_lock"] is False
     assert result["write_state"]["in_progress"] is False

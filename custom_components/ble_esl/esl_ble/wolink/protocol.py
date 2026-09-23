@@ -64,15 +64,19 @@ if crc16_modbus(b"123456789") != 0x4B37:
 def parse_manufacturer_data(data: bytes) -> dict:
     """Parse 0xBBAA manufacturer-data value (company ID already stripped).
 
-    Layout: PID(2B) + AppVer(2B) + HwVer(2B) + DispVer(2B) + BatVoltage_mv(2B) = 10 bytes.
+    Layout: PID + AppVer + HwVer + DispVer + BatVoltage_mv, each a big-endian
+    uint16. GATT command fields elsewhere in this protocol are little-endian;
+    the advertisement is not. Reading the versions little-endian swaps the
+    bytes (app ``00 0E`` becomes 3584 instead of 14).
     """
     if len(data) < 10:
         raise ValueError(f"expected at least 10 bytes of manufacturer data, got {len(data)}")
+    pid, app_ver, hw_ver, disp_ver = struct.unpack_from(">4H", data)
     return {
-        "pid": data[0:2].hex(),
-        "app_ver": struct.unpack_from("<H", data, 2)[0],
-        "hw_ver": struct.unpack_from("<H", data, 4)[0],
-        "disp_ver": struct.unpack_from("<H", data, 6)[0],
+        "pid": f"{pid:04x}",
+        "app_ver": app_ver,
+        "hw_ver": hw_ver,
+        "disp_ver": disp_ver,
         "battery_mv": _battery_mv(data[8:10]),
     }
 
@@ -205,13 +209,108 @@ def quantize_image(
     return plane_bw, plane_red, plane_yellow
 
 
+def _scan_xy(
+    row: int,
+    col: int,
+    width: int,
+    height: int,
+    *,
+    mirror: bool,
+    rotate_cw: bool,
+    row_major: bool,
+) -> tuple[int, int]:
+    """Source pixel for buffer position ``(row, col)``.
+
+    ``row`` is the slow axis. Both packers use this, so ``mirror`` and
+    ``rotate_cw`` mean the same thing in each. ``mirror`` flips x after the
+    scan mapping. ``rotate_cw`` without ``mirror`` reads column ``row`` from
+    ``x = width - 1 - row``.
+    """
+    if row_major:
+        x, y = col, row
+    elif rotate_cw:
+        x, y = width - 1 - row, col
+    else:
+        x, y = row, height - 1 - col
+    if mirror:
+        x = width - 1 - x
+    return x, y
+
+
+def _pack_1bpp(
+    bits: list[int],
+    width: int,
+    height: int,
+    *,
+    mirror: bool,
+    rotate_cw: bool,
+    row_major: bool,
+) -> bytes:
+    """Pack one bit per pixel, first pixel of a byte in the high bit.
+
+    The fast axis is ``col`` (eight pixels per byte). ``row_major`` walks x
+    along each row; otherwise each column is ``height`` pixels.
+    """
+    if row_major:
+        buf_h, buf_w = height, width
+    else:
+        buf_h, buf_w = width, height
+    stride = (buf_w + 7) // 8
+    raw = bytearray(buf_h * stride)
+    for row in range(buf_h):
+        for col in range(buf_w):
+            x, y = _scan_xy(
+                row,
+                col,
+                width,
+                height,
+                mirror=mirror,
+                rotate_cw=rotate_cw,
+                row_major=row_major,
+            )
+            if bits[y * width + x]:
+                raw[row * stride + (col // 8)] |= 1 << (7 - (col % 8))
+    return bytes(raw)
+
+
+def _encode_split_planes(
+    plane_bw: list[int] | bytes,
+    plane_red: list[int] | bytes,
+    preset: DevicePreset,
+) -> bytes:
+    """Pack two full-frame 1bpp planes: black/white, then red.
+
+    Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
+    white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
+    inverted. A red bit of 1 is red and covers the black/white plane; red
+    pixels are stored as white underneath. Scan flags are the same mapping as
+    the 2bpp packer (``_scan_xy``).
+    """
+    width, height = preset.width, preset.height
+    count = width * height
+    mirror = bool(preset.extra.get("mirror", False))
+    rotate_cw = bool(preset.extra.get("rotate_cw", False))
+    row_major = bool(preset.extra.get("row_major", False))
+    # 1 = black in the quantizer, 1 = white on the panel.
+    bw_bits = [0 if plane_bw[i] else 1 for i in range(count)]
+    red_bits = [int(plane_red[i]) for i in range(count)]
+    kwargs = {
+        "mirror": mirror,
+        "rotate_cw": rotate_cw,
+        "row_major": row_major,
+    }
+    return _pack_1bpp(bw_bits, width, height, **kwargs) + _pack_1bpp(
+        red_bits, width, height, **kwargs
+    )
+
+
 def encode_planes(
     plane_bw: list[int] | bytes,
     plane_red: list[int] | bytes,
     plane_yellow: list[int] | bytes | None,
     preset: DevicePreset,
 ) -> bytes:
-    """Convert bit planes to 2bpp packed bytes matching panel scan orientation."""
+    """Pack bit planes for ``preset``: 2bpp, or two 1bpp frames when split."""
     width, height = preset.width, preset.height
     expected = width * height
     if plane_yellow is None:
@@ -230,23 +329,12 @@ def encode_planes(
                 "so this is checked up front."
             )
 
+    if preset.extra.get("split_planes"):
+        return _encode_split_planes(plane_bw, plane_red, preset)
+
     mirror = bool(preset.extra.get("mirror", False))
     rotate_cw = bool(preset.extra.get("rotate_cw", False))
     row_major = bool(preset.extra.get("row_major", False))
-
-    if mirror:
-
-        def flip_h(plane: list[int] | bytes) -> list[int]:
-            flipped = list(plane)
-            for y in range(height):
-                for x in range(width // 2):
-                    a, b = y * width + x, y * width + (width - 1 - x)
-                    flipped[a], flipped[b] = flipped[b], flipped[a]
-            return flipped
-
-        plane_bw = flip_h(plane_bw)
-        plane_red = flip_h(plane_red)
-        plane_yellow = flip_h(plane_yellow)
 
     if row_major:
         buf_h, buf_w = height, width
@@ -264,13 +352,15 @@ def encode_planes(
             for p in range(4):
                 col = col_group * 4 + p
                 if col < buf_w:
-                    if row_major:
-                        orig_x, orig_y = col, row
-                    elif rotate_cw:
-                        orig_x, orig_y = width - 1 - row, col
-                    else:
-                        orig_x, orig_y = row, height - 1 - col
-
+                    orig_x, orig_y = _scan_xy(
+                        row,
+                        col,
+                        width,
+                        height,
+                        mirror=mirror,
+                        rotate_cw=rotate_cw,
+                        row_major=row_major,
+                    )
                     idx = orig_y * width + orig_x
                     if plane_bw[idx]:
                         color = 0b00

@@ -138,26 +138,42 @@ def test_parse_manufacturer_data():
             0x12,
             0x34,  # PID: "1234"
             0x01,
-            0x02,  # AppVer: 0x0201 = 513
+            0x02,  # AppVer: 0x0102 = 258 (big-endian)
             0x03,
-            0x04,  # HwVer: 0x0403 = 1027
+            0x04,  # HwVer: 0x0304 = 772
             0x05,
-            0x06,  # DispVer: 0x0605 = 1541
+            0x06,  # DispVer: 0x0506 = 1286
             0x0B,
-            0xB8,  # BatVoltage_mv: 0x0BB8 = 3000 mV (BE)
+            0xB8,  # BatVoltage_mv: 0x0BB8 = 3000 mV
         ]
     )
     info = parse_manufacturer_data(raw)
     assert info["pid"] == "1234"
-    assert info["app_ver"] == 513
-    assert info["hw_ver"] == 1027
-    assert info["disp_ver"] == 1541
+    assert info["app_ver"] == 258
+    assert info["hw_ver"] == 772
+    assert info["disp_ver"] == 1286
     assert info["battery_mv"] == 3000
     assert battery_looks_plausible(info["battery_mv"]) is True
 
     # Short payload
     with pytest.raises(ValueError):
         parse_manufacturer_data(b"\x01\x02\x03")
+
+
+def test_parse_manufacturer_data_captured_advertisement():
+    """Versions use the same big-endian layout as the battery millivolts.
+
+    Captured from the 2.9\" tag in discussion 55. Little-endian would report
+    app 3584 (0x0E00) and hardware 12291 (0x3003) instead of 14 and 0x0330.
+    """
+    info = parse_manufacturer_data(bytes.fromhex("3000000e033003030b9d"))
+    assert info == {
+        "pid": "3000",
+        "app_ver": 0x000E,
+        "hw_ver": 0x0330,
+        "disp_ver": 0x0303,
+        "battery_mv": 2973,
+    }
 
 
 def test_battery_plausibility_and_endian():
@@ -230,6 +246,86 @@ def test_encode_planes_mirror_and_rotation():
     plane_750 = [0] * (preset_750.width * preset_750.height)
     encoded_750 = encode_planes(plane_750, plane_750, plane_750, preset_750)
     assert len(encoded_750) == expected_len_750
+
+
+def test_encode_split_planes_bw_then_red():
+    """BWR split packing: BW bit 1 is white, red follows, MSB first."""
+    preset = DevicePreset(
+        key="bwr",
+        display_name="bwr",
+        width=8,
+        height=1,
+        colors="BWR",
+        extra={"split_planes": True, "row_major": True},
+    )
+    black = [1] * 8  # quantizer: 1 = black
+    white = [0] * 8
+    off = [0] * 8
+    assert encode_planes(black, off, off, preset) == bytes([0x00, 0x00])
+    assert encode_planes(white, off, off, preset) == bytes([0xFF, 0x00])
+    assert encode_planes(white, [1] * 8, off, preset) == bytes([0xFF, 0xFF])
+
+    # White pixel at x=0 on a black row sets the high bit of the BW plane.
+    one_white = [0, 1, 1, 1, 1, 1, 1, 1]
+    assert encode_planes(one_white, off, off, preset) == bytes([0x80, 0x00])
+
+    mirrored = DevicePreset(
+        key="bwr",
+        display_name="bwr",
+        width=8,
+        height=1,
+        colors="BWR",
+        extra={"split_planes": True, "row_major": True, "mirror": True},
+    )
+    assert encode_planes(one_white, off, off, mirrored)[0] == 0x01
+
+
+def test_encode_split_planes_column_scan_matches_2bpp_axes():
+    """Without rotate_cw, column 0 starts at y = height - 1, same as 2bpp."""
+    preset = DevicePreset(
+        key="bwr",
+        display_name="bwr",
+        width=4,
+        height=2,
+        colors="BWR",
+        extra={"split_planes": True, "row_major": False},
+    )
+    # Index y * width + x. White (quantizer 0) only at (x=0, y=1), the bottom.
+    plane_bw = [1, 1, 1, 1, 0, 1, 1, 1]
+    off = [0] * 8
+    packed = encode_planes(plane_bw, off, off, preset)
+    assert packed[0] == 0x80  # column x=0, col 0 maps to y = height - 1
+    assert packed[1:] == bytes(len(packed) - 1)
+
+
+def test_290_bwr_corner_is_first_bit():
+    """Default scan: source (0, height - 1) is the high bit of byte 0.
+
+    With the LED at the top-left, discussion 55's photo puts the first columns
+    on the left edge and the first bit of each column at the bottom.
+    """
+    preset = PRESETS["290-bwr"]
+    width, height = preset.width, preset.height
+    count = width * height
+    plane_bw = [1] * count  # quantizer: 1 = black
+    off = [0] * count
+    plane_bw[(height - 1) * width] = 0  # white at (x=0, y=height-1)
+    packed = encode_planes(plane_bw, off, off, preset)
+    assert packed[0] == 0x80
+    assert packed[1:] == bytes(len(packed) - 1)
+    assert len(packed) == 2 * width * ((height + 7) // 8)
+
+
+def test_encode_290_bwr_is_two_full_frames():
+    """2.9\" BWR is two 296x128 1bpp frames, not the 2bpp packing of preset 290."""
+    preset = PRESETS["290-bwr"]
+    count = preset.width * preset.height
+    black = encode_planes([1] * count, [0] * count, [0] * count, preset)
+    assert len(black) == count // 4  # same byte count as 2bpp: two 1bpp frames
+    assert black == bytes(len(black))
+    white = encode_planes([0] * count, [0] * count, [0] * count, preset)
+    assert white[: count // 8] == bytes([0xFF]) * (count // 8)
+    assert white[count // 8 :] == bytes(count // 8)
 
 
 def test_encode_planes_213_non_multiple_of_4():

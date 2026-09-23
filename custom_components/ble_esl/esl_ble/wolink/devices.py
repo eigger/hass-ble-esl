@@ -20,9 +20,14 @@ def _p(
     mirror: bool = False,
     rotate_cw: bool = False,
     row_major: bool = False,
+    split_planes: bool = False,
     colors: str = "BWRY",
     confidence: str = CONFIDENCE_ESTIMATED,
 ) -> DevicePreset:
+    extra: dict[str, bool] = {"mirror": mirror, "rotate_cw": rotate_cw, "row_major": row_major}
+    if split_planes:
+        # Two 1bpp frames (black/white, then red) instead of interleaved 2bpp.
+        extra["split_planes"] = True
     return DevicePreset(
         key=key,
         display_name=name,
@@ -30,7 +35,7 @@ def _p(
         height=h,
         colors=colors,
         confidence=confidence,
-        extra={"mirror": mirror, "rotate_cw": rotate_cw, "row_major": row_major},
+        extra=extra,
     )
 
 
@@ -45,6 +50,18 @@ PRESETS: dict[str, DevicePreset] = {
             mirror=True,
             rotate_cw=True,
             confidence=CONFIDENCE_HARDWARE,
+        ),
+        # 2.9" BWR reads two 1bpp planes, 128 pixels per column (discussion 55).
+        # LED at the top-left: column 0 is the left edge, bit 0 of each column
+        # is the bottom. That is the default scan, so no rotate or mirror.
+        _p(
+            "290-bwr",
+            '2.9" BWR',
+            296,
+            128,
+            split_planes=True,
+            colors="BWR",
+            confidence=CONFIDENCE_COMMUNITY,
         ),
         _p("350", '3.5" BWRY', 384, 184, confidence=CONFIDENCE_HARDWARE),
         _p(

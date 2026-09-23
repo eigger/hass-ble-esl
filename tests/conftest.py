@@ -33,7 +33,7 @@ from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID as WO
 
 ADDRESS = "66:66:54:20:00:55"
 IDENT = "54200055"
-# PID=0x1234, AppVer=258, HwVer=772, DispVer=0x0506, battery 3000 mV
+# PID=0x1234, AppVer=0x0201 (513), HwVer=0x0403 (1027), DispVer=0x0605 (1541), battery 3000 mV
 WOLINK_MFR_BYTES = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
 
 
