@@ -280,8 +280,8 @@ def test_encode_split_planes_bw_then_red():
     assert encode_planes(one_white, off, off, mirrored)[0] == 0x01
 
 
-def test_encode_split_planes_column_major():
-    """With row_major off, x is the slow axis: pixel (0, 1) is the second bit."""
+def test_encode_split_planes_column_scan_matches_2bpp_axes():
+    """Without rotate_cw, column 0 starts at y = height - 1, same as 2bpp."""
     preset = DevicePreset(
         key="bwr",
         display_name="bwr",
@@ -290,12 +290,30 @@ def test_encode_split_planes_column_major():
         colors="BWR",
         extra={"split_planes": True, "row_major": False},
     )
-    # Index y * width + x. White (quantizer 0) only at (x=0, y=1).
+    # Index y * width + x. White (quantizer 0) only at (x=0, y=1), the bottom.
     plane_bw = [1, 1, 1, 1, 0, 1, 1, 1]
     off = [0] * 8
     packed = encode_planes(plane_bw, off, off, preset)
-    assert packed[0] == 0x40  # column x=0: y=0 black, y=1 white
+    assert packed[0] == 0x80  # column x=0, col 0 maps to y = height - 1
     assert packed[1:] == bytes(len(packed) - 1)
+
+
+def test_290_bwr_corner_is_first_bit():
+    """rotate_cw, no mirror: source (width - 1, 0) is the high bit of byte 0.
+
+    Discussion 55's marked photo matched this column scan (128 pixels, 16
+    bytes per column), not a 296-pixel row.
+    """
+    preset = PRESETS["290-bwr"]
+    width, height = preset.width, preset.height
+    count = width * height
+    plane_bw = [1] * count  # quantizer: 1 = black
+    off = [0] * count
+    plane_bw[width - 1] = 0  # white at (x=width-1, y=0)
+    packed = encode_planes(plane_bw, off, off, preset)
+    assert packed[0] == 0x80
+    assert packed[1:] == bytes(len(packed) - 1)
+    assert len(packed) == 2 * width * ((height + 7) // 8)
 
 
 def test_encode_290_bwr_is_two_full_frames():

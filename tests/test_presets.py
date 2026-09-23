@@ -26,14 +26,15 @@ def test_presets_catalog():
     assert PRESETS["290"].extra.get("rotate_cw") is True
     assert "split_planes" not in PRESETS["290"].extra
 
-    # 2.9" BWR: two 1bpp planes. Scan flags are provisional, so it stays unverified.
+    # 2.9" BWR: two 1bpp columns. Community report, so it stays unverified.
     assert PRESETS["290-bwr"].colors == "BWR"
     assert PRESETS["290-bwr"].width == 296
     assert PRESETS["290-bwr"].height == 128
-    assert PRESETS["290-bwr"].confidence == CONFIDENCE_ESTIMATED
+    assert PRESETS["290-bwr"].confidence == CONFIDENCE_COMMUNITY
     assert PRESETS["290-bwr"].verified is False
     assert PRESETS["290-bwr"].extra.get("split_planes") is True
-    assert PRESETS["290-bwr"].extra.get("row_major") is True
+    assert PRESETS["290-bwr"].extra.get("rotate_cw") is True
+    assert PRESETS["290-bwr"].extra.get("row_major") is False
     assert PRESETS["290-bwr"].extra.get("mirror") is False
 
     assert PRESETS["350"].confidence == CONFIDENCE_HARDWARE
@@ -71,6 +72,8 @@ def test_model_selector_ordering():
     keys = [o["value"] for o in options]
     # First 4 must be verified: 290, 350, 750, 420 (hardware/reported confidence, then area)
     assert set(keys[:4]) == {"290", "350", "750", "420"}
+    # Community confidence sorts after hardware/reported, so 290-bwr stays out.
+    assert "290-bwr" not in keys[:4]
 
     for option in options:
         preset = PRESETS[option["value"]]

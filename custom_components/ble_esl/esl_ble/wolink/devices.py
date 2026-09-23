@@ -51,16 +51,18 @@ PRESETS: dict[str, DevicePreset] = {
             rotate_cw=True,
             confidence=CONFIDENCE_HARDWARE,
         ),
-        # Same panel size as 290, but the controller reads two 1bpp planes
-        # (discussion 55). Row order is provisional until a marked photo lands.
+        # 2.9" BWR reads two 1bpp planes, 128 pixels per column (discussion 55).
+        # rotate_cw and mirror off matched the marked photo; mirror here means
+        # the same x-flip as the 2bpp packer, not the opposite.
         _p(
             "290-bwr",
             '2.9" BWR',
             296,
             128,
-            row_major=True,
+            rotate_cw=True,
             split_planes=True,
             colors="BWR",
+            confidence=CONFIDENCE_COMMUNITY,
         ),
         _p("350", '3.5" BWRY', 384, 184, confidence=CONFIDENCE_HARDWARE),
         _p(

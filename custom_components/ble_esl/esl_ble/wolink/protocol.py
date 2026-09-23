@@ -209,32 +209,67 @@ def quantize_image(
     return plane_bw, plane_red, plane_yellow
 
 
+def _scan_xy(
+    row: int,
+    col: int,
+    width: int,
+    height: int,
+    *,
+    mirror: bool,
+    rotate_cw: bool,
+    row_major: bool,
+) -> tuple[int, int]:
+    """Source pixel for buffer position ``(row, col)``.
+
+    ``row`` is the slow axis. Both packers use this, so ``mirror`` and
+    ``rotate_cw`` mean the same thing in each. ``mirror`` flips x after the
+    scan mapping. ``rotate_cw`` without ``mirror`` reads column ``row`` from
+    ``x = width - 1 - row``.
+    """
+    if row_major:
+        x, y = col, row
+    elif rotate_cw:
+        x, y = width - 1 - row, col
+    else:
+        x, y = row, height - 1 - col
+    if mirror:
+        x = width - 1 - x
+    return x, y
+
+
 def _pack_1bpp(
     bits: list[int],
     width: int,
     height: int,
     *,
     mirror: bool,
+    rotate_cw: bool,
     row_major: bool,
 ) -> bytes:
     """Pack one bit per pixel, first pixel of a byte in the high bit.
 
-    ``row_major`` walks x along each row. Otherwise x is the slow axis and
-    each column is ``height`` pixels, which is the scan the 2bpp presets use.
+    The fast axis is ``col`` (eight pixels per byte). ``row_major`` walks x
+    along each row; otherwise each column is ``height`` pixels.
     """
     if row_major:
-        major, minor = height, width
+        buf_h, buf_w = height, width
     else:
-        major, minor = width, height
-    stride = (minor + 7) // 8
-    raw = bytearray(major * stride)
-    for i in range(major):
-        for j in range(minor):
-            x, y = (j, i) if row_major else (i, j)
-            if mirror:
-                x = width - 1 - x
+        buf_h, buf_w = width, height
+    stride = (buf_w + 7) // 8
+    raw = bytearray(buf_h * stride)
+    for row in range(buf_h):
+        for col in range(buf_w):
+            x, y = _scan_xy(
+                row,
+                col,
+                width,
+                height,
+                mirror=mirror,
+                rotate_cw=rotate_cw,
+                row_major=row_major,
+            )
             if bits[y * width + x]:
-                raw[i * stride + (j // 8)] |= 1 << (7 - (j % 8))
+                raw[row * stride + (col // 8)] |= 1 << (7 - (col % 8))
     return bytes(raw)
 
 
@@ -248,18 +283,24 @@ def _encode_split_planes(
     Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
     white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
     inverted. A red bit of 1 is red and covers the black/white plane; red
-    pixels are stored as white underneath. Scan order is provisional
-    (``row_major`` / ``mirror`` on the preset) until a marked photo fixes it.
+    pixels are stored as white underneath. Scan flags are the same mapping as
+    the 2bpp packer (``_scan_xy``).
     """
     width, height = preset.width, preset.height
     count = width * height
     mirror = bool(preset.extra.get("mirror", False))
-    row_major = bool(preset.extra.get("row_major", True))
+    rotate_cw = bool(preset.extra.get("rotate_cw", False))
+    row_major = bool(preset.extra.get("row_major", False))
     # 1 = black in the quantizer, 1 = white on the panel.
     bw_bits = [0 if plane_bw[i] else 1 for i in range(count)]
     red_bits = [int(plane_red[i]) for i in range(count)]
-    return _pack_1bpp(bw_bits, width, height, mirror=mirror, row_major=row_major) + _pack_1bpp(
-        red_bits, width, height, mirror=mirror, row_major=row_major
+    kwargs = {
+        "mirror": mirror,
+        "rotate_cw": rotate_cw,
+        "row_major": row_major,
+    }
+    return _pack_1bpp(bw_bits, width, height, **kwargs) + _pack_1bpp(
+        red_bits, width, height, **kwargs
     )
 
 
@@ -295,20 +336,6 @@ def encode_planes(
     rotate_cw = bool(preset.extra.get("rotate_cw", False))
     row_major = bool(preset.extra.get("row_major", False))
 
-    if mirror:
-
-        def flip_h(plane: list[int] | bytes) -> list[int]:
-            flipped = list(plane)
-            for y in range(height):
-                for x in range(width // 2):
-                    a, b = y * width + x, y * width + (width - 1 - x)
-                    flipped[a], flipped[b] = flipped[b], flipped[a]
-            return flipped
-
-        plane_bw = flip_h(plane_bw)
-        plane_red = flip_h(plane_red)
-        plane_yellow = flip_h(plane_yellow)
-
     if row_major:
         buf_h, buf_w = height, width
     else:
@@ -325,13 +352,15 @@ def encode_planes(
             for p in range(4):
                 col = col_group * 4 + p
                 if col < buf_w:
-                    if row_major:
-                        orig_x, orig_y = col, row
-                    elif rotate_cw:
-                        orig_x, orig_y = width - 1 - row, col
-                    else:
-                        orig_x, orig_y = row, height - 1 - col
-
+                    orig_x, orig_y = _scan_xy(
+                        row,
+                        col,
+                        width,
+                        height,
+                        mirror=mirror,
+                        rotate_cw=rotate_cw,
+                        row_major=row_major,
+                    )
                     idx = orig_y * width + orig_x
                     if plane_bw[idx]:
                         color = 0b00
