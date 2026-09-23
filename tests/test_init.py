@@ -54,7 +54,9 @@ async def test_setup_creates_device_and_entities(hass: HomeAssistant, wolink_ent
 
 async def test_advertisement_updates_device_versions(hass: HomeAssistant, wolink_entry) -> None:
     """process_service_info mirrors new firmware/hardware versions onto the device."""
-    newer = bytes([0x12, 0x34, 0x03, 0x01, 0x05, 0x03]) + WOLINK_MFR_BYTES[6:]  # app 0x0301, hw 0x0503
+    newer = (
+        bytes([0x12, 0x34, 0x03, 0x01, 0x05, 0x03]) + WOLINK_MFR_BYTES[6:]
+    )  # app 0x0301, hw 0x0503
     inject_bluetooth_service_info(hass, wolink_service_info(mfr_bytes=newer))
     await hass.async_block_till_done()
 
