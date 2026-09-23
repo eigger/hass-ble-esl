@@ -43,7 +43,7 @@ def test_parser_supported():
 def test_parser_start_update_battery_and_versions():
     """Parser publishes voltage/%/battery-low and sw/hw versions from the advertisement."""
     parser = WolinkBluetoothDeviceData(PRESETS["290"])
-    # PID=0x1234, AppVer=258, HwVer=772, DispVer=0x0506, battery 3000 mV
+    # PID=0x1234, AppVer=0x0201 (513), HwVer=0x0403 (1027), DispVer=0x0605, battery 3000 mV
     mfr_bytes = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
 
     update = parser.update(
@@ -52,8 +52,8 @@ def test_parser_start_update_battery_and_versions():
     assert update.title == '54200055 (2.9" BWRY)'
     device = update_device(update)
     assert device.name == "Zhsunyco 54200055"
-    assert device.sw_version == "258"
-    assert device.hw_version == "772"
+    assert device.sw_version == "513"
+    assert device.hw_version == "1027"
     values = sensor_values(update)
     assert values["voltage"] == 3.0
     assert values["battery"] == 100
@@ -102,8 +102,8 @@ def test_protocol_parse_advertisement():
     adv_info = protocol.parse_advertisement(info)
     assert adv_info is not None
     assert adv_info.battery_mv == 3000
-    assert adv_info.sw_version == "258"
-    assert adv_info.hw_version == "772"
+    assert adv_info.sw_version == "513"
+    assert adv_info.hw_version == "1027"
 
     # Empty/invalid manufacturer data returns None
     info_empty = MagicMock()

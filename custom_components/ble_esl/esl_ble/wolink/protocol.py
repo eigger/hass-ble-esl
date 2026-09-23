@@ -64,15 +64,19 @@ if crc16_modbus(b"123456789") != 0x4B37:
 def parse_manufacturer_data(data: bytes) -> dict:
     """Parse 0xBBAA manufacturer-data value (company ID already stripped).
 
-    Layout: PID(2B) + AppVer(2B) + HwVer(2B) + DispVer(2B) + BatVoltage_mv(2B) = 10 bytes.
+    Layout: PID + AppVer + HwVer + DispVer + BatVoltage_mv, each a big-endian
+    uint16. GATT command fields elsewhere in this protocol are little-endian;
+    the advertisement is not. Reading the versions little-endian swaps the
+    bytes (app ``00 0E`` becomes 3584 instead of 14).
     """
     if len(data) < 10:
         raise ValueError(f"expected at least 10 bytes of manufacturer data, got {len(data)}")
+    pid, app_ver, hw_ver, disp_ver = struct.unpack_from(">4H", data)
     return {
-        "pid": data[0:2].hex(),
-        "app_ver": struct.unpack_from("<H", data, 2)[0],
-        "hw_ver": struct.unpack_from("<H", data, 4)[0],
-        "disp_ver": struct.unpack_from("<H", data, 6)[0],
+        "pid": f"{pid:04x}",
+        "app_ver": app_ver,
+        "hw_ver": hw_ver,
+        "disp_ver": disp_ver,
         "battery_mv": _battery_mv(data[8:10]),
     }
 
@@ -205,13 +209,67 @@ def quantize_image(
     return plane_bw, plane_red, plane_yellow
 
 
+def _pack_1bpp(
+    bits: list[int],
+    width: int,
+    height: int,
+    *,
+    mirror: bool,
+    row_major: bool,
+) -> bytes:
+    """Pack one bit per pixel, first pixel of a byte in the high bit.
+
+    ``row_major`` walks x along each row. Otherwise x is the slow axis and
+    each column is ``height`` pixels, which is the scan the 2bpp presets use.
+    """
+    if row_major:
+        major, minor = height, width
+    else:
+        major, minor = width, height
+    stride = (minor + 7) // 8
+    raw = bytearray(major * stride)
+    for i in range(major):
+        for j in range(minor):
+            x, y = (j, i) if row_major else (i, j)
+            if mirror:
+                x = width - 1 - x
+            if bits[y * width + x]:
+                raw[i * stride + (j // 8)] |= 1 << (7 - (j % 8))
+    return bytes(raw)
+
+
+def _encode_split_planes(
+    plane_bw: list[int] | bytes,
+    plane_red: list[int] | bytes,
+    preset: DevicePreset,
+) -> bytes:
+    """Pack two full-frame 1bpp planes: black/white, then red.
+
+    Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
+    white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
+    inverted. A red bit of 1 is red and covers the black/white plane; red
+    pixels are stored as white underneath. Scan order is provisional
+    (``row_major`` / ``mirror`` on the preset) until a marked photo fixes it.
+    """
+    width, height = preset.width, preset.height
+    count = width * height
+    mirror = bool(preset.extra.get("mirror", False))
+    row_major = bool(preset.extra.get("row_major", True))
+    # 1 = black in the quantizer, 1 = white on the panel.
+    bw_bits = [0 if plane_bw[i] else 1 for i in range(count)]
+    red_bits = [int(plane_red[i]) for i in range(count)]
+    return _pack_1bpp(bw_bits, width, height, mirror=mirror, row_major=row_major) + _pack_1bpp(
+        red_bits, width, height, mirror=mirror, row_major=row_major
+    )
+
+
 def encode_planes(
     plane_bw: list[int] | bytes,
     plane_red: list[int] | bytes,
     plane_yellow: list[int] | bytes | None,
     preset: DevicePreset,
 ) -> bytes:
-    """Convert bit planes to 2bpp packed bytes matching panel scan orientation."""
+    """Pack bit planes for ``preset``: 2bpp, or two 1bpp frames when split."""
     width, height = preset.width, preset.height
     expected = width * height
     if plane_yellow is None:
@@ -229,6 +287,9 @@ def encode_planes(
                 "A wrong preset produces a scrambled image rather than an error, "
                 "so this is checked up front."
             )
+
+    if preset.extra.get("split_planes"):
+        return _encode_split_planes(plane_bw, plane_red, preset)
 
     mirror = bool(preset.extra.get("mirror", False))
     rotate_cw = bool(preset.extra.get("rotate_cw", False))

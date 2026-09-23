@@ -22,7 +22,7 @@ async def test_build_device_info_matches_registry(hass: HomeAssistant, enable_bl
     assert info["manufacturer"] == "Zhsunyco" == registered.manufacturer
     assert info["model"] == '2.9" BWRY 296x128' == registered.model
     assert info["model_id"] == "WOLINK" == registered.model_id
-    assert info["sw_version"] == "258" and info["hw_version"] == "772"
+    assert info["sw_version"] == "513" and info["hw_version"] == "1027"
     assert ("bluetooth", ADDRESS) in info["connections"]
 
 

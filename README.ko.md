@@ -35,7 +35,7 @@ BLE 프로토콜 4계열, 판매 브랜드는 다음과 같습니다:
 |---|---|---|---|---|---|
 | **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ 실기기 검증 | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
 | **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ PSJ-420은 소유자 검증; 다른 크기는 크기만 맞춘 프리셋 | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
-| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWRY | ⚠️ 사양서 기반, 미검증 | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
+| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ⚠️ 사양서 기반, 미검증 | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** (eLabel) | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ 사양서 기반, 미검증 | — |
 
 해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)**. 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 백엔드 추가하기](custom_components/ble_esl/esl_ble/README.md)를 보세요.
