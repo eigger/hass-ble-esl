@@ -52,14 +52,13 @@ PRESETS: dict[str, DevicePreset] = {
             confidence=CONFIDENCE_HARDWARE,
         ),
         # 2.9" BWR reads two 1bpp planes, 128 pixels per column (discussion 55).
-        # rotate_cw and mirror off matched the marked photo; mirror here means
-        # the same x-flip as the 2bpp packer, not the opposite.
+        # LED at the top-left: column 0 is the left edge, bit 0 of each column
+        # is the bottom. That is the default scan, so no rotate or mirror.
         _p(
             "290-bwr",
             '2.9" BWR',
             296,
             128,
-            rotate_cw=True,
             split_planes=True,
             colors="BWR",
             confidence=CONFIDENCE_COMMUNITY,

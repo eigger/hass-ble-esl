@@ -33,7 +33,7 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].confidence == CONFIDENCE_COMMUNITY
     assert PRESETS["290-bwr"].verified is False
     assert PRESETS["290-bwr"].extra.get("split_planes") is True
-    assert PRESETS["290-bwr"].extra.get("rotate_cw") is True
+    assert PRESETS["290-bwr"].extra.get("rotate_cw") is False
     assert PRESETS["290-bwr"].extra.get("row_major") is False
     assert PRESETS["290-bwr"].extra.get("mirror") is False
 

@@ -299,17 +299,17 @@ def test_encode_split_planes_column_scan_matches_2bpp_axes():
 
 
 def test_290_bwr_corner_is_first_bit():
-    """rotate_cw, no mirror: source (width - 1, 0) is the high bit of byte 0.
+    """Default scan: source (0, height - 1) is the high bit of byte 0.
 
-    Discussion 55's marked photo matched this column scan (128 pixels, 16
-    bytes per column), not a 296-pixel row.
+    With the LED at the top-left, discussion 55's photo puts the first columns
+    on the left edge and the first bit of each column at the bottom.
     """
     preset = PRESETS["290-bwr"]
     width, height = preset.width, preset.height
     count = width * height
     plane_bw = [1] * count  # quantizer: 1 = black
     off = [0] * count
-    plane_bw[width - 1] = 0  # white at (x=width-1, y=0)
+    plane_bw[(height - 1) * width] = 0  # white at (x=0, y=height-1)
     packed = encode_planes(plane_bw, off, off, preset)
     assert packed[0] == 0x80
     assert packed[1:] == bytes(len(packed) - 1)
