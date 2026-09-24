@@ -70,7 +70,7 @@ PRESETS: dict[str, DevicePreset] = {
             split_planes=True,
             disp_ver=0x0303,
             colors="BWR",
-            confidence=CONFIDENCE_COMMUNITY,
+            confidence=CONFIDENCE_HARDWARE,
         ),
         _p("350", '3.5" BWRY', 384, 184, disp_ver=0x0201, confidence=CONFIDENCE_HARDWARE),
         _p(

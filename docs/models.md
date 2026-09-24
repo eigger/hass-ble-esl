@@ -1,7 +1,7 @@
 # Supported models
 
 > [!WARNING]
-> **Hardware Testing Notice**: **PickSmart** (Gicisky) models are fully verified, inherited from hass-gicisky. **WOLINK** and **easyTag** models have **not** been physically tested yet — their implementations and presets are built from technical specifications.
+> **Hardware Testing Notice**: **PickSmart** (Gicisky) models are fully verified, inherited from hass-gicisky. The **WOLINK 2.9" BWR** preset (`290-bwr`) is verified on a physical tag. Other **WOLINK** and **easyTag** presets have **not** been physically tested yet — their implementations are built from technical specifications.
 > If you test a WOLINK or easyTag device, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
 
 Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + red + yellow.
@@ -22,7 +22,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 2.66" | 296 × 152 | BWR | Zhsunyco | easyTag | ET0266-3A | ⚠️ untested |
 | 2.66" | 296 × 152 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
 | 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
-| 2.9" | 296 × 128 | BWR | Zhsunyco | WOLINK | `290-bwr` | ⚠️ community report |
+| 2.9" | 296 × 128 | BWR | Zhsunyco | WOLINK | `290-bwr` | ✅ verified |
 | 2.9" | 296 × 128 | BWR | Zhsunyco | easyTag | ET0290-3DB / ETR290-FF | ⚠️ untested |
 | 2.9" | 296 × 128 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
 | 2.9" | 296 × 128 | BW | Gicisky | PickSmart | EPD | ✅ verified |
@@ -52,7 +52,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 
 Protocol notes:
 - **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
-- **WOLINK** — Zhsunyco tags. Most presets are 4-color, 2 bits per pixel. The 2.9" BWR preset (`290-bwr`) sends two 1bpp planes (black/white, then red), 128 pixels per column. Colors and that scan were confirmed on a physical tag. The 5.83" panel is listed as 5.8".
+- **WOLINK** — Zhsunyco tags. Most presets are 4-color, 2 bits per pixel. The 2.9" BWR preset (`290-bwr`) is verified on hardware with this integration: it sends two 1bpp planes (black/white, then red), 128 pixels per column, with the LED at the top-left. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
 
