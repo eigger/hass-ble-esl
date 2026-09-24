@@ -71,7 +71,6 @@ def test_easytag_advertisement_names_no_model_yet():
     assert preset_for_advertisement(info) is None
 
     backend = EasyTagBleBackend()
-    assert backend.capabilities.model_detection is True
     assert backend.parse_advertisement(info) is None
     assert backend.refine_preset(PRESETS["3D"], None) is PRESETS["3D"]
 

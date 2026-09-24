@@ -45,7 +45,6 @@ class FooBleBackend(BleBackend):
         passive_battery=...,  # battery from advertisements
         session_battery=...,  # battery from the write session's reply
         session_temperature=...,
-        model_detection=...,  # advertisement may name the model (AdvertisementInfo.model_key); a named model skips the model step in setup and options, others are picked by hand
         palettes=("BW", "BWR"),  # every preset's `colors` must be listed here
     )
     PRESETS = PRESETS
@@ -62,7 +61,7 @@ class FooBleBackend(BleBackend):
 | `id`, `label`, `name`, `capabilities`, `PRESETS`, `parser_cls` | yes | class attributes |
 | `parse_advertisement()` | yes | battery / versions / `model_key` from the advertisement, or `None` |
 | `prepare_image()` + `write_session()` | yes\* | \*or override `write_image()` wholesale |
-| `refine_preset(preset, info)` | when `model_detection=True` identifies more than one model | e.g. PickSmart's firmware quirks |
+| `refine_preset(preset, info)` | when the advertisement names the model | e.g. PickSmart's firmware quirks |
 | `write_prepared()` | rarely | to refuse before connecting (raise `WriteRefused`; XTE) |
 | `read_status()` | optional | status query without a write |
 

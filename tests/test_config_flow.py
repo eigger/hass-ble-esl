@@ -345,5 +345,5 @@ def test_options_schema_default_model_falls_back_per_protocol():
 
     assert model_default("wolink") == "290"
     assert model_default("easytag") == next(iter(EASYTAG_PRESETS))
-    identified = _build_options_schema("wolink", model_identified=True)
+    identified = _build_options_schema("wolink", model_fixed=True)
     assert all(str(key) != CONF_MODEL for key in identified)

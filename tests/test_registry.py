@@ -123,7 +123,6 @@ def test_registry_custom_backend(monkeypatch):
             passive_battery=False,
             session_battery=True,
             session_temperature=True,
-            model_detection=False,
             palettes=("BW",),
         )
         PRESETS = {"m": DevicePreset(key="m", display_name="Mock", width=8, height=8, colors="BW")}

@@ -79,11 +79,11 @@ def _model_selector_options(
     return out
 
 
-def advertised_model_key(
+def _advertised_model_key(
     backend: BleBackend, service_info: BluetoothServiceInfoBleak | None
 ) -> str | None:
     """Catalog model the advertisement names, or None when it does not."""
-    if service_info is None or not backend.capabilities.model_detection:
+    if service_info is None:
         return None
     info = backend.parse_advertisement(service_info)
     if info is None or not info.model_key or info.model_key not in backend.presets():
@@ -99,23 +99,23 @@ def _model_fixed(hass: HomeAssistant, address: str | None, protocol_id: str) -> 
     would overrule.
     """
     backend = esl_ble.get(protocol_id)
-    if not backend.capabilities.model_detection or address is None:
+    if address is None:
         return False
     service_info = async_last_service_info(hass, address, connectable=True)
     if service_info is None:
         return True
-    return advertised_model_key(backend, service_info) is not None
+    return _advertised_model_key(backend, service_info) is not None
 
 
 def _build_options_schema(
-    protocol_id: str = DEFAULT_PROTOCOL, *, model_identified: bool = False
+    protocol_id: str = DEFAULT_PROTOCOL, *, model_fixed: bool = False
 ) -> dict[Any, Any]:
     backend = esl_ble.get(protocol_id)
     default_model = backend.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
-    if not model_identified:
+    if not model_fixed:
         schema[vol.Required(CONF_MODEL, default=default_model)] = SelectSelector(
             SelectSelectorConfig(
                 options=_model_selector_options(protocol_id),
@@ -213,7 +213,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._backend = backend
         self._protocol_id = backend.id
-        self._detected_model = advertised_model_key(backend, discovery_info)
+        self._detected_model = _advertised_model_key(backend, discovery_info)
 
         title = _title(discovery_info, backend, self._detected_model)
         self.context["title_placeholders"] = {"name": title}
@@ -249,7 +249,9 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             self._backend = discovery.backend
             self._protocol_id = discovery.backend.id
 
-            self._detected_model = advertised_model_key(discovery.backend, discovery.discovery_info)
+            self._detected_model = _advertised_model_key(
+                discovery.backend, discovery.discovery_info
+            )
             if self._detected_model:
                 return self._create_entry(self._detected_model)
 
@@ -293,13 +295,8 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
                 mode=SelectSelectorMode.DROPDOWN,
             )
         )
-        if backend.capabilities.model_detection and not self._detected_model:
-            # The tag's type is unknown; no size is a better guess than another.
-            field = vol.Required(CONF_MODEL)
-        else:
-            default_model = backend.preset_for(self._detected_model or DEFAULT_MODEL).key
-            field = vol.Required(CONF_MODEL, default=default_model)
-        schema = vol.Schema({field: selector})
+        # Reached only when the advertisement did not name a model.
+        schema = vol.Schema({vol.Required(CONF_MODEL): selector})
 
         return self.async_show_form(
             step_id="model",
@@ -328,12 +325,12 @@ class OptionsFlowHandler(OptionsFlowWithReload):
             **self.config_entry.options,
         }
         protocol_id = suggested_values.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
-        model_identified = _model_fixed(self.hass, self.config_entry.unique_id, protocol_id)
+        model_fixed = _model_fixed(self.hass, self.config_entry.unique_id, protocol_id)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(_build_options_schema(protocol_id, model_identified=model_identified)),
+                vol.Schema(_build_options_schema(protocol_id, model_fixed=model_fixed)),
                 suggested_values,
             ),
         )

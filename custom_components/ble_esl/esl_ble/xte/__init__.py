@@ -36,7 +36,6 @@ class XteBleBackend(BleBackend):
         passive_battery=True,
         session_battery=False,
         session_temperature=False,
-        model_detection=True,
         palettes=tuple(PALETTES),
     )
     PRESETS = PRESETS

@@ -23,7 +23,6 @@ class EasyTagBleBackend(BleBackend):
         passive_battery=False,
         session_battery=True,
         session_temperature=True,
-        model_detection=True,
         palettes=("BW", "BWR"),
     )
     PRESETS = PRESETS
