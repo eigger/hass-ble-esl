@@ -193,7 +193,10 @@ async def test_user_flow_without_devices_aborts(hass: HomeAssistant, enable_blue
 async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_bluetooth) -> None:
     # An entry saved by a release that still had the Write Delay option loads
     # fine; the stale key is neither shown nor kept once options are saved.
-    entry = await setup_entry(hass, options={"write_delay_ms": 50})
+    # easyTag still offers a model; WOLINK reads it from the advertisement.
+    entry = await setup_entry(
+        hass, protocol="easytag", model="33", options={"write_delay_ms": 50}, advertise=False
+    )
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM and result["step_id"] == "init"
     fields = {str(key) for key in result["data_schema"].schema}
@@ -208,7 +211,7 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
         user_input={
-            CONF_MODEL: "350",
+            CONF_MODEL: "36",
             CONF_RETRY_COUNT: 5,
             CONF_PREVENT_DUPLICATE_SEND: True,
             CONF_DEBOUNCE_MS: 2000,
@@ -217,19 +220,18 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {
-        CONF_MODEL: "350",
+        CONF_MODEL: "36",
         CONF_RETRY_COUNT: 5,
         CONF_PREVENT_DUPLICATE_SEND: True,
         CONF_DEBOUNCE_MS: 2000,
     }
     # OptionsFlowWithReload reloaded the entry: the new model is in force.
     assert entry.state is ConfigEntryState.LOADED
-    assert entry.runtime_data.preset.key == "350"
+    assert entry.runtime_data.preset.key == "36"
 
 
-async def test_options_flow_hides_model_when_display_version_is_known(
-    hass: HomeAssistant, enable_bluetooth
-) -> None:
+async def test_options_flow_hides_wolink_model(hass: HomeAssistant, enable_bluetooth) -> None:
+    """WOLINK never offers a model in options; a known display version still wins."""
     inject_bluetooth_service_info(
         hass, wolink_service_info(mfr_bytes=bytes.fromhex("3000000e033002010b8b"))
     )
@@ -237,6 +239,7 @@ async def test_options_flow_hides_model_when_display_version_is_known(
     result = await hass.config_entries.options.async_init(entry.entry_id)
     fields = {str(key) for key in result["data_schema"].schema}
     assert CONF_MODEL not in fields
+    assert CONF_RETRY_COUNT in fields
     assert entry.runtime_data.preset.key == "350"
 
 
@@ -276,5 +279,5 @@ def test_options_schema_default_model_falls_back_per_protocol():
                 return key.default()
         raise AssertionError("no model field")
 
-    assert model_default("wolink") == "290"
     assert model_default("easytag") == next(iter(EASYTAG_PRESETS))
+    assert all(str(key) != CONF_MODEL for key in _build_options_schema("wolink"))
