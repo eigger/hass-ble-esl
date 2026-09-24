@@ -86,7 +86,7 @@ data:
 
 몇 초 뒤 태그가 갱신됩니다. `dry_run: true`를 붙이면 보내지 않고 렌더링만 합니다 — 결과는 태그의 **Preview Content** 이미지 엔티티에 나타나므로, 패널을 소모하지 않고 레이아웃을 다듬을 수 있습니다.
 
-레이아웃은 [imagespec](https://github.com/eigger/imagespec) 요소의 목록입니다 — 텍스트, 아이콘, 선, QR 코드, 진행 바, 게이지, 파이/막대 차트, 히스토리 플롯, 다운로드 이미지 — 그리고 어떤 값이든 엔티티를 참조하는 Jinja 템플릿이 될 수 있습니다. 지원 해상도별로 완성된 레이아웃은 [`examples/`](examples/README.md)에 있고, [Payload Editor](https://eigger.github.io/Gicisky_Payload_Editor.html)와 [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) 웹 도구로 브라우저에서 초안을 만들 수 있습니다.
+레이아웃은 [imagespec](https://github.com/eigger/imagespec) 요소의 목록입니다 — 텍스트, 아이콘, 선, QR 코드, 진행 바, 게이지, 파이/막대 차트, 히스토리 플롯, 다운로드 이미지 — 그리고 어떤 값이든 엔티티를 참조하는 Jinja 템플릿이 될 수 있습니다. 지원 해상도별로 완성된 레이아웃은 [`examples/`](examples/README.md)에 있고, [Payload Editor](https://eigger.github.io/BLE_ESL_Payload_Editor.html)와 [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) 웹 도구로 브라우저에서 초안을 만들 수 있습니다.
 
 ## 액션
 

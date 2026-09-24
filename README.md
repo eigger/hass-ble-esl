@@ -84,7 +84,7 @@ data:
 
 The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity, so you can iterate on a layout without wearing the panel.
 
-A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements — text, icons, lines, QR codes, progress bars, gauges, pie/bar charts, history plots, downloaded images — and any value can be a Jinja template over your entities. Ready-made layouts for every supported resolution are in [`examples/`](examples/README.md); the [Payload Editor](https://eigger.github.io/Gicisky_Payload_Editor.html) and [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) web tools let you draft one in the browser.
+A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements — text, icons, lines, QR codes, progress bars, gauges, pie/bar charts, history plots, downloaded images — and any value can be a Jinja template over your entities. Ready-made layouts for every supported resolution are in [`examples/`](examples/README.md); the [Payload Editor](https://eigger.github.io/BLE_ESL_Payload_Editor.html) and [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) web tools let you draft one in the browser.
 
 ## Actions
 
