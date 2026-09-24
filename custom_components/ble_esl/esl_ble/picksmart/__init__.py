@@ -28,7 +28,6 @@ class PickSmartBleBackend(BleBackend):
         passive_battery=True,
         session_battery=False,
         session_temperature=False,
-        model_detection=True,
         palettes=("BW", "BWR", "BWRY"),
     )
     PRESETS = PRESETS

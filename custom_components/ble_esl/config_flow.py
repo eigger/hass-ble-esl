@@ -9,6 +9,7 @@ from homeassistant.components import onboarding
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
+    async_last_service_info,
 )
 from homeassistant.config_entries import (
     ConfigFlow,
@@ -16,7 +17,7 @@ from homeassistant.config_entries import (
     OptionsFlowWithReload,
 )
 from homeassistant.const import CONF_ADDRESS
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -78,14 +79,43 @@ def _model_selector_options(
     return out
 
 
-def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]:
+def _advertised_model_key(
+    backend: BleBackend, service_info: BluetoothServiceInfoBleak | None
+) -> str | None:
+    """Catalog model the advertisement names, or None when it does not."""
+    if service_info is None:
+        return None
+    info = backend.parse_advertisement(service_info)
+    if info is None or not info.model_key or info.model_key not in backend.presets():
+        return None
+    return info.model_key
+
+
+def _model_fixed(hass: HomeAssistant, address: str | None, protocol_id: str) -> bool:
+    """Hide the options model field when the advertisement names the model.
+
+    No cached advertisement is not the same as an advertisement that leaves
+    the model open: a sleeping tag must not grow a picker the next advertisement
+    would overrule.
+    """
+    backend = esl_ble.get(protocol_id)
+    if address is None:
+        return False
+    service_info = async_last_service_info(hass, address, connectable=True)
+    if service_info is None:
+        return True
+    return _advertised_model_key(backend, service_info) is not None
+
+
+def _build_options_schema(
+    protocol_id: str = DEFAULT_PROTOCOL, *, model_fixed: bool = False
+) -> dict[Any, Any]:
     backend = esl_ble.get(protocol_id)
     default_model = backend.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
-    # Only show model selection if backend does not support auto model detection
-    if not backend.capabilities.model_detection:
+    if not model_fixed:
         schema[vol.Required(CONF_MODEL, default=default_model)] = SelectSelector(
             SelectSelectorConfig(
                 options=_model_selector_options(protocol_id),
@@ -183,11 +213,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._backend = backend
         self._protocol_id = backend.id
-
-        if backend.capabilities.model_detection:
-            adv_info = backend.parse_advertisement(discovery_info)
-            if adv_info and adv_info.model_key:
-                self._detected_model = adv_info.model_key
+        self._detected_model = _advertised_model_key(backend, discovery_info)
 
         title = _title(discovery_info, backend, self._detected_model)
         self.context["title_placeholders"] = {"name": title}
@@ -200,11 +226,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Confirm discovery."""
         if user_input is not None or not onboarding.async_is_onboarded(self.hass):
-            if (
-                self._backend
-                and self._backend.capabilities.model_detection
-                and self._detected_model
-            ):
+            if self._detected_model:
                 return self._create_entry(self._detected_model)
             return await self.async_step_model()
 
@@ -227,11 +249,11 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             self._backend = discovery.backend
             self._protocol_id = discovery.backend.id
 
-            if discovery.backend.capabilities.model_detection:
-                adv_info = discovery.backend.parse_advertisement(discovery.discovery_info)
-                if adv_info and adv_info.model_key:
-                    self._detected_model = adv_info.model_key
-                    return self._create_entry(self._detected_model)
+            self._detected_model = _advertised_model_key(
+                discovery.backend, discovery.discovery_info
+            )
+            if self._detected_model:
+                return self._create_entry(self._detected_model)
 
             return await self.async_step_model()
 
@@ -273,13 +295,8 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
                 mode=SelectSelectorMode.DROPDOWN,
             )
         )
-        if backend.capabilities.model_detection and not self._detected_model:
-            # The tag's type is unknown; no size is a better guess than another.
-            field = vol.Required(CONF_MODEL)
-        else:
-            default_model = backend.preset_for(self._detected_model or DEFAULT_MODEL).key
-            field = vol.Required(CONF_MODEL, default=default_model)
-        schema = vol.Schema({field: selector})
+        # Reached only when the advertisement did not name a model.
+        schema = vol.Schema({vol.Required(CONF_MODEL): selector})
 
         return self.async_show_form(
             step_id="model",
@@ -298,6 +315,9 @@ class OptionsFlowHandler(OptionsFlowWithReload):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
+            if CONF_MODEL not in user_input and CONF_MODEL in self.config_entry.options:
+                # The field was hidden; saving must not drop an earlier pick.
+                user_input = {**user_input, CONF_MODEL: self.config_entry.options[CONF_MODEL]}
             return self.async_create_entry(title="", data=user_input)
 
         suggested_values = {
@@ -305,10 +325,12 @@ class OptionsFlowHandler(OptionsFlowWithReload):
             **self.config_entry.options,
         }
         protocol_id = suggested_values.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
+        model_fixed = _model_fixed(self.hass, self.config_entry.unique_id, protocol_id)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(_build_options_schema(protocol_id)), suggested_values
+                vol.Schema(_build_options_schema(protocol_id, model_fixed=model_fixed)),
+                suggested_values,
             ),
         )

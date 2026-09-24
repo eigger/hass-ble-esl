@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..base import (
     CONFIDENCE_HARDWARE,
     CONFIDENCE_REPORTED,
     DevicePreset,
 )
+
+if TYPE_CHECKING:
+    from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 PRESETS: dict[str, DevicePreset] = {
     "33": DevicePreset(
@@ -118,3 +123,13 @@ PRESETS: dict[str, DevicePreset] = {
         extra={"dither": True},
     ),
 }
+
+
+def preset_for_advertisement(service_info: BluetoothServiceInfoBleak | None) -> DevicePreset | None:
+    """The preset the advertisement names, or None.
+
+    No easyTag advertisement field is known to name the panel yet, so every
+    tag is picked by hand. Once one is captured next to a known model, key
+    the presets on it here, as WOLINK does with its display version.
+    """
+    return None

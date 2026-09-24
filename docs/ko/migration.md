@@ -27,7 +27,7 @@
 | 페이로드 형식 | imagespec 요소 목록 | **동일** |
 | 기기 이름 | `Gicisky <MAC 뒤 8자리>` | `Gicisky <MAC 뒤 8자리>` (같음) |
 | 엔티티 | Battery, Battery Voltage, Signal Strength, Connectivity, Display In Sync, Write Duration, Failure Count, Last Failure Time, Last Updated Content, Preview Content, Alias, Write Lock | 같은 구성; 엔티티 레지스트리 항목은 새로 생김 (unique ID 접두어가 `gicisky_`에서 `ble_esl_`로) |
-| 옵션 | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay는 없어짐(재시도가 알아서 간격을 둠); **Model** 옵션은 모델을 스스로 알리지 못하는 프로토콜에만 나타나고, PickSmart 태그는 광고에서 모델을 인식 |
+| 옵션 | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay는 없어짐(재시도가 알아서 간격을 둠). **Model**은 광고가 모델을 정하지 못하는 동안에만 남고, 태그가 보이지 않는 동안에는 숨겨짐 |
 | 모델 인식 | 광고에서 | 광고에서; 등록되지 않은 device number는 수동 모델 선택으로 |
 | 폰트 | `custom_components/gicisky/fonts/`, 그다음 `config/www/fonts/` | `custom_components/ble_esl/fonts/`, 그다음 `config/www/fonts/` |
 | 최소 Home Assistant | 2025.1 | **2025.12** |
@@ -129,5 +129,5 @@
 `hass-zhsunyco`는 이 저장소로 이름이 바뀐 것이라 `zhsunyco` 도메인도 같은 도메인 변경을 거쳤습니다. 위 단계가 그대로 적용되고, 다른 점은 다음과 같습니다:
 
 - **Zhsunyco** 항목과 `custom_components/zhsunyco`를 제거합니다; 액션은 `zhsunyco.write` / `zhsunyco.write_guarded` 대신 `ble_esl.write` / `ble_esl.write_guarded`가 됩니다.
-- WOLINK와 easyTag 태그는 모델을 스스로 알리지 못하므로 설정 흐름(그리고 **옵션** 대화상자)에 **Model** 선택이 있습니다 — 쓰던 것과 같은 크기를 고르세요.
+- 모든 프로토콜은 광고가 카탈로그 모델을 가리키면 모델 단계 없이 등록하고, 가리키지 않으면 모델을 고릅니다. **옵션**의 모델 선택은 광고가 아직 모델을 정하지 못할 때만 남고, 태그가 보이지 않는 동안에는 숨겨집니다.
 - 기기 이름은 `Zhsunyco <id>` 그대로라, Gicisky 태그처럼 기본 엔티티 ID가 대개 똑같이 돌아옵니다.

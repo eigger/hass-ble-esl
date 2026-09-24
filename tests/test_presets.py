@@ -10,6 +10,7 @@ from custom_components.ble_esl.esl_ble.base import (
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import (
     PRESETS,
+    preset_for_advertisement,
 )
 
 
@@ -36,8 +37,10 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].extra.get("rotate_cw") is False
     assert PRESETS["290-bwr"].extra.get("row_major") is False
     assert PRESETS["290-bwr"].extra.get("mirror") is False
+    assert PRESETS["290-bwr"].extra.get("disp_ver") == 0x0303
 
     assert PRESETS["350"].confidence == CONFIDENCE_HARDWARE
+    assert PRESETS["350"].extra.get("disp_ver") == 0x0201
     assert PRESETS["350"].verified is True
 
     assert PRESETS["750"].confidence == CONFIDENCE_HARDWARE
@@ -78,3 +81,13 @@ def test_model_selector_ordering():
     for option in options:
         preset = PRESETS[option["value"]]
         assert ("(unverified)" in option["label"]) is (not preset.verified)
+
+
+def test_preset_for_advertisement_uses_display_version():
+    """Known display versions select a preset; anything else stays manual."""
+    assert preset_for_advertisement(bytes.fromhex("3000000e033003030b9d")).key == "290-bwr"
+    assert preset_for_advertisement(bytes.fromhex("3000000e033002010b8b")).key == "350"
+    assert preset_for_advertisement(bytes.fromhex("3000000e033004010beb")) is None
+    assert preset_for_advertisement(bytes.fromhex("12340201040306050bb8")) is None
+    assert preset_for_advertisement(b"\x01\x02") is None
+    assert preset_for_advertisement(None) is None

@@ -111,7 +111,6 @@ class Capabilities:
     passive_battery: bool
     session_battery: bool
     session_temperature: bool
-    model_detection: bool
     palettes: tuple[str, ...]
 
 

@@ -34,7 +34,7 @@ what to note down beforehand, and how to verify the result.
 | Payload format | imagespec element list | **unchanged** |
 | Device name | `Gicisky <last 8 hex of MAC>` | `Gicisky <last 8 hex of MAC>` (same) |
 | Entities | Battery, Battery Voltage, Signal Strength, Connectivity, Display In Sync, Write Duration, Failure Count, Last Failure Time, Last Updated Content, Preview Content, Alias, Write Lock | same set; entity registry entries are new (unique IDs are prefixed `ble_esl_` instead of `gicisky_`) |
-| Options | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay is gone (retries pace themselves); a **Model** option appears only for protocols without auto detection, PickSmart tags detect their model from the advertisement |
+| Options | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay is gone (retries pace themselves). **Model** stays only while an advertisement does not name the model, and is hidden while the tag is not visible |
 | Model detection | from advertisement | from advertisement; unknown device numbers fall back to a manual model pick |
 | Fonts | `custom_components/gicisky/fonts/`, then `config/www/fonts/` | `custom_components/ble_esl/fonts/`, then `config/www/fonts/` |
 | Minimum Home Assistant | 2025.1 | **2025.12** |
@@ -186,7 +186,9 @@ through the same domain change. The steps above apply with these differences:
 - Remove the **Zhsunyco** entries and `custom_components/zhsunyco`; actions become
   `ble_esl.write` / `ble_esl.write_guarded` instead of `zhsunyco.write` /
   `zhsunyco.write_guarded`.
-- WOLINK and easyTag tags cannot report their model, so the flow (and the
-  **Options** dialog) has a **Model** picker — choose the same size you had.
+- Every protocol registers a tag with no model step when its advertisement
+  names a catalog model, and asks for the model when it does not. **Options**
+  keeps that picker only while the advertisement still does not name one, and
+  hides it while the tag is not visible.
 - Devices keep the `Zhsunyco <id>` name, so the default entity IDs usually come
   back identical, as with Gicisky tags.
