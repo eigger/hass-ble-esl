@@ -19,6 +19,7 @@ from custom_components.ble_esl.const import (
     CONF_RETRY_COUNT,
     DOMAIN,
 )
+from custom_components.ble_esl.esl_ble.easytag.const import SERVICE_UUID as EASYTAG_UUID
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PICKSMART_ID
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 
@@ -194,6 +195,9 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     # An entry saved by a release that still had the Write Delay option loads
     # fine; the stale key is neither shown nor kept once options are saved.
     # easyTag still offers a model; WOLINK reads it from the advertisement.
+    inject_bluetooth_service_info(
+        hass, service_info(ADDRESS, name="easyTag", service_uuids=[EASYTAG_UUID])
+    )
     entry = await setup_entry(
         hass, protocol="easytag", model="33", options={"write_delay_ms": 50}, advertise=False
     )
@@ -289,6 +293,18 @@ async def test_options_flow_keeps_model_when_hidden(hass: HomeAssistant, enable_
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_MODEL] == "350"
     assert entry.options[CONF_RETRY_COUNT] == 5
+
+
+async def test_options_flow_hides_model_when_the_tag_is_silent(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """A missing advertisement is not an unidentified model."""
+    entry = await setup_entry(
+        hass, address=PICKSMART_ADDRESS, protocol="picksmart", model="0x0033", advertise=False
+    )
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    fields = {str(key) for key in result["data_schema"].schema}
+    assert CONF_MODEL not in fields
 
 
 async def test_options_flow_hides_model_for_model_detection_backend(

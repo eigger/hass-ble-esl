@@ -79,19 +79,32 @@ def _model_selector_options(
     return out
 
 
-def _model_identified(hass: HomeAssistant, address: str | None, protocol_id: str) -> bool:
-    """True when the tag's last advertisement names its model.
+def advertised_model_key(
+    backend: BleBackend, service_info: BluetoothServiceInfoBleak | None
+) -> str | None:
+    """Catalog model the advertisement names, or None when it does not."""
+    if service_info is None or not backend.capabilities.model_detection:
+        return None
+    info = backend.parse_advertisement(service_info)
+    if info is None or not info.model_key or info.model_key not in backend.presets():
+        return None
+    return info.model_key
 
-    Setup skips the model step on the same test, so options only offer a
-    model the advertisement cannot settle (and refine_preset() would not
-    overrule).
+
+def _model_fixed(hass: HomeAssistant, address: str | None, protocol_id: str) -> bool:
+    """Hide the options model field when the advertisement names the model.
+
+    No cached advertisement is not the same as an advertisement that leaves
+    the model open: a sleeping tag must not grow a picker the next advertisement
+    would overrule.
     """
     backend = esl_ble.get(protocol_id)
     if not backend.capabilities.model_detection or address is None:
         return False
     service_info = async_last_service_info(hass, address, connectable=True)
-    advertisement = backend.parse_advertisement(service_info) if service_info else None
-    return bool(advertisement and advertisement.model_key)
+    if service_info is None:
+        return True
+    return advertised_model_key(backend, service_info) is not None
 
 
 def _build_options_schema(
@@ -200,11 +213,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._backend = backend
         self._protocol_id = backend.id
-
-        if backend.capabilities.model_detection:
-            adv_info = backend.parse_advertisement(discovery_info)
-            if adv_info and adv_info.model_key:
-                self._detected_model = adv_info.model_key
+        self._detected_model = advertised_model_key(backend, discovery_info)
 
         title = _title(discovery_info, backend, self._detected_model)
         self.context["title_placeholders"] = {"name": title}
@@ -217,11 +226,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Confirm discovery."""
         if user_input is not None or not onboarding.async_is_onboarded(self.hass):
-            if (
-                self._backend
-                and self._backend.capabilities.model_detection
-                and self._detected_model
-            ):
+            if self._detected_model:
                 return self._create_entry(self._detected_model)
             return await self.async_step_model()
 
@@ -244,11 +249,9 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             self._backend = discovery.backend
             self._protocol_id = discovery.backend.id
 
-            if discovery.backend.capabilities.model_detection:
-                adv_info = discovery.backend.parse_advertisement(discovery.discovery_info)
-                if adv_info and adv_info.model_key:
-                    self._detected_model = adv_info.model_key
-                    return self._create_entry(self._detected_model)
+            self._detected_model = advertised_model_key(discovery.backend, discovery.discovery_info)
+            if self._detected_model:
+                return self._create_entry(self._detected_model)
 
             return await self.async_step_model()
 
@@ -325,7 +328,7 @@ class OptionsFlowHandler(OptionsFlowWithReload):
             **self.config_entry.options,
         }
         protocol_id = suggested_values.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
-        model_identified = _model_identified(self.hass, self.config_entry.unique_id, protocol_id)
+        model_identified = _model_fixed(self.hass, self.config_entry.unique_id, protocol_id)
 
         return self.async_show_form(
             step_id="init",
