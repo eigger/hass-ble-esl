@@ -9,6 +9,7 @@ from homeassistant.components import onboarding
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
+    async_last_service_info,
 )
 from homeassistant.config_entries import (
     ConfigFlow,
@@ -78,14 +79,15 @@ def _model_selector_options(
     return out
 
 
-def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]:
+def _build_options_schema(
+    protocol_id: str = DEFAULT_PROTOCOL, *, model_detected: bool = False
+) -> dict[Any, Any]:
     backend = esl_ble.get(protocol_id)
     default_model = backend.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
-    # Only show model selection if backend does not support auto model detection
-    if not backend.capabilities.model_detection:
+    if not backend.capabilities.model_detection or not model_detected:
         schema[vol.Required(CONF_MODEL, default=default_model)] = SelectSelector(
             SelectSelectorConfig(
                 options=_model_selector_options(protocol_id),
@@ -305,10 +307,17 @@ class OptionsFlowHandler(OptionsFlowWithReload):
             **self.config_entry.options,
         }
         protocol_id = suggested_values.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
+        backend = esl_ble.get(protocol_id)
+        service_info = async_last_service_info(
+            self.hass, self.config_entry.unique_id, connectable=True
+        )
+        advertisement = backend.parse_advertisement(service_info) if service_info else None
+        model_detected = bool(advertisement and advertisement.model_key)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(_build_options_schema(protocol_id)), suggested_values
+                vol.Schema(_build_options_schema(protocol_id, model_detected=model_detected)),
+                suggested_values,
             ),
         )

@@ -52,6 +52,22 @@ async def start_bluetooth_flow(hass: HomeAssistant, info):
 # ── Discovery ────────────────────────────────────────────────────────────
 
 
+async def test_bluetooth_discovery_wolink_known_display_skips_model(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """A captured display version registers the preset without a model step."""
+    info = wolink_service_info(mfr_bytes=bytes.fromhex("3000000e033003030b9d"))
+    result = await start_bluetooth_flow(hass, info)
+    assert result["step_id"] == "bluetooth_confirm"
+    assert '2.9" BWR' in result["description_placeholders"]["name"]
+
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
+    await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == {CONF_PROTOCOL: "wolink", CONF_MODEL: "290-bwr"}
+    assert result["result"].runtime_data.preset.key == "290-bwr"
+
+
 async def test_bluetooth_discovery_wolink_asks_for_model(
     hass: HomeAssistant, enable_bluetooth
 ) -> None:
@@ -208,6 +224,19 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     }
     # OptionsFlowWithReload reloaded the entry: the new model is in force.
     assert entry.state is ConfigEntryState.LOADED
+    assert entry.runtime_data.preset.key == "350"
+
+
+async def test_options_flow_hides_model_when_display_version_is_known(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    inject_bluetooth_service_info(
+        hass, wolink_service_info(mfr_bytes=bytes.fromhex("3000000e033002010b8b"))
+    )
+    entry = await setup_entry(hass, model="290", advertise=False)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    fields = {str(key) for key in result["data_schema"].schema}
+    assert CONF_MODEL not in fields
     assert entry.runtime_data.preset.key == "350"
 
 

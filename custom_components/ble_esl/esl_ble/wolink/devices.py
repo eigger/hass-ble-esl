@@ -9,6 +9,7 @@ from ..base import (
     CONFIDENCE_REPORTED,
     DevicePreset,
 )
+from .protocol import parse_manufacturer_data
 
 
 def _p(
@@ -21,13 +22,20 @@ def _p(
     rotate_cw: bool = False,
     row_major: bool = False,
     split_planes: bool = False,
+    disp_ver: int | None = None,
     colors: str = "BWRY",
     confidence: str = CONFIDENCE_ESTIMATED,
 ) -> DevicePreset:
-    extra: dict[str, bool] = {"mirror": mirror, "rotate_cw": rotate_cw, "row_major": row_major}
+    extra: dict[str, bool | int] = {
+        "mirror": mirror,
+        "rotate_cw": rotate_cw,
+        "row_major": row_major,
+    }
     if split_planes:
         # Two 1bpp frames (black/white, then red) instead of interleaved 2bpp.
         extra["split_planes"] = True
+    if disp_ver is not None:
+        extra["disp_ver"] = disp_ver
     return DevicePreset(
         key=key,
         display_name=name,
@@ -60,10 +68,11 @@ PRESETS: dict[str, DevicePreset] = {
             296,
             128,
             split_planes=True,
+            disp_ver=0x0303,
             colors="BWR",
             confidence=CONFIDENCE_COMMUNITY,
         ),
-        _p("350", '3.5" BWRY', 384, 184, confidence=CONFIDENCE_HARDWARE),
+        _p("350", '3.5" BWRY', 384, 184, disp_ver=0x0201, confidence=CONFIDENCE_HARDWARE),
         _p(
             "750",
             '7.5" BWRY',
@@ -97,3 +106,18 @@ PRESETS: dict[str, DevicePreset] = {
         _p("133", '13.3" BWR', 1600, 1200, colors="BWR"),
     )
 }
+
+
+def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:
+    """The preset whose display version the manufacturer data carries, or None."""
+    if not data:
+        return None
+    try:
+        parsed = parse_manufacturer_data(data)
+    except ValueError:
+        return None
+    disp_ver = parsed["disp_ver"]
+    for preset in PRESETS.values():
+        if preset.extra.get("disp_ver") == disp_ver:
+            return preset
+    return None

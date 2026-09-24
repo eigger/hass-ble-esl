@@ -7,17 +7,33 @@ from typing import TYPE_CHECKING
 
 from ..base import BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUID
+from .devices import preset_for_advertisement
 from .protocol import battery_looks_plausible, parse_manufacturer_data
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 _LOGGER = logging.getLogger(__name__)
+_unknown_reported: set[str] = set()
 
 
 def is_wolink_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     """Return True if advertisement matches WOLINK manufacturer data or service UUID."""
-    if MANUFACTURER_ID in data.manufacturer_data:
+    mfr_bytes = data.manufacturer_data.get(MANUFACTURER_ID)
+    if mfr_bytes is not None:
+        if (
+            len(mfr_bytes) >= 10
+            and preset_for_advertisement(mfr_bytes) is None
+            and data.address not in _unknown_reported
+        ):
+            _unknown_reported.add(data.address)
+            _LOGGER.info(
+                "WOLINK tag %s has an unknown display version (manufacturer data %s): "
+                "select its model manually, and open an issue with this line and the "
+                "tag's model and resolution.",
+                data.address,
+                mfr_bytes.hex(),
+            )
         return True
     return SERVICE_UUID.lower() in {u.lower() for u in data.service_uuids}
 
