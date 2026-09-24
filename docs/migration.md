@@ -186,9 +186,9 @@ through the same domain change. The steps above apply with these differences:
 - Remove the **Zhsunyco** entries and `custom_components/zhsunyco`; actions become
   `ble_esl.write` / `ble_esl.write_guarded` instead of `zhsunyco.write` /
   `zhsunyco.write_guarded`.
-- easyTag tags cannot report their model, so the flow and the **Options**
-  dialog have a **Model** picker — choose the same size you had. A WOLINK tag
-  whose display version is known skips that step; any other WOLINK tag asks
-  once, during setup, and not again in **Options**.
+- easyTag tags, and WOLINK tags whose display version is not in the catalog,
+  cannot report their model, so the flow and the **Options** dialog have a
+  **Model** picker — choose the same size you had. A WOLINK tag whose display
+  version is known is set to that model with no picker, in setup or Options.
 - Devices keep the `Zhsunyco <id>` name, so the default entity IDs usually come
   back identical, as with Gicisky tags.

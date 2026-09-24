@@ -129,5 +129,5 @@
 `hass-zhsunyco`는 이 저장소로 이름이 바뀐 것이라 `zhsunyco` 도메인도 같은 도메인 변경을 거쳤습니다. 위 단계가 그대로 적용되고, 다른 점은 다음과 같습니다:
 
 - **Zhsunyco** 항목과 `custom_components/zhsunyco`를 제거합니다; 액션은 `zhsunyco.write` / `zhsunyco.write_guarded` 대신 `ble_esl.write` / `ble_esl.write_guarded`가 됩니다.
-- easyTag 태그는 모델을 스스로 알리지 못하므로 설정 흐름과 **옵션** 대화상자에 **Model** 선택이 있습니다 — 쓰던 것과 같은 크기를 고르세요. 디스플레이 버전을 아는 WOLINK 태그는 그 단계를 건너뛰고, 그 외 WOLINK 태그는 설정할 때 한 번만 고르며 **옵션**에서는 다시 고르지 않습니다.
+- easyTag 태그와, 디스플레이 버전이 카탈로그에 없는 WOLINK 태그는 모델을 스스로 알리지 못하므로 설정 흐름과 **옵션** 대화상자에 **Model** 선택이 있습니다 — 쓰던 것과 같은 크기를 고르세요. 디스플레이 버전을 아는 WOLINK 태그는 설정과 옵션 모두에서 선택 없이 그 모델로 정해집니다.
 - 기기 이름은 `Zhsunyco <id>` 그대로라, Gicisky 태그처럼 기본 엔티티 ID가 대개 똑같이 돌아옵니다.

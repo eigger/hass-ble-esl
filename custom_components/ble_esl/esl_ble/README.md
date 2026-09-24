@@ -45,7 +45,7 @@ class FooBleBackend(BleBackend):
         passive_battery=...,  # battery from advertisements
         session_battery=...,  # battery from the write session's reply
         session_temperature=...,
-        model_detection=...,  # advertisement identifies the model -> no model step in the config flow
+        model_detection=...,  # advertisement may name the model (AdvertisementInfo.model_key); a named model skips the model step in setup and options, others are picked by hand
         palettes=("BW", "BWR"),  # every preset's `colors` must be listed here
     )
     PRESETS = PRESETS

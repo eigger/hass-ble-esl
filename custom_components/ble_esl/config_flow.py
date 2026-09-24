@@ -9,6 +9,7 @@ from homeassistant.components import onboarding
 from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
+    async_last_service_info,
 )
 from homeassistant.config_entries import (
     ConfigFlow,
@@ -16,7 +17,7 @@ from homeassistant.config_entries import (
     OptionsFlowWithReload,
 )
 from homeassistant.const import CONF_ADDRESS
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -78,14 +79,30 @@ def _model_selector_options(
     return out
 
 
-def _build_options_schema(protocol_id: str = DEFAULT_PROTOCOL) -> dict[Any, Any]:
+def _model_identified(hass: HomeAssistant, address: str | None, protocol_id: str) -> bool:
+    """True when the tag's last advertisement names its model.
+
+    Setup skips the model step on the same test, so options only offer a
+    model the advertisement cannot settle (and refine_preset() would not
+    overrule).
+    """
+    backend = esl_ble.get(protocol_id)
+    if not backend.capabilities.model_detection or address is None:
+        return False
+    service_info = async_last_service_info(hass, address, connectable=True)
+    advertisement = backend.parse_advertisement(service_info) if service_info else None
+    return bool(advertisement and advertisement.model_key)
+
+
+def _build_options_schema(
+    protocol_id: str = DEFAULT_PROTOCOL, *, model_identified: bool = False
+) -> dict[Any, Any]:
     backend = esl_ble.get(protocol_id)
     default_model = backend.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
-    # Only show model selection if backend does not support auto model detection
-    if not backend.capabilities.model_detection:
+    if not model_identified:
         schema[vol.Required(CONF_MODEL, default=default_model)] = SelectSelector(
             SelectSelectorConfig(
                 options=_model_selector_options(protocol_id),
@@ -298,6 +315,9 @@ class OptionsFlowHandler(OptionsFlowWithReload):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
+            if CONF_MODEL not in user_input and CONF_MODEL in self.config_entry.options:
+                # The field was hidden; saving must not drop an earlier pick.
+                user_input = {**user_input, CONF_MODEL: self.config_entry.options[CONF_MODEL]}
             return self.async_create_entry(title="", data=user_input)
 
         suggested_values = {
@@ -305,10 +325,12 @@ class OptionsFlowHandler(OptionsFlowWithReload):
             **self.config_entry.options,
         }
         protocol_id = suggested_values.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
+        model_identified = _model_identified(self.hass, self.config_entry.unique_id, protocol_id)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(_build_options_schema(protocol_id)), suggested_values
+                vol.Schema(_build_options_schema(protocol_id, model_identified=model_identified)),
+                suggested_values,
             ),
         )
