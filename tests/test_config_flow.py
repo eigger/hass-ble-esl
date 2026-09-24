@@ -327,7 +327,7 @@ def test_model_selector_options_verified_first():
     options = _model_selector_options("wolink")
     assert len(options) == len(PRESETS)
     keys = [o["value"] for o in options]
-    assert set(keys[:4]) == {"290", "350", "750", "420"}  # hardware/reported confidence first
+    assert set(keys[:5]) == {"290", "290-bwr", "350", "750", "420"}
     for option in options:
         assert ("(unverified)" in option["label"]) is (not PRESETS[option["value"]].verified)
 
