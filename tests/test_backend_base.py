@@ -74,7 +74,7 @@ class _Backend(BleBackend):
     id = "t"
     label = "T"
     name = "Test"
-    capabilities = Capabilities(False, False, False, False, ("BWRY",))
+    capabilities = Capabilities(False, False, False, ("BWRY",))
     PRESETS = {PRESET.key: PRESET}
     parser_cls = _Parser
 
@@ -147,7 +147,7 @@ def test_contract_write_path_requires_hooks_or_write_image():
 def test_contract_validates_presets_against_class_attributes():
     bad_key = {"other": PRESET}
     assert "PRESETS['other'].key is 'p'" in _define(PRESETS=bad_key)
-    bw_only = Capabilities(False, False, False, False, ("BW",))
+    bw_only = Capabilities(False, False, False, ("BW",))
     assert "not in capabilities.palettes" in _define(capabilities=bw_only)
     assert "parser_cls must be a BleParser subclass" in _define(parser_cls=object)
 
