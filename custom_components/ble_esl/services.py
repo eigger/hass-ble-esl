@@ -19,7 +19,7 @@ from functools import partial
 from io import BytesIO
 import logging
 import time
-from typing import Any
+from typing import Any, Literal
 
 from blesession import Attempt, placement, report_attempt, run_attempts, stages
 from blesession.hass import ble_device_or_raise, radio_facts
@@ -338,44 +338,42 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
     )
 
 
-def _decline(job: WriteJob, *checks: str) -> str | None:
-    """First matching decline status among `checks`, or None to proceed.
+_Decline = Literal["locked", "dropped", "duplicate"]
 
-    The condition and the log for each status live here. Callers choose the
-    order: write_guarded rejects a duplicate before a dry run or the write
-    lock, while the under-lock guard checks the lock first because it can
-    flip while the write waits.
 
-    Returns the WriteOutcome status, not the outcome itself. Under the BLE
-    lock, blesession puts it on the attempt as `skipped` and from there into
-    the report, which has to stay JSON-serialisable for the entity attributes
-    and the diagnostics download.
+def _locked(job: WriteJob) -> _Decline | None:
+    """The write-lock switch is on."""
+    if not job.data.write_lock:
+        return None
+    _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
+    return "locked"
+
+
+def _dropped(job: WriteJob) -> _Decline | None:
+    """A debounced write whose generation was bumped while it waited."""
+    if job.generation is None or job.generation == job.data.write_generation:
+        return None
+    _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
+    return "dropped"
+
+
+def _duplicate(job: WriteJob) -> _Decline | None:
+    """The same payload was already written."""
+    if not (job.prevent_duplicate_send and job.image_png == job.data.last_image_data):
+        return None
+    _LOGGER.info("Skipping duplicate image for %s", job.address)
+    return "duplicate"
+
+
+def _guard(job: WriteJob) -> _Decline | None:
+    """Checks that can change while a write waits, run under the BLE lock before every attempt.
+
+    The lock is first because it can flip during the wait, then a superseded
+    debounce, then a duplicate of a write that finished ahead of this one.
+    The status is what blesession stores as `skipped`, so it stays a plain
+    string for the entity attributes and the diagnostics download.
     """
-    data = job.data
-    for check in checks:
-        if check == "locked" and data.write_lock:
-            _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-            return "locked"
-        if (
-            check == "dropped"
-            and job.generation is not None
-            and job.generation != data.write_generation
-        ):
-            _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
-            return "dropped"
-        if (
-            check == "duplicate"
-            and job.prevent_duplicate_send
-            and job.image_png == data.last_image_data
-        ):
-            _LOGGER.info("Skipping duplicate image for %s", job.address)
-            return "duplicate"
-    return None
-
-
-def _guard(job: WriteJob) -> str | None:
-    """Checks that can change while a write waits, run under the BLE lock before every attempt."""
-    return _decline(job, "locked", "dropped", "duplicate")
+    return _locked(job) or _dropped(job) or _duplicate(job)
 
 
 async def _attempt(
@@ -661,12 +659,12 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
             options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
         )
 
-        if (status := _decline(job, "duplicate")) is not None:
+        if (status := _duplicate(job)) is not None:
             return WriteOutcome(status)
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.
             return WriteOutcome("preview")
-        if (status := _decline(job, "locked")) is not None:
+        if (status := _locked(job)) is not None:
             return WriteOutcome(status)
 
         debounce_ms = int(
