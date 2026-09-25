@@ -19,7 +19,7 @@ from functools import partial
 from io import BytesIO
 import logging
 import time
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from blesession import Attempt, placement, report_attempt, run_attempts, stages
 from blesession.hass import ble_device_or_raise, radio_facts
@@ -510,7 +510,8 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     # the last real write's duration; nothing was written now.
                     duration = data.duration_coordinator
                     duration.async_set_updated_data(duration.data)
-                return WriteOutcome(last.skipped)
+                # blesession types `skipped` as Any. The guard only returns _Decline.
+                return WriteOutcome(cast(_Decline, last.skipped))
             timing = data.reports.last
             if last.ok:
                 result = last.result
