@@ -338,30 +338,44 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
     )
 
 
-def _guard(job: WriteJob) -> str | None:
-    """The checks that can change while a write waits for its turn.
+def _decline(job: WriteJob, *checks: str) -> str | None:
+    """First matching decline status among `checks`, or None to proceed.
 
-    Run under the BLE lock before every attempt: the write lock, whether a
-    debounced write has been superseded, and the duplicate guard (a write of
-    the same payload may have just finished ahead of us — which is exactly
-    the case the guard is for).
+    The condition and the log for each status live here. Callers choose the
+    order: write_guarded rejects a duplicate before a dry run or the write
+    lock, while the under-lock guard checks the lock first because it can
+    flip while the write waits.
 
-    Returns the WriteOutcome status that declining produces, not the outcome
-    itself: blesession puts it on the attempt as `skipped` and from there
-    into the report, which has to stay JSON-serialisable for the entity
-    attributes and the diagnostics download.
+    Returns the WriteOutcome status, not the outcome itself. Under the BLE
+    lock, blesession puts it on the attempt as `skipped` and from there into
+    the report, which has to stay JSON-serialisable for the entity attributes
+    and the diagnostics download.
     """
     data = job.data
-    if data.write_lock:
-        _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-        return "locked"
-    if job.generation is not None and job.generation != data.write_generation:
-        _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
-        return "dropped"
-    if job.prevent_duplicate_send and job.image_png == data.last_image_data:
-        _LOGGER.info("Skipping duplicate image for %s", job.address)
-        return "duplicate"
+    for check in checks:
+        if check == "locked" and data.write_lock:
+            _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
+            return "locked"
+        if (
+            check == "dropped"
+            and job.generation is not None
+            and job.generation != data.write_generation
+        ):
+            _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
+            return "dropped"
+        if (
+            check == "duplicate"
+            and job.prevent_duplicate_send
+            and job.image_png == data.last_image_data
+        ):
+            _LOGGER.info("Skipping duplicate image for %s", job.address)
+            return "duplicate"
     return None
+
+
+def _guard(job: WriteJob) -> str | None:
+    """Checks that can change while a write waits, run under the BLE lock before every attempt."""
+    return _decline(job, "locked", "dropped", "duplicate")
 
 
 async def _attempt(
@@ -647,15 +661,13 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
             options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
         )
 
-        if job.prevent_duplicate_send and job.image_png == data.last_image_data:
-            _LOGGER.info("Skipping duplicate image for %s", job.address)
-            return WriteOutcome("duplicate")
+        if (status := _decline(job, "duplicate")) is not None:
+            return WriteOutcome(status)
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.
             return WriteOutcome("preview")
-        if data.write_lock:
-            _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
-            return WriteOutcome("locked")
+        if (status := _decline(job, "locked")) is not None:
+            return WriteOutcome(status)
 
         debounce_ms = int(
             service.data.get(
