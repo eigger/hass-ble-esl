@@ -103,6 +103,19 @@ async def async_targeted_entries(
 # ── Outcomes (service response data) ────────────────────────────────────
 
 
+WriteStatus = Literal[
+    "written",
+    "failed",
+    "scheduled",
+    "duplicate",
+    "locked",
+    "preview",
+    "dropped",
+]
+# The three a guard can return. The rest are produced by the write itself.
+_Decline = Literal["locked", "dropped", "duplicate"]
+
+
 @dataclass
 class WriteOutcome:
     """What happened to one target, reported in the service response.
@@ -118,7 +131,7 @@ class WriteOutcome:
                         on the lock); never reaches a service response
     """
 
-    status: str
+    status: WriteStatus
     error: str | None = None
     attempts: int | None = None
     duration_s: float | None = None
@@ -336,9 +349,6 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
         noun="tag",
         attempts=job.max_retries,
     )
-
-
-_Decline = Literal["locked", "dropped", "duplicate"]
 
 
 def _locked(job: WriteJob) -> _Decline | None:
