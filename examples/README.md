@@ -10,7 +10,7 @@ photographed on.
 | [`gicisky/`](./gicisky) | PickSmart | Originally from [hass-gicisky](https://github.com/eigger/hass-gicisky) (archived); maintained here. Resolutions: 2.1" 250×128, 2.9" 296×128, 4.2" 400×300, 7.5" 800×480, 10.2" 960×640 |
 | [`poshiji/`](./poshiji) | XTE | Poshiji PSJ-420: 400×300 BWRY; color check and weekday Naver weather automation |
 | [`zhsunyco/`](./zhsunyco) | WOLINK / easyTag | Zhsunyco-branded tags. No examples yet — contributions welcome |
-| [`blueprints/`](./blueprints) | any | Date, weather, and presence layouts. Each file branches on the tag height. Copy into `config/blueprints/automation/ble_esl/`. |
+| [`blueprints/`](./blueprints) | any | One board. Short tags show today, mid-size tags a week, large tags the month. Copy into `config/blueprints/automation/ble_esl/`. |
 
 Examples call `ble_esl.write` or `ble_esl.write_guarded`; replace `device_id` with
 your own device. A 4.2" (400×300) example runs unchanged on a Gicisky or Poshiji tag.
@@ -46,6 +46,18 @@ the coordinates.
 | 10.2" (960×640) | Gicisky | Calendar Weather | ![10.2-calendar-weather.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather.png) | [10.2-calendar-weather.yaml](./gicisky/10.2-calendar-weather.yaml) |
 | 10.2" (960×640) | Gicisky | Calendar Weather 2 | ![10.2-calendar-weather2.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar-weather2.png) | [10.2-calendar-weather2.yaml](./gicisky/10.2-calendar-weather2.yaml) |
 | 10.2" (960×640) | Gicisky | Calendar | ![10.2-calendar.png](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/examples/gicisky/10.2-calendar.png) | [10.2-calendar.yaml](./gicisky/10.2-calendar.yaml) |
+
+## Blueprints
+
+[`blueprints/board.yaml`](./blueprints/board.yaml) is one layout. The tag height picks what is drawn. These previews are rendered samples for 2026-09-23, not photographs of a tag.
+
+| Size | Shows | Preview |
+|------|-------|---------|
+| 2.1" (250×128) | Today | ![250x128](./blueprints/250x128.png) |
+| 2.9" (296×128) | Today | ![296x128](./blueprints/296x128.png) |
+| 4.2" (400×300) | This week | ![400x300](./blueprints/400x300.png) |
+| 7.5" (800×480) | This month | ![800x480](./blueprints/800x480.png) |
+| 10.2" (960×640) | This month | ![960x640](./blueprints/960x640.png) |
 
 ## Recipes
 

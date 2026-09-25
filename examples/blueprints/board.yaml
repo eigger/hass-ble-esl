@@ -1,0 +1,348 @@
+blueprint:
+  name: BLE ESL board
+  description: >
+    One board for every tag size, following the example layouts. A short tag
+    shows today's date beside today's weather, the way the 2.1" date and
+    weather labels do. A mid-size tag adds the next seven days under today's
+    reading, in the spirit of the 4.2" date-and-weather board. A large tag
+    shows the month grid from the 7.5" and 10.2" calendars, with today's
+    weather kept beside the title. Layouts assume the panel's native
+    orientation. This blueprint does not set rotate.
+  domain: automation
+  author: BLE ESL
+  homeassistant:
+    min_version: "2025.12.0"
+  input:
+    tag:
+      name: Tag
+      selector:
+        device:
+          integration: ble_esl
+    weather:
+      name: Weather
+      selector:
+        entity:
+          domain: weather
+    pattern_hours:
+      name: Hour pattern
+      description: >
+        Time pattern, not a clock time. 0 matches that hour, /6 matches every
+        6 hours, * matches every hour. The tag also redraws when the weather
+        changes and when Home Assistant starts.
+      default: "/1"
+      selector:
+        text:
+    pattern_minutes:
+      name: Minute pattern
+      description: "0 matches that minute, /15 matches every 15 minutes, * matches every minute."
+      default: "0"
+      selector:
+        text:
+    pattern_seconds:
+      name: Second pattern
+      description: Keep this at 0. Leaving it open fires once a second during the matching minute.
+      default: "0"
+      selector:
+        text:
+    date_text:
+      name: Date line
+      description: >
+        Shown on short and mid-size tags. The default changes every day.
+        Replace it with your own text or template.
+      default: "{{ now().month }}/{{ now().day }}"
+      selector:
+        text:
+    weekday_text:
+      name: Weekday line
+      description: >
+        Shown under the date on short and mid-size tags. The default is the
+        full weekday name from the clock, often English. Replace it with your
+        own text or template.
+      default: "{{ now().strftime('%A') }}"
+      selector:
+        text:
+    text_scale:
+      name: Text scale
+      description: Percent applied on top of the size chosen for this tag.
+      default: 100
+      selector:
+        number:
+          min: 50
+          max: 200
+          step: 10
+          mode: slider
+          unit_of_measurement: "%"
+    font:
+      name: Font
+      description: >
+        Font file name. The component looks in its own fonts folder, then
+        config/www/fonts. Default is the built-in Noto Sans KR.
+      default: NotoSansKR-Regular.ttf
+      selector:
+        text:
+
+triggers:
+  - trigger: state
+    entity_id: !input weather
+  - trigger: time_pattern
+    hours: !input pattern_hours
+    minutes: !input pattern_minutes
+    seconds: !input pattern_seconds
+  - trigger: homeassistant
+    event: start
+
+variables:
+  tag_id: !input tag
+  font: !input font
+  date_text: !input date_text
+  weekday_text: !input weekday_text
+  text_scale: !input text_scale
+  weather: !input weather
+  model: "{{ device_attr(tag_id, 'model') | default('', true) }}"
+  width: >-
+    {% set ns = namespace(n=296) %}
+    {% for piece in model.split() %}
+      {% set bits = piece.split('x') %}
+      {% if bits | length == 2 and bits[0].isdigit() and bits[1].isdigit() %}
+        {% set ns.n = bits[0] | int %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.n }}
+  height: >-
+    {% set ns = namespace(n=128) %}
+    {% for piece in model.split() %}
+      {% set bits = piece.split('x') %}
+      {% if bits | length == 2 and bits[0].isdigit() and bits[1].isdigit() %}
+        {% set ns.n = bits[1] | int %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.n }}
+
+actions:
+  - action: weather.get_forecasts
+    continue_on_error: true
+    target:
+      entity_id: !input weather
+    data:
+      type: daily
+    response_variable: daily
+  - action: ble_esl.write_guarded
+    target:
+      device_id: !input tag
+    data:
+      payload: |
+        {% set w = width | int %}
+        {% set h = height | int %}
+        {% set scale = (text_scale | int) / 100 %}
+        {% set weekend = now().weekday() >= 5 %}
+        {% set temp = state_attr(weather, 'temperature') %}
+        {% set unit = state_attr(weather, 'temperature_unit') | default('', true) %}
+        {% set temp_text = (temp | string) if temp is not none else '–' %}
+        {% if unit %}
+          {% set temp_text = temp_text ~ unit %}
+        {% endif %}
+        {% set forecasts = (daily | default({})).get(weather, {}).get('forecast', []) %}
+        {% macro wicon(cond) -%}
+          {%- set icons = {
+            'sunny': 'mdi:weather-sunny',
+            'clear-night': 'mdi:weather-night',
+            'partlycloudy': 'mdi:weather-partly-cloudy',
+            'cloudy': 'mdi:weather-cloudy',
+            'rainy': 'mdi:weather-rainy',
+            'pouring': 'mdi:weather-pouring',
+            'snowy': 'mdi:weather-snowy',
+            'fog': 'mdi:weather-fog',
+            'windy': 'mdi:weather-windy',
+            'lightning': 'mdi:weather-lightning',
+            'hail': 'mdi:weather-hail',
+            'lightning-rainy': 'mdi:weather-lightning-rainy',
+            'snowy-rainy': 'mdi:weather-snowy-rainy'
+          } -%}
+          {{- icons.get(cond, 'mdi:weather-cloudy') -}}
+        {%- endmacro %}
+        {% if h < 200 %}
+          {% set text_w = (w * 0.58) | int %}
+          {% set date_size = [h * 0.36 * scale, text_w / 3.2] | min | int %}
+          {% set week_size = [h * 0.24 * scale, text_w / 6.0] | min | int %}
+          {% set icon_size = [h * 0.46 * scale, w * 0.30] | min | int %}
+          {% set temp_size = [h * 0.26 * scale, w * 0.11] | min | int %}
+          {% set payload = [{
+            'type': 'row',
+            'padding': 10,
+            'gap': 12,
+            'justify': 'between',
+            'align': 'center',
+            'elements': [
+              {
+                'type': 'column',
+                'justify': 'between',
+                'align': 'center',
+                'elements': [
+                  {'type': 'text', 'font': font, 'align': 'center', 'size': date_size, 'value': date_text},
+                  {'type': 'text', 'font': font, 'align': 'center', 'size': week_size, 'color': 'red' if weekend else 'black', 'value': weekday_text}
+                ]
+              },
+              {
+                'type': 'column',
+                'justify': 'center',
+                'align': 'center',
+                'gap': 6,
+                'elements': [
+                  {'type': 'icon', 'size': icon_size, 'value': wicon(states(weather))},
+                  {'type': 'text', 'font': font, 'align': 'center', 'size': temp_size, 'value': temp_text}
+                ]
+              }
+            ]
+          }] %}
+        {% elif h < 450 %}
+          {% set cell = ((w - 28) / 7) | int %}
+          {% set date_size = (h * 0.24 * scale) | int %}
+          {% set week_size = (h * 0.09 * scale) | int %}
+          {% set icon_size = (h * 0.20 * scale) | int %}
+          {% set temp_size = (h * 0.14 * scale) | int %}
+          {% set cond_size = (h * 0.07 * scale) | int %}
+          {% set day_icon = [h * 0.11 * scale, cell * 0.72] | min | int %}
+          {% set day_text = [h * 0.055 * scale, cell * 0.38] | min | int %}
+          {% set days = namespace(cols=[]) %}
+          {% for day in forecasts[:7] %}
+            {% set when = as_datetime(day.datetime) %}
+            {% set label = when.strftime('%a') if when else '' %}
+            {% set high = day.temperature %}
+            {% set days.cols = days.cols + [{
+              'type': 'group',
+              'width': cell,
+              'height': day_text + day_icon + day_text + 20,
+              'elements': [
+                {'type': 'rectangle', 'x_start': 0, 'y_start': 0, 'x_end': cell - 1, 'y_end': day_text + day_icon + day_text + 19, 'fill': 'white', 'outline': 'white', 'width': 0},
+                {'type': 'text', 'font': font, 'x': (cell / 2) | int, 'y': 0, 'anchor': 'mt', 'size': day_text, 'value': label},
+                {'type': 'icon', 'x': ((cell - day_icon) / 2) | int, 'y': day_text + 8, 'size': day_icon, 'value': wicon(day.condition)},
+                {'type': 'text', 'font': font, 'x': (cell / 2) | int, 'y': day_text + day_icon + 16, 'anchor': 'mt', 'size': day_text, 'value': (high | string) if high is not none else '–'}
+              ]
+            }] %}
+          {% endfor %}
+          {% set payload = [{
+            'type': 'column',
+            'padding': 18,
+            'justify': 'between',
+            'elements': [
+              {
+                'type': 'row',
+                'justify': 'between',
+                'align': 'center',
+                'elements': [
+                  {
+                    'type': 'column',
+                    'gap': 10,
+                    'elements': [
+                      {'type': 'text', 'font': font, 'size': date_size, 'value': date_text, 'color': 'red' if weekend else 'black'},
+                      {'type': 'text', 'font': font, 'size': week_size, 'value': weekday_text, 'color': 'red' if weekend else 'black'}
+                    ]
+                  },
+                  {
+                    'type': 'row',
+                    'gap': 14,
+                    'align': 'center',
+                    'elements': [
+                      {'type': 'icon', 'size': icon_size, 'value': wicon(states(weather))},
+                      {
+                        'type': 'column',
+                        'gap': 8,
+                        'elements': [
+                          {'type': 'text', 'font': font, 'size': temp_size, 'value': temp_text},
+                          {'type': 'text', 'font': font, 'size': cond_size, 'value': state_translated(weather)}
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                'type': 'column',
+                'gap': 14,
+                'elements': [
+                  {'type': 'line', 'x_start': 0, 'x_end': w - 36, 'y_start': 0, 'y_end': 0, 'fill': 'black', 'width': 1},
+                  {'type': 'row', 'align': 'center', 'elements': days.cols}
+                ]
+              }
+            ]
+          }] %}
+        {% else %}
+          {% set first = now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) %}
+          {% set offset = first.weekday() %}
+          {% set last = (first.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1) %}
+          {% set count = last.day %}
+          {% set ns = namespace(cells=[]) %}
+          {% for _ in range(offset) %}
+            {% set ns.cells = ns.cells + [0] %}
+          {% endfor %}
+          {% for day in range(1, count + 1) %}
+            {% set ns.cells = ns.cells + [day] %}
+          {% endfor %}
+          {% for _ in range((7 - (ns.cells | length % 7)) % 7) %}
+            {% set ns.cells = ns.cells + [0] %}
+          {% endfor %}
+          {% set cell = ((w - 32) / 7) | int %}
+          {% set title_size = (h * 0.07 * scale) | int %}
+          {% set head_size = (h * 0.035 * scale) | int %}
+          {% set day_size = (h * 0.04 * scale) | int %}
+          {% set rows = (ns.cells | length) // 7 %}
+          {% set cell_h = ((h - 40 - title_size - head_size) / rows) | int %}
+          {% set icon_size = (h * 0.1 * scale) | int %}
+          {% set temp_size = (h * 0.06 * scale) | int %}
+          {% set grid = namespace(heads=[], weeks=[]) %}
+          {% for i in range(7) %}
+            {% set grid.heads = grid.heads + [{
+              'type': 'group',
+              'width': cell,
+              'height': head_size + 8,
+              'elements': [
+                {'type': 'rectangle', 'x_start': 0, 'y_start': 0, 'x_end': cell - 1, 'y_end': head_size + 3, 'fill': 'white', 'outline': 'white', 'width': 0},
+                {'type': 'text', 'font': font, 'x': (cell / 2) | int, 'y': 0, 'anchor': 'mt', 'size': head_size, 'value': (first - timedelta(days=offset) + timedelta(days=i)).strftime('%a')}
+              ]
+            }] %}
+          {% endfor %}
+          {% for i in range(0, ns.cells | length, 7) %}
+            {% set row = namespace(cells=[]) %}
+            {% for day in ns.cells[i:i + 7] %}
+              {% set wd = (offset + day - 1) % 7 if day else 0 %}
+              {% set row.cells = row.cells + [{
+                'type': 'group',
+                'width': cell,
+                'height': cell_h,
+                'elements': [
+                  {'type': 'rectangle', 'x_start': 4, 'y_start': 4, 'x_end': cell - 5, 'y_end': cell_h - 5, 'fill': 'white', 'outline': 'red' if day == now().day else 'white', 'width': 2 if day == now().day else 0},
+                  {'type': 'text', 'font': font, 'x': (cell / 2) | int, 'y': (cell_h / 2) | int, 'anchor': 'mm', 'size': day_size, 'color': 'red' if day and wd >= 5 else 'black', 'value': day | string if day else ''}
+                ]
+              }] %}
+            {% endfor %}
+            {% set grid.weeks = grid.weeks + [{'type': 'row', 'elements': row.cells}] %}
+          {% endfor %}
+          {% set payload = [{
+            'type': 'column',
+            'padding': 16,
+            'gap': 8,
+            'justify': 'start',
+            'elements': [
+              {
+                'type': 'row',
+                'justify': 'between',
+                'align': 'center',
+                'elements': [
+                  {'type': 'text', 'font': font, 'size': title_size, 'value': first.strftime('%B')},
+                  {
+                    'type': 'row',
+                    'gap': 8,
+                    'align': 'center',
+                    'elements': [
+                      {'type': 'icon', 'size': icon_size, 'value': wicon(states(weather))},
+                      {'type': 'text', 'font': font, 'size': temp_size, 'value': temp_text}
+                    ]
+                  }
+                ]
+              },
+              {'type': 'row', 'elements': grid.heads}
+            ] + grid.weeks
+          }] %}
+        {% endif %}
+        {{ payload | tojson }}
+mode: single
