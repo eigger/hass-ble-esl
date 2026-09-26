@@ -111,7 +111,9 @@ class WolinkClient:
         """Calculate image chunk size from negotiated MTU, within [200, 506] bytes.
 
         The ATT attribute value limit is 512 bytes. With a 6-byte command header,
-        the chunk payload cannot exceed 506 bytes or (MTU - 9) bytes.
+        the chunk payload cannot exceed 506 bytes or (MTU - 9) bytes. When MTU
+        is below 209 (or unknown), the 200-byte floor relies on Bleak/GATT long
+        writes (ATT Prepare/Execute Write), matching historical behavior.
         """
         mtu = getattr(self.client, "mtu_size", None)
         if isinstance(mtu, int) and mtu > 0:

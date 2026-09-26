@@ -208,8 +208,8 @@ def test_write_image_entrypoint(monkeypatch):
 
         async def mock_write(char, data, response=True):
             if char == DATA_CHAR and data[:2] == b"\x02\xa5":
-                # Send 0xFF completion marker
-                mock_client.start_notify.call_args[0][1](None, bytearray([0xFF, 0x00]))
+                # Trigger 0x00 idle / not busy completion
+                mock_client.start_notify.call_args[0][1](None, bytearray([0x00, 0x00]))
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
