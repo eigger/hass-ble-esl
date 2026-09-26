@@ -208,8 +208,8 @@ def test_write_image_entrypoint(monkeypatch):
 
         async def mock_write(char, data, response=True):
             if char == DATA_CHAR and data[:2] == b"\x02\xa5":
-                # Trigger 0x00 idle / not busy completion
-                mock_client.start_notify.call_args[0][1](None, bytearray([0x00, 0x00]))
+                # Send 0xFF completion marker
+                mock_client.start_notify.call_args[0][1](None, bytearray([0xFF, 0x00]))
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
@@ -237,7 +237,7 @@ def test_write_image_entrypoint(monkeypatch):
             "session",
             "disconnect",
         ]
-        assert list(trace.facts) == ["bytes", "parts", "sends"]
+        assert list(trace.facts) == ["bytes", "parts", "sends", "chunk_size"]
 
     asyncio.run(_test())
 
@@ -397,5 +397,91 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
         assert order == ["connect"]
         assert prepared.done() and not prepared.cancelled()
         assert prepared.result() == (b"", 0)  # still usable for a retry
+
+    asyncio.run(_test())
+
+
+def test_wolink_completed_status():
+    """Both 0x00 (idle) and 0xFF (complete) finish the wait; errors raise."""
+    client = WolinkClient(MagicMock(), PRESETS["290"], MAC)
+    assert client._completed(bytes([0x00, 0x00])) is True
+    assert client._completed(bytes([0xFF, 0x00])) is True
+    # Empty status does not complete
+    assert client._completed(b"") is False
+    # Error status raises WolinkError
+    with pytest.raises(WolinkError, match="device error 1"):
+        client._completed(bytes([0x01, 0x01]))
+
+
+def test_wolink_chunk_sizing_from_mtu():
+    """Chunk size scales with MTU (MTU - 9) with a floor of 200B and 506B cap."""
+
+    async def _test():
+        written_chunks = []
+        mock_ble = MagicMock()
+        mock_ble.mtu_size = 247
+
+        async def mock_write(char, data, response=True):
+            if data[:2] == b"\x00\xa5":
+                written_chunks.append(data[6:])  # strip 6-byte header
+
+        mock_ble.write_gatt_char = AsyncMock(side_effect=mock_write)
+        client = WolinkClient(mock_ble, PRESETS["290"], MAC)
+        trace = SessionTrace()
+
+        payload = b"x" * 500
+        await client._write_chunked(payload, trace=trace)
+
+        # MTU 247 -> chunk_size = 238
+        assert trace.facts["chunk_size"] == 238
+        assert trace.facts["parts"] == 3  # 238 + 238 + 24
+        assert [len(c) for c in written_chunks] == [238, 238, 24]
+
+        # Larger MTU: 517 -> capped at 506 bytes (512 ATT attribute limit - 6 header bytes)
+        mock_ble.mtu_size = 517
+        written_chunks.clear()
+        trace = SessionTrace()
+        await client._write_chunked(b"x" * 600, trace=trace)
+        assert trace.facts["chunk_size"] == 506
+        assert trace.facts["parts"] == 2
+        assert [len(c) for c in written_chunks] == [506, 94]
+
+        # Small or missing MTU falls back to floor of 200
+        mock_ble.mtu_size = 23
+        written_chunks.clear()
+        trace = SessionTrace()
+        await client._write_chunked(payload, trace=trace)
+        assert trace.facts["chunk_size"] == 200
+        assert trace.facts["parts"] == 3
+        assert [len(c) for c in written_chunks] == [200, 200, 100]
+
+    asyncio.run(_test())
+
+
+def test_wolink_chunk_pacing(monkeypatch):
+    """When pacing_s is 0, no inter-chunk delay occurs; pacing_s > 0 sleeps."""
+
+    async def _test():
+        mock_ble = MagicMock()
+        mock_ble.mtu_size = 209  # 200 byte chunks
+        mock_ble.write_gatt_char = AsyncMock()
+        client = WolinkClient(mock_ble, PRESETS["290"], MAC)
+
+        sleep_calls = []
+
+        async def mock_sleep(s):
+            sleep_calls.append(s)
+
+        monkeypatch.setattr(asyncio, "sleep", mock_sleep)
+
+        # pacing_s = 0.0 -> no sleep
+        trace = SessionTrace()
+        await client._write_chunked(b"x" * 400, trace=trace, pacing_s=0.0)
+        assert sleep_calls == []
+
+        # pacing_s = 0.05 -> sleeps for each chunk sent
+        trace = SessionTrace()
+        await client._write_chunked(b"x" * 400, trace=trace, pacing_s=0.05)
+        assert sleep_calls == [0.05, 0.05]
 
     asyncio.run(_test())

@@ -59,6 +59,3 @@ SCREEN_KEEP = -1
 
 # Brand the tags are sold under; used as the HA device manufacturer
 BRAND = "Zhsunyco"
-
-# Pause between image chunks (200-byte writes with response).
-CHUNK_DELAY_S = 0.03
