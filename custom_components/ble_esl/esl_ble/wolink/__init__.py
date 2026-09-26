@@ -1,7 +1,8 @@
-"""WOLINK Protocol backend for BLE ESL BWRY ESL tags."""
+"""WOLINK protocol backend (tags sold as Zhsunyco)."""
 
 from __future__ import annotations
 
+import dataclasses
 from typing import TYPE_CHECKING
 
 from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset
@@ -9,14 +10,14 @@ from . import writer
 from .const import MANUFACTURER_ID
 from .devices import PRESETS, preset_for_advertisement
 from .parser import WolinkBluetoothDeviceData, is_wolink_advertisement
-from .protocol import parse_manufacturer_data
+from .protocol import parse_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
 class WolinkBleBackend(BleBackend):
-    """WOLINK (BWRY) BLE backend."""
+    """WOLINK BLE backend."""
 
     id = "wolink"
     label = "WOLINK"
@@ -33,7 +34,7 @@ class WolinkBleBackend(BleBackend):
     write_session = staticmethod(writer.write_session)
 
     def refine_preset(self, preset: DevicePreset, info: AdvertisementInfo | None) -> DevicePreset:
-        """A captured display version names the panel; an unknown one leaves the choice."""
+        """A known display version names the panel; otherwise the choice stays."""
         if info is None or info.model_key is None:
             return preset
         return self.PRESETS.get(info.model_key, preset)
@@ -41,21 +42,18 @@ class WolinkBleBackend(BleBackend):
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """Parse advertisement manufacturer data."""
-        mfr_bytes = service_info.manufacturer_data.get(MANUFACTURER_ID)
-        if not mfr_bytes or len(mfr_bytes) < 10:
+        """Battery, versions and (for a known display version) the model."""
+        data = service_info.manufacturer_data.get(MANUFACTURER_ID)
+        advertisement = parse_advertisement(data)
+        if advertisement is None:
             return None
-        try:
-            parsed = parse_manufacturer_data(mfr_bytes)
-        except Exception:
-            return None
-        preset = preset_for_advertisement(mfr_bytes)
+        preset = preset_for_advertisement(data)
         return AdvertisementInfo(
-            battery_mv=parsed.get("battery_mv"),
+            battery_mv=advertisement.battery_mv,
             model_key=None if preset is None else preset.key,
-            sw_version=str(parsed["app_ver"]) if parsed.get("app_ver") is not None else None,
-            hw_version=str(parsed["hw_ver"]) if parsed.get("hw_ver") is not None else None,
-            raw=parsed,
+            sw_version=str(advertisement.app_version),
+            hw_version=str(advertisement.hardware_version),
+            raw=dataclasses.asdict(advertisement),
         )
 
 

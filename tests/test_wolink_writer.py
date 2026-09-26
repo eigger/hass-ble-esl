@@ -11,6 +11,7 @@ from PIL import Image
 import pytest
 
 from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble.wolink import writer
 from custom_components.ble_esl.esl_ble.wolink.const import (
     AES_KEY,
     AUTH_CHAR,
@@ -19,8 +20,8 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
 )
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl.esl_ble.wolink.writer import (
-    WolinkClient,
     WolinkError,
+    WolinkSession,
     prepare,
 )
 
@@ -28,7 +29,7 @@ MAC = "66:66:54:20:00:55"
 
 
 def test_wolink_authentication():
-    """Verify AES-128 ECB challenge-response authentication writes directly to AUTH_CHAR without pre-subscribing."""
+    """The unlock answer is the AES-encrypted nonce, written before anything is subscribed."""
 
     async def _test():
         mock_client = MagicMock()
@@ -43,10 +44,10 @@ def test_wolink_authentication():
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
-        await client.authenticate()
+        client = WolinkSession(mock_client, MAC)
+        await client.unlock()
 
-        # Must not call start_notify during authenticate to avoid triggering unauthorized service disconnect
+        # Subscribing before the unlock makes the tag drop the link.
         assert not mock_client.start_notify.called
         assert AUTH_CHAR in written
         cipher = Cipher(algorithms.AES(AES_KEY), modes.ECB())
@@ -58,7 +59,7 @@ def test_wolink_authentication():
 
 
 def test_wolink_authentication_failure_disconnect():
-    """Verify authenticate immediately raises WolinkError if device disconnects."""
+    """A tag that drops the link after the answer failed the unlock."""
 
     async def _test():
         mock_client = MagicMock()
@@ -73,15 +74,15 @@ def test_wolink_authentication_failure_disconnect():
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        client = WolinkSession(mock_client, MAC)
         with pytest.raises(WolinkError, match="device error 5"):
-            await client.authenticate()
+            await client.unlock()
 
     asyncio.run(_test())
 
 
 def test_wolink_write_image_flow_with_status_notification():
-    """Verify write_image subscribes to status BEFORE writing, handles chunks and completion."""
+    """Status is subscribed before the first write; chunks, then the refresh, then idle."""
 
     async def _test():
         mock_client = MagicMock()
@@ -113,13 +114,12 @@ def test_wolink_write_image_flow_with_status_notification():
         mock_client.stop_notify = AsyncMock(side_effect=mock_stop_notify)
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        client = WolinkSession(mock_client, MAC)
         img = Image.new("RGB", (296, 128), "white")
         prepared = prepare(PRESETS["290"], img, MAC)
         trace = SessionTrace()
-        result = await client.write_prepared(prepared, trace=trace)
+        await client.send(*prepared, trace=trace)
 
-        assert result.success is True
         assert len(written_data) >= 2  # Chunks + refresh
         assert notification_active is False  # Stopped after session
         # The breakdown: every chunk is a part (all sent), the refresh wait is the finish.
@@ -150,11 +150,11 @@ def test_wolink_error_during_upload_fails_before_refresh():
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        client = WolinkSession(mock_client, MAC)
         img = Image.new("RGB", (296, 128), "white")
         trace = SessionTrace()
         with pytest.raises(WolinkError, match="device error 1: epd initialization error"):
-            await client.write_prepared(prepare(PRESETS["290"], img, MAC), trace=trace)
+            await client.send(*prepare(PRESETS["290"], img, MAC), trace=trace)
 
         assert b"\x02\xa5" not in sent  # refresh (0xA502) never sent
         mock_client.stop_notify.assert_awaited_once()
@@ -166,7 +166,7 @@ def test_wolink_error_during_upload_fails_before_refresh():
 
 
 def test_wolink_write_image_error_notification():
-    """Verify write_image handles device ERR status frame."""
+    """An error frame after the refresh raises with the code's meaning."""
 
     async def _test():
         mock_client = MagicMock()
@@ -183,11 +183,11 @@ def test_wolink_write_image_error_notification():
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
+        client = WolinkSession(mock_client, MAC)
         img = Image.new("RGB", (296, 128), "white")
 
         with pytest.raises(WolinkError, match="device error 2: epd write error"):
-            await client.write_prepared(prepare(PRESETS["290"], img, MAC))
+            await client.send(*prepare(PRESETS["290"], img, MAC))
 
     asyncio.run(_test())
 
@@ -319,7 +319,6 @@ def test_encoding_overlaps_connection_off_the_event_loop(monkeypatch):
 def test_connect_failure_does_not_leak_encode_task(monkeypatch):
     """If connecting fails while the encode is still running, the result is
     dropped cleanly (no pending-task or unretrieved-exception warnings)."""
-    from custom_components.ble_esl.esl_ble.wolink import writer
 
     async def _test():
         started = asyncio.Event()
@@ -360,21 +359,18 @@ def test_wolink_completion_timeout_has_message(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock()  # never notifies
 
-        client = WolinkClient(mock_client, PRESETS["290"], MAC)
-        monkeypatch.setattr(WolinkClient, "_completion_timeout", staticmethod(lambda raw_len: 0.05))
+        client = WolinkSession(mock_client, MAC)
+        monkeypatch.setattr(writer, "refresh_timeout", lambda raw_size: 0.05)
         with pytest.raises(
             NotificationTimeout, match=r"No response from device within 0\.05s after refresh"
         ):
-            await client.write_prepared(
-                prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC)
-            )
+            await client.send(*prepare(PRESETS["290"], Image.new("RGB", (296, 128), "white"), MAC))
 
     asyncio.run(_test())
 
 
 def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monkeypatch):
     """The caller-owned future is awaited once the link is up and not cancelled here."""
-    from custom_components.ble_esl.esl_ble.wolink import writer
 
     async def _test():
         order = []
@@ -386,9 +382,7 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
             return MagicMock(is_connected=False)
 
         monkeypatch.setattr(session_mod, "establish_connection", connect)
-        monkeypatch.setattr(
-            writer.WolinkClient, "authenticate", AsyncMock(side_effect=OSError("stop"))
-        )
+        monkeypatch.setattr(writer.WolinkSession, "unlock", AsyncMock(side_effect=OSError("stop")))
         mock_ble_device = MagicMock()
         mock_ble_device.address = MAC
         with pytest.raises(OSError, match="stop"):
@@ -401,16 +395,14 @@ def test_write_prepared_awaits_encode_after_connect_and_leaves_it_to_caller(monk
     asyncio.run(_test())
 
 
-def test_wolink_completed_status():
+def test_wolink_refreshed_status():
     """Both 0x00 (idle) and 0xFF (complete) finish the wait; errors raise."""
-    client = WolinkClient(MagicMock(), PRESETS["290"], MAC)
-    assert client._completed(bytes([0x00, 0x00])) is True
-    assert client._completed(bytes([0xFF, 0x00])) is True
-    # Empty status does not complete
-    assert client._completed(b"") is False
-    # Error status raises WolinkError
+    client = WolinkSession(MagicMock(), MAC)
+    assert client._refreshed(bytes([0x00, 0x00])) is True
+    assert client._refreshed(bytes([0xFF, 0x00])) is True
+    assert client._refreshed(b"") is False
     with pytest.raises(WolinkError, match="device error 1"):
-        client._completed(bytes([0x01, 0x01]))
+        client._refreshed(bytes([0x01, 0x01]))
 
 
 def test_wolink_chunk_sizing_from_mtu():
@@ -426,11 +418,11 @@ def test_wolink_chunk_sizing_from_mtu():
                 written_chunks.append(data[6:])  # strip 6-byte header
 
         mock_ble.write_gatt_char = AsyncMock(side_effect=mock_write)
-        client = WolinkClient(mock_ble, PRESETS["290"], MAC)
+        client = WolinkSession(mock_ble, MAC)
         trace = SessionTrace()
 
         payload = b"x" * 500
-        await client._write_chunked(payload, trace=trace)
+        await client.upload(payload, trace)
 
         # MTU 247 -> chunk_size = 238
         assert trace.facts["chunk_size"] == 238
@@ -441,7 +433,7 @@ def test_wolink_chunk_sizing_from_mtu():
         mock_ble.mtu_size = 517
         written_chunks.clear()
         trace = SessionTrace()
-        await client._write_chunked(b"x" * 600, trace=trace)
+        await client.upload(b"x" * 600, trace)
         assert trace.facts["chunk_size"] == 506
         assert trace.facts["parts"] == 2
         assert [len(c) for c in written_chunks] == [506, 94]
@@ -450,13 +442,13 @@ def test_wolink_chunk_sizing_from_mtu():
         mock_ble.mtu_size = 23
         written_chunks.clear()
         trace = SessionTrace()
-        await client._write_chunked(payload, trace=trace)
+        await client.upload(payload, trace)
         assert trace.facts["chunk_size"] == 200
         assert trace.facts["parts"] == 3
         assert [len(c) for c in written_chunks] == [200, 200, 100]
 
         mock_ble.mtu_size = None
-        assert client._chunk_size() == 200
+        assert client.chunk_size() == 200
 
     asyncio.run(_test())
 
@@ -468,7 +460,7 @@ def test_wolink_chunk_pacing(monkeypatch):
         mock_ble = MagicMock()
         mock_ble.mtu_size = 209  # 200 byte chunks
         mock_ble.write_gatt_char = AsyncMock()
-        client = WolinkClient(mock_ble, PRESETS["290"], MAC)
+        client = WolinkSession(mock_ble, MAC)
 
         sleep_calls = []
 
@@ -479,12 +471,12 @@ def test_wolink_chunk_pacing(monkeypatch):
 
         # pacing_s = 0.0 -> no sleep
         trace = SessionTrace()
-        await client._write_chunked(b"x" * 400, trace=trace, pacing_s=0.0)
+        await client.upload(b"x" * 400, trace, pacing_s=0.0)
         assert sleep_calls == []
 
         # pacing_s = 0.05 -> sleeps for each chunk sent
         trace = SessionTrace()
-        await client._write_chunked(b"x" * 400, trace=trace, pacing_s=0.05)
+        await client.upload(b"x" * 400, trace, pacing_s=0.05)
         assert sleep_calls == [0.05, 0.05]
 
     asyncio.run(_test())

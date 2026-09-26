@@ -35,10 +35,10 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].extra.get("rotation") == 270
     assert PRESETS["290-bwr"].extra.get("mirror_x") is False
     assert PRESETS["290-bwr"].extra.get("mirror_y") is False
-    assert PRESETS["290-bwr"].extra.get("disp_ver") == 0x0303
+    assert PRESETS["290-bwr"].extra.get("display_version") == 0x0303
 
     assert PRESETS["350"].confidence == CONFIDENCE_HARDWARE
-    assert PRESETS["350"].extra.get("disp_ver") == 0x0201
+    assert PRESETS["350"].extra.get("display_version") == 0x0201
     assert PRESETS["350"].verified is True
 
     assert PRESETS["750"].confidence == CONFIDENCE_HARDWARE

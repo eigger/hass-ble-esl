@@ -1,4 +1,4 @@
-"""Parser for WOLINK BLE advertisements."""
+"""WOLINK advertisement parser: battery and versions for the device page."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ..base import BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUID
-from .protocol import battery_looks_plausible, parse_manufacturer_data
+from .protocol import battery_plausible, parse_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
@@ -16,38 +16,28 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def is_wolink_advertisement(data: BluetoothServiceInfoBleak) -> bool:
-    """Return True if advertisement matches WOLINK manufacturer data or service UUID."""
+    """WOLINK manufacturer data, or the WOLINK service UUID."""
     if MANUFACTURER_ID in data.manufacturer_data:
         return True
-    return SERVICE_UUID.lower() in {u.lower() for u in data.service_uuids}
+    return SERVICE_UUID in {uuid.lower() for uuid in data.service_uuids}
 
 
 class WolinkBluetoothDeviceData(BleParser):
-    """Data parser for WOLINK Bluetooth ESL devices."""
+    """Sensor data from WOLINK advertisements."""
 
     brand = BRAND
     fallback_name = "WOLINK"
     is_advertisement = staticmethod(is_wolink_advertisement)
 
     def _parse(self, service_info: BluetoothServiceInfoBleak) -> None:
-        mfr_bytes = service_info.manufacturer_data.get(MANUFACTURER_ID)
-        if not mfr_bytes or len(mfr_bytes) < 10:
+        advertisement = parse_advertisement(service_info.manufacturer_data.get(MANUFACTURER_ID))
+        if advertisement is None:
             return
-        try:
-            info = parse_manufacturer_data(mfr_bytes)
-        except Exception as err:
-            _LOGGER.debug("Failed to parse WOLINK manufacturer data: %s", err)
-            return
-
-        batt_mv = info["battery_mv"]
-        if not battery_looks_plausible(batt_mv):
+        if not battery_plausible(advertisement.battery_mv):
             _LOGGER.warning(
-                "Battery read %d mV is out of plausible range (raw %s)",
-                batt_mv,
-                mfr_bytes[8:10].hex(),
+                "WOLINK battery reading %d mV is out of the plausible range",
+                advertisement.battery_mv,
             )
-        self.update_battery(batt_mv / 1000.0)
-        if info.get("app_ver") is not None:
-            self.set_device_sw_version(str(info["app_ver"]))
-        if info.get("hw_ver") is not None:
-            self.set_device_hw_version(str(info["hw_ver"]))
+        self.update_battery(advertisement.battery_mv / 1000.0)
+        self.set_device_sw_version(str(advertisement.app_version))
+        self.set_device_hw_version(str(advertisement.hardware_version))
