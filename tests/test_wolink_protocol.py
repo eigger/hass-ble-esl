@@ -342,7 +342,6 @@ def test_encode_planes_213_non_multiple_of_4():
 @pytest.mark.parametrize(
     ("rotation", "mirror_x", "mirror_y", "first"),
     [
-        # Source pixel that lands in buffer byte 0, bit 7, on a 4x2 image.
         (0, False, False, (0, 0)),
         (0, True, False, (3, 0)),
         (0, False, True, (0, 1)),
@@ -353,7 +352,7 @@ def test_encode_planes_213_non_multiple_of_4():
     ],
 )
 def test_orientation_first_pixel(rotation, mirror_x, mirror_y, first):
-    """rotation turns the image counter-clockwise; mirrors reverse the buffer read."""
+    """Source pixel of buffer byte 0, bit 7, on a 4x2 image."""
     width, height = 4, 2
     preset = DevicePreset(
         key="o",
@@ -377,7 +376,7 @@ def test_orientation_first_pixel(rotation, mirror_x, mirror_y, first):
 
 
 def test_orientation_matches_pil_rotate():
-    """rotation means what PIL's Image.rotate means, like PickSmart and XTE."""
+    """rotation matches PIL's Image.rotate."""
     from PIL import Image
 
     width, height = 5, 3
@@ -409,8 +408,7 @@ def test_preset_rejects_unknown_rotation():
 @pytest.mark.parametrize(
     ("key", "corner"),
     [
-        # Where buffer byte 0 lands, seen with the LED at the top-left.
-        ("290-bwr", "bottom-left"),  # discussion 55, photographed
+        ("290-bwr", "bottom-left"),
         ("290", "bottom-right"),
         ("266", "bottom-right"),
         ("370", "top-right"),

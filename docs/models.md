@@ -52,7 +52,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 
 Protocol notes:
 - **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
-- **WOLINK** — Zhsunyco tags. Most presets are 4-color, 2 bits per pixel. The 2.9" BWR preset (`290-bwr`) is verified on hardware with this integration: it sends two 1bpp planes (black/white, then red), 128 pixels per column, with the LED at the top-left. Every WOLINK preset draws upright with the tag's LED at the **top-left**. That is photographed for the 2.9" BWR; the 2.9" and 2.66" BWRY and the 3.7" follow reports that they drew upright with the LED at the bottom-right in earlier releases (so they are turned 180° from those), and the other sizes are unchecked. If a tag comes out upside down, send `rotate: 180` and please report it. The 5.83" panel is listed as 5.8".
+- **WOLINK** — Zhsunyco tags. Most presets are 4-color, 2 bits per pixel. The 2.9" BWR preset (`290-bwr`) is verified on hardware with this integration: it sends two 1bpp planes (black/white, then red), 128 pixels per column, with the LED at the top-left. WOLINK presets draw upright with the tag's LED at the **top-left**; if a tag comes out upside down, please report it. The 5.83" panel is listed as 5.8".
 - **easyTag** — eLabel firmware sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
 

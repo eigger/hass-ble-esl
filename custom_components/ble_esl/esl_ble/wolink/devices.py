@@ -26,9 +26,6 @@ def _p(
     colors: str = "BWRY",
     confidence: str = CONFIDENCE_ESTIMATED,
 ) -> DevicePreset:
-    # Orientation is against the image as seen with the LED at the top-left:
-    # turn it ``rotation`` degrees counter-clockwise, then read the buffer
-    # left to right, top to bottom, reversed along x / y where mirrored.
     if rotation not in ROTATIONS:
         raise ValueError(f"{key}: rotation must be one of {ROTATIONS}, got {rotation}")
     extra: dict[str, bool | int] = {
@@ -55,9 +52,6 @@ def _p(
 PRESETS: dict[str, DevicePreset] = {
     p.key: p
     for p in (
-        # The reference library's scan drew upright with the LED at the
-        # bottom-right; turned 180 degrees for the LED at the top-left. The
-        # 4-color controller reads mirrored against the 2.9" BWR one.
         _p(
             "290",
             '2.9" BWRY',
@@ -67,9 +61,6 @@ PRESETS: dict[str, DevicePreset] = {
             mirror_x=True,
             confidence=CONFIDENCE_HARDWARE,
         ),
-        # 2.9" BWR reads two 1bpp planes, 128 pixels per column (discussion 55).
-        # LED at the top-left: column 0 is the left edge, bit 0 of each column
-        # is the bottom, i.e. the image turned 270 degrees.
         _p(
             "290-bwr",
             '2.9" BWR',
@@ -111,13 +102,12 @@ PRESETS: dict[str, DevicePreset] = {
             '2.66" BWRY',
             296,
             152,
-            rotation=90,  # same panel family and flip as 290
+            rotation=90,
             mirror_x=True,
             confidence=CONFIDENCE_COMMUNITY,
         ),
         _p("154", '1.54" BWRY', 200, 200, rotation=270),
         _p("213", '2.13" BWRY', 250, 122, rotation=270),
-        # A 3.7" owner saw the 270 scan upright with the LED at the bottom-right.
         _p("370", '3.7" BWRY', 240, 416, rotation=90),
         _p("583", '5.83" BWRY', 648, 480, rotation=270),
         _p("102", '10.2" BWR', 960, 640, rotation=270, colors="BWR"),

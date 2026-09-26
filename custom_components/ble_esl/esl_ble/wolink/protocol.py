@@ -229,10 +229,9 @@ def _source_xy(
 ) -> tuple[int, int]:
     """Source pixel for buffer position ``(row, col)``.
 
-    The buffer holds the image as seen with the tag's LED at the top-left,
-    turned ``rotation`` degrees counter-clockwise (PIL's convention, as the
-    PickSmart and XTE presets use), then read left to right and top to
-    bottom. ``mirror_x`` / ``mirror_y`` reverse that read along each axis.
+    The image is turned ``rotation`` degrees counter-clockwise (as PIL's
+    ``Image.rotate``), then read left to right, top to bottom; ``mirror_x`` /
+    ``mirror_y`` reverse that read.
     """
     rows, cols = _buffer_shape(width, height, rotation)
     if mirror_x:
@@ -279,8 +278,7 @@ def _encode_split_planes(
     Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
     white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
     inverted. A red bit of 1 is red and covers the black/white plane; red
-    pixels are stored as white underneath. Orientation is the same as the
-    2bpp packer (``_source_xy``).
+    pixels are stored as white underneath.
     """
     width, height = preset.width, preset.height
     count = width * height
