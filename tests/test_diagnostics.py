@@ -42,7 +42,7 @@ async def test_diagnostics_content_and_redaction(
     assert result["backend"]["id"] == "wolink"
     assert result["backend"]["capabilities"]["passive_battery"] is True
     assert result["preset"]["key"] == "290"
-    assert result["preset"]["extra"]["mirror"] is True
+    assert result["preset"]["extra"]["mirror_x"] is True
 
     adv = result["advertisement"]
     assert adv["manufacturer_data"] == {f"0x{MANUFACTURER_ID:04X}": "12340201040306050bb8"}

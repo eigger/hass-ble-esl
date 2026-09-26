@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import struct
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import zlib
 
 from PIL import Image
@@ -209,65 +209,61 @@ def quantize_image(
     return plane_bw, plane_red, plane_yellow
 
 
-def _scan_xy(
+ROTATIONS = (0, 90, 180, 270)
+
+
+def _buffer_shape(width: int, height: int, rotation: int) -> tuple[int, int]:
+    """(rows, pixels per row) of the buffer: the image turned by ``rotation``."""
+    return (width, height) if rotation in (90, 270) else (height, width)
+
+
+def _source_xy(
     row: int,
     col: int,
     width: int,
     height: int,
     *,
-    mirror: bool,
-    rotate_cw: bool,
-    row_major: bool,
+    rotation: int,
+    mirror_x: bool,
+    mirror_y: bool,
 ) -> tuple[int, int]:
     """Source pixel for buffer position ``(row, col)``.
 
-    ``row`` is the slow axis. Both packers use this, so ``mirror`` and
-    ``rotate_cw`` mean the same thing in each. ``mirror`` flips x after the
-    scan mapping. ``rotate_cw`` without ``mirror`` reads column ``row`` from
-    ``x = width - 1 - row``.
+    The buffer holds the image as seen with the tag's LED at the top-left,
+    turned ``rotation`` degrees counter-clockwise (PIL's convention, as the
+    PickSmart and XTE presets use), then read left to right and top to
+    bottom. ``mirror_x`` / ``mirror_y`` reverse that read along each axis.
     """
-    if row_major:
-        x, y = col, row
-    elif rotate_cw:
-        x, y = width - 1 - row, col
-    else:
-        x, y = row, height - 1 - col
-    if mirror:
-        x = width - 1 - x
-    return x, y
+    rows, cols = _buffer_shape(width, height, rotation)
+    if mirror_x:
+        col = cols - 1 - col
+    if mirror_y:
+        row = rows - 1 - row
+    if rotation == 90:
+        return width - 1 - row, col
+    if rotation == 180:
+        return width - 1 - col, height - 1 - row
+    if rotation == 270:
+        return row, height - 1 - col
+    return col, row
 
 
-def _pack_1bpp(
-    bits: list[int],
-    width: int,
-    height: int,
-    *,
-    mirror: bool,
-    rotate_cw: bool,
-    row_major: bool,
-) -> bytes:
-    """Pack one bit per pixel, first pixel of a byte in the high bit.
+def _orientation(preset: DevicePreset) -> dict[str, Any]:
+    return {
+        "rotation": int(preset.extra.get("rotation", 0)),
+        "mirror_x": bool(preset.extra.get("mirror_x", False)),
+        "mirror_y": bool(preset.extra.get("mirror_y", False)),
+    }
 
-    The fast axis is ``col`` (eight pixels per byte). ``row_major`` walks x
-    along each row; otherwise each column is ``height`` pixels.
-    """
-    if row_major:
-        buf_h, buf_w = height, width
-    else:
-        buf_h, buf_w = width, height
-    stride = (buf_w + 7) // 8
-    raw = bytearray(buf_h * stride)
-    for row in range(buf_h):
-        for col in range(buf_w):
-            x, y = _scan_xy(
-                row,
-                col,
-                width,
-                height,
-                mirror=mirror,
-                rotate_cw=rotate_cw,
-                row_major=row_major,
-            )
+
+def _pack_1bpp(bits: list[int], width: int, height: int, **orientation: Any) -> bytes:
+    """Pack one bit per pixel, first pixel of a byte in the high bit."""
+    rows, cols = _buffer_shape(width, height, orientation["rotation"])
+    stride = (cols + 7) // 8
+    raw = bytearray(rows * stride)
+    for row in range(rows):
+        for col in range(cols):
+            x, y = _source_xy(row, col, width, height, **orientation)
             if bits[y * width + x]:
                 raw[row * stride + (col // 8)] |= 1 << (7 - (col % 8))
     return bytes(raw)
@@ -283,24 +279,17 @@ def _encode_split_planes(
     Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
     white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
     inverted. A red bit of 1 is red and covers the black/white plane; red
-    pixels are stored as white underneath. Scan flags are the same mapping as
-    the 2bpp packer (``_scan_xy``).
+    pixels are stored as white underneath. Orientation is the same as the
+    2bpp packer (``_source_xy``).
     """
     width, height = preset.width, preset.height
     count = width * height
-    mirror = bool(preset.extra.get("mirror", False))
-    rotate_cw = bool(preset.extra.get("rotate_cw", False))
-    row_major = bool(preset.extra.get("row_major", False))
+    orientation = _orientation(preset)
     # 1 = black in the quantizer, 1 = white on the panel.
     bw_bits = [0 if plane_bw[i] else 1 for i in range(count)]
     red_bits = [int(plane_red[i]) for i in range(count)]
-    kwargs = {
-        "mirror": mirror,
-        "rotate_cw": rotate_cw,
-        "row_major": row_major,
-    }
-    return _pack_1bpp(bw_bits, width, height, **kwargs) + _pack_1bpp(
-        red_bits, width, height, **kwargs
+    return _pack_1bpp(bw_bits, width, height, **orientation) + _pack_1bpp(
+        red_bits, width, height, **orientation
     )
 
 
@@ -332,14 +321,8 @@ def encode_planes(
     if preset.extra.get("split_planes"):
         return _encode_split_planes(plane_bw, plane_red, preset)
 
-    mirror = bool(preset.extra.get("mirror", False))
-    rotate_cw = bool(preset.extra.get("rotate_cw", False))
-    row_major = bool(preset.extra.get("row_major", False))
-
-    if row_major:
-        buf_h, buf_w = height, width
-    else:
-        buf_h, buf_w = width, height
+    orientation = _orientation(preset)
+    buf_h, buf_w = _buffer_shape(width, height, orientation["rotation"])
 
     # Row stride is byte-aligned (ceil(buf_w / 4) bytes per row).
     # For displays where buf_w is not a multiple of 4 (e.g. 213: 250x122, buf_w=122 -> 31 bytes),
@@ -352,15 +335,7 @@ def encode_planes(
             for p in range(4):
                 col = col_group * 4 + p
                 if col < buf_w:
-                    orig_x, orig_y = _scan_xy(
-                        row,
-                        col,
-                        width,
-                        height,
-                        mirror=mirror,
-                        rotate_cw=rotate_cw,
-                        row_major=row_major,
-                    )
+                    orig_x, orig_y = _source_xy(row, col, width, height, **orientation)
                     idx = orig_y * width + orig_x
                     if plane_bw[idx]:
                         color = 0b00
