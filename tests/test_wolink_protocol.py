@@ -24,6 +24,7 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl.esl_ble.wolink.protocol import (
     _battery_mv,
+    _orientation,
     _source_xy,
     battery_looks_plausible,
     cmd_load_image_chunk,
@@ -403,3 +404,22 @@ def test_preset_rejects_unknown_rotation():
 
     with pytest.raises(ValueError, match="rotation"):
         _p("x", "x", 8, 8, rotation=45)
+
+
+@pytest.mark.parametrize(
+    ("key", "corner"),
+    [
+        # Where buffer byte 0 lands, seen with the LED at the top-left.
+        ("290-bwr", "bottom-left"),  # discussion 55, photographed
+        ("290", "bottom-right"),
+        ("266", "bottom-right"),
+        ("370", "top-right"),
+    ],
+)
+def test_first_byte_corner_with_led_top_left(key, corner):
+    preset = PRESETS[key]
+    x, y = _source_xy(0, 0, preset.width, preset.height, **_orientation(preset))
+    right = x == preset.width - 1
+    bottom = y == preset.height - 1
+    assert (x in (0, preset.width - 1)) and (y in (0, preset.height - 1))
+    assert f"{'bottom' if bottom else 'top'}-{'right' if right else 'left'}" == corner
