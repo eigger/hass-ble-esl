@@ -24,6 +24,8 @@ from custom_components.ble_esl.esl_ble.wolink.const import (
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl.esl_ble.wolink.protocol import (
     _battery_mv,
+    _orientation,
+    _source_xy,
     battery_looks_plausible,
     cmd_load_image_chunk,
     cmd_multiscreen_refresh,
@@ -208,7 +210,7 @@ def test_encode_planes_2bpp_mapping():
         width=4,
         height=1,
         colors="BWRY",
-        extra={"row_major": True, "mirror": False, "rotate_cw": False},
+        extra={"rotation": 0},
     )
     # 4 pixels: Black (00), White (01), Yellow (10), Red (11)
     plane_bw = [1, 0, 0, 0]
@@ -231,7 +233,7 @@ def test_encode_planes_length_guard():
 
 
 def test_encode_planes_mirror_and_rotation():
-    """Verify orientation flags (mirror, rotate_cw, row_major) produce expected buffer sizes."""
+    """Rotated (290) and unrotated (750) presets both fill the whole buffer."""
     preset_290 = PRESETS["290"]
     expected_len = (preset_290.width * preset_290.height) // 4
     plane_bw = [0] * (preset_290.width * preset_290.height)
@@ -256,7 +258,7 @@ def test_encode_split_planes_bw_then_red():
         width=8,
         height=1,
         colors="BWR",
-        extra={"split_planes": True, "row_major": True},
+        extra={"split_planes": True, "rotation": 0},
     )
     black = [1] * 8  # quantizer: 1 = black
     white = [0] * 8
@@ -275,20 +277,20 @@ def test_encode_split_planes_bw_then_red():
         width=8,
         height=1,
         colors="BWR",
-        extra={"split_planes": True, "row_major": True, "mirror": True},
+        extra={"split_planes": True, "rotation": 0, "mirror_x": True},
     )
     assert encode_planes(one_white, off, off, mirrored)[0] == 0x01
 
 
 def test_encode_split_planes_column_scan_matches_2bpp_axes():
-    """Without rotate_cw, column 0 starts at y = height - 1, same as 2bpp."""
+    """Turned 270 degrees, column 0 starts at y = height - 1, same as 2bpp."""
     preset = DevicePreset(
         key="bwr",
         display_name="bwr",
         width=4,
         height=2,
         colors="BWR",
-        extra={"split_planes": True, "row_major": False},
+        extra={"split_planes": True, "rotation": 270},
     )
     # Index y * width + x. White (quantizer 0) only at (x=0, y=1), the bottom.
     plane_bw = [1, 1, 1, 1, 0, 1, 1, 1]
@@ -299,7 +301,7 @@ def test_encode_split_planes_column_scan_matches_2bpp_axes():
 
 
 def test_290_bwr_corner_is_first_bit():
-    """Default scan: source (0, height - 1) is the high bit of byte 0.
+    """Rotation 270: source (0, height - 1) is the high bit of byte 0.
 
     With the LED at the top-left, discussion 55's photo puts the first columns
     on the left edge and the first bit of each column at the bottom.
@@ -330,8 +332,90 @@ def test_encode_290_bwr_is_two_full_frames():
 
 def test_encode_planes_213_non_multiple_of_4():
     """Verify 213 (250x122) encodes correctly with (buf_w + 3) // 4 byte alignment."""
-    preset_213 = PRESETS["213"]  # 250x122, row_major=False -> buf_w=122 (122%4 == 2)
+    preset_213 = PRESETS["213"]  # 250x122 turned 270 -> buf_w=122 (122%4 == 2)
     plane = [0] * (250 * 122)
     encoded = encode_planes(plane, plane, plane, preset_213)
     # buf_h=250, num_col_groups=(122+3)//4 = 31 -> 250 * 31 = 7750 bytes
     assert len(encoded) == 250 * 31
+
+
+@pytest.mark.parametrize(
+    ("rotation", "mirror_x", "mirror_y", "first"),
+    [
+        (0, False, False, (0, 0)),
+        (0, True, False, (3, 0)),
+        (0, False, True, (0, 1)),
+        (90, False, False, (3, 0)),
+        (180, False, False, (3, 1)),
+        (270, False, False, (0, 1)),
+        (270, True, False, (0, 0)),
+    ],
+)
+def test_orientation_first_pixel(rotation, mirror_x, mirror_y, first):
+    """Source pixel of buffer byte 0, bit 7, on a 4x2 image."""
+    width, height = 4, 2
+    preset = DevicePreset(
+        key="o",
+        display_name="o",
+        width=width,
+        height=height,
+        colors="BWR",
+        extra={
+            "split_planes": True,
+            "rotation": rotation,
+            "mirror_x": mirror_x,
+            "mirror_y": mirror_y,
+        },
+    )
+    x, y = first
+    plane_bw = [1] * (width * height)
+    plane_bw[y * width + x] = 0  # the only white pixel
+    packed = encode_planes(plane_bw, [0] * (width * height), None, preset)
+    assert packed[0] & 0x80
+    assert sum(bin(b).count("1") for b in packed[: len(packed) // 2]) == 1
+
+
+def test_orientation_matches_pil_rotate():
+    """rotation matches PIL's Image.rotate."""
+    from PIL import Image
+
+    width, height = 5, 3
+    values = list(range(width * height))
+    for rotation in (0, 90, 180, 270):
+        image = Image.new("L", (width, height))
+        image.putdata(values)
+        turned = image.rotate(rotation, expand=True)
+        cols, rows = turned.size
+        expected = [turned.getpixel((c, r)) for r in range(rows) for c in range(cols)]
+        got = [
+            values[y * width + x]
+            for r in range(rows)
+            for c in range(cols)
+            for x, y in [
+                _source_xy(r, c, width, height, rotation=rotation, mirror_x=False, mirror_y=False)
+            ]
+        ]
+        assert got == expected, rotation
+
+
+def test_preset_rejects_unknown_rotation():
+    from custom_components.ble_esl.esl_ble.wolink.devices import _p
+
+    with pytest.raises(ValueError, match="rotation"):
+        _p("x", "x", 8, 8, rotation=45)
+
+
+@pytest.mark.parametrize(
+    ("key", "corner"),
+    [
+        ("290-bwr", "bottom-left"),
+        ("370", "top-right"),
+    ],
+)
+def test_first_byte_corner_with_led_top_left(key, corner):
+    preset = PRESETS[key]
+    x, y = _source_xy(0, 0, preset.width, preset.height, **_orientation(preset))
+    right = x == preset.width - 1
+    bottom = y == preset.height - 1
+    assert (x in (0, preset.width - 1)) and (y in (0, preset.height - 1))
+    assert f"{'bottom' if bottom else 'top'}-{'right' if right else 'left'}" == corner

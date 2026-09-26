@@ -23,8 +23,8 @@ def test_presets_catalog():
     assert PRESETS["290"].verified is True
     assert PRESETS["290"].width == 296
     assert PRESETS["290"].height == 128
-    assert PRESETS["290"].extra.get("mirror") is True
-    assert PRESETS["290"].extra.get("rotate_cw") is True
+    assert PRESETS["290"].extra.get("rotation") == 270
+    assert PRESETS["290"].extra.get("mirror_x") is True
     assert "split_planes" not in PRESETS["290"].extra
 
     # 2.9" BWR: two 1bpp columns, verified on a physical tag.
@@ -34,9 +34,9 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].confidence == CONFIDENCE_HARDWARE
     assert PRESETS["290-bwr"].verified is True
     assert PRESETS["290-bwr"].extra.get("split_planes") is True
-    assert PRESETS["290-bwr"].extra.get("rotate_cw") is False
-    assert PRESETS["290-bwr"].extra.get("row_major") is False
-    assert PRESETS["290-bwr"].extra.get("mirror") is False
+    assert PRESETS["290-bwr"].extra.get("rotation") == 270
+    assert PRESETS["290-bwr"].extra.get("mirror_x") is False
+    assert PRESETS["290-bwr"].extra.get("mirror_y") is False
     assert PRESETS["290-bwr"].extra.get("disp_ver") == 0x0303
 
     assert PRESETS["350"].confidence == CONFIDENCE_HARDWARE
@@ -45,7 +45,7 @@ def test_presets_catalog():
 
     assert PRESETS["750"].confidence == CONFIDENCE_HARDWARE
     assert PRESETS["750"].verified is True
-    assert PRESETS["750"].extra.get("row_major") is True
+    assert PRESETS["750"].extra.get("rotation") == 0
 
     assert PRESETS["420"].confidence == CONFIDENCE_REPORTED
     assert PRESETS["420"].verified is True
