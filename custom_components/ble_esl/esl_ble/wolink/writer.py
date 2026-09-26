@@ -120,6 +120,11 @@ class WolinkClient:
 
     def _completed(self, data: bytes) -> bool:
         """Accept a status frame after the refresh: error -> raise, idle -> done."""
+        _LOGGER.debug(
+            "WOLINK status frame from %s after refresh: %s",
+            self.address,
+            data.hex() if data else "empty",
+        )
         if err := self._status_error(data):
             raise WolinkError(err)
         return bool(data) and data[0] in (0x00, 0xFF)

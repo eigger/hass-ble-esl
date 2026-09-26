@@ -455,6 +455,9 @@ def test_wolink_chunk_sizing_from_mtu():
         assert trace.facts["parts"] == 3
         assert [len(c) for c in written_chunks] == [200, 200, 100]
 
+        mock_ble.mtu_size = None
+        assert client._chunk_size() == 200
+
     asyncio.run(_test())
 
 
