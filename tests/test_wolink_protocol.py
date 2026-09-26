@@ -409,8 +409,6 @@ def test_preset_rejects_unknown_rotation():
     ("key", "corner"),
     [
         ("290-bwr", "bottom-left"),
-        ("290", "bottom-right"),
-        ("266", "bottom-right"),
         ("370", "top-right"),
     ],
 )

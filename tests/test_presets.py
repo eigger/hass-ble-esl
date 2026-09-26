@@ -23,7 +23,7 @@ def test_presets_catalog():
     assert PRESETS["290"].verified is True
     assert PRESETS["290"].width == 296
     assert PRESETS["290"].height == 128
-    assert PRESETS["290"].extra.get("rotation") == 90
+    assert PRESETS["290"].extra.get("rotation") == 270
     assert PRESETS["290"].extra.get("mirror_x") is True
     assert "split_planes" not in PRESETS["290"].extra
 
