@@ -25,7 +25,6 @@ def test_presets_catalog():
     assert PRESETS["290"].height == 128
     assert PRESETS["290"].extra.get("rotation") == 270
     assert PRESETS["290"].extra.get("mirror_x") is True
-    assert "split_planes" not in PRESETS["290"].extra
 
     # 2.9" BWR: two 1bpp columns, verified on a physical tag.
     assert PRESETS["290-bwr"].colors == "BWR"
@@ -33,7 +32,6 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].height == 128
     assert PRESETS["290-bwr"].confidence == CONFIDENCE_HARDWARE
     assert PRESETS["290-bwr"].verified is True
-    assert PRESETS["290-bwr"].extra.get("split_planes") is True
     assert PRESETS["290-bwr"].extra.get("rotation") == 270
     assert PRESETS["290-bwr"].extra.get("mirror_x") is False
     assert PRESETS["290-bwr"].extra.get("mirror_y") is False
@@ -57,11 +55,8 @@ def test_presets_catalog():
     assert PRESETS["154"].confidence == CONFIDENCE_ESTIMATED
     assert PRESETS["154"].verified is False
 
-    # 10.2" and 13.3" are BWR colors but still interleaved 2bpp, not split planes.
     assert PRESETS["102"].colors == "BWR"
     assert PRESETS["133"].colors == "BWR"
-    assert "split_planes" not in PRESETS["102"].extra
-    assert "split_planes" not in PRESETS["133"].extra
 
 
 def test_model_selector_ordering():

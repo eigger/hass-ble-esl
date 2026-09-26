@@ -250,7 +250,7 @@ def test_encode_planes_mirror_and_rotation():
     assert len(encoded_750) == expected_len_750
 
 
-def test_encode_split_planes_bw_then_red():
+def test_encode_bwr_planes_bw_then_red():
     """BWR split packing: BW bit 1 is white, red follows, MSB first."""
     preset = DevicePreset(
         key="bwr",
@@ -258,7 +258,7 @@ def test_encode_split_planes_bw_then_red():
         width=8,
         height=1,
         colors="BWR",
-        extra={"split_planes": True, "rotation": 0},
+        extra={"rotation": 0},
     )
     black = [1] * 8  # quantizer: 1 = black
     white = [0] * 8
@@ -277,12 +277,12 @@ def test_encode_split_planes_bw_then_red():
         width=8,
         height=1,
         colors="BWR",
-        extra={"split_planes": True, "rotation": 0, "mirror_x": True},
+        extra={"rotation": 0, "mirror_x": True},
     )
     assert encode_planes(one_white, off, off, mirrored)[0] == 0x01
 
 
-def test_encode_split_planes_column_scan_matches_2bpp_axes():
+def test_encode_bwr_planes_column_scan_matches_2bpp_axes():
     """Turned 270 degrees, column 0 starts at y = height - 1, same as 2bpp."""
     preset = DevicePreset(
         key="bwr",
@@ -290,7 +290,7 @@ def test_encode_split_planes_column_scan_matches_2bpp_axes():
         width=4,
         height=2,
         colors="BWR",
-        extra={"split_planes": True, "rotation": 270},
+        extra={"rotation": 270},
     )
     # Index y * width + x. White (quantizer 0) only at (x=0, y=1), the bottom.
     plane_bw = [1, 1, 1, 1, 0, 1, 1, 1]
@@ -361,7 +361,6 @@ def test_orientation_first_pixel(rotation, mirror_x, mirror_y, first):
         height=height,
         colors="BWR",
         extra={
-            "split_planes": True,
             "rotation": rotation,
             "mirror_x": mirror_x,
             "mirror_y": mirror_y,
@@ -419,3 +418,19 @@ def test_first_byte_corner_with_led_top_left(key, corner):
     bottom = y == preset.height - 1
     assert (x in (0, preset.width - 1)) and (y in (0, preset.height - 1))
     assert f"{'bottom' if bottom else 'top'}-{'right' if right else 'left'}" == corner
+
+
+def test_pixel_format_follows_colors():
+    """BWR presets (10.2", 13.3" too) send two 1bpp frames; BWRY sends 2bpp."""
+    for key in ("290-bwr", "102", "133"):
+        preset = PRESETS[key]
+        count = preset.width * preset.height
+        white = encode_planes([0] * count, [0] * count, None, preset)
+        assert white == bytes([0xFF]) * (count // 8) + bytes(count // 8), key
+    preset = PRESETS["290"]
+    count = preset.width * preset.height
+    assert encode_planes([0] * count, [0] * count, None, preset) == bytes([0x55]) * (count // 4)
+
+    bw = DevicePreset(key="bw", display_name="bw", width=8, height=1, colors="BW")
+    with pytest.raises(ValueError, match="pixel format"):
+        encode_planes([0] * 8, [0] * 8, None, bw)

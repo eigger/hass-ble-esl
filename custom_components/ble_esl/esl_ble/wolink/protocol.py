@@ -268,7 +268,7 @@ def _pack_1bpp(bits: list[int], width: int, height: int, **orientation: Any) -> 
     return bytes(raw)
 
 
-def _encode_split_planes(
+def _encode_bw_red_planes(
     plane_bw: list[int] | bytes,
     plane_red: list[int] | bytes,
     preset: DevicePreset,
@@ -297,7 +297,7 @@ def encode_planes(
     plane_yellow: list[int] | bytes | None,
     preset: DevicePreset,
 ) -> bytes:
-    """Pack bit planes for ``preset``: 2bpp, or two 1bpp frames when split."""
+    """Pack bit planes for ``preset``: BWRY as 2bpp, BWR as two 1bpp frames."""
     width, height = preset.width, preset.height
     expected = width * height
     if plane_yellow is None:
@@ -316,8 +316,10 @@ def encode_planes(
                 "so this is checked up front."
             )
 
-    if preset.extra.get("split_planes"):
-        return _encode_split_planes(plane_bw, plane_red, preset)
+    if preset.colors == "BWR":
+        return _encode_bw_red_planes(plane_bw, plane_red, preset)
+    if preset.colors != "BWRY":
+        raise ValueError(f"no WOLINK pixel format for {preset.colors} ({preset.key})")
 
     orientation = _orientation(preset)
     buf_h, buf_w = _buffer_shape(width, height, orientation["rotation"])

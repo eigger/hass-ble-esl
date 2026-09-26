@@ -21,7 +21,6 @@ def _p(
     rotation: int,
     mirror_x: bool = False,
     mirror_y: bool = False,
-    split_planes: bool = False,
     disp_ver: int | None = None,
     colors: str = "BWRY",
     confidence: str = CONFIDENCE_ESTIMATED,
@@ -33,9 +32,6 @@ def _p(
         "mirror_x": mirror_x,
         "mirror_y": mirror_y,
     }
-    if split_planes:
-        # Two 1bpp frames (black/white, then red) instead of interleaved 2bpp.
-        extra["split_planes"] = True
     if disp_ver is not None:
         extra["disp_ver"] = disp_ver
     return DevicePreset(
@@ -67,7 +63,6 @@ PRESETS: dict[str, DevicePreset] = {
             296,
             128,
             rotation=270,
-            split_planes=True,
             disp_ver=0x0303,
             colors="BWR",
             confidence=CONFIDENCE_HARDWARE,
