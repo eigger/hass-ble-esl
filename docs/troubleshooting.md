@@ -54,7 +54,7 @@ The tag did not answer, or answered wrongly, before any image data was sent. `au
 ### `transfer`
 
 Failed while sending the image data. This is the one case that points at link quality.
-- *Check:* `resends` / `round_trip_ms` (PickSmart), `sends` vs `parts` (how far it got), `chunk_size` (XTE: 20 means the proxy only allows tiny writes), `rssi`, `via` (which radio).
+- *Check:* `resends` / `round_trip_ms` (PickSmart), `sends` vs `parts` (how far it got), `chunk_size` (XTE / WOLINK: negotiated chunk size; small values mean tiny writes), `rssi`, `via` (which radio).
 - *Do:* Move the tag or the proxy it actually used (`via`), or add one. The next retry is automatically paced slower (`pacing_s`).
 
 ### `finish`
@@ -72,7 +72,7 @@ The image was sent; the tag did not confirm.
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used.
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
 - **`start_probes` above 1 on successful writes** (PickSmart) — the tag was slow to answer after connecting. Harmless once in a while, but it is where a marginal link shows first; if it is 2–3 on most writes, treat it like a `transfer` problem.
-- **Only large images fail** — WOLINK / easyTag panels take longer to refresh the bigger they are; `finish_s` of tens of seconds is normal for 7.5" and above, and the wait allowed grows with the image size. On XTE, `chunk_size: 20` makes a 4.2" image take far longer than 244 would; a different proxy or a local adapter usually reports 244.
+- **Only large images fail** — WOLINK / easyTag panels take longer to refresh the bigger they are; `finish_s` of tens of seconds is normal for 7.5" and above, and the wait allowed grows with the image size. On XTE and WOLINK, a smaller `chunk_size` (e.g. 20 on some XTE proxies, or 200 on low-MTU links) makes large images take far longer than with a higher negotiated MTU; a different proxy or a local adapter usually reports a higher value.
 
 ## What the attributes cannot show
 

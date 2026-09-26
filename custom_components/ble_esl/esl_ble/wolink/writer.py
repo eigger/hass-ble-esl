@@ -16,7 +16,6 @@ from .const import (
     AES_KEY,
     AUTH_CHAR,
     BATTERY_CHAR,
-    CHUNK_DELAY_S,
     DATA_CHAR,
     ERROR_MESSAGES,
     STATUS_CHAR,
@@ -108,8 +107,26 @@ class WolinkClient:
         """Error code carried by a status frame (byte 1), 0 if none."""
         return data[1] if len(data) >= 2 else 0
 
+    def _chunk_size(self) -> int:
+        """Calculate image chunk size from negotiated MTU, within [200, 506] bytes.
+
+        The ATT attribute value limit is 512 bytes. With a 6-byte command header,
+        the chunk payload cannot exceed 506 bytes or (MTU - 9) bytes. When MTU
+        is below 209 (or unknown), the 200-byte floor relies on Bleak/GATT long
+        writes (ATT Prepare/Execute Write), matching historical behavior.
+        """
+        mtu = getattr(self.client, "mtu_size", None)
+        if isinstance(mtu, int) and mtu > 0:
+            return max(200, min(mtu - 9, 506))
+        return 200
+
     def _completed(self, data: bytes) -> bool:
         """Accept a status frame after the refresh: error -> raise, idle -> done."""
+        _LOGGER.debug(
+            "WOLINK status frame from %s after refresh: %s",
+            self.address,
+            data.hex() if data else "empty",
+        )
         if err := self._status_error(data):
             raise WolinkError(err)
         return bool(data) and data[0] in (0x00, 0xFF)
@@ -118,7 +135,7 @@ class WolinkClient:
         self,
         payload: bytes,
         trace: SessionTrace,
-        chunk_size: int = 200,
+        chunk_size: int | None = None,
         pacing_s: float = 0.0,
     ) -> None:
         """Write compressed image payload in chunks, `pacing_s` slower than usual.
@@ -126,10 +143,15 @@ class WolinkClient:
         `parts` is the chunk count of the image; `sends` counts the chunks
         written so far, so a failure mid-transfer still says how far it got.
         """
-        delay = CHUNK_DELAY_S + pacing_s
+        if chunk_size is None:
+            chunk_size = self._chunk_size()
         offset = 0
         sends = 0
-        trace.note(parts=(len(payload) + chunk_size - 1) // chunk_size, sends=sends)
+        trace.note(
+            parts=(len(payload) + chunk_size - 1) // chunk_size,
+            sends=sends,
+            chunk_size=chunk_size,
+        )
         try:
             while offset < len(payload):
                 chunk = payload[offset : offset + chunk_size]
@@ -137,7 +159,8 @@ class WolinkClient:
                 await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
                 offset += len(chunk)
                 sends += 1
-                await asyncio.sleep(delay)
+                if pacing_s > 0:
+                    await asyncio.sleep(pacing_s)
         finally:
             trace.note(sends=sends)
 
@@ -157,13 +180,13 @@ class WolinkClient:
         refresh = cmd_refresh_compressed(len(payload))
 
         if raw_len > 100000:
-            est_seconds = int((len(payload) / 200) * (CHUNK_DELAY_S + pacing_s))
+            chunk_size = self._chunk_size()
+            est_parts = (len(payload) + chunk_size - 1) // chunk_size
             _LOGGER.info(
-                "Sending large image (%d bytes, %d chunks) to %s — estimated transfer time: ~%ds",
+                "Sending large image (%d bytes, %d chunks) to %s",
                 raw_len,
-                (len(payload) + 199) // 200,
+                est_parts,
                 self.address,
-                est_seconds,
             )
         timeout = self._completion_timeout(raw_len)
         if trace is None:

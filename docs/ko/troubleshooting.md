@@ -56,7 +56,7 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 ### `transfer`
 
 이미지 데이터를 보내는 중에 실패. 링크 품질을 가리키는 유일한 경우.
-- *확인:* `resends` / `round_trip_ms` (PickSmart), `sends` 대 `parts` (어디까지 갔나), `chunk_size` (XTE: 20이면 프록시가 아주 작은 쓰기만 허용), `rssi`, `via` (어느 라디오).
+- *확인:* `resends` / `round_trip_ms` (PickSmart), `sends` 대 `parts` (어디까지 갔나), `chunk_size` (XTE / WOLINK: 협상된 청크 크기; 작을수록 쓰기 느림), `rssi`, `via` (어느 라디오).
 - *조치:* 태그나 실제로 쓰인 프록시(`via`)를 옮기거나 하나 추가. 다음 재시도는 자동으로 패킷 간격을 더 둡니다(`pacing_s`).
 
 ### `finish`
@@ -74,7 +74,7 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 - **`rssi`는 낮은데 `paths`가 2 이상** — 다른 라디오가 더 나을 수 있습니다; HA는 가장 강한 광고를 낸 라디오로 연결하고, 다른 라디오는 실패한 뒤에야 씁니다. `via`로 어느 것이 쓰였는지 보세요.
 - **프록시를 추가한 직후 전부 `connect`에서 실패** — 프록시는 `esp32_ble_tracker`와 `bluetooth_proxy` 둘 다 `active: true`여야 합니다([README](../../README.ko.md#설치) 참고); 패시브 프록시는 태그를 보기만 하고 연결은 못 합니다.
 - **성공한 쓰기인데 `start_probes`가 1보다 큼** (PickSmart) — 연결 후 태그가 느리게 응답한 것. 가끔이면 무해하지만, 한계 링크가 가장 먼저 드러나는 곳입니다; 대부분의 쓰기에서 2–3이면 `transfer` 문제처럼 다루세요.
-- **큰 이미지만 실패** — WOLINK / easyTag 패널은 클수록 리프레시가 오래 걸립니다; 7.5" 이상에서 `finish_s`가 수십 초인 것은 정상이고, 허용 대기 시간도 이미지 크기에 따라 늘어납니다. XTE에서 `chunk_size: 20`이면 4.2" 이미지가 244일 때보다 훨씬 오래 걸립니다; 다른 프록시나 로컬 어댑터는 보통 244를 보고합니다.
+- **큰 이미지만 실패** — WOLINK / easyTag 패널은 클수록 리프레시가 오래 걸립니다; 7.5" 이상에서 `finish_s`가 수십 초인 것은 정상이고, 허용 대기 시간도 이미지 크기에 따라 늘어납니다. XTE와 WOLINK에서 `chunk_size`가 작으면(예: 일부 XTE 프록시의 20, 저MTU 링크의 200) MTU가 크게 협상되었을 때보다 훨씬 오래 걸립니다; 다른 프록시나 로컬 어댑터는 보통 더 큰 값을 보고합니다.
 
 ## 속성으로는 볼 수 없는 것
 
