@@ -50,16 +50,15 @@ async def write_session(
 ) -> WriteResult:
     """Send the object once the link is up."""
     obj = await prepared
-    await XteSession(client, address, pacing_s=pacing_s).send(obj, trace=trace)
+    await XteSession(client, pacing_s=pacing_s).send(obj, trace=trace)
     return WriteResult(success=True)
 
 
 class XteSession:
     """One connected XTE tag."""
 
-    def __init__(self, client: BleakClient, address: str = "", *, pacing_s: float = 0.0) -> None:
+    def __init__(self, client: BleakClient, *, pacing_s: float = 0.0) -> None:
         self.client = client
-        self.address = address
         self.pacing_s = max(0.0, pacing_s)
         self.settle_s = NOTIFY_SETTLE_S
         self.reply_timeout_s = REPLY_TIMEOUT_S
