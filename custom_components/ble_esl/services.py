@@ -239,10 +239,10 @@ async def build_write_job(
     """
     data = entry.runtime_data
     options = {**entry.data, **entry.options}
-    backend = data.backend
+    protocol = data.protocol
 
     preset = resolve_preset(
-        hass, backend, data.address, options.get(CONF_MODEL, DEFAULT_MODEL)
+        hass, protocol, data.address, options.get(CONF_MODEL, DEFAULT_MODEL)
     ).preset
     data.preset = preset
     data.parser.set_preset(preset)
@@ -285,7 +285,7 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
 
 
 def _likely_cause(
-    stage: str | None, error: str, facts: dict[str, Any], backend_id: str
+    stage: str | None, error: str, facts: dict[str, Any], protocol_id: str
 ) -> str | None:
     """The tag's own reading of a failure, or None for blesession's generic one.
 
@@ -324,7 +324,7 @@ def _likely_cause(
         # What the tag was expected to say depends on the protocol.
         if "device error" in err:
             return f"The tag reported an error after the transfer: {error}."
-        if backend_id == "xte":
+        if protocol_id == "xte":
             if no_reply:
                 return f"The tag took the image but did not acknowledge the end command.{where}"
             return f"The end of the transfer failed: {error or 'unknown error'}."
@@ -340,12 +340,12 @@ def _likely_cause(
 def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -> dict[str, Any]:
     """The breakdown of one attempt, as the Write Duration / Last Failure
     Time attributes, the diagnostics download and the service response show it."""
-    backend_id = job.data.backend.id
+    protocol_id = job.data.protocol.id
     return report_attempt(
         attempt,
         operation="write",
         facts=radio_facts(hass, job.address, attempt.trace.link),
-        cause=lambda stage, _detail, error, facts: _likely_cause(stage, error, facts, backend_id),
+        cause=lambda stage, _detail, error, facts: _likely_cause(stage, error, facts, protocol_id),
         noun="tag",
         attempts=job.max_retries,
     )
@@ -403,10 +403,10 @@ async def _attempt(
     pacing_s = RETRY_BACKOFF_S * attempt.state.get("transfer_failures", 0)
     if pacing_s:
         attempt.trace.note(pacing_s=pacing_s)
-    # The encode was started before the BLE lock was taken; the backend
+    # The encode was started before the BLE lock was taken; the protocol
     # awaits it once the link is up, and a retry awaits the same future
     # again instead of re-encoding.
-    return await job.data.backend.write_prepared(
+    return await job.data.protocol.write_prepared(
         ble_device,
         job.preset,
         job.prepared,
@@ -423,7 +423,7 @@ def _retry(attempt: Attempt[WriteResult]) -> bool:
         # automation run is the real retry.
         return False
     if isinstance(attempt.error, WriteRefused):
-        # The backend declined before connecting; nothing about a retry changes that.
+        # The protocol declined before connecting; nothing about a retry changes that.
         return False
     if attempt.failed_stage == stages.TRANSFER:
         attempt.state["transfer_failures"] = attempt.state.get("transfer_failures", 0) + 1
@@ -465,7 +465,7 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
         return None
 
     def on_attempt(attempt: Attempt[WriteResult]) -> None:
-        # Every attempt is recorded (with whatever the backend timed) so the
+        # Every attempt is recorded (with whatever the protocol timed) so the
         # Write Duration sensor's attributes always describe the last one —
         # including an attempt a guard declined, which reports as
         # `success: false` with `skipped: locked` / `duplicate` / `dropped`
@@ -574,13 +574,13 @@ async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
 
     The encode runs once per write, in HA's executor, *before* queueing on
     the locks: tags waiting their turn encode while another transfers, and
-    the CPU-bound work never runs on the event loop. The backend awaits the
+    the CPU-bound work never runs on the event loop. The protocol awaits the
     future only once its link is up (overlapping connect), and every retry
     attempt reuses the same result.
     """
     data = job.data
     prepared = hass.async_add_executor_job(
-        data.backend.prepare_image, job.preset, job.image, data.address
+        data.protocol.prepare_image, job.preset, job.image, data.address
     )
     job.prepared = prepared
     try:

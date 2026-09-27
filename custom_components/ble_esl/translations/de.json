@@ -145,8 +145,8 @@
     }
   },
   "exceptions": {
-    "unknown_backend": {
-      "message": "Unbekanntes Protokoll-Backend {protocol}; entfernen Sie dieses Gerät und fügen Sie es erneut hinzu."
+    "unknown_protocol": {
+      "message": "Unbekanntes Protokoll {protocol}; entfernen Sie dieses Gerät und fügen Sie es erneut hinzu."
     }
   }
 }

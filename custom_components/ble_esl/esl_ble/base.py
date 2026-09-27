@@ -1,4 +1,4 @@
-"""Common base classes and data structures for protocol backends."""
+"""Common base classes and data structures for protocol implementations."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ full speed. The integration turns this into `pacing_s` for the writers.
 # Battery % is a linear map of the cell voltage over this range, and at or
 # below the minimum the battery-low binary sensor turns on. Below 2.5 V
 # e-paper refresh becomes unreliable even though BLE still works; the same
-# range applies to every backend that reports a voltage (advertised: PickSmart,
+# range applies to every protocol that reports a voltage (advertised: PickSmart,
 # WOLINK; session-polled: easyTag) so the percentages are comparable across
 # tags. A preset may override it via extra["min_voltage"] / extra["max_voltage"].
 BATTERY_MIN_VOLTAGE = 2.5
@@ -141,7 +141,7 @@ class WriteResult:
 
 
 class WriteRefused(Exception):
-    """A backend declined the write before connecting (see XTE): a preset or
+    """A protocol declined the write before connecting (see XTE): a preset or
     tag it cannot encode for. Not a BLE failure, and not worth retrying."""
 
 
@@ -152,7 +152,7 @@ def battery_percent(volts: float, min_v: float, max_v: float) -> int:
 
 
 class ProtocolContractError(TypeError):
-    """A backend or parser class does not satisfy the protocol contract.
+    """A protocol or parser class does not satisfy the protocol contract.
 
     Raised when the class is *defined* (import time), listing everything
     that is missing, so an incomplete protocol package can never load.
@@ -252,8 +252,8 @@ class BleParser(BluetoothData, ABC):
         self.update_predefined_binary_sensor(BinarySensorDeviceClass.BATTERY, volts <= min_v)
 
 
-class BleBackend(ABC):
-    """A protocol backend: declarative class attributes plus a few hooks.
+class EslProtocol(ABC):
+    """An ESL protocol: declarative class attributes plus a few hooks.
 
     Contract (checked when the subclass is defined, see __init_subclass__):
 
@@ -309,12 +309,12 @@ class BleBackend(ABC):
                         for k, v in presets.items()
                         if v.colors not in caps.palettes
                     ]
-        if not _overrides(cls, BleBackend, "parse_advertisement"):
+        if not _overrides(cls, EslProtocol, "parse_advertisement"):
             problems.append("parse_advertisement() not implemented")
-        has_hooks = _overrides(cls, BleBackend, "prepare_image") and _overrides(
-            cls, BleBackend, "write_session"
+        has_hooks = _overrides(cls, EslProtocol, "prepare_image") and _overrides(
+            cls, EslProtocol, "write_session"
         )
-        if not has_hooks and not _overrides(cls, BleBackend, "write_image"):
+        if not has_hooks and not _overrides(cls, EslProtocol, "write_image"):
             problems.append(
                 "write path: implement prepare_image() and write_session(), "
                 "or override write_image()"

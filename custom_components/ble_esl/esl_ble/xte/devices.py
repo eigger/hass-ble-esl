@@ -10,7 +10,7 @@ clockwise, as PIL's `Image.rotate`).
 from __future__ import annotations
 
 from ..base import CONFIDENCE_COMMUNITY, CONFIDENCE_ESTIMATED, CONFIDENCE_REPORTED, DevicePreset
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 
 def _preset(

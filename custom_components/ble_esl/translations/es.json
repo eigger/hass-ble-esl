@@ -145,8 +145,8 @@
     }
   },
   "exceptions": {
-    "unknown_backend": {
-      "message": "Backend de protocolo desconocido {protocol}; elimina este dispositivo y añádelo de nuevo."
+    "unknown_protocol": {
+      "message": "Protocolo desconocido {protocol}; elimina este dispositivo y añádelo de nuevo."
     }
   }
 }

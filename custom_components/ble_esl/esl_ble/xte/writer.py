@@ -24,7 +24,7 @@ from .const import (
     WRITE_UUID,
 )
 from .image import buffer_size, encode_image
-from .protocol import XteError, blocks, check_reply, command, image_object
+from .wire import XteError, blocks, check_reply, command, image_object
 
 if TYPE_CHECKING:
     from bleak import BleakClient
@@ -101,7 +101,7 @@ class XteSession:
         return write_char, notify_char
 
     def chunk_size(self, write_char: BleakGATTCharacteristic) -> int:
-        """The backend's write-without-response limit, at most 244 bytes."""
+        """The protocol's write-without-response limit, at most 244 bytes."""
         size = min(MAX_CHUNK, write_char.max_write_without_response_size)
         if size < MIN_CHUNK:
             raise XteError(f"Invalid XTE write-without-response size: {size}")

@@ -145,8 +145,8 @@
     }
   },
   "exceptions": {
-    "unknown_backend": {
-      "message": "不明なプロトコルバックエンド {protocol} です。このデバイスを削除して再度追加してください。"
+    "unknown_protocol": {
+      "message": "不明なプロトコル {protocol} です。このデバイスを削除して再度追加してください。"
     }
   }
 }

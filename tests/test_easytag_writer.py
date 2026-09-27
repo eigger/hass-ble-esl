@@ -16,7 +16,7 @@ from custom_components.ble_esl.esl_ble.easytag.const import (
     WRITE_UUID,
 )
 from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
-from custom_components.ble_esl.esl_ble.easytag.protocol import session_key
+from custom_components.ble_esl.esl_ble.easytag.wire import session_key
 from custom_components.ble_esl.esl_ble.easytag.writer import (
     EasyTagError,
     EasyTagSession,

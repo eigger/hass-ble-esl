@@ -18,7 +18,7 @@ from custom_components.ble_esl.esl_ble.picksmart.parser import (
     PickSmartBluetoothDeviceData,
     is_picksmart_advertisement,
 )
-from custom_components.ble_esl.esl_ble.picksmart.protocol import parse_advertisement
+from custom_components.ble_esl.esl_ble.picksmart.wire import parse_advertisement
 
 
 def test_picksmart_parser_supported():
@@ -110,27 +110,27 @@ def test_picksmart_firmware_encoding():
     assert preset_for_device(0x0999, 0x0101) is None
 
 
-def test_picksmart_backend_refine_preset():
-    """Verify PickSmartBleBackend.refine_preset adjusts preset using AdvertisementInfo."""
+def test_picksmart_protocol_refine_preset():
+    """Verify PickSmartProtocol.refine_preset adjusts preset using AdvertisementInfo."""
     from custom_components.ble_esl.esl_ble.base import AdvertisementInfo
-    from custom_components.ble_esl.esl_ble.picksmart import PickSmartBleBackend
+    from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
 
-    backend = PickSmartBleBackend()
-    preset_75 = backend.presets()["0x012B"]
+    protocol = PickSmartProtocol()
+    preset_75 = protocol.presets()["0x012B"]
 
     # 1. Without AdvertisementInfo -> unmodified
-    assert backend.refine_preset(preset_75, None) == preset_75
+    assert protocol.refine_preset(preset_75, None) == preset_75
 
     # 2. With normal firmware 0x0101 -> QuickLZ
     info_normal = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x0101})
-    assert backend.refine_preset(preset_75, info_normal).extra["encoding"] == "quicklz"
+    assert protocol.refine_preset(preset_75, info_normal).extra["encoding"] == "quicklz"
 
     # 3. With firmware 0x8101 on 7.5" -> headed lines
     info_quirk = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x8101})
-    assert backend.refine_preset(preset_75, info_quirk).extra["encoding"] == "lines"
+    assert protocol.refine_preset(preset_75, info_quirk).extra["encoding"] == "lines"
 
     # 4. Advertisement is authoritative for PickSmart: if advertisement reports 0x012B, it resolves to 0x012B
-    preset_29 = backend.presets()["0x0033"]
-    refined_adv_authority = backend.refine_preset(preset_29, info_quirk)
+    preset_29 = protocol.presets()["0x0033"]
+    refined_adv_authority = protocol.refine_preset(preset_29, info_quirk)
     assert refined_adv_authority.key == "0x012B"
     assert refined_adv_authority.width == 800

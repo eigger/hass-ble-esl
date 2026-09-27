@@ -22,7 +22,7 @@ ignore = [
     # Long lines: the device catalogue and log/error messages are more readable
     # unwrapped; the formatter keeps everything else within line-length.
     "E501",
-    # Mutable class attributes are the declarative backend contract (PRESETS).
+    # Mutable class attributes are the declarative protocol contract (PRESETS).
     "RUF012",
 ]
 

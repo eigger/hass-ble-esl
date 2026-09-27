@@ -86,7 +86,7 @@ async def async_setup_entry(
             hass, entry, data.image_coordinator, data.preview_coordinator
         ),
     ]
-    caps = data.backend.capabilities
+    caps = data.protocol.capabilities
     if caps.session_battery and not caps.passive_battery:
         entities.append(BleEslBatteryLowBinarySensor(hass, entry, data.battery_coordinator))
 

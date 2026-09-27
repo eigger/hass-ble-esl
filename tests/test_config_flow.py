@@ -97,7 +97,7 @@ async def test_bluetooth_discovery_wolink_asks_for_model(
 async def test_bluetooth_discovery_picksmart_detects_model(
     hass: HomeAssistant, enable_bluetooth
 ) -> None:
-    """A backend with model detection skips the model step."""
+    """A protocol with model detection skips the model step."""
     result = await start_bluetooth_flow(hass, picksmart_service_info())
     assert result["step_id"] == "bluetooth_confirm"
     assert '2.9" EPD BWR' in result["description_placeholders"]["name"]
@@ -307,7 +307,7 @@ async def test_options_flow_hides_model_when_the_tag_is_silent(
     assert CONF_MODEL not in fields
 
 
-async def test_options_flow_hides_model_for_model_detection_backend(
+async def test_options_flow_hides_model_for_model_detection_protocol(
     hass: HomeAssistant, enable_bluetooth
 ) -> None:
     inject_bluetooth_service_info(hass, picksmart_service_info())

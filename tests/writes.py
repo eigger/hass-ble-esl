@@ -1,6 +1,6 @@
 """Scripted outcomes for the stubbed write path (see conftest.TagWriter).
 
-A real backend times its stages on the SessionTrace it is handed and raises
+A real protocol times its stages on the SessionTrace it is handed and raises
 on failure; the stub does the same from a script, so the pipeline above it
 (retries, pacing, the report, the sensors) is exercised for real.
 

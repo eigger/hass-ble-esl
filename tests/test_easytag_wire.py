@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from custom_components.ble_esl.esl_ble.easytag.const import KEY_INDEX_IMAGE, KEY_INDEX_REPLY
-from custom_components.ble_esl.esl_ble.easytag.protocol import (
+from custom_components.ble_esl.esl_ble.easytag.wire import (
     Reply,
     crc16,
     image_frames,

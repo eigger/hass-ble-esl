@@ -12,7 +12,7 @@ from custom_components.ble_esl.esl_ble.xte.image import (
     buffer_size,
     encode_image,
 )
-from custom_components.ble_esl.esl_ble.xte.protocol import image_object
+from custom_components.ble_esl.esl_ble.xte.wire import image_object
 
 PSJ_420 = PRESETS["psj-420"]
 

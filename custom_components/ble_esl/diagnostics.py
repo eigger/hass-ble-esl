@@ -1,7 +1,7 @@
 """Diagnostics support for BLE ESL.
 
 Powers "Download diagnostics" on the device page. The aim is that a support
-report needs nothing else: which backend and preset are in use, what the tag
+report needs nothing else: which protocol and preset are in use, what the tag
 advertises (model / firmware), the options in force, and the write state
 and failure counters at the time of the download.
 """
@@ -41,14 +41,14 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     data = entry.runtime_data
-    backend = data.backend
+    protocol = data.protocol
     preset = data.preset
 
     service_info = async_last_service_info(hass, data.address, connectable=True)
     advertisement: dict[str, Any] | None = None
     if service_info is not None:
         try:
-            parsed = _asdict_or_none(backend.parse_advertisement(service_info))
+            parsed = _asdict_or_none(protocol.parse_advertisement(service_info))
         except Exception as err:  # a bad frame must not break the download
             parsed = {"error": f"{type(err).__name__}: {err}"}
         advertisement = {
@@ -77,12 +77,12 @@ async def async_get_config_entry_diagnostics(
             # What the write pipeline actually uses: defaults < data < options.
             "effective_options": {**OPTION_DEFAULTS, **entry.data, **entry.options},
         },
-        "backend": {
-            "id": backend.id,
-            "label": backend.label,
-            "name": backend.name,
-            "brand": backend.brand,
-            "capabilities": dataclasses.asdict(backend.capabilities),
+        "protocol": {
+            "id": protocol.id,
+            "label": protocol.label,
+            "name": protocol.name,
+            "brand": protocol.brand,
+            "capabilities": dataclasses.asdict(protocol.capabilities),
         },
         "preset": {
             **dataclasses.asdict(preset),

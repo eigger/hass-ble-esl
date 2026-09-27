@@ -1,4 +1,4 @@
-"""XTE protocol backend (tags sold as Poshiji)."""
+"""XTE protocol implementation (tags sold as Poshiji)."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 
 from ..base import (
     AdvertisementInfo,
-    BleBackend,
     Capabilities,
     DevicePreset,
+    EslProtocol,
     WriteRefused,
     WriteResult,
 )
@@ -19,7 +19,7 @@ from .const import MANUFACTURER_ID, UNSUPPORTED_PACKING_DEVICE_NUMBERS
 from .devices import PRESETS, preset_for_advertisement
 from .image import PALETTES
 from .parser import XteBluetoothDeviceData, is_xte_advertisement
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
-class XteBleBackend(BleBackend):
-    """XTE BLE backend."""
+class XteProtocol(EslProtocol):
+    """XTE ESL protocol."""
 
     id = "xte"
     label = "XTE"
@@ -116,8 +116,8 @@ class XteBleBackend(BleBackend):
 
 __all__ = [
     "PRESETS",
-    "XteBleBackend",
     "XteBluetoothDeviceData",
+    "XteProtocol",
     "is_xte_advertisement",
     "preset_for_advertisement",
 ]

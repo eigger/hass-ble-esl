@@ -10,7 +10,7 @@ from ..base import (
     DevicePreset,
 )
 from .image import ROTATIONS
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 
 def _preset(

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.ble_esl import device
 from custom_components.ble_esl.device import build_device_info
-from custom_components.ble_esl.esl_ble.picksmart import PickSmartBleBackend
+from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PS_ID
 
 
@@ -28,19 +28,19 @@ async def test_build_device_info_matches_registry(hass: HomeAssistant, enable_bl
 
 def test_resolve_preset_refines_from_last_advertisement(monkeypatch) -> None:
     """Configured model -> preset, then the advertisement's model (PickSmart) wins."""
-    backend = PickSmartBleBackend()
+    protocol = PickSmartProtocol()
     info = service_info(
         "AA:BB:CC:DD:EE:FF",
         manufacturer_data={PS_ID: bytes([0x33, 0x1A, 0x81, 0x01, 0x40])},  # device 0x0033
     )
     monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: info)
 
-    resolved = device.resolve_preset(MagicMock(), backend, info.address, "0x0028")
+    resolved = device.resolve_preset(MagicMock(), protocol, info.address, "0x0028")
     assert resolved.preset.key == "0x0033"  # advertisement is authoritative
     assert resolved.service_info is info
     assert resolved.advertisement.raw["device_id"] == 0x33
 
     monkeypatch.setattr(device, "async_last_service_info", lambda *a, **k: None)
-    resolved = device.resolve_preset(MagicMock(), backend, info.address, "bogus")
-    assert resolved.preset is next(iter(backend.presets().values()))
+    resolved = device.resolve_preset(MagicMock(), protocol, info.address, "bogus")
+    assert resolved.preset is next(iter(protocol.presets().values()))
     assert resolved.service_info is None and resolved.advertisement is None

@@ -1,113 +1,264 @@
-"""Codec checks for XTE wire formats without a BLE adapter or Home Assistant."""
+"""XTE discovery, model catalog, config persistence and session integration tests."""
 
-from __future__ import annotations
+import asyncio
+import dataclasses
+import logging
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
 
+from blesession import ConnectFailed, SessionTrace, session as session_mod
+from bt import binary_values, sensor_values, service_info, update_device
+from PIL import Image
 import pytest
 
+from custom_components.ble_esl import esl_ble
+from custom_components.ble_esl.esl_ble.base import (
+    CONFIDENCE_COMMUNITY,
+    CONFIDENCE_REPORTED,
+    WriteRefused,
+)
+from custom_components.ble_esl.esl_ble.xte import devices, writer
 from custom_components.ble_esl.esl_ble.xte.devices import (
     PRESETS,
     preset_for_advertisement,
 )
-from custom_components.ble_esl.esl_ble.xte.protocol import (
-    blocks,
-    command,
-    image_object,
-    parse_advertisement,
-    run_length,
-)
+from custom_components.ble_esl.esl_ble.xte.image import PALETTES, buffer_size
+from custom_components.ble_esl.esl_ble.xte.wire import blocks, run_length
 
 PSJ_420 = PRESETS["psj-420"]
 PSJ_213 = PRESETS["psj-213"]
 
 
-@pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
-def test_advertisement_variable_tail(tail):
-    data = bytes.fromhex("fd024002009964060102ffff") + bytes([tail])
-    assert preset_for_advertisement(data) is PSJ_420
-
-
-def test_advertisement_fields_psj420_and_psj213():
-    """Field layout of the XTE manufacturer-data record."""
-    ours = parse_advertisement(bytes.fromhex("fd024002009964060102ffff1e"))
-    assert (ours.record_type, ours.hardware_revision, ours.firmware) == (0xFD, 2, "4.0.2")
-    assert (ours.device_number, ours.battery_percent) == (153, 100)
-    assert (ours.chip_type, ours.tx_power) == (0, 6)
-    theirs = parse_advertisement(bytes.fromhex("fd024002008c63060102ffff1c"))
-    assert (theirs.device_number, theirs.battery_percent, theirs.firmware) == (140, 99, "4.0.2")
-    # Battery and firmware are readings, not identity.
-    assert preset_for_advertisement(bytes.fromhex("fd024103009905060102ffff1b")) is PSJ_420
-    assert preset_for_advertisement(bytes.fromhex("fd024002008c63060102ffff1c")) is PSJ_213
-    assert preset_for_advertisement(bytes.fromhex("fd024002008d63060102ffff1c")) is None
-    assert (
-        parse_advertisement(bytes.fromhex("fd02400200 99 ff 06".replace(" ", ""))).battery_percent
-        == 100
+def advertisement(tail=0x1B, payload=None):
+    return service_info(
+        "AA:BB:CC:DD:EE:FF",
+        name="FFEEDDCCBBAA",
+        manufacturer_data={
+            0x5258: payload
+            if payload is not None
+            else bytes.fromhex("fd024002009964060102ffff") + bytes([tail])
+        },
     )
 
 
-@pytest.mark.parametrize("record_type", [0xFD, 0xFE, 0xFC, 0x04])
-def test_advertisement_record_types(record_type):
-    data = bytes([record_type]) + bytes.fromhex("024002009964060102ffff1e")
-    assert parse_advertisement(data).record_type == record_type
-    assert preset_for_advertisement(data) is PSJ_420
+def test_discovery_profile_and_advertised_readings():
+    protocol = esl_ble.get("xte")
+    assert protocol.brand == "Poshiji"
+    assert PSJ_420.confidence == CONFIDENCE_REPORTED
+    assert PSJ_420.verified
+    assert protocol.capabilities.passive_battery and not protocol.capabilities.session_battery
+    for tail in (0x1E, 0x1B):
+        info = advertisement(tail)
+        assert [p.id for p in esl_ble.all_protocols() if p.supported(info)] == ["xte"]
+        assert esl_ble.detect(info) is protocol
+        adv = protocol.parse_advertisement(info)
+        assert adv.model_key == "psj-420" and adv.battery_mv is None
+        assert adv.sw_version == "4.0.2" and adv.hw_version == "2"
+        assert adv.raw["device_number"] == 153 and adv.raw["battery_percent"] == 100
+        parser = protocol.create_parser(PSJ_420)
+        update = parser.update(info)
+        device = update_device(update)
+        assert device.manufacturer == "Poshiji"
+        assert "PSJ-420" in device.model
+        assert device.sw_version == "4.0.2" and device.hw_version == "2"
+        assert sensor_values(update)["battery"] == 100
+        assert binary_values(update)["battery"] is False
+        assert set(sensor_values(update)) == {"signal_strength", "battery"}  # no temperature
+    unknown = advertisement(payload=b"\x00" * 13)
+    assert protocol.parse_advertisement(unknown) is None
+    assert not protocol.supported(unknown)
 
 
-@pytest.mark.parametrize(
-    "data",
-    [
-        None,
-        b"",
-        bytes.fromhex("ff01"),  # the alternating 2-byte payload under the same company id
-        bytes.fromhex("fd0240020099"),  # too short to carry battery and chip bytes
-        bytes.fromhex("00024002009964060102ffff1e"),  # unknown record type
-        b"\x00" * 13,
-    ],
-)
-def test_advertisement_rejects_other_payloads(data):
-    assert parse_advertisement(data) is None
-    assert preset_for_advertisement(data) is None
+def test_identity_survives_battery_and_firmware_changes():
+    """The model is the device number; battery and firmware bytes may change."""
+    protocol = esl_ble.get("xte")
+    drained = advertisement(payload=bytes.fromhex("fd024103009905060102ffff1b"))
+    assert protocol.supported(drained)
+    adv = protocol.parse_advertisement(drained)
+    assert adv.model_key == "psj-420" and adv.sw_version == "4.1.3"
+    update = protocol.create_parser(PSJ_420).update(drained)
+    assert sensor_values(update)["battery"] == 5
+    assert binary_values(update)["battery"] is True
 
 
-def test_rle_boundaries():
-    assert run_length(b"") == b""
-    assert run_length(b"\x55" * 256 + b"\xaa" * 2) == bytes.fromhex("ff55015502aa")
-    raw = bytes(range(256)) * 120
-    encoded = run_length(raw)
-    assert b"".join(bytes([v]) * n for n, v in zip(encoded[::2], encoded[1::2], strict=True)) == raw
+def test_psj213_is_detected_and_packed_portrait():
+    """PSJ-213: device number 140, viewed 250x122, portrait 122x250 buffer."""
+    protocol = esl_ble.get("xte")
+    assert PSJ_213.confidence == CONFIDENCE_COMMUNITY and not PSJ_213.verified
+    info = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
+    assert esl_ble.detect(info) is protocol
+    adv = protocol.parse_advertisement(info)
+    assert adv.model_key == "psj-213" and adv.raw["battery_percent"] == 99
+    assert protocol.refine_preset(PSJ_420, adv) is PSJ_213
+    update = protocol.create_parser(PSJ_213).update(info)
+    assert "PSJ-213" in update_device(update).model and sensor_values(update)["battery"] == 99
+    obj = writer.prepare(PSJ_213, Image.new("RGB", (250, 122), "white"), "")
+    assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
+    rows = (b"\x55" * 30 + b"\x50") * 250  # 31-byte rows: 30 white bytes, then 2 px + 2 pad
+    assert obj[33] == 1 and obj[38:] == run_length(rows[:3875]) + run_length(rows[3875:])
+    assert len(blocks(obj)) == 1
 
 
-def test_image_header_and_half_frame_run_boundary():
-    obj = image_object(b"\xaa" * 30000, 400, 300)
-    # Each independently encoded 15000-byte half is 58*255 + 210 bytes.
-    encoded_half = bytes.fromhex("ffaa") * 58 + bytes.fromhex("d2aa")
-    assert obj[38:] == encoded_half * 2
-    assert obj[:4] == b"XTEK"
-    assert int.from_bytes(obj[4:8], "big") == sum(obj[12:])
+def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(caplog):
+    """An XTE tag of an uncaptured type is ours, needs a manual model, and is logged once."""
+    protocol = esl_ble.get("xte")
+    unknown = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+    with caplog.at_level(logging.INFO, logger="custom_components.ble_esl.esl_ble.xte"):
+        assert protocol.supported(unknown)
+        assert esl_ble.detect(unknown) is protocol
+        assert protocol.supported(unknown)
+    adv = protocol.parse_advertisement(unknown)
+    assert adv.model_key is None
+    assert adv.raw["device_number"] == 141 and adv.raw["battery_percent"] == 99
+    # The configured (hand-picked) model stays, stamped with the seen device number.
+    size_only = devices.PRESETS["psj-290"]
+    refined = protocol.refine_preset(size_only, adv)
+    assert refined.key == "psj-290" and refined.extra["seen_device_number"] == 141
+    assert refined.extra["rotation"] == 90
+    assert protocol.refine_preset(refined, adv) is refined  # no churn on repeated refines
+    update = protocol.create_parser(size_only).update(unknown)
+    assert '2.9" BWRY' in update_device(update).model and sensor_values(update)["battery"] == 99
+    reports = [r for r in caplog.records if "unknown device number" in r.message]
+    assert len(reports) == 1
+    assert "device number 141" in reports[0].message and "4.0.2" in reports[0].message
+    assert "fd024002008d63060102ffff1c" in reports[0].message
+
+
+def test_size_only_presets_pack_at_their_resolution():
+    """Size-only entries have no device number but are complete for a manual pick."""
+    expected_buffers = {
+        "psj-154": (200, 200),  # square: no rotation
+        "psj-266": (152, 296),
+        "psj-290": (128, 296),
+        "psj-350": (384, 184),  # larger: landscape like the PSJ-420
+        "psj-370": (416, 240),
+        "psj-750": (800, 480),
+    }
+    for key, (buf_w, buf_h) in expected_buffers.items():
+        preset = devices.PRESETS[key]
+        assert "device_number" not in preset.extra and not preset.verified
+        assert (preset.extra.get("rotation", 0) == 90) == (key in ("psj-266", "psj-290"))
+        assert buffer_size(preset) == (buf_w, buf_h)
+        obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
+        assert obj[25:33] == buf_w.to_bytes(4, "big") + buf_h.to_bytes(4, "big")
+
+
+def test_catalog_entries_are_complete_and_disjoint():
+    """A model is one PRESETS entry; check what discovery and packing derive from it."""
+    device_numbers = {}
+    for key, preset in devices.PRESETS.items():
+        assert preset.colors in PALETTES, f"{key} palette {preset.colors} has no pixel mapping"
+        number = preset.extra.get("device_number")
+        if number is None:
+            continue  # size-only entry, picked by hand until its device number is known
+        assert isinstance(number, int) and 0 < number <= 0xFFFF, f"{key} device number"
+        assert number not in device_numbers, (
+            f"{key} shares a device number with {device_numbers[number]}"
+        )
+        record = b"\xfd\x02\x40\x02" + number.to_bytes(2, "big") + b"\x64\x06"
+        assert preset_for_advertisement(record) is preset
+        device_numbers[number] = key
+    assert {"psj-420", "psj-213"} <= set(device_numbers.values())
+
+
+def test_new_model_is_one_catalog_entry(monkeypatch):
+    """Adding a preset with its own fingerprint wires up detection, naming and packing."""
+    other = dataclasses.replace(
+        PSJ_420,
+        key="psj-290",
+        display_name='PSJ-290 2.9" BWRY',
+        width=296,
+        height=128,
+        extra={"device_number": 141},
+    )
+    monkeypatch.setitem(devices.PRESETS, other.key, other)
+    protocol = esl_ble.get("xte")
+    info = advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+    assert esl_ble.detect(info) is protocol
+    assert protocol.parse_advertisement(info).model_key == "psj-290"
+    assert protocol.parse_advertisement(advertisement()).model_key == "psj-420"
+    assert protocol.preset_for("psj-290") is other
+    # A stale configured model is corrected by what the tag advertises.
+    assert protocol.refine_preset(PSJ_420, protocol.parse_advertisement(info)) is other
+    assert protocol.refine_preset(other, protocol.parse_advertisement(advertisement())) is PSJ_420
+    assert protocol.refine_preset(PSJ_420, None) is PSJ_420
+    assert "PSJ-290" in update_device(protocol.create_parser(other).update(info)).model
+    obj = writer.prepare(other, Image.new("RGB", (296, 128), "white"), "")
+    assert obj[25:33] == (296).to_bytes(4, "big") + (128).to_bytes(4, "big")
     assert int.from_bytes(obj[8:12], "big") == len(obj)
-    assert obj[12:25] == bytes.fromhex("01000000110000000000000000")
-    assert obj[25:34] == bytes.fromhex("000001900000012c01")
-    assert int.from_bytes(obj[34:38], "big") == 236
-    with pytest.raises(ValueError, match="30000 bytes"):
-        image_object(b"\x00", 400, 300)
-    with pytest.raises(ValueError, match="7750 bytes"):  # 122 px rows pad to 31 bytes
-        image_object(b"\x00" * 7625, 122, 250)
 
 
-def test_control_commands_from_capture():
-    assert command(b"\x01" + (10244).to_bytes(4, "big")) == bytes.fromhex("585445010b2d0100002804")
-    assert command(b"\x04\x00") == bytes.fromhex("5854450108040400")
+def test_foreign_preset_is_refused_before_connecting(monkeypatch):
+    connect = AsyncMock(side_effect=AssertionError("must not connect"))
+    monkeypatch.setattr(session_mod, "establish_connection", connect)
+    foreign = dataclasses.replace(PSJ_420, width=296, height=128)
+    with pytest.raises(WriteRefused, match="Unsupported XTE preset"):
+        asyncio.run(esl_ble.get("xte").write_image(advertisement(), foreign, object()))
+    connect.assert_not_awaited()
 
 
-def test_blocks_and_worst_case_size():
-    obj = bytes(range(256)) * 40 + b"test"
-    framed = blocks(obj)
-    assert len(framed) == 9
-    assert [len(b) for b in framed] == [1220] * 8 + [565]
-    assert b"".join(b[9:] for b in framed) == obj
-    for i, block in enumerate(framed):
-        assert block[:4] == b"XTE\x02"
-        assert int.from_bytes(block[4:6], "big") == len(block)
-        assert block[6] == sum(block[7:]) & 255
-        assert block[7:9] == bytes((9, i))
-    raw = (bytes(range(256)) * 118)[:30000]
-    assert len(image_object(raw, 400, 300)) == 60038
-    assert len(blocks(image_object(raw, 400, 300))) == 50
+@pytest.mark.parametrize("number", [97, 102, 106, 109, 119, 122])
+def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, number):
+    """A hand-picked size on a tag type with another pixel layout never gets a bad image."""
+    connect = AsyncMock(side_effect=AssertionError("must not connect"))
+    monkeypatch.setattr(session_mod, "establish_connection", connect)
+    protocol = esl_ble.get("xte")
+    payload = (
+        bytes.fromhex("fd024002") + number.to_bytes(2, "big") + bytes.fromhex("63060102ffff1c")
+    )
+    adv = protocol.parse_advertisement(advertisement(payload=payload))
+    preset = protocol.refine_preset(devices.PRESETS["psj-290"], adv)
+    with pytest.raises(WriteRefused, match=f"device number {number}"):
+        asyncio.run(protocol.write_image(advertisement(), preset, object()))
+    connect.assert_not_awaited()
+    # Any other seen device number writes normally (the stamp is not a rejection).
+    other = protocol.refine_preset(
+        devices.PRESETS["psj-290"],
+        protocol.parse_advertisement(
+            advertisement(payload=bytes.fromhex("fd024002008d63060102ffff1c"))
+        ),
+    )
+    monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(side_effect=OSError("down")))
+    with pytest.raises(ConnectFailed, match="down"):
+        asyncio.run(protocol.write_image(advertisement(), other, object()))
+
+
+@pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
+def test_session_result_and_disconnect(monkeypatch, error):
+    client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
+    monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(return_value=client))
+    session = SimpleNamespace(send=AsyncMock(side_effect=error))
+    factory = MagicMock(return_value=session)
+    monkeypatch.setattr(writer, "XteSession", factory)
+    image, encoded = object(), b"XTEK-encoded"
+    prepare = MagicMock(return_value=encoded)
+    monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", prepare)
+    trace = SessionTrace()
+
+    async def run():
+        return await esl_ble.get("xte").write_image(
+            advertisement(), PSJ_420, image, pacing_s=0.05, trace=trace
+        )
+
+    if error is None:
+        result = asyncio.run(run())
+        assert result.success and result.battery_mv is None
+    else:
+        with pytest.raises(type(error)):
+            asyncio.run(run())
+        assert trace.failed_primary == "session"  # the stand-in timed no stage
+    # Encoded before connecting, in a worker thread, then handed to the session
+    # together with the trace.
+    prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
+    factory.assert_called_once_with(client, advertisement().address, pacing_s=0.05)
+    session.send.assert_awaited_once_with(encoded, trace=trace)
+    client.disconnect.assert_awaited_once()
+
+
+def test_connection_failure_raises_connect_failed(monkeypatch):
+    monkeypatch.setattr(
+        session_mod, "establish_connection", AsyncMock(side_effect=OSError("unavailable"))
+    )
+    monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", MagicMock(return_value=b""))
+    with pytest.raises(ConnectFailed, match="unavailable"):
+        asyncio.run(esl_ble.get("xte").write_image(advertisement(), PSJ_420, object()))

@@ -39,8 +39,8 @@ async def test_diagnostics_content_and_redaction(
     assert result["entry"]["effective_options"]["retry_count"] == 2
     assert result["entry"]["effective_options"]["debounce_ms"] == 0
 
-    assert result["backend"]["id"] == "wolink"
-    assert result["backend"]["capabilities"]["passive_battery"] is True
+    assert result["protocol"]["id"] == "wolink"
+    assert result["protocol"]["capabilities"]["passive_battery"] is True
     assert result["preset"]["key"] == "290"
     assert result["preset"]["extra"]["mirror_x"] is True
 
@@ -110,7 +110,7 @@ async def test_diagnostics_masks_mac_in_name_and_survives_parse_errors(
     await hass.async_block_till_done()
 
     with patch.object(
-        entry.runtime_data.backend, "parse_advertisement", side_effect=ValueError("bad")
+        entry.runtime_data.protocol, "parse_advertisement", side_effect=ValueError("bad")
     ):
         result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
 

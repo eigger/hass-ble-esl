@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ..base import BleParser
 from .const import BRAND, MANUFACTURER_ID, SERVICE_UUID
-from .protocol import battery_plausible, parse_advertisement
+from .wire import battery_plausible, parse_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak

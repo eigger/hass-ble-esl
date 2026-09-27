@@ -12,7 +12,7 @@ from homeassistant.helpers import entity_registry as er
 
 from custom_components.ble_esl.const import DOMAIN
 from custom_components.ble_esl.esl_ble.base import WriteResult
-from custom_components.ble_esl.esl_ble.easytag import EasyTagBleBackend
+from custom_components.ble_esl.esl_ble.easytag import EasyTagProtocol
 from custom_components.ble_esl.esl_ble.easytag.const import SERVICE_UUID as EASYTAG_UUID
 
 EASYTAG_ADDRESS = "3D:00:00:E5:7D:76"
@@ -132,8 +132,8 @@ async def test_easytag_session_battery_and_temperature(
         return WriteResult(success=True, battery_mv=2600, temperature_c=21)
 
     with (
-        patch.object(EasyTagBleBackend, "write_prepared", fake_write),
-        patch.object(EasyTagBleBackend, "prepare_image", staticmethod(lambda p, i, a: i)),
+        patch.object(EasyTagProtocol, "write_prepared", fake_write),
+        patch.object(EasyTagProtocol, "prepare_image", staticmethod(lambda p, i, a: i)),
         patch("custom_components.ble_esl.services.render_image") as render,
         patch(
             "custom_components.ble_esl.services.ble_device_or_raise",

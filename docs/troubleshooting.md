@@ -49,7 +49,7 @@ Connected, but the tag dropped or refused the session before the protocol starte
 
 The tag did not answer, or answered wrongly, before any image data was sent. `auth` is the shared name for this stage across BLE integrations; `failed_detail` gives the tag's own name for it.
 - *Check:* PickSmart `start_probes: 3` = it never answered START. WOLINK *device error 5* = authentication refused. *No response … after command 0x01* (XTE) = no reply to the size command.
-- *Do:* Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this backend knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model.
+- *Do:* Unanswered: the tag was not ready yet — transient, retries cover it; if constant, the tag firmware is not one this protocol knows. Auth refused: not a WOLINK tag, or different firmware. Wrong answer: wrong protocol/model.
 
 ### `transfer`
 
@@ -92,7 +92,7 @@ Home Assistant also records the Write Duration attributes with each state change
 
 ## What to attach to an issue
 
-1. The **diagnostics download** from the device page. It contains the backend, preset, firmware, options, the last advertisement, `last_write` and `last_failure_write`; the tag's MAC is redacted.
+1. The **diagnostics download** from the device page. It contains the protocol, preset, firmware, options, the last advertisement, `last_write` and `last_failure_write`; the tag's MAC is redacted.
 2. For a wrong-looking panel: the **Last Updated Content** image and a photo of the tag.
 3. For a failing action: the error message shown by Home Assistant (or the action response with `response_variable`).
 4. Which radio the tag uses (`via` — proxy model and ESPHome version, or the adapter) if the failure is `connect` or `transfer`.

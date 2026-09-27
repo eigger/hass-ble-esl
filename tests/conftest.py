@@ -3,7 +3,7 @@
 Protocol/codec/session tests need no fixtures from here. Integration-level
 tests use `wolink_entry` (a loaded config entry for a WOLINK tag whose
 advertisement the bluetooth integration has seen) and `tag_writer` (the
-backend's write path and the renderer stubbed out, steerable per test).
+protocol's write path and the renderer stubbed out, steerable per test).
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from writes import Scripted, ok, play
 from custom_components.ble_esl import services as svc
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL, DOMAIN
 from custom_components.ble_esl.esl_ble.base import WriteResult
-from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
+from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID as WOLINK_MFR_ID
 
 ADDRESS = "66:66:54:20:00:55"
@@ -100,11 +100,11 @@ async def wolink_entry(hass: HomeAssistant, enable_bluetooth: None) -> MockConfi
 
 @dataclass
 class TagWriter:
-    """Stubbed write path of the WOLINK backend, steerable per test.
+    """Stubbed write path of the WOLINK protocol, steerable per test.
 
     The real pipeline (services, lock, debounce, retries, the report, sensors)
     runs; only the encode and the BLE transfer are replaced. Like a real
-    backend, the stub awaits the encode future before "writing", times its
+    protocol, the stub awaits the encode future before "writing", times its
     stages on the trace it is handed and raises on failure — from
     `write_result` (a `writes.Scripted`, or a WriteResult) or `write_hook`
     (called with the trace; may return either or raise itself).
@@ -118,13 +118,13 @@ class TagWriter:
     """Addresses whose image has been encoded (prepare_image ran), in order."""
 
     def sent_image(self, call_index: int = -1) -> Image.Image:
-        """The image handed to the backend on the n-th write."""
+        """The image handed to the protocol on the n-th write."""
         return self.write_prepared.await_args_list[call_index].args[2].result()
 
 
 @pytest.fixture
 def tag_writer() -> TagWriter:
-    """Stub the WOLINK backend's encode/transfer and the renderer."""
+    """Stub the WOLINK protocol's encode/transfer and the renderer."""
     writer = TagWriter(write_prepared=AsyncMock())
 
     async def fake_write_prepared(ble_device, preset, prepared, **kwargs):
@@ -156,8 +156,8 @@ def tag_writer() -> TagWriter:
         return img
 
     with (
-        patch.object(WolinkBleBackend, "write_prepared", writer.write_prepared),
-        patch.object(WolinkBleBackend, "prepare_image", staticmethod(identity_prepare)),
+        patch.object(WolinkProtocol, "write_prepared", writer.write_prepared),
+        patch.object(WolinkProtocol, "prepare_image", staticmethod(identity_prepare)),
         patch.object(svc, "render_image", fake_render),
         patch.object(svc, "ble_device_or_raise", fake_ble_device),
         patch.object(attempts_mod, "sleep", AsyncMock()),  # the retry pause

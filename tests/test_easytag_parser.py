@@ -60,7 +60,7 @@ def test_easytag_parser_device_info():
 def test_easytag_advertisement_names_no_model_yet():
     """No easyTag advertisement field is known to name the panel: pick by hand."""
     from custom_components.ble_esl.esl_ble.easytag import (
-        EasyTagBleBackend,
+        EasyTagProtocol,
         preset_for_advertisement,
     )
 
@@ -70,9 +70,9 @@ def test_easytag_advertisement_names_no_model_yet():
     info.manufacturer_data = {}
     assert preset_for_advertisement(info) is None
 
-    backend = EasyTagBleBackend()
-    assert backend.parse_advertisement(info) is None
-    assert backend.refine_preset(PRESETS["3D"], None) is PRESETS["3D"]
+    protocol = EasyTagProtocol()
+    assert protocol.parse_advertisement(info) is None
+    assert protocol.refine_preset(PRESETS["3D"], None) is PRESETS["3D"]
 
 
 def test_easytag_advertised_model_wins(monkeypatch):
@@ -80,7 +80,7 @@ def test_easytag_advertised_model_wins(monkeypatch):
     from custom_components.ble_esl.esl_ble import easytag
 
     monkeypatch.setattr(easytag, "preset_for_advertisement", lambda _info: PRESETS["40"])
-    backend = easytag.EasyTagBleBackend()
-    info = backend.parse_advertisement(MagicMock())
+    protocol = easytag.EasyTagProtocol()
+    info = protocol.parse_advertisement(MagicMock())
     assert info is not None and info.model_key == "40"
-    assert backend.refine_preset(PRESETS["3D"], info) is PRESETS["40"]
+    assert protocol.refine_preset(PRESETS["3D"], info) is PRESETS["40"]

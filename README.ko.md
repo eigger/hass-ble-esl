@@ -38,7 +38,7 @@ BLE 프로토콜 4계열, 판매 브랜드는 다음과 같습니다:
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ⚠️ 사양서 기반, 미검증 | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ 사양서 기반, 미검증 | — |
 
-해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)**. 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 백엔드 추가하기](custom_components/ble_esl/esl_ble/README.md)를 보세요.
+해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)**. 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md)를 보세요.
 
 > [!WARNING]
 > WOLINK와 easyTag 프리셋은 기술 사양서로 만들었고 실제 태그에서 테스트되지 않았습니다. 써 보셨다면 [Discussions](https://github.com/eigger/hass-ble-esl/discussions)에 결과를 알려 주세요.
@@ -144,7 +144,7 @@ data:
 ## 피드백과 지원
 
 - 라벨이 갱신되지 않나요? **[docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)** — 실패 센서가 쓰기가 어디서, 왜 죽었는지 알려줍니다.
-- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 백엔드, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(MAC은 가려짐).
+- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(MAC은 가려짐).
 - 질문이나 아이디어? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - WOLINK나 easyTag 태그를 테스트하셨거나, 수동 모델 선택을 요구한 Poshiji 크기가 있나요? 알려 주세요 — 그렇게 프리셋이 검증됩니다.
 

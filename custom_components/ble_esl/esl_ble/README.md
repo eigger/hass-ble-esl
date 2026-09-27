@@ -1,10 +1,10 @@
-# Adding a protocol backend
+# Adding a protocol
 
 Every ESL protocol is one package under `esl_ble/<id>/`. The contract below is
-**enforced**: a backend or parser class that misses a required piece raises
+**enforced**: a protocol or parser class that misses a required piece raises
 `ProtocolContractError` when it is defined (import time), listing everything
 that is missing, and `tests/test_protocol_contract.py` runs the same checks
-plus the package-layout ones against every registered backend.
+plus the package-layout ones against every registered protocol.
 
 ## Package layout
 
@@ -13,10 +13,10 @@ plus the package-layout ones against every registered backend.
 | `const.py` | yes | `BRAND`, service/characteristic UUIDs or manufacturer id, timing constants |
 | `devices.py` | yes | `PRESETS: dict[str, DevicePreset]` — key must equal `preset.key` |
 | `image.py` | yes | `encode_image(image, preset)` — pixel buffers: scan order (rotation, mirror), palette quantization/dithering, bit packing |
-| `protocol.py` | yes | Pure wire codecs: framing, packet headers, chunking/blocks, CRC, command/reply serialization. No BLE, no I/O — this is the part tested without hardware |
+| `wire.py` | yes | Pure wire codecs: framing, packet headers, chunking/blocks, CRC, command/reply serialization. No BLE, no I/O — this is the part tested without hardware |
 | `parser.py` | yes | `is_<id>_advertisement(service_info)` and `<Id>BluetoothDeviceData(BleParser)` |
 | `writer.py` | yes | `prepare(preset, image, address)` (runs `image.encode_image` + codecs in worker thread) and `write_session(client, address, preset, prepared, *, pacing_s=0.0, trace=trace)`; usually an `<Id>Session` class holding the GATT session |
-| `__init__.py` | yes | `<Id>BleBackend(BleBackend)` — declarative, see below |
+| `__init__.py` | yes | `<Id>Protocol(EslProtocol)` — declarative, see below |
 
 ## Parser (`BleParser`)
 
@@ -35,10 +35,10 @@ class FooBluetoothDeviceData(BleParser):
 Device naming, preset tracking (`set_preset`) and the update skeleton are
 inherited; do not override `_start_update`.
 
-## Backend (`BleBackend`)
+## Protocol (`EslProtocol`)
 
 ```python
-class FooBleBackend(BleBackend):
+class FooProtocol(EslProtocol):
     id = "foo"  # registry / options key, lowercase, unique
     label = "FOO"  # short name shown as the HA model_id
     name = "Foo (vendor)"  # shown in the config UI
@@ -72,7 +72,7 @@ derived from the class attributes — do not override them.
 ## Write path (provided by the base)
 
 ```
-BleBackend.write_image(ble_device, preset, image, trace=)
+EslProtocol.write_image(ble_device, preset, image, trace=)
   └─ encode task: to_thread(prepare_image)                 ┐ overlap
   └─ write_prepared(ble_device, preset, encode, trace=)     ┘
        └─ blesession.ble_session(ble_device, trace=)   connect … finally disconnect
@@ -117,15 +117,15 @@ the BLE lock, the attempt bound, the retries and the report.
 
 ## Registering
 
-1. `esl_ble/__init__.py`: `register(FooBleBackend())` — ids must be unique and
-   advertisement matchers must not overlap with other backends
+1. `esl_ble/__init__.py`: `register(FooProtocol())` — ids must be unique and
+   advertisement matchers must not overlap with other protocols
    (`test_protocol_contract.py` checks both; add a sample advertisement there).
 2. `manifest.json`: add the `bluetooth` matcher(s) so Home Assistant starts a
    discovery flow for the tags.
 3. `README.md` (repo root): supported-models table and gallery entry.
 4. Tests: `tests/test_<id>_image.py` for pixel buffers & palette packing,
    `tests/test_<id>_parser.py` for advertisement matchers & broadcast data,
-   `tests/test_<id>_protocol.py` for the wire codecs (no hardware),
+   `tests/test_<id>_wire.py` for the wire codecs (no hardware),
    `tests/test_<id>_writer.py` for the session against a mocked BleakClient,
    and a sample advertisement in `tests/test_protocol_contract.py`. Integration
    behaviour (discovery, entities, services) is covered generically through a

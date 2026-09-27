@@ -12,7 +12,7 @@ from blesession import Notifications, SessionTrace
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import AUTH_CHAR, DATA_CHAR, DEVICE_ERRORS, ERROR_UNLOCK_FAILED, STATUS_CHAR
 from .image import encode_image
-from .protocol import (
+from .wire import (
     compress,
     refresh_command,
     status_error,

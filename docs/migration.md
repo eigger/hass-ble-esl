@@ -157,7 +157,7 @@ web tools that were written for Gicisky tags are the same ones this repository s
    **Failure Count** stays at 0.
 3. If a write fails, look at the **Write Duration** sensor attributes
    (`attempt`, `error`, `start_probes`, `round_trip_ms`) or download
-   **⋮ → Download diagnostics** from the device page — it contains the backend,
+   **⋮ → Download diagnostics** from the device page — it contains the protocol,
    preset, firmware, options and the last advertisement, and is what an issue
    report needs.
 
@@ -171,7 +171,7 @@ protocol fixes and features land only in `hass-ble-esl`.
 the same advertisement and will compete for the tag. Remove the old one first.
 
 **Is the image sent any differently?** No. The PickSmart writer, compression and
-presets were carried over from `hass-gicisky` and are the only backend verified
+presets were carried over from `hass-gicisky` and are the only protocol verified
 on real hardware; see the model table in [models.md](models.md).
 
 **What about history?** Recorder history is keyed by entity ID. When the new
