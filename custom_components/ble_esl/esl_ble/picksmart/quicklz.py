@@ -1,4 +1,4 @@
-"""QuickLZ Level 1 compression utilities for PickSmart / gicisky BLE image transfer."""
+"""QuickLZ level 1, as the PickSmart firmware decodes it (6-bit hash, 64-byte chunks)."""
 
 from __future__ import annotations
 

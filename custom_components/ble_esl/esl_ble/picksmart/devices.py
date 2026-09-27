@@ -1,157 +1,99 @@
-"""Device presets and lookup for PickSmart (gicisky) ESL protocol."""
+"""PickSmart model catalog; the advertisement names the model (device id) and firmware."""
 
 from __future__ import annotations
 
 import dataclasses
 
 from ..base import CONFIDENCE_HARDWARE, DevicePreset
+from .image import ENCODINGS
+
+
+def _preset(
+    device_id: int,
+    name: str,
+    width: int,
+    height: int,
+    colors: str,
+    *,
+    rotation: int = 0,
+    mirror_x: bool = False,
+    mirror_y: bool = False,
+    encoding: str | None = None,
+    resample: tuple[int, int] | None = None,
+    black_plane: bool = False,
+) -> DevicePreset:
+    encoding = encoding or ("2bpp" if colors == "BWRY" else "planes")
+    if encoding not in ENCODINGS:
+        raise ValueError(f"{name}: unknown encoding {encoding}")
+    extra: dict[str, int | bool | str] = {
+        "rotation": rotation,
+        "mirror_x": mirror_x,
+        "mirror_y": mirror_y,
+        "encoding": encoding,
+    }
+    if resample:
+        extra["resample"] = resample
+    if black_plane:
+        extra["black_plane"] = True
+    key = f"0x{device_id:04X}"
+    return DevicePreset(
+        key=key,
+        display_name=name,
+        width=width,
+        height=height,
+        colors=colors,
+        confidence=CONFIDENCE_HARDWARE,
+        extra=extra,
+    )
+
 
 PRESETS: dict[str, DevicePreset] = {
-    "0x00A0": DevicePreset(
-        key="0x00A0",
-        display_name='2.1" TFT BW',
-        width=250,
-        height=132,
-        colors="BW",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "tft": True,
-            "rotation": 90,
-            "mirror_x": True,
-        },
-    ),
-    "0x000B": DevicePreset(
-        key="0x000B",
-        display_name='2.1" EPD BWR',
-        width=212,
-        height=104,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 270,
-            "mirror_x": True,
-        },
-    ),
-    "0x010B": DevicePreset(
-        key="0x010B",
-        display_name='2.1" EPD BWR',
-        width=250,
-        height=128,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 270,
-            "mirror_x": True,
-        },
-    ),
-    "0x0028": DevicePreset(
-        key="0x0028",
-        display_name='2.9" EPD BW',
-        width=296,
-        height=128,
-        colors="BW",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 90,
-        },
-    ),
-    "0x0033": DevicePreset(
-        key="0x0033",
-        display_name='2.9" EPD BWR',
-        width=296,
-        height=128,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 90,
-        },
-    ),
-    "0x002E": DevicePreset(
-        key="0x002E",
-        display_name='2.9" EPD BWRY',
-        width=296,
-        height=128,
-        colors="BWRY",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 90,
-            "four_color": True,
-        },
-    ),
-    "0x022B": DevicePreset(
-        key="0x022B",
-        display_name='3.7" EPD BWR',
-        width=240,
-        height=416,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "rotation": 180,
-            "mirror_x": True,
-            "compression": True,
-        },
-    ),
-    "0x004B": DevicePreset(
-        key="0x004B",
-        display_name='4.2" EPD BWR',
-        width=400,
-        height=300,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={},
-    ),
-    "0x004E": DevicePreset(
-        key="0x004E",
-        display_name='4.2" EPD BWRY',
-        width=400,
-        height=300,
-        colors="BWRY",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "four_color": True,
-        },
-    ),
-    "0x012B": DevicePreset(
-        key="0x012B",
-        display_name='7.5" EPD BWR',
-        width=800,
-        height=480,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "mirror_y": True,
-            "invert_luminance": True,
-            "compression2": True,
-        },
-    ),
-    "0x008B": DevicePreset(
-        key="0x008B",
-        display_name='10.2" EPD BWR',
-        width=960,
-        height=640,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={
-            "compression2": True,
-        },
-    ),
+    preset.key: preset
+    for preset in (
+        _preset(
+            0x00A0, '2.1" TFT BW', 250, 132, "BW", rotation=90, mirror_x=True, resample=(125, 264)
+        ),
+        _preset(0x000B, '2.1" EPD BWR', 212, 104, "BWR", rotation=270, mirror_x=True),
+        _preset(0x010B, '2.1" EPD BWR', 250, 128, "BWR", rotation=270, mirror_x=True),
+        _preset(0x0028, '2.9" EPD BW', 296, 128, "BW", rotation=90),
+        _preset(0x0033, '2.9" EPD BWR', 296, 128, "BWR", rotation=90),
+        _preset(0x002E, '2.9" EPD BWRY', 296, 128, "BWRY", rotation=90),
+        _preset(
+            0x022B,
+            '3.7" EPD BWR',
+            240,
+            416,
+            "BWR",
+            rotation=180,
+            mirror_x=True,
+            encoding="lines",
+        ),
+        _preset(0x004B, '4.2" EPD BWR', 400, 300, "BWR"),
+        _preset(0x004E, '4.2" EPD BWRY', 400, 300, "BWRY"),
+        _preset(
+            0x012B,
+            '7.5" EPD BWR',
+            800,
+            480,
+            "BWR",
+            mirror_y=True,
+            encoding="quicklz",
+            black_plane=True,
+        ),
+        _preset(0x008B, '10.2" EPD BWR', 960, 640, "BWR", encoding="quicklz"),
+    )
 }
 
-
-def apply_firmware_quirks(preset: DevicePreset, firmware: int) -> DevicePreset:
-    """Apply model-specific firmware quirks to a preset."""
-    if preset.key == "0x012B" and firmware == 0x8101:
-        new_extra = dict(preset.extra)
-        new_extra["compression"] = True
-        new_extra["compression2"] = False
-        return dataclasses.replace(preset, extra=new_extra)
-    return preset
+# (device id, firmware) -> the encoding that firmware expects instead.
+FIRMWARE_ENCODINGS = {(0x012B, 0x8101): "lines"}
 
 
-def get_device_preset(device_id: int, firmware: int) -> DevicePreset | None:
-    """Retrieve device preset by device_id and apply firmware-specific adjustments."""
-    key = f"0x{device_id:04X}"
-    preset = PRESETS.get(key)
+def preset_for_device(device_id: int, firmware: int) -> DevicePreset | None:
+    """The catalog preset for `device_id`, with the encoding its `firmware` needs."""
+    preset = PRESETS.get(f"0x{device_id:04X}")
     if preset is None:
         return None
-    return apply_firmware_quirks(preset, firmware)
+    encoding = FIRMWARE_ENCODINGS.get((device_id, firmware))
+    if encoding is None:
+        return preset
+    return dataclasses.replace(preset, extra={**preset.extra, "encoding": encoding})

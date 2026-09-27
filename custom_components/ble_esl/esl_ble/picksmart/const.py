@@ -1,8 +1,9 @@
-"""Constants for PickSmart (gicisky) ESL BLE protocol."""
+"""PickSmart constants."""
 
 from __future__ import annotations
 
-MANUFACTURER_ID = 20563  # 0x5053
+BRAND = "Gicisky"
+MANUFACTURER_ID = 0x5053
 
 SERVICE_UUID_PREFIX = "0000f"
 SERVICE_UUIDS = (
@@ -14,33 +15,24 @@ SERVICE_UUIDS = (
 CMD_START = 0x01
 CMD_SIZE = 0x02
 CMD_IMAGE = 0x03
-RESP_IMAGE_DATA = 0x05
-# Second byte of the 0x05 reply: 0x00 = "send me part N" (next four bytes),
-# 0x08 = transfer complete (observed after the last part on every tag tested).
-RESP_STATUS_NEXT_PART = 0x00
-RESP_STATUS_COMPLETE = 0x08
+REPLY_START = bytes((0x01, 0xF4, 0x00))
+REPLY_SIZE = 0x02
+REPLY_PART = 0x05
+PART_NEXT = 0x00  # "send part N" (N follows as u32 little endian)
+PART_DONE = 0x08  # the tag has every part
+PART_SIZE = 240
 
-FEEDBACK_TIMEOUT = 10.0
+REPLY_TIMEOUT_S = 10.0
 
-# After subscribing to notifications the tag may not be ready for commands
-# yet, and a START it drops is never answered. Rather than a long blind wait
-# (hass-gicisky used 1.0 s), wait briefly and then *probe*: send START with a
-# short timeout and resend it if unanswered. START only opens the transfer
-# (SIZE/IMAGE follow), so repeating it is harmless. The first answered START
-# proves both the subscription and the tag's readiness end to end.
-# Field data (six tags, 0.2 s settle): START was answered in 0.05-0.19 s, and
-# one tag in six dropped the first START. 0.4 s leaves 2x margin on the answer
-# while keeping the cost of a dropped START small.
+# A tag may drop the first START after the notification subscription, and a
+# dropped START is never answered. So wait briefly, then probe: resend START
+# on a short timeout until one is answered. Answers came in 0.05-0.19 s.
 NOTIFY_SETTLE_S = 0.2
 START_PROBE_TIMEOUT_S = 0.4
 START_PROBE_ATTEMPTS = 3
 
-# The tag re-requests a chunk it could not accept. Give up only after this
-# many consecutive requests for the same part; the n-th resend first waits
-# RESEND_BACKOFF_S * n (50 ms, 100 ms, ...) to let the tag finish its
-# previous write.
+# The tag asks for a part again when it could not take it. Give up after this
+# many requests in a row for one part; the n-th resend first waits
+# RESEND_BACKOFF_S * (n - 1).
 MAX_SAME_PART_REQUESTS = 6
 RESEND_BACKOFF_S = 0.05
-
-# Brand the tags are sold under; used as the HA device manufacturer
-BRAND = "Gicisky"
