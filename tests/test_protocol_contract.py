@@ -15,7 +15,7 @@ import pytest
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.base import BleParser
 
-REQUIRED_MODULES = ("const", "devices", "parser", "protocol", "writer")
+REQUIRED_MODULES = ("const", "devices", "image", "parser", "protocol", "writer")
 
 BACKENDS = esl_ble.all_backends()
 IDS = [b.id for b in BACKENDS]
@@ -35,6 +35,8 @@ def test_package_layout(backend):
     assert isinstance(getattr(const, "BRAND", None), str) and const.BRAND
     devices = importlib.import_module(f"{package}.devices")
     assert devices.PRESETS is backend.PRESETS
+    image = importlib.import_module(f"{package}.image")
+    assert callable(getattr(image, "encode_image", None)), "image.encode_image(image, preset)"
     writer = importlib.import_module(f"{package}.writer")
     assert callable(getattr(writer, "prepare", None)), "writer.prepare(preset, image, address)"
     assert callable(getattr(writer, "write_session", None)), (
