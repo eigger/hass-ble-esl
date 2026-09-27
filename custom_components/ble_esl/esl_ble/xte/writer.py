@@ -24,7 +24,7 @@ from .const import (
     WRITE_UUID,
 )
 from .image import buffer_size, encode_image
-from .protocol import XteError, blocks, check_reply, command, image_object
+from .wire import XteError, blocks, check_reply, command, image_object
 
 if TYPE_CHECKING:
     from bleak import BleakClient

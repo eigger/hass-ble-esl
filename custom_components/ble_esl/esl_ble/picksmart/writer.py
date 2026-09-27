@@ -21,7 +21,7 @@ from .const import (
     START_PROBE_TIMEOUT_S,
 )
 from .image import encode_image
-from .protocol import (
+from .wire import (
     data_packet,
     image_command,
     is_done_reply,

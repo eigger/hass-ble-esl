@@ -18,7 +18,7 @@ from custom_components.ble_esl.esl_ble.picksmart.parser import (
     PickSmartBluetoothDeviceData,
     is_picksmart_advertisement,
 )
-from custom_components.ble_esl.esl_ble.picksmart.protocol import parse_advertisement
+from custom_components.ble_esl.esl_ble.picksmart.wire import parse_advertisement
 
 
 def test_picksmart_parser_supported():

@@ -19,7 +19,7 @@ from .const import (
     WRITE_UUID,
 )
 from .image import encode_image
-from .protocol import image_frames, parse_reply
+from .wire import image_frames, parse_reply
 
 if TYPE_CHECKING:
     from bleak import BleakClient

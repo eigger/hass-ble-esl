@@ -10,7 +10,7 @@ from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 from ..base import BleParser
 from .const import BATTERY_LOW_PERCENT, BRAND, MANUFACTURER_ID
 from .devices import preset_for_advertisement
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak

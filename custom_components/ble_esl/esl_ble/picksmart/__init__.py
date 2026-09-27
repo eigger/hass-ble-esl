@@ -10,7 +10,7 @@ from . import writer
 from .const import MANUFACTURER_ID
 from .devices import PRESETS, preset_for_device
 from .parser import PickSmartBluetoothDeviceData, is_picksmart_advertisement
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak

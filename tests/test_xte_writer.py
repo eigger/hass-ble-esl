@@ -11,7 +11,7 @@ import pytest
 
 from custom_components.ble_esl.esl_ble.xte.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from custom_components.ble_esl.esl_ble.xte.devices import PRESETS
-from custom_components.ble_esl.esl_ble.xte.protocol import blocks, command, image_object
+from custom_components.ble_esl.esl_ble.xte.wire import blocks, command, image_object
 from custom_components.ble_esl.esl_ble.xte.writer import XteError, XteSession, prepare
 
 PSJ_420 = PRESETS["psj-420"]

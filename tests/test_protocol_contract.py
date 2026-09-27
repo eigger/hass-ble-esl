@@ -15,7 +15,7 @@ import pytest
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.base import BleParser
 
-REQUIRED_MODULES = ("const", "devices", "image", "parser", "protocol", "writer")
+REQUIRED_MODULES = ("const", "devices", "image", "parser", "wire", "writer")
 
 PROTOCOLS = esl_ble.all_protocols()
 IDS = [p.id for p in PROTOCOLS]

@@ -19,7 +19,7 @@ from .const import MANUFACTURER_ID, UNSUPPORTED_PACKING_DEVICE_NUMBERS
 from .devices import PRESETS, preset_for_advertisement
 from .image import PALETTES
 from .parser import XteBluetoothDeviceData, is_xte_advertisement
-from .protocol import parse_advertisement
+from .wire import parse_advertisement
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice

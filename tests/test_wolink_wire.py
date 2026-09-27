@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import pytest
 
 from custom_components.ble_esl.esl_ble.wolink.const import AES_KEY
-from custom_components.ble_esl.esl_ble.wolink.protocol import (
+from custom_components.ble_esl.esl_ble.wolink.wire import (
     Advertisement,
     battery_plausible,
     compress,

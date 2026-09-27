@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 
-from custom_components.ble_esl.esl_ble.picksmart.protocol import (
+from custom_components.ble_esl.esl_ble.picksmart.wire import (
     data_packet,
     image_command,
     is_done_reply,
