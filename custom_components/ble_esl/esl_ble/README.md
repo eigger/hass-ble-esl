@@ -12,9 +12,10 @@ plus the package-layout ones against every registered backend.
 |---|---|---|
 | `const.py` | yes | `BRAND`, service/characteristic UUIDs or manufacturer id, timing constants |
 | `devices.py` | yes | `PRESETS: dict[str, DevicePreset]` — key must equal `preset.key` |
-| `protocol.py` | yes | Pure codecs: framing, CRC, quantization, compression. No BLE, no I/O — this is the part tested without hardware |
+| `image.py` | yes | `encode_image(image, preset)` — pixel buffers: scan order (rotation, mirror), palette quantization/dithering, bit packing |
+| `protocol.py` | yes | Pure wire codecs: framing, packet headers, chunking/blocks, CRC, command/reply serialization. No BLE, no I/O — this is the part tested without hardware |
 | `parser.py` | yes | `is_<id>_advertisement(service_info)` and `<Id>BluetoothDeviceData(BleParser)` |
-| `writer.py` | yes | `prepare(preset, image, address)` and `write_session(client, address, preset, prepared, *, pacing_s)`; usually also a `Client` class holding the GATT session |
+| `writer.py` | yes | `prepare(preset, image, address)` (runs `image.encode_image` + codecs in worker thread) and `write_session(client, address, preset, prepared, *, pacing_s=0.0, trace=trace)`; usually an `<Id>Session` class holding the GATT session |
 | `__init__.py` | yes | `<Id>BleBackend(BleBackend)` — declarative, see below |
 
 ## Parser (`BleParser`)
@@ -122,7 +123,9 @@ the BLE lock, the attempt bound, the retries and the report.
 2. `manifest.json`: add the `bluetooth` matcher(s) so Home Assistant starts a
    discovery flow for the tags.
 3. `README.md` (repo root): supported-models table and gallery entry.
-4. Tests: `tests/test_<id>_protocol.py` for the codecs (no hardware),
+4. Tests: `tests/test_<id>_image.py` for pixel buffers & palette packing,
+   `tests/test_<id>_parser.py` for advertisement matchers & broadcast data,
+   `tests/test_<id>_protocol.py` for the wire codecs (no hardware),
    `tests/test_<id>_writer.py` for the session against a mocked BleakClient,
    and a sample advertisement in `tests/test_protocol_contract.py`. Integration
    behaviour (discovery, entities, services) is covered generically through a

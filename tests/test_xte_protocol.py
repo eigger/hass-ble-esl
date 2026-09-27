@@ -1,19 +1,13 @@
-"""Codec and transport checks without a BLE adapter or Home Assistant."""
+"""Codec checks for XTE wire formats without a BLE adapter or Home Assistant."""
 
-import asyncio
-import dataclasses
-from types import SimpleNamespace
+from __future__ import annotations
 
-from blesession import SessionTrace
-from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.xte.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
 from custom_components.ble_esl.esl_ble.xte.devices import (
     PRESETS,
     preset_for_advertisement,
 )
-from custom_components.ble_esl.esl_ble.xte.image import buffer_size, encode_image
 from custom_components.ble_esl.esl_ble.xte.protocol import (
     blocks,
     command,
@@ -21,11 +15,9 @@ from custom_components.ble_esl.esl_ble.xte.protocol import (
     parse_advertisement,
     run_length,
 )
-from custom_components.ble_esl.esl_ble.xte.writer import XteError, XteSession, prepare
 
 PSJ_420 = PRESETS["psj-420"]
 PSJ_213 = PRESETS["psj-213"]
-MAC = "AA:BB:CC:DD:EE:FF"
 
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
@@ -83,39 +75,6 @@ def test_rle_boundaries():
     assert b"".join(bytes([v]) * n for n, v in zip(encoded[::2], encoded[1::2], strict=True)) == raw
 
 
-def test_palette_and_bit_order():
-    image = Image.new("RGB", (400, 300), "white")
-    for x, color in enumerate(("black", "white", "yellow", "red")):
-        image.putpixel((x, 0), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
-    assert encode_image(image, PSJ_420) == b"\x1b" + b"\x55" * 29999
-    with pytest.raises(ValueError, match="400x300"):
-        encode_image(Image.new("RGB", (300, 400)), PSJ_420)
-
-
-def test_rows_pad_to_four_pixels_and_rotate_into_the_buffer():
-    """A 250x122 as-viewed preset with a portrait buffer: 31-byte rows, 122x250."""
-    portrait = dataclasses.replace(
-        PSJ_420, key="t", width=250, height=122, extra={"device_number": 1, "rotation": 90}
-    )
-    assert buffer_size(portrait) == (122, 250)
-    assert buffer_size(PSJ_420) == (400, 300)
-    image = Image.new("RGB", (250, 122), "white")
-    for x, color in enumerate(("white", "yellow", "red", "black", "black", "white")):
-        image.putpixel((249, x), Image.new("RGB", (1, 1), color).getpixel((0, 0)))
-    packed = encode_image(image, portrait)
-    assert len(packed) == 31 * 250
-    # Rotated 90 degrees counter-clockwise, the right-hand column becomes buffer row 0,
-    # top pixel first; the two padded pixels pack as black.
-    assert packed[:2] == bytes.fromhex("6c15")
-    assert packed[2:30] == b"\x55" * 28
-    assert packed[30] == 0x50  # 122 px: last byte holds 2 white pixels + 2 padded (black)
-    assert packed[31:62] == b"\x55" * 30 + b"\x50"
-    obj = image_object(packed, *buffer_size(portrait))
-    assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
-    with pytest.raises(ValueError, match="250x122"):
-        encode_image(Image.new("RGB", (122, 250)), portrait)
-
-
 def test_image_header_and_half_frame_run_boundary():
     obj = image_object(b"\xaa" * 30000, 400, 300)
     # Each independently encoded 15000-byte half is 58*255 + 210 bytes.
@@ -152,151 +111,3 @@ def test_blocks_and_worst_case_size():
     raw = (bytes(range(256)) * 118)[:30000]
     assert len(image_object(raw, 400, 300)) == 60038
     assert len(blocks(image_object(raw, 400, 300))) == 50
-
-
-def _client(client, pacing_s=0.0):
-    session = XteSession(client, MAC, pacing_s=pacing_s)
-    session.settle_s = 0  # Keep unit tests fast; the settle is asserted separately.
-    return session
-
-
-class FakeClient:
-    def __init__(self, reply="ok", mtu_payload=244, fail_write=False):
-        self.write_char = SimpleNamespace(
-            properties=["write-without-response"], max_write_without_response_size=mtu_payload
-        )
-        self.notify_char = SimpleNamespace(properties=["notify"])
-        self.service = SimpleNamespace(
-            get_characteristic=lambda uuid: {
-                WRITE_UUID: self.write_char,
-                NOTIFY_UUID: self.notify_char,
-            }.get(uuid)
-        )
-        self.services = SimpleNamespace(
-            get_service=lambda uuid: self.service if uuid == SERVICE_UUID else None
-        )
-        self.reply = reply
-        self.fail_write = fail_write
-        self.writes = []
-        self.stopped = False
-        self.is_connected = True
-
-    async def start_notify(self, characteristic, callback):
-        assert characteristic is self.notify_char
-        self.callback = callback
-
-    async def stop_notify(self, characteristic):
-        assert characteristic is self.notify_char
-        if not self.is_connected:
-            raise OSError("Not connected")
-        self.stopped = True
-
-    async def write_gatt_char(self, characteristic, data, response):
-        assert characteristic is self.write_char and response is False
-        assert len(data) <= min(244, self.write_char.max_write_without_response_size)
-        self.writes.append(data)
-        if self.fail_write:
-            raise OSError("adapter write failed")
-        if not data.startswith(b"XTE\x01") or self.reply == "timeout":
-            return
-        if data[6] == 1:
-            reply = bytearray.fromhex("5854450409bd01ffbd00000000000000")
-        else:
-            reply = bytearray.fromhex("58544504080304ff0000000000000000")
-        if self.reply == "checksum":
-            reply[5] ^= 1
-        elif self.reply == "status":
-            reply[7] = 0
-            reply[5] = sum(reply[6 : reply[4]]) & 255
-        elif self.reply == "length":
-            reply[4] = 17
-        self.callback(None, reply)
-
-
-@pytest.mark.parametrize("write_limit", [20, 182, 244, 514])
-def test_transport_sequence(write_limit):
-    client = FakeClient(mtu_payload=write_limit)
-    image = Image.new("RGB", (400, 300), "white")
-    trace = SessionTrace()
-    asyncio.run(_client(client).send(prepare(PSJ_420, image, ""), trace=trace))
-    obj = image_object(b"\x55" * 30000, 400, 300)
-    expected = [command(b"\x01" + len(obj).to_bytes(4, "big"))]
-    chunk_size = min(244, write_limit)
-    assert trace.facts["chunk_size"] == chunk_size
-    assert trace.facts["bytes"] == len(obj)
-    assert {"settle_s", "parts"} <= trace.facts.keys()
-    assert list(trace.timings) == ["handshake", "transfer", "finish"]
-    for block in blocks(obj):
-        expected.extend(block[i : i + chunk_size] for i in range(0, len(block), chunk_size))
-    expected.append(command(b"\x04\x00"))
-    assert client.writes == expected
-    assert b"".join(client.writes[1:-1]) == b"".join(blocks(obj))
-    assert client.stopped
-
-
-@pytest.mark.parametrize(
-    "reply,error",
-    [
-        ("checksum", XteError),
-        ("status", XteError),
-        ("length", XteError),
-        ("timeout", TimeoutError),
-    ],
-)
-def test_bad_responses_fail_and_unsubscribe(reply, error):
-    client = FakeClient(reply=reply)
-    transport = _client(client)
-    transport.reply_timeout_s = 0.01
-    with pytest.raises(error):
-        asyncio.run(transport.send(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
-    assert client.stopped
-    assert len(client.writes) == 1  # No data sent after a failed preparation.
-
-
-def test_invalid_write_size_and_missing_service():
-    client = FakeClient(mtu_payload=0)
-    with pytest.raises(XteError, match="write-without-response size"):
-        asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
-    assert client.writes == []
-    client.services.get_service = lambda uuid: None
-    with pytest.raises(XteError, match="service missing"):
-        asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
-
-
-def test_write_failure_unsubscribes():
-    client = FakeClient(fail_write=True)
-    with pytest.raises(OSError):
-        asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
-    assert client.stopped
-
-
-def test_write_failure_after_disconnect_keeps_original_error():
-    client = FakeClient(fail_write=True)
-    original = client.write_gatt_char
-
-    async def write_then_drop(characteristic, data, response):
-        client.is_connected = False
-        await original(characteristic, data, response)
-
-    client.write_gatt_char = write_then_drop
-    with pytest.raises(OSError, match="adapter write failed"):
-        asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), "")))
-    assert not client.stopped  # stop_notify skipped on a dropped link
-
-
-def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
-    sleeps = []
-
-    async def fake_sleep(seconds):
-        sleeps.append(seconds)
-
-    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
-    client = FakeClient(mtu_payload=20)
-    asyncio.run(
-        XteSession(client, MAC, pacing_s=0.05).send(
-            prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), MAC)
-        )
-    )
-    frames = 2 + len(blocks(image_object(b"\x55" * 30000, 400, 300)))
-    # One settle after start_notify, then the pacing once per XTE frame.
-    assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames
