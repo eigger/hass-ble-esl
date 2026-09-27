@@ -124,6 +124,7 @@ the BLE lock, the attempt bound, the retries and the report.
    discovery flow for the tags.
 3. `README.md` (repo root): supported-models table and gallery entry.
 4. Tests: `tests/test_<id>_image.py` for pixel buffers & palette packing,
+   `tests/test_<id>_parser.py` for advertisement matchers & broadcast data,
    `tests/test_<id>_protocol.py` for the wire codecs (no hardware),
    `tests/test_<id>_writer.py` for the session against a mocked BleakClient,
    and a sample advertisement in `tests/test_protocol_contract.py`. Integration
