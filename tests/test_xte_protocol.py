@@ -25,6 +25,7 @@ from custom_components.ble_esl.esl_ble.xte.writer import XteError, XteSession, p
 
 PSJ_420 = PRESETS["psj-420"]
 PSJ_213 = PRESETS["psj-213"]
+MAC = "AA:BB:CC:DD:EE:FF"
 
 
 @pytest.mark.parametrize("tail", [0x1E, 0x1B, 0x00, 0xFF])
@@ -154,7 +155,7 @@ def test_blocks_and_worst_case_size():
 
 
 def _client(client, pacing_s=0.0):
-    session = XteSession(client, pacing_s=pacing_s)
+    session = XteSession(client, MAC, pacing_s=pacing_s)
     session.settle_s = 0  # Keep unit tests fast; the settle is asserted separately.
     return session
 
@@ -292,8 +293,8 @@ def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
     client = FakeClient(mtu_payload=20)
     asyncio.run(
-        XteSession(client, pacing_s=0.05).send(
-            prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), "")
+        XteSession(client, MAC, pacing_s=0.05).send(
+            prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), MAC)
         )
     )
     frames = 2 + len(blocks(image_object(b"\x55" * 30000, 400, 300)))

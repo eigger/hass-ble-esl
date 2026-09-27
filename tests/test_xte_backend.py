@@ -250,7 +250,7 @@ def test_session_result_and_disconnect(monkeypatch, error):
     # Encoded before connecting, in a worker thread, then handed to the session
     # together with the trace.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
-    factory.assert_called_once_with(client, pacing_s=0.05)
+    factory.assert_called_once_with(client, advertisement().address, pacing_s=0.05)
     session.send.assert_awaited_once_with(encoded, trace=trace)
     client.disconnect.assert_awaited_once()
 
