@@ -21,6 +21,8 @@ PALETTES = {"BWRY": (BLACK, WHITE, YELLOW, RED), "BWR": (BLACK, WHITE, RED)}
 
 def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
     """The uncompressed buffer for `preset`: 2 bits per pixel on BWRY, two frames on BWR."""
+    if preset.colors not in PALETTES:
+        raise ValueError(f"no WOLINK pixel format for {preset.colors} ({preset.key})")
     scanned = scan_order(image, preset)
     codes = color_codes(scanned, preset.colors)
     if preset.colors == "BWRY":
@@ -32,8 +34,6 @@ def scan_order(image: Image.Image, preset: DevicePreset) -> Image.Image:
     """Turn `rotation` degrees counter-clockwise, then mirror, so rows follow the scan."""
     if image.size != (preset.width, preset.height):
         raise ValueError(f"expected a {preset.width}x{preset.height} image, got {image.size}")
-    if preset.colors not in PALETTES:
-        raise ValueError(f"no WOLINK pixel format for {preset.colors} ({preset.key})")
     rotation = preset.extra.get("rotation", 0)
     if rotation:
         image = image.rotate(rotation, expand=True)
