@@ -12,8 +12,8 @@ import pytest
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS
 from custom_components.ble_esl.esl_ble.picksmart.writer import (
-    PickSmartClient,
     PickSmartError,
+    PickSmartSession,
     prepare,
 )
 
@@ -53,15 +53,9 @@ def test_picksmart_handshake_flow():
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = PickSmartClient(
-            mock_client,
-            CMD_UUID,
-            IMG_UUID,
-            PRESETS["0x0033"],
-            MAC,
-        )
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
         img = Image.new("RGB", (296, 128), "white")
-        result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+        result = await client.send(prepare(PRESETS["0x0033"], img, MAC), quicklz=False)
 
         assert result.success is True
 
@@ -94,18 +88,11 @@ def test_picksmart_stall_detection():
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         trace = SessionTrace()
-        client = PickSmartClient(
-            mock_client,
-            CMD_UUID,
-            IMG_UUID,
-            PRESETS["0x0033"],
-            MAC,
-            trace=trace,
-        )
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
         img = Image.new("RGB", (296, 128), "white")
 
         with pytest.raises(PickSmartError, match=r"Transfer stalled: part 0/\d+ requested 6 times"):
-            await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+            await client.send(prepare(PRESETS["0x0033"], img, MAC), quicklz=False, trace=trace)
         # One send per request: the initial one plus five resends.
         img_writes = [
             c for c in mock_client.write_gatt_char.await_args_list if c.args[0] == IMG_UUID
@@ -159,9 +146,9 @@ def test_picksmart_recovers_from_resend_requests(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
-        result = await client.write_payload(
-            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
+        result = await client.send(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC), quicklz=False
         )
 
         assert result.success is True
@@ -219,11 +206,11 @@ def test_picksmart_start_is_probed_until_the_tag_answers(monkeypatch):
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         trace = SessionTrace()
-        client = PickSmartClient(
-            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, trace=trace
-        )
-        result = await client.write_payload(
-            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
+        result = await client.send(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+            quicklz=False,
+            trace=trace,
         )
 
         assert result.success is True
@@ -248,12 +235,13 @@ def test_picksmart_start_probes_exhausted_is_descriptive(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock()  # never answers
 
-        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
         with pytest.raises(
             NotificationTimeout, match=r"No response from tag to START after 3 probes"
         ):
-            await client.write_payload(
-                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+            await client.send(
+                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+                quicklz=False,
             )
         starts = [c for c in mock_client.write_gatt_char.await_args_list if c.args[1][0] == 0x01]
         assert len(starts) == 3
@@ -280,7 +268,7 @@ def test_picksmart_timeout_after_start_is_descriptive(monkeypatch):
 
     async def _test():
         _fast_probe(monkeypatch)
-        monkeypatch.setattr(f"{WRITER}.FEEDBACK_TIMEOUT", 0.05)
+        monkeypatch.setattr(f"{WRITER}.REPLY_TIMEOUT_S", 0.05)
         mock_client = MagicMock()
 
         async def mock_start_notify(char, handler):
@@ -295,12 +283,13 @@ def test_picksmart_timeout_after_start_is_descriptive(monkeypatch):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        client = PickSmartClient(mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC)
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
         with pytest.raises(
             NotificationTimeout, match=r"No response from device within 0\.05s after SIZE"
         ):
-            await client.write_payload(
-                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+            await client.send(
+                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+                quicklz=False,
             )
 
     asyncio.run(_test())
@@ -470,22 +459,22 @@ def test_picksmart_transfer_end_frames(frame, at, expect):
         mock_client.stop_notify = AsyncMock()
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
-        from custom_components.ble_esl.esl_ble.picksmart.protocol import encode_image
+        from custom_components.ble_esl.esl_ble.picksmart.image import encode_image
 
         img = Image.new("RGB", (296, 128), "white")
         payload_parts = (len(encode_image(img, PRESETS["0x0033"])) + 239) // 240
         trace = SessionTrace()
-        client = PickSmartClient(
-            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, trace=trace
-        )
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
 
         if expect == "completed":
-            result = await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+            result = await client.send(
+                prepare(PRESETS["0x0033"], img, MAC), quicklz=False, trace=trace
+            )
             assert result.success is True
             assert trace.facts["completed_by_tag"] is True
         else:
             with pytest.raises(PickSmartError, match=expect):
-                await client.write_payload(prepare(PRESETS["0x0033"], img, MAC))
+                await client.send(prepare(PRESETS["0x0033"], img, MAC), quicklz=False, trace=trace)
 
     asyncio.run(_test())
 
@@ -571,11 +560,11 @@ def test_pacing_applies_to_image_parts_not_the_handshake(monkeypatch):
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         trace = SessionTrace()
-        client = PickSmartClient(
-            mock_client, CMD_UUID, IMG_UUID, PRESETS["0x0033"], MAC, pacing_s=0.05, trace=trace
-        )
-        result = await client.write_payload(
-            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC)
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC, pacing_s=0.05)
+        result = await client.send(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+            quicklz=False,
+            trace=trace,
         )
 
         assert result.success is True

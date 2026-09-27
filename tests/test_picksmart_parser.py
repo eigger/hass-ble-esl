@@ -12,13 +12,13 @@ from custom_components.ble_esl.esl_ble.picksmart.const import (
 )
 from custom_components.ble_esl.esl_ble.picksmart.devices import (
     PRESETS,
-    get_device_preset,
+    preset_for_device,
 )
 from custom_components.ble_esl.esl_ble.picksmart.parser import (
     PickSmartBluetoothDeviceData,
     is_picksmart_advertisement,
-    parse_manufacturer_data,
 )
+from custom_components.ble_esl.esl_ble.picksmart.protocol import parse_advertisement
 
 
 def test_picksmart_parser_supported():
@@ -47,18 +47,17 @@ def test_picksmart_parser_supported():
     assert parser.supported(info_other) is False
 
 
-def test_picksmart_parse_manufacturer_data():
-    """Verify decoding 5-byte 0x5053 broadcast."""
-    # 2.9" BWR (0x0033): data = [0x33, 0x1E (3.0V), 0x81, 0x01, 0x40]
-    # device_id = ((0x40 << 8) | 0x33) & 0x3FFF = 0x0033
-    data = bytes([0x33, 0x1E, 0x81, 0x01, 0x40])
-    parsed = parse_manufacturer_data(data)
-    assert parsed is not None
-    assert parsed["device_id"] == 0x0033
-    assert parsed["model_key"] == "0x0033"
-    assert parsed["battery_v"] == 3.0
-    assert parsed["battery_mv"] == 3000
-    assert parsed["firmware"] == 0x8101
+def test_picksmart_parse_advertisement():
+    """2.9" BWR: hardware 0x4033 (device id 0x0033), 3.0 V, firmware 0x8101."""
+    advertisement = parse_advertisement(bytes([0x33, 0x1E, 0x81, 0x01, 0x40]))
+    assert advertisement is not None
+    assert advertisement.device_id == 0x0033
+    assert advertisement.model_key == "0x0033"
+    assert advertisement.battery_mv == 3000
+    assert advertisement.firmware == 0x8101
+    assert advertisement.hardware == 0x4033
+    assert parse_advertisement(bytes(4)) is None
+    assert parse_advertisement(None) is None
 
 
 def test_picksmart_parser_device_info_and_battery():
@@ -104,17 +103,11 @@ def test_picksmart_parser_battery_low_and_clamp():
     assert run(0x20) == (100, False)  # 3.2 V (clamped)
 
 
-def test_picksmart_firmware_fix():
-    """Verify 0x012B (7.5\" BWR) firmware 0x8101 compression switch fix."""
-    normal_preset = get_device_preset(0x012B, firmware=0x0101)
-    assert normal_preset is not None
-    assert normal_preset.extra.get("compression2") is True
-    assert normal_preset.extra.get("compression", False) is False
-
-    fixed_preset = get_device_preset(0x012B, firmware=0x8101)
-    assert fixed_preset is not None
-    assert fixed_preset.extra.get("compression") is True
-    assert fixed_preset.extra.get("compression2") is False
+def test_picksmart_firmware_format():
+    """7.5\" BWR: QuickLZ, except firmware 0x8101, which takes headed lines."""
+    assert preset_for_device(0x012B, 0x0101).extra["format"] == "quicklz"
+    assert preset_for_device(0x012B, 0x8101).extra["format"] == "lines"
+    assert preset_for_device(0x0999, 0x0101) is None
 
 
 def test_picksmart_backend_refine_preset():
@@ -128,17 +121,13 @@ def test_picksmart_backend_refine_preset():
     # 1. Without AdvertisementInfo -> unmodified
     assert backend.refine_preset(preset_75, None) == preset_75
 
-    # 2. With normal firmware 0x0101 -> unmodified (compression2=True)
+    # 2. With normal firmware 0x0101 -> QuickLZ
     info_normal = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x0101})
-    refined_normal = backend.refine_preset(preset_75, info_normal)
-    assert refined_normal.extra.get("compression2") is True
-    assert refined_normal.extra.get("compression", False) is False
+    assert backend.refine_preset(preset_75, info_normal).extra["format"] == "quicklz"
 
-    # 3. With quirk firmware 0x8101 on 7.5" -> refined (compression=True, compression2=False)
+    # 3. With firmware 0x8101 on 7.5" -> headed lines
     info_quirk = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x8101})
-    refined_quirk = backend.refine_preset(preset_75, info_quirk)
-    assert refined_quirk.extra.get("compression") is True
-    assert refined_quirk.extra.get("compression2") is False
+    assert backend.refine_preset(preset_75, info_quirk).extra["format"] == "lines"
 
     # 4. Advertisement is authoritative for PickSmart: if advertisement reports 0x012B, it resolves to 0x012B
     preset_29 = backend.presets()["0x0033"]
