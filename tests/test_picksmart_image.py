@@ -8,9 +8,9 @@ import struct
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.picksmart.compression import decompress
 from custom_components.ble_esl.esl_ble.picksmart.devices import PRESETS, _preset
 from custom_components.ble_esl.esl_ble.picksmart.image import encode_image, scan_order
+from custom_components.ble_esl.esl_ble.picksmart.quicklz import decompress
 
 BLACK, WHITE, RED, YELLOW = (0, 0, 0), (255, 255, 255), (255, 0, 0), (255, 255, 0)
 

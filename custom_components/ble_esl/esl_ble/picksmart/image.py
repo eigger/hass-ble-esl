@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from PIL import Image, ImageChops, ImageOps
 
-from .compression import compress
+from . import quicklz
 
 if TYPE_CHECKING:
     from ..base import DevicePreset
@@ -35,7 +35,7 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
         # This firmware counts a pixel as red without looking at blue.
         planes = first + pack_bits(masks.red_loose)
         try:
-            return compress(planes)
+            return quicklz.compress(planes)
         except Exception:
             return planes
     red = pack_bits(masks.red) if "R" in preset.colors else None
