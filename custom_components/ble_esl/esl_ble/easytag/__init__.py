@@ -18,7 +18,7 @@ class EasyTagBleBackend(BleBackend):
 
     id = "easytag"
     label = "easyTag"
-    name = "easyTag (eLabel)"
+    name = "easyTag"
     capabilities = Capabilities(
         passive_battery=False,
         session_battery=True,
