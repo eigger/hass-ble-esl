@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 
 from ..base import CONFIDENCE_HARDWARE, DevicePreset
-from .image import FORMATS
+from .image import ENCODINGS
 
 
 def _preset(
@@ -18,21 +18,21 @@ def _preset(
     rotation: int = 0,
     mirror_x: bool = False,
     mirror_y: bool = False,
-    payload_format: str | None = None,
-    tft: bool = False,
+    encoding: str | None = None,
+    resample: tuple[int, int] | None = None,
     invert_luminance: bool = False,
 ) -> DevicePreset:
-    payload_format = payload_format or ("2bpp" if colors == "BWRY" else "planes")
-    if payload_format not in FORMATS:
-        raise ValueError(f"{name}: unknown format {payload_format}")
+    encoding = encoding or ("2bpp" if colors == "BWRY" else "planes")
+    if encoding not in ENCODINGS:
+        raise ValueError(f"{name}: unknown encoding {encoding}")
     extra: dict[str, int | bool | str] = {
         "rotation": rotation,
         "mirror_x": mirror_x,
         "mirror_y": mirror_y,
-        "format": payload_format,
+        "encoding": encoding,
     }
-    if tft:
-        extra["tft"] = True
+    if resample:
+        extra["resample"] = resample
     if invert_luminance:
         extra["invert_luminance"] = True
     key = f"0x{device_id:04X}"
@@ -50,7 +50,9 @@ def _preset(
 PRESETS: dict[str, DevicePreset] = {
     preset.key: preset
     for preset in (
-        _preset(0x00A0, '2.1" TFT BW', 250, 132, "BW", rotation=90, mirror_x=True, tft=True),
+        _preset(
+            0x00A0, '2.1" TFT BW', 250, 132, "BW", rotation=90, mirror_x=True, resample=(125, 264)
+        ),
         _preset(0x000B, '2.1" EPD BWR', 212, 104, "BWR", rotation=270, mirror_x=True),
         _preset(0x010B, '2.1" EPD BWR', 250, 128, "BWR", rotation=270, mirror_x=True),
         _preset(0x0028, '2.9" EPD BW', 296, 128, "BW", rotation=90),
@@ -64,7 +66,7 @@ PRESETS: dict[str, DevicePreset] = {
             "BWR",
             rotation=180,
             mirror_x=True,
-            payload_format="lines",
+            encoding="lines",
         ),
         _preset(0x004B, '4.2" EPD BWR', 400, 300, "BWR"),
         _preset(0x004E, '4.2" EPD BWRY', 400, 300, "BWRY"),
@@ -75,23 +77,23 @@ PRESETS: dict[str, DevicePreset] = {
             480,
             "BWR",
             mirror_y=True,
-            payload_format="quicklz",
+            encoding="quicklz",
             invert_luminance=True,
         ),
-        _preset(0x008B, '10.2" EPD BWR', 960, 640, "BWR", payload_format="quicklz"),
+        _preset(0x008B, '10.2" EPD BWR', 960, 640, "BWR", encoding="quicklz"),
     )
 }
 
-# (device id, firmware) -> the format that firmware expects instead.
-FIRMWARE_FORMATS = {(0x012B, 0x8101): "lines"}
+# (device id, firmware) -> the encoding that firmware expects instead.
+FIRMWARE_ENCODINGS = {(0x012B, 0x8101): "lines"}
 
 
 def preset_for_device(device_id: int, firmware: int) -> DevicePreset | None:
-    """The catalog preset for `device_id`, with the format its `firmware` needs."""
+    """The catalog preset for `device_id`, with the encoding its `firmware` needs."""
     preset = PRESETS.get(f"0x{device_id:04X}")
     if preset is None:
         return None
-    payload_format = FIRMWARE_FORMATS.get((device_id, firmware))
-    if payload_format is None:
+    encoding = FIRMWARE_ENCODINGS.get((device_id, firmware))
+    if encoding is None:
         return preset
-    return dataclasses.replace(preset, extra={**preset.extra, "format": payload_format})
+    return dataclasses.replace(preset, extra={**preset.extra, "encoding": encoding})

@@ -1,6 +1,6 @@
-"""PickSmart image payload: the picture in scan order, packed in the preset's format.
+"""PickSmart image payload: the picture in scan order, packed in the preset's encoding.
 
-Formats (`extra["format"]`):
+Encodings (`extra["encoding"]`):
   planes   a white bit plane, then a red one on BWR
   lines    the planes cut into lines, each behind a 7-byte `75` header
   quicklz  the planes, QuickLZ compressed
@@ -19,7 +19,7 @@ from .compression import compress
 if TYPE_CHECKING:
     from ..base import DevicePreset
 
-FORMATS = ("planes", "lines", "quicklz", "2bpp")
+ENCODINGS = ("planes", "lines", "quicklz", "2bpp")
 LINE_HEADER = 0x75
 
 
@@ -27,10 +27,10 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
     """The payload for `preset`."""
     scanned = scan_order(image, preset)
     masks = ColorMasks(scanned, invert=preset.extra.get("invert_luminance", False))
-    format_ = preset.extra.get("format", "planes")
-    if format_ == "2bpp":
+    encoding = preset.extra.get("encoding", "planes")
+    if encoding == "2bpp":
         return pack_2bpp(masks)
-    if format_ == "quicklz":
+    if encoding == "quicklz":
         # This firmware counts a pixel as red without looking at blue.
         planes = pack_bits(masks.white) + pack_bits(masks.red_loose)
         try:
@@ -39,16 +39,17 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
             return planes
     white = pack_bits(masks.white)
     red = pack_bits(masks.red) if "R" in preset.colors else None
-    if format_ == "lines":
+    if encoding == "lines":
         return line_blocks(white, red, lines=scanned.width, line_bytes=scanned.height // 8)
     return white + red if red is not None else white
 
 
 def scan_order(image: Image.Image, preset: DevicePreset) -> Image.Image:
-    """The picture on a white preset-sized canvas, turned and mirrored into the scan.
+    """The picture on a white preset-sized canvas, resampled, turned and mirrored into the scan.
 
-    A TFT panel takes half the columns at twice the rows. `rotation` is
-    counter-clockwise, as PIL's `Image.rotate`; the mirrors apply after it.
+    `resample` is the (width, height) the canvas is scaled to first (the 2.1"
+    TFT takes half the columns at twice the rows). `rotation` is counter-
+    clockwise, as PIL's `Image.rotate`; the mirrors apply after it.
     """
     canvas = Image.new("RGB", (preset.width, preset.height), "white")
     picture = image.convert("RGB")
@@ -56,10 +57,8 @@ def scan_order(image: Image.Image, preset: DevicePreset) -> Image.Image:
         picture = picture.crop((0, 0, preset.width, preset.height))
     canvas.paste(picture, (0, 0))
     extra = preset.extra
-    if extra.get("tft"):
-        canvas = canvas.resize(
-            (preset.width // 2, preset.height * 2), resample=Image.Resampling.BICUBIC
-        )
+    if size := extra.get("resample"):
+        canvas = canvas.resize(tuple(size), resample=Image.Resampling.BICUBIC)
     if rotation := extra.get("rotation", 0):
         canvas = canvas.rotate(rotation, expand=True)
     if extra.get("mirror_x"):

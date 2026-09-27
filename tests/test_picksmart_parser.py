@@ -103,10 +103,10 @@ def test_picksmart_parser_battery_low_and_clamp():
     assert run(0x20) == (100, False)  # 3.2 V (clamped)
 
 
-def test_picksmart_firmware_format():
+def test_picksmart_firmware_encoding():
     """7.5\" BWR: QuickLZ, except firmware 0x8101, which takes headed lines."""
-    assert preset_for_device(0x012B, 0x0101).extra["format"] == "quicklz"
-    assert preset_for_device(0x012B, 0x8101).extra["format"] == "lines"
+    assert preset_for_device(0x012B, 0x0101).extra["encoding"] == "quicklz"
+    assert preset_for_device(0x012B, 0x8101).extra["encoding"] == "lines"
     assert preset_for_device(0x0999, 0x0101) is None
 
 
@@ -123,11 +123,11 @@ def test_picksmart_backend_refine_preset():
 
     # 2. With normal firmware 0x0101 -> QuickLZ
     info_normal = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x0101})
-    assert backend.refine_preset(preset_75, info_normal).extra["format"] == "quicklz"
+    assert backend.refine_preset(preset_75, info_normal).extra["encoding"] == "quicklz"
 
     # 3. With firmware 0x8101 on 7.5" -> headed lines
     info_quirk = AdvertisementInfo(raw={"device_id": 0x012B, "firmware": 0x8101})
-    assert backend.refine_preset(preset_75, info_quirk).extra["format"] == "lines"
+    assert backend.refine_preset(preset_75, info_quirk).extra["encoding"] == "lines"
 
     # 4. Advertisement is authoritative for PickSmart: if advertisement reports 0x012B, it resolves to 0x012B
     preset_29 = backend.presets()["0x0033"]

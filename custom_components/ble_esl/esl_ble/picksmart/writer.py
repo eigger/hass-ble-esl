@@ -70,7 +70,7 @@ async def write_session(
         raise PickSmartError(f"Insufficient characteristics: {uuids}")
     command_uuid, image_uuid = sorted(uuids, key=lambda uuid: int(uuid[4:8], 16))[:2]
     session = PickSmartSession(client, command_uuid, image_uuid, address, pacing_s=pacing_s)
-    quicklz = preset.extra.get("format") == "quicklz"
+    quicklz = preset.extra.get("encoding") == "quicklz"
     return await session.send(await prepared, quicklz=quicklz, trace=trace)
 
 

@@ -16,7 +16,7 @@ BLACK, WHITE, RED, YELLOW = (0, 0, 0), (255, 255, 255), (255, 0, 0), (255, 255, 
 
 
 def preset(width, height, colors="BWR", **extra):
-    base = {"rotation": 0, "mirror_x": False, "mirror_y": False, "format": "planes"}
+    base = {"rotation": 0, "mirror_x": False, "mirror_y": False, "encoding": "planes"}
     return dataclasses.replace(
         PRESETS["0x004B"], key="t", width=width, height=height, colors=colors, extra=base | extra
     )
@@ -42,13 +42,13 @@ def test_inverted_panel_sets_the_white_bit_for_black():
 def test_2bpp_codes_and_priority():
     """00 black, 01 white, 10 yellow, 11 red; a light red or yellow still counts."""
     image = row(BLACK, WHITE, YELLOW, RED, (200, 40, 40), (200, 200, 60), WHITE, WHITE)
-    assert encode_image(image, preset(8, 1, "BWRY", format="2bpp")) == bytes(
+    assert encode_image(image, preset(8, 1, "BWRY", encoding="2bpp")) == bytes(
         [0b00011011, 0b11100101]
     )
 
 
 def test_lines_prefix_every_line_with_a_header():
-    p = preset(16, 8, format="lines")
+    p = preset(16, 8, encoding="lines")
     payload = encode_image(Image.new("RGB", (16, 8), "white"), p)
     # 16 lines of one byte per plane, two planes.
     assert struct.unpack_from("<I", payload)[0] == len(payload) == 4 + 2 * 16 * 8
@@ -79,19 +79,21 @@ def test_small_picture_sits_top_left_on_white():
     assert scanned.getpixel((1, 1)) == BLACK and scanned.getpixel((3, 3)) == WHITE
 
 
-def test_tft_halves_columns_and_doubles_rows():
+def test_resample_before_turning():
+    """The 2.1" TFT is scaled to 125x264, then turned 90 degrees."""
     p = PRESETS["0x00A0"]
+    assert p.extra["resample"] == (125, 264)
     scanned = scan_order(Image.new("RGB", (p.width, p.height), "white"), p)
-    assert scanned.size == (p.height * 2, p.width // 2)  # then turned 90 degrees
+    assert scanned.size == (264, 125)
 
 
 def test_bwry_presets_use_2bpp():
     p = PRESETS["0x002E"]
-    assert p.extra["format"] == "2bpp"
+    assert p.extra["encoding"] == "2bpp"
     white = encode_image(Image.new("RGB", (p.width, p.height), "white"), p)
     assert white == b"\x55" * (p.width * p.height // 4)
 
 
-def test_unknown_format_is_rejected():
-    with pytest.raises(ValueError, match="format"):
-        _preset(0x1234, "x", 8, 8, "BWR", payload_format="rle")
+def test_unknown_encoding_is_rejected():
+    with pytest.raises(ValueError, match="encoding"):
+        _preset(0x1234, "x", 8, 8, "BWR", encoding="rle")
