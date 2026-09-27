@@ -1,18 +1,10 @@
 """XTE model catalog.
 
-Adding a model is one DevicePreset here. Everything else derives from it:
-model detection from ``extra["device_number"]`` (the tag type the
-advertisement carries), image packing from ``width`` / ``height`` /
-``colors`` (the palette must exist in ``const.PALETTES``) plus an optional
-``extra["rotation"]`` for panels whose native buffer is rotated from the
-as-viewed image, and the write guard from membership in PRESETS.
-
-Two kinds of entry:
-
-* captured — has a device number; the advertisement selects it automatically.
-* size-only — no device number yet; offered in the model picker when an
-  XTE tag with an unknown device number is discovered. Once a report pairs
-  a device number with the size, fill it in and the same key keeps working.
+A captured model has a device number and is picked from the advertisement.
+A size-only model has none yet and is offered in the model picker when a tag
+with an unknown device number shows up; its key stays when the number is
+filled in. `rotation` turns the picture into the panel's buffer (counter-
+clockwise, as PIL's `Image.rotate`).
 """
 
 from __future__ import annotations
@@ -20,67 +12,65 @@ from __future__ import annotations
 from ..base import CONFIDENCE_COMMUNITY, CONFIDENCE_ESTIMATED, CONFIDENCE_REPORTED, DevicePreset
 from .protocol import parse_advertisement
 
-PSJ_420 = DevicePreset(
-    key="psj-420",
-    display_name='PSJ-420 4.2" BWRY',
-    width=400,
-    height=300,
-    colors="BWRY",
-    confidence=CONFIDENCE_REPORTED,
-    extra={"device_number": 153},
-)
-# Viewed landscape 250x122; the panel scans along the short edge, so the
-# native buffer is portrait 122x250 (rotate 90 degrees counter-clockwise,
-# rows padded to 124 pixels). Pushed successfully by a community user with
-# this same transaction; not re-tested with this integration.
-PSJ_213 = DevicePreset(
-    key="psj-213",
-    display_name='PSJ-213 2.13" BWRY',
-    width=250,
-    height=122,
-    colors="BWRY",
-    confidence=CONFIDENCE_COMMUNITY,
-    extra={"device_number": 140, "rotation": 90},
-)
 
-# Size-only entries for the rest of the family. Resolutions follow the
-# listed panel sizes; device numbers are unknown until a tag of that size is
-# seen (an unknown device number is logged once per address). Panels up to
-# 2.9" scan along their short edge like the PSJ-213, so their buffer is
-# portrait (rotation 90); the square 1.54" and the larger ones are left
-# unrotated (landscape like the PSJ-420) until a tag shows otherwise. Keys
-# follow the PSJ-<size> naming of the captured models.
-_SIZE_ONLY = (
-    ("psj-154", '1.54" BWRY', 200, 200, 0),
-    ("psj-266", '2.66" BWRY', 296, 152, 90),
-    ("psj-290", '2.9" BWRY', 296, 128, 90),
-    ("psj-350", '3.5" BWRY', 384, 184, 0),
-    ("psj-370", '3.7" BWRY', 416, 240, 0),
-    # 7.5" is sold under the same brand but not confirmed to speak XTE; the
-    # 800x480 panel is the usual one for that size. 96000 packed bytes fit
-    # one batch (80 packets).
-    ("psj-750", '7.5" BWRY', 800, 480, 0),
-)
+def _preset(
+    key: str,
+    name: str,
+    width: int,
+    height: int,
+    *,
+    device_number: int | None = None,
+    rotation: int = 0,
+    confidence: str = CONFIDENCE_ESTIMATED,
+) -> DevicePreset:
+    extra: dict[str, int] = {}
+    if device_number is not None:
+        extra["device_number"] = device_number
+    if rotation:
+        extra["rotation"] = rotation
+    return DevicePreset(
+        key=key,
+        display_name=name,
+        width=width,
+        height=height,
+        colors="BWRY",
+        confidence=confidence,
+        extra=extra,
+    )
 
-PRESETS: dict[str, DevicePreset] = {preset.key: preset for preset in (PSJ_420, PSJ_213)}
-PRESETS.update(
-    {
-        key: DevicePreset(
-            key=key,
-            display_name=name,
-            width=width,
-            height=height,
-            colors="BWRY",
-            confidence=CONFIDENCE_ESTIMATED,
-            extra={"rotation": rotation} if rotation else {},
-        )
-        for key, name, width, height, rotation in _SIZE_ONLY
-    }
-)
+
+PRESETS: dict[str, DevicePreset] = {
+    preset.key: preset
+    for preset in (
+        _preset(
+            "psj-420",
+            'PSJ-420 4.2" BWRY',
+            400,
+            300,
+            device_number=153,
+            confidence=CONFIDENCE_REPORTED,
+        ),
+        _preset(
+            "psj-213",
+            'PSJ-213 2.13" BWRY',
+            250,
+            122,
+            device_number=140,
+            rotation=90,
+            confidence=CONFIDENCE_COMMUNITY,
+        ),
+        _preset("psj-154", '1.54" BWRY', 200, 200),
+        _preset("psj-266", '2.66" BWRY', 296, 152, rotation=90),
+        _preset("psj-290", '2.9" BWRY', 296, 128, rotation=90),
+        _preset("psj-350", '3.5" BWRY', 384, 184),
+        _preset("psj-370", '3.7" BWRY', 416, 240),
+        _preset("psj-750", '7.5" BWRY', 800, 480),
+    )
+}
 
 
 def preset_for_advertisement(data: bytes | None) -> DevicePreset | None:
-    """The captured model whose device number the manufacturer data carries, or None."""
+    """The captured model whose device number the advertisement carries, or None."""
     advertisement = parse_advertisement(data)
     if advertisement is None:
         return None

@@ -1,26 +1,16 @@
-"""XTE advertisement decoding, pixel packing and framing.
-
-Framing and packing are capture-verified on the PSJ-420. The advertisement
-layout (see docs/xte.md) is common to the XTE firmware family.
-"""
+"""XTE wire formats: advertisement, image object, command and block frames, replies."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
-from typing import TYPE_CHECKING
+import struct
 
-from .const import BLOCK_DATA_SIZE, PALETTES
-
-if TYPE_CHECKING:
-    from PIL import Image
-
-    from ..base import DevicePreset
+from .const import BLOCK_DATA_SIZE
 
 # Manufacturer data (company id 0x5258 stripped):
 #   [0] record type   [1] hardware revision   [2] firmware major.minor (BCD)
-#   [3] firmware patch   [4:6] device number (u16, identifies the tag type)
-#   [6] battery %   [7] chip type << 4 | tx power   [8:] not read by the app
+#   [3] firmware patch   [4:6] device number (u16, the tag type)
+#   [6] battery %   [7] chip type << 4 | tx power
 # The tag alternates this record with a 2-byte `ff 01` payload under the
 # same company id; the record-type check rejects that one.
 RECORD_TYPES = frozenset({0xFD, 0xFE, 0xFC, 0x04})
@@ -55,121 +45,81 @@ def parse_advertisement(data: bytes | None) -> Advertisement | None:
     )
 
 
-# XTEK container header after the length field: image count 1, offset of
-# the (only) image record 17, then the record's x 0 and y 0; width and
-# height follow. OBJECT_FLAG is the record's compression byte, 1 = RLE.
-OBJECT_METADATA = bytes.fromhex("01000000110000000000000000")
-OBJECT_FLAG = b"\x01"
-
-
-def buffer_size(preset: DevicePreset) -> tuple[int, int]:
-    """Native buffer dimensions: the as-viewed size, swapped when the panel scans the other way."""
-    if preset.extra.get("rotation", 0) % 180:
-        return preset.height, preset.width
-    return preset.width, preset.height
-
-
 def row_bytes(width: int) -> int:
-    """Packed bytes per row: four pixels per byte, the row padded to a multiple of four."""
-    return math.ceil(width / 4)
+    """Packed bytes per buffer row: four pixels per byte, padded to a whole byte."""
+    return (width + 3) // 4
 
 
-def pack_pixels(image: Image.Image, preset: DevicePreset) -> bytes:
-    """Rotate into the native buffer, then pack four pixels per byte, first pixel in the high bits."""
-    if image.size != (preset.width, preset.height):
-        raise ValueError(f"XTE requires a {preset.width}x{preset.height} image")
-    rotation = preset.extra.get("rotation", 0)
-    if rotation:
-        image = image.rotate(rotation, expand=True)
-    width, height = image.size
-    palette = PALETTES[preset.colors]
-    # Quantize using a fixed palette without dithering, like the HA renderer.
-    color_cache = {color: index for index, color in enumerate(palette)}
-
-    def code(pixel: tuple[int, int, int]) -> int:
-        value = color_cache.get(pixel)
-        if value is None:
-            value = min(
-                range(4), key=lambda n: sum((pixel[c] - palette[n][c]) ** 2 for c in range(3))
-            )
-            color_cache[pixel] = value
-        return value
-
-    raw = image.convert("RGB").tobytes()
-    stride = width * 3
-    padding = (-width) % 4  # padded pixels pack as code 0 (black)
-    result = bytearray()
-    for y in range(height):
-        row = raw[y * stride : (y + 1) * stride]
-        codes = [code(p) for p in zip(row[0::3], row[1::3], row[2::3], strict=True)]
-        codes.extend([0] * padding)
-        for i in range(0, len(codes), 4):
-            result.append(
-                (codes[i] << 6) | (codes[i + 1] << 4) | (codes[i + 2] << 2) | codes[i + 3]
-            )
-    return bytes(result)
-
-
-def encode_rle(data: bytes) -> bytes:
-    """Encode (count, value) runs, splitting runs at 255 bytes."""
-    output = bytearray()
-    pos = 0
-    while pos < len(data):
+def run_length(data: bytes) -> bytes:
+    """(count, value) pairs, runs split at 255 bytes."""
+    out = bytearray()
+    pos, total = 0, len(data)
+    while pos < total:
+        value = data[pos]
         end = pos + 1
-        while end < len(data) and end - pos < 255 and data[end] == data[pos]:
+        while end < total and end - pos < 255 and data[end] == value:
             end += 1
-        output.extend((end - pos, data[pos]))
+        out += bytes((end - pos, value))
         pos = end
-    return bytes(output)
+    return bytes(out)
 
 
-def make_image_object(pixels: bytes, width: int, height: int) -> bytes:
-    """Build the XTEK container (one full-screen image record) around packed buffer rows."""
-    expected = row_bytes(width) * height
-    if len(pixels) != expected:
-        raise ValueError(f"Expected {expected} bytes of packed XTE pixels")
-    # The captured encoder resets its run at byte 15000, halfway through the
-    # frame. Preserve that boundary even when both adjacent bytes are equal.
-    midpoint = len(pixels) // 2
-    compressed = encode_rle(pixels[:midpoint]) + encode_rle(pixels[midpoint:])
-    body = (
-        OBJECT_METADATA
-        + width.to_bytes(4, "big")
-        + height.to_bytes(4, "big")
-        + OBJECT_FLAG
-        + len(compressed).to_bytes(4, "big")
-        + compressed
-    )
-    return (
-        b"XTEK"
-        + (sum(body) & 0xFFFFFFFF).to_bytes(4, "big")
-        + (12 + len(body)).to_bytes(4, "big")
-        + body
-    )
+# After the length field: image count 1, offset 17 of the one image record,
+# the record's x 0 and y 0; width, height, compression (1 = RLE) and the
+# compressed size follow.
+OBJECT_HEADER = bytes.fromhex("01000000110000000000000000")
+COMPRESSION_RLE = 1
 
 
-def make_command(payload: bytes) -> bytes:
-    """Control frames use a one-byte total length and payload checksum."""
+def image_object(pixels: bytes, width: int, height: int) -> bytes:
+    """The XTEK container: one full-screen record of run-length packed rows."""
+    if len(pixels) != row_bytes(width) * height:
+        raise ValueError(f"Expected {row_bytes(width) * height} bytes of packed XTE pixels")
+    # The tag's encoder restarts its run halfway through the frame; keep that
+    # boundary even when the bytes either side of it are equal.
+    half = len(pixels) // 2
+    data = run_length(pixels[:half]) + run_length(pixels[half:])
+    body = OBJECT_HEADER + struct.pack(">IIBI", width, height, COMPRESSION_RLE, len(data)) + data
+    return b"XTEK" + struct.pack(">II", sum(body) & 0xFFFFFFFF, 12 + len(body)) + body
+
+
+def command(payload: bytes) -> bytes:
+    """Control frame: `XTE 01`, total length (u8), payload checksum, payload."""
     if len(payload) > 249:
         raise ValueError("XTE command too long")
     return b"XTE\x01" + bytes((6 + len(payload), sum(payload) & 0xFF)) + payload
 
 
-def make_blocks(image_object: bytes) -> list[bytes]:
-    """Frame the object into numbered, checksummed logical blocks."""
-    count = math.ceil(len(image_object) / BLOCK_DATA_SIZE)
+def blocks(obj: bytes) -> list[bytes]:
+    """The object in numbered, checksummed blocks of up to 1211 data bytes."""
+    count = (len(obj) + BLOCK_DATA_SIZE - 1) // BLOCK_DATA_SIZE
     if not 1 <= count <= 255:
         raise ValueError("Invalid XTE block count")
-    blocks = []
+    out = []
     for number in range(count):
         payload = (
-            bytes((count, number))
-            + image_object[number * BLOCK_DATA_SIZE : (number + 1) * BLOCK_DATA_SIZE]
+            bytes((count, number)) + obj[number * BLOCK_DATA_SIZE : (number + 1) * BLOCK_DATA_SIZE]
         )
-        blocks.append(
-            b"XTE\x02"
-            + (7 + len(payload)).to_bytes(2, "big")
-            + bytes((sum(payload) & 0xFF,))
-            + payload
-        )
-    return blocks
+        out.append(b"XTE\x02" + struct.pack(">HB", 7 + len(payload), sum(payload) & 0xFF) + payload)
+    return out
+
+
+def check_reply(frame: bytes, expected: bytes) -> bool:
+    """True for the `XTE 04` reply carrying `expected`; other notifications are ignored.
+
+    A malformed reply, or one with another body, raises: only the known
+    positive replies count as success.
+    """
+    if not frame.startswith(b"XTE\x04"):
+        return False
+    if len(frame) < 6:
+        raise ValueError("Truncated XTE response")
+    length = frame[4]
+    if length < 7 or length > len(frame):
+        raise ValueError("Invalid XTE response length")
+    body = frame[6:length]
+    if sum(body) & 0xFF != frame[5]:
+        raise ValueError("Invalid XTE response checksum")
+    if body != expected:
+        raise ValueError(f"Unexpected XTE response: {body.hex()}")
+    return True

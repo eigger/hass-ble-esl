@@ -15,8 +15,9 @@ from ..base import (
     WriteResult,
 )
 from . import writer
-from .const import MANUFACTURER_ID, PALETTES, UNSUPPORTED_PACKING_DEVICE_NUMBERS
+from .const import MANUFACTURER_ID, UNSUPPORTED_PACKING_DEVICE_NUMBERS
 from .devices import PRESETS, preset_for_advertisement
+from .image import PALETTES
 from .parser import XteBluetoothDeviceData, is_xte_advertisement
 from .protocol import parse_advertisement
 

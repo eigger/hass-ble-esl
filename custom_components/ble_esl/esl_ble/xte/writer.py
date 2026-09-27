@@ -1,80 +1,90 @@
-"""XTE BLE session and image writer."""
+"""XTE write session: start command, blocks, end command, each command answered."""
 
 from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable
 import logging
+from typing import TYPE_CHECKING
 
-from bleak import BleakClient
 from blesession import Notifications, SessionTrace
-from PIL import Image
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
-from .const import NOTIFY_SETTLE_S, NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
-from .protocol import buffer_size, make_blocks, make_command, make_image_object, pack_pixels
+from .const import (
+    CMD_END,
+    CMD_START,
+    MAX_CHUNK,
+    MIN_CHUNK,
+    NOTIFY_SETTLE_S,
+    NOTIFY_UUID,
+    REPLY_END,
+    REPLY_START,
+    REPLY_TIMEOUT_S,
+    SERVICE_UUID,
+    WRITE_UUID,
+)
+from .image import buffer_size, encode_image
+from .protocol import blocks, check_reply, command, image_object
+
+if TYPE_CHECKING:
+    from bleak import BleakClient
+    from bleak.backends.characteristic import BleakGATTCharacteristic
+    from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class XteClient:
-    """Send the observed transaction, requiring both application responses."""
+def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
+    """Encode `image` into an XTEK object; CPU-bound, so callers run it in a worker thread."""
+    return image_object(encode_image(image, preset), *buffer_size(preset))
 
-    def __init__(self, client, pacing_s: float = 0.0, trace: SessionTrace | None = None):
+
+async def write_session(
+    client: BleakClient,
+    address: str,
+    preset: DevicePreset,
+    prepared: Awaitable[bytes],
+    *,
+    pacing_s: float = 0.0,
+    trace: SessionTrace,
+) -> WriteResult:
+    """Send the object once the link is up."""
+    obj = await prepared
+    await XteSession(client, pacing_s=pacing_s).send(obj, trace=trace)
+    return WriteResult(success=True)
+
+
+class XteSession:
+    """One connected XTE tag."""
+
+    def __init__(self, client: BleakClient, *, pacing_s: float = 0.0) -> None:
         self.client = client
-        self.delay = max(0.0, pacing_s)
-        self.timeout = 5.0
-        self.settle = NOTIFY_SETTLE_S
-        self.trace = trace if trace is not None else SessionTrace()
-        self._replies: Notifications | None = None
+        self.pacing_s = max(0.0, pacing_s)
+        self.settle_s = NOTIFY_SETTLE_S
+        self.reply_timeout_s = REPLY_TIMEOUT_S
 
-    async def _write(self, characteristic, data: bytes, chunk_size: int) -> None:
-        """Write one logical frame (command or block) as consecutive ATT chunks."""
-        for offset in range(0, len(data), chunk_size):
-            await self.client.write_gatt_char(
-                characteristic, data[offset : offset + chunk_size], response=False
-            )
-        # Pause per logical frame, not per ATT chunk: with a 20-byte write
-        # limit a frame is up to 61 chunks, and a per-chunk retry delay would
-        # stretch a single attempt to minutes.
-        if self.delay:
-            await asyncio.sleep(self.delay)
+    async def send(self, obj: bytes, *, trace: SessionTrace | None = None) -> None:
+        """Announce the object, write its blocks, then end; both commands must be answered."""
+        if trace is None:
+            trace = SessionTrace()
+        write_char, notify_char = self._characteristics()
+        size = self.chunk_size(write_char)
+        frames = blocks(obj)
+        trace.note(settle_s=self.settle_s, parts=len(frames), bytes=len(obj), chunk_size=size)
+        async with Notifications(self.client, notify_char, settle=self.settle_s) as replies:
+            with trace.timed(STAGE_HANDSHAKE):
+                start = bytes((CMD_START,)) + len(obj).to_bytes(4, "big")
+                await self._command(replies, write_char, start, size, REPLY_START)
+            # Blocks are not acknowledged, so the transfer stage is pacing plus
+            # the write-without-response throughput.
+            with trace.timed(STAGE_TRANSFER):
+                for frame in frames:
+                    await self._write(write_char, frame, size)
+            # The end command is answered once the tag has taken the image.
+            with trace.timed(STAGE_FINISH):
+                await self._command(replies, write_char, bytes((CMD_END, 0)), size, REPLY_END)
 
-    @staticmethod
-    def _expecting(expected_payload: bytes):
-        """Accept the XTE\x04 frame whose body is `expected_payload`; raise on any other."""
-
-        def accept(response: bytes) -> bool:
-            if not response.startswith(b"XTE\x04"):
-                return False
-            if len(response) < 6:
-                raise ValueError("Truncated XTE response")
-            length = response[4]
-            if length < 7 or length > len(response):
-                raise ValueError("Invalid XTE response length")
-            body = response[6:length]
-            if sum(body) & 0xFF != response[5]:
-                raise ValueError("Invalid XTE response checksum")
-            # Only the captured positive responses are currently known.
-            # Never treat an arbitrary notification as transfer success.
-            if body != expected_payload:
-                raise ValueError(f"Unexpected XTE response: {body.hex()}")
-            return True
-
-        return accept
-
-    async def _command(
-        self, characteristic, payload: bytes, chunk_size: int, expected_payload: bytes
-    ) -> None:
-        assert self._replies is not None, "inside write_object()'s notification session"
-        self._replies.clear()
-        await self._write(characteristic, make_command(payload), chunk_size)
-        await self._replies.wait_for(
-            self._expecting(expected_payload), self.timeout, step=f"command {payload[0]:#04x}"
-        )
-
-    async def write_object(self, image_object: bytes) -> None:
-        """Send an already-encoded XTEK object; the stages land on `self.trace`."""
+    def _characteristics(self) -> tuple[BleakGATTCharacteristic, BleakGATTCharacteristic]:
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
             raise ValueError("XTE service missing")
@@ -87,55 +97,40 @@ class XteClient:
             or "notify" not in notify_char.properties
         ):
             raise ValueError("XTE characteristic properties do not match")
-        chunk_size = min(244, write_char.max_write_without_response_size)
-        # 244 is the captured upper bound, not a minimum ATT payload. Preserve
-        # each XTE block and its checksum while splitting its byte stream to
-        # fit the backend's advertised write limit (often 20 on some backends).
-        if chunk_size < 20:
-            raise ValueError(f"Invalid XTE write-without-response size: {chunk_size}")
-        _LOGGER.debug("XTE write chunk size: %s bytes", chunk_size)
-        blocks = make_blocks(image_object)
-        trace = self.trace
-        trace.note(
-            settle_s=self.settle,
-            parts=len(blocks),
-            bytes=len(image_object),
-            chunk_size=chunk_size,
+        return write_char, notify_char
+
+    @staticmethod
+    def chunk_size(write_char: BleakGATTCharacteristic) -> int:
+        """The backend's write-without-response limit, at most 244 bytes."""
+        size = min(MAX_CHUNK, write_char.max_write_without_response_size)
+        if size < MIN_CHUNK:
+            raise ValueError(f"Invalid XTE write-without-response size: {size}")
+        _LOGGER.debug("XTE write chunk size: %s bytes", size)
+        return size
+
+    async def _command(
+        self,
+        replies: Notifications,
+        char: BleakGATTCharacteristic,
+        payload: bytes,
+        size: int,
+        expected: bytes,
+    ) -> None:
+        replies.clear()
+        await self._write(char, command(payload), size)
+        await replies.wait_for(
+            lambda frame: check_reply(frame, expected),
+            self.reply_timeout_s,
+            step=f"command {payload[0]:#04x}",
         )
-        async with Notifications(self.client, notify_char, settle=self.settle) as replies:
-            self._replies = replies
-            with trace.timed(STAGE_HANDSHAKE):
-                await self._command(
-                    write_char,
-                    b"\x01" + len(image_object).to_bytes(4, "big"),
-                    chunk_size,
-                    bytes.fromhex("01ffbd"),
-                )
-            # Blocks are not acknowledged individually, so the transfer stage
-            # is pacing plus the backend's write-without-response throughput.
-            with trace.timed(STAGE_TRANSFER):
-                for block in blocks:
-                    await self._write(write_char, block, chunk_size)
-            # The end command is answered once the tag has taken the image.
-            with trace.timed(STAGE_FINISH):
-                await self._command(write_char, b"\x04\x00", chunk_size, bytes.fromhex("04ff"))
 
+    async def _write(self, char: BleakGATTCharacteristic, frame: bytes, size: int) -> None:
+        """One command or block as consecutive ATT writes, then the pacing pause.
 
-def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
-    """Pack and RLE-encode an image into an XTEK object (CPU-bound, run in a thread)."""
-    width, height = buffer_size(preset)
-    return make_image_object(pack_pixels(image, preset), width, height)
-
-
-async def write_session(
-    client: BleakClient,
-    address: str,
-    preset: DevicePreset,
-    prepared: Awaitable[bytes],
-    *,
-    pacing_s: float = 0.0,
-    trace: SessionTrace,
-) -> WriteResult:
-    """Send an encoded XTEK object over an open link."""
-    await XteClient(client, pacing_s, trace).write_object(await prepared)
-    return WriteResult(success=True)
+        The pause is per frame, not per ATT write: at a 20-byte limit a block
+        is up to 61 writes.
+        """
+        for offset in range(0, len(frame), size):
+            await self.client.write_gatt_char(char, frame[offset : offset + size], response=False)
+        if self.pacing_s:
+            await asyncio.sleep(self.pacing_s)
