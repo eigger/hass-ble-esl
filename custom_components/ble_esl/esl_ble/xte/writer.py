@@ -28,6 +28,7 @@ from .protocol import blocks, check_reply, command, image_object
 
 if TYPE_CHECKING:
     from bleak import BleakClient
+    from bleak.backends.characteristic import BleakGATTCharacteristic
     from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class XteSession:
             with trace.timed(STAGE_FINISH):
                 await self._command(replies, write_char, bytes((CMD_END, 0)), size, REPLY_END)
 
-    def _characteristics(self):
+    def _characteristics(self) -> tuple[BleakGATTCharacteristic, BleakGATTCharacteristic]:
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
             raise ValueError("XTE service missing")
@@ -99,7 +100,7 @@ class XteSession:
         return write_char, notify_char
 
     @staticmethod
-    def chunk_size(write_char) -> int:
+    def chunk_size(write_char: BleakGATTCharacteristic) -> int:
         """The backend's write-without-response limit, at most 244 bytes."""
         size = min(MAX_CHUNK, write_char.max_write_without_response_size)
         if size < MIN_CHUNK:
@@ -108,7 +109,12 @@ class XteSession:
         return size
 
     async def _command(
-        self, replies: Notifications, char, payload: bytes, size: int, expected: bytes
+        self,
+        replies: Notifications,
+        char: BleakGATTCharacteristic,
+        payload: bytes,
+        size: int,
+        expected: bytes,
     ) -> None:
         replies.clear()
         await self._write(char, command(payload), size)
@@ -118,7 +124,7 @@ class XteSession:
             step=f"command {payload[0]:#04x}",
         )
 
-    async def _write(self, char, frame: bytes, size: int) -> None:
+    async def _write(self, char: BleakGATTCharacteristic, frame: bytes, size: int) -> None:
         """One command or block as consecutive ATT writes, then the pacing pause.
 
         The pause is per frame, not per ATT write: at a 20-byte limit a block
