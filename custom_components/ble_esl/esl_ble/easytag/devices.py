@@ -1,135 +1,53 @@
-"""Device presets and choices for easyTag ESL protocol."""
+"""easyTag model catalog; the model code is printed on the tag."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..base import (
-    CONFIDENCE_HARDWARE,
-    CONFIDENCE_REPORTED,
-    DevicePreset,
-)
+from ..base import CONFIDENCE_HARDWARE, CONFIDENCE_REPORTED, DevicePreset
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
+
+def _preset(
+    key: str,
+    name: str,
+    width: int,
+    height: int,
+    colors: str,
+    confidence: str = CONFIDENCE_REPORTED,
+) -> DevicePreset:
+    return DevicePreset(
+        key=key,
+        display_name=name,
+        width=width,
+        height=height,
+        colors=colors,
+        confidence=confidence,
+        extra={"dither": True},
+    )
+
+
 PRESETS: dict[str, DevicePreset] = {
-    "33": DevicePreset(
-        key="33",
-        display_name='1.54" BWR (ET0154-33B)',
-        width=200,
-        height=200,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "36": DevicePreset(
-        key="36",
-        display_name='2.13" BWR (ETR0213-36B)',
-        width=250,
-        height=122,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "39": DevicePreset(
-        key="39",
-        display_name='2.13" BW (ETR0213-39B)',
-        width=250,
-        height=122,
-        colors="BW",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "3A": DevicePreset(
-        key="3A",
-        display_name='2.66" BWR (ET0266-3A)',
-        width=296,
-        height=152,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "3D": DevicePreset(
-        key="3D",
-        display_name='2.9" BWR (ET0290-3DB)',
-        width=296,
-        height=128,
-        colors="BWR",
-        confidence=CONFIDENCE_HARDWARE,
-        extra={"dither": True},
-    ),
-    "FF": DevicePreset(
-        key="FF",
-        display_name='2.9" BWR Gen1 (ETR290-FF)',
-        width=296,
-        height=128,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "55": DevicePreset(
-        key="55",
-        display_name='3.5" BWR (ET0350-55B)',
-        width=384,
-        height=184,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "40": DevicePreset(
-        key="40",
-        display_name='4.2" BWR (ET0420-40B)',
-        width=400,
-        height=300,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "43": DevicePreset(
-        key="43",
-        display_name='4.2" BWR (ET0420-43B)',
-        width=400,
-        height=300,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "4F": DevicePreset(
-        key="4F",
-        display_name='5.8" BWR (ETR0580-4FB)',
-        width=648,
-        height=480,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "44": DevicePreset(
-        key="44",
-        display_name='7.5" BWR (ET0750-44B)',
-        width=800,
-        height=480,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
-    "64": DevicePreset(
-        key="64",
-        display_name='10.2" BWR (ET1020-64)',
-        width=960,
-        height=640,
-        colors="BWR",
-        confidence=CONFIDENCE_REPORTED,
-        extra={"dither": True},
-    ),
+    preset.key: preset
+    for preset in (
+        _preset("33", '1.54" BWR (ET0154-33B)', 200, 200, "BWR"),
+        _preset("36", '2.13" BWR (ETR0213-36B)', 250, 122, "BWR"),
+        _preset("39", '2.13" BW (ETR0213-39B)', 250, 122, "BW"),
+        _preset("3A", '2.66" BWR (ET0266-3A)', 296, 152, "BWR"),
+        _preset("3D", '2.9" BWR (ET0290-3DB)', 296, 128, "BWR", CONFIDENCE_HARDWARE),
+        _preset("FF", '2.9" BWR Gen1 (ETR290-FF)', 296, 128, "BWR"),
+        _preset("55", '3.5" BWR (ET0350-55B)', 384, 184, "BWR"),
+        _preset("40", '4.2" BWR (ET0420-40B)', 400, 300, "BWR"),
+        _preset("43", '4.2" BWR (ET0420-43B)', 400, 300, "BWR"),
+        _preset("4F", '5.8" BWR (ETR0580-4FB)', 648, 480, "BWR"),
+        _preset("44", '7.5" BWR (ET0750-44B)', 800, 480, "BWR"),
+        _preset("64", '10.2" BWR (ET1020-64)', 960, 640, "BWR"),
+    )
 }
 
 
 def preset_for_advertisement(service_info: BluetoothServiceInfoBleak | None) -> DevicePreset | None:
-    """The preset the advertisement names, or None.
-
-    No easyTag advertisement field is known to name the panel yet, so every
-    tag is picked by hand. Once one is captured next to a known model, key
-    the presets on it here, as WOLINK does with its display version.
-    """
+    """The preset the advertisement names; no advertisement field is known to, yet."""
     return None

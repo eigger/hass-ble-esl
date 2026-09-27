@@ -1,4 +1,4 @@
-"""easyTag (eLabel) Protocol Backend."""
+"""easyTag protocol backend (tags sold as Zhsunyco)."""
 
 from __future__ import annotations
 
@@ -14,11 +14,11 @@ if TYPE_CHECKING:
 
 
 class EasyTagBleBackend(BleBackend):
-    """easyTag (eLabel) BLE backend."""
+    """easyTag BLE backend."""
 
     id = "easytag"
     label = "easyTag"
-    name = "easyTag (eLabel)"
+    name = "easyTag"
     capabilities = Capabilities(
         passive_battery=False,
         session_battery=True,

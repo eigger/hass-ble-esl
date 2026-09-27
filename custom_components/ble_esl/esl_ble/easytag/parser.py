@@ -1,4 +1,4 @@
-"""Parser for easyTag BLE advertisements."""
+"""easyTag advertisement parser."""
 
 from __future__ import annotations
 
@@ -12,18 +12,14 @@ if TYPE_CHECKING:
 
 
 def is_easytag_advertisement(data: BluetoothServiceInfoBleak) -> bool:
-    """Return True if advertisement matches easyTag service UUID or name prefix."""
-    if any(isinstance(u, str) and u.lower() == SERVICE_UUID.lower() for u in data.service_uuids):
+    """The easyTag service UUID, or a name starting with "easyTag"."""
+    if SERVICE_UUID in {uuid.lower() for uuid in data.service_uuids if isinstance(uuid, str)}:
         return True
     return isinstance(data.name, str) and data.name.startswith(NAME_PREFIX)
 
 
 class EasyTagBluetoothDeviceData(BleParser):
-    """Data parser for easyTag Bluetooth ESL devices.
-
-    easyTag advertisements carry no readings; battery and temperature come
-    from the write session instead.
-    """
+    """easyTag advertisements carry no readings; battery and temperature come from writes."""
 
     brand = BRAND
     fallback_name = "easyTag"
