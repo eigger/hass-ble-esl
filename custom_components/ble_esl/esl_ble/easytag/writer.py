@@ -46,24 +46,26 @@ async def write_session(
 ) -> WriteResult:
     """Send the frames once the link is up; the reply carries battery and temperature."""
     frames = await prepared
-    return await EasyTagSession(client, address).send(frames, pacing_s=pacing_s, trace=trace)
+    return await EasyTagSession(client, address, pacing_s=pacing_s).send(frames, trace=trace)
 
 
 class EasyTagSession:
     """One connected easyTag tag."""
 
-    def __init__(self, client: BleakClient, address: str) -> None:
+    def __init__(self, client: BleakClient, address: str, *, pacing_s: float = 0.0) -> None:
         self.client = client
         self.address = address
+        self.pacing_s = max(0.0, pacing_s)
 
     async def send(
         self,
         frames: list[bytes],
         *,
-        pacing_s: float = 0.0,
+        pacing_s: float | None = None,
         trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Write every frame unacknowledged, then wait for the tag's single reply."""
+        pacing = self.pacing_s if pacing_s is None else max(0.0, pacing_s)
         if trace is None:
             trace = SessionTrace()
         settle = NOTIFY_SETTLE_S + PRE_HEADER_S
@@ -74,7 +76,7 @@ class EasyTagSession:
                 for index, frame in enumerate(frames):
                     await self.client.write_gatt_char(WRITE_UUID, frame, response=False)
                     extra = EVERY_FIFTH_EXTRA_S if index % 5 == 0 else 0.0
-                    await asyncio.sleep(PACKET_GAP_S + pacing_s + extra)
+                    await asyncio.sleep(PACKET_GAP_S + pacing + extra)
             with trace.timed(STAGE_FINISH):
                 frame = await replies.next(REPLY_TIMEOUT_S, step="image frames")
                 if not frame:

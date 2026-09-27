@@ -104,6 +104,10 @@ def blocks(obj: bytes) -> list[bytes]:
     return out
 
 
+class XteError(Exception):
+    """The tag or protocol reported an error."""
+
+
 def check_reply(frame: bytes, expected: bytes) -> bool:
     """True for the `XTE 04` reply carrying `expected`; other notifications are ignored.
 
@@ -113,13 +117,13 @@ def check_reply(frame: bytes, expected: bytes) -> bool:
     if not frame.startswith(b"XTE\x04"):
         return False
     if len(frame) < 6:
-        raise ValueError("Truncated XTE response")
+        raise XteError("Truncated XTE response")
     length = frame[4]
     if length < 7 or length > len(frame):
-        raise ValueError("Invalid XTE response length")
+        raise XteError("Invalid XTE response length")
     body = frame[6:length]
     if sum(body) & 0xFF != frame[5]:
-        raise ValueError("Invalid XTE response checksum")
+        raise XteError("Invalid XTE response checksum")
     if body != expected:
-        raise ValueError(f"Unexpected XTE response: {body.hex()}")
+        raise XteError(f"Unexpected XTE response: {body.hex()}")
     return True

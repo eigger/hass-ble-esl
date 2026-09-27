@@ -24,7 +24,7 @@ from .const import (
     WRITE_UUID,
 )
 from .image import buffer_size, encode_image
-from .protocol import blocks, check_reply, command, image_object
+from .protocol import XteError, blocks, check_reply, command, image_object
 
 if TYPE_CHECKING:
     from bleak import BleakClient
@@ -50,15 +50,16 @@ async def write_session(
 ) -> WriteResult:
     """Send the object once the link is up."""
     obj = await prepared
-    await XteSession(client, pacing_s=pacing_s).send(obj, trace=trace)
+    await XteSession(client, address, pacing_s=pacing_s).send(obj, trace=trace)
     return WriteResult(success=True)
 
 
 class XteSession:
     """One connected XTE tag."""
 
-    def __init__(self, client: BleakClient, *, pacing_s: float = 0.0) -> None:
+    def __init__(self, client: BleakClient, address: str, *, pacing_s: float = 0.0) -> None:
         self.client = client
+        self.address = address
         self.pacing_s = max(0.0, pacing_s)
         self.settle_s = NOTIFY_SETTLE_S
         self.reply_timeout_s = REPLY_TIMEOUT_S
@@ -87,25 +88,24 @@ class XteSession:
     def _characteristics(self) -> tuple[BleakGATTCharacteristic, BleakGATTCharacteristic]:
         service = self.client.services.get_service(SERVICE_UUID)
         if service is None:
-            raise ValueError("XTE service missing")
+            raise XteError("XTE service missing")
         write_char = service.get_characteristic(WRITE_UUID)
         notify_char = service.get_characteristic(NOTIFY_UUID)
         if write_char is None or notify_char is None:
-            raise ValueError("XTE characteristics missing")
+            raise XteError("XTE characteristics missing")
         if (
             "write-without-response" not in write_char.properties
             or "notify" not in notify_char.properties
         ):
-            raise ValueError("XTE characteristic properties do not match")
+            raise XteError("XTE characteristic properties do not match")
         return write_char, notify_char
 
-    @staticmethod
-    def chunk_size(write_char: BleakGATTCharacteristic) -> int:
+    def chunk_size(self, write_char: BleakGATTCharacteristic) -> int:
         """The backend's write-without-response limit, at most 244 bytes."""
         size = min(MAX_CHUNK, write_char.max_write_without_response_size)
         if size < MIN_CHUNK:
-            raise ValueError(f"Invalid XTE write-without-response size: {size}")
-        _LOGGER.debug("XTE write chunk size: %s bytes", size)
+            raise XteError(f"Invalid XTE write-without-response size: {size}")
+        _LOGGER.debug("XTE %s write chunk size: %s bytes", self.address, size)
         return size
 
     async def _command(
@@ -119,10 +119,14 @@ class XteSession:
         replies.clear()
         await self._write(char, command(payload), size)
         await replies.wait_for(
-            lambda frame: check_reply(frame, expected),
+            lambda frame: self._check_reply(frame, expected),
             self.reply_timeout_s,
             step=f"command {payload[0]:#04x}",
         )
+
+    def _check_reply(self, frame: bytes, expected: bytes) -> bool:
+        _LOGGER.debug("XTE status from %s: %s", self.address, frame.hex())
+        return check_reply(frame, expected)
 
     async def _write(self, char: BleakGATTCharacteristic, frame: bytes, size: int) -> None:
         """One command or block as consecutive ATT writes, then the pacing pause.

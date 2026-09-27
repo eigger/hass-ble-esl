@@ -90,12 +90,18 @@ class PickSmartSession:
         self.command_uuid = command_uuid
         self.image_uuid = image_uuid
         self.address = address
-        self.pacing_s = pacing_s
+        self.pacing_s = max(0.0, pacing_s)
 
     async def send(
-        self, payload: bytes, *, quicklz: bool, trace: SessionTrace | None = None
+        self,
+        payload: bytes,
+        *,
+        quicklz: bool,
+        pacing_s: float | None = None,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Open the transfer, then answer the tag's part requests until it has them all."""
+        pacing = self.pacing_s if pacing_s is None else max(0.0, pacing_s)
         if trace is None:
             trace = SessionTrace()
         trace.note(settle_s=NOTIFY_SETTLE_S, bytes=len(payload))
@@ -103,7 +109,7 @@ class PickSmartSession:
             with trace.timed(STAGE_HANDSHAKE):
                 part = await self._open(replies, len(payload), quicklz, trace)
             trace.note(parts=part_count(len(payload)))
-            await self._send_parts(replies, payload, part, trace)
+            await self._send_parts(replies, payload, part, trace, pacing=pacing)
         return WriteResult(success=True)
 
     async def _open(
@@ -149,7 +155,13 @@ class PickSmartSession:
         return part
 
     async def _send_parts(
-        self, replies: Notifications, payload: bytes, part: int, trace: SessionTrace
+        self,
+        replies: Notifications,
+        payload: bytes,
+        part: int,
+        trace: SessionTrace,
+        *,
+        pacing: float = 0.0,
     ) -> None:
         """Send each part the tag asks for; asking for the same part again means resend.
 
@@ -172,6 +184,7 @@ class PickSmartSession:
                         data_packet(part, payload),
                         f"part {part}/{total}",
                         pace=True,
+                        pacing=pacing,
                     )
                     if is_done_reply(reply):
                         # Anything before the last part is a short transfer,
@@ -229,10 +242,12 @@ class PickSmartSession:
         timeout: float | None = None,
         *,
         pace: bool = False,
+        pacing: float | None = None,
     ) -> bytes:
         """Write `packet` and return the tag's reply; `pace` adds the retry pacing."""
         replies.clear()
         await self.client.write_gatt_char(uuid, packet, response=False)
-        if pace and self.pacing_s > 0:
-            await asyncio.sleep(self.pacing_s)
+        delay = self.pacing_s if pacing is None else pacing
+        if pace and delay > 0:
+            await asyncio.sleep(delay)
         return await replies.next(REPLY_TIMEOUT_S if timeout is None else timeout, step=step)
