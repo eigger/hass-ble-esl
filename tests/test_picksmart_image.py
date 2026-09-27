@@ -34,9 +34,9 @@ def test_planes_are_white_then_red():
     assert encode_image(image, preset(8, 1, "BW")) == bytes([0b10010000])
 
 
-def test_inverted_panel_sets_the_white_bit_for_black():
+def test_black_plane_marks_black_pixels():
     image = row(WHITE, BLACK, RED, WHITE, BLACK, BLACK, BLACK, RED)
-    assert encode_image(image, preset(8, 1, invert_luminance=True))[0] == 0b01001110
+    assert encode_image(image, preset(8, 1, black_plane=True))[0] == 0b01001110
 
 
 def test_2bpp_codes_and_priority():

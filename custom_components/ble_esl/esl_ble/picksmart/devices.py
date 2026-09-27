@@ -20,7 +20,7 @@ def _preset(
     mirror_y: bool = False,
     encoding: str | None = None,
     resample: tuple[int, int] | None = None,
-    invert_luminance: bool = False,
+    black_plane: bool = False,
 ) -> DevicePreset:
     encoding = encoding or ("2bpp" if colors == "BWRY" else "planes")
     if encoding not in ENCODINGS:
@@ -33,8 +33,8 @@ def _preset(
     }
     if resample:
         extra["resample"] = resample
-    if invert_luminance:
-        extra["invert_luminance"] = True
+    if black_plane:
+        extra["black_plane"] = True
     key = f"0x{device_id:04X}"
     return DevicePreset(
         key=key,
@@ -78,7 +78,7 @@ PRESETS: dict[str, DevicePreset] = {
             "BWR",
             mirror_y=True,
             encoding="quicklz",
-            invert_luminance=True,
+            black_plane=True,
         ),
         _preset(0x008B, '10.2" EPD BWR', 960, 640, "BWR", encoding="quicklz"),
     )

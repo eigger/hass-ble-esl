@@ -1,7 +1,7 @@
 """PickSmart image payload: the picture in scan order, packed in the preset's encoding.
 
 Encodings (`extra["encoding"]`):
-  planes   a white bit plane, then a red one on BWR
+  planes   a white bit plane (a black one with `black_plane`), then a red one on BWR
   lines    the planes cut into lines, each behind a 7-byte `75` header
   quicklz  the planes, QuickLZ compressed
   2bpp     four pixels per byte (00 black, 01 white, 10 yellow, 11 red)
@@ -26,22 +26,22 @@ LINE_HEADER = 0x75
 def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
     """The payload for `preset`."""
     scanned = scan_order(image, preset)
-    masks = ColorMasks(scanned, invert=preset.extra.get("invert_luminance", False))
+    masks = ColorMasks(scanned)
     encoding = preset.extra.get("encoding", "planes")
     if encoding == "2bpp":
         return pack_2bpp(masks)
+    first = pack_bits(masks.black if preset.extra.get("black_plane") else masks.white)
     if encoding == "quicklz":
         # This firmware counts a pixel as red without looking at blue.
-        planes = pack_bits(masks.white) + pack_bits(masks.red_loose)
+        planes = first + pack_bits(masks.red_loose)
         try:
             return compress(planes)
         except Exception:
             return planes
-    white = pack_bits(masks.white)
     red = pack_bits(masks.red) if "R" in preset.colors else None
     if encoding == "lines":
-        return line_blocks(white, red, lines=scanned.width, line_bytes=scanned.height // 8)
-    return white + red if red is not None else white
+        return line_blocks(first, red, lines=scanned.width, line_bytes=scanned.height // 8)
+    return first + red if red is not None else first
 
 
 def scan_order(image: Image.Image, preset: DevicePreset) -> Image.Image:
@@ -71,17 +71,16 @@ def scan_order(image: Image.Image, preset: DevicePreset) -> Image.Image:
 class ColorMasks:
     """Per-pixel color tests as 0/255 masks; a channel counts as lit above 128."""
 
-    def __init__(self, image: Image.Image, *, invert: bool) -> None:
+    def __init__(self, image: Image.Image) -> None:
         red, green, blue = (
             channel.point(lambda v: 255 if v > 128 else 0) for channel in image.split()
         )
         dark = [ImageChops.invert(channel) for channel in (red, green, blue)]
-        lit_all = _all(red, green, blue)
-        # An inverted panel sets the white bit for dark pixels.
-        self.white = _all(*dark) if invert else lit_all
+        self.white = _all(red, green, blue)
+        self.black = _all(*dark)
         self.red = _all(red, dark[1], dark[2])
         self.red_loose = _all(red, dark[1])
-        self.yellow = _all(green, ImageChops.invert(lit_all))
+        self.yellow = _all(green, ImageChops.invert(self.white))
         self.red_not_white = _all(red, ImageChops.invert(self.white))
 
 
@@ -114,11 +113,11 @@ def pack_2bpp(masks: ColorMasks) -> bytes:
     )
 
 
-def line_blocks(white: bytes, red: bytes | None, *, lines: int, line_bytes: int) -> bytes:
+def line_blocks(first: bytes, red: bytes | None, *, lines: int, line_bytes: int) -> bytes:
     """Total length (u32 little endian), then `lines` headed lines per plane."""
     out = bytearray(4)
     header = bytes((LINE_HEADER, line_bytes + 7, line_bytes, 0, 0, 0, 0))
-    for plane in (white, red):
+    for plane in (first, red):
         if plane is None:
             continue
         for line in range(lines):
