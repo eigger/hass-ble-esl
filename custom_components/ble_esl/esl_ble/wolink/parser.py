@@ -19,7 +19,7 @@ def is_wolink_advertisement(data: BluetoothServiceInfoBleak) -> bool:
     """WOLINK manufacturer data, or the WOLINK service UUID."""
     if MANUFACTURER_ID in data.manufacturer_data:
         return True
-    return SERVICE_UUID in {uuid.lower() for uuid in data.service_uuids}
+    return SERVICE_UUID in {uuid.lower() for uuid in data.service_uuids if isinstance(uuid, str)}
 
 
 class WolinkBluetoothDeviceData(BleParser):

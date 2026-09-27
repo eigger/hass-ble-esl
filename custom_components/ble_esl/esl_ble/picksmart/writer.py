@@ -90,12 +90,19 @@ class PickSmartSession:
         self.command_uuid = command_uuid
         self.image_uuid = image_uuid
         self.address = address
-        self.pacing_s = pacing_s
+        self.pacing_s = max(0.0, pacing_s)
 
     async def send(
-        self, payload: bytes, *, quicklz: bool, trace: SessionTrace | None = None
+        self,
+        payload: bytes,
+        *,
+        quicklz: bool,
+        pacing_s: float | None = None,
+        trace: SessionTrace | None = None,
     ) -> WriteResult:
         """Open the transfer, then answer the tag's part requests until it has them all."""
+        if pacing_s is not None:
+            self.pacing_s = max(0.0, pacing_s)
         if trace is None:
             trace = SessionTrace()
         trace.note(settle_s=NOTIFY_SETTLE_S, bytes=len(payload))

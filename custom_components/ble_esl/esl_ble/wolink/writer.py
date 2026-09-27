@@ -61,7 +61,7 @@ async def write_session(
 ) -> WriteResult:
     """Unlock, then send the picture; `prepared` is awaited once the link is up."""
     payload, raw_size = await prepared
-    session = WolinkSession(client, address)
+    session = WolinkSession(client, address, pacing_s=pacing_s)
     with trace.timed(STAGE_HANDSHAKE):
         await session.unlock()
     await session.send(payload, raw_size, pacing_s=pacing_s, trace=trace)
@@ -80,9 +80,10 @@ def refresh_timeout(raw_size: int) -> float:
 class WolinkSession:
     """One connected WOLINK tag."""
 
-    def __init__(self, client: BleakClient, address: str) -> None:
+    def __init__(self, client: BleakClient, address: str, *, pacing_s: float = 0.0) -> None:
         self.client = client
         self.address = address
+        self.pacing_s = max(0.0, pacing_s)
 
     async def unlock(self) -> None:
         """Answer the auth nonce; a wrong answer makes the tag drop the link.
@@ -107,16 +108,17 @@ class WolinkSession:
         payload: bytes,
         raw_size: int,
         *,
-        pacing_s: float = 0.0,
+        pacing_s: float | None = None,
         trace: SessionTrace | None = None,
     ) -> None:
         """Upload `payload`, then refresh and wait for the tag to go idle."""
+        pacing = self.pacing_s if pacing_s is None else max(0.0, pacing_s)
         if trace is None:
             trace = SessionTrace()
         trace.note(bytes=len(payload))
         async with Notifications(self.client, STATUS_CHAR) as status:
             with trace.timed(STAGE_TRANSFER):
-                await self.upload(payload, trace, pacing_s=pacing_s)
+                await self.upload(payload, trace, pacing_s=pacing)
                 # Frames during the upload only say busy, unless they carry an error.
                 for frame in status.clear():
                     if code := status_error(frame):
@@ -127,8 +129,11 @@ class WolinkSession:
                 )
                 await status.wait_for(self._refreshed, refresh_timeout(raw_size), step="refresh")
 
-    async def upload(self, payload: bytes, trace: SessionTrace, *, pacing_s: float = 0.0) -> None:
+    async def upload(
+        self, payload: bytes, trace: SessionTrace, *, pacing_s: float | None = None
+    ) -> None:
         """Write `payload` in MTU-sized chunks; `sends` records how far it got."""
+        pacing = self.pacing_s if pacing_s is None else max(0.0, pacing_s)
         size = self.chunk_size()
         sends = 0
         trace.note(parts=(len(payload) + size - 1) // size, sends=sends, chunk_size=size)
@@ -137,8 +142,8 @@ class WolinkSession:
                 chunk = write_data_command(offset, payload[offset : offset + size])
                 await self.client.write_gatt_char(DATA_CHAR, chunk, response=True)
                 sends += 1
-                if pacing_s > 0:
-                    await asyncio.sleep(pacing_s)
+                if pacing > 0:
+                    await asyncio.sleep(pacing)
         finally:
             trace.note(sends=sends)
 
