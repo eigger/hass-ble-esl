@@ -914,19 +914,40 @@ async def test_other_tags_write_between_a_failing_tags_attempts(
     a, b = "66:66:54:20:00:01", "66:66:54:20:00:02"
     await setup_entry(hass, address=a, options={CONF_RETRY_COUNT: 2})
     await setup_entry(hass, address=b, options={CONF_RETRY_COUNT: 2})
+
+    class QueuedLock(asyncio.Lock):
+        """Tells when a second writer waits on the BLE lock."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.queued = asyncio.Event()
+
+        async def acquire(self) -> bool:
+            if self.locked():
+                self.queued.set()
+            return await super().acquire()
+
+    lock = hass.data[DATA_LOCK] = QueuedLock()
+    first_try = asyncio.Event()
     order: list[str] = []
 
     async def hook(ble_device, preset, image, **kwargs):
         order.append(ble_device.address[-2:])
         if ble_device.address == a and order.count("01") == 1:
+            first_try.set()
+            await lock.queued.wait()  # b is waiting behind this attempt
             return fail("first try", connect=0.1)
         return ok(transfer=0.1)
 
     tag_writer.write_hook = hook
-    response = await respond(hass, "write", [device_id_of(hass, a), device_id_of(hass, b)])
+    # a's first attempt holds the lock before b is queued behind it.
+    write_a = hass.async_create_task(respond(hass, "write", device_id_of(hass, a)))
+    await first_try.wait()
+    write_b = hass.async_create_task(respond(hass, "write", device_id_of(hass, b)))
+    response_a, response_b = await asyncio.gather(write_a, write_b)
 
-    assert response[device_id_of(hass, a)]["status"] == "written"
-    assert response[device_id_of(hass, b)]["status"] == "written"
+    assert response_a[device_id_of(hass, a)]["status"] == "written"
+    assert response_b[device_id_of(hass, b)]["status"] == "written"
     assert order == ["01", "02", "01"]  # b went first while a waited to retry
 
 
