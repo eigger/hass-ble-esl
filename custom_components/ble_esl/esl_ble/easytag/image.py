@@ -26,14 +26,14 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
         raise ValueError(f"expected a {preset.width}x{preset.height} image, got {image.size}")
     codes = quantize(image, preset.colors, dither=preset.extra.get("dither", True))
     width, height = align8(preset.width), align8(preset.height)
-    planes = [plane(codes, preset.width, preset.height, BLACK)]
-    if preset.colors == "BWR":
-        planes.append(plane(codes, preset.width, preset.height, RED))
-    run_length = b"".join(
-        run_length_block(p, width, height, red=i == 1) for i, p in enumerate(planes)
-    )
-    raw = b"".join(raw_block(p, width, height, red=i == 1) for i, p in enumerate(planes))
-    return run_length if len(run_length) <= len(raw) else raw
+    black = plane(codes, preset.width, preset.height, BLACK)
+    red = plane(codes, preset.width, preset.height, RED) if preset.colors == "BWR" else None
+    runs = run_length_block(black, width, height, red=False)
+    raw = raw_block(black, width, height, red=False)
+    if red is not None:
+        runs += run_length_block(red, width, height, red=True)
+        raw += raw_block(red, width, height, red=True)
+    return runs if len(runs) <= len(raw) else raw
 
 
 def align8(value: int) -> int:
