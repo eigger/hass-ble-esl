@@ -33,11 +33,7 @@ def encode_image(image: Image.Image, preset: DevicePreset) -> bytes:
     first = pack_bits(masks.black if preset.extra.get("black_plane") else masks.white)
     if encoding == "quicklz":
         # This firmware counts a pixel as red without looking at blue.
-        planes = first + pack_bits(masks.red_loose)
-        try:
-            return quicklz.compress(planes)
-        except Exception:
-            return planes
+        return quicklz.compress(first + pack_bits(masks.red_loose))
     red = pack_bits(masks.red) if "R" in preset.colors else None
     if encoding == "lines":
         return line_blocks(first, red, lines=scanned.width, line_bytes=scanned.height // 8)
