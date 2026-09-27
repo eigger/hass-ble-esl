@@ -18,13 +18,15 @@ from custom_components.ble_esl.esl_ble.base import (
     WriteRefused,
 )
 from custom_components.ble_esl.esl_ble.xte import devices, writer
-from custom_components.ble_esl.esl_ble.xte.const import PALETTES
 from custom_components.ble_esl.esl_ble.xte.devices import (
-    PSJ_213,
-    PSJ_420,
+    PRESETS,
     preset_for_advertisement,
 )
-from custom_components.ble_esl.esl_ble.xte.protocol import buffer_size, encode_rle, make_blocks
+from custom_components.ble_esl.esl_ble.xte.image import PALETTES, buffer_size
+from custom_components.ble_esl.esl_ble.xte.protocol import blocks, run_length
+
+PSJ_420 = PRESETS["psj-420"]
+PSJ_213 = PRESETS["psj-213"]
 
 
 def advertisement(tail=0x1B, payload=None):
@@ -93,8 +95,8 @@ def test_psj213_is_detected_and_packed_portrait():
     obj = writer.prepare(PSJ_213, Image.new("RGB", (250, 122), "white"), "")
     assert obj[25:33] == (122).to_bytes(4, "big") + (250).to_bytes(4, "big")
     rows = (b"\x55" * 30 + b"\x50") * 250  # 31-byte rows: 30 white bytes, then 2 px + 2 pad
-    assert obj[33] == 1 and obj[38:] == encode_rle(rows[:3875]) + encode_rle(rows[3875:])
-    assert len(make_blocks(obj)) == 1
+    assert obj[33] == 1 and obj[38:] == run_length(rows[:3875]) + run_length(rows[3875:])
+    assert len(blocks(obj)) == 1
 
 
 def test_unknown_device_number_is_claimed_without_a_model_and_reported_once(caplog):
@@ -225,9 +227,9 @@ def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, nu
 def test_session_result_and_disconnect(monkeypatch, error):
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
     monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(return_value=client))
-    transport = SimpleNamespace(write_object=AsyncMock(side_effect=error))
-    factory = MagicMock(return_value=transport)
-    monkeypatch.setattr(writer, "XteClient", factory)
+    session = SimpleNamespace(send=AsyncMock(side_effect=error))
+    factory = MagicMock(return_value=session)
+    monkeypatch.setattr(writer, "XteSession", factory)
     image, encoded = object(), b"XTEK-encoded"
     prepare = MagicMock(return_value=encoded)
     monkeypatch.setattr(esl_ble.get("xte"), "prepare_image", prepare)
@@ -248,8 +250,8 @@ def test_session_result_and_disconnect(monkeypatch, error):
     # Encoded before connecting, in a worker thread, then handed to the session
     # together with the trace.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
-    factory.assert_called_once_with(client, 0.05, trace)
-    transport.write_object.assert_awaited_once_with(encoded)
+    factory.assert_called_once_with(client, pacing_s=0.05)
+    session.send.assert_awaited_once_with(encoded, trace=trace)
     client.disconnect.assert_awaited_once()
 
 
