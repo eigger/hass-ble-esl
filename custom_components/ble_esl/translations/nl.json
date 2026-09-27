@@ -145,7 +145,7 @@
     }
   },
   "exceptions": {
-    "unknown_backend": {
+    "unknown_protocol": {
       "message": "Onbekend protocol {protocol}; verwijder dit apparaat en voeg het opnieuw toe."
     }
   }

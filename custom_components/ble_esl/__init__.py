@@ -108,7 +108,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         # another id, the user removes the device and adds the tag again.
         raise ConfigEntryError(
             translation_domain=DOMAIN,
-            translation_key="unknown_backend",
+            translation_key="unknown_protocol",
             translation_placeholders={"protocol": protocol_id},
         ) from exc
     preset, service_info, adv_info = resolve_preset(

@@ -128,5 +128,5 @@ async def test_unknown_protocol_id_fails_setup_clearly(
     assert not await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.SETUP_ERROR
-    assert entry.error_reason_translation_key == "unknown_backend"
+    assert entry.error_reason_translation_key == "unknown_protocol"
     assert entry.error_reason_translation_placeholders == {"protocol": "poshiji"}
