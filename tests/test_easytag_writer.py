@@ -11,15 +11,15 @@ import pytest
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.easytag.const import (
-    KEY_INDEX_NOTIFY,
+    KEY_INDEX_REPLY,
     NOTIFY_UUID,
     WRITE_UUID,
 )
 from custom_components.ble_esl.esl_ble.easytag.devices import PRESETS
-from custom_components.ble_esl.esl_ble.easytag.protocol import xor_key
+from custom_components.ble_esl.esl_ble.easytag.protocol import session_key
 from custom_components.ble_esl.esl_ble.easytag.writer import (
-    EasyTagClient,
     EasyTagError,
+    EasyTagSession,
     prepare,
 )
 
@@ -53,7 +53,7 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
             plain = bytearray(20)
             plain[2] = 30
             plain[3] = 22
-            kn = xor_key(MAC, KEY_INDEX_NOTIFY)
+            kn = session_key(MAC, KEY_INDEX_REPLY)
             mock_client._handler(None, bytearray(b ^ kn for b in plain))
 
         mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
@@ -61,10 +61,10 @@ def test_easytag_writer_notify_pre_subscription_and_flow():
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         trace = SessionTrace()
-        client = EasyTagClient(mock_client, PRESETS["3D"], MAC, trace)
+        client = EasyTagSession(mock_client, MAC)
         img = Image.new("RGB", (296, 128), "white")
         frames = prepare(PRESETS["3D"], img, MAC)
-        result = await client.write_frames(frames)
+        result = await client.send(frames, trace=trace)
 
         assert result.success is True
         assert result.battery_mv == 3000
@@ -96,7 +96,7 @@ def test_easytag_update_image_entrypoint(monkeypatch):
             plain = bytearray(20)
             plain[2] = 29
             plain[3] = 18
-            kn = xor_key(MAC, KEY_INDEX_NOTIFY)
+            kn = session_key(MAC, KEY_INDEX_REPLY)
             mock_client.start_notify.call_args[0][1](None, bytearray(b ^ kn for b in plain))
 
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
@@ -194,10 +194,10 @@ def test_empty_reply_is_a_finish_failure():
         mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
 
         trace = SessionTrace()
-        client = EasyTagClient(mock_client, PRESETS["3D"], MAC, trace)
+        client = EasyTagSession(mock_client, MAC)
         frames = prepare(PRESETS["3D"], Image.new("RGB", (296, 128), "white"), MAC)
         with pytest.raises(EasyTagError, match="Empty notify payload"):
-            await client.write_frames(frames)
+            await client.send(frames, trace=trace)
         assert trace.failed_stage == "finish"
 
     asyncio.run(_test())
