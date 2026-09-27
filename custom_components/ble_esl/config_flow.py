@@ -48,8 +48,8 @@ from .esl_ble import (
     CONFIDENCE_ESTIMATED,
     CONFIDENCE_HARDWARE,
     CONFIDENCE_REPORTED,
-    BleBackend,
     DevicePreset,
+    EslProtocol,
 )
 
 
@@ -57,8 +57,8 @@ def _model_selector_options(
     protocol_id: str = DEFAULT_PROTOCOL,
 ) -> list[SelectOptionDict]:
     """Generate model selector options sorted with verified models first."""
-    backend = esl_ble.get(protocol_id)
-    presets = backend.presets()
+    protocol = esl_ble.get(protocol_id)
+    presets = protocol.presets()
 
     def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
         _, preset = item
@@ -80,13 +80,13 @@ def _model_selector_options(
 
 
 def _advertised_model_key(
-    backend: BleBackend, service_info: BluetoothServiceInfoBleak | None
+    protocol: EslProtocol, service_info: BluetoothServiceInfoBleak | None
 ) -> str | None:
     """Catalog model the advertisement names, or None when it does not."""
     if service_info is None:
         return None
-    info = backend.parse_advertisement(service_info)
-    if info is None or not info.model_key or info.model_key not in backend.presets():
+    info = protocol.parse_advertisement(service_info)
+    if info is None or not info.model_key or info.model_key not in protocol.presets():
         return None
     return info.model_key
 
@@ -98,20 +98,20 @@ def _model_fixed(hass: HomeAssistant, address: str | None, protocol_id: str) -> 
     the model open: a sleeping tag must not grow a picker the next advertisement
     would overrule.
     """
-    backend = esl_ble.get(protocol_id)
+    protocol = esl_ble.get(protocol_id)
     if address is None:
         return False
     service_info = async_last_service_info(hass, address, connectable=True)
     if service_info is None:
         return True
-    return _advertised_model_key(backend, service_info) is not None
+    return _advertised_model_key(protocol, service_info) is not None
 
 
 def _build_options_schema(
     protocol_id: str = DEFAULT_PROTOCOL, *, model_fixed: bool = False
 ) -> dict[Any, Any]:
-    backend = esl_ble.get(protocol_id)
-    default_model = backend.preset_for(DEFAULT_MODEL).key
+    protocol = esl_ble.get(protocol_id)
+    default_model = protocol.preset_for(DEFAULT_MODEL).key
 
     schema: dict[Any, Any] = {}
 
@@ -157,18 +157,18 @@ class Discovery:
 
     title: str
     discovery_info: BluetoothServiceInfoBleak
-    backend: BleBackend
+    protocol: EslProtocol
 
 
 def _title(
     discovery_info: BluetoothServiceInfoBleak,
-    backend: BleBackend,
+    protocol: EslProtocol,
     model_key: str | None = None,
 ) -> str:
     identifier = discovery_info.address.replace(":", "")[-8:]
-    preset = backend.presets().get(model_key) if model_key else None
-    model_str = preset.display_name if preset else backend.name
-    return f"{backend.brand} {identifier} ({model_str})"
+    preset = protocol.presets().get(model_key) if model_key else None
+    model_str = preset.display_name if preset else protocol.name
+    return f"{protocol.brand} {identifier} ({model_str})"
 
 
 class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -179,23 +179,23 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._discovery_info: BluetoothServiceInfoBleak | None = None
-        self._backend: BleBackend | None = None
+        self._protocol: EslProtocol | None = None
         self._protocol_id: str = DEFAULT_PROTOCOL
         self._discovered_devices: dict[str, Discovery] = {}
         self._detected_model: str | None = None
 
     def _create_entry(self, model_key: str) -> ConfigFlowResult:
         """Create entry with determined model key."""
-        backend = self._backend or esl_ble.get(self._protocol_id)
+        protocol = self._protocol or esl_ble.get(self._protocol_id)
         if self._discovery_info:
-            title = _title(self._discovery_info, backend, model_key)
+            title = _title(self._discovery_info, protocol, model_key)
         else:
             title = self.context.get("title_placeholders", {}).get("name", "BLE ESL")
 
         return self.async_create_entry(
             title=title,
             data={
-                CONF_PROTOCOL: backend.id,
+                CONF_PROTOCOL: protocol.id,
                 CONF_MODEL: model_key,
             },
         )
@@ -207,15 +207,15 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
 
-        backend = esl_ble.detect(discovery_info)
-        if backend is None:
+        protocol = esl_ble.detect(discovery_info)
+        if protocol is None:
             return self.async_abort(reason="not_supported")
 
-        self._backend = backend
-        self._protocol_id = backend.id
-        self._detected_model = _advertised_model_key(backend, discovery_info)
+        self._protocol = protocol
+        self._protocol_id = protocol.id
+        self._detected_model = _advertised_model_key(protocol, discovery_info)
 
-        title = _title(discovery_info, backend, self._detected_model)
+        title = _title(discovery_info, protocol, self._detected_model)
         self.context["title_placeholders"] = {"name": title}
         self._discovery_info = discovery_info
 
@@ -246,11 +246,11 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self.context["title_placeholders"] = {"name": discovery.title}
             self._discovery_info = discovery.discovery_info
-            self._backend = discovery.backend
-            self._protocol_id = discovery.backend.id
+            self._protocol = discovery.protocol
+            self._protocol_id = discovery.protocol.id
 
             self._detected_model = _advertised_model_key(
-                discovery.backend, discovery.discovery_info
+                discovery.protocol, discovery.discovery_info
             )
             if self._detected_model:
                 return self._create_entry(self._detected_model)
@@ -262,12 +262,12 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             address = discovery_info.address
             if address in current_addresses or address in self._discovered_devices:
                 continue
-            backend = esl_ble.detect(discovery_info)
-            if backend is not None:
+            protocol = esl_ble.detect(discovery_info)
+            if protocol is not None:
                 self._discovered_devices[address] = Discovery(
-                    title=_title(discovery_info, backend),
+                    title=_title(discovery_info, protocol),
                     discovery_info=discovery_info,
-                    backend=backend,
+                    protocol=protocol,
                 )
 
         if not self._discovered_devices:
@@ -283,7 +283,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_model(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle model selection step."""
-        backend = self._backend or esl_ble.get(self._protocol_id)
+        protocol = self._protocol or esl_ble.get(self._protocol_id)
 
         if user_input is not None:
             model_key = user_input[CONF_MODEL]
@@ -291,7 +291,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
 
         selector = SelectSelector(
             SelectSelectorConfig(
-                options=_model_selector_options(backend.id),
+                options=_model_selector_options(protocol.id),
                 mode=SelectSelectorMode.DROPDOWN,
             )
         )

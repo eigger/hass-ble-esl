@@ -146,7 +146,7 @@
   },
   "exceptions": {
     "unknown_backend": {
-      "message": "Nieznany backend protokołu {protocol}; usuń to urządzenie i dodaj je ponownie."
+      "message": "Nieznany protokół {protocol}; usuń to urządzenie i dodaj je ponownie."
     }
   }
 }

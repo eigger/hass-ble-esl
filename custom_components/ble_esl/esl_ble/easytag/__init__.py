@@ -1,10 +1,10 @@
-"""easyTag protocol backend (tags sold as Zhsunyco)."""
+"""easyTag protocol implementation (tags sold as Zhsunyco)."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset
+from ..base import AdvertisementInfo, Capabilities, DevicePreset, EslProtocol
 from . import writer
 from .devices import PRESETS, preset_for_advertisement
 from .parser import EasyTagBluetoothDeviceData, is_easytag_advertisement
@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
-class EasyTagBleBackend(BleBackend):
-    """easyTag BLE backend."""
+class EasyTagProtocol(EslProtocol):
+    """easyTag ESL protocol."""
 
     id = "easytag"
     label = "easyTag"
@@ -48,8 +48,8 @@ class EasyTagBleBackend(BleBackend):
 
 __all__ = [
     "PRESETS",
-    "EasyTagBleBackend",
     "EasyTagBluetoothDeviceData",
+    "EasyTagProtocol",
     "is_easytag_advertisement",
     "preset_for_advertisement",
 ]

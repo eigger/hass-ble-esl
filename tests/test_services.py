@@ -1,6 +1,6 @@
 """ble_esl.write / ble_esl.write_guarded through a real Home Assistant.
 
-Only the backend's encode/transfer and the renderer are stubbed (see the
+Only the protocol's encode/transfer and the renderer are stubbed (see the
 `tag_writer` fixture); target resolution, the BLE lock, debounce timers,
 retries and the result sensors are the real code paths.
 """
@@ -168,7 +168,7 @@ async def test_likely_cause_reads_stage_error_and_radio(
 
 
 @pytest.mark.parametrize(
-    ("stage", "error", "via", "backend", "expected"),
+    ("stage", "error", "via", "protocol", "expected"),
     [
         # A single radio with a fine signal is the normal case: no placement advice.
         (
@@ -236,9 +236,9 @@ async def test_likely_cause_reads_stage_error_and_radio(
         ),
     ],
 )
-def test_likely_cause_wording(stage, error, via, backend, expected) -> None:
+def test_likely_cause_wording(stage, error, via, protocol, expected) -> None:
     """The tag's own sentences first; blesession's generic ones where it has none."""
-    sentence = _likely_cause(stage, error, via, backend)
+    sentence = _likely_cause(stage, error, via, protocol)
     if sentence is None:
         sentence = generic_cause(stage, error, via, noun="tag")
     assert sentence == expected
@@ -708,7 +708,7 @@ async def test_skipped_write_discards_failed_encode_quietly(
 ) -> None:
     """A write skipped under the lock consumes its encode future, so a failing
     encode never logs 'exception was never retrieved'."""
-    from custom_components.ble_esl.esl_ble.wolink import WolinkBleBackend
+    from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
 
     wolink_entry.runtime_data.write_lock = True
 
@@ -718,7 +718,7 @@ async def test_skipped_write_discards_failed_encode_quietly(
     unhandled: list = []
     hass.loop.set_exception_handler(lambda loop, ctx: unhandled.append(ctx))
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(WolinkBleBackend, "prepare_image", staticmethod(broken))
+        mp.setattr(WolinkProtocol, "prepare_image", staticmethod(broken))
         await call(hass, "write", device_id_of(hass))
         await asyncio.sleep(0.05)
     import gc

@@ -1,11 +1,11 @@
-"""WOLINK protocol backend (tags sold as Zhsunyco)."""
+"""WOLINK protocol implementation (tags sold as Zhsunyco)."""
 
 from __future__ import annotations
 
 import dataclasses
 from typing import TYPE_CHECKING
 
-from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset
+from ..base import AdvertisementInfo, Capabilities, DevicePreset, EslProtocol
 from . import writer
 from .const import MANUFACTURER_ID
 from .devices import PRESETS, preset_for_advertisement
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
-class WolinkBleBackend(BleBackend):
-    """WOLINK BLE backend."""
+class WolinkProtocol(EslProtocol):
+    """WOLINK ESL protocol."""
 
     id = "wolink"
     label = "WOLINK"
@@ -59,8 +59,8 @@ class WolinkBleBackend(BleBackend):
 
 __all__ = [
     "PRESETS",
-    "WolinkBleBackend",
     "WolinkBluetoothDeviceData",
+    "WolinkProtocol",
     "is_wolink_advertisement",
     "preset_for_advertisement",
 ]

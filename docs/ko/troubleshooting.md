@@ -51,7 +51,7 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 이미지 데이터를 보내기 전에 태그가 응답하지 않았거나 잘못 응답. `auth`는 BLE 통합들이 공통으로 쓰는 이 단계의 이름이고, `failed_detail`이 이 태그에서의 이름입니다.
 - *확인:* PickSmart `start_probes: 3` = START에 끝내 응답 없음. WOLINK *device error 5* = 인증 거부. *No response … after command 0x01* (XTE) = size 명령에 응답 없음.
-- *조치:* 무응답: 태그가 아직 준비되지 않은 것 — 일시적, 재시도가 처리; 항상 그렇다면 이 백엔드가 모르는 태그 펌웨어. 인증 거부: WOLINK 태그가 아니거나 펌웨어가 다름. 잘못된 응답: 프로토콜/모델이 틀림.
+- *조치:* 무응답: 태그가 아직 준비되지 않은 것 — 일시적, 재시도가 처리; 항상 그렇다면 이 프로토콜이 모르는 태그 펌웨어. 인증 거부: WOLINK 태그가 아니거나 펌웨어가 다름. 잘못된 응답: 프로토콜/모델이 틀림.
 
 ### `transfer`
 
@@ -94,7 +94,7 @@ Home Assistant는 Write Duration의 속성도 상태 변경마다 기록하므�
 
 ## 이슈에 첨부할 것
 
-1. 기기 페이지의 **진단 다운로드**. 백엔드, 프리셋, 펌웨어, 옵션, 마지막 광고, `last_write`와 `last_failure_write`가 들어 있고, 태그의 MAC은 가려집니다.
+1. 기기 페이지의 **진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, `last_write`와 `last_failure_write`가 들어 있고, 태그의 MAC은 가려집니다.
 2. 패널이 이상하게 보이는 경우: **Last Updated Content** 이미지와 태그 사진.
 3. 액션이 실패하는 경우: Home Assistant가 보여준 에러 메시지(또는 `response_variable`로 받은 액션 응답).
 4. 실패가 `connect`나 `transfer`라면 태그가 쓰는 라디오(`via` — 프록시 모델과 ESPHome 버전, 또는 어댑터).

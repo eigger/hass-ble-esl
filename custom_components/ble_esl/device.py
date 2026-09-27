@@ -13,7 +13,7 @@ from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceIn
 from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 from sensor_state_data import DeviceKey
 
-from .esl_ble.base import AdvertisementInfo, BleBackend, DevicePreset
+from .esl_ble.base import AdvertisementInfo, DevicePreset, EslProtocol
 
 if TYPE_CHECKING:
     from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
@@ -48,7 +48,7 @@ class PresetResolution(NamedTuple):
 
 
 def resolve_preset(
-    hass: HomeAssistant, backend: BleBackend, address: str, model_key: str | None
+    hass: HomeAssistant, protocol: EslProtocol, address: str, model_key: str | None
 ) -> PresetResolution:
     """Configured model -> preset, refined by what the tag last advertised.
 
@@ -58,11 +58,11 @@ def resolve_preset(
     directly, so it must not be routed through here (that would re-read the
     last advertisement a second time).
     """
-    preset = backend.preset_for(model_key)
+    preset = protocol.preset_for(model_key)
     service_info = async_last_service_info(hass, address, connectable=True)
-    advertisement = backend.parse_advertisement(service_info) if service_info else None
+    advertisement = protocol.parse_advertisement(service_info) if service_info else None
     if advertisement is not None:
-        preset = backend.refine_preset(preset, advertisement)
+        preset = protocol.refine_preset(preset, advertisement)
     return PresetResolution(preset, service_info, advertisement)
 
 
@@ -78,7 +78,7 @@ def build_device_info(data: BleEslRuntimeData) -> DeviceInfo:
         name=f"{data.manufacturer} {data.identifier}",
         manufacturer=data.manufacturer,
         model=data.model,
-        model_id=data.backend.label,
+        model_id=data.protocol.label,
         sw_version=data.sw_version,
         hw_version=data.hw_version,
     )

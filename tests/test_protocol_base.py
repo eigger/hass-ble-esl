@@ -1,4 +1,4 @@
-"""Tests for the shared BleParser / BleBackend behaviour in esl_ble/base.py."""
+"""Tests for the shared BleParser / EslProtocol behaviour in esl_ble/base.py."""
 
 from __future__ import annotations
 
@@ -14,10 +14,10 @@ from custom_components.ble_esl.esl_ble.base import (
     STAGE_HANDSHAKE,
     STAGE_MAP,
     STAGE_TRANSFER,
-    BleBackend,
     BleParser,
     Capabilities,
     DevicePreset,
+    EslProtocol,
     ProtocolContractError,
     WriteResult,
     battery_percent,
@@ -70,7 +70,7 @@ def test_parser_ignores_foreign_advertisements():
     assert update.title is None and update.devices == {}
 
 
-class _Backend(BleBackend):
+class _Protocol(EslProtocol):
     id = "t"
     label = "T"
     name = "Test"
@@ -88,33 +88,33 @@ class _Backend(BleBackend):
         return WriteResult(success=True)
 
 
-def test_backend_declarative_defaults():
-    backend = _Backend()
-    assert backend.presets() is _Backend.PRESETS
-    assert backend.brand == "Acme"  # from the parser class
-    assert isinstance(backend.create_parser(PRESET), _Parser)
-    assert backend.supported(_info()) and not backend.supported(_info(name="no"))
+def test_protocol_declarative_defaults():
+    protocol = _Protocol()
+    assert protocol.presets() is _Protocol.PRESETS
+    assert protocol.brand == "Acme"  # from the parser class
+    assert isinstance(protocol.create_parser(PRESET), _Parser)
+    assert protocol.supported(_info()) and not protocol.supported(_info(name="no"))
 
 
 def _define(**attrs):
-    """Define a backend subclass with the given class body; returns the error message or None."""
+    """Define a protocol subclass with the given class body; returns the error message or None."""
     body = dict(
         id="x",
         label="X",
         name="X",
-        capabilities=_Backend.capabilities,
-        PRESETS=_Backend.PRESETS,
+        capabilities=_Protocol.capabilities,
+        PRESETS=_Protocol.PRESETS,
         parser_cls=_Parser,
         parse_advertisement=lambda self, i: None,
         prepare_image=lambda self, p, i, a: i,
-        write_session=_Backend.write_session,
+        write_session=_Protocol.write_session,
     )
     body.update(attrs)
     for key, value in list(body.items()):
         if value is _REMOVE:
             del body[key]
     try:
-        type("Probe", (BleBackend,), body)
+        type("Probe", (EslProtocol,), body)
     except ProtocolContractError as err:
         return str(err)
     return None
@@ -123,7 +123,7 @@ def _define(**attrs):
 _REMOVE = object()
 
 
-def test_contract_complete_backend_defines_cleanly():
+def test_contract_complete_protocol_defines_cleanly():
     assert _define() is None
 
 
@@ -166,17 +166,17 @@ def test_contract_rejects_empty_identity_strings():
 
 
 def test_registry_rejects_duplicate_ids(monkeypatch):
-    monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
-    esl_ble.register(_Backend())
+    monkeypatch.setattr(esl_ble, "_PROTOCOLS", dict(esl_ble._PROTOCOLS))
+    esl_ble.register(_Protocol())
     with pytest.raises(ProtocolContractError, match="already registered"):
-        esl_ble.register(type("Dup", (_Backend,), {})())
+        esl_ble.register(type("Dup", (_Protocol,), {})())
 
 
 def test_preset_for_falls_back_to_first_preset():
-    backend = _Backend()
-    assert backend.preset_for("p") is PRESET
-    assert backend.preset_for("290") is PRESET  # foreign/stale key
-    assert backend.preset_for(None) is PRESET
+    protocol = _Protocol()
+    assert protocol.preset_for("p") is PRESET
+    assert protocol.preset_for("290") is PRESET  # foreign/stale key
+    assert protocol.preset_for(None) is PRESET
 
 
 # ── Write path ───────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ def test_write_prepared_propagates_session_errors_and_disconnects(monkeypatch):
     trace; the link is closed either way; the caller-owned encode future is
     untouched."""
 
-    class Backend(_Backend):
+    class Protocol(_Protocol):
         id = "t2"
 
         async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
@@ -214,10 +214,10 @@ def test_write_prepared_propagates_session_errors_and_disconnects(monkeypatch):
     async def _test():
         client = _connected(monkeypatch)
         prepared = _prepared()
-        trace = Backend().new_trace()
+        trace = Protocol().new_trace()
 
         with pytest.raises(TimeoutError):
-            await Backend().write_prepared(FakeDevice(), PRESET, prepared, trace=trace)
+            await Protocol().write_prepared(FakeDevice(), PRESET, prepared, trace=trace)
 
         # Before any protocol stage: the session itself is where it died.
         assert trace.failed_primary == "session"
@@ -229,7 +229,7 @@ def test_write_prepared_propagates_session_errors_and_disconnects(monkeypatch):
 
 
 def test_write_prepared_times_connect_and_session_around_the_writer(monkeypatch):
-    class Backend(_Backend):
+    class Protocol(_Protocol):
         id = "t3"
 
         async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
@@ -242,8 +242,8 @@ def test_write_prepared_times_connect_and_session_around_the_writer(monkeypatch)
 
     async def _test():
         _connected(monkeypatch)
-        trace = Backend().new_trace()
-        result = await Backend().write_prepared(FakeDevice(), PRESET, _prepared(), trace=trace)
+        trace = Protocol().new_trace()
+        result = await Protocol().write_prepared(FakeDevice(), PRESET, _prepared(), trace=trace)
         assert result.success
         assert list(trace.timings) == ["connect", "handshake", "transfer", "session", "disconnect"]
         assert trace.failed_stage is None
@@ -252,7 +252,7 @@ def test_write_prepared_times_connect_and_session_around_the_writer(monkeypatch)
 
 
 def test_new_trace_maps_the_handshake_to_auth():
-    trace = _Backend().new_trace()
+    trace = _Protocol().new_trace()
     with pytest.raises(ValueError), trace.timed(STAGE_HANDSHAKE):
         raise ValueError
     assert trace.failed_stage == "handshake"
@@ -263,7 +263,7 @@ def test_new_trace_maps_the_handshake_to_auth():
 def test_write_prepared_records_the_link(monkeypatch):
     """Which radio the link took is on the trace for the integration to name."""
 
-    class Backend(_Backend):
+    class Protocol(_Protocol):
         id = "t4"
 
         async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
@@ -274,8 +274,8 @@ def test_write_prepared_records_the_link(monkeypatch):
         client = FakeClient()
         client._connected_scanner = scanner = object()
         _connected(monkeypatch, client)
-        trace = Backend().new_trace()
-        await Backend().write_prepared(
+        trace = Protocol().new_trace()
+        await Protocol().write_prepared(
             FakeDevice(details={"source": "AA:11"}), PRESET, _prepared(), trace=trace
         )
         assert trace.link is not None
@@ -285,7 +285,7 @@ def test_write_prepared_records_the_link(monkeypatch):
 
 
 def test_write_prepared_without_a_trace_makes_its_own(monkeypatch):
-    class Backend(_Backend):
+    class Protocol(_Protocol):
         id = "t5"
 
         async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
@@ -295,6 +295,6 @@ def test_write_prepared_without_a_trace_makes_its_own(monkeypatch):
 
     async def _test():
         _connected(monkeypatch)
-        assert (await Backend().write_prepared(FakeDevice(), PRESET, _prepared())).success
+        assert (await Protocol().write_prepared(FakeDevice(), PRESET, _prepared())).success
 
     asyncio.run(_test())

@@ -24,7 +24,7 @@ def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:
 class PickSmartBluetoothDeviceData(BleParser):
     """Sensor data from PickSmart advertisements.
 
-    The model the advertisement names is applied by the backend's
+    The model the advertisement names is applied by the protocol's
     refine_preset(); a preset may narrow the battery range with
     extra["min_voltage"] / extra["max_voltage"].
     """

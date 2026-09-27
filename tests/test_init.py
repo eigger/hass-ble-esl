@@ -16,7 +16,7 @@ async def test_setup_creates_device_and_entities(hass: HomeAssistant, wolink_ent
     assert wolink_entry.state is ConfigEntryState.LOADED
     data = wolink_entry.runtime_data
     assert data.address == ADDRESS
-    assert data.backend.id == "wolink"
+    assert data.protocol.id == "wolink"
     assert data.preset.key == "290"
 
     device = device_of(hass)
@@ -113,10 +113,10 @@ async def test_unload_makes_entities_unavailable(hass: HomeAssistant, wolink_ent
     assert hass.states.get(f"switch.zhsunyco_{IDENT}_write_lock").state == "unavailable"
 
 
-async def test_unknown_backend_id_fails_setup_clearly(
+async def test_unknown_protocol_id_fails_setup_clearly(
     hass: HomeAssistant, enable_bluetooth
 ) -> None:
-    """Backend ids are not migrated: an entry with a stale id asks to be re-added."""
+    """Protocol ids are not migrated: an entry with a stale id asks to be re-added."""
     address = "AA:BB:CC:DD:EE:42"
     entry = MockConfigEntry(
         domain=DOMAIN,

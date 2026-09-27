@@ -71,11 +71,11 @@ def process_service_info(
     data = entry.runtime_data
     update = data.parser.update(service_info)
 
-    adv_info = data.backend.parse_advertisement(service_info)
+    adv_info = data.protocol.parse_advertisement(service_info)
     if adv_info is None:
         return update
 
-    data.preset = data.backend.refine_preset(data.preset, adv_info)
+    data.preset = data.protocol.refine_preset(data.preset, adv_info)
     data.parser.set_preset(data.preset)
 
     # Mirror what the advertisement tells us about the tag onto the device.
@@ -86,7 +86,7 @@ def process_service_info(
         data.hw_version = update_kwargs["hw_version"] = adv_info.hw_version
     if (model := format_model_name(data.preset)) != data.model:
         data.model = update_kwargs["model"] = model
-    if (manufacturer := data.backend.brand) != data.manufacturer:
+    if (manufacturer := data.protocol.brand) != data.manufacturer:
         data.manufacturer = update_kwargs["manufacturer"] = manufacturer
     if update_kwargs:
         device_registry.async_update_device(data.device_id, **update_kwargs)
@@ -100,27 +100,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     assert address is not None
 
     options = {**entry.data, **entry.options}
-    protocol = options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
+    protocol_id = options.get(CONF_PROTOCOL, DEFAULT_PROTOCOL)
     try:
-        backend = esl_ble.get(protocol)
+        protocol = esl_ble.get(protocol_id)
     except KeyError as exc:
-        # Backend ids are not migrated: for an entry from a release that used
+        # Protocol ids are not migrated: for an entry from a release that used
         # another id, the user removes the device and adds the tag again.
         raise ConfigEntryError(
             translation_domain=DOMAIN,
             translation_key="unknown_backend",
-            translation_placeholders={"protocol": protocol},
+            translation_placeholders={"protocol": protocol_id},
         ) from exc
     preset, service_info, adv_info = resolve_preset(
-        hass, backend, address, options.get(CONF_MODEL, DEFAULT_MODEL)
+        hass, protocol, address, options.get(CONF_MODEL, DEFAULT_MODEL)
     )
 
-    parser = backend.create_parser(preset=preset)
+    parser = protocol.create_parser(preset=preset)
     if service_info:
         parser.update(service_info)
 
     identifier = address.replace(":", "")[-8:]
-    manufacturer = backend.brand
+    manufacturer = protocol.brand
     model = format_model_name(preset)
     sw_version = adv_info.sw_version if adv_info else None
     hw_version = adv_info.hw_version if adv_info else None
@@ -132,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         manufacturer=manufacturer,
         name=f"{manufacturer} {identifier}",
         model=model,
-        model_id=backend.label,
+        model_id=protocol.label,
         sw_version=sw_version,
         hw_version=hw_version,
     )
@@ -163,7 +163,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 
     entry.runtime_data = BleEslRuntimeData(
         address=address,
-        backend=backend,
+        protocol=protocol,
         preset=preset,
         parser=parser,
         device_id=device_entry.id,

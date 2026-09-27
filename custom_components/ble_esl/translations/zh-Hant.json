@@ -146,7 +146,7 @@
   },
   "exceptions": {
     "unknown_backend": {
-      "message": "未知的協定後端 {protocol}；請移除此裝置並重新加入。"
+      "message": "未知的協定 {protocol}；請移除此裝置並重新加入。"
     }
   }
 }

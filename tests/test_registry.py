@@ -7,7 +7,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from custom_components.ble_esl import esl_ble
-from custom_components.ble_esl.esl_ble.base import BleBackend, BleParser, Capabilities, DevicePreset
+from custom_components.ble_esl.esl_ble.base import (
+    BleParser,
+    Capabilities,
+    DevicePreset,
+    EslProtocol,
+)
 from custom_components.ble_esl.esl_ble.easytag.const import (
     SERVICE_UUID as EASYTAG_SERVICE_UUID,
 )
@@ -23,31 +28,31 @@ from custom_components.ble_esl.esl_ble.xte.const import MANUFACTURER_ID as XTE_M
 
 
 def test_registry_get():
-    """Verify backend retrieval by protocol ID."""
+    """Verify protocol retrieval by protocol ID."""
     assert esl_ble.get("wolink").id == "wolink"
     assert esl_ble.get("easytag").id == "easytag"
     assert esl_ble.get("picksmart").id == "picksmart"
     assert esl_ble.get("xte").id == "xte"
 
-    with pytest.raises(KeyError, match="Unknown BLE backend: 'unknown'"):
+    with pytest.raises(KeyError, match="Unknown BLE protocol: 'unknown'"):
         esl_ble.get("unknown")
 
 
-def test_registry_all_backends():
-    """Verify all_backends lists registered backends."""
-    backend_ids = [b.id for b in esl_ble.all_backends()]
-    assert "wolink" in backend_ids
-    assert "easytag" in backend_ids
-    assert "picksmart" in backend_ids
-    assert "xte" in backend_ids
+def test_registry_all_protocols():
+    """Verify all_protocols lists registered protocols."""
+    protocol_ids = [p.id for p in esl_ble.all_protocols()]
+    assert "wolink" in protocol_ids
+    assert "easytag" in protocol_ids
+    assert "picksmart" in protocol_ids
+    assert "xte" in protocol_ids
 
 
 def test_registry_detect_mutual_exclusivity():
     """Verify the bundled protocols are strictly mutually exclusive during advertisement detection."""
-    wolink_backend = esl_ble.get("wolink")
-    easytag_backend = esl_ble.get("easytag")
-    picksmart_backend = esl_ble.get("picksmart")
-    xte_backend = esl_ble.get("xte")
+    wolink_protocol = esl_ble.get("wolink")
+    easytag_protocol = esl_ble.get("easytag")
+    picksmart_protocol = esl_ble.get("picksmart")
+    xte_protocol = esl_ble.get("xte")
 
     # 1. WOLINK Advertisement
     info_wolink = MagicMock()
@@ -55,11 +60,11 @@ def test_registry_detect_mutual_exclusivity():
     info_wolink.service_uuids = [WOLINK_SERVICE_UUID]
     info_wolink.name = "WOLINK_TAG"
 
-    assert wolink_backend.supported(info_wolink) is True
-    assert easytag_backend.supported(info_wolink) is False
-    assert picksmart_backend.supported(info_wolink) is False
-    assert xte_backend.supported(info_wolink) is False
-    assert esl_ble.detect(info_wolink) is wolink_backend
+    assert wolink_protocol.supported(info_wolink) is True
+    assert easytag_protocol.supported(info_wolink) is False
+    assert picksmart_protocol.supported(info_wolink) is False
+    assert xte_protocol.supported(info_wolink) is False
+    assert esl_ble.detect(info_wolink) is wolink_protocol
 
     # 2. easyTag Advertisement
     info_easytag = MagicMock()
@@ -67,11 +72,11 @@ def test_registry_detect_mutual_exclusivity():
     info_easytag.service_uuids = [EASYTAG_SERVICE_UUID]
     info_easytag.name = "easyTag3D:00:11:22"
 
-    assert easytag_backend.supported(info_easytag) is True
-    assert wolink_backend.supported(info_easytag) is False
-    assert picksmart_backend.supported(info_easytag) is False
-    assert xte_backend.supported(info_easytag) is False
-    assert esl_ble.detect(info_easytag) is easytag_backend
+    assert easytag_protocol.supported(info_easytag) is True
+    assert wolink_protocol.supported(info_easytag) is False
+    assert picksmart_protocol.supported(info_easytag) is False
+    assert xte_protocol.supported(info_easytag) is False
+    assert esl_ble.detect(info_easytag) is easytag_protocol
 
     # 3. PickSmart Advertisement
     info_picksmart = MagicMock()
@@ -79,11 +84,11 @@ def test_registry_detect_mutual_exclusivity():
     info_picksmart.service_uuids = [PICKSMART_SERVICE_UUIDS[0]]
     info_picksmart.name = "BleTag"
 
-    assert picksmart_backend.supported(info_picksmart) is True
-    assert wolink_backend.supported(info_picksmart) is False
-    assert easytag_backend.supported(info_picksmart) is False
-    assert xte_backend.supported(info_picksmart) is False
-    assert esl_ble.detect(info_picksmart) is picksmart_backend
+    assert picksmart_protocol.supported(info_picksmart) is True
+    assert wolink_protocol.supported(info_picksmart) is False
+    assert easytag_protocol.supported(info_picksmart) is False
+    assert xte_protocol.supported(info_picksmart) is False
+    assert esl_ble.detect(info_picksmart) is picksmart_protocol
 
     # 4. XTE Advertisement
     info_xte = MagicMock()
@@ -91,11 +96,11 @@ def test_registry_detect_mutual_exclusivity():
     info_xte.service_uuids = []
     info_xte.name = "FFEEDDCCBBAA"
 
-    assert xte_backend.supported(info_xte) is True
-    assert wolink_backend.supported(info_xte) is False
-    assert easytag_backend.supported(info_xte) is False
-    assert picksmart_backend.supported(info_xte) is False
-    assert esl_ble.detect(info_xte) is xte_backend
+    assert xte_protocol.supported(info_xte) is True
+    assert wolink_protocol.supported(info_xte) is False
+    assert easytag_protocol.supported(info_xte) is False
+    assert picksmart_protocol.supported(info_xte) is False
+    assert esl_ble.detect(info_xte) is xte_protocol
 
     # 5. Unknown Advertisement
     info_other = MagicMock()
@@ -106,16 +111,16 @@ def test_registry_detect_mutual_exclusivity():
     assert esl_ble.detect(info_other) is None
 
 
-def test_registry_custom_backend(monkeypatch):
-    """Verify registering a new protocol backend dynamically."""
-    monkeypatch.setattr(esl_ble, "_BACKENDS", dict(esl_ble._BACKENDS))
+def test_registry_custom_protocol(monkeypatch):
+    """Verify registering a new protocol dynamically."""
+    monkeypatch.setattr(esl_ble, "_PROTOCOLS", dict(esl_ble._PROTOCOLS))
 
     class MockParser(BleParser):
         brand = "Mock"
         fallback_name = "Mock"
         is_advertisement = staticmethod(lambda info: "mock_uuid" in info.service_uuids)
 
-    class MockTestBackend(BleBackend):
+    class MockTestProtocol(EslProtocol):
         id = "mock_test"
         label = "MOCK"
         name = "Mock Protocol"
@@ -134,12 +139,12 @@ def test_registry_custom_backend(monkeypatch):
         async def write_image(self, ble_device, preset, image, *, pacing_s=0.0):
             return MagicMock()
 
-    mock_backend = MockTestBackend()
-    esl_ble.register(mock_backend)
+    mock_protocol = MockTestProtocol()
+    esl_ble.register(mock_protocol)
 
-    assert esl_ble.get("mock_test") is mock_backend
+    assert esl_ble.get("mock_test") is mock_protocol
     info = MagicMock()
     info.name = "Mock"
     info.manufacturer_data = {}
     info.service_uuids = ["mock_uuid"]
-    assert esl_ble.detect(info) is mock_backend
+    assert esl_ble.detect(info) is mock_protocol

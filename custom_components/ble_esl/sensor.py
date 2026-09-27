@@ -131,7 +131,7 @@ async def async_setup_entry(
         data.bt_coordinator.async_register_processor(processor, SensorEntityDescription)
     )
 
-    caps = data.backend.capabilities
+    caps = data.protocol.capabilities
     entities: list[SensorEntity] = [
         BleEslDurationSensorEntity(hass, entry, data.duration_coordinator),
         BleEslFailureCountSensorEntity(hass, entry, data.failure_coordinator),

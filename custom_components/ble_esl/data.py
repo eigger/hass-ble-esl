@@ -11,7 +11,7 @@ from blesession import SessionReports
 from homeassistant.core import CALLBACK_TYPE
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .esl_ble.base import BleBackend, BleParser, DevicePreset
+from .esl_ble.base import BleParser, DevicePreset, EslProtocol
 
 if TYPE_CHECKING:
     from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
@@ -23,7 +23,7 @@ class BleEslRuntimeData:
     """Everything a loaded config entry holds, attached as entry.runtime_data."""
 
     address: str
-    backend: BleBackend
+    protocol: EslProtocol
     preset: DevicePreset
     parser: BleParser
     device_id: str

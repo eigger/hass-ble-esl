@@ -1,4 +1,4 @@
-"""BLE plugin registry for BLE ESL ESL."""
+"""Protocol registry for BLE ESL."""
 
 from __future__ import annotations
 
@@ -12,65 +12,67 @@ from .base import (
     CONFIDENCE_HARDWARE,
     CONFIDENCE_REPORTED,
     AdvertisementInfo,
-    BleBackend,
     BleParser,
     Capabilities,
     DevicePreset,
+    EslProtocol,
     ProtocolContractError,
     WriteResult,
 )
-from .easytag import EasyTagBleBackend
-from .picksmart import PickSmartBleBackend
-from .wolink import WolinkBleBackend
-from .xte import XteBleBackend
+from .easytag import EasyTagProtocol
+from .picksmart import PickSmartProtocol
+from .wolink import WolinkProtocol
+from .xte import XteProtocol
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
-_BACKENDS: dict[str, BleBackend] = {}
+_PROTOCOLS: dict[str, EslProtocol] = {}
 
 
-def register(backend: BleBackend) -> None:
-    """Register a BLE backend (the class-level contract is checked at definition time)."""
-    if backend.id in _BACKENDS and _BACKENDS[backend.id] is not backend:
+def register(protocol: EslProtocol) -> None:
+    """Register an ESL protocol (the class-level contract is checked at definition time)."""
+    if protocol.id in _PROTOCOLS and _PROTOCOLS[protocol.id] is not protocol:
         raise ProtocolContractError(
-            f"backend id {backend.id!r} is already registered by "
-            f"{type(_BACKENDS[backend.id]).__name__}"
+            f"protocol id {protocol.id!r} is already registered by "
+            f"{type(_PROTOCOLS[protocol.id]).__name__}"
         )
-    _BACKENDS[backend.id] = backend
+    _PROTOCOLS[protocol.id] = protocol
 
 
-def get(backend_id: str) -> BleBackend:
-    """Retrieve a BLE backend by ID."""
-    if backend_id not in _BACKENDS:
-        raise KeyError(f"Unknown BLE backend: {backend_id!r}. Available: {list(_BACKENDS.keys())}")
-    return _BACKENDS[backend_id]
+def get(protocol_id: str) -> EslProtocol:
+    """Retrieve an ESL protocol by ID."""
+    if protocol_id not in _PROTOCOLS:
+        raise KeyError(
+            f"Unknown BLE protocol: {protocol_id!r}. Available: {list(_PROTOCOLS.keys())}"
+        )
+    return _PROTOCOLS[protocol_id]
 
 
-def all_backends() -> list[BleBackend]:
-    """Return all registered BLE backends."""
-    return list(_BACKENDS.values())
+def all_protocols() -> list[EslProtocol]:
+    """Return all registered ESL protocols."""
+    return list(_PROTOCOLS.values())
 
 
 def detect(
     service_info: BluetoothServiceInfoBleak,
-) -> BleBackend | None:
-    """Detect matching BLE backend from advertisement.
+) -> EslProtocol | None:
+    """Detect matching BLE protocol from advertisement.
 
-    Backends are checked in registration order; backends should define mutually
-    exclusive supported() matchers to avoid ambiguous backend resolution.
+    Protocols are checked in registration order; protocols should define mutually
+    exclusive supported() matchers to avoid ambiguous protocol resolution.
     """
-    for backend in _BACKENDS.values():
-        if backend.supported(service_info):
-            return backend
+    for protocol in _PROTOCOLS.values():
+        if protocol.supported(service_info):
+            return protocol
     return None
 
 
-# Register standard backends
-register(WolinkBleBackend())
-register(EasyTagBleBackend())
-register(PickSmartBleBackend())
-register(XteBleBackend())
+# Register standard protocols
+register(WolinkProtocol())
+register(EasyTagProtocol())
+register(PickSmartProtocol())
+register(XteProtocol())
 
 __all__ = [
     "BATTERY_MAX_VOLTAGE",
@@ -80,17 +82,17 @@ __all__ = [
     "CONFIDENCE_HARDWARE",
     "CONFIDENCE_REPORTED",
     "AdvertisementInfo",
-    "BleBackend",
     "BleParser",
     "Capabilities",
     "DevicePreset",
-    "EasyTagBleBackend",
-    "PickSmartBleBackend",
+    "EasyTagProtocol",
+    "EslProtocol",
+    "PickSmartProtocol",
     "ProtocolContractError",
-    "WolinkBleBackend",
+    "WolinkProtocol",
     "WriteResult",
-    "XteBleBackend",
-    "all_backends",
+    "XteProtocol",
+    "all_protocols",
     "detect",
     "get",
     "register",

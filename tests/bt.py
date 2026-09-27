@@ -3,7 +3,7 @@
 `inject_bluetooth_service_info` and the generators are a trimmed port of Home
 Assistant's tests/components/bluetooth/__init__.py, which
 pytest-homeassistant-custom-component does not ship. `service_info()` builds
-the BluetoothServiceInfoBleak the integration's parsers and backends consume.
+the BluetoothServiceInfoBleak the integration's parsers and protocols consume.
 """
 
 from __future__ import annotations

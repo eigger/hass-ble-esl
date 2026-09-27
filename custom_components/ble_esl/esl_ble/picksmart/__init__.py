@@ -1,11 +1,11 @@
-"""PickSmart protocol backend (tags sold as Gicisky)."""
+"""PickSmart protocol implementation (tags sold as Gicisky)."""
 
 from __future__ import annotations
 
 import dataclasses
 from typing import TYPE_CHECKING
 
-from ..base import AdvertisementInfo, BleBackend, Capabilities, DevicePreset
+from ..base import AdvertisementInfo, Capabilities, DevicePreset, EslProtocol
 from . import writer
 from .const import MANUFACTURER_ID
 from .devices import PRESETS, preset_for_device
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
 
 
-class PickSmartBleBackend(BleBackend):
-    """PickSmart BLE backend."""
+class PickSmartProtocol(EslProtocol):
+    """PickSmart ESL protocol."""
 
     id = "picksmart"
     label = "PickSmart"
@@ -58,8 +58,8 @@ class PickSmartBleBackend(BleBackend):
 
 __all__ = [
     "PRESETS",
-    "PickSmartBleBackend",
     "PickSmartBluetoothDeviceData",
+    "PickSmartProtocol",
     "is_picksmart_advertisement",
     "preset_for_device",
 ]

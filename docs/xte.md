@@ -4,7 +4,7 @@ BLE ESL supports the XTE protocol family sold under the Poshiji brand. The
 reference device is the PSJ-420, a 400x300 black/white/red/yellow label;
 the catalog under [Advertisement](#advertisement) lists the other models.
 Manufacturer, model and colors of the PSJ-420 were confirmed by the device
-owner, who verified working screen updates with this backend on the real
+owner, who verified working screen updates with this protocol on the real
 tag. Its preset uses `reported` confidence. The protocol codec and BLE
 transaction are also covered by automated tests.
 
@@ -39,14 +39,14 @@ warranty are not recorded here.
 | Display | Four-color electronic shelf label / e-paper | Owner description and photograph |
 | Colors | Black, white, red, yellow (BWRY) | Owner confirmation and visible photo contents |
 | Connection | Bluetooth Low Energy, connected GATT | Radio capture |
-| Integration backend | `xte` / XTE (Poshiji) | BLE ESL implementation |
+| Integration protocol | `xte` / XTE (Poshiji) | BLE ESL implementation |
 | Preset key | `psj-420` | BLE ESL implementation |
 | Image packing | 2 bits/pixel, 30,000 bytes before RLE | Capture reconstruction |
 | Compression | Run-length encoding (count, byte) | Byte-for-byte capture verification |
 | Discovery | Manufacturer ID `0x5258`, XTE record with device number 153 | Advertisement layout (see [Advertisement](#advertisement)) |
 | Battery telemetry | Percentage from the advertisement | Advertisement layout; PSJ-420 read 100 % |
 | Temperature telemetry | Not exposed | Last advertised byte is probably °C but unconfirmed |
-| Hardware confidence | Owner-verified working updates | Device owner tested this backend; codec/transport covered by tests |
+| Hardware confidence | Owner-verified working updates | Device owner tested this protocol; codec/transport covered by tests |
 
 **Not established:** enclosure dimensions/weight, battery type/capacity/life,
 operating temperature, IP rating, exact Bluetooth specification version,
@@ -76,10 +76,10 @@ device. Use `dry_run: true` for a preview before writing. Make sure no other
 integration writes to the same tag.
 
 After enabling notifications the writer waits 0.5 s before the prepare
-command, like the other backends. Writes use the smaller of 244 bytes and
-the backend's reported write limit.
+command, like the other protocols. Writes use the smaller of 244 bytes and
+the protocol's reported write limit.
 20-byte limits are accepted without changing logical XTE block contents.
-The Retry Count option applies to the Poshiji backend; a retry after a failure
+The Retry Count option applies to the Poshiji protocol; a retry after a failure
 mid-transfer paces each XTE command or block a little more, never per ATT chunk.
 
 ## Advertisement
@@ -158,7 +158,7 @@ so existing config entries keep working.
 - XTEK object: magic [0:4], sum of bytes [12:] as big-endian uint32 [4:8],
   total length [8:12], image count 1 [12], image record offset 17 [13:17],
   then the record: x 0 [17:21], y 0 [21:25], width [25:29], height [29:33],
-  compression 01 = RLE [33], RLE length [34:38], RLE body [38:]. This backend
+  compression 01 = RLE [33], RLE length [34:38], RLE body [38:]. This protocol
   always sends one full-screen record.
 - Logical block: `XTE 02`, big-endian uint16 total length, one-byte sum of all
   following bytes, total block count, zero-based block index, up to 1211 bytes
@@ -184,7 +184,7 @@ Object SHA-256:
 
 Automated tests cover RLE boundaries, pixel ordering, header checksums, block
 sizes, observed commands, the BLE transaction using a fake client, invalid
-replies, timeout, write failure and 20/182/244/514-byte backend write limits.
+replies, timeout, write failure and 20/182/244/514-byte protocol write limits.
 No raw radio capture or
 nearby-device addresses are included in this repository.
 

@@ -36,7 +36,7 @@ Four BLE protocol families, sold under these brands:
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ⚠️ from specifications, untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
-Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol backend](custom_components/ble_esl/esl_ble/README.md).
+Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
 > [!WARNING]
 > WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
@@ -142,7 +142,7 @@ What this integration adds on top:
 ## Feedback & support
 
 - A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
-- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the backend, preset, firmware, options, last advertisement and failure counters (MAC redacted).
+- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (MAC redacted).
 - Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
 

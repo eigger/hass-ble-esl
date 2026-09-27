@@ -31,9 +31,9 @@ DEFAULT_RETRY_COUNT = 3
 DEFAULT_PREVENT_DUPLICATE_SEND = False
 DEFAULT_DEBOUNCE_MS = 0
 
-# Session-polled battery (backends with session_battery, i.e. easyTag): the
+# Session-polled battery (protocols with session_battery, i.e. easyTag): the
 # same voltage range as the advertised readings, so percentages are
-# comparable across backends.
+# comparable across protocols.
 SESSION_MIN_VOLTAGE = BATTERY_MIN_VOLTAGE
 SESSION_MAX_VOLTAGE = BATTERY_MAX_VOLTAGE
 
