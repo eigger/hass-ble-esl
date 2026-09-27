@@ -1,61 +1,25 @@
-"""Constants for the WOLINK BLE ESL protocol."""
+"""WOLINK constants."""
 
 from __future__ import annotations
 
+BRAND = "Zhsunyco"
+MANUFACTURER_ID = 0xBBAA
+
 SERVICE_UUID = "30323032-4c53-4545-4c42-4b4e494c4f57"
 DATA_CHAR = "31323032-4c53-4545-4c42-4b4e494c4f57"
-INFO_CHAR = "32323032-4c53-4545-4c42-4b4e494c4f57"
 AUTH_CHAR = "33323032-4c53-4545-4c42-4b4e494c4f57"
 STATUS_CHAR = "34323032-4c53-4545-4c42-4b4e494c4f57"
-BATTERY_CHAR = "35323032-4c53-4545-4c42-4b4e494c4f57"
 
-AES_KEY = bytes(
-    [
-        0x9B,
-        0x60,
-        0x9F,
-        0x28,
-        0xBC,
-        0x49,
-        0xE2,
-        0x57,
-        0x29,
-        0xBD,
-        0x7B,
-        0x8D,
-        0xF2,
-        0x2B,
-        0x44,
-        0x20,
-    ]
-)
+AES_KEY = bytes.fromhex("9b609f28bc49e25729bd7b8df22b4420")
 
-MANUFACTURER_ID = 0xBBAA  # 48042
-
-BLOCK_SIZE = 8192
-
-OP_LOAD_IMAGE = 0xA500
-OP_REFRESH_RAW = 0xA501
+OP_WRITE_DATA = 0xA500
 OP_REFRESH_COMPRESSED = 0xA502
-OP_MULTISCREEN_STORE = 0xA503
-OP_UNBIND_CLEAR = 0xA504
-OP_OTA_SEND = 0xA505
-OP_OTA_APPLY = 0xA506
-OP_OTA_ERASE = 0xA507
-OP_RGB = 0xA508
-OP_MULTISCREEN_REFRESH = 0xA509
 
-ERROR_MESSAGES = {
-    0: "no error",
+DEVICE_ERRORS = {
     1: "epd initialization error",
     2: "epd write error",
     3: "data decompression error",
     4: "OTA error",
-    5: "unlock (auth) failed",
+    5: "unlock failed",
 }
-
-SCREEN_CLEAR = -2
-SCREEN_KEEP = -1
-
-# Brand the tags are sold under; used as the HA device manufacturer
-BRAND = "Zhsunyco"
+ERROR_UNLOCK_FAILED = 5

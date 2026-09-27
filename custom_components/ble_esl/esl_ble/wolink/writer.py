@@ -1,4 +1,4 @@
-"""BLE writer and session management for WOLINK protocol."""
+"""WOLINK write session: unlock, upload the compressed picture, refresh."""
 
 from __future__ import annotations
 
@@ -7,221 +7,47 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from bleak import BleakClient
 from blesession import Notifications, SessionTrace
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
-from .const import (
-    AES_KEY,
-    AUTH_CHAR,
-    BATTERY_CHAR,
-    DATA_CHAR,
-    ERROR_MESSAGES,
-    STATUS_CHAR,
-)
+from .const import AUTH_CHAR, DATA_CHAR, DEVICE_ERRORS, ERROR_UNLOCK_FAILED, STATUS_CHAR
+from .image import encode_image
 from .protocol import (
-    battery_looks_plausible,
-    cmd_load_image_chunk,
-    cmd_refresh_compressed,
-    compress_wolink_blocks,
-    encode_planes,
-    quantize_image,
+    compress,
+    refresh_command,
+    status_error,
+    status_idle,
+    unlock_response,
+    write_data_command,
 )
 
 if TYPE_CHECKING:
+    from bleak import BleakClient
     from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
 
-# (compressed payload, uncompressed length) — the latter picks the refresh timeout.
+# Compressed payload, and the uncompressed size it expands to.
 PreparedImage = tuple[bytes, int]
+
+UNLOCK_SETTLE_S = 0.5
+MIN_CHUNK = 200
+MAX_CHUNK = 506  # 512-byte ATT attribute limit minus the 6-byte command header
+MTU_OVERHEAD = 9  # ATT write header (3) and command header (6)
 
 
 class WolinkError(Exception):
-    """WOLINK device error."""
+    """The tag reported an error code."""
 
     def __init__(self, code: int) -> None:
         self.code = code
-        msg = ERROR_MESSAGES.get(code, "unknown")
-        super().__init__(f"device error {code}: {msg}")
-
-
-class WolinkClient:
-    """Client handling a single connected WOLINK BLE session."""
-
-    def __init__(self, client: BleakClient, preset: DevicePreset, address: str) -> None:
-        self.client = client
-        self.preset = preset
-        self.address = address
-
-    async def authenticate(self) -> None:
-        """Perform AES-128 ECB challenge-response authentication.
-
-        Note: Writing to other characteristics/descriptors before unlocking triggers
-        immediate disconnect on official firmware. Therefore, authentication must be
-        performed directly on AUTH_CHAR prior to opening status notifications.
-        """
-        nonce = await self.client.read_gatt_char(AUTH_CHAR)
-        cipher = Cipher(algorithms.AES(AES_KEY), modes.ECB())
-        encryptor = cipher.encryptor()
-        encrypted = encryptor.update(bytes(nonce)) + encryptor.finalize()
-        await self.client.write_gatt_char(AUTH_CHAR, encrypted, response=True)
-        await asyncio.sleep(0.5)
-        if not self.client.is_connected:
-            raise WolinkError(5)  # Documented auth failure = immediate disconnect
-
-    async def read_battery_mv(self) -> int | None:
-        """Diagnostic read of battery GATT characteristic.
-
-        Note: WOLINK battery is passively provided via 0xBBAA broadcast advertisement.
-        This GATT characteristic is not used during standard write sessions.
-        """
-        try:
-            raw = await self.client.read_gatt_char(BATTERY_CHAR)
-            if not raw or len(raw) < 2:
-                return None
-            millivolts = (raw[0] << 8) | raw[1]
-            if not battery_looks_plausible(millivolts):
-                _LOGGER.warning(
-                    "GATT Battery read %d mV is out of plausible range (raw %s)",
-                    millivolts,
-                    bytes(raw)[:2].hex(),
-                )
-            return millivolts
-        except Exception as exc:
-            _LOGGER.debug("Could not read GATT battery: %s", exc)
-            return None
-
-    @staticmethod
-    def _completion_timeout(raw_len: int) -> float:
-        """How long the panel may take to refresh after the upload, by image size."""
-        if raw_len > 100000:
-            return 120.0
-        if raw_len > 20000:
-            return 60.0
-        return 30.0
-
-    @staticmethod
-    def _status_error(data: bytes) -> int:
-        """Error code carried by a status frame (byte 1), 0 if none."""
-        return data[1] if len(data) >= 2 else 0
-
-    def _chunk_size(self) -> int:
-        """Calculate image chunk size from negotiated MTU, within [200, 506] bytes.
-
-        The ATT attribute value limit is 512 bytes. With a 6-byte command header,
-        the chunk payload cannot exceed 506 bytes or (MTU - 9) bytes. When MTU
-        is below 209 (or unknown), the 200-byte floor relies on Bleak/GATT long
-        writes (ATT Prepare/Execute Write), matching historical behavior.
-        """
-        mtu = getattr(self.client, "mtu_size", None)
-        if isinstance(mtu, int) and mtu > 0:
-            return max(200, min(mtu - 9, 506))
-        return 200
-
-    def _completed(self, data: bytes) -> bool:
-        """Accept a status frame after the refresh: error -> raise, idle -> done."""
-        _LOGGER.debug(
-            "WOLINK status frame from %s after refresh: %s",
-            self.address,
-            data.hex() if data else "empty",
-        )
-        if err := self._status_error(data):
-            raise WolinkError(err)
-        return bool(data) and data[0] in (0x00, 0xFF)
-
-    async def _write_chunked(
-        self,
-        payload: bytes,
-        trace: SessionTrace,
-        chunk_size: int | None = None,
-        pacing_s: float = 0.0,
-    ) -> None:
-        """Write compressed image payload in chunks, `pacing_s` slower than usual.
-
-        `parts` is the chunk count of the image; `sends` counts the chunks
-        written so far, so a failure mid-transfer still says how far it got.
-        """
-        if chunk_size is None:
-            chunk_size = self._chunk_size()
-        offset = 0
-        sends = 0
-        trace.note(
-            parts=(len(payload) + chunk_size - 1) // chunk_size,
-            sends=sends,
-            chunk_size=chunk_size,
-        )
-        try:
-            while offset < len(payload):
-                chunk = payload[offset : offset + chunk_size]
-                cmd = cmd_load_image_chunk(offset, chunk)
-                await self.client.write_gatt_char(DATA_CHAR, cmd, response=True)
-                offset += len(chunk)
-                sends += 1
-                if pacing_s > 0:
-                    await asyncio.sleep(pacing_s)
-        finally:
-            trace.note(sends=sends)
-
-    async def write_prepared(
-        self,
-        prepared: PreparedImage,
-        *,
-        pacing_s: float = 0.0,
-        trace: SessionTrace | None = None,
-    ) -> WriteResult:
-        """Send an already-encoded image and trigger the refresh.
-
-        `trace` carries the stages before this one (authentication) when the
-        caller timed them (see write_session).
-        """
-        payload, raw_len = prepared
-        refresh = cmd_refresh_compressed(len(payload))
-
-        if raw_len > 100000:
-            chunk_size = self._chunk_size()
-            est_parts = (len(payload) + chunk_size - 1) // chunk_size
-            _LOGGER.info(
-                "Sending large image (%d bytes, %d chunks) to %s",
-                raw_len,
-                est_parts,
-                self.address,
-            )
-        timeout = self._completion_timeout(raw_len)
-        if trace is None:
-            trace = SessionTrace()
-        trace.note(bytes=len(payload))
-
-        async with Notifications(self.client, STATUS_CHAR) as status:
-            with trace.timed(STAGE_TRANSFER):
-                await self._write_chunked(payload, trace, pacing_s=pacing_s)
-                # Status frames during the upload are only busy indications,
-                # but an error reported before the refresh is still an error
-                # — of the transfer, so it is raised inside its stage: the
-                # trace attributes a failure to the block it escapes from.
-                for frame in status.clear():
-                    if err := self._status_error(frame):
-                        raise WolinkError(err)
-            # The finish stage is the panel refresh: the tag reports idle once
-            # the e-paper has been redrawn, seconds to a minute by panel size.
-            with trace.timed(STAGE_FINISH):
-                await self.client.write_gatt_char(DATA_CHAR, refresh, response=True)
-                await status.wait_for(self._completed, timeout, step="refresh")
-        return WriteResult(success=True)
+        super().__init__(f"device error {code}: {DEVICE_ERRORS.get(code, 'unknown')}")
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> PreparedImage:
-    """Quantize, pack and compress an image for `preset`.
-
-    Pure-Python per-pixel work (seconds for the larger panels); callers run
-    it in a worker thread so the event loop stays responsive.
-    """
-    plane_bw, plane_red, plane_yellow = quantize_image(
-        image, preset.width, preset.height, preset.colors
-    )
-    raw = encode_planes(plane_bw, plane_red, plane_yellow, preset)
-    return compress_wolink_blocks(raw), len(raw)
+    """Encode and compress `image`; CPU-bound, so callers run it in a worker thread."""
+    raw = encode_image(image, preset)
+    return compress(raw), len(raw)
 
 
 async def write_session(
@@ -233,13 +59,91 @@ async def write_session(
     pacing_s: float = 0.0,
     trace: SessionTrace,
 ) -> WriteResult:
-    """Authenticate and send an encode over an open link.
-
-    `prepared` is awaited once the link is up (the caller owns it and may
-    await it again on a retry); authentication must precede any other write.
-    """
-    payload = await prepared
-    wolink = WolinkClient(client, preset, address)
+    """Unlock, then send the picture; `prepared` is awaited once the link is up."""
+    payload, raw_size = await prepared
+    session = WolinkSession(client, address)
     with trace.timed(STAGE_HANDSHAKE):
-        await wolink.authenticate()
-    return await wolink.write_prepared(payload, pacing_s=pacing_s, trace=trace)
+        await session.unlock()
+    await session.send(payload, raw_size, pacing_s=pacing_s, trace=trace)
+    return WriteResult(success=True)
+
+
+def refresh_timeout(raw_size: int) -> float:
+    """How long the panel may take to redraw, by picture size."""
+    if raw_size > 100_000:
+        return 120.0
+    if raw_size > 20_000:
+        return 60.0
+    return 30.0
+
+
+class WolinkSession:
+    """One connected WOLINK tag."""
+
+    def __init__(self, client: BleakClient, address: str) -> None:
+        self.client = client
+        self.address = address
+
+    async def unlock(self) -> None:
+        """Answer the auth nonce; a wrong answer makes the tag drop the link.
+
+        Nothing else may be written or subscribed before this.
+        """
+        nonce = await self.client.read_gatt_char(AUTH_CHAR)
+        await self.client.write_gatt_char(AUTH_CHAR, unlock_response(nonce), response=True)
+        await asyncio.sleep(UNLOCK_SETTLE_S)
+        if not self.client.is_connected:
+            raise WolinkError(ERROR_UNLOCK_FAILED)
+
+    def chunk_size(self) -> int:
+        """Largest data chunk the negotiated MTU carries, never below 200 bytes."""
+        mtu = getattr(self.client, "mtu_size", None)
+        if isinstance(mtu, int) and mtu > 0:
+            return max(MIN_CHUNK, min(mtu - MTU_OVERHEAD, MAX_CHUNK))
+        return MIN_CHUNK
+
+    async def send(
+        self,
+        payload: bytes,
+        raw_size: int,
+        *,
+        pacing_s: float = 0.0,
+        trace: SessionTrace | None = None,
+    ) -> None:
+        """Upload `payload`, then refresh and wait for the tag to go idle."""
+        if trace is None:
+            trace = SessionTrace()
+        trace.note(bytes=len(payload))
+        async with Notifications(self.client, STATUS_CHAR) as status:
+            with trace.timed(STAGE_TRANSFER):
+                await self.upload(payload, trace, pacing_s=pacing_s)
+                # Frames during the upload only say busy, unless they carry an error.
+                for frame in status.clear():
+                    if code := status_error(frame):
+                        raise WolinkError(code)
+            with trace.timed(STAGE_FINISH):
+                await self.client.write_gatt_char(
+                    DATA_CHAR, refresh_command(len(payload)), response=True
+                )
+                await status.wait_for(self._refreshed, refresh_timeout(raw_size), step="refresh")
+
+    async def upload(self, payload: bytes, trace: SessionTrace, *, pacing_s: float = 0.0) -> None:
+        """Write `payload` in MTU-sized chunks; `sends` records how far it got."""
+        size = self.chunk_size()
+        sends = 0
+        trace.note(parts=(len(payload) + size - 1) // size, sends=sends, chunk_size=size)
+        try:
+            for offset in range(0, len(payload), size):
+                chunk = write_data_command(offset, payload[offset : offset + size])
+                await self.client.write_gatt_char(DATA_CHAR, chunk, response=True)
+                sends += 1
+                if pacing_s > 0:
+                    await asyncio.sleep(pacing_s)
+        finally:
+            trace.note(sends=sends)
+
+    def _refreshed(self, frame: bytes) -> bool:
+        _LOGGER.debug("WOLINK status from %s after refresh: %s", self.address, frame.hex())
+        if code := status_error(frame):
+            raise WolinkError(code)
+        return status_idle(frame)

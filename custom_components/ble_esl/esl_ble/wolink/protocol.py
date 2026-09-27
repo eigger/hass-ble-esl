@@ -1,352 +1,85 @@
-"""WOLINK BLE ESL protocol — pure functions and codecs."""
+"""WOLINK wire formats: advertisement, unlock, commands, status and compression."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import struct
-from typing import TYPE_CHECKING, Any
 import zlib
 
-from PIL import Image
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from ..base import DevicePreset
-from .const import (
-    BLOCK_SIZE,
-    OP_LOAD_IMAGE,
-    OP_MULTISCREEN_REFRESH,
-    OP_MULTISCREEN_STORE,
-    OP_OTA_APPLY,
-    OP_OTA_ERASE,
-    OP_OTA_SEND,
-    OP_REFRESH_COMPRESSED,
-    OP_REFRESH_RAW,
-    OP_RGB,
-    OP_UNBIND_CLEAR,
-)
+from .const import AES_KEY, OP_REFRESH_COMPRESSED, OP_WRITE_DATA
 
-if TYPE_CHECKING:
-    pass
+ADVERTISEMENT_LENGTH = 10
 
 
-def _opcode_bytes(opcode: int) -> bytes:
-    return bytes([opcode & 0xFF, (opcode >> 8) & 0xFF])
+@dataclass(frozen=True)
+class Advertisement:
+    """The five big-endian words after company id 0xBBAA."""
+
+    product_id: int
+    app_version: int
+    hardware_version: int
+    display_version: int
+    battery_mv: int
 
 
-def compress_wolink_blocks(data: bytes) -> bytes:
-    """Block-deflate format used by WOLINK image/OTA commands.
-
-    Format: A5 A6 <block_count> 02 [<idx:1B> <size:u16le> <raw_deflate>] x N
-    """
-    blocks = [data[i : i + BLOCK_SIZE] for i in range(0, len(data), BLOCK_SIZE)]
-    out = bytearray([0xA5, 0xA6, len(blocks), 0x02])
-    for i, block in enumerate(blocks):
-        compressor = zlib.compressobj(9, zlib.DEFLATED, -15)
-        compressed = compressor.compress(block) + compressor.flush()
-        out.append(i + 1)
-        out.extend(len(compressed).to_bytes(2, "little"))
-        out.extend(compressed)
-    return bytes(out)
+def parse_advertisement(data: bytes | None) -> Advertisement | None:
+    """Decode WOLINK manufacturer data, or None if it is too short."""
+    if data is None or len(data) < ADVERTISEMENT_LENGTH:
+        return None
+    return Advertisement(*struct.unpack_from(">5H", data))
 
 
-def crc16_modbus(data: bytes) -> int:
-    """CRC-16/MODBUS (init 0xFFFF, poly 0xA001 reflected, no xorout)."""
-    crc = 0xFFFF
-    for byte in data:
-        crc ^= byte
-        for _ in range(8):
-            crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
-    return crc
-
-
-if crc16_modbus(b"123456789") != 0x4B37:
-    raise RuntimeError("crc16_modbus self-test failed")
-
-
-def parse_manufacturer_data(data: bytes) -> dict:
-    """Parse 0xBBAA manufacturer-data value (company ID already stripped).
-
-    Layout: PID + AppVer + HwVer + DispVer + BatVoltage_mv, each a big-endian
-    uint16. GATT command fields elsewhere in this protocol are little-endian;
-    the advertisement is not. Reading the versions little-endian swaps the
-    bytes (app ``00 0E`` becomes 3584 instead of 14).
-    """
-    if len(data) < 10:
-        raise ValueError(f"expected at least 10 bytes of manufacturer data, got {len(data)}")
-    pid, app_ver, hw_ver, disp_ver = struct.unpack_from(">4H", data)
-    return {
-        "pid": f"{pid:04x}",
-        "app_ver": app_ver,
-        "hw_ver": hw_ver,
-        "disp_ver": disp_ver,
-        "battery_mv": _battery_mv(data[8:10]),
-    }
-
-
-def _battery_mv(raw: bytes) -> int:
-    """Decode a 2-byte battery-voltage field as big-endian millivolts."""
-    if len(raw) < 2:
-        raise ValueError("battery field needs at least 2 bytes")
-    return (raw[0] << 8) | raw[1]
-
-
-def battery_looks_plausible(millivolts: int) -> bool:
-    """True if millivolts is in the plausible range for a coin/AA-class cell."""
+def battery_plausible(millivolts: int) -> bool:
+    """A coin or AA-class cell reads between 1.5 and 4.2 V."""
     return 1500 <= millivolts <= 4200
 
 
-def cmd_load_image_chunk(pointer: int, data: bytes) -> bytes:
-    return _opcode_bytes(OP_LOAD_IMAGE) + pointer.to_bytes(4, "little") + data
+def unlock_response(nonce: bytes) -> bytes:
+    """The auth characteristic's nonce, AES-128-ECB encrypted with the vendor key."""
+    encryptor = Cipher(algorithms.AES(AES_KEY), modes.ECB()).encryptor()
+    return encryptor.update(bytes(nonce)) + encryptor.finalize()
 
 
-def cmd_refresh_raw(size: int) -> bytes:
-    return _opcode_bytes(OP_REFRESH_RAW) + size.to_bytes(4, "little")
+def write_data_command(offset: int, data: bytes) -> bytes:
+    """Store `data` at `offset` of the tag's image buffer."""
+    return struct.pack("<HI", OP_WRITE_DATA, offset) + data
 
 
-def cmd_refresh_compressed(size: int) -> bytes:
-    return _opcode_bytes(OP_REFRESH_COMPRESSED) + size.to_bytes(4, "little")
+def refresh_command(size: int) -> bytes:
+    """Redraw the panel from the first `size` stored bytes, block compressed."""
+    return struct.pack("<HI", OP_REFRESH_COMPRESSED, size)
 
 
-def multiscreen_picture_tag(slot: int) -> bytes:
-    if not 0 <= slot <= 10:
-        raise ValueError("slot must be 0-10")
-    return f"PIC{slot:02d}\0".encode("ascii")
+def status_error(frame: bytes) -> int:
+    """Error code of a status frame (byte 1), 0 when there is none."""
+    return frame[1] if len(frame) >= 2 else 0
 
 
-def cmd_multiscreen_store_chunk(pointer: int, data: bytes) -> bytes:
-    return _opcode_bytes(OP_MULTISCREEN_STORE) + pointer.to_bytes(4, "little") + data
+def status_idle(frame: bytes) -> bool:
+    """The tag is done: byte 0 is 0x00 (not busy) or 0xFF (refresh finished)."""
+    return bool(frame) and frame[0] in (0x00, 0xFF)
 
 
-def cmd_multiscreen_store_end(total_length: int) -> bytes:
-    return _opcode_bytes(OP_MULTISCREEN_STORE) + total_length.to_bytes(4, "little")
+COMPRESSION_MAGIC = b"\xa5\xa6"
+COMPRESSION_FORMAT = 0x02
+COMPRESSION_BLOCK = 8192
 
 
-def cmd_unbind_clear() -> bytes:
-    return _opcode_bytes(OP_UNBIND_CLEAR)
+def compress(data: bytes) -> bytes:
+    """Block-compressed picture: raw DEFLATE per 8 KiB, behind a four-byte header.
 
-
-def cmd_ota_erase() -> bytes:
-    return _opcode_bytes(OP_OTA_ERASE)
-
-
-def cmd_ota_send_chunk(pointer: int, data: bytes) -> bytes:
-    return _opcode_bytes(OP_OTA_SEND) + pointer.to_bytes(4, "little") + data
-
-
-def cmd_ota_apply(firmware_size: int, crc16: int) -> bytes:
-    return (
-        _opcode_bytes(OP_OTA_APPLY)
-        + firmware_size.to_bytes(4, "little")
-        + crc16.to_bytes(2, "little")
-    )
-
-
-def cmd_rgb(red: int, green: int, blue: int, on_ms: int, off_ms: int, work_ms: int) -> bytes:
-    return (
-        _opcode_bytes(OP_RGB)
-        + bytes([red & 0xFF, green & 0xFF, blue & 0xFF])
-        + on_ms.to_bytes(2, "little")
-        + off_ms.to_bytes(2, "little")
-        + work_ms.to_bytes(4, "little")
-    )
-
-
-def cmd_multiscreen_refresh(screen_a: int, screen_b: int) -> bytes:
-    return _opcode_bytes(OP_MULTISCREEN_REFRESH) + struct.pack("<bb", screen_a, screen_b)
-
-
-def _color_distance(r1: int, g1: int, b1: int, r2: int, g2: int, b2: int) -> float:
-    r_mean = (r1 + r2) / 2
-    dr = r1 - r2
-    dg = g1 - g2
-    db = b1 - b2
-    return (2 + r_mean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - r_mean) / 256) * db * db
-
-
-def quantize_image(
-    img: Image.Image, width: int, height: int, colors: str = "BWRY"
-) -> tuple[list[int], list[int], list[int]]:
-    """Quantize a PIL Image into (plane_bw, plane_red, plane_yellow) bit planes."""
-    if img.size != (width, height):
-        img = img.resize((width, height), Image.Resampling.LANCZOS)
-    rgb_img = img.convert("RGB")
-    pixels = rgb_img.load()
-
-    plane_bw: list[int] = []
-    plane_red: list[int] = []
-    plane_yellow: list[int] = []
-
-    has_red = "R" in colors
-    has_yellow = "Y" in colors
-
-    for y in range(height):
-        for x in range(width):
-            r, g, b = pixels[x, y]
-            dist_black = _color_distance(r, g, b, 0, 0, 0)
-            dist_white = _color_distance(r, g, b, 255, 255, 255)
-            candidates = [("black", dist_black), ("white", dist_white)]
-            if has_red:
-                candidates.append(("red", _color_distance(r, g, b, 255, 0, 0)))
-            if has_yellow:
-                candidates.append(("yellow", _color_distance(r, g, b, 255, 255, 0)))
-
-            best_color = min(candidates, key=lambda c: c[1])[0]
-            if best_color == "black":
-                plane_bw.append(1)
-                plane_red.append(0)
-                plane_yellow.append(0)
-            elif best_color == "red":
-                plane_bw.append(0)
-                plane_red.append(1)
-                plane_yellow.append(0)
-            elif best_color == "yellow":
-                plane_bw.append(0)
-                plane_red.append(0)
-                plane_yellow.append(1)
-            else:  # white
-                plane_bw.append(0)
-                plane_red.append(0)
-                plane_yellow.append(0)
-
-    return plane_bw, plane_red, plane_yellow
-
-
-ROTATIONS = (0, 90, 180, 270)
-
-
-def _buffer_shape(width: int, height: int, rotation: int) -> tuple[int, int]:
-    """(rows, pixels per row) of the buffer: the image turned by ``rotation``."""
-    return (width, height) if rotation in (90, 270) else (height, width)
-
-
-def _source_xy(
-    row: int,
-    col: int,
-    width: int,
-    height: int,
-    *,
-    rotation: int,
-    mirror_x: bool,
-    mirror_y: bool,
-) -> tuple[int, int]:
-    """Source pixel for buffer position ``(row, col)``.
-
-    The image is turned ``rotation`` degrees counter-clockwise (as PIL's
-    ``Image.rotate``), then read left to right, top to bottom; ``mirror_x`` /
-    ``mirror_y`` reverse that read.
+    Header `A5 A6 <block count> 02`, then per block its 1-based index, its
+    compressed size (u16 little endian) and the deflate stream.
     """
-    rows, cols = _buffer_shape(width, height, rotation)
-    if mirror_x:
-        col = cols - 1 - col
-    if mirror_y:
-        row = rows - 1 - row
-    if rotation == 90:
-        return width - 1 - row, col
-    if rotation == 180:
-        return width - 1 - col, height - 1 - row
-    if rotation == 270:
-        return row, height - 1 - col
-    return col, row
-
-
-def _orientation(preset: DevicePreset) -> dict[str, Any]:
-    return {
-        "rotation": int(preset.extra.get("rotation", 0)),
-        "mirror_x": bool(preset.extra.get("mirror_x", False)),
-        "mirror_y": bool(preset.extra.get("mirror_y", False)),
-    }
-
-
-def _pack_1bpp(bits: list[int], width: int, height: int, **orientation: Any) -> bytes:
-    """Pack one bit per pixel, first pixel of a byte in the high bit."""
-    rows, cols = _buffer_shape(width, height, orientation["rotation"])
-    stride = (cols + 7) // 8
-    raw = bytearray(rows * stride)
-    for row in range(rows):
-        for col in range(cols):
-            x, y = _source_xy(row, col, width, height, **orientation)
-            if bits[y * width + x]:
-                raw[row * stride + (col // 8)] |= 1 << (7 - (col % 8))
-    return bytes(raw)
-
-
-def _encode_bw_red_planes(
-    plane_bw: list[int] | bytes,
-    plane_red: list[int] | bytes,
-    preset: DevicePreset,
-) -> bytes:
-    """Pack two full-frame 1bpp planes: black/white, then red.
-
-    Polarity is from the 2.9\" tag in discussion 55. A black/white bit of 1 is
-    white and 0 is black, so ``quantize_image``'s black plane (1 = black) is
-    inverted. A red bit of 1 is red and covers the black/white plane; red
-    pixels are stored as white underneath.
-    """
-    width, height = preset.width, preset.height
-    count = width * height
-    orientation = _orientation(preset)
-    # 1 = black in the quantizer, 1 = white on the panel.
-    bw_bits = [0 if plane_bw[i] else 1 for i in range(count)]
-    red_bits = [int(plane_red[i]) for i in range(count)]
-    return _pack_1bpp(bw_bits, width, height, **orientation) + _pack_1bpp(
-        red_bits, width, height, **orientation
-    )
-
-
-def encode_planes(
-    plane_bw: list[int] | bytes,
-    plane_red: list[int] | bytes,
-    plane_yellow: list[int] | bytes | None,
-    preset: DevicePreset,
-) -> bytes:
-    """Pack bit planes for ``preset``: BWRY as 2bpp, BWR as two 1bpp frames."""
-    width, height = preset.width, preset.height
-    expected = width * height
-    if plane_yellow is None:
-        plane_yellow = [0] * expected
-
-    for name, plane in (
-        ("plane_bw", plane_bw),
-        ("plane_red", plane_red),
-        ("plane_yellow", plane_yellow),
-    ):
-        if len(plane) != expected:
-            raise ValueError(
-                f"{name} has {len(plane)} entries, expected {expected} "
-                f"({width}x{height} for {preset.display_name or 'this preset'}). "
-                "A wrong preset produces a scrambled image rather than an error, "
-                "so this is checked up front."
-            )
-
-    if preset.colors == "BWR":
-        return _encode_bw_red_planes(plane_bw, plane_red, preset)
-    if preset.colors != "BWRY":
-        raise ValueError(f"no WOLINK pixel format for {preset.colors} ({preset.key})")
-
-    orientation = _orientation(preset)
-    buf_h, buf_w = _buffer_shape(width, height, orientation["rotation"])
-
-    # Row stride is byte-aligned (ceil(buf_w / 4) bytes per row).
-    # For displays where buf_w is not a multiple of 4 (e.g. 213: 250x122, buf_w=122 -> 31 bytes),
-    # trailing sub-pixels are padded with white (0b01) so no scanline pixels are truncated.
-    num_col_groups = (buf_w + 3) // 4
-    raw = bytearray()
-    for row in range(buf_h):
-        for col_group in range(num_col_groups):
-            byte = 0
-            for p in range(4):
-                col = col_group * 4 + p
-                if col < buf_w:
-                    orig_x, orig_y = _source_xy(row, col, width, height, **orientation)
-                    idx = orig_y * width + orig_x
-                    if plane_bw[idx]:
-                        color = 0b00
-                    elif plane_red[idx]:
-                        color = 0b11
-                    elif plane_yellow[idx]:
-                        color = 0b10
-                    else:
-                        color = 0b01
-                else:
-                    color = 0b01  # Padding pixel is white
-                byte |= color << (6 - p * 2)
-            raw.append(byte)
-    return bytes(raw)
+    blocks = [data[i : i + COMPRESSION_BLOCK] for i in range(0, len(data), COMPRESSION_BLOCK)]
+    if not 1 <= len(blocks) <= 255:
+        raise ValueError(f"{len(data)} bytes do not fit 1-255 compression blocks")
+    out = bytearray(COMPRESSION_MAGIC)
+    out += bytes((len(blocks), COMPRESSION_FORMAT))
+    for index, block in enumerate(blocks, start=1):
+        deflate = zlib.compressobj(9, zlib.DEFLATED, -zlib.MAX_WBITS)
+        stream = deflate.compress(block) + deflate.flush()
+        out += bytes((index,)) + struct.pack("<H", len(stream)) + stream
+    return bytes(out)
