@@ -5,7 +5,7 @@ reference device is the PSJ-420, a 400x300 black/white/red/yellow label;
 the catalog under [Advertisement](#advertisement) lists the other models.
 Manufacturer, model and colors of the PSJ-420 were confirmed by the device
 owner, who verified working screen updates with this protocol on the real
-tag. Its preset uses `reported` confidence. The protocol codec and BLE
+tag. The protocol codec and BLE
 transaction are also covered by automated tests.
 
 ## Product photo

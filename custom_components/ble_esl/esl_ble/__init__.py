@@ -7,10 +7,6 @@ from typing import TYPE_CHECKING
 from .base import (
     BATTERY_MAX_VOLTAGE,
     BATTERY_MIN_VOLTAGE,
-    CONFIDENCE_COMMUNITY,
-    CONFIDENCE_ESTIMATED,
-    CONFIDENCE_HARDWARE,
-    CONFIDENCE_REPORTED,
     AdvertisementInfo,
     BleParser,
     Capabilities,
@@ -77,10 +73,6 @@ register(XteProtocol())
 __all__ = [
     "BATTERY_MAX_VOLTAGE",
     "BATTERY_MIN_VOLTAGE",
-    "CONFIDENCE_COMMUNITY",
-    "CONFIDENCE_ESTIMATED",
-    "CONFIDENCE_HARDWARE",
-    "CONFIDENCE_REPORTED",
     "AdvertisementInfo",
     "BleParser",
     "Capabilities",

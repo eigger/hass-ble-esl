@@ -87,7 +87,6 @@ async def async_get_config_entry_diagnostics(
         "preset": {
             **dataclasses.asdict(preset),
             "extra": dict(preset.extra),
-            "verified": preset.verified,
         },
         "device": {
             "identifier": data.identifier,

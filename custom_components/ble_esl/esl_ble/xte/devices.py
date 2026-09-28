@@ -9,7 +9,7 @@ clockwise, as PIL's `Image.rotate`).
 
 from __future__ import annotations
 
-from ..base import CONFIDENCE_COMMUNITY, CONFIDENCE_ESTIMATED, CONFIDENCE_REPORTED, DevicePreset
+from ..base import DevicePreset
 from .wire import parse_advertisement
 
 
@@ -21,7 +21,6 @@ def _preset(
     *,
     device_number: int | None = None,
     rotation: int = 0,
-    confidence: str = CONFIDENCE_ESTIMATED,
 ) -> DevicePreset:
     extra: dict[str, int] = {}
     if device_number is not None:
@@ -34,7 +33,6 @@ def _preset(
         width=width,
         height=height,
         colors="BWRY",
-        confidence=confidence,
         extra=extra,
     )
 
@@ -48,7 +46,6 @@ PRESETS: dict[str, DevicePreset] = {
             400,
             300,
             device_number=153,
-            confidence=CONFIDENCE_REPORTED,
         ),
         _preset(
             "psj-213",
@@ -57,7 +54,6 @@ PRESETS: dict[str, DevicePreset] = {
             122,
             device_number=140,
             rotation=90,
-            confidence=CONFIDENCE_COMMUNITY,
         ),
         _preset("psj-154", '1.54" BWRY', 200, 200),
         _preset("psj-266", '2.66" BWRY', 296, 152, rotation=90),

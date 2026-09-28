@@ -13,8 +13,6 @@ import pytest
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.base import (
-    CONFIDENCE_COMMUNITY,
-    CONFIDENCE_REPORTED,
     WriteRefused,
 )
 from custom_components.ble_esl.esl_ble.xte import devices, writer
@@ -44,8 +42,6 @@ def advertisement(tail=0x1B, payload=None):
 def test_discovery_profile_and_advertised_readings():
     protocol = esl_ble.get("xte")
     assert protocol.brand == "Poshiji"
-    assert PSJ_420.confidence == CONFIDENCE_REPORTED
-    assert PSJ_420.verified
     assert protocol.capabilities.passive_battery and not protocol.capabilities.session_battery
     for tail in (0x1E, 0x1B):
         info = advertisement(tail)
@@ -84,7 +80,6 @@ def test_identity_survives_battery_and_firmware_changes():
 def test_psj213_is_detected_and_packed_portrait():
     """PSJ-213: device number 140, viewed 250x122, portrait 122x250 buffer."""
     protocol = esl_ble.get("xte")
-    assert PSJ_213.confidence == CONFIDENCE_COMMUNITY and not PSJ_213.verified
     info = advertisement(payload=bytes.fromhex("fd024002008c63060102ffff1c"))
     assert esl_ble.detect(info) is protocol
     adv = protocol.parse_advertisement(info)
@@ -136,7 +131,7 @@ def test_size_only_presets_pack_at_their_resolution():
     }
     for key, (buf_w, buf_h) in expected_buffers.items():
         preset = devices.PRESETS[key]
-        assert "device_number" not in preset.extra and not preset.verified
+        assert "device_number" not in preset.extra
         assert (preset.extra.get("rotation", 0) == 90) == (key in ("psj-266", "psj-290"))
         assert buffer_size(preset) == (buf_w, buf_h)
         obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")

@@ -33,13 +33,13 @@ Four BLE protocol families, sold under these brands:
 |---|---|---|---|---|---|
 | **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ verified on hardware | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
 | **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ PSJ-420 verified by owner; other sizes size-only presets | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
-| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ⚠️ from specifications, untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
+| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ partially verified (2.9" BWR, 3.7" BWRY); other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
 Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
 > [!WARNING]
-> WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
+> Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
 
 ## Installation
 

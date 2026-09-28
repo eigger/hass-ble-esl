@@ -135,8 +135,8 @@ async def test_bluetooth_discovery_xte_unknown_device_number_asks_for_model(
     field = next(k for k in result["data_schema"].schema if k == CONF_MODEL)
     assert field.default is vol.UNDEFINED
     labels = {o["value"]: o["label"] for o in _model_selector_options("xte")}
-    assert labels["psj-290"] == '2.9" BWRY — 296x128 (unverified)'
-    assert "(unverified)" not in labels["psj-420"]
+    assert labels["psj-290"] == '2.9" BWRY — 296x128'
+    assert labels["psj-420"] == 'PSJ-420 4.2" BWRY — 400x300'
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], user_input={CONF_MODEL: "psj-290"}
@@ -323,13 +323,15 @@ async def test_options_flow_hides_model_for_model_detection_protocol(
 # ── Model list ───────────────────────────────────────────────────────────
 
 
-def test_model_selector_options_verified_first():
+def test_model_selector_options_sorted_by_size():
     options = _model_selector_options("wolink")
     assert len(options) == len(PRESETS)
     keys = [o["value"] for o in options]
-    assert set(keys[:5]) == {"290", "290-bwr", "350", "750", "420"}
+    expected_order = sorted(PRESETS.keys(), key=lambda k: PRESETS[k].width * PRESETS[k].height)
+    assert keys == expected_order
     for option in options:
-        assert ("(unverified)" in option["label"]) is (not PRESETS[option["value"]].verified)
+        preset = PRESETS[option["value"]]
+        assert option["label"] == f"{preset.display_name} — {preset.width}x{preset.height}"
 
 
 def test_options_schema_default_model_falls_back_per_protocol():

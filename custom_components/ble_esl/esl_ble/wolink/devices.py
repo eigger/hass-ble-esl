@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from ..base import (
-    CONFIDENCE_COMMUNITY,
-    CONFIDENCE_ESTIMATED,
-    CONFIDENCE_HARDWARE,
-    CONFIDENCE_REPORTED,
-    DevicePreset,
-)
+from ..base import DevicePreset
 from .image import ROTATIONS
 from .wire import parse_advertisement
 
@@ -24,7 +18,6 @@ def _preset(
     mirror_y: bool = False,
     display_version: int | None = None,
     colors: str = "BWRY",
-    confidence: str = CONFIDENCE_ESTIMATED,
 ) -> DevicePreset:
     if rotation not in ROTATIONS:
         raise ValueError(f"{key}: rotation must be one of {ROTATIONS}, got {rotation}")
@@ -41,7 +34,6 @@ def _preset(
         width=width,
         height=height,
         colors=colors,
-        confidence=confidence,
         extra=extra,
     )
 
@@ -56,7 +48,6 @@ PRESETS: dict[str, DevicePreset] = {
             128,
             rotation=270,
             mirror_x=True,
-            confidence=CONFIDENCE_HARDWARE,
         ),
         _preset(
             "290-bwr",
@@ -66,7 +57,6 @@ PRESETS: dict[str, DevicePreset] = {
             rotation=270,
             display_version=0x0303,
             colors="BWR",
-            confidence=CONFIDENCE_HARDWARE,
         ),
         _preset(
             "350",
@@ -75,10 +65,9 @@ PRESETS: dict[str, DevicePreset] = {
             184,
             rotation=270,
             display_version=0x0201,
-            confidence=CONFIDENCE_HARDWARE,
         ),
-        _preset("750", '7.5" BWRY', 800, 480, rotation=0, confidence=CONFIDENCE_HARDWARE),
-        _preset("420", '4.2" BWRY', 400, 300, rotation=0, confidence=CONFIDENCE_REPORTED),
+        _preset("750", '7.5" BWRY', 800, 480, rotation=0),
+        _preset("420", '4.2" BWRY', 400, 300, rotation=0),
         _preset(
             "266",
             '2.66" BWRY',
@@ -86,7 +75,6 @@ PRESETS: dict[str, DevicePreset] = {
             152,
             rotation=270,
             mirror_x=True,
-            confidence=CONFIDENCE_COMMUNITY,
         ),
         _preset("154", '1.54" BWRY', 200, 200, rotation=270),
         _preset("213", '2.13" BWRY', 250, 122, rotation=270),

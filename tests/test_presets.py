@@ -2,12 +2,6 @@
 
 from __future__ import annotations
 
-from custom_components.ble_esl.esl_ble.base import (
-    CONFIDENCE_COMMUNITY,
-    CONFIDENCE_ESTIMATED,
-    CONFIDENCE_HARDWARE,
-    CONFIDENCE_REPORTED,
-)
 from custom_components.ble_esl.esl_ble.wolink.devices import (
     PRESETS,
     preset_for_advertisement,
@@ -18,63 +12,43 @@ def test_presets_catalog():
     """Verify all 12 device presets and their properties."""
     assert len(PRESETS) == 12
 
-    # Verified hardware presets
-    assert PRESETS["290"].confidence == CONFIDENCE_HARDWARE
-    assert PRESETS["290"].verified is True
+    # 2.9" BWRY
     assert PRESETS["290"].width == 296
     assert PRESETS["290"].height == 128
     assert PRESETS["290"].extra.get("rotation") == 270
     assert PRESETS["290"].extra.get("mirror_x") is True
 
-    # 2.9" BWR: two 1bpp columns, verified on a physical tag.
+    # 2.9" BWR: two 1bpp columns
     assert PRESETS["290-bwr"].colors == "BWR"
     assert PRESETS["290-bwr"].width == 296
     assert PRESETS["290-bwr"].height == 128
-    assert PRESETS["290-bwr"].confidence == CONFIDENCE_HARDWARE
-    assert PRESETS["290-bwr"].verified is True
     assert PRESETS["290-bwr"].extra.get("rotation") == 270
     assert PRESETS["290-bwr"].extra.get("mirror_x") is False
     assert PRESETS["290-bwr"].extra.get("mirror_y") is False
     assert PRESETS["290-bwr"].extra.get("display_version") == 0x0303
 
-    assert PRESETS["350"].confidence == CONFIDENCE_HARDWARE
     assert PRESETS["350"].extra.get("display_version") == 0x0201
-    assert PRESETS["350"].verified is True
-
-    assert PRESETS["750"].confidence == CONFIDENCE_HARDWARE
-    assert PRESETS["750"].verified is True
+    assert PRESETS["370"].extra.get("rotation") == 90
     assert PRESETS["750"].extra.get("rotation") == 0
-
-    assert PRESETS["420"].confidence == CONFIDENCE_REPORTED
-    assert PRESETS["420"].verified is True
-
-    # Community / Estimated presets
-    assert PRESETS["266"].confidence == CONFIDENCE_COMMUNITY
-    assert PRESETS["266"].verified is False
-
-    assert PRESETS["154"].confidence == CONFIDENCE_ESTIMATED
-    assert PRESETS["154"].verified is False
 
     assert PRESETS["102"].colors == "BWR"
     assert PRESETS["133"].colors == "BWR"
 
 
 def test_model_selector_ordering():
-    """The config-flow model list puts verified hardware/reported models first
-    and marks the rest as unverified."""
+    """The config-flow model list orders models by panel size (area)."""
     from custom_components.ble_esl.config_flow import _model_selector_options
 
     options = _model_selector_options("wolink")
     assert len(options) == 12
 
     keys = [o["value"] for o in options]
-    # Verified models come first, smaller panels before larger ones.
-    assert set(keys[:5]) == {"290", "290-bwr", "350", "750", "420"}
-    assert "(unverified)" not in options[keys.index("290-bwr")]["label"]
+    expected_order = sorted(PRESETS.keys(), key=lambda k: PRESETS[k].width * PRESETS[k].height)
+    assert keys == expected_order
 
     for option in options:
         preset = PRESETS[option["value"]]
-        assert ("(unverified)" in option["label"]) is (not preset.verified)
+        assert option["label"] == f"{preset.display_name} — {preset.width}x{preset.height}"
 
 
 def test_preset_for_advertisement_uses_display_version():
