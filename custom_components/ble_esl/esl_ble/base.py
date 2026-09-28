@@ -74,11 +74,6 @@ full speed. The integration turns this into `pacing_s` for the writers.
 BATTERY_MIN_VOLTAGE = 2.5
 BATTERY_MAX_VOLTAGE = 2.9
 
-CONFIDENCE_HARDWARE = "hardware"  # Verified on real hardware
-CONFIDENCE_REPORTED = "reported"  # Third-party verified on real hardware
-CONFIDENCE_COMMUNITY = "community"  # Community report, not re-tested
-CONFIDENCE_ESTIMATED = "estimated"  # Resolution cross-checked, scan orientation estimated
-
 
 @dataclass(frozen=True)
 class DevicePreset:
@@ -89,13 +84,7 @@ class DevicePreset:
     width: int
     height: int
     colors: str = "BWRY"
-    confidence: str = CONFIDENCE_ESTIMATED
     extra: Mapping[str, Any] = field(default_factory=dict)
-
-    @property
-    def verified(self) -> bool:
-        """True if the preset is confirmed working on physical hardware."""
-        return self.confidence in (CONFIDENCE_HARDWARE, CONFIDENCE_REPORTED)
 
     @property
     def model_name(self) -> str:

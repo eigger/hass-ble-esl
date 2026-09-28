@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from ..base import CONFIDENCE_HARDWARE, DevicePreset
+from ..base import DevicePreset
 from .image import ENCODINGS
 
 
@@ -42,7 +42,6 @@ def _preset(
         width=width,
         height=height,
         colors=colors,
-        confidence=CONFIDENCE_HARDWARE,
         extra=extra,
     )
 

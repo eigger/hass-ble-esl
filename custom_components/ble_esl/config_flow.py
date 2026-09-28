@@ -43,38 +43,18 @@ from .const import (
     DEFAULT_RETRY_COUNT,
     DOMAIN,
 )
-from .esl_ble import (
-    CONFIDENCE_COMMUNITY,
-    CONFIDENCE_ESTIMATED,
-    CONFIDENCE_HARDWARE,
-    CONFIDENCE_REPORTED,
-    DevicePreset,
-    EslProtocol,
-)
+from .esl_ble import EslProtocol
 
 
 def _model_selector_options(
     protocol_id: str = DEFAULT_PROTOCOL,
 ) -> list[SelectOptionDict]:
-    """Generate model selector options sorted with verified models first."""
+    """Generate model selector options sorted by panel size."""
     protocol = esl_ble.get(protocol_id)
     presets = protocol.presets()
-
-    def sort_key(item: tuple[str, DevicePreset]) -> tuple[int, int]:
-        _, preset = item
-        order = {
-            CONFIDENCE_HARDWARE: 0,
-            CONFIDENCE_REPORTED: 1,
-            CONFIDENCE_COMMUNITY: 2,
-            CONFIDENCE_ESTIMATED: 3,
-        }
-        return (order.get(preset.confidence, 4), preset.width * preset.height)
-
     out = []
-    for key, preset in sorted(presets.items(), key=sort_key):
+    for key, preset in sorted(presets.items(), key=lambda item: item[1].width * item[1].height):
         label = f"{preset.display_name} — {preset.width}x{preset.height}"
-        if not preset.verified:
-            label += " (unverified)"
         out.append(SelectOptionDict(value=key, label=label))
     return out
 
