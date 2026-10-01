@@ -300,10 +300,15 @@ class Designer:
         generation = entry.runtime_data.write_generation
         async with self.locks.setdefault(entry.entry_id, asyncio.Lock()):
             document, image, payload, _ = await self.draw(entry, document)
+            # An advertisement can refine the preset while drawing awaits.
+            # Check before build_write_job_from_data publishes the preview; it
+            # resolves the preset again before its first await, so nothing can
+            # change in between.
+            preset = self.preset(entry)
+            if (preset.width, preset.height) != image.size:
+                raise HomeAssistantError("The tag's display size changed; reload the designer")
             service_data = {"payload": payload, "background": document["background"]}
             job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
-            if (job.preset.width, job.preset.height) != image.size:
-                raise HomeAssistantError("The tag's display size changed; reload the designer")
             # An explicit Send always writes, e.g. to restore a reset tag;
             # automatic updates skip an image the tag already shows.
             job.prevent_duplicate_send = automatic

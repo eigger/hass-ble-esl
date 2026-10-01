@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from homeassistant.components.frontend import DATA_PANELS
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from PIL import Image
 import pytest
 import voluptuous as vol
@@ -801,3 +802,20 @@ async def test_panel_follows_loaded_tags(hass, wolink_entry):
     assert "ble-esl-designer" not in hass.data[DATA_PANELS]
     await hass.config_entries.async_setup(wolink_entry.entry_id)
     assert "ble-esl-designer" in hass.data[DATA_PANELS]
+
+
+async def test_send_refuses_a_resized_tag_before_publishing(hass, wolink_entry, tag_writer):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    manager = hass.data[KEY]
+    data = wolink_entry.runtime_data
+    before = data.image_store.images.preview
+    small = DevicePreset("small", "Small", 200, 96, "BWR")
+    drawn = await manager.draw(wolink_entry, document())
+    with (
+        patch.object(manager, "draw", return_value=drawn),
+        patch.object(manager, "preset", return_value=small),
+        pytest.raises(HomeAssistantError, match="display size changed"),
+    ):
+        await manager.send(wolink_entry, document())
+    assert data.image_store.images.preview is before
+    assert tag_writer.write_prepared.await_count == 0
