@@ -78,7 +78,7 @@ class Designer:
             self.hass,
             PANEL,
             PANEL,
-            sidebar_title="Label designer",
+            sidebar_title="ESL Designer",
             sidebar_icon="mdi:label-outline",
             module_url="/ble_esl_designer/panel.js?v=4",
             require_admin=True,
