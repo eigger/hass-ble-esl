@@ -86,6 +86,12 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 
 A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements — text, icons, lines, QR codes, progress bars, gauges, pie/bar charts, history plots, downloaded images — and any value can be a Jinja template over your entities. Ready-made layouts for every supported resolution are in [`examples/`](examples/README.md); the [Payload Editor](https://eigger.github.io/BLE_ESL_Payload_Editor.html) and [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) web tools let you draft one in the browser.
 
+## Visual editor
+
+Open **Label designer** in the HA sidebar to arrange text, images, shapes and sensor components with drag-and-drop, layering and keyboard controls. Configure each component with native HA entity/icon pickers, create reusable sensor templates, or use Jinja to control individual fields. The live pixel preview uses the same renderer as the sent image. Bluetooth Send saves the design first; Auto update sensor keeps it current.
+
+See [the visual editor guide](docs/designer.md) for setup, conditional icons, weather forecasts and template examples. Existing YAML actions remain available.
+
 ## Actions
 
 Both actions take a standard `target:` (a tag device, one of its entities, or an area/floor/label containing tags) and write each target in turn.

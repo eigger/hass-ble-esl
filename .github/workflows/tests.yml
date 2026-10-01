@@ -49,8 +49,24 @@ jobs:
           pip install -r requirements_test.txt
           python -c "import json; print('\n'.join(json.load(open('custom_components/ble_esl/manifest.json'))['requirements']))" > requirements.txt
           pip install -r requirements.txt
-          python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics > requirements_ha.txt
+          python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics frontend panel_custom websocket_api > requirements_ha.txt
           pip install -r requirements_ha.txt
 
       - name: Run tests
         run: python -m pytest tests/ -v --timeout 120
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install browser test dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Test visual editor
+        env:
+          DESIGNER_PYTHON: python
+        run: npm test
