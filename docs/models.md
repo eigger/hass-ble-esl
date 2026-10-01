@@ -8,6 +8,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 
 | Size | Resolution | Colors | Brand | Protocol | Model / Type | Status |
 |------|------------|--------|-------|----------|--------------|--------|
+| 1.54" | 200 × 200 | BWRY | Minew | Minew | MTag15 | ⚠️ discovery/battery only; no image writes |
 | 1.54" | 200 × 200 | BWRY | Zhsunyco | WOLINK | `154` | ✅ verified |
 | 1.54" | 200 × 200 | BWR | Zhsunyco | easyTag | ET0154-33B | ⚠️ untested |
 | 1.54" | 200 × 200 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
@@ -51,6 +52,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
+- **Minew** — MTag15 discovery and advertised battery readings only. Authentication/image writes are unverified and explicitly refused. See [limitations](minew.md).
 - **XTE** — tags sold under the Poshiji brand. PSJ-213, PSJ-266, PSJ-290 and PSJ-420 are verified on hardware by the device owner and are picked automatically from the advertisement. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
 - **WOLINK** — Zhsunyco tags. BWRY presets send 2 bits per pixel; BWR presets send two 1bpp planes (black/white, then red). The 1.54" (`154`), 2.66" (`266`), 3.5" (`350`), 3.7" (`370`) and 4.2" (`420`) BWRY presets and the 2.9" BWR preset (`290-bwr`) are verified on hardware with this integration. If a tag comes out upside down, please report it with the LED position. The 5.83" panel is listed as 5.8".
 - **easyTag** — tags sold under the Zhsunyco brand. Model code is printed on the tag.
