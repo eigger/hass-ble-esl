@@ -890,10 +890,20 @@ test("inline editing still gets a caret when the click resets the selection", as
   await expect(page.locator('[data-property="text"]')).toHaveValue("Caret");
 });
 
-const pickerDefined = (page) =>
-  page.waitForFunction(() => customElements.get("ha-entity-picker"), null, {
-    timeout: 12000,
-  });
+// The demo defines the picker 2.5 s after load; the interaction under test
+// must happen before that, or the test proves nothing.
+const pickerDefined = async (page) => {
+  expect(
+    await page.evaluate(() => !customElements.get("ha-entity-picker")),
+  ).toBe(true);
+  await page.waitForFunction(
+    () => customElements.get("ha-entity-picker"),
+    null,
+    {
+      timeout: 6000,
+    },
+  );
+};
 
 test("the picker arriving late keeps inline editing going", async ({
   page,

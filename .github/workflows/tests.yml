@@ -64,9 +64,10 @@ jobs:
       - name: Install browser test dependencies
         run: |
           npm ci
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps chromium
 
       - name: Test visual editor
+        timeout-minutes: 5
         env:
           DESIGNER_PYTHON: python
         run: npm test

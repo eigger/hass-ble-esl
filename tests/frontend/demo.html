@@ -109,7 +109,7 @@
       window.loadCardHelpers = () => new Promise(() => {});
       setTimeout(
         () => customElements.define("ha-entity-picker", DemoEntityPicker),
-        8000,
+        2500,
       );
     } else customElements.define("ha-entity-picker", DemoEntityPicker);
     await import("/frontend/panel.js");
