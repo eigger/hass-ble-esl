@@ -33,6 +33,7 @@ def test_registry_get():
     assert esl_ble.get("easytag").id == "easytag"
     assert esl_ble.get("picksmart").id == "picksmart"
     assert esl_ble.get("xte").id == "xte"
+    assert esl_ble.get("etag").id == "etag"
 
     with pytest.raises(KeyError, match="Unknown BLE protocol: 'unknown'"):
         esl_ble.get("unknown")
@@ -45,6 +46,7 @@ def test_registry_all_protocols():
     assert "easytag" in protocol_ids
     assert "picksmart" in protocol_ids
     assert "xte" in protocol_ids
+    assert "etag" in protocol_ids
 
 
 def test_registry_detect_mutual_exclusivity():
@@ -102,7 +104,23 @@ def test_registry_detect_mutual_exclusivity():
     assert picksmart_protocol.supported(info_xte) is False
     assert esl_ble.detect(info_xte) is xte_protocol
 
-    # 5. Unknown Advertisement
+    # 5. ETAG Advertisement
+    etag_protocol = esl_ble.get("etag")
+    info_etag = MagicMock()
+    info_etag.manufacturer_data = {}
+    info_etag.service_uuids = []
+    info_etag.name = "ETAG-52500058B6"
+
+    assert etag_protocol.supported(info_etag) is True
+    assert all(
+        not other.supported(info_etag)
+        for other in (wolink_protocol, easytag_protocol, picksmart_protocol, xte_protocol)
+    )
+    assert esl_ble.detect(info_etag) is etag_protocol
+    for other in (info_wolink, info_easytag, info_picksmart, info_xte):
+        assert etag_protocol.supported(other) is False
+
+    # 6. Unknown Advertisement
     info_other = MagicMock()
     info_other.manufacturer_data = {0x9999: b"\x00"}
     info_other.service_uuids = ["0000ffff-0000-1000-8000-00805f9b34fb"]
