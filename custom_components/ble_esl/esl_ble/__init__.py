@@ -81,6 +81,7 @@ __all__ = [
     "DevicePreset",
     "EasyTagProtocol",
     "EslProtocol",
+    "EtagProtocol",
     "PickSmartProtocol",
     "ProtocolContractError",
     "WolinkProtocol",
