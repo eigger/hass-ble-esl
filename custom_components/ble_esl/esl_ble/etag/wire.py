@@ -6,12 +6,16 @@ from .image import encode
 
 
 def packets(image, firmware):
+    return frames(encode(image, firmware))
+
+
+def frames(planes):
     # APK SendPublishTemplateActivity.h2, type 1. These are app commands,
     # not Bluetooth pairing or firmware flashing.
     yield bytes.fromhex("ac05ca")
     yield bytes.fromhex("ac1100112233445566778899112233445566ca")
     yield bytes.fromhex("ac07ca")
-    for plane, data in enumerate(encode(image, firmware)):
+    for plane, data in enumerate(planes):
         count = (len(data) + 229) // 230
         for index in range(count):
             chunk = data[index * 230 : (index + 1) * 230]

@@ -2,7 +2,7 @@
 
 from PIL import Image
 
-from .const import PALETTE, SIZE
+from .const import PALETTE, PANELS, SIZE
 
 
 def quantize(image):
@@ -39,5 +39,6 @@ def encode(image, firmware):
 
 
 def encode_image(image, preset):
-    """Quantize before the firmware-specific orientation is known."""
-    return quantize(image)
+    """Both panels' planes; the firmware read after connecting picks one."""
+    image = quantize(image)
+    return {panel: encode(image, panel) for panel in PANELS}
