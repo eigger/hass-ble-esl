@@ -917,6 +917,18 @@ test("the picker arriving late keeps an open component dialog", async ({
   await page.waitForFunction(() => window.panel?.tag);
   await page.locator('[data-action="add-component"]').click();
   await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
+  const text = page.getByLabel("Component text", { exact: true });
+  await text.fill("abc");
+  await page.getByRole("button", { name: /Dynamic fields/ }).click();
+  const dynamic = page.getByRole("dialog", { name: "Dynamic fields" });
+  await expect(dynamic).toBeVisible();
   await pickerDefined(page);
-  await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
+  await expect(
+    page.locator("ble-esl-component-editor dialog").first(),
+  ).toBeVisible();
+  await expect(dynamic).toBeVisible();
+  // The data source picker was swapped for a working one.
+  await expect(
+    page.locator("ble-esl-component-editor #source"),
+  ).toHaveJSProperty("label", "Data source");
 });

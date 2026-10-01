@@ -849,8 +849,7 @@ export class BleEslDesigner extends HTMLElement {
     }
     this.renderEntities();
     this.bindEntityPickers();
-    // Keeps its draft and reopens the dialog.
-    this.shadowRoot.querySelector("ble-esl-component-editor")?.redraw();
+    this.shadowRoot.querySelector("ble-esl-component-editor")?.upgradeSource();
   }
   renderEntities() {
     const picker = this.shadowRoot.querySelector("#entity-picker");
