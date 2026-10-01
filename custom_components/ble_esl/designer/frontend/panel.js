@@ -1,6 +1,12 @@
 import "./component-editor.js";
 import "./yaml-dialog.js";
 import {
+  applySpecInput,
+  newSpecElement,
+  specEditorHtml,
+  specLabel,
+} from "./spec-editor.js";
+import {
   clone,
   createId,
   palette,
@@ -182,6 +188,7 @@ export class BleEslDesigner extends HTMLElement {
         (response) => response.json(),
       );
       this.templates = await this.api("templates");
+      this.specs = await this.api("specs");
       this.tags = await this.api("list");
       this.mode = "display";
       this.tag = this.tags[0];
@@ -603,7 +610,7 @@ export class BleEslDesigner extends HTMLElement {
     this.finishTextEdit();
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="Save" title="Save">${toolIcon("save")}${this.dirty ? "·" : ""}</button><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto update sensor</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum update interval">↻ <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="Save" title="Save">${toolIcon("save")}${this.dirty ? "·" : ""}</button><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto update sensor</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum update interval">↻ <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -627,13 +634,13 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div><div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="export">Export JSON</button><button data-action="import">Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div></div></div><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + Z undoes</p></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element ? `<button class="wide" data-action="configure-component">Configure</button>` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="export">Export JSON</button><button data-action="import">Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div></div></div><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + Z undoes</p></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
             .map(
               (item) =>
-                `<button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(item.label || item.entity_id || item.text || item.type)}</button>`,
+                `<button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(this.layerLabel(item))}</button>`,
             )
             .join("")}</div></section></aside></div>`
         : ""
@@ -722,6 +729,57 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="New icon state" placeholder="Another state"><button data-action="add-icon-state" aria-label="Add state mapping">+</button></div></div>`;
   }
+  layerLabel(item) {
+    return item.type === "imagespec"
+      ? specLabel(item)
+      : item.label || item.entity_id || item.text || item.type;
+  }
+  specDefinition(element) {
+    return this.specs?.types.find((type) => type.type === element.spec?.type);
+  }
+  // Every imagespec element, by category, to add beside the quick buttons.
+  specPalette() {
+    if (!this.specs || this.mode === "template") return "";
+    const groups = {};
+    for (const type of this.specs.types)
+      (groups[type.category] ||= []).push(type.type);
+    return `<label class="wide">All elements<select id="add-spec" aria-label="Add element"><option value="">Add element…</option>${Object.entries(
+      groups,
+    )
+      .map(
+        ([category, types]) =>
+          `<optgroup label="${esc(category)}">${types
+            .map(
+              (type) =>
+                `<option value="${esc(type)}">${esc(type.replaceAll("_", " "))}</option>`,
+            )
+            .join("")}</optgroup>`,
+      )
+      .join("")}</select></label>`;
+  }
+  addSpec(type) {
+    const definition = this.specs.types.find((item) => item.type === type);
+    if (!definition) return;
+    this.checkpoint();
+    const element = newSpecElement(definition, newElement, this.tag);
+    this.document.elements.push(element);
+    this.selected = element.id;
+    this.edited();
+    this.focusElement();
+  }
+  specInput(input) {
+    const element = this.element;
+    if (element?.type !== "imagespec") return;
+    if (this.typingProperty !== input) {
+      this.checkpoint();
+      this.typingProperty = input;
+    }
+    if (!applySpecInput(input, element.spec, this.specDefinition(element)))
+      return;
+    this.edited(false);
+    const save = this.shadowRoot.querySelector('[data-action="save"]');
+    if (save) save.innerHTML = toolIcon("save") + "·";
+  }
   properties(element) {
     if (!element)
       return '<p class="muted wide">Click a block to move, resize, or bind it to an entity.</p>';
@@ -730,6 +788,16 @@ export class BleEslDesigner extends HTMLElement {
     let html = ["x", "y", "width", "height"]
       .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
       .join("");
+    if (element.type === "imagespec")
+      return (
+        html +
+        specEditorHtml(
+          this.specDefinition(element),
+          element.spec,
+          this.tag.colors,
+          this.specs?.dither_methods || [],
+        )
+      );
     if (["sensor", "text"].includes(element.type))
       html +=
         field("font_size", "Font size", "number") +
@@ -1535,6 +1603,8 @@ export class BleEslDesigner extends HTMLElement {
     if (input.id === "search") {
       this.search = input.value;
       this.renderEntities();
+    } else if (input.dataset.spec && ["text", "textarea"].includes(input.type)) {
+      this.specInput(input);
     } else if (
       input.dataset.property &&
       this.element &&
@@ -1553,11 +1623,7 @@ export class BleEslDesigner extends HTMLElement {
         `[data-select="${this.selected}"]`,
       );
       if (layer)
-        layer.textContent =
-          this.element.label ||
-          this.element.entity_id ||
-          this.element.text ||
-          this.element.type;
+        layer.textContent = this.layerLabel(this.element);
     }
   }
   updateProperty(input) {
@@ -1668,6 +1734,18 @@ export class BleEslDesigner extends HTMLElement {
         );
       if (id === "background") this.document.background = input.value;
       this.edited();
+      return;
+    }
+    if (id === "add-spec") {
+      if (input.value) this.addSpec(input.value);
+      return;
+    }
+    if (input.dataset.spec) {
+      if (input.matches("select") && this.element?.type === "imagespec") {
+        this.checkpoint();
+        if (applySpecInput(input, this.element.spec, this.specDefinition(this.element)))
+          this.edited();
+      }
       return;
     }
     if (input.dataset.property === "template" && input.value === "__new__") {

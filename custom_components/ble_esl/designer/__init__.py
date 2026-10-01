@@ -40,6 +40,7 @@ from .layout import (
     validate_template,
 )
 from .rendering import render_document, snapshot_layers
+from .specs import describe, templates_in
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
@@ -159,6 +160,11 @@ class Designer:
             )
             for el in elements
             for source in el.get("field_templates", {}).values()
+        ] + [
+            TrackTemplate(Template(source, self.hass), None)
+            for el in elements
+            if el["type"] == "imagespec"
+            for source in templates_in(el["spec"])
         ]
         if tracked:
             self.template_listeners[entry.entry_id] = async_track_template_result(
@@ -347,6 +353,7 @@ class Designer:
         vol.Required("action"): vol.In(
             (
                 "list",
+                "specs",
                 "save",
                 "preview",
                 "export",
@@ -368,7 +375,9 @@ class Designer:
 async def websocket_designer(hass, connection, msg):
     designer = hass.data[KEY]
     action = msg["action"]
-    if action == "templates":
+    if action == "specs":
+        result = describe()
+    elif action == "templates":
         result = designer.templates
     elif action == "save_template":
         result = await designer.save_template(msg["key"], msg["template"])

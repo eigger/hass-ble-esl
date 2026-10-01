@@ -1082,3 +1082,46 @@ test("keys typed in the YAML dialog do not edit the design behind it", async ({
   await expect(page.locator("ble-esl-yaml-dialog")).toHaveCount(0);
   await expect(page.locator('[data-action="yaml"]')).toBeFocused();
 });
+
+test("an imagespec element is added from the list, edited by its fields and exported", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("pie");
+  await expect(page.locator(".layer.active")).toHaveText("pie");
+  await page.locator('[data-spec="values"]').fill("A,1;B,3");
+  await page.locator('[data-spec="inner_radius"]').fill("20");
+  await page.locator('[data-spec="outline"]').selectOption("red");
+  // A half-typed number is flagged and the last good value is kept.
+  await page.locator('[data-spec="inner_radius"]').fill("2x");
+  await expect(page.locator('[data-spec="inner_radius"]')).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  expect(
+    await page.evaluate(() => window.panel.element.spec.inner_radius),
+  ).toBe(20);
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const yaml = page
+    .locator("ble-esl-yaml-dialog dialog")
+    .getByLabel("YAML", { exact: true });
+  await expect(yaml).toHaveValue(/- type: pie\n {2}values: A,1;B,3\n {2}inner_radius: 20/);
+  // Position keys come from the frame, in display coordinates.
+  await expect(yaml).toHaveValue(/ {2}x: 48\n {2}y: 48\n {2}radius: 39/);
+});
+
+test("every imagespec element can be added and rendered", async ({ page }) => {
+  const types = await page.evaluate(() =>
+    window.panel.specs.types.map((type) => type.type),
+  );
+  expect(types.length).toBeGreaterThan(25);
+  // plot reads the recorder, which the demo server does not have.
+  for (const type of types.filter((type) => type !== "plot")) {
+    await page.evaluate((type) => window.panel.addSpec(type), type);
+    await page.waitForFunction(
+      () => window.panel.preview && !window.panel.error,
+    );
+  }
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    types.length - 1,
+  );
+});

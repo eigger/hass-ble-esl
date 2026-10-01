@@ -89,7 +89,7 @@ A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements 
 
 ## Visual editor
 
-Open **ESL Designer** in the HA sidebar to arrange text, images, shapes and sensor components with drag-and-drop, layering and keyboard controls. Configure each component with native HA entity/icon pickers, create reusable sensor templates, or use Jinja to control individual fields. The live pixel preview is one render of the same payload that is sent to the tag. **Payload YAML** shows that payload, or a complete `ble_esl.write` action, ready to paste into an automation or script (values are those of the moment; Auto update sensor keeps a tag current). Bluetooth Send saves the design first; Auto update sensor keeps it current.
+Open **ESL Designer** in the HA sidebar to arrange text, images, shapes and sensor components with drag-and-drop, layering and keyboard controls. Configure each component with native HA entity/icon pickers, add any [imagespec element](https://github.com/eigger/imagespec/blob/main/docs/elements.md) (shapes, text, QR/bar codes, charts, tables, …) from **All elements** and edit every one of its fields (Jinja templates allowed), create reusable sensor templates, or use Jinja to control individual fields. The live pixel preview is one render of the same payload that is sent to the tag. **Payload YAML** shows that payload, or a complete `ble_esl.write` action, ready to paste into an automation or script (values are those of the moment; Auto update sensor keeps a tag current). Bluetooth Send saves the design first; Auto update sensor keeps it current.
 
 Existing YAML actions remain available.
 

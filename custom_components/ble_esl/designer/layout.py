@@ -8,6 +8,8 @@ from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
 
+from .specs import GEOMETRY, resolve_templates, spec_payload
+
 COLOR = vol.In(("black", "white", "red", "yellow"))
 ELEMENT = vol.Schema(
     {
@@ -26,8 +28,10 @@ ELEMENT = vol.Schema(
                 "ellipse",
                 "triangle",
                 "rounded_rectangle",
+                "imagespec",
             )
         ),
+        vol.Optional("spec", default=dict): dict,
         vol.Required("x"): int,
         vol.Required("y"): int,
         vol.Required("width"): vol.All(int, vol.Range(min=1)),
@@ -136,6 +140,8 @@ def validate(document, preset):
         element["background"] = "transparent"
         if element["type"] == "sensor" and not element["entity_id"]:
             raise vol.Invalid("Sensor elements need an entity_id")
+        if element["type"] == "imagespec" and element["spec"].get("type") not in GEOMETRY:
+            raise vol.Invalid("Choose an element type")
     return result
 
 
@@ -490,6 +496,10 @@ def compile_payload(hass, document, templates=None, forecasts=None):
                     child["font_size"] = max(8, round(child["font_size"] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested))
                 continue
+        if element["type"] == "imagespec":
+            spec = resolve_templates(hass, element["spec"], set())
+            payload.append(spec_payload(spec, x, y, width, height))
+            continue
         if element["type"] in ("progress_bar", "gauge"):
             low, high, value = element["min_value"], element["max_value"], element["value"]
             # No reading, or a field template that collapsed the range.

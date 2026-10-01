@@ -24,6 +24,7 @@ from custom_components.ble_esl.designer.layout import (
     validate_template,
 )
 from custom_components.ble_esl.designer.rendering import render_document, snapshot_layers
+from custom_components.ble_esl.designer.specs import describe
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -99,6 +100,8 @@ async def setup_hass(app):
 
 async def api(request):
     msg = await request.json()
+    if msg["action"] == "specs":
+        return web.json_response(describe())
     if msg["action"] == "templates":
         return web.json_response(TEMPLATES)
     if msg["action"] == "save_template":
