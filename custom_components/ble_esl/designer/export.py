@@ -20,7 +20,7 @@ class _PlainDumper(yaml.SafeDumper):
 def template_syntax(value, path="payload"):
     """Paths of strings Home Assistant would render as a template in an automation."""
     if isinstance(value, str):
-        return [path] if "{{" in value or "{%" in value else []
+        return [path] if any(mark in value for mark in ("{{", "{%", "{#")) else []
     if isinstance(value, dict):
         children = ((f"{path}.{key}", item) for key, item in value.items())
     elif isinstance(value, list):

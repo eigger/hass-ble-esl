@@ -953,76 +953,95 @@ test("the display exports as the payload and a ready write action", async ({
   const yaml = dialog.getByLabel("YAML", { exact: true });
   await expect(yaml).toHaveValue(/- type: icon/);
   await expect(yaml).toHaveValue(/office_temperature|°C/);
-  await dialog.getByRole("button", { name: "Automation action" }).click();
+  await dialog.getByRole("tab", { name: "Automation action" }).click();
   await expect(yaml).toHaveValue(/action: ble_esl\.write/);
   await expect(yaml).toHaveValue(/device_id: <your device>/);
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(page.locator("ble-esl-yaml-dialog")).toHaveCount(0);
 });
 
-test("the selection box follows an element while it is resized", async ({
-  page,
-}) => {
-  await page.locator('[data-add="rectangle"]').click();
+const rendered = (page) =>
   // The box comes from the last render, so wait for one to exist.
-  await page.waitForFunction(
-    () => window.panel.layerRecords?.[window.panel.selected],
-  );
-  const boxWidth = () =>
-    page
-      .locator(".selection-box")
-      .evaluate((node) => Number.parseFloat(node.style.width));
-  const width = async () =>
-    Number(await page.locator('[data-property="width"]').inputValue());
-  const before = await width();
-  expect(await boxWidth()).toBe(before);
-  const handle = await page.locator('.handle[data-corner="se"]').boundingBox();
-  await page.mouse.move(
-    handle.x + handle.width / 2,
-    handle.y + handle.height / 2,
-  );
-  await page.mouse.down();
-  await page.mouse.move(
-    handle.x + handle.width / 2 + 80,
-    handle.y + handle.height / 2,
-  );
-  // Still dragging: no new render has arrived to refresh the bounds.
-  const during = await width();
-  expect(during).toBeGreaterThan(before);
-  expect(await boxWidth()).toBe(during);
-  await page.mouse.up();
-  expect(await boxWidth()).toBe(during);
-});
+  page.waitForFunction(() => window.panel.visibleBounds(window.panel.element) !== undefined);
+const selectionBox = (page) =>
+  page.locator(".selection-box").evaluate((node) => ({
+    width: Number.parseFloat(node.style.width),
+    height: Number.parseFloat(node.style.height),
+  }));
+const elementSize = (page) =>
+  // The inspector is only refreshed when a drag ends; the element is current.
+  page.evaluate(() => ({
+    width: window.panel.element.width,
+    height: window.panel.element.height,
+  }));
+
+for (const type of ["rectangle", "text"]) {
+  test(`the selection box follows a ${type} while it is resized`, async ({
+    page,
+  }) => {
+    await page.locator(`[data-add="${type}"]`).click();
+    await rendered(page);
+    const box = await selectionBox(page);
+    const size = await elementSize(page);
+    const handle = await page
+      .locator('.handle[data-corner="se"]')
+      .boundingBox();
+    const [x, y] = [
+      handle.x + handle.width / 2,
+      handle.y + handle.height / 2,
+    ];
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 80, y + 30);
+    // Still dragging: no new render has arrived to refresh the content bounds,
+    // so the box grows by what the frame grew.
+    const during = await elementSize(page);
+    expect(during.width).toBeGreaterThan(size.width);
+    const grown = await selectionBox(page);
+    expect(grown.width - box.width).toBe(during.width - size.width);
+    expect(grown.height - box.height).toBe(during.height - size.height);
+    await page.mouse.up();
+    expect(await selectionBox(page)).toEqual(grown);
+  });
+}
 
 test("the selection box does not keep the old text size after a font size change", async ({
   page,
 }) => {
   await page.locator('[data-add="text"]').click();
-  await page.waitForFunction(
-    () => window.panel.layerRecords?.[window.panel.selected],
-  );
-  const box = () =>
-    page
-      .locator(".selection-box")
-      .evaluate((node) => [node.style.width, node.style.height]);
-  const text = await box();
-  await page.locator('[data-property="font_size"]').fill("12");
-  await page.locator('[data-property="font_size"]').dispatchEvent("change");
-  // No render has arrived yet: the old text bounds must not be shown.
-  const frame = await page.evaluate(() => [
-    `${window.panel.element.width}px`,
-    `${window.panel.element.height}px`,
-  ]);
-  expect(await box()).toEqual(frame);
-  expect(frame).not.toEqual(text);
+  await rendered(page);
+  const text = await selectionBox(page);
+  // One task, so no render can arrive between the edit and the reading.
+  const right = await page.evaluate(() => {
+    const input = window.panel.shadowRoot.querySelector(
+      '[data-property="font_size"]',
+    );
+    input.value = "12";
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    const box = window.panel.shadowRoot.querySelector(".selection-box");
+    return {
+      box: [box.style.width, box.style.height],
+      frame: [
+        `${window.panel.element.width}px`,
+        `${window.panel.element.height}px`,
+      ],
+    };
+  });
+  // The old text bounds are not shown: the frame stands in.
+  expect(right.box).toEqual(right.frame);
   // The new render arrives and the box fits the smaller text.
-  await page.waitForFunction(
-    () => window.panel.visibleBounds(window.panel.element) !== undefined,
-  );
-  const fitted = await box();
-  expect(Number.parseFloat(fitted[0])).toBeLessThan(
-    Number.parseFloat(text[0]),
-  );
+  await rendered(page);
+  expect((await selectionBox(page)).width).toBeLessThan(text.width);
+});
+
+test("saving keeps the selection box on the content", async ({ page }) => {
+  await page.locator('[data-add="text"]').click();
+  await rendered(page);
+  const before = await selectionBox(page);
+  // The server hands the document back with its defaults filled in.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".status")).toContainText("Display saved");
+  expect(await selectionBox(page)).toEqual(before);
 });
 
 test("keys typed in the YAML dialog do not edit the design behind it", async ({

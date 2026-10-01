@@ -1077,7 +1077,33 @@ export class BleEslDesigner extends HTMLElement {
   // size, text...) leaves them describing the old content, so the element's
   // frame stands in until the new preview arrives.
   shape(element) {
-    return JSON.stringify({ ...element, x: 0, y: 0, width: 0, height: 0 });
+    // An uploaded image is a data URL of megabytes: stand in for it.
+    const { image, ...rest } = element;
+    return JSON.stringify({
+      ...rest,
+      image: image && [image.length, image.slice(0, 40), image.slice(-40)],
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    });
+  }
+  // The server returns the saved document with its defaults filled in. That
+  // changes nothing on screen, so what the last render still describes stays.
+  adoptDocument(saved) {
+    const current = this.document.elements
+      .filter((el) => this.visibleBounds(el) !== undefined)
+      .map((el) => el.id);
+    this.document = saved;
+    const records = this.layerRecords || {};
+    this.layerRecords = Object.fromEntries(
+      saved.elements
+        .filter((el) => current.includes(el.id))
+        .map((el) => [
+          el.id,
+          { shape: this.shape(el), size: records[el.id].size },
+        ]),
+    );
   }
   renderRecords() {
     return Object.fromEntries(
@@ -1245,10 +1271,12 @@ export class BleEslDesigner extends HTMLElement {
         this.status = action === "send" ? "Sending display…" : "Working…";
         this.render();
         if (action === "send") {
-          this.document = await this.api("save", {
-            entry_id: this.tag.entry_id,
-            document: this.document,
-          });
+          this.adoptDocument(
+            await this.api("save", {
+              entry_id: this.tag.entry_id,
+              document: this.document,
+            }),
+          );
           this.tag.document = clone(this.document);
           this.dirty = false;
           this.drafts.delete(this.tag.entry_id);
@@ -1272,7 +1300,9 @@ export class BleEslDesigner extends HTMLElement {
                 document: this.document,
               });
         if (action === "save") {
-          this.document = this.mode === "template" ? result.document : result;
+          this.adoptDocument(
+            this.mode === "template" ? result.document : result,
+          );
           if (this.mode === "template")
             this.templates[this.templateKey] = clone(result);
           this.tag.document = clone(this.document);
