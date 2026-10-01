@@ -12,7 +12,6 @@ from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import (
     TrackTemplate,
     async_call_later,
@@ -26,6 +25,7 @@ import voluptuous as vol
 from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
+from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .export import export_yaml
 from .layout import (
@@ -82,7 +82,7 @@ class Designer:
             PANEL,
             sidebar_title="ESL Designer",
             sidebar_icon="mdi:label-outline",
-            module_url="/ble_esl_designer/panel.js?v=5",
+            module_url="/ble_esl_designer/panel.js?v=6",
             require_admin=True,
         )
 
@@ -270,14 +270,24 @@ class Designer:
 
     async def export(self, entry, document):
         """The display as YAML for an automation: what the preview shows, as a payload."""
-        document = validate(document, self.preset(entry))
+        preset = self.preset(entry)
+        document = validate(document, preset)
         forecasts = await self.forecasts(document)
         payload = compile_payload(self.hass, document, self.templates, forecasts)
-        return export_yaml(payload, document["background"], self.device_id(entry))
-
-    def device_id(self, entry):
-        devices = dr.async_entries_for_config_entry(dr.async_get(self.hass), entry.entry_id)
-        return devices[0].id if devices else None
+        issues = []
+        try:
+            # imagespec.validate() misses what only rendering finds, e.g. an unknown icon.
+            async with self.render_lock:
+                await self.hass.async_add_executor_job(
+                    partial(
+                        render_image, self.hass, preset, payload, background=document["background"]
+                    )
+                )
+        except HomeAssistantError as err:
+            issues.append(f"render: {err}")
+        result = export_yaml(payload, document["background"], entry.runtime_data.device_id, issues)
+        result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
+        return result
 
     async def save_template(self, key, template):
         if not key or ":" not in key:

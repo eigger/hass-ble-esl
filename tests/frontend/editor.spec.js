@@ -1024,3 +1024,31 @@ test("the selection box does not keep the old text size after a font size change
     Number.parseFloat(text[0]),
   );
 });
+
+test("keys typed in the YAML dialog do not edit the design behind it", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  const before = await page.evaluate(() => ({
+    count: window.panel.document.elements.length,
+    x: window.panel.element.x,
+  }));
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const yaml = page
+    .locator("ble-esl-yaml-dialog dialog")
+    .getByLabel("YAML", { exact: true });
+  await expect(yaml).toBeVisible();
+  await yaml.focus();
+  for (const key of ["ArrowRight", "Backspace", "Delete", "Control+z"])
+    await page.keyboard.press(key);
+  await expect(page.locator("ble-esl-yaml-dialog dialog")).toBeVisible();
+  expect(
+    await page.evaluate(() => ({
+      count: window.panel.document.elements.length,
+      x: window.panel.element?.x,
+    })),
+  ).toEqual(before);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("ble-esl-yaml-dialog")).toHaveCount(0);
+  await expect(page.locator('[data-action="yaml"]')).toBeFocused();
+});

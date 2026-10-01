@@ -9,7 +9,6 @@ from unittest.mock import patch
 from homeassistant.components.frontend import DATA_PANELS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import device_registry as dr
 from PIL import Image
 import pytest
 import voluptuous as vol
@@ -373,7 +372,7 @@ async def test_send_writes_the_pixels_of_the_exported_payload(hass, wolink_entry
     hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
     manager = hass.data[KEY]
     exported = await manager.export(wolink_entry, document())
-    image = (await manager.draw(wolink_entry, document()))[1]
+    await manager.send(wolink_entry, document())
     expected = await hass.async_add_executor_job(
         partial(
             render_image,
@@ -383,7 +382,7 @@ async def test_send_writes_the_pixels_of_the_exported_payload(hass, wolink_entry
             background="white",
         )
     )
-    assert image.tobytes() == expected.tobytes()
+    assert tag_writer.sent_image().tobytes() == expected.tobytes()
 
 
 async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
@@ -396,9 +395,46 @@ async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
     service = yaml.safe_load(result["service"])
     assert service["action"] == "ble_esl.write"
     assert service["data"] == {"background": "white", "payload": payload}
-    (device,) = dr.async_entries_for_config_entry(dr.async_get(hass), wolink_entry.entry_id)
-    assert service["target"] == {"device_id": device.id}
+    assert service["target"] == {"device_id": wolink_entry.runtime_data.device_id}
+    assert result["writable"] is True
     assert "&id" not in result["service"]
+
+
+async def test_export_flags_what_an_automation_or_the_renderer_would_trip_on(hass, wolink_entry):
+    doc = {
+        "version": 1,
+        "elements": [
+            {"id": "icon", "type": "icon", "x": 0, "y": 0, "width": 32, "height": 32},
+            {
+                "id": "text",
+                "type": "text",
+                "text": "{{ states('sensor.x') }}",
+                "x": 40,
+                "y": 0,
+                "width": 100,
+                "height": 30,
+            },
+        ],
+    }
+    result = await hass.data[KEY].export(wolink_entry, doc)
+    assert any(issue.startswith("render:") and "icon" in issue for issue in result["issues"])
+    assert any("payload[1].value: contains template syntax" in i for i in result["issues"])
+
+
+async def test_websocket_export(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "export",
+            "entry_id": wolink_entry.entry_id,
+            "document": document(),
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert set(result["result"]) == {"payload", "service", "issues", "writable"}
 
 
 def test_export_reports_what_imagespec_rejects():

@@ -122,7 +122,8 @@ async def api(request):
         return web.json_response({"status": "demo_only"})
     if msg["action"] == "export":
         payload = compile_payload(HASS, document, TEMPLATES, await demo_forecasts())
-        return web.json_response(export_yaml(payload, document["background"], None))
+        result = export_yaml(payload, document["background"], None)
+        return web.json_response({**result, "writable": tag["writable"]})
     return await preview(document, preset)
 
 

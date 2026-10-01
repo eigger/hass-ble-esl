@@ -17,14 +17,28 @@ class _PlainDumper(yaml.SafeDumper):
         return super().increase_indent(flow, False)
 
 
-def export_yaml(payload, background, device_id):
-    """YAML for ``ble_esl.write``, plus whatever imagespec rejects in the payload."""
+def template_syntax(value, path="payload"):
+    """Paths of strings Home Assistant would render as a template in an automation."""
+    if isinstance(value, str):
+        return [path] if "{{" in value or "{%" in value else []
+    if isinstance(value, dict):
+        children = ((f"{path}.{key}", item) for key, item in value.items())
+    elif isinstance(value, list):
+        children = ((f"{path}[{index}]", item) for index, item in enumerate(value))
+    else:
+        return []
+    return [found for child, item in children for found in template_syntax(item, child)]
+
+
+def export_yaml(payload, background, device_id, issues=()):
+    """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on."""
     dump = partial(
         yaml.dump,
         Dumper=_PlainDumper,
         sort_keys=False,
         allow_unicode=True,
         default_flow_style=False,
+        width=10**6,
     )
     service = {
         "action": "ble_esl.write",
@@ -34,5 +48,12 @@ def export_yaml(payload, background, device_id):
     return {
         "payload": dump(payload),
         "service": dump(service),
-        "issues": [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)],
+        "issues": [
+            *issues,
+            *(f"{issue.path}: {issue.message}" for issue in validate_payload(payload)),
+            *(
+                f"{path}: contains template syntax; Home Assistant renders it when the automation runs"
+                for path in template_syntax(payload)
+            ),
+        ],
     }
