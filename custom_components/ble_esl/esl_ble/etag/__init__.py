@@ -1,4 +1,4 @@
-"""Bluetooth Label ETAG protocol, verified on a 2.13-inch BWR tag."""
+"""Hipoink ETAG protocol, verified on a 2.13-inch BWR tag."""
 
 from ..base import AdvertisementInfo, Capabilities, EslProtocol
 from . import writer
@@ -9,7 +9,7 @@ from .parser import EtagParser
 class EtagProtocol(EslProtocol):
     id = "etag"
     label = "ETAG"
-    name = "Bluetooth Label / ETAG (FFE0)"
+    name = "Hipoink / ETAG (FFE0)"
     capabilities = Capabilities(False, False, False, ("BWR",))
     PRESETS = PRESETS
     parser_cls = EtagParser

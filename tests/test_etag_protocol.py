@@ -1,5 +1,6 @@
 """ETAG discovery, image framing and acknowledged packet transfer."""
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -140,3 +141,30 @@ async def test_link_problems_are_reported_clearly(kwargs, match):
         await connection.write(
             Image.new("RGB", (250, 122), "white"), timeout=1, log=[], progress=lambda *_: None
         )
+
+
+async def test_retry_reuses_the_prepared_encode_and_awaits_it_after_the_handshake(monkeypatch):
+    """The integration awaits the same future on every attempt."""
+    yield_once = asyncio.sleep  # writer.asyncio is this module; keep a real one
+    monkeypatch.setattr(writer.asyncio, "sleep", AsyncMock())
+    image = Image.new("RGB", (250, 122), "white")
+    prepared = asyncio.get_running_loop().create_future()
+    expected = list(packets(image, "SE0213NP61-TNG-A0"))
+    for _ in range(2):
+        client = fake_tag()
+        if not prepared.done():
+            # Not encoded yet: the handshake must still go out.
+            task = asyncio.create_task(
+                writer.write_session(
+                    client, "AA", PRESETS["etag213"], prepared, trace=SessionTrace(STAGE_MAP)
+                )
+            )
+            while client.write_gatt_char.await_count < 3:
+                await yield_once(0)
+            prepared.set_result(writer.prepare(PRESETS["etag213"], image, "AA"))
+            await task
+        else:
+            await writer.write_session(
+                client, "AA", PRESETS["etag213"], prepared, trace=SessionTrace(STAGE_MAP)
+            )
+        assert [c.args[1] for c in client.write_gatt_char.await_args_list] == expected

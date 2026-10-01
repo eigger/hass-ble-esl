@@ -1,23 +1,25 @@
 """ETAG image transfer with checked notifications."""
 
 import asyncio
+import inspect
 
 from blesession import SessionTrace
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, WriteRefused, WriteResult
 from .const import CHARACTERISTIC, FIRMWARE, PANELS, SERVICE
-from .image import encode_image
-from .wire import frames, packets
+from .image import encode, encode_image
+from .wire import HANDSHAKE, MAX_PACKET, REFRESH, image_packets
 
 REPLY_TIMEOUT_S = 30
 REPLIES = {5: 6, 0x11: 0x12, 7: 8, 1: 2, 3: 4}
 CMD_IMAGE = 1
-CMD_REFRESH = 3
 
 
 def prepare(preset, image, address):
     """Frame the image for every supported panel; the firmware picks one after connecting."""
-    return {panel: list(frames(planes)) for panel, planes in encode_image(image, preset).items()}
+    return {
+        panel: list(image_packets(planes)) for panel, planes in encode_image(image, preset).items()
+    }
 
 
 def panel_for(firmware):
@@ -31,8 +33,11 @@ async def write_session(client, address, preset, prepared, *, pacing_s=0.0, trac
         # Retrying cannot change the firmware, so do not hold the BLE lock again.
         raise WriteRefused(f"Unsupported ETAG panel firmware: {firmware.strip(chr(0))}")
     trace.note(firmware=panel)
-    outgoing = (await prepared)[panel]
-    await EtagConnection(client, firmware, pacing_s=pacing_s).send(outgoing, trace=trace)
+
+    async def image():
+        return (await prepared)[panel]
+
+    await EtagConnection(client, firmware, pacing_s=pacing_s).send(image(), trace=trace)
     return WriteResult(success=True)
 
 
@@ -47,7 +52,10 @@ class EtagConnection:
     async def write(self, image, *, timeout, log, progress):
         """Frame and send an image (the standalone entry point)."""
         await self.send(
-            list(packets(image, self.firmware)), timeout=timeout, log=log, progress=progress
+            list(image_packets(encode(image, self.firmware))),
+            timeout=timeout,
+            log=log,
+            progress=progress,
         )
 
     def _characteristic(self):
@@ -57,18 +65,21 @@ class EtagConnection:
             raise RuntimeError("ETAG FFE0/FFE1 characteristic missing")
         return char
 
-    async def send(self, outgoing, *, timeout=REPLY_TIMEOUT_S, log=None, progress=None, trace=None):
+    async def send(self, image, *, timeout=REPLY_TIMEOUT_S, log=None, progress=None, trace=None):
+        """Handshake, image packets, refresh; every packet is acknowledged.
+
+        `image` is the list of image packets, or an awaitable of it: it is
+        awaited only after the handshake, so a slow encode overlaps it.
+        """
         if trace is None:
             trace = SessionTrace()
         log = [] if log is None else log
         char = self._characteristic()
-        size = max(map(len, outgoing))
-        if char.max_write_without_response_size < size:
+        if char.max_write_without_response_size < MAX_PACKET:
             raise RuntimeError(
                 f"Bluetooth write size {char.max_write_without_response_size} is too small "
-                f"for the app's {size}-byte packets"
+                f"for the app's {MAX_PACKET}-byte packets"
             )
-        trace.note(parts=len(outgoing), bytes=sum(map(len, outgoing)))
         queue = asyncio.Queue()
 
         def notification(_, data):
@@ -76,10 +87,9 @@ class EtagConnection:
             log.append({"rx": raw.hex()})
             queue.put_nowait(raw)
 
-        image = [i for i, packet in enumerate(outgoing) if packet[1] == CMD_IMAGE]
-        first, last = image[0], image[-1] + 1
         await self.client.start_notify(char, notification)
         sent = 0
+        total = None
 
         async def run(batch, *, paced=False):
             nonlocal sent
@@ -87,16 +97,27 @@ class EtagConnection:
                 await self._exchange(char, queue, packet, timeout, log)
                 sent += 1
                 if progress is not None:
-                    progress(sent, len(outgoing))
+                    progress(sent, total)
                 if paced and self.pacing_s:
                     await asyncio.sleep(self.pacing_s)
 
-        with trace.timed(STAGE_HANDSHAKE):
-            await run(outgoing[:first])
+        if not inspect.isawaitable(image):
+            total = len(HANDSHAKE) + len(image) + len(REFRESH)
+        try:
+            with trace.timed(STAGE_HANDSHAKE):
+                await run(HANDSHAKE)
+        except BaseException:
+            if inspect.iscoroutine(image):
+                image.close()  # never needed; avoid a "never awaited" warning
+            raise
+        if inspect.isawaitable(image):
+            image = await image
+            total = len(HANDSHAKE) + len(image) + len(REFRESH)
+        trace.note(parts=total, bytes=sum(map(len, image)))
         with trace.timed(STAGE_TRANSFER):
-            await run(outgoing[first:last], paced=True)
+            await run(image, paced=True)
         with trace.timed(STAGE_FINISH):
-            await run(outgoing[last:])
+            await run(REFRESH)
             await asyncio.sleep(1)
 
     async def _exchange(self, char, queue, packet, timeout, log):

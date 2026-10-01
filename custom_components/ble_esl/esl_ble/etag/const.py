@@ -9,4 +9,5 @@ PALETTE = ((0, 0, 0), (255, 255, 255), (255, 0, 0))
 PANELS = ("SE0213NP61-TNG-A0", "SE0213MN50-TNG-A0")
 
 
-BRAND = "Bluetooth Label"
+# Guangdong SID Technology, maker of the Bluetooth Label app (com.gdsid.tag).
+BRAND = "Hipoink"

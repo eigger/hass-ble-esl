@@ -4,20 +4,32 @@ import struct
 
 from .image import encode
 
+# APK SendPublishTemplateActivity.h2, type 1. These are app commands,
+# not Bluetooth pairing or firmware flashing.
+HANDSHAKE = (
+    bytes.fromhex("ac05ca"),
+    bytes.fromhex("ac1100112233445566778899112233445566ca"),
+    bytes.fromhex("ac07ca"),
+)
+REFRESH = (bytes.fromhex("ac03ca"),)
+CHUNK = 230
+HEADER = ">BBBHHH"
+MAX_PACKET = struct.calcsize(HEADER) + CHUNK + 1
+
 
 def packets(image, firmware):
     return frames(encode(image, firmware))
 
 
 def frames(planes):
-    # APK SendPublishTemplateActivity.h2, type 1. These are app commands,
-    # not Bluetooth pairing or firmware flashing.
-    yield bytes.fromhex("ac05ca")
-    yield bytes.fromhex("ac1100112233445566778899112233445566ca")
-    yield bytes.fromhex("ac07ca")
+    yield from HANDSHAKE
+    yield from image_packets(planes)
+    yield from REFRESH
+
+
+def image_packets(planes):
     for plane, data in enumerate(planes):
-        count = (len(data) + 229) // 230
+        count = (len(data) + CHUNK - 1) // CHUNK
         for index in range(count):
-            chunk = data[index * 230 : (index + 1) * 230]
-            yield struct.pack(">BBBHHH", 0xAC, 1, plane, index, count, len(chunk)) + chunk + b"\xca"
-    yield bytes.fromhex("ac03ca")
+            chunk = data[index * CHUNK : (index + 1) * CHUNK]
+            yield struct.pack(HEADER, 0xAC, 1, plane, index, count, len(chunk)) + chunk + b"\xca"
