@@ -1,6 +1,7 @@
 """Editor persistence, rendering, sensor updates and lifecycle in real HA."""
 
 import base64
+from functools import partial
 from io import BytesIO
 import threading
 from unittest.mock import patch
@@ -11,10 +12,13 @@ from homeassistant.exceptions import HomeAssistantError
 from PIL import Image
 import pytest
 import voluptuous as vol
+import yaml
 
 from custom_components.ble_esl.designer import KEY
+from custom_components.ble_esl.designer.export import export_yaml
 from custom_components.ble_esl.designer.layout import compile_payload, validate, validate_template
 from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.renderer import render_image
 
 
 def document():
@@ -321,9 +325,14 @@ async def test_explicit_text_line_breaks_are_preserved(hass, wolink_entry):
         assert image.crop((0, 40, 100, 80)).getextrema() != ((255, 255), (255, 255), (255, 255))
 
 
-async def test_preview_composes_exact_layers_and_crops(hass, wolink_entry):
+def decode_png(value):
+    return Image.open(BytesIO(base64.b64decode(value.split(",")[1])))
+
+
+async def test_preview_is_one_render_of_the_exported_payload(hass, wolink_entry):
     doc = {
         "version": 1,
+        "background": "yellow",
         "elements": [
             {
                 "id": "base",
@@ -346,20 +355,103 @@ async def test_preview_composes_exact_layers_and_crops(hass, wolink_entry):
             },
         ],
     }
-    result = await hass.data[KEY].preview(wolink_entry, doc)
-
-    def decode(value):
-        return Image.open(BytesIO(base64.b64decode(value.split(",")[1])))
-
-    with decode(result["png"]) as actual:
-        expected = Image.new("RGB", actual.size, "white")
-        for element in doc["elements"]:
-            with decode(result["layers"][element["id"]]) as layer:
-                expected.paste(layer, (element["x"], element["y"]), layer)
+    manager = hass.data[KEY]
+    result = await manager.preview(wolink_entry, doc)
+    preset = manager.preset(wolink_entry)
+    expected = await hass.async_add_executor_job(
+        partial(render_image, hass, preset, result["payload"], background="yellow")
+    )
+    with decode_png(result["png"]) as actual:
         assert actual.tobytes() == expected.tobytes()
         assert actual.getpixel((90, 70)) == (255, 0, 0)
-        with decode(result["layers"]["overlay"]) as layer:
-            assert layer.getpixel((99, 59))[3] == 0
+    with decode_png(result["layers"]["overlay"]) as layer:
+        assert layer.getpixel((99, 59))[3] == 0
+
+
+async def test_send_writes_the_pixels_of_the_exported_payload(hass, wolink_entry, tag_writer):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    manager = hass.data[KEY]
+    exported = await manager.export(wolink_entry, document())
+    await manager.send(wolink_entry, document())
+    expected = await hass.async_add_executor_job(
+        partial(
+            render_image,
+            hass,
+            manager.preset(wolink_entry),
+            yaml.safe_load(exported["payload"]),
+            background="white",
+        )
+    )
+    assert tag_writer.sent_image().tobytes() == expected.tobytes()
+
+
+async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    manager = hass.data[KEY]
+    payload = (await manager.draw(wolink_entry, document()))[2]
+    result = await manager.export(wolink_entry, document())
+    assert yaml.safe_load(result["payload"]) == payload
+    assert result["issues"] == []
+    service = yaml.safe_load(result["service"])
+    assert service["action"] == "ble_esl.write"
+    assert service["data"] == {"background": "white", "payload": payload}
+    assert service["target"] == {"device_id": wolink_entry.runtime_data.device_id}
+    assert result["writable"] is True
+    assert "&id" not in result["service"]
+
+
+async def test_export_flags_what_an_automation_or_the_renderer_would_trip_on(hass, wolink_entry):
+    doc = {
+        "version": 1,
+        "elements": [
+            {"id": "icon", "type": "icon", "x": 0, "y": 0, "width": 32, "height": 32},
+            {
+                "id": "text",
+                "type": "text",
+                "text": "{{ states('sensor.x') }}",
+                "x": 40,
+                "y": 0,
+                "width": 100,
+                "height": 30,
+            },
+        ],
+    }
+    result = await hass.data[KEY].export(wolink_entry, doc)
+    assert any(issue.startswith("render:") and "icon" in issue for issue in result["issues"])
+    assert any("payload[1].value: contains template syntax" in i for i in result["issues"])
+
+
+async def test_websocket_export(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "export",
+            "entry_id": wolink_entry.entry_id,
+            "document": document(),
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert set(result["result"]) == {"payload", "service", "issues", "writable"}
+
+
+def test_export_reports_what_imagespec_rejects():
+    result = export_yaml([{"type": "text", "x": 1}], "white", None)
+    assert result["issues"] == ["[0].value: missing required key for 'text'"]
+    assert yaml.safe_load(result["service"])["target"] == {"device_id": "<your device>"}
+
+
+async def test_font_awesome_icons_render(hass):
+    render = partial(
+        render_image,
+        hass,
+        DevicePreset("test", "test", 40, 40, "BW"),
+        [{"type": "icon", "x": 4, "y": 4, "value": "fa:house", "size": 32}],
+    )
+    image = await hass.async_add_executor_job(render)
+    assert image.getextrema() != ((255, 255), (255, 255), (255, 255))
 
 
 async def test_numeric_template_applies_across_sensor_device_classes(hass):

@@ -43,14 +43,11 @@ def _make_context(hass, *, default_font, palette):
             no_attributes=False,
         )
 
-    icons_dir = os.path.join(os.path.dirname(__file__), "fonts")
-
     return RenderContext(
         font_resolver=font_resolver,
         history_provider=history_provider,
         default_font=default_font,
         palette=palette,
-        icons_dir=icons_dir,
         allow_local_images=True,
     )
 

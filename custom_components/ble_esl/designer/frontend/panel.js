@@ -1,4 +1,5 @@
 import "./component-editor.js";
+import "./yaml-dialog.js";
 import {
   clone,
   createId,
@@ -626,7 +627,7 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div><div class="footer-tools"><button data-action="export">Export JSON</button><button data-action="import">Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div></div></div><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + Z undoes</p></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element ? `<button class="wide" data-action="configure-component">Configure</button>` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div><div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="export">Export JSON</button><button data-action="import">Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div></div></div><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + Z undoes</p></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element ? `<button class="wide" data-action="configure-component">Configure</button>` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
@@ -651,6 +652,15 @@ export class BleEslDesigner extends HTMLElement {
     if (menu) {
       menu.hass = this.hass;
       menu.narrow = this.narrow;
+    }
+    if (this.yamlExport) {
+      // render() rebuilds the shadow tree, so the dialog opens after it.
+      const dialog = document.createElement("ble-esl-yaml-dialog");
+      this.shadowRoot.append(dialog);
+      dialog.open(this.yamlExport, () =>
+        this.shadowRoot.querySelector('[data-action="yaml"]')?.focus(),
+      );
+      this.yamlExport = null;
     }
     if (this.busy) {
       this.shadowRoot.querySelector(".workspace")?.setAttribute("inert", "");
@@ -1034,21 +1044,17 @@ export class BleEslDesigner extends HTMLElement {
             content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor" aria-hidden="true">${shape}</svg>`;
           }
           const rendered = this.layerPreviews[element.id];
+          const visible = this.visibleBounds(element);
+          const box = [0, 0, element.width, element.height];
           const hitBounds =
-            this.layerBounds?.[element.id] ??
-            (rendered ? null : [0, 0, element.width, element.height]);
+            visible === undefined ? box : (visible ?? (rendered ? null : box));
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
           return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? `<img class="layer-preview" src="${rendered}" alt="" aria-hidden="true">` : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
-                  const bounds = this.layerBounds?.[element.id] || [
-                    0,
-                    0,
-                    element.width,
-                    element.height,
-                  ];
+                  const bounds = visible || box;
                   const [left, top, right, bottom] = bounds;
                   return `<div class="selection-box" style="position:absolute;left:${left}px;top:${top}px;width:${right - left}px;height:${bottom - top}px;outline:2px solid var(--primary-color,#16838b);pointer-events:none">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -3 : right - left - 3}px;top:${corner.startsWith("n") ? -3 : bottom - top - 3}px;right:auto;bottom:auto;width:6px;height:6px;pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
                 })()
@@ -1064,6 +1070,68 @@ export class BleEslDesigner extends HTMLElement {
       icon.hass = this.hass;
       icon.stateObj = this.hass.states[element.entity_id];
     });
+  }
+  // Content bounds come from the last render and are relative to the element.
+  // Moving the element keeps them. Resizing it grows or shrinks them with the
+  // frame, so a dragged handle stays under the pointer. Any other edit (font
+  // size, text...) leaves them describing the old content, so the element's
+  // frame stands in until the new preview arrives.
+  shape(element) {
+    // An uploaded image is a data URL of megabytes: stand in for it.
+    const { image, ...rest } = element;
+    return JSON.stringify({
+      ...rest,
+      image: image && [
+        image.length,
+        image.slice(0, 40),
+        image.slice(image.length / 2 - 20, image.length / 2 + 20),
+        image.slice(-40),
+      ],
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    });
+  }
+  // The server returns the saved document with its defaults filled in. That
+  // changes nothing on screen, so what the last render still describes stays.
+  adoptDocument(saved) {
+    const current = this.document.elements
+      .filter((el) => this.visibleBounds(el) !== undefined)
+      .map((el) => el.id);
+    this.document = saved;
+    const records = this.layerRecords || {};
+    this.layerRecords = Object.fromEntries(
+      saved.elements
+        .filter((el) => current.includes(el.id))
+        .map((el) => [
+          el.id,
+          { shape: this.shape(el), size: records[el.id].size },
+        ]),
+    );
+  }
+  renderRecords() {
+    return Object.fromEntries(
+      this.document.elements.map((el) => [
+        el.id,
+        { shape: this.shape(el), size: [el.width, el.height] },
+      ]),
+    );
+  }
+  // undefined: not known, use the frame. null: rendered with nothing visible.
+  visibleBounds(element) {
+    const record = this.layerRecords?.[element.id];
+    if (!record || record.shape !== this.shape(element)) return undefined;
+    const dw = element.width - record.size[0],
+      dh = element.height - record.size[1],
+      bounds = this.layerBounds[element.id];
+    if (!bounds) return dw || dh ? undefined : null;
+    return [
+      bounds[0],
+      bounds[1],
+      Math.max(bounds[0] + 1, bounds[2] + dw),
+      Math.max(bounds[1] + 1, bounds[3] + dh),
+    ];
   }
   add(type, entity, x, y) {
     this.checkpoint();
@@ -1208,10 +1276,12 @@ export class BleEslDesigner extends HTMLElement {
         this.status = action === "send" ? "Sending display…" : "Working…";
         this.render();
         if (action === "send") {
-          this.document = await this.api("save", {
-            entry_id: this.tag.entry_id,
-            document: this.document,
-          });
+          this.adoptDocument(
+            await this.api("save", {
+              entry_id: this.tag.entry_id,
+              document: this.document,
+            }),
+          );
           this.tag.document = clone(this.document);
           this.dirty = false;
           this.drafts.delete(this.tag.entry_id);
@@ -1235,7 +1305,9 @@ export class BleEslDesigner extends HTMLElement {
                 document: this.document,
               });
         if (action === "save") {
-          this.document = this.mode === "template" ? result.document : result;
+          this.adoptDocument(
+            this.mode === "template" ? result.document : result,
+          );
           if (this.mode === "template")
             this.templates[this.templateKey] = clone(result);
           this.tag.document = clone(this.document);
@@ -1258,6 +1330,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
+          this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
           ];
@@ -1282,6 +1355,16 @@ export class BleEslDesigner extends HTMLElement {
           this.selected = null;
           this.edited();
         }
+      } else if (action === "yaml") {
+        this.busy = true;
+        this.error = false;
+        this.status = "Exporting payload…";
+        this.render();
+        this.yamlExport = await this.api("export", {
+          entry_id: this.tag.entry_id,
+          document: this.document,
+        });
+        this.status = "Payload exported";
       } else if (action === "export") {
         const blob = new Blob([JSON.stringify(this.document, null, 2)], {
             type: "application/json",
@@ -1604,9 +1687,11 @@ export class BleEslDesigner extends HTMLElement {
       event
         .composedPath()
         .some((node) =>
-          ["BLE-ESL-COMPONENT-EDITOR", "HA-ENTITY-PICKER"].includes(
-            node.tagName,
-          ),
+          [
+            "BLE-ESL-COMPONENT-EDITOR",
+            "BLE-ESL-YAML-DIALOG",
+            "HA-ENTITY-PICKER",
+          ].includes(node.tagName),
         )
     )
       return;
@@ -1789,6 +1874,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
+          this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
           ];

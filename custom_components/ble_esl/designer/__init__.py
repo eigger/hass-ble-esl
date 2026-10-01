@@ -25,7 +25,9 @@ import voluptuous as vol
 from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
+from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
+from .export import export_yaml
 from .layout import (
     bindings,
     compile_payload,
@@ -80,7 +82,7 @@ class Designer:
             PANEL,
             sidebar_title="ESL Designer",
             sidebar_icon="mdi:label-outline",
-            module_url="/ble_esl_designer/panel.js?v=5",
+            module_url="/ble_esl_designer/panel.js?v=6",
             require_admin=True,
         )
 
@@ -238,12 +240,12 @@ class Designer:
             options.get(CONF_MODEL, DEFAULT_MODEL),
         ).preset
 
-    async def render(self, preset, document, snapshots):
+    async def render(self, preset, document, payload, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
         # clients and automatic writes to one render worker at a time.
         async with self.render_lock:
             return await self.hass.async_add_executor_job(
-                partial(render_document, self.hass, preset, document, snapshots)
+                partial(render_document, self.hass, preset, document, payload, snapshots)
             )
 
     async def draw(self, entry, document):
@@ -253,7 +255,7 @@ class Designer:
         forecasts = await self.forecasts(document)
         payload = compile_payload(self.hass, document, self.templates, forecasts)
         snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
-        image, layers = await self.render(preset, document, snapshots)
+        image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
     async def preview(self, entry, document):
@@ -265,6 +267,27 @@ class Designer:
             "payload": payload,
             "layers": layers,
         }
+
+    async def export(self, entry, document):
+        """The display as YAML for an automation: what the preview shows, as a payload."""
+        preset = self.preset(entry)
+        document = validate(document, preset)
+        forecasts = await self.forecasts(document)
+        payload = compile_payload(self.hass, document, self.templates, forecasts)
+        issues = []
+        try:
+            # imagespec.validate() misses what only rendering finds, e.g. an unknown icon.
+            async with self.render_lock:
+                await self.hass.async_add_executor_job(
+                    partial(
+                        render_image, self.hass, preset, payload, background=document["background"]
+                    )
+                )
+        except HomeAssistantError as err:
+            issues.append(f"render: {err}")
+        result = export_yaml(payload, document["background"], entry.runtime_data.device_id, issues)
+        result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
+        return result
 
     async def save_template(self, key, template):
         if not key or ":" not in key:
@@ -285,7 +308,7 @@ class Designer:
         payload = compile_payload(self.hass, document)
         preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         snapshots = snapshot_layers(self.hass, document, {}, {})
-        image, layers = await self.render(preset, document, snapshots)
+        image, layers = await self.render(preset, document, payload, snapshots)
         buffer = BytesIO()
         image.save(buffer, "PNG")
         return {
@@ -322,7 +345,16 @@ class Designer:
     {
         vol.Required("type"): "ble_esl/designer",
         vol.Required("action"): vol.In(
-            ("list", "save", "preview", "send", "templates", "save_template", "preview_template")
+            (
+                "list",
+                "save",
+                "preview",
+                "export",
+                "send",
+                "templates",
+                "save_template",
+                "preview_template",
+            )
         ),
         vol.Optional("entry_id"): str,
         vol.Optional("document"): dict,

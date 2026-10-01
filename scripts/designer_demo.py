@@ -15,6 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from custom_components.ble_esl.designer.export import export_yaml
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
     sensor_values,
@@ -119,11 +120,15 @@ async def api(request):
         return web.json_response(document)
     if msg["action"] == "send":
         return web.json_response({"status": "demo_only"})
+    if msg["action"] == "export":
+        payload = compile_payload(HASS, document, TEMPLATES, await demo_forecasts())
+        result = export_yaml(payload, document["background"], None)
+        return web.json_response({**result, "writable": tag["writable"]})
     return await preview(document, preset)
 
 
-async def preview(document, preset):
-    forecasts = {
+async def demo_forecasts():
+    return {
         ("weather.home", kind): [
             {
                 "datetime": (dt_util.now() + timedelta(days=day)).isoformat(),
@@ -136,9 +141,15 @@ async def preview(document, preset):
         ]
         for kind in ("daily", "hourly")
     }
+
+
+async def preview(document, preset):
+    forecasts = await demo_forecasts()
     payload = compile_payload(HASS, document, TEMPLATES, forecasts)
     snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts)
-    image, layers = await asyncio.to_thread(render_document, HASS, preset, document, snapshots)
+    image, layers = await asyncio.to_thread(
+        render_document, HASS, preset, document, payload, snapshots
+    )
     buffer = BytesIO()
     image.save(buffer, "PNG")
     return web.json_response(
