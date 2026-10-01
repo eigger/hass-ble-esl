@@ -86,6 +86,11 @@ class BleEslRuntimeData:
     `run_attempts()` returns instead of every one."""
 
     @property
+    def label(self) -> str:
+        """The id on the tag's label, for device names (unique ids use `identifier`)."""
+        return self.protocol.tag_label(self.address)
+
+    @property
     def identifier(self) -> str:
         """Short tag id used in names and unique ids (last 8 hex digits of the address)."""
         return self.address.replace(":", "")[-8:]

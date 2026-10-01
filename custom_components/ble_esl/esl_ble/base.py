@@ -208,8 +208,17 @@ class BleParser(BluetoothData, ABC):
         if self.last_service_info is not None:
             self._update_device_info(self.last_service_info)
 
+    @staticmethod
+    def tag_label(address: str) -> str:
+        """How the tag is named to the user: the last 8 hex digits of its address.
+
+        A protocol whose tags print another id on the label overrides this.
+        Names and titles only; unique ids keep the address-derived identifier.
+        """
+        return address.replace(":", "")[-8:]
+
     def _update_device_info(self, service_info: BluetoothServiceInfoBleak) -> None:
-        identifier = service_info.address.replace(":", "")[-8:]
+        identifier = self.tag_label(service_info.address)
         if self.preset is None:
             display_name, model = self.fallback_name, self.fallback_name
         else:
@@ -317,6 +326,10 @@ class EslProtocol(ABC):
     def brand(self) -> str:
         """Brand the tags are sold under (shown as HA device manufacturer)."""
         return self.parser_cls.brand
+
+    def tag_label(self, address: str) -> str:
+        """The id the tag's label shows, for device names and titles."""
+        return self.parser_cls.tag_label(address)
 
     def presets(self) -> Mapping[str, DevicePreset]:
         """Return device presets supported by this protocol."""

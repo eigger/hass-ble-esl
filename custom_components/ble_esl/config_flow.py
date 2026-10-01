@@ -145,7 +145,7 @@ def _title(
     protocol: EslProtocol,
     model_key: str | None = None,
 ) -> str:
-    identifier = discovery_info.address.replace(":", "")[-8:]
+    identifier = protocol.tag_label(discovery_info.address)
     preset = protocol.presets().get(model_key) if model_key else None
     model_str = preset.display_name if preset else protocol.name
     return f"{protocol.brand} {identifier} ({model_str})"

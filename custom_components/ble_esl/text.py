@@ -32,7 +32,7 @@ class BleEslTextEntity(BleEslEntity, RestoreText):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._bind_tag(hass, entry)
-        self._attr_native_value = self._identifier
+        self._attr_native_value = self._data.label
 
     def set_value(self, value: str) -> None:
         """Change the selected option."""

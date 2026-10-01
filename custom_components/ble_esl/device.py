@@ -75,7 +75,7 @@ def build_device_info(data: BleEslRuntimeData) -> DeviceInfo:
     """DeviceInfo shared by every entity of a tag."""
     return DeviceInfo(
         connections={(CONNECTION_BLUETOOTH, data.address)},
-        name=f"{data.manufacturer} {data.identifier}",
+        name=f"{data.manufacturer} {data.label}",
         manufacturer=data.manufacturer,
         model=data.model,
         model_id=data.protocol.label,

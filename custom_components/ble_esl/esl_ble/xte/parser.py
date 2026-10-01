@@ -49,6 +49,15 @@ class XteBluetoothDeviceData(BleParser):
     fallback_name = "XTE"
     is_advertisement = staticmethod(is_xte_advertisement)
 
+    @staticmethod
+    def tag_label(address: str) -> str:
+        """The label prints the address bytes in reverse (B9:B9:00:18:39:37 -> 37391800B9B9)."""
+        parts = address.split(":")
+        if len(parts) != 6:
+            # Not a MAC (a CoreBluetooth UUID on macOS): nothing to reverse.
+            return BleParser.tag_label(address)
+        return "".join(reversed(parts)).upper()
+
     def _parse(self, service_info: BluetoothServiceInfoBleak) -> None:
         advertisement = parse_advertisement(service_info.manufacturer_data.get(MANUFACTURER_ID))
         if advertisement is None:
