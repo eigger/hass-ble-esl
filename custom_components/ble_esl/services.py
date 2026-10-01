@@ -423,7 +423,7 @@ def _retry(attempt: Attempt[WriteResult]) -> bool:
         # automation run is the real retry.
         return False
     if isinstance(attempt.error, WriteRefused):
-        # The protocol declined before connecting; nothing about a retry changes that.
+        # The protocol declined the tag or preset; nothing about a retry changes that.
         return False
     if attempt.failed_stage == stages.TRANSFER:
         attempt.state["transfer_failures"] = attempt.state.get("transfer_failures", 0) + 1

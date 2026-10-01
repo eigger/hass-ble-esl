@@ -63,7 +63,7 @@ class FooProtocol(EslProtocol):
 | `parse_advertisement()` | yes | battery / versions / `model_key` from the advertisement, or `None` |
 | `prepare_image()` + `write_session()` | yes\* | \*or override `write_image()` wholesale |
 | `refine_preset(preset, info)` | when the advertisement names the model | e.g. PickSmart's firmware quirks |
-| `write_prepared()` | rarely | to refuse before connecting (raise `WriteRefused`; XTE) |
+| `write_prepared()` | rarely | to refuse before connecting (raise `WriteRefused`; XTE). `write_session()` may raise it too once connected (ETAG) |
 | `read_status()` | optional | status query without a write |
 
 `presets()`, `preset_for()`, `supported()`, `create_parser()` and `brand` are

@@ -14,7 +14,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 2.1" | 250 × 132 | BW | Gicisky | PickSmart | TFT | ✅ verified |
 | 2.1" | 212 × 104 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 2.1" | 250 × 128 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
-| 2.13" | 250 × 122 | BWR | Bluetooth Label | ETAG | `etag213` | ✅ protocol verified on hardware |
+| 2.13" | 250 × 122 | BWR | Hipoink | ETAG | `etag213` | ✅ protocol verified on hardware |
 | 2.13" | 250 × 122 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 2.13" | 250 × 122 | BWR | Zhsunyco | easyTag | ETR0213-36B | ⚠️ untested |
 | 2.13" | 250 × 122 | BW | Zhsunyco | easyTag | ETR0213-39B | ⚠️ untested |
@@ -52,7 +52,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
-- **ETAG** — Bluetooth Label app tags, 250 × 122 BWR. The NP61 firmware orientation and acknowledged transfer were verified on hardware; MN50 is derived from the app and untested. See [protocol notes](etag.md).
+- **ETAG** — Hipoink (Guangdong SID Technology) tags for the Bluetooth Label app, 250 × 122 BWR. The NP61 firmware orientation and acknowledged transfer were verified on hardware; MN50 is derived from the app and untested. See [protocol notes](etag.md).
 - **XTE** — tags sold under the Poshiji brand. PSJ-213, PSJ-266, PSJ-290 and PSJ-420 are verified on hardware by the device owner and are picked automatically from the advertisement. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
 - **WOLINK** — Zhsunyco tags. BWRY presets send 2 bits per pixel; BWR presets send two 1bpp planes (black/white, then red). The 1.54" (`154`), 2.66" (`266`), 3.5" (`350`), 3.7" (`370`) and 4.2" (`420`) BWRY presets and the 2.9" BWR preset (`290-bwr`) are verified on hardware with this integration. If a tag comes out upside down, please report it with the LED position. The 5.83" panel is listed as 5.8".
 - **easyTag** — tags sold under the Zhsunyco brand. Model code is printed on the tag.

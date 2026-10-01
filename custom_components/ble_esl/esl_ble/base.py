@@ -130,8 +130,9 @@ class WriteResult:
 
 
 class WriteRefused(Exception):
-    """A protocol declined the write before connecting (see XTE): a preset or
-    tag it cannot encode for. Not a BLE failure, and not worth retrying."""
+    """A protocol declined the write: a preset or tag it cannot encode for,
+    found before connecting (see XTE) or right after (ETAG's panel firmware).
+    Not a BLE failure, and not worth retrying."""
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:
