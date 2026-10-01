@@ -67,6 +67,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Test visual editor
+        timeout-minutes: 5
         env:
           DESIGNER_PYTHON: python
         run: npm test

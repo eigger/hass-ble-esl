@@ -124,31 +124,7 @@ export class ComponentEditor extends HTMLElement {
       this.shadowRoot.append(modal);
       modal.open(this);
     };
-    const source = root.querySelector("#source");
-    source.hass = this.hass;
-    source.label =
-      this.panel.mode === "template"
-        ? "Data source (blank = sample sensor)"
-        : "Data source";
-    source.allowCustomEntity = false;
-    source.value = d.entity_id || "";
-    source.addEventListener("value-changed", (event) => {
-      d.entity_id = event.detail.value || "";
-      if (d.entity_id) {
-        d.data_field ||= d.type === "icon" ? "icon" : "state";
-        const state = this.hass.states[d.entity_id];
-        if (conditional && !d.icon_rules.length) {
-          d.icon_rules =
-            this.panel.outputType(state) === "binary"
-              ? [
-                  { kind: "state", state: "on", icon: "{{icon}}" },
-                  { kind: "state", state: "off", icon: "{{icon}}" },
-                ]
-              : [];
-        }
-      }
-      this.redraw();
-    });
+    this.bindSource(root.querySelector("#source"));
     root.querySelectorAll("[data-type]").forEach(
       (button) =>
         (button.onclick = () => {
@@ -244,6 +220,45 @@ export class ComponentEditor extends HTMLElement {
     };
     this.ensureIcons();
     this.currentState();
+  }
+  bindSource(source) {
+    const d = this.draft;
+    const conditional = d.type === "conditional_icon";
+    source.hass = this.hass;
+    source.label =
+      this.panel.mode === "template"
+        ? "Data source (blank = sample sensor)"
+        : "Data source";
+    source.allowCustomEntity = false;
+    source.value = d.entity_id || "";
+    source.addEventListener("value-changed", (event) => {
+      d.entity_id = event.detail.value || "";
+      if (d.entity_id) {
+        d.data_field ||= d.type === "icon" ? "icon" : "state";
+        const state = this.hass.states[d.entity_id];
+        if (conditional && !d.icon_rules.length) {
+          d.icon_rules =
+            this.panel.outputType(state) === "binary"
+              ? [
+                  { kind: "state", state: "on", icon: "{{icon}}" },
+                  { kind: "state", state: "off", icon: "{{icon}}" },
+                ]
+              : [];
+        }
+      }
+      this.redraw();
+    });
+  }
+  // HA defined ha-entity-picker after this dialog was built: swap in a fresh
+  // picker without render(), which would drop focus and a nested modal.
+  upgradeSource() {
+    const old = this.shadowRoot.querySelector("#source");
+    if (!old) return;
+    const fresh = document.createElement("ha-entity-picker");
+    for (const { name, value } of old.attributes)
+      fresh.setAttribute(name, value);
+    old.replaceWith(fresh);
+    this.bindSource(fresh);
   }
   redraw() {
     const dialog = this.shadowRoot.querySelector("dialog");

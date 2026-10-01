@@ -6,6 +6,10 @@ async function pickSensor(page, id) {
     .fill(id);
   await page.locator(`#entity-picker [data-entity="${id}"]`).click();
 }
+// One demo server serves every browser project; start each from a clean state.
+test.beforeAll(async ({ request }) => {
+  await request.post("/reset");
+});
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.waitForFunction(() => window.panel?.tag);
@@ -376,7 +380,9 @@ test("text can be edited directly in the preview", async ({ page }) => {
     exact: true,
   });
   await expect(editor).toBeFocused();
-  await editor.fill("Inline °C");
+  // Type like a user: the placeholder is selected and gets replaced. (fill()
+  // selects through addRange, which WebKit ignores inside a shadow tree.)
+  await page.keyboard.type("Inline °C");
   await expect(page.locator('[data-property="text"]')).toHaveValue("Inline °C");
   await page.keyboard.press("Backspace");
   await expect(page.locator(".el")).toHaveCount(1);
@@ -851,4 +857,88 @@ test("sensor components inside templates can open Configure and render", async (
   );
   await expect(modal.getByRole("status")).toBeEmpty();
   await modal.getByRole("button", { name: "Cancel", exact: true }).click();
+});
+
+test("tags load while HA has not defined the entity picker yet", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag, null, { timeout: 3000 });
+  await expect(page.locator("#tag option")).not.toHaveCount(0);
+  // Once HA defines the picker, the panel upgrades to a working one.
+  const before = await page.locator(".el").count();
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator(".el")).toHaveCount(before + 1);
+});
+
+test("inline editing still gets a caret when the click resets the selection", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  // Safari clears the selection after the gesture, once the panel already
+  // selected the placeholder on pointerup. Emulate that: this listener runs
+  // first, so its task lands between the panel's two selections.
+  await page.evaluate(() =>
+    window.addEventListener(
+      "pointerup",
+      () => setTimeout(() => window.getSelection().removeAllRanges()),
+      { once: true },
+    ),
+  );
+  await page.locator(".el.selected .content").click();
+  await page.keyboard.type("Caret");
+  await expect(page.locator('[data-property="text"]')).toHaveValue("Caret");
+});
+
+// The demo defines the picker 2.5 s after load; the interaction under test
+// must happen before that, or the test proves nothing.
+const pickerDefined = async (page) => {
+  expect(
+    await page.evaluate(() => !customElements.get("ha-entity-picker")),
+  ).toBe(true);
+  await page.waitForFunction(
+    () => customElements.get("ha-entity-picker"),
+    null,
+    {
+      timeout: 6000,
+    },
+  );
+};
+
+test("the picker arriving late keeps inline editing going", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag);
+  await page.locator('[data-add="text"]').click();
+  await page.locator(".el.selected .content").click();
+  await page.keyboard.type("Hello");
+  await pickerDefined(page);
+  await page.keyboard.type(" world");
+  await expect(page.locator('[data-property="text"]')).toHaveValue(
+    "Hello world",
+  );
+});
+
+test("the picker arriving late keeps an open component dialog", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag);
+  await page.locator('[data-action="add-component"]').click();
+  await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
+  const text = page.getByLabel("Component text", { exact: true });
+  await text.fill("abc");
+  await page.getByRole("button", { name: /Dynamic fields/ }).click();
+  const dynamic = page.getByRole("dialog", { name: "Dynamic fields" });
+  await expect(dynamic).toBeVisible();
+  await pickerDefined(page);
+  await expect(
+    page.locator("ble-esl-component-editor dialog").first(),
+  ).toBeVisible();
+  await expect(dynamic).toBeVisible();
+  // The data source picker was swapped for a working one.
+  await expect(
+    page.locator("ble-esl-component-editor #source"),
+  ).toHaveJSProperty("label", "Data source");
 });

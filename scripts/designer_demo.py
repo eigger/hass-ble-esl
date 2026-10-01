@@ -150,6 +150,14 @@ async def preview(document, preset):
     )
 
 
+async def reset(request):
+    """Fresh saved state, so each browser project starts alike."""
+    TEMPLATES.clear()
+    for tag in TAGS:
+        tag["document"] = None
+    return web.json_response({})
+
+
 async def index(request):
     return web.FileResponse(ROOT / "tests/frontend/demo.html")
 
@@ -163,6 +171,7 @@ app.on_startup.append(setup_hass)
 app.router.add_get("/", index)
 app.router.add_get("/states", states)
 app.router.add_post("/api/designer", api)
+app.router.add_post("/reset", reset)
 app.router.add_static("/ble_esl_designer_fonts", ROOT / "custom_components/ble_esl/fonts")
 app.router.add_static("/frontend", ROOT / "custom_components/ble_esl/designer/frontend")
 if __name__ == "__main__":
