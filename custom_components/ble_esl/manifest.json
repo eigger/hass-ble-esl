@@ -36,6 +36,10 @@
     {
       "manufacturer_id": 21080,
       "connectable": true
+    },
+    {
+      "local_name": "ETAG-*",
+      "connectable": true
     }
   ],
   "codeowners": [
