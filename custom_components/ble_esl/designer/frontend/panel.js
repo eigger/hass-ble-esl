@@ -1081,7 +1081,12 @@ export class BleEslDesigner extends HTMLElement {
     const { image, ...rest } = element;
     return JSON.stringify({
       ...rest,
-      image: image && [image.length, image.slice(0, 40), image.slice(-40)],
+      image: image && [
+        image.length,
+        image.slice(0, 40),
+        image.slice(image.length / 2 - 20, image.length / 2 + 20),
+        image.slice(-40),
+      ],
       x: 0,
       y: 0,
       width: 0,

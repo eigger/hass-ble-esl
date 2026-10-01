@@ -962,7 +962,9 @@ test("the display exports as the payload and a ready write action", async ({
 
 const rendered = (page) =>
   // The box comes from the last render, so wait for one to exist.
-  page.waitForFunction(() => window.panel.visibleBounds(window.panel.element) !== undefined);
+  page.waitForFunction(
+    () => window.panel.visibleBounds(window.panel.element) !== undefined,
+  );
 const selectionBox = (page) =>
   page.locator(".selection-box").evaluate((node) => ({
     width: Number.parseFloat(node.style.width),
@@ -1001,7 +1003,16 @@ for (const type of ["rectangle", "text"]) {
     expect(grown.width - box.width).toBe(during.width - size.width);
     expect(grown.height - box.height).toBe(during.height - size.height);
     await page.mouse.up();
-    expect(await selectionBox(page)).toEqual(grown);
+    // Dropping schedules a new render; read the box before it can arrive.
+    const dropped = await page.evaluate(() => {
+      clearTimeout(window.panel.previewTimer);
+      const box = window.panel.shadowRoot.querySelector(".selection-box");
+      return {
+        width: Number.parseFloat(box.style.width),
+        height: Number.parseFloat(box.style.height),
+      };
+    });
+    expect(dropped).toEqual(grown);
   });
 }
 
