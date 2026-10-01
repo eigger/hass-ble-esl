@@ -1,6 +1,7 @@
 """ETAG discovery, image framing and acknowledged packet transfer."""
 
 import asyncio
+import gc
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -159,8 +160,13 @@ async def test_retry_reuses_the_prepared_encode_and_awaits_it_after_the_handshak
                     client, "AA", PRESETS["etag213"], prepared, trace=SessionTrace(STAGE_MAP)
                 )
             )
-            while client.write_gatt_char.await_count < 3:
-                await yield_once(0)
+
+            async def handshake_sent(client=client):
+                while client.write_gatt_char.await_count < 3:
+                    await yield_once(0)
+
+            # Fails (rather than hangs) if the encode is awaited first again.
+            await asyncio.wait_for(handshake_sent(), 1)
             prepared.set_result(writer.prepare(PRESETS["etag213"], image, "AA"))
             await task
         else:
@@ -168,3 +174,32 @@ async def test_retry_reuses_the_prepared_encode_and_awaits_it_after_the_handshak
                 client, "AA", PRESETS["etag213"], prepared, trace=SessionTrace(STAGE_MAP)
             )
         assert [c.args[1] for c in client.write_gatt_char.await_args_list] == expected
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"), [({"service": False}, "missing"), ({"mtu_payload": 20}, "too small")]
+)
+async def test_early_link_failure_closes_the_unused_encode(kwargs, match):
+    """Run with -W error::RuntimeWarning: an unawaited coroutine would fail it."""
+    client = fake_tag(**kwargs)
+    prepared = asyncio.get_running_loop().create_future()
+    with pytest.raises(RuntimeError, match=match):
+        await writer.write_session(
+            client, "AA", PRESETS["etag213"], prepared, trace=SessionTrace(STAGE_MAP)
+        )
+    prepared.cancel()
+    gc.collect()
+
+
+async def test_progress_total_is_known_during_the_handshake(monkeypatch):
+    monkeypatch.setattr(writer.asyncio, "sleep", AsyncMock())
+    seen = []
+    image = Image.new("RGB", (250, 122), "white")
+
+    async def prepared():
+        return writer.prepare(PRESETS["etag213"], image, "AA")["SE0213NP61-TNG-A0"]
+
+    await EtagConnection(fake_tag(), "SE0213NP61-TNG-A0").send(
+        prepared(), progress=lambda n, total: seen.append(total)
+    )
+    assert seen == [40] * 40

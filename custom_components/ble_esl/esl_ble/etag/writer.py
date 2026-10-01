@@ -8,7 +8,7 @@ from blesession import SessionTrace
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, WriteRefused, WriteResult
 from .const import CHARACTERISTIC, FIRMWARE, PANELS, SERVICE
 from .image import encode, encode_image
-from .wire import HANDSHAKE, MAX_PACKET, REFRESH, image_packets
+from .wire import HANDSHAKE, IMAGE_PACKETS, MAX_PACKET, REFRESH, image_packets
 
 REPLY_TIMEOUT_S = 30
 REPLIES = {5: 6, 0x11: 0x12, 7: 8, 1: 2, 3: 4}
@@ -74,22 +74,16 @@ class EtagConnection:
         if trace is None:
             trace = SessionTrace()
         log = [] if log is None else log
-        char = self._characteristic()
-        if char.max_write_without_response_size < MAX_PACKET:
-            raise RuntimeError(
-                f"Bluetooth write size {char.max_write_without_response_size} is too small "
-                f"for the app's {MAX_PACKET}-byte packets"
-            )
         queue = asyncio.Queue()
+        sent = 0
+        # Both panels encode to the same number of packets, so the total is
+        # known before the encode is.
+        total = len(HANDSHAKE) + IMAGE_PACKETS + len(REFRESH)
 
         def notification(_, data):
             raw = bytes(data)
             log.append({"rx": raw.hex()})
             queue.put_nowait(raw)
-
-        await self.client.start_notify(char, notification)
-        sent = 0
-        total = None
 
         async def run(batch, *, paced=False):
             nonlocal sent
@@ -101,9 +95,14 @@ class EtagConnection:
                 if paced and self.pacing_s:
                     await asyncio.sleep(self.pacing_s)
 
-        if not inspect.isawaitable(image):
-            total = len(HANDSHAKE) + len(image) + len(REFRESH)
         try:
+            char = self._characteristic()
+            if char.max_write_without_response_size < MAX_PACKET:
+                raise RuntimeError(
+                    f"Bluetooth write size {char.max_write_without_response_size} is too small "
+                    f"for the app's {MAX_PACKET}-byte packets"
+                )
+            await self.client.start_notify(char, notification)
             with trace.timed(STAGE_HANDSHAKE):
                 await run(HANDSHAKE)
         except BaseException:
@@ -112,7 +111,8 @@ class EtagConnection:
             raise
         if inspect.isawaitable(image):
             image = await image
-            total = len(HANDSHAKE) + len(image) + len(REFRESH)
+        if len(image) != IMAGE_PACKETS:
+            raise RuntimeError(f"Expected {IMAGE_PACKETS} image packets, got {len(image)}")
         trace.note(parts=total, bytes=sum(map(len, image)))
         with trace.timed(STAGE_TRANSFER):
             await run(image, paced=True)

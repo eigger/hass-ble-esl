@@ -2,6 +2,7 @@
 
 import struct
 
+from .const import SIZE
 from .image import encode
 
 # APK SendPublishTemplateActivity.h2, type 1. These are app commands,
@@ -15,6 +16,9 @@ REFRESH = (bytes.fromhex("ac03ca"),)
 CHUNK = 230
 HEADER = ">BBBHHH"
 MAX_PACKET = struct.calcsize(HEADER) + CHUNK + 1
+# Two planes of one 16-byte padded column per x, whichever the panel.
+PLANE_BYTES = SIZE[0] * ((SIZE[1] + 7) // 8)
+IMAGE_PACKETS = 2 * ((PLANE_BYTES + CHUNK - 1) // CHUNK)
 
 
 def packets(image, firmware):
