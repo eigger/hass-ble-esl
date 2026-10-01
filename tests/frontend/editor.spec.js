@@ -959,3 +959,37 @@ test("the display exports as the payload and a ready write action", async ({
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(page.locator("ble-esl-yaml-dialog")).toHaveCount(0);
 });
+
+test("the selection box follows an element while it is resized", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  // The box comes from the last render, so wait for one to exist.
+  await page.waitForFunction(
+    () => window.panel.layerSizes?.[window.panel.selected],
+  );
+  const boxWidth = () =>
+    page
+      .locator(".selection-box")
+      .evaluate((node) => Number.parseFloat(node.style.width));
+  const width = async () =>
+    Number(await page.locator('[data-property="width"]').inputValue());
+  const before = await width();
+  expect(await boxWidth()).toBe(before);
+  const handle = await page.locator('.handle[data-corner="se"]').boundingBox();
+  await page.mouse.move(
+    handle.x + handle.width / 2,
+    handle.y + handle.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    handle.x + handle.width / 2 + 80,
+    handle.y + handle.height / 2,
+  );
+  // Still dragging: no new render has arrived to refresh the bounds.
+  const during = await width();
+  expect(during).toBeGreaterThan(before);
+  expect(await boxWidth()).toBe(during);
+  await page.mouse.up();
+  expect(await boxWidth()).toBe(during);
+});
