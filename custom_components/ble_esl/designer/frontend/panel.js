@@ -167,14 +167,14 @@ export class BleEslDesigner extends HTMLElement {
     try {
       // The tag list must not wait for HA's lazily loaded entity picker:
       // in Safari the card helpers that load it may never settle.
-      if (!customElements.get("ha-entity-picker")) {
+      if (!customElements.get("ha-entity-picker") && !this.pickerPending) {
+        // Once per panel: boot() runs again on "Refresh tags".
+        this.pickerPending = true;
         loadEntityPicker();
-        // Pickers created before the definition keep properties as plain
-        // fields that shadow the upgraded element's accessors; re-render so
-        // they are created fresh once HA defines it.
-        customElements
-          .whenDefined("ha-entity-picker")
-          .then(() => this.isConnected && this.render());
+        customElements.whenDefined("ha-entity-picker").then(() => {
+          this.pickerPending = false;
+          if (this.isConnected) this.upgradeEntityPickers();
+        });
       }
       await Promise.all([iconFont, textFont]);
       this.icons = await fetch(new URL("./icons.json", import.meta.url)).then(
@@ -835,6 +835,22 @@ export class BleEslDesigner extends HTMLElement {
       }
     }
     return html;
+  }
+  // Pickers created before HA defined the element keep their properties as
+  // plain fields that can shadow the upgraded element's accessors. Swap in
+  // fresh ones without a full render(), which would end inline editing and
+  // drop an open dialog or menu.
+  upgradeEntityPickers() {
+    for (const old of this.shadowRoot.querySelectorAll("ha-entity-picker")) {
+      const fresh = document.createElement("ha-entity-picker");
+      for (const { name, value } of old.attributes)
+        fresh.setAttribute(name, value);
+      old.replaceWith(fresh);
+    }
+    this.renderEntities();
+    this.bindEntityPickers();
+    // Keeps its draft and reopens the dialog.
+    this.shadowRoot.querySelector("ble-esl-component-editor")?.redraw();
   }
   renderEntities() {
     const picker = this.shadowRoot.querySelector("#entity-picker");

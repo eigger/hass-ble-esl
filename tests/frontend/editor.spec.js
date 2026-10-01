@@ -6,6 +6,10 @@ async function pickSensor(page, id) {
     .fill(id);
   await page.locator(`#entity-picker [data-entity="${id}"]`).click();
 }
+// One demo server serves every browser project; start each from a clean state.
+test.beforeAll(async ({ request }) => {
+  await request.post("/reset");
+});
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.waitForFunction(() => window.panel?.tag);
@@ -865,4 +869,54 @@ test("tags load while HA has not defined the entity picker yet", async ({
   const before = await page.locator(".el").count();
   await pickSensor(page, "sensor.office_temperature");
   await expect(page.locator(".el")).toHaveCount(before + 1);
+});
+
+test("inline editing still gets a caret when the click resets the selection", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  // Safari clears the selection after the gesture, once the panel already
+  // selected the placeholder on pointerup. Emulate that: this listener runs
+  // first, so its task lands between the panel's two selections.
+  await page.evaluate(() =>
+    window.addEventListener(
+      "pointerup",
+      () => setTimeout(() => window.getSelection().removeAllRanges()),
+      { once: true },
+    ),
+  );
+  await page.locator(".el.selected .content").click();
+  await page.keyboard.type("Caret");
+  await expect(page.locator('[data-property="text"]')).toHaveValue("Caret");
+});
+
+const pickerDefined = (page) =>
+  page.waitForFunction(() => customElements.get("ha-entity-picker"), null, {
+    timeout: 12000,
+  });
+
+test("the picker arriving late keeps inline editing going", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag);
+  await page.locator('[data-add="text"]').click();
+  await page.locator(".el.selected .content").click();
+  await page.keyboard.type("Hello");
+  await pickerDefined(page);
+  await page.keyboard.type(" world");
+  await expect(page.locator('[data-property="text"]')).toHaveValue(
+    "Hello world",
+  );
+});
+
+test("the picker arriving late keeps an open component dialog", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag);
+  await page.locator('[data-action="add-component"]').click();
+  await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
+  await pickerDefined(page);
+  await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
 });

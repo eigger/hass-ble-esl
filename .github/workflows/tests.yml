@@ -64,7 +64,7 @@ jobs:
       - name: Install browser test dependencies
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
 
       - name: Test visual editor
         env:
