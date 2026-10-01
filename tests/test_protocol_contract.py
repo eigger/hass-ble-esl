@@ -90,6 +90,7 @@ def test_protocol_ids_are_unique_and_matchers_disjoint_on_each_others_samples():
     """Registration order resolves detect(); matchers must not overlap."""
     assert len(IDS) == len(set(IDS))
     samples = {
+        "minew": {"manufacturer_data": {0x0639: b"\xca\x21"}, "service_uuids": []},
         "wolink": {"manufacturer_data": {0xBBAA: bytes(10)}, "service_uuids": []},
         "easytag": {
             "manufacturer_data": {},

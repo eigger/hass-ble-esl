@@ -36,6 +36,13 @@
     {
       "manufacturer_id": 21080,
       "connectable": true
+    },
+    {
+      "manufacturer_id": 1593,
+      "manufacturer_data_start": [
+        202
+      ],
+      "connectable": true
     }
   ],
   "codeowners": [
