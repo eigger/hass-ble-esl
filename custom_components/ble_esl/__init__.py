@@ -130,7 +130,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         config_entry_id=entry.entry_id,
         connections={(CONNECTION_BLUETOOTH, address)},
         manufacturer=manufacturer,
-        name=f"{manufacturer} {identifier}",
+        name=f"{manufacturer} {protocol.tag_label(address)}",
         model=model,
         model_id=protocol.label,
         sw_version=sw_version,

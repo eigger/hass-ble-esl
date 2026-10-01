@@ -99,3 +99,18 @@ def test_parser_unknown_device_number_reported_once(caplog):
     assert "device number 141" in reports[0].message
     assert "4.0.2" in reports[0].message
     assert "fd024002008d63060102ffff1c" in reports[0].message
+
+
+def test_tag_label_is_the_address_reversed():
+    """The label prints the address bytes in reverse; names and titles follow it."""
+    label = XteBluetoothDeviceData.tag_label
+    assert label("B9:B9:00:18:39:37") == "37391800B9B9"
+    assert label("4D:BD:10:18:39:37") == "37391810BD4D"
+    assert label("4f:9a:10:17:39:37") == "373917109A4F"
+
+    info = advertisement(
+        address="B9:B9:00:18:39:37", payload=bytes.fromhex("0402400300996406ff01ffff1c")
+    )
+    parser = XteBluetoothDeviceData(PRESETS["psj-420"])
+    device = update_device(parser.update(info))
+    assert device.name == "Poshiji 37391800B9B9"
