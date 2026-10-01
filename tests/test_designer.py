@@ -2,10 +2,12 @@
 
 import base64
 from io import BytesIO
+import threading
 from unittest.mock import patch
 
 from homeassistant.components.frontend import DATA_PANELS
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from PIL import Image
 import pytest
 import voluptuous as vol
@@ -77,13 +79,16 @@ async def test_send_duplicate_and_lock(hass: HomeAssistant, wolink_entry, tag_wr
     designer = hass.data[KEY]
     entry = wolink_entry
     assert (await designer.send(entry, document()))["status"] == "written"
-    assert (await designer.send(entry, document()))["status"] == "duplicate"
+    assert (await designer.send(entry, document(), automatic=True))["status"] == "duplicate"
     assert tag_writer.write_prepared.await_count == 1
+    # An explicit Send rewrites the same image, e.g. after the tag was reset.
+    assert (await designer.send(entry, document()))["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 2
     entry.runtime_data.write_lock = True
     doc = document()
     doc["elements"][0]["label"] = "Changed label"
     assert (await designer.send(entry, doc))["status"] == "locked"
-    assert tag_writer.write_prepared.await_count == 1
+    assert tag_writer.write_prepared.await_count == 2
 
 
 async def test_auto_update_coalesces_and_detaches(hass: HomeAssistant, wolink_entry):
@@ -717,3 +722,100 @@ async def test_sensor_component_can_be_configured_in_a_reusable_template(hass, w
     )
     payload = compile_payload(hass, outer, {"custom:laundry": saved})
     assert any(element["type"] == "icon" for element in payload)
+
+
+async def test_preview_leaves_the_tag_preview_untouched(hass, wolink_entry):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    data = wolink_entry.runtime_data
+    before = data.image_store.images.preview
+    await hass.data[KEY].preview(wolink_entry, document())
+    assert data.image_store.images.preview is before
+
+
+async def test_missing_attribute_and_non_numeric_state_render(hass, wolink_entry):
+    hass.states.async_set("media_player.tv", "off", {"friendly_name": "TV"})
+    hass.states.async_set("sensor.room_temperature", "calibrating", {"unit_of_measurement": "°C"})
+    doc = document()
+    doc["elements"] += [
+        {
+            "id": "title",
+            "type": "text",
+            "entity_id": "media_player.tv",
+            "data_field": "attribute",
+            "attribute": "media_title",
+            "x": 0,
+            "y": 80,
+            "width": 100,
+            "height": 20,
+        },
+        {
+            "id": "bar",
+            "type": "progress_bar",
+            "entity_id": "media_player.tv",
+            "data_field": "state",
+            "x": 0,
+            "y": 100,
+            "width": 100,
+            "height": 10,
+        },
+    ]
+    result = await hass.data[KEY].preview(wolink_entry, doc)
+    assert result["payload"][2]["value"] == "calibrating °C"
+    assert not any(item["type"] == "progress_bar" for item in result["payload"])
+
+
+async def test_template_tracker_schedules_on_the_event_loop(hass, wolink_entry):
+    manager = hass.data[KEY]
+    hass.states.async_set("sensor.other", "0")
+    doc = document()
+    doc["auto_update"] = True
+    doc["elements"][0]["field_templates"] = {
+        "color": "{{ 'red' if states('sensor.other') | int > 0 else 'black' }}"
+    }
+    threads = []
+    with patch.object(
+        manager, "schedule", side_effect=lambda _id: threads.append(threading.get_ident())
+    ):
+        await manager.save(wolink_entry, doc)
+        threads.clear()
+        hass.states.async_set("sensor.other", "1")
+        await hass.async_block_till_done()
+    assert threads
+    assert set(threads) == {hass.loop_thread_id}
+    manager.detach(wolink_entry.entry_id)
+
+
+async def test_auto_send_failure_is_logged_and_throttled(hass, wolink_entry, caplog):
+    manager = hass.data[KEY]
+    manager.documents[wolink_entry.entry_id] = validate(
+        document(), wolink_entry.runtime_data.preset
+    )
+    with patch.object(manager, "send", side_effect=ValueError("boom")):
+        await manager.auto_send(wolink_entry.entry_id)
+    assert "Automatic display update failed" in caplog.text
+    assert wolink_entry.entry_id in manager.last_sent
+
+
+async def test_panel_follows_loaded_tags(hass, wolink_entry):
+    assert "ble-esl-designer" in hass.data[DATA_PANELS]
+    await hass.config_entries.async_unload(wolink_entry.entry_id)
+    assert "ble-esl-designer" not in hass.data[DATA_PANELS]
+    await hass.config_entries.async_setup(wolink_entry.entry_id)
+    assert "ble-esl-designer" in hass.data[DATA_PANELS]
+
+
+async def test_send_refuses_a_resized_tag_before_publishing(hass, wolink_entry, tag_writer):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    manager = hass.data[KEY]
+    data = wolink_entry.runtime_data
+    before = data.image_store.images.preview
+    small = DevicePreset("small", "Small", 200, 96, "BWR")
+    drawn = await manager.draw(wolink_entry, document())
+    with (
+        patch.object(manager, "draw", return_value=drawn),
+        patch.object(manager, "preset", return_value=small),
+        pytest.raises(HomeAssistantError, match="display size changed"),
+    ):
+        await manager.send(wolink_entry, document())
+    assert data.image_store.images.preview is before
+    assert tag_writer.write_prepared.await_count == 0

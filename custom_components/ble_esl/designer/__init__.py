@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 import time
 
-from homeassistant.components import panel_custom, websocket_api
+from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -22,7 +22,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
 import voluptuous as vol
 
-from ..const import DOMAIN
+from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
+from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .layout import (
@@ -39,6 +40,7 @@ from .layout import (
 from .rendering import render_document, snapshot_layers
 
 KEY = f"{DOMAIN}_designer"
+PANEL = "ble-esl-designer"
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -59,16 +61,41 @@ class Designer:
         self.locks = {}
         self.tasks = {}
         self.render_lock = asyncio.Lock()
+        self.panel_registered = False
 
     def entry(self, entry_id):
-        return next(
-            entry
-            for entry in self.hass.config_entries.async_loaded_entries(DOMAIN)
-            if entry.entry_id == entry_id
+        for entry in self.hass.config_entries.async_loaded_entries(DOMAIN):
+            if entry.entry_id == entry_id:
+                return entry
+        raise HomeAssistantError(f"Tag {entry_id} is not loaded")
+
+    async def register_panel(self):
+        """Show the sidebar panel while at least one tag is configured."""
+        if self.panel_registered:
+            return
+        self.panel_registered = True
+        await panel_custom.async_register_panel(
+            self.hass,
+            PANEL,
+            PANEL,
+            sidebar_title="ESL Designer",
+            sidebar_icon="mdi:label-outline",
+            module_url="/ble_esl_designer/panel.js?v=4",
+            require_admin=True,
         )
 
+    @callback
+    def remove_panel_if_unused(self, unloading_entry_id):
+        if not self.panel_registered or any(
+            entry.entry_id != unloading_entry_id
+            for entry in self.hass.config_entries.async_loaded_entries(DOMAIN)
+        ):
+            return
+        self.panel_registered = False
+        frontend.async_remove_panel(self.hass, PANEL)
+
     async def save(self, entry, document):
-        document = validate(document, entry.runtime_data.preset)
+        document = validate(document, self.preset(entry))
         if document["auto_update"] and not getattr(entry.runtime_data.protocol, "writable", True):
             raise HomeAssistantError("This tag supports discovery only")
         self.documents[entry.entry_id] = document
@@ -133,12 +160,17 @@ class Designer:
         ]
         if tracked:
             self.template_listeners[entry.entry_id] = async_track_template_result(
-                self.hass, tracked, lambda event, updates: self.schedule(entry.entry_id)
+                self.hass, tracked, partial(self.template_changed, entry.entry_id)
             )
         self.schedule(entry.entry_id)
 
     @callback
     def changed(self, entry_id, event):
+        self.schedule(entry_id)
+
+    @callback
+    def template_changed(self, entry_id, event, updates):
+        # Must stay a callback: a plain function would run in the executor.
         self.schedule(entry_id)
 
     @callback
@@ -159,8 +191,13 @@ class Designer:
 
     async def auto_send(self, entry_id):
         try:
-            await self.send(self.entry(entry_id), self.documents[entry_id])
-        except HomeAssistantError:
+            await self.send(self.entry(entry_id), self.documents[entry_id], automatic=True)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # A failed render must not retry on every state change: count it
+            # against the interval like a send.
+            self.last_sent[entry_id] = time.monotonic()
             _LOGGER.exception("Automatic display update failed for %s", entry_id)
         finally:
             if self.tasks.get(entry_id) is asyncio.current_task():
@@ -191,6 +228,16 @@ class Designer:
             result[key] = cached[1]
         return result
 
+    def preset(self, entry):
+        """The preset a write would use now, refined by the last advertisement."""
+        options = {**entry.data, **entry.options}
+        return resolve_preset(
+            self.hass,
+            entry.runtime_data.protocol,
+            entry.runtime_data.address,
+            options.get(CONF_MODEL, DEFAULT_MODEL),
+        ).preset
+
     async def render(self, preset, document, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
         # clients and automatic writes to one render worker at a time.
@@ -199,23 +246,22 @@ class Designer:
                 partial(render_document, self.hass, preset, document, snapshots)
             )
 
-    async def job(self, entry, document):
-        document = validate(document, entry.runtime_data.preset)
+    async def draw(self, entry, document):
+        """Render without touching the tag's runtime data or preview entity."""
+        preset = self.preset(entry)
+        document = validate(document, preset)
         forecasts = await self.forecasts(document)
         payload = compile_payload(self.hass, document, self.templates, forecasts)
-        service_data = {"payload": payload, "background": document["background"]}
         snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
-        image, layers = await self.render(entry.runtime_data.preset, document, snapshots)
-        return (
-            await build_write_job_from_data(self.hass, entry, service_data, image=image),
-            payload,
-            layers,
-        )
+        image, layers = await self.render(preset, document, snapshots)
+        return document, image, payload, layers
 
     async def preview(self, entry, document):
-        job, payload, layers = await self.job(entry, document)
+        _, image, payload, layers = await self.draw(entry, document)
+        buffer = BytesIO()
+        image.save(buffer, "PNG")
         return {
-            "png": "data:image/png;base64," + base64.b64encode(job.image_png).decode(),
+            "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
             "payload": payload,
             "layers": layers,
         }
@@ -248,13 +294,24 @@ class Designer:
             "layers": layers,
         }
 
-    async def send(self, entry, document):
+    async def send(self, entry, document, automatic=False):
         if not getattr(entry.runtime_data.protocol, "writable", True):
             raise HomeAssistantError("This tag protocol does not support image writes")
         generation = entry.runtime_data.write_generation
         async with self.locks.setdefault(entry.entry_id, asyncio.Lock()):
-            job, _, _ = await self.job(entry, document)
-            job.prevent_duplicate_send = True
+            document, image, payload, _ = await self.draw(entry, document)
+            # An advertisement can refine the preset while drawing awaits.
+            # Check before build_write_job_from_data publishes the preview; it
+            # resolves the preset again before its first await, so nothing can
+            # change in between.
+            preset = self.preset(entry)
+            if (preset.width, preset.height) != image.size:
+                raise HomeAssistantError("The tag's display size changed; reload the designer")
+            service_data = {"payload": payload, "background": document["background"]}
+            job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
+            # An explicit Send always writes, e.g. to restore a reset tag;
+            # automatic updates skip an image the tag already shows.
+            job.prevent_duplicate_send = automatic
             job.generation = generation
             self.last_sent[entry.entry_id] = time.monotonic()
             outcome = await run_ble_write(self.hass, job)
@@ -290,9 +347,9 @@ async def websocket_designer(hass, connection, msg):
             {
                 "entry_id": entry.entry_id,
                 "title": entry.title,
-                "width": entry.runtime_data.preset.width,
-                "height": entry.runtime_data.preset.height,
-                "colors": entry.runtime_data.preset.colors,
+                "width": (preset := designer.preset(entry)).width,
+                "height": preset.height,
+                "colors": preset.colors,
                 "writable": getattr(entry.runtime_data.protocol, "writable", True),
                 "document": designer.documents.get(entry.entry_id),
             }
@@ -316,13 +373,4 @@ async def async_setup_designer(hass):
                 "/ble_esl_designer_fonts", str(Path(__file__).parent.parent / "fonts"), True
             ),
         ]
-    )
-    await panel_custom.async_register_panel(
-        hass,
-        "ble-esl-designer",
-        "ble-esl-designer",
-        sidebar_title="Label designer",
-        sidebar_icon="mdi:label-outline",
-        module_url="/ble_esl_designer/panel.js?v=3",
-        require_admin=True,
     )
