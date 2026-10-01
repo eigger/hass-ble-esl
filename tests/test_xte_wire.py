@@ -44,6 +44,23 @@ def test_advertisement_fields_psj420_and_psj213():
     )
 
 
+@pytest.mark.parametrize(
+    ("hex_data", "key", "number", "firmware", "battery"),
+    [
+        ("fd024002009a64060102ffff1a", "psj-290", 154, "4.0.2", 100),
+        ("fd024001009c64060102ffff1a", "psj-266", 156, "4.0.1", 100),
+        ("fd024002008c5f060102ffff1c", "psj-213", 140, "4.0.2", 95),
+        ("0402400300996406ff01ffff1c", "psj-420", 153, "4.0.3", 100),
+    ],
+)
+def test_captured_advertisements(hex_data, key, number, firmware, battery):
+    """Advertisements captured from real tags of each size."""
+    data = bytes.fromhex(hex_data)
+    adv = parse_advertisement(data)
+    assert (adv.device_number, adv.firmware, adv.battery_percent) == (number, firmware, battery)
+    assert preset_for_advertisement(data) is PRESETS[key]
+
+
 @pytest.mark.parametrize("record_type", [0xFD, 0xFE, 0xFC, 0x04])
 def test_advertisement_record_types(record_type):
     data = bytes([record_type]) + bytes.fromhex("024002009964060102ffff1e")

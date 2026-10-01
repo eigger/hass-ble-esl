@@ -135,16 +135,16 @@ async def test_bluetooth_discovery_xte_unknown_device_number_asks_for_model(
     field = next(k for k in result["data_schema"].schema if k == CONF_MODEL)
     assert field.default is vol.UNDEFINED
     labels = {o["value"]: o["label"] for o in _model_selector_options("xte")}
-    assert labels["psj-290"] == '2.9" BWRY — 296x128'
+    assert labels["psj-350"] == '3.5" BWRY — 384x184'
     assert labels["psj-420"] == 'PSJ-420 4.2" BWRY — 400x300'
 
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], user_input={CONF_MODEL: "psj-290"}
+        result["flow_id"], user_input={CONF_MODEL: "psj-350"}
     )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-290"}
-    assert result["result"].runtime_data.preset.key == "psj-290"
+    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-350"}
+    assert result["result"].runtime_data.preset.key == "psj-350"
     assert result["title"].startswith("Poshiji ")
 
 
