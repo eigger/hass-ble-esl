@@ -4,7 +4,7 @@ import base64
 from copy import deepcopy
 from io import BytesIO
 
-from PIL import ImageChops
+from PIL import Image, ImageChops
 
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
@@ -17,7 +17,8 @@ def snapshot_layers(hass, document, templates, forecasts):
     for element in document["elements"]:
         element = resolve_component(hass, element)[0]
         local = deepcopy(element)
-        local["x"] = local["y"] = 0
+        if element["type"] != "imagespec":
+            local["x"] = local["y"] = 0
         payload = compile_payload(hass, {"elements": [local]}, templates, forecasts)
         layers.append((element, payload))
     return layers
@@ -27,6 +28,22 @@ def png_url(image):
     buffer = BytesIO()
     image.save(buffer, "PNG")
     return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+def spec_layer(hass, preset, element, payload, previews):
+    """The transparent layer of one imagespec element, cropped to what it draws."""
+    light = render_image(hass, preset, payload, background="white")
+    dark = render_image(hass, preset, payload, background="black")
+    alpha = ImageChops.difference(light, dark).convert("L").point(lambda value: 0 if value else 255)
+    layer = light.convert("RGBA")
+    layer.putalpha(alpha)
+    box = alpha.getbbox()
+    if box is None:
+        return png_url(Image.new("RGBA", (element["width"], element["height"])))
+    x, y = element["x"], element["y"]
+    previews["_offsets"][element["id"]] = [box[0] - x, box[1] - y]
+    previews["_bounds"][element["id"]] = [box[0] - x, box[1] - y, box[2] - x, box[3] - y]
+    return png_url(layer.crop(box))
 
 
 def render_document(hass, preset, document, payload, snapshots):
@@ -43,8 +60,15 @@ def render_document(hass, preset, document, payload, snapshots):
     masks, so covered pixels are exact.
     """
     canvas = render_image(hass, preset, payload, background=document["background"])
-    previews = {"_bounds": {}, "_values": {}, "_dependencies": {}}
+    previews = {"_bounds": {}, "_offsets": {}, "_values": {}, "_dependencies": {}}
     for element, element_payload in snapshots:
+        if element["type"] == "imagespec":
+            # Such an element can draw beyond its frame (a barcode's quiet zone,
+            # a chart's labels), so its layer is the whole of what it draws.
+            previews["_values"][element["id"]] = {}
+            previews["_dependencies"][element["id"]] = []
+            previews[element["id"]] = spec_layer(hass, preset, element, element_payload, previews)
+            continue
         local = DevicePreset("layer", "Layer", element["width"], element["height"], preset.colors)
         background = element["background"]
         light = render_image(

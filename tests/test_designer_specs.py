@@ -190,3 +190,14 @@ async def test_the_specs_action_describes_every_element(hass, wolink_entry, hass
     assert result["success"]
     assert {item["type"] for item in result["result"]["types"]} == set(element_types())
     assert "floyd" in result["result"]["dither_methods"]
+
+
+async def test_a_layer_keeps_what_an_element_draws_beyond_its_frame(hass, wolink_entry):
+    # A barcode's quiet zone and bars run past the 120x50 frame it starts in.
+    document = spec_document(element("code", "barcode", 20, 60, 120, 50))
+    layers = (await hass.data[KEY].preview(wolink_entry, document))["layers"]
+    left, top, right, bottom = layers["_bounds"]["code"]
+    assert right - left > 120
+    assert layers["_offsets"]["code"] == [left, top]
+    with Image.open(BytesIO(base64.b64decode(layers["code"].split(",")[1]))) as layer:
+        assert layer.size == (right - left, bottom - top)

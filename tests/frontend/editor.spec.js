@@ -1125,3 +1125,21 @@ test("every imagespec element can be added and rendered", async ({ page }) => {
     types.length - 1,
   );
 });
+
+test("a click on an element keeps the exact preview and a drag swaps in the layers", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("pie");
+  await expect(page.locator("img.exact")).toBeVisible();
+  const hit = page.locator(".el.selected .hit-area");
+  const box = await hit.boundingBox();
+  const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+  await page.mouse.click(x, y);
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 30, y + 10);
+  await expect(page.locator("img.exact")).toHaveCount(0);
+  await page.mouse.up();
+  await expect(page.locator("img.exact")).toBeVisible();
+});

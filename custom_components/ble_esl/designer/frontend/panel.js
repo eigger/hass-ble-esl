@@ -729,6 +729,18 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="New icon state" placeholder="Another state"><button data-action="add-icon-state" aria-label="Add state mapping">+</button></div></div>`;
   }
+  // The layer of an element that draws beyond its frame is cropped to what it
+  // drew: it sits at an offset from the frame and follows the frame's scale.
+  layerImage(element, src) {
+    const offset = this.layerOffsets?.[element.id],
+      bounds = this.layerBounds?.[element.id],
+      record = this.layerRecords?.[element.id];
+    if (!offset || !bounds)
+      return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
+    const sx = record ? element.width / record.size[0] : 1,
+      sy = record ? element.height / record.size[1] : 1;
+    return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0] * sx}px;top:${offset[1] * sy}px;width:${(bounds[2] - bounds[0]) * sx}px;height:${(bounds[3] - bounds[1]) * sy}px">`;
+  }
   layerLabel(item) {
     return item.type === "imagespec"
       ? specLabel(item)
@@ -1119,7 +1131,7 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? `<img class="layer-preview" src="${rendered}" alt="" aria-hidden="true">` : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
+          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
                   const bounds = visible || box;
@@ -1398,6 +1410,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
+          this.layerOffsets = result.layers._offsets || {};
           this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
@@ -1861,9 +1874,8 @@ export class BleEslDesigner extends HTMLElement {
       startX = event.clientX,
       startY = event.clientY;
     let moved = false;
-    this.preview = null;
-    this.previewSequence++;
-    clearTimeout(this.previewTimer);
+    // A plain click leaves the exact preview alone; only a drag swaps it for
+    // the movable layers.
     this.render();
     this.focusElement();
     const controller = new AbortController();
@@ -1881,6 +1893,9 @@ export class BleEslDesigner extends HTMLElement {
         if (!moved) {
           this.checkpoint();
           moved = true;
+          this.preview = null;
+          this.previewSequence++;
+          clearTimeout(this.previewTimer);
         }
         if (resize) {
           const west = resize.endsWith("w"),
@@ -1907,7 +1922,6 @@ export class BleEslDesigner extends HTMLElement {
           this.edited();
           this.focusElement();
         } else if (!resize && element.type === "text") this.beginTextEdit();
-        else this.queuePreview();
       },
       { once: true, signal: controller.signal },
     );
@@ -1952,6 +1966,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
+          this.layerOffsets = result.layers._offsets || {};
           this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
