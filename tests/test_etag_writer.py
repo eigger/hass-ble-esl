@@ -128,6 +128,7 @@ async def test_rejected_packet_aborts_the_transfer():
     with pytest.raises(EtagError, match="rejected"):
         await writer.write_session(client, "AA", PRESET, _prepared(), trace=_trace())
     assert len(client.written) == 4  # handshake, then the first image packet
+    assert client.subscribed == {}
 
 
 async def test_a_silent_tag_times_out_naming_the_step():
@@ -136,6 +137,7 @@ async def test_a_silent_tag_times_out_naming_the_step():
     session.reply_timeout_s = 0.01
     with pytest.raises(NotificationTimeout, match="command 0x11"):
         await session.send(_prepared_list(), total=36, trace=_trace())
+    assert client.subscribed == {}
 
 
 async def test_a_dropped_link_ends_the_wait_at_once():
