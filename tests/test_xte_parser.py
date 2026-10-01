@@ -107,6 +107,8 @@ def test_tag_label_is_the_address_reversed():
     assert label("B9:B9:00:18:39:37") == "37391800B9B9"
     assert label("4D:BD:10:18:39:37") == "37391810BD4D"
     assert label("4f:9a:10:17:39:37") == "373917109A4F"
+    # A non-MAC address (a CoreBluetooth UUID) keeps the short default form.
+    assert label("12345678-1234-1234-1234-123456789ABC") == "56789ABC"
 
     info = advertisement(
         address="B9:B9:00:18:39:37", payload=bytes.fromhex("0402400300996406ff01ffff1c")
