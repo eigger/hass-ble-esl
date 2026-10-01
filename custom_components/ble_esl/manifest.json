@@ -45,6 +45,7 @@
   "dependencies": [
     "bluetooth_adapters",
     "frontend",
+    "http",
     "panel_custom",
     "websocket_api"
   ],
