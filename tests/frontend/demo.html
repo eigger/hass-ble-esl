@@ -103,7 +103,15 @@
         );
       }
     }
-    customElements.define("ha-entity-picker", DemoEntityPicker);
+    // ?lazy-picker mimics HA: the picker is defined only later, and the card
+    // helpers that would load it never settle.
+    if (new URLSearchParams(location.search).has("lazy-picker")) {
+      window.loadCardHelpers = () => new Promise(() => {});
+      setTimeout(
+        () => customElements.define("ha-entity-picker", DemoEntityPicker),
+        8000,
+      );
+    } else customElements.define("ha-entity-picker", DemoEntityPicker);
     await import("/frontend/panel.js");
     const panel = document.querySelector("ble-esl-designer");
     const states = await fetch("/states").then((response) => response.json());

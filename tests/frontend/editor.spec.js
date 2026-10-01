@@ -376,7 +376,9 @@ test("text can be edited directly in the preview", async ({ page }) => {
     exact: true,
   });
   await expect(editor).toBeFocused();
-  await editor.fill("Inline °C");
+  // Type like a user: the placeholder is selected and gets replaced. (fill()
+  // selects through addRange, which WebKit ignores inside a shadow tree.)
+  await page.keyboard.type("Inline °C");
   await expect(page.locator('[data-property="text"]')).toHaveValue("Inline °C");
   await page.keyboard.press("Backspace");
   await expect(page.locator(".el")).toHaveCount(1);
@@ -851,4 +853,16 @@ test("sensor components inside templates can open Configure and render", async (
   );
   await expect(modal.getByRole("status")).toBeEmpty();
   await modal.getByRole("button", { name: "Cancel", exact: true }).click();
+});
+
+test("tags load while HA has not defined the entity picker yet", async ({
+  page,
+}) => {
+  await page.goto("/?lazy-picker");
+  await page.waitForFunction(() => window.panel?.tag, null, { timeout: 3000 });
+  await expect(page.locator("#tag option")).not.toHaveCount(0);
+  // Once HA defines the picker, the panel upgrades to a working one.
+  const before = await page.locator(".el").count();
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator(".el")).toHaveCount(before + 1);
 });

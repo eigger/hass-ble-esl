@@ -80,7 +80,7 @@ class Designer:
             PANEL,
             sidebar_title="ESL Designer",
             sidebar_icon="mdi:label-outline",
-            module_url="/ble_esl_designer/panel.js?v=4",
+            module_url="/ble_esl_designer/panel.js?v=5",
             require_admin=True,
         )
 
