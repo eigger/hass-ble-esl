@@ -179,8 +179,11 @@ async def test_retry_reuses_the_prepared_encode_and_awaits_it_after_the_handshak
 @pytest.mark.parametrize(
     ("kwargs", "match"), [({"service": False}, "missing"), ({"mtu_payload": 20}, "too small")]
 )
+@pytest.mark.filterwarnings(
+    "error::RuntimeWarning", "error::pytest.PytestUnraisableExceptionWarning"
+)
 async def test_early_link_failure_closes_the_unused_encode(kwargs, match):
-    """Run with -W error::RuntimeWarning: an unawaited coroutine would fail it."""
+    """An unawaited encode coroutine would warn, which this test turns into a failure."""
     client = fake_tag(**kwargs)
     prepared = asyncio.get_running_loop().create_future()
     with pytest.raises(RuntimeError, match=match):
