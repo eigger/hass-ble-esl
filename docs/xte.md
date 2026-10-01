@@ -1,4 +1,4 @@
-# XTE (Poshiji PSJ-420, PSJ-213)
+# XTE (Poshiji PSJ-420, PSJ-290, PSJ-266, PSJ-213)
 
 BLE ESL supports the XTE protocol family sold under the Poshiji brand. The
 reference device is the PSJ-420, a 400x300 black/white/red/yellow label;
@@ -21,8 +21,8 @@ weather and temperature are the photographed screen contents, not live data.
 [AliExpress — Poshiji BWRY ESL, 2.13" to 4.2"](https://ko.aliexpress.com/item/1005012725381116.html)
 
 One listing covers the sizes from 2.13" to 4.2"; pick the size option you
-want. The 4.2" (PSJ-420) is the verified one; the 2.13" (PSJ-213) is a
-community report; the other sizes are size-only presets (see the catalog
+want. The 2.13" (PSJ-213), 2.66" (PSJ-266), 2.9" (PSJ-290) and 4.2" (PSJ-420) are
+verified on real tags; the other sizes are size-only presets (see the catalog
 below) — check **BWRY, BLE** with the seller and do not assume every option
 uses this protocol. Current price, availability, accessories and seller
 warranty are not recorded here.
@@ -128,17 +128,17 @@ Catalog (`esl_ble/xte/devices.py`):
 
 | Preset | Device number | Viewed | Buffer | Confidence |
 |---|---|---|---|---|
-| PSJ-420 | 153 | 400×300 landscape | 400×300 | reported (owner-verified with this integration) |
-| PSJ-213 | 140 | 250×122 landscape | 122×250 portrait (`rotation: 90`, rows padded to 124 px) | community (pushed successfully with the same transaction elsewhere; not re-tested here) |
+| PSJ-420 | 153 | 400×300 landscape | 400×300 | verified (owner, real tag) |
+| PSJ-213 | 140 | 250×122 landscape | 122×250 portrait (`rotation: 90`, rows padded to 124 px) | verified (owner, real tag) |
 | psj-154 | — | 200×200 | 200×200 | estimated (size only, manual pick) |
-| psj-266 | — | 296×152 | 152×296 portrait (`rotation: 90`) | estimated (size only, manual pick) |
-| psj-290 | — | 296×128 | 128×296 portrait (`rotation: 90`) | estimated (size only, manual pick) |
+| PSJ-266 | 156 | 296×152 landscape | 152×296 portrait (`rotation: 270`) | verified (owner, real tag) |
+| PSJ-290 | 154 | 296×128 landscape | 128×296 portrait (`rotation: 270`) | verified (owner, real tag) |
 | psj-350 | — | 384×184 | 384×184 landscape | estimated (size only, manual pick) |
 | psj-370 | — | 416×240 | 416×240 landscape | estimated (size only, manual pick) |
 | psj-750 | — | 800×480 | 800×480 landscape | estimated (size only, manual pick; 7.5" is sold under the brand but not confirmed to be XTE) |
 
-The 2.66" and 2.9" are assumed to scan along their short edge like the
-PSJ-213 (portrait buffer); the square 1.54" and the larger sizes are left
+The 2.66" and 2.9" scan along their short edge like the PSJ-213 (portrait
+buffer, turned 270° rather than 90°); the square 1.54" and the larger sizes are left
 unrotated like the PSJ-420. If a manually picked size displays as diagonal
 stripes (shear), the orientation assumption is wrong for that panel; on the
 square 1.54" a wrong assumption shows instead as the picture lying on its

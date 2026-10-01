@@ -1,14 +1,14 @@
 # Supported models
 
 > [!WARNING]
-> **Hardware Testing Notice**: **PickSmart** (Gicisky) models are fully verified, inherited from hass-gicisky. The **WOLINK 2.9" BWR** preset (`290-bwr`) and **3.7" BWRY** preset (`370`) are verified on physical tags. Other **WOLINK** and **easyTag** presets have **not** been physically tested yet — their implementations are built from technical specifications.
+> **Hardware Testing Notice**: **PickSmart** (Gicisky) models are fully verified, inherited from hass-gicisky. The **WOLINK** 1.54" (`154`), 2.66" (`266`), 3.5" (`350`), 3.7" (`370`) and 4.2" (`420`) BWRY presets and the 2.9" BWR preset (`290-bwr`) are verified on physical tags, as are the **XTE** (Poshiji) 2.13", 2.66", 2.9" and 4.2" presets. Other **WOLINK** and **easyTag** presets have **not** been physically tested yet — their implementations are built from technical specifications.
 > If you test a WOLINK or easyTag device, please share your results in [Discussions](https://github.com/eigger/hass-ble-esl/discussions) or [open an issue](https://github.com/eigger/hass-ble-esl/issues)!
 
 Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + red + yellow.
 
 | Size | Resolution | Colors | Brand | Protocol | Model / Type | Status |
 |------|------------|--------|-------|----------|--------------|--------|
-| 1.54" | 200 × 200 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 1.54" | 200 × 200 | BWRY | Zhsunyco | WOLINK | `154` | ✅ verified |
 | 1.54" | 200 × 200 | BWR | Zhsunyco | easyTag | ET0154-33B | ⚠️ untested |
 | 1.54" | 200 × 200 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
 | 2.1" | 250 × 132 | BW | Gicisky | PickSmart | TFT | ✅ verified |
@@ -17,24 +17,24 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 2.13" | 250 × 122 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 2.13" | 250 × 122 | BWR | Zhsunyco | easyTag | ETR0213-36B | ⚠️ untested |
 | 2.13" | 250 × 122 | BW | Zhsunyco | easyTag | ETR0213-39B | ⚠️ untested |
-| 2.13" | 250 × 122 | BWRY | Poshiji | XTE | PSJ-213 | ⚠️ community report |
-| 2.66" | 296 × 152 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 2.13" | 250 × 122 | BWRY | Poshiji | XTE | PSJ-213 | ✅ verified |
+| 2.66" | 296 × 152 | BWRY | Zhsunyco | WOLINK | `266` | ✅ verified |
 | 2.66" | 296 × 152 | BWR | Zhsunyco | easyTag | ET0266-3A | ⚠️ untested |
-| 2.66" | 296 × 152 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
+| 2.66" | 296 × 152 | BWRY | Poshiji | XTE | PSJ-266 | ✅ verified |
 | 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 2.9" | 296 × 128 | BWR | Zhsunyco | WOLINK | `290-bwr` | ✅ verified |
 | 2.9" | 296 × 128 | BWR | Zhsunyco | easyTag | ET0290-3DB / ETR290-FF | ⚠️ untested |
-| 2.9" | 296 × 128 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
+| 2.9" | 296 × 128 | BWRY | Poshiji | XTE | PSJ-290 | ✅ verified |
 | 2.9" | 296 × 128 | BW | Gicisky | PickSmart | EPD | ✅ verified |
 | 2.9" | 296 × 128 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 2.9" | 296 × 128 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
-| 3.5" | 384 × 184 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 3.5" | 384 × 184 | BWRY | Zhsunyco | WOLINK | `350` | ✅ verified |
 | 3.5" | 384 × 184 | BWR | Zhsunyco | easyTag | ET0350-55B | ⚠️ untested |
 | 3.5" | 384 × 184 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
 | 3.7" | 416 × 240 | BWRY | Zhsunyco | WOLINK | `370` | ✅ verified |
 | 3.7" | 240 × 416 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 3.7" | 416 × 240 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
-| 4.2" | 400 × 300 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 4.2" | 400 × 300 | BWRY | Zhsunyco | WOLINK | `420` | ✅ verified |
 | 4.2" | 400 × 300 | BWR | Zhsunyco | easyTag | ET0420-40B / 43B | ⚠️ untested |
 | 4.2" | 400 × 300 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
 | 4.2" | 400 × 300 | BWRY | Gicisky | PickSmart | EPD | ✅ verified |
@@ -51,8 +51,8 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 13.3" | 960 × 680 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 
 Protocol notes:
-- **XTE** — tags sold under the Poshiji brand. PSJ-420 (400×300 BWRY) verified on hardware by the device owner; PSJ-213 (250×122 BWRY, portrait buffer) from a community report. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
-- **WOLINK** — Zhsunyco tags. BWRY presets send 2 bits per pixel; BWR presets send two 1bpp planes (black/white, then red). The 2.9" BWR preset (`290-bwr`) and 3.7" BWRY preset (`370`) are verified on hardware with this integration. If a tag comes out upside down, please report it with the LED position. The 5.83" panel is listed as 5.8".
+- **XTE** — tags sold under the Poshiji brand. PSJ-213, PSJ-266, PSJ-290 and PSJ-420 are verified on hardware by the device owner and are picked automatically from the advertisement. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
+- **WOLINK** — Zhsunyco tags. BWRY presets send 2 bits per pixel; BWR presets send two 1bpp planes (black/white, then red). The 1.54" (`154`), 2.66" (`266`), 3.5" (`350`), 3.7" (`370`) and 4.2" (`420`) BWRY presets and the 2.9" BWR preset (`290-bwr`) are verified on hardware with this integration. If a tag comes out upside down, please report it with the LED position. The 5.83" panel is listed as 5.8".
 - **easyTag** — tags sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
 
