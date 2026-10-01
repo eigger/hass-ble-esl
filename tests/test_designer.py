@@ -678,3 +678,42 @@ async def test_template_references_track_other_entities_for_auto_updates(hass, w
     assert wolink_entry.entry_id in manager.template_listeners
     manager.detach(wolink_entry.entry_id)
     assert wolink_entry.entry_id not in manager.template_listeners
+
+
+async def test_sensor_component_can_be_configured_in_a_reusable_template(hass, wolink_entry):
+    """A sensor dropped into a template must preview/save without the old type ban."""
+    hass.states.async_set(
+        "binary_sensor.laundry_finished", "on", {"friendly_name": "Laundry finished"}
+    )
+    template = {
+        "width": 140,
+        "height": 60,
+        "document": {
+            "version": 1,
+            "elements": [
+                {
+                    "id": "laundry",
+                    "type": "sensor",
+                    "entity_id": "binary_sensor.laundry_finished",
+                    "x": 0,
+                    "y": 0,
+                    "width": 140,
+                    "height": 60,
+                    "template": "auto",
+                }
+            ],
+        },
+    }
+    designer = hass.data[KEY]
+    result = await designer.preview_template(template, "binary_sensor.laundry_finished")
+    assert result["layers"]["_bounds"]["laundry"] is not None
+    saved = await designer.save_template("custom:laundry", template)
+    assert saved["document"]["elements"][0]["type"] == "sensor"
+    assert (await designer.template_store.async_load())["custom:laundry"] == saved
+    outer = validate(document(), wolink_entry.runtime_data.preset)
+    del outer["elements"][0]["decimals"]
+    outer["elements"][0].update(
+        entity_id="binary_sensor.laundry_finished", template="custom:laundry"
+    )
+    payload = compile_payload(hass, outer, {"custom:laundry": saved})
+    assert any(element["type"] == "icon" for element in payload)

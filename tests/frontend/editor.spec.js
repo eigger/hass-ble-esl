@@ -763,3 +763,92 @@ test("clicking empty canvas and surrounding space deselects the component", asyn
   await expect(page.locator(".el.selected")).toHaveCount(0);
   await expect(page.locator(".el")).toHaveCount(1);
 });
+
+test("transparent component padding does not capture hover or clicks above another layer", async ({
+  page,
+}) => {
+  await pickSensor(page, "sensor.office_temperature");
+  await page.evaluate(() => {
+    window.panel.element.template = "default";
+    window.panel.edited();
+  });
+  await page.locator('[data-property="show_label"]').uncheck();
+  await page.waitForFunction(() => {
+    const p = window.panel,
+      e = p.element,
+      b = p.layerBounds?.[e?.id];
+    return b && b[3] < e.height - 12;
+  });
+  const fixture = await page.evaluate(() => {
+    const p = window.panel,
+      sensor = p.element;
+    p.add("rectangle");
+    const shape = p.element;
+    Object.assign(shape, {
+      x: sensor.x + sensor.width - 12,
+      y: sensor.y + sensor.height - 12,
+      width: 10,
+      height: 10,
+    });
+    p.document.elements = [shape, sensor];
+    p.selected = null;
+    p.edited();
+    return {
+      sensor: sensor.id,
+      shape: shape.id,
+      x: shape.x + 5,
+      y: shape.y + 5,
+    };
+  });
+  await page.waitForFunction(
+    (id) => !!window.panel.layerBounds?.[id],
+    fixture.shape,
+  );
+  const stage = await page.locator(".stage").boundingBox();
+  const zoom = await page.evaluate(() => window.panel.zoom);
+  const point = {
+    x: stage.x + fixture.x * zoom,
+    y: stage.y + fixture.y * zoom,
+  };
+  await page.mouse.move(point.x, point.y);
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        window.panel.shadowRoot.elementFromPoint(x, y)?.closest("[data-id]")
+          ?.dataset.id,
+      point,
+    ),
+  ).toBe(fixture.shape);
+  await page.mouse.click(point.x, point.y);
+  expect(await page.evaluate(() => window.panel.selected)).toBe(fixture.shape);
+  const empty = await page.evaluate(() => {
+    const e = window.panel.document.elements.find((e) => e.type === "sensor");
+    return { x: e.x + 5, y: e.y + e.height - 5 };
+  });
+  await page.mouse.click(stage.x + empty.x * zoom, stage.y + empty.y * zoom);
+  expect(await page.evaluate(() => window.panel.selected)).toBeNull();
+});
+
+test("sensor components inside templates can open Configure and render", async ({
+  page,
+}) => {
+  const id = await page.evaluate(() => {
+    const p = window.panel;
+    p.switchMode("template");
+    p.add("sensor", p.hass.states["binary_sensor.window"]);
+    return p.element.id;
+  });
+  await page.waitForFunction((id) => !!window.panel.layerBounds?.[id], id);
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
+  const modal = page.getByRole("dialog", {
+    name: "Component editor",
+    exact: true,
+  });
+  await expect(modal.locator(".pixels img")).toBeVisible();
+  await expect(modal.locator(".pixels img")).toHaveAttribute(
+    "src",
+    /^data:image\/png/,
+  );
+  await expect(modal.getByRole("status")).toBeEmpty();
+  await modal.getByRole("button", { name: "Cancel", exact: true }).click();
+});

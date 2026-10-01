@@ -306,10 +306,6 @@ def validate_template(template):
         result["document"],
         DevicePreset("template", "Template", result["width"], result["height"], "BWRY"),
     )
-    if any(el["type"] == "sensor" for el in result["document"]["elements"]):
-        raise vol.Invalid(
-            "Templates contain text, icons and shapes; use {{state}} for the sensor value"
-        )
     return result
 
 
