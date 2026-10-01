@@ -32,7 +32,7 @@ Four BLE protocol families, sold under these brands:
 | Protocol | Brand | Sizes | Colors | Status | Buy |
 |---|---|---|---|---|---|
 | **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ verified on hardware | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
-| **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ PSJ-420 verified by owner; PSJ-213, 2.66" and 2.9" identified from captured advertisements; other sizes size-only presets | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
+| **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ 2.13", 2.66", 2.9" and 4.2" verified on real tags by owner; other sizes size-only presets | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ partially verified (2.9" BWR, 3.7" BWRY); other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
