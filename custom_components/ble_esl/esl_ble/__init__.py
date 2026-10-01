@@ -16,6 +16,7 @@ from .base import (
     WriteResult,
 )
 from .easytag import EasyTagProtocol
+from .etag import EtagProtocol
 from .picksmart import PickSmartProtocol
 from .wolink import WolinkProtocol
 from .xte import XteProtocol
@@ -69,6 +70,7 @@ register(WolinkProtocol())
 register(EasyTagProtocol())
 register(PickSmartProtocol())
 register(XteProtocol())
+register(EtagProtocol())
 
 __all__ = [
     "BATTERY_MAX_VOLTAGE",

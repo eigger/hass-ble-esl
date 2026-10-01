@@ -1,0 +1,10 @@
+"""ETAG GATT identifiers and panel palette."""
+
+SERVICE = "0000ffe0-0000-1000-8000-00805f9b34fb"
+CHARACTERISTIC = "0000ffe1-0000-1000-8000-00805f9b34fb"
+FIRMWARE = "00002a26-0000-1000-8000-00805f9b34fb"
+SIZE = (250, 122)
+PALETTE = ((0, 0, 0), (255, 255, 255), (255, 0, 0))
+
+
+BRAND = "Bluetooth Label"
