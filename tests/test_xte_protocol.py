@@ -161,7 +161,7 @@ def test_captured_small_models_pack_in_a_rotated_buffer():
         ("psj-266", 156, (152, 296)),
     ):
         preset = devices.PRESETS[key]
-        assert preset.extra["device_number"] == number and preset.extra["rotation"] == 90
+        assert preset.extra["device_number"] == number and preset.extra["rotation"] == 270
         assert buffer_size(preset) == (buf_w, buf_h)
         obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
         assert obj[25:33] == buf_w.to_bytes(4, "big") + buf_h.to_bytes(4, "big")
