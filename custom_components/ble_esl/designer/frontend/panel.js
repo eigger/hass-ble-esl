@@ -1042,19 +1042,17 @@ export class BleEslDesigner extends HTMLElement {
             content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor" aria-hidden="true">${shape}</svg>`;
           }
           const rendered = this.layerPreviews[element.id];
-          const fresh = this.boundsAreCurrent(element);
+          const visible = this.visibleBounds(element);
           const box = [0, 0, element.width, element.height];
-          const hitBounds = fresh
-            ? (this.layerBounds[element.id] ?? (rendered ? null : box))
-            : box;
+          const hitBounds =
+            visible === undefined ? box : (visible ?? (rendered ? null : box));
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
           return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? `<img class="layer-preview" src="${rendered}" alt="" aria-hidden="true">` : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
-                  const bounds =
-                    (fresh && this.layerBounds[element.id]) || box;
+                  const bounds = visible || box;
                   const [left, top, right, bottom] = bounds;
                   return `<div class="selection-box" style="position:absolute;left:${left}px;top:${top}px;width:${right - left}px;height:${bottom - top}px;outline:2px solid var(--primary-color,#16838b);pointer-events:none">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -3 : right - left - 3}px;top:${corner.startsWith("n") ? -3 : bottom - top - 3}px;right:auto;bottom:auto;width:6px;height:6px;pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
                 })()
@@ -1071,18 +1069,36 @@ export class BleEslDesigner extends HTMLElement {
       icon.stateObj = this.hass.states[element.entity_id];
     });
   }
-  // Content bounds come from the last render. While an element is being
-  // resized, or until its new preview arrives, they describe the old size.
-  elementSizes() {
+  // Content bounds come from the last render and are relative to the element.
+  // Moving the element keeps them. Resizing it grows or shrinks them with the
+  // frame, so a dragged handle stays under the pointer. Any other edit (font
+  // size, text...) leaves them describing the old content, so the element's
+  // frame stands in until the new preview arrives.
+  shape(element) {
+    return JSON.stringify({ ...element, x: 0, y: 0, width: 0, height: 0 });
+  }
+  renderRecords() {
     return Object.fromEntries(
-      this.document.elements.map((el) => [el.id, [el.width, el.height]]),
+      this.document.elements.map((el) => [
+        el.id,
+        { shape: this.shape(el), size: [el.width, el.height] },
+      ]),
     );
   }
-  boundsAreCurrent(element) {
-    const size = this.layerSizes?.[element.id];
-    return (
-      !!size && size[0] === element.width && size[1] === element.height
-    );
+  // undefined: not known, use the frame. null: rendered with nothing visible.
+  visibleBounds(element) {
+    const record = this.layerRecords?.[element.id];
+    if (!record || record.shape !== this.shape(element)) return undefined;
+    const dw = element.width - record.size[0],
+      dh = element.height - record.size[1],
+      bounds = this.layerBounds[element.id];
+    if (!bounds) return dw || dh ? undefined : null;
+    return [
+      bounds[0],
+      bounds[1],
+      Math.max(bounds[0] + 1, bounds[2] + dw),
+      Math.max(bounds[1] + 1, bounds[3] + dh),
+    ];
   }
   add(type, entity, x, y) {
     this.checkpoint();
@@ -1277,7 +1293,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
-          this.layerSizes = this.elementSizes();
+          this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
           ];
@@ -1819,7 +1835,7 @@ export class BleEslDesigner extends HTMLElement {
           this.preview = result.png;
           this.layerPreviews = result.layers;
           this.layerBounds = result.layers._bounds || {};
-          this.layerSizes = this.elementSizes();
+          this.layerRecords = this.renderRecords();
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
           ];

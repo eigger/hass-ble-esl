@@ -966,7 +966,7 @@ test("the selection box follows an element while it is resized", async ({
   await page.locator('[data-add="rectangle"]').click();
   // The box comes from the last render, so wait for one to exist.
   await page.waitForFunction(
-    () => window.panel.layerSizes?.[window.panel.selected],
+    () => window.panel.layerRecords?.[window.panel.selected],
   );
   const boxWidth = () =>
     page
@@ -992,4 +992,35 @@ test("the selection box follows an element while it is resized", async ({
   expect(await boxWidth()).toBe(during);
   await page.mouse.up();
   expect(await boxWidth()).toBe(during);
+});
+
+test("the selection box does not keep the old text size after a font size change", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await page.waitForFunction(
+    () => window.panel.layerRecords?.[window.panel.selected],
+  );
+  const box = () =>
+    page
+      .locator(".selection-box")
+      .evaluate((node) => [node.style.width, node.style.height]);
+  const text = await box();
+  await page.locator('[data-property="font_size"]').fill("12");
+  await page.locator('[data-property="font_size"]').dispatchEvent("change");
+  // No render has arrived yet: the old text bounds must not be shown.
+  const frame = await page.evaluate(() => [
+    `${window.panel.element.width}px`,
+    `${window.panel.element.height}px`,
+  ]);
+  expect(await box()).toEqual(frame);
+  expect(frame).not.toEqual(text);
+  // The new render arrives and the box fits the smaller text.
+  await page.waitForFunction(
+    () => window.panel.visibleBounds(window.panel.element) !== undefined,
+  );
+  const fitted = await box();
+  expect(Number.parseFloat(fitted[0])).toBeLessThan(
+    Number.parseFloat(text[0]),
+  );
 });
