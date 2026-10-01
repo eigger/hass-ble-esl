@@ -942,3 +942,20 @@ test("the picker arriving late keeps an open component dialog", async ({
     page.locator("ble-esl-component-editor #source"),
   ).toHaveJSProperty("label", "Data source");
 });
+
+test("the display exports as the payload and a ready write action", async ({
+  page,
+}) => {
+  await pickSensor(page, "sensor.office_temperature");
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const dialog = page.locator("ble-esl-yaml-dialog dialog");
+  await expect(dialog).toBeVisible();
+  const yaml = dialog.getByLabel("YAML", { exact: true });
+  await expect(yaml).toHaveValue(/- type: icon/);
+  await expect(yaml).toHaveValue(/office_temperature|°C/);
+  await dialog.getByRole("button", { name: "Automation action" }).click();
+  await expect(yaml).toHaveValue(/action: ble_esl\.write/);
+  await expect(yaml).toHaveValue(/device_id: <your device>/);
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(page.locator("ble-esl-yaml-dialog")).toHaveCount(0);
+});

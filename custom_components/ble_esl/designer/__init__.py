@@ -12,6 +12,7 @@ from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import (
     TrackTemplate,
     async_call_later,
@@ -26,6 +27,7 @@ from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
+from .export import export_yaml
 from .layout import (
     bindings,
     compile_payload,
@@ -238,12 +240,12 @@ class Designer:
             options.get(CONF_MODEL, DEFAULT_MODEL),
         ).preset
 
-    async def render(self, preset, document, snapshots):
+    async def render(self, preset, document, payload, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
         # clients and automatic writes to one render worker at a time.
         async with self.render_lock:
             return await self.hass.async_add_executor_job(
-                partial(render_document, self.hass, preset, document, snapshots)
+                partial(render_document, self.hass, preset, document, payload, snapshots)
             )
 
     async def draw(self, entry, document):
@@ -253,7 +255,7 @@ class Designer:
         forecasts = await self.forecasts(document)
         payload = compile_payload(self.hass, document, self.templates, forecasts)
         snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
-        image, layers = await self.render(preset, document, snapshots)
+        image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
     async def preview(self, entry, document):
@@ -265,6 +267,17 @@ class Designer:
             "payload": payload,
             "layers": layers,
         }
+
+    async def export(self, entry, document):
+        """The display as YAML for an automation: what the preview shows, as a payload."""
+        document = validate(document, self.preset(entry))
+        forecasts = await self.forecasts(document)
+        payload = compile_payload(self.hass, document, self.templates, forecasts)
+        return export_yaml(payload, document["background"], self.device_id(entry))
+
+    def device_id(self, entry):
+        devices = dr.async_entries_for_config_entry(dr.async_get(self.hass), entry.entry_id)
+        return devices[0].id if devices else None
 
     async def save_template(self, key, template):
         if not key or ":" not in key:
@@ -285,7 +298,7 @@ class Designer:
         payload = compile_payload(self.hass, document)
         preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         snapshots = snapshot_layers(self.hass, document, {}, {})
-        image, layers = await self.render(preset, document, snapshots)
+        image, layers = await self.render(preset, document, payload, snapshots)
         buffer = BytesIO()
         image.save(buffer, "PNG")
         return {
@@ -322,7 +335,16 @@ class Designer:
     {
         vol.Required("type"): "ble_esl/designer",
         vol.Required("action"): vol.In(
-            ("list", "save", "preview", "send", "templates", "save_template", "preview_template")
+            (
+                "list",
+                "save",
+                "preview",
+                "export",
+                "send",
+                "templates",
+                "save_template",
+                "preview_template",
+            )
         ),
         vol.Optional("entry_id"): str,
         vol.Optional("document"): dict,

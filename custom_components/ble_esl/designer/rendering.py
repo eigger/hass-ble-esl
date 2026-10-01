@@ -1,10 +1,10 @@
-"""Render movable editor layers with the exact same pixels used for writes."""
+"""Render the display exactly as a write would, plus movable editor layers."""
 
 import base64
 from copy import deepcopy
 from io import BytesIO
 
-from PIL import Image, ImageChops
+from PIL import ImageChops
 
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
@@ -29,23 +29,35 @@ def png_url(image):
     return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 
-def render_document(hass, preset, document, snapshots):
-    """Compose opaque e-paper output and transparent, independently movable layers.
+def render_document(hass, preset, document, payload, snapshots):
+    """Render the display from the whole payload, plus per-element editor layers.
 
-    imagespec returns RGB. Rendering against black and white identifies untouched
-    pixels without mistaking intentionally white text or fills for transparency.
-    Font drawing uses imagespec's monochrome masks, so covered pixels are exact.
+    The returned image is one imagespec render of ``payload``: the same call a
+    ``ble_esl.write`` with that payload makes, so the preview, the pixels sent
+    to the tag and an automation using the exported YAML cannot differ.
+
+    The layers only exist to select and drag elements. imagespec returns RGB, so
+    each is rendered against black and white: pixels that differ were untouched
+    by the element and become transparent, without mistaking intentionally white
+    text or fills for transparency. Font drawing uses imagespec's monochrome
+    masks, so covered pixels are exact.
     """
-    canvas = Image.new("RGB", (preset.width, preset.height), document["background"])
+    canvas = render_image(hass, preset, payload, background=document["background"])
     previews = {"_bounds": {}, "_values": {}, "_dependencies": {}}
-    for element, payload in snapshots:
+    for element, element_payload in snapshots:
         local = DevicePreset("layer", "Layer", element["width"], element["height"], preset.colors)
         background = element["background"]
         light = render_image(
-            hass, local, payload, background="white" if background == "transparent" else background
+            hass,
+            local,
+            element_payload,
+            background="white" if background == "transparent" else background,
         )
         dark = render_image(
-            hass, local, payload, background="black" if background == "transparent" else background
+            hass,
+            local,
+            element_payload,
+            background="black" if background == "transparent" else background,
         )
         previews["_values"][element["id"]] = element.get("_templated_fields", {})
         previews["_dependencies"][element["id"]] = element.get("_template_entities", [])
@@ -56,6 +68,5 @@ def render_document(hass, preset, document, snapshots):
         layer.putalpha(alpha)
         if bounds := alpha.getbbox():
             previews["_bounds"][element["id"]] = bounds
-        canvas.paste(layer, (element["x"], element["y"]), layer)
         previews[element["id"]] = png_url(layer)
     return canvas, previews
