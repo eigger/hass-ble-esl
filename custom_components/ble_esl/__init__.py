@@ -191,7 +191,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(bt_coordinator.async_start())
-    hass.data[DESIGNER_KEY].attach(entry)
+    designer = hass.data[DESIGNER_KEY]
+    await designer.register_panel()
+    designer.attach(entry)
     return True
 
 
@@ -208,7 +210,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DESIGNER_KEY].detach(entry.entry_id)
+        designer = hass.data[DESIGNER_KEY]
+        designer.detach(entry.entry_id)
+        designer.remove_panel_if_unused(entry.entry_id)
         # Cancels a pending debounce timer and bumps the generation, so a
         # debounced write that already fired but is still queued on the BLE
         # lock is dropped instead of writing to an unloaded entry's tag.

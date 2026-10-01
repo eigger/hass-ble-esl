@@ -65,7 +65,7 @@ ELEMENT = vol.Schema(
             ("", "state", "name", "unit", "icon", "attribute")
         ),
         vol.Optional("attribute", default=""): str,
-        vol.Optional("value", default=0): vol.Coerce(float),
+        vol.Optional("value", default=0): vol.Any(None, vol.Coerce(float)),
         vol.Optional("min_value", default=0): vol.Coerce(float),
         vol.Optional("max_value", default=100): vol.Coerce(float),
         vol.Optional("icon_rules", default=list): [
@@ -271,13 +271,28 @@ def weather_state(state, element, forecasts):
     )
 
 
+def format_decimals(value, decimals):
+    """Round numeric states; a non-numeric state is shown as reported."""
+    try:
+        return f"{float(value):.{decimals}f}"
+    except (TypeError, ValueError):
+        return value
+
+
+def as_number(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def sensor_values(state, element):
     label = element.get("label") or state.attributes.get("friendly_name", state.entity_id)
     value = state.state
     if value in ("unavailable", "unknown"):
         value = value.capitalize()
     elif "decimals" in element:
-        value = f"{float(value):.{element['decimals']}f}"
+        value = format_decimals(value, element["decimals"])
     unit = (
         normalize_unit(state.attributes.get("unit_of_measurement", ""))
         if element.get("show_unit", True)
@@ -419,7 +434,9 @@ def resolve_component(hass, element):
         return element, state
     field = element["data_field"]
     values = sensor_values(state, element)
-    value = state.attributes[element["attribute"]] if field == "attribute" else values[field]
+    value = (
+        state.attributes.get(element["attribute"], "") if field == "attribute" else values[field]
+    )
     if element["type"] == "text":
         element["text"] = str(value)
     elif element["type"] == "image":
@@ -427,7 +444,7 @@ def resolve_component(hass, element):
     elif element["type"] == "icon":
         element["icon"] = conditional_icon(element, state.state, str(value))
     elif element["type"] in ("progress_bar", "gauge"):
-        element["value"] = None if state.state in ("unknown", "unavailable") else float(value)
+        element["value"] = as_number(value)
     elif element["type"] == "conditional_icon":
         fallback = sensor_icon(state) if element["icon"] == "{{icon}}" else element["icon"]
         element["icon"] = conditional_icon(element, value, fallback)
@@ -474,9 +491,10 @@ def compile_payload(hass, document, templates=None, forecasts=None):
                 payload.extend(compile_payload(hass, nested))
                 continue
         if element["type"] in ("progress_bar", "gauge"):
-            if element["value"] is None:
-                continue
             low, high, value = element["min_value"], element["max_value"], element["value"]
+            # No reading, or a field template that collapsed the range.
+            if value is None or high <= low:
+                continue
             if element["type"] == "progress_bar":
                 payload.append(
                     {
@@ -577,7 +595,7 @@ def compile_payload(hass, document, templates=None, forecasts=None):
                 if value in ("unavailable", "unknown"):
                     value = value.capitalize()
                 elif "decimals" in element:
-                    value = f"{float(value):.{element['decimals']}f}"
+                    value = format_decimals(value, element["decimals"])
                 if element["show_unit"] and state.state not in ("unavailable", "unknown"):
                     unit = normalize_unit(state.attributes.get("unit_of_measurement", ""))
                     value += f" {unit}" if unit else ""

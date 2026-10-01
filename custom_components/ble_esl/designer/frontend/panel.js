@@ -168,7 +168,7 @@ export class BleEslDesigner extends HTMLElement {
       await Promise.all([
         iconFont,
         textFont,
-        customElements.whenDefined("ha-entity-picker"),
+        loadEntityPicker(),
       ]);
       this.icons = await fetch(new URL("./icons.json", import.meta.url)).then(
         (response) => response.json(),
@@ -1777,4 +1777,22 @@ export class BleEslDesigner extends HTMLElement {
     }, 200);
   }
 }
+// HA loads ha-entity-picker lazily. Opening this panel directly (or reloading
+// it) happens before any page that uses the picker, so load it through a card
+// editor; never block the panel if that fails.
+async function loadEntityPicker() {
+  if (customElements.get("ha-entity-picker")) return;
+  try {
+    const helpers = await window.loadCardHelpers?.();
+    const card = await helpers?.createCardElement({ type: "entities", entities: [] });
+    await card?.constructor?.getConfigElement?.();
+  } catch (error) {
+    console.warn("Label designer: could not load the entity picker", error);
+  }
+  await Promise.race([
+    customElements.whenDefined("ha-entity-picker"),
+    new Promise((resolve) => setTimeout(resolve, 5000)),
+  ]);
+}
+
 customElements.define("ble-esl-designer", BleEslDesigner);
