@@ -199,7 +199,11 @@ export class BleEslDesigner extends HTMLElement {
         this.dirty ||
         this.drafts.size ||
         (this.mode === "template" && this.displaySession?.dirty) ||
-        [...this.templateDrafts.values()].some((draft) => draft.dirty)
+        [...this.templateDrafts].some(
+          ([key, draft]) =>
+            draft.dirty &&
+            !(this.mode === "template" && key === this.templateKey),
+        )
       )
         event.preventDefault();
     };

@@ -1432,11 +1432,8 @@ test("layers can be hidden and reordered, and the display background is set from
   ).toBe(false);
   await expect(page.locator(".el.hidden-el")).toHaveCount(1);
   await page.getByRole("button", { name: /^Show / }).click();
-  await page.keyboard.press("Escape");
-  await page.evaluate(() => {
-    window.panel.selected = null;
-    window.panel.render();
-  });
+  await page.locator(".canvas-wrap").click({ position: { x: 4, y: 4 } });
+  expect(await page.evaluate(() => window.panel.selected)).toBeNull();
   await expect(page.locator(".inspector .group-title")).toHaveText("Display");
   await page
     .getByRole("button", { name: "Background: black", exact: true })
