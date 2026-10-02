@@ -548,9 +548,7 @@ def live_payload(hass, document, templates=None, forecasts=None):
 
 def _optional(element, **keys):
     """The imagespec keys the element sets, under the names imagespec gives them."""
-    return {
-        name: element[key] for name, key in keys.items() if element.get(key) is not None
-    }
+    return {name: element[key] for name, key in keys.items() if element.get(key) is not None}
 
 
 def _text_options(element):
@@ -698,9 +696,7 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     "value": element["icon"],
                     "color": color,
                     "anchor": "lt",
-                    **_optional(
-                        element, stroke_width="stroke_width", stroke_fill="stroke_fill"
-                    ),
+                    **_optional(element, stroke_width="stroke_width", stroke_fill="stroke_fill"),
                 }
             )
             continue

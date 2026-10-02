@@ -936,12 +936,31 @@ def _compiled(hass, *elements):
 async def test_native_element_properties_reach_the_payload(hass):
     payload = _compiled(
         hass,
-        {"type": "text", "text": "hi", "valign": "middle", "max_lines": 2, "padding": 3, "font": "a.ttf"},
+        {
+            "type": "text",
+            "text": "hi",
+            "valign": "middle",
+            "max_lines": 2,
+            "padding": 3,
+            "font": "a.ttf",
+        },
         {"type": "ellipse", "filled": False, "line_width": 3},
         {"type": "rounded_rectangle", "radius": 7},
         {"type": "icon", "icon": "mdi:home", "stroke_width": 2, "stroke_fill": "red"},
-        {"type": "image", "image": "data:image/png;base64,AAAA", "rotate": 90, "circle": True, "dither": "atkinson"},
-        {"type": "progress_bar", "value": 50, "direction": "up", "show_percentage": True, "radius": 4},
+        {
+            "type": "image",
+            "image": "data:image/png;base64,AAAA",
+            "rotate": 90,
+            "circle": True,
+            "dither": "atkinson",
+        },
+        {
+            "type": "progress_bar",
+            "value": 50,
+            "direction": "up",
+            "show_percentage": True,
+            "radius": 4,
+        },
         {"type": "gauge", "value": 50, "thickness": 5, "show_value": False},
         {"type": "rectangle", "dither": False},
     )
