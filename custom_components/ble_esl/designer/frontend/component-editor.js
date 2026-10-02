@@ -340,4 +340,4 @@ export class ComponentEditor extends HTMLElement {
     }, 250);
   }
 }
-customElements.define("ble-esl-component-editor", ComponentEditor);
+if (!customElements.get("ble-esl-component-editor")) customElements.define("ble-esl-component-editor", ComponentEditor);

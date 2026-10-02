@@ -88,4 +88,4 @@ export class ImportDialog extends HTMLElement {
     }
   }
 }
-customElements.define("ble-esl-import-dialog", ImportDialog);
+if (!customElements.get("ble-esl-import-dialog")) customElements.define("ble-esl-import-dialog", ImportDialog);

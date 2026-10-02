@@ -114,4 +114,4 @@ export class YamlDialog extends HTMLElement {
     }
   }
 }
-customElements.define("ble-esl-yaml-dialog", YamlDialog);
+if (!customElements.get("ble-esl-yaml-dialog")) customElements.define("ble-esl-yaml-dialog", YamlDialog);
