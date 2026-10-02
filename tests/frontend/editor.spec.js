@@ -1204,8 +1204,10 @@ test("clicking a text to edit it leaves no rendered copy of the old text under i
 }) => {
   await page.locator('[data-add="text"]').click();
   await expect(page.locator("img.exact")).toBeVisible();
-  // Deselect, then click the text itself: a click starts editing it.
-  await page.mouse.click(5, 300);
+  // Deselect by clicking the empty canvas, then click the text itself: a
+  // click starts editing it.
+  await page.locator(".canvas-wrap").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator(".el.selected")).toHaveCount(0);
   const hit = page.locator(".el .hit-area");
   const box = await hit.boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

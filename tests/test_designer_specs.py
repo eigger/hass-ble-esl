@@ -315,3 +315,15 @@ async def test_a_layer_is_placed_where_the_editor_holds_the_element(hass, wolink
         ) as layer:
             stacked.paste(layer, (10 + left, 10 + top), layer)
         assert stacked.tobytes() == shown.tobytes()
+
+
+def test_a_template_does_not_hide_a_misspelt_key_or_a_wrong_value_elsewhere():
+    circle = element("c", "circle", 0, 0, 40, 40)
+    circle["spec"]["colour"] = "{{ 'red' }}"
+    with pytest.raises(vol.Invalid, match="colour"):
+        validate(spec_document(circle), PRESET)
+    polygon = element("p", "polygon", 0, 0, 40, 40, points="{{ '0,0;100,0;50,100' }}")
+    validate(spec_document(polygon), PRESET)
+    polygon["spec"]["bogus"] = 1
+    with pytest.raises(vol.Invalid, match="bogus"):
+        validate(spec_document(polygon), PRESET)

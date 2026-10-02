@@ -170,7 +170,8 @@ def validate_spec(element):
         hint = " (row and column are a stack with a direction)" if name in ("row", "column") else ""
         raise vol.Invalid(f"Choose an element type{hint}")
     if name == "polygon" and templates_in(spec.get("points", "")):
-        return  # Its corners are known only once the template is rendered.
+        # Its corners are known only once the template is rendered.
+        spec = {**spec, "points": "0,0"}
     try:
         payload = spec_payload(
             spec, element["x"], element["y"], element["width"], element["height"]
@@ -178,8 +179,11 @@ def validate_spec(element):
     except HomeAssistantError as err:
         raise vol.Invalid(str(err)) from err
     # A field that holds a template is checked once the template is rendered.
+    # A misspelt key is wrong whatever it holds.
     issues = [
-        issue for issue in imagespec.validate([payload]) if not _is_template(payload, issue.path)
+        issue
+        for issue in imagespec.validate([payload])
+        if "unknown key" in issue.message or not _is_template(payload, issue.path)
     ]
     if issues:
         raise vol.Invalid(
