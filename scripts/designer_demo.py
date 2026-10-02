@@ -12,6 +12,7 @@ import sys
 
 from aiohttp import web
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -124,7 +125,11 @@ async def api(request):
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
     if msg["action"] == "import_yaml":
-        items, background = parse_payload(msg["text"])
+        try:
+            items, background = parse_payload(msg["text"])
+        except HomeAssistantError as err:
+            # Home Assistant carries the message to the panel; so does the demo.
+            return web.Response(status=400, text=str(err))
         elements, imported, issues = elements_from(items, preset)
         different = (
             await asyncio.to_thread(different_pixels, HASS, preset, imported, elements)
