@@ -19,8 +19,10 @@ from custom_components.ble_esl.designer.layout import (
 )
 from custom_components.ble_esl.designer.specs import (
     GEOMETRY,
+    ImportProblem,
     describe,
     element_types,
+    from_payload,
     new_spec,
     resolve_templates,
     spec_payload,
@@ -374,3 +376,110 @@ async def test_a_templated_polygon_and_a_list_template_still_export(hass, wolink
     assert live[1]["values"] == "{{ [1, 2, 3] }}"
     assert any("polygon's corners are as of now" in issue for issue in result["issues"])
     assert resolve_templates(hass, live, set()) == now
+
+
+@pytest.mark.parametrize("type_", element_types())
+@pytest.mark.parametrize(("width", "height"), [(None, None), (30, 30), (200, 90), (17, 5)])
+def test_a_payload_becomes_the_same_payload_through_its_frame(type_, width, height):
+    spec, default_width, default_height = new_spec(type_)
+    payload = spec_payload(spec, 7, 5, width or default_width, height or default_height)
+    again, x, y, w, h = from_payload(payload)
+    assert spec_payload(again, x, y, w, h) == payload
+
+
+def test_row_and_column_are_a_stack_with_their_direction():
+    spec, _, _, _, _ = from_payload(
+        {"type": "column", "x": 3, "y": 4, "width": 50, "height": 60, "elements": []}
+    )
+    assert spec["type"] == "stack"
+    assert spec["direction"] == "vertical"
+
+
+@pytest.mark.parametrize(
+    ("item", "reason"),
+    [
+        (
+            {"type": "rectangle", "x_start": "{{ 1 }}", "y_start": 0, "x_end": 9, "y_end": 9},
+            "template",
+        ),
+        (
+            {"type": "line", "x_start": 0, "y_start": 0, "x_end": 9, "y_end": 9},
+            "horizontal or vertical",
+        ),
+        ({"type": "text", "value": "no y", "x": 3}, "'y'"),
+        ({"type": "nonsense"}, "not an imagespec element"),
+        ({"type": "polygon", "points": "0,0;1"}, "points"),
+        ({"x": 1}, "type"),
+    ],
+)
+def test_what_the_designer_cannot_place_says_why(item, reason):
+    with pytest.raises(ImportProblem, match=reason):
+        from_payload(item)
+
+
+async def test_what_the_designer_exports_it_imports_unchanged(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.5")
+    document = spec_document(
+        element("pie", "pie", 5, 5, 60, 60),
+        element("qr", "qrcode", 80, 5, 60, 60, data="{{ states('sensor.room') }}"),
+        element("box", "rectangle", 150, 5, 40, 40, fill=None),
+        element("poly", "polygon", 150, 60, 41, 31),
+        element("txt", "text", 5, 80, 100, 30, value="{{ states('sensor.room') }} °C"),
+    )
+    manager = hass.data[KEY]
+    exported = await manager.export(wolink_entry, document)
+    for text in (exported["live_service"], exported["live_payload"], exported["payload"]):
+        result = await manager.import_yaml(wolink_entry, text)
+        assert result["issues"] == []
+        assert len(result["elements"]) == 5
+        assert result["different_pixels"] == 0
+    live = await manager.import_yaml(wolink_entry, exported["live_payload"])
+    texts = {e["spec"]["type"]: e["spec"] for e in live["elements"]}
+    assert texts["text"]["value"] == "{{ states('sensor.room') }} °C"
+
+
+async def test_import_keeps_what_it_can_place_and_says_what_it_cannot(hass, wolink_entry):
+    text = yaml.safe_dump(
+        [
+            {"type": "text", "value": "placed", "x": 4, "y": 4},
+            {"type": "text", "value": "no y, so it flows", "x": 4},
+            {"type": "line", "x_start": 0, "y_start": 0, "x_end": 20, "y_end": 20},
+            {"type": "circle", "x": 60, "y": 60, "radius": 10},
+        ]
+    )
+    result = await hass.data[KEY].import_yaml(wolink_entry, text)
+    assert [e["spec"]["type"] for e in result["elements"]] == ["text", "circle"]
+    assert len(result["issues"]) == 2
+    assert "#2 text" in result["issues"][0]
+    assert "#3 line" in result["issues"][1]
+
+
+@pytest.mark.parametrize("text", ["a: [", "just text", "[1, 2]", "data: {payload: 3}"])
+async def test_import_rejects_what_is_not_a_payload(hass, wolink_entry, text):
+    with pytest.raises(HomeAssistantError):
+        await hass.data[KEY].import_yaml(wolink_entry, text)
+
+
+async def test_import_reports_a_difference_the_designer_introduces(hass, wolink_entry):
+    # A QR code with no size is drawn at its own size; in the designer it has a frame.
+    text = yaml.safe_dump([{"type": "qrcode", "data": "https://example.com", "x": 10, "y": 10}])
+    result = await hass.data[KEY].import_yaml(wolink_entry, text)
+    assert len(result["elements"]) == 1
+    assert result["different_pixels"] is not None
+
+
+async def test_import_over_the_websocket(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "import_yaml",
+            "entry_id": wolink_entry.entry_id,
+            "text": "- {type: circle, x: 40, y: 40, radius: 12}",
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"]["different_pixels"] == 0
+    assert result["result"]["elements"][0]["spec"]["type"] == "circle"

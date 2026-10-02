@@ -209,6 +209,102 @@ def frozen_corners(spec):
     return spec.get("type") == "polygon" and bool(templates_in(spec.get("points", "")))
 
 
+class ImportProblem(ValueError):
+    """An element of a pasted payload the designer cannot place, and why."""
+
+
+def _number(item, key):
+    if key not in item:
+        raise ImportProblem(
+            f"no '{key}': an element without a position is laid out after the previous "
+            "one, which the designer cannot place"
+        )
+    value = item[key]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ImportProblem(f"'{key}' must be a number (a template cannot place an element)")
+    return round(value)
+
+
+def from_payload(item):
+    """The designer's spec and frame for an imagespec element: the inverse of spec_payload.
+
+    Returns (spec, x, y, width, height). Raises ImportProblem when the element
+    cannot be placed, for example a line that is neither horizontal nor vertical.
+    """
+    if not isinstance(item, dict) or not isinstance(item.get("type"), str):
+        raise ImportProblem("an element needs a 'type'")
+    name = item["type"]
+    spec = dict(item)
+    if name in ("row", "column"):
+        spec["type"] = name = "stack"
+        spec.setdefault("direction", "horizontal" if item["type"] == "row" else "vertical")
+    if name not in GEOMETRY:
+        raise ImportProblem(f"'{name}' is not an imagespec element")
+    role, keys = GEOMETRY[name]
+    _, default_width, default_height = new_spec(name)
+    for key in keys:
+        spec.pop(key, None)
+    if role == "box":
+        x0, y0, x1, y1 = (_number(item, key) for key in keys)
+        x, y = min(x0, x1), min(y0, y1)
+        return spec, x, y, abs(x1 - x0) + 1, abs(y1 - y0) + 1
+    if role == "line":
+        x0, x1 = _number(item, "x_start"), _number(item, "x_end")
+        y0, y1 = _number(item, "y_start"), _number(item, "y_end")
+        stroke = (
+            max(1, round(item.get("width", 1)))
+            if isinstance(item.get("width", 1), (int, float))
+            else 1
+        )
+        if y0 == y1:
+            return spec, min(x0, x1), y0 - stroke // 2, abs(x1 - x0) + 1, stroke
+        if x0 == x1:
+            return spec, x0 - stroke // 2, min(y0, y1), stroke, abs(y1 - y0) + 1
+        raise ImportProblem("a line must be horizontal or vertical")
+    if role == "circle":
+        cx, cy, radius = (_number(item, key) for key in keys)
+        radius = max(1, radius)
+        return spec, cx - radius - 1, cy - radius - 1, 2 * radius + 2, 2 * radius + 2
+    if role == "icon":
+        x, y, size = (_number(item, key) for key in keys)
+        size = max(1, size)
+        return spec, x, y, size, size
+    if role == "rect":
+        x, y = _number(item, keys[0]), _number(item, keys[1])
+        size = []
+        for key, default in zip(keys[2:], (default_width, default_height), strict=True):
+            size.append(max(1, _number(item, key)) if key in item else default)
+        return spec, x, y, size[0], size[1]
+    if role == "midline":
+        x, middle = _number(item, keys[0]), _number(item, keys[1])
+        return spec, x, middle - default_height // 2, default_width, default_height
+    if role == "points":
+        try:
+            corners = [
+                (float(px), float(py))
+                for px, py in (
+                    pair.split(",")
+                    for pair in str(item.get("points", "")).split(";")
+                    if pair.strip()
+                )
+            ]
+        except ValueError as err:
+            raise ImportProblem("'points' must be \"x,y;x,y;...\"") from err
+        if len(corners) < 3:
+            raise ImportProblem("a polygon needs at least three points")
+        left, top = min(px for px, _ in corners), min(py for _, py in corners)
+        width = max(1, round(max(px for px, _ in corners) - left)) + 1
+        height = max(1, round(max(py for _, py in corners) - top)) + 1
+        spec["points"] = ";".join(
+            f"{round((px - left) * 100 / (width - 1), 4):g},{round((py - top) * 100 / (height - 1), 4):g}"
+            for px, py in corners
+        )
+        return spec, round(left), round(top), width, height
+    # origin: drawn from the frame's top left at its own size
+    x, y = _number(item, keys[0]), _number(item, keys[1])
+    return spec, x, y, default_width, default_height
+
+
 def templates_in(value):
     """Strings in a spec that Home Assistant renders when the payload is built."""
     if isinstance(value, str):

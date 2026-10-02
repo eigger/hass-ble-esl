@@ -28,6 +28,7 @@ from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .export import export_yaml
+from .importer import different_pixels, elements_from, parse
 from .layout import (
     bindings,
     compile_payload,
@@ -309,6 +310,36 @@ class Designer:
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
 
+    async def import_yaml(self, entry, text):
+        """Elements for a pasted payload, and how faithfully they stand for it."""
+        preset = self.preset(entry)
+        items, background = parse(text)
+        elements, imported, issues = elements_from(items, preset)
+        different = None
+        if elements:
+            try:
+                async with self.render_lock:
+                    different = await self.hass.async_add_executor_job(
+                        partial(
+                            different_pixels,
+                            self.hass,
+                            preset,
+                            imported,
+                            elements,
+                            background
+                            if background in ("white", "black", "red", "yellow")
+                            else "white",
+                        )
+                    )
+            except HomeAssistantError as err:
+                issues.append(f"render: {err}")
+        return {
+            "elements": elements,
+            "issues": issues,
+            "different_pixels": different,
+            "background": background,
+        }
+
     async def save_template(self, key, template):
         if not key or ":" not in key:
             raise HomeAssistantError("Choose a sensor type")
@@ -371,6 +402,7 @@ class Designer:
                 "save",
                 "preview",
                 "export",
+                "import_yaml",
                 "send",
                 "templates",
                 "save_template",
@@ -379,6 +411,7 @@ class Designer:
         ),
         vol.Optional("entry_id"): str,
         vol.Optional("document"): dict,
+        vol.Optional("text"): str,
         vol.Optional("template"): dict,
         vol.Optional("key"): str,
         vol.Optional("entity_id"): str,
@@ -410,6 +443,8 @@ async def websocket_designer(hass, connection, msg):
             }
             for entry in hass.config_entries.async_loaded_entries(DOMAIN)
         ]
+    elif action == "import_yaml":
+        result = await designer.import_yaml(designer.entry(msg["entry_id"]), msg["text"])
     else:
         entry = designer.entry(msg["entry_id"])
         result = await getattr(designer, action)(entry, msg["document"])

@@ -16,6 +16,11 @@ from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer.export import export_yaml
+from custom_components.ble_esl.designer.importer import (
+    different_pixels,
+    elements_from,
+    parse as parse_payload,
+)
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
     live_payload,
@@ -118,6 +123,22 @@ async def api(request):
         return web.json_response(TAGS)
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
+    if msg["action"] == "import_yaml":
+        items, background = parse_payload(msg["text"])
+        elements, imported, issues = elements_from(items, preset)
+        different = (
+            await asyncio.to_thread(different_pixels, HASS, preset, imported, elements)
+            if elements
+            else None
+        )
+        return web.json_response(
+            {
+                "elements": elements,
+                "issues": issues,
+                "different_pixels": different,
+                "background": background,
+            }
+        )
     document = validate(msg["document"], preset)
     if msg["action"] == "save":
         tag["document"] = document

@@ -1236,3 +1236,36 @@ test("the YAML keeps a template as written, or shows today's value", async ({
   await expect(yaml).toHaveValue(/action: ble_esl\.write/);
   await expect(yaml).toHaveValue(/\{\{ states/);
 });
+
+test("a pasted payload becomes elements and what cannot be placed is listed", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Import YAML" }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog
+    .getByLabel("YAML to import")
+    .fill(
+      "[{type: circle, x: 40, y: 40, radius: 12}, {type: text, value: no y, x: 4}, {type: rectangle, x_start: 90, y_start: 80, x_end: 120, y_end: 100}]",
+    );
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect(dialog.getByRole("status")).toHaveText("2 placed, 1 skipped.");
+  await expect(dialog.locator(".issues li")).toContainText("#2 text");
+  await expect(page.locator(".layer")).toHaveCount(2);
+  await expect(page.locator("img.exact")).toBeVisible();
+  // The elements are there already: only closing is left.
+  await expect(dialog.getByRole("button", { name: "Add to display" })).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(page.locator("ble-esl-import-dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Import YAML" })).toBeFocused();
+});
+
+test("a payload that is not YAML says so and changes nothing", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Import YAML" }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog.getByLabel("YAML to import").fill("just some words");
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect(dialog.getByRole("status")).toContainText("Paste a payload");
+  await expect(page.locator(".layer")).toHaveCount(0);
+});
