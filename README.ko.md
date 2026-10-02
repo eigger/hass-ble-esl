@@ -88,6 +88,12 @@ data:
 
 레이아웃은 [imagespec](https://github.com/eigger/imagespec) 요소의 목록입니다 — 텍스트, 아이콘, 선, QR 코드, 진행 바, 게이지, 파이/막대 차트, 히스토리 플롯, 다운로드 이미지 — 그리고 어떤 값이든 엔티티를 참조하는 Jinja 템플릿이 될 수 있습니다. 지원 해상도별로 완성된 레이아웃은 [`examples/`](examples/README.md)에 있고, [Payload Editor](https://eigger.github.io/BLE_ESL_Payload_Editor.html)와 [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) 웹 도구로 브라우저에서 초안을 만들 수 있습니다.
 
+## 비주얼 에디터
+
+사이드바의 **ESL Designer**로 payload를 눈으로 보며 만듭니다. 요소를 끌어 옮기고 크기를 바꾸고 겹쳐 놓으며, [imagespec 요소](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) 서른 가지(도형, 텍스트, QR / 바코드, 차트, 표 등)를 모두 추가해 각 필드를 편집할 수 있고, Jinja 템플릿도 쓸 수 있습니다. 미리보기, 태그로 보내는 이미지, 내보내는 **Payload YAML**(payload 또는 템플릿을 쓴 그대로 둔 완성된 `ble_esl.write` 액션이라서, 자동화가 센서를 따라갑니다)은 같은 렌더러가 그리는 같은 payload입니다. **Import YAML**은 이미 가진 액션의 payload를 디자이너로 가져오고, **Convert to elements**는 센서나 기존 컴포넌트를 평범한 요소로 바꿉니다.
+
+**[디자이너 가이드 →](docs/ko/designer.md)**
+
 ## 액션
 
 두 액션 모두 표준 `target:`(태그 기기, 그 엔티티, 또는 태그가 속한 구역/층/레이블)을 받고 대상마다 차례로 씁니다.
