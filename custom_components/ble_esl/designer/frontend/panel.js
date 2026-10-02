@@ -126,6 +126,7 @@ export class BleEslDesigner extends HTMLElement {
     this.dirty = false;
     this.busy = false;
     this.previewSequence = 0;
+    this.pendingUploads = new Set();
     this.drafts = new Map();
     this.libraryOpen = true;
     this.inspectorOpen = true;
@@ -223,7 +224,8 @@ export class BleEslDesigner extends HTMLElement {
     window.removeEventListener("beforeunload", this.beforeUnload);
     clearTimeout(this.previewTimer);
     this.previewSequence++;
-    this.gesture?.abort();
+    this.gestureCancel?.();
+    this.gesture = null;
     this.resizeObserver.disconnect();
   }
   async boot() {
@@ -788,6 +790,12 @@ export class BleEslDesigner extends HTMLElement {
       this.shadowRoot
         .querySelectorAll("button")
         .forEach((button) => (button.disabled = true));
+      this.shadowRoot
+        .querySelectorAll("input, select, textarea, ha-entity-picker")
+        .forEach((control) => {
+          if ("disabled" in control) control.disabled = true;
+          control.setAttribute("aria-disabled", "true");
+        });
     }
     for (const [selector, left, top] of scrolled) {
       const node = this.shadowRoot.querySelector(selector);
@@ -1610,6 +1618,7 @@ export class BleEslDesigner extends HTMLElement {
   async click(event) {
     const button = event.target.closest("button");
     if (!button || this.busy) return;
+    this.gestureFinish?.(false);
     this.closeContextMenu();
     if (["display-mode", "template-mode"].includes(button.dataset.action)) {
       this.switchMode(
@@ -1809,10 +1818,14 @@ export class BleEslDesigner extends HTMLElement {
     }
     try {
       if (["save", "preview", "send"].includes(action)) {
+        // Finish canvas edits and in-flight uploads before freezing the request.
+        this.gestureFinish?.(false);
         this.busy = true;
         this.error = false;
         this.status = action === "send" ? "Sending display…" : "Working…";
         this.render();
+        if (this.pendingUploads.size)
+          await Promise.all([...this.pendingUploads]);
         if (action === "send") {
           this.adoptDocument(
             await this.api("save", {
@@ -2043,6 +2056,8 @@ export class BleEslDesigner extends HTMLElement {
     this.queuePreview();
   }
   input(event) {
+    if (this.busy) return;
+    this.gestureFinish?.(false);
     const input = event.target;
     if (input.dataset.editText) {
       if (this.typingProperty !== input) {
@@ -2161,6 +2176,8 @@ export class BleEslDesigner extends HTMLElement {
     clampBox(this.element, this.tag, false);
   }
   async change(event) {
+    if (this.busy) return;
+    this.gestureFinish?.(false);
     const input = event.target,
       id = input.id;
     if (id === "template-type") {
@@ -2187,6 +2204,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (id === "tag") {
+      this.gestureFinish?.(false);
       this.load(this.tags.find((tag) => tag.entry_id === input.value));
       return;
     }
@@ -2200,54 +2218,94 @@ export class BleEslDesigner extends HTMLElement {
       const file = input.files[0];
       if (!file) return;
       const id = this.element.id,
-        sequence = (this.uploadSequence = (this.uploadSequence || 0) + 1);
+        sequence = (this.uploadSequence = (this.uploadSequence || 0) + 1),
+        ownerTag = this.tag,
+        ownerDocument = this.document;
       const reader = new FileReader();
-      reader.onload = async () => {
-        let image = reader.result;
-        // The renderer ignores a photo's EXIF orientation, which the browser
-        // applies: a portrait phone photo would print turned 90°. A photo that
-        // carries one is redrawn (and, as a tag is small, capped in size) so
-        // the orientation is in its pixels. The rest is kept byte for byte.
-        try {
-          const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer());
-          if (jpegOrientation(head) > 1) {
-            const bitmap = await createImageBitmap(file, {
-              imageOrientation: "from-image",
-            });
-            const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height)),
-              canvas = document.createElement("canvas");
-            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-            canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-            bitmap.close();
-            const redrawn = canvas.toDataURL("image/jpeg", 0.92);
-            // A canvas the browser refuses gives "data:," rather than an error.
-            if (redrawn.length > 100) image = redrawn;
+      const upload = new Promise((resolve, reject) => {
+        reader.onload = async () => {
+          try {
+            let image = reader.result;
+            // The renderer ignores a photo's EXIF orientation, which the browser
+            // applies: a portrait phone photo would print turned 90°. A photo that
+            // carries one is redrawn (and, as a tag is small, capped in size) so
+            // the orientation is in its pixels. The rest is kept byte for byte.
+            try {
+              const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer());
+              if (jpegOrientation(head) > 1) {
+                const bitmap = await createImageBitmap(file, {
+                  imageOrientation: "from-image",
+                });
+                const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height)),
+                  canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                bitmap.close();
+                const redrawn = canvas.toDataURL("image/jpeg", 0.92);
+                // A canvas the browser refuses gives "data:," rather than an error.
+                if (redrawn.length > 100) image = redrawn;
+              }
+            } catch {
+              // Keep the file as it is when the browser cannot decode it.
+            }
+            const element = ownerDocument.elements.find((item) => item.id === id);
+            if (
+              !element ||
+              sequence !== this.uploadSequence ||
+              this.document !== ownerDocument ||
+              this.tag !== ownerTag
+            ) {
+              resolve();
+              return;
+            }
+            this.checkpoint();
+            element.image = image;
+            if (!this.error) this.status = "Image added";
+            this.edited();
+            resolve();
+          } catch (error) {
+            reject(error);
           }
-        } catch {
-          // Keep the file as it is when the browser cannot decode it.
-        }
-        // Reading took a moment: the element may be gone, the document swapped
-        // (saved, another tag) or a later upload may have started.
-        const element = this.document.elements.find((item) => item.id === id);
-        if (!element || sequence !== this.uploadSequence) return;
-        this.checkpoint();
-        element.image = image;
-        this.edited();
-      };
-      reader.readAsDataURL(file);
+        };
+        reader.onerror = () => reject(reader.error || new Error("Image upload failed"));
+        reader.readAsDataURL(file);
+      });
+      this.pendingUploads.add(upload);
+      this.busy = true;
+      this.error = false;
+      this.status = "Loading image…";
+      this.render();
+      upload.catch((error) => this.report(error)).finally(() => {
+        this.pendingUploads.delete(upload);
+        this.busy = false;
+        this.render();
+      });
       return;
     }
     if (id === "file") {
+      const file = input.files?.[0];
+      if (!file) return;
+      const targetTag = this.tag;
+      this.busy = true;
+      this.status = "Checking display…";
+      this.render();
       try {
-        const document = JSON.parse(await input.files[0].text());
-        await this.api("preview", { entry_id: this.tag.entry_id, document });
+        const imported = JSON.parse(await file.text());
+        await this.api("preview", {
+          entry_id: targetTag.entry_id,
+          document: imported,
+        });
+        if (this.tag !== targetTag) return;
         this.checkpoint();
-        this.document = document;
+        this.document = this.normalizeImportedDocument(imported);
         this.selected = null;
         this.edited();
       } catch (error) {
         this.report(error);
+      } finally {
+        this.busy = false;
+        this.render();
       }
       return;
     }
@@ -2312,6 +2370,49 @@ export class BleEslDesigner extends HTMLElement {
       this.edited();
     }
   }
+  normalizeImportedDocument(document) {
+    const normalized = {
+      ...emptyDocument(),
+      ...document,
+      elements: Array.isArray(document?.elements) ? document.elements : [],
+    };
+    // Mirror the server schema defaults so preview, imported display and the
+    // next save all render the same minimal-but-valid document identically.
+    const defaults = {
+      spec: {},
+      color: "black",
+      background: "transparent",
+      visible: true,
+      font_size: 24,
+      text: "Text",
+      image: "",
+      image_fit: "contain",
+      icon: "{{icon}}",
+      state: "",
+      state_icons: {},
+      template: "auto",
+      weather_when: "now",
+      weather_field: "condition",
+      entity_id: "",
+      field_templates: {},
+      data_field: "",
+      attribute: "",
+      value: 0,
+      min_value: 0,
+      max_value: 100,
+      icon_rules: [],
+      label: "",
+      show_label: true,
+      show_unit: true,
+      align: "left",
+    };
+    normalized.elements = normalized.elements.map((element) => ({
+      ...clone(defaults),
+      ...element,
+      id: element.id || createId(),
+    }));
+    return normalized;
+  }
 
   key(event) {
     if (
@@ -2327,6 +2428,14 @@ export class BleEslDesigner extends HTMLElement {
     )
       return;
     if (this.busy) return;
+    if (this.gesture) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        this.gestureCancel?.();
+        return;
+      }
+      this.gestureFinish?.(false);
+    }
     const context = event.target.closest(".context-menu");
     if (context && ["ArrowDown", "ArrowUp"].includes(event.key)) {
       event.preventDefault();
@@ -2402,7 +2511,10 @@ export class BleEslDesigner extends HTMLElement {
   }
   pointer(event) {
     if (
+      this.busy ||
       event.button !== 0 ||
+      !event.isPrimary ||
+      this.gesture ||
       event.target.isContentEditable ||
       event.target.closest("button")
     )
@@ -2423,6 +2535,8 @@ export class BleEslDesigner extends HTMLElement {
       resize = event.target.closest(".handle")?.dataset.corner,
       startX = event.clientX,
       startY = event.clientY,
+      pointerId = event.pointerId,
+      snapshot = clone(this.document),
       // An element that hangs off the label (an imported frame) is not pulled
       // back by the first move.
       bound = onLabel(start, this.tag);
@@ -2433,9 +2547,50 @@ export class BleEslDesigner extends HTMLElement {
     this.focusElement();
     const controller = new AbortController();
     this.gesture = controller;
+    const previewBeforeGesture = this.preview;
+    const cancelGesture = () => {
+      controller.abort();
+      if (this.gesture !== controller) return;
+      this.gesture = null;
+      this.gestureCancel = null;
+      if (moved) {
+        Object.assign(element, start);
+        this.preview = previewBeforeGesture;
+        this.drawStage();
+        if (this.isConnected && !this.preview) this.queuePreview();
+      }
+    };
+    this.gestureCancel = cancelGesture;
+    const finishGesture = (editText = true) => {
+      controller.abort();
+      if (this.gesture !== controller) return;
+      this.gesture = null;
+      this.gestureCancel = null;
+      this.gestureFinish = null;
+      const changed =
+        moved &&
+        (element.x !== start.x ||
+          element.y !== start.y ||
+          element.width !== start.width ||
+          element.height !== start.height);
+      if (changed) {
+        this.pushUndo(snapshot);
+        this.edited();
+        this.focusElement();
+      } else {
+        if (moved) {
+          this.preview = previewBeforeGesture;
+          this.drawStage();
+          if (!this.preview) this.queuePreview();
+        }
+        if (editText && !resize && element.type === "text") this.beginTextEdit();
+      }
+    };
+    this.gestureFinish = finishGesture;
     window.addEventListener(
       "pointermove",
       (move) => {
+        if (move.pointerId !== pointerId) return;
         const dx = Math.round((move.clientX - startX) / this.zoom),
           dy = Math.round((move.clientY - startY) / this.zoom);
         if (
@@ -2444,7 +2599,6 @@ export class BleEslDesigner extends HTMLElement {
         )
           return;
         if (!moved) {
-          this.checkpoint();
           moved = true;
           this.preview = null;
           this.previewSequence++;
@@ -2496,33 +2650,34 @@ export class BleEslDesigner extends HTMLElement {
     );
     window.addEventListener(
       "pointerup",
-      () => {
-        controller.abort();
-        this.gesture = null;
-        if (moved) {
-          this.edited();
-          this.focusElement();
-        } else if (!resize && element.type === "text") this.beginTextEdit();
+      (up) => {
+        if (up.pointerId === pointerId) finishGesture();
       },
-      { once: true, signal: controller.signal },
+      { signal: controller.signal },
     );
     window.addEventListener(
       "pointercancel",
-      () => {
-        controller.abort();
-        this.gesture = null;
-        this.edited();
+      (cancel) => {
+        if (cancel.pointerId !== pointerId) return;
+        // A cancelled gesture is rolled back and never becomes an undo step.
+        cancelGesture();
       },
-      { once: true, signal: controller.signal },
+      { signal: controller.signal },
     );
+    window.addEventListener("blur", cancelGesture, {
+      once: true,
+      signal: controller.signal,
+    });
   }
   drop(event) {
+    if (this.busy) return;
     const stage = event.target.closest(".stage");
     if (!stage) return;
     event.preventDefault();
+    const rect = stage.getBoundingClientRect();
+    this.gestureFinish?.(false);
     const entity = this.hass.states[event.dataTransfer.getData("text/plain")];
     if (!entity) return;
-    const rect = stage.getBoundingClientRect();
     this.add(
       "sensor",
       entity,

@@ -33,12 +33,6 @@ export class ComponentEditor extends HTMLElement {
     this.draft.icon_rules ||= [];
     this.render();
     this.shadowRoot.querySelector("dialog").showModal();
-    this.shadowRoot
-      .querySelector("dialog")
-      .addEventListener("cancel", (event) => {
-        event.preventDefault();
-        this.close();
-      });
     this.queuePreview();
   }
   close() {
@@ -119,6 +113,10 @@ export class ComponentEditor extends HTMLElement {
       ${d.type === "image" ? '<label>Image<input id="upload" type="file" accept="image/*"></label>' : ""}
       <div class="pair"><label>Width<input id="width" aria-label="Component width" type="number" min="1" value="${d.width}"></label><label>Height<input id="height" aria-label="Component height" type="number" min="1" value="${d.height}"></label></div></section><section class="preview"><strong>Live preview</strong><div class="state" id="current-state"></div><div class="pixels"><img id="pixels" alt="Component pixel preview"></div><div class="error" role="status"></div></section></div><footer><button id="cancel">Cancel</button><button id="apply" class="primary">${this.original ? "Apply" : "Add to display"}</button></footer></dialog>`;
     const root = this.shadowRoot;
+    root.querySelector("dialog").addEventListener("cancel", (event) => {
+      event.preventDefault();
+      this.close();
+    });
     root.querySelector("#dynamic").onclick = () => {
       const modal = document.createElement("ble-esl-dynamic-fields");
       this.shadowRoot.append(modal);
