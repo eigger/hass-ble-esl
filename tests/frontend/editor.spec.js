@@ -1214,3 +1214,25 @@ test("clicking a text to edit it leaves no rendered copy of the old text under i
   await expect(page.locator(".el.editing")).toHaveCount(1);
   await expect(page.locator("img.exact")).toHaveCount(0);
 });
+
+test("the YAML keeps a template as written, or shows today's value", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("text");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page
+    .locator('[data-spec="value"]')
+    .fill("{{ states('sensor.office_temperature') }} °C");
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const dialog = page.locator("ble-esl-yaml-dialog dialog");
+  const yaml = dialog.getByLabel("YAML", { exact: true });
+  // An automation should keep the template, so that is what is offered first.
+  await expect(yaml).toHaveValue(/value: '\{\{ states\(''sensor.office_temperature''\) \}\} °C'/);
+  await dialog.getByLabel(/Keep templates/).uncheck();
+  await expect(dialog.getByLabel(/Keep templates/)).toBeFocused();
+  await expect(yaml).toHaveValue(/value: 21\.3 °C/);
+  await dialog.getByLabel(/Keep templates/).check();
+  await dialog.getByRole("tab", { name: "Automation action" }).click();
+  await expect(yaml).toHaveValue(/action: ble_esl\.write/);
+  await expect(yaml).toHaveValue(/\{\{ states/);
+});

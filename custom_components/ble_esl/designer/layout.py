@@ -11,7 +11,7 @@ from homeassistant.util import dt as dt_util
 import imagespec
 import voluptuous as vol
 
-from .specs import GEOMETRY, resolve_templates, spec_payload, templates_in
+from .specs import GEOMETRY, frozen_corners, resolve_templates, spec_payload, templates_in
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
 ELEMENT = vol.Schema(
@@ -511,7 +511,20 @@ def resolve_component(hass, element):
     return element, state
 
 
-def compile_payload(hass, document, templates=None, forecasts=None):
+def live_payload(hass, document, templates=None, forecasts=None):
+    """The payload with imagespec templates left as written, for an automation.
+
+    None when no element has one: the payload as it is then already is it.
+    """
+    if not any(
+        element["type"] == "imagespec" and templates_in(element["spec"])
+        for element in document["elements"]
+    ):
+        return None
+    return compile_payload(hass, document, templates, forecasts, keep_templates=True)
+
+
+def compile_payload(hass, document, templates=None, forecasts=None, keep_templates=False):
     """Snapshot HA values on its event loop; render them later in the executor."""
     payload = []
     for element in document["elements"]:
@@ -551,9 +564,13 @@ def compile_payload(hass, document, templates=None, forecasts=None):
         if element["type"] == "imagespec":
             spec = (
                 element["spec"]
-                if element.get("_spec_resolved")
+                if keep_templates or element.get("_spec_resolved")
                 else resolve_templates(hass, element["spec"], set())
             )
+            if keep_templates and frozen_corners(element["spec"]):
+                # Corners are percentages of the frame: only the rendered text
+                # can be turned into them, so they are as of now.
+                spec = {**spec, "points": resolve_templates(hass, spec["points"], set())}
             payload.append(spec_payload(spec, x, y, width, height))
             continue
         if element["type"] in ("progress_bar", "gauge"):

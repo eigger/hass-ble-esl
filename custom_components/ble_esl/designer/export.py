@@ -30,8 +30,31 @@ def template_syntax(value, path="payload"):
     return [found for child, item in children for found in template_syntax(item, child)]
 
 
-def export_yaml(payload, background, device_id, issues=()):
-    """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on."""
+def plain(value):
+    """The value as YAML can write it: Home Assistant returns its own list, dict
+    and str subclasses from a rendered template."""
+    if isinstance(value, dict):
+        return {str(key): plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [plain(item) for item in value]
+    if isinstance(value, bool):
+        return bool(value)
+    if isinstance(value, int):
+        return int(value)
+    if isinstance(value, float):
+        return float(value)
+    if isinstance(value, str):
+        return str(value)
+    return value
+
+
+def export_yaml(payload, background, device_id, issues=(), live=None):
+    """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
+
+    ``live`` is the same payload with its templates left as written: the
+    automation then renders them each time it runs, instead of freezing today's
+    values.
+    """
     dump = partial(
         yaml.dump,
         Dumper=_PlainDumper,
@@ -40,12 +63,14 @@ def export_yaml(payload, background, device_id, issues=()):
         default_flow_style=False,
         width=10**6,
     )
+    payload = plain(payload)
+    live = None if live is None else plain(live)
     service = {
         "action": "ble_esl.write",
         "target": {"device_id": device_id or "<your device>"},
         "data": {"background": background, "payload": payload},
     }
-    return {
+    result = {
         "payload": dump(payload),
         "service": dump(service),
         "issues": [
@@ -57,3 +82,9 @@ def export_yaml(payload, background, device_id, issues=()):
             ),
         ],
     }
+    if live is not None:
+        result["live_payload"] = dump(live)
+        result["live_service"] = dump(
+            {**service, "data": {"background": background, "payload": live}}
+        )
+    return result
