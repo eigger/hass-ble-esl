@@ -1002,3 +1002,64 @@ def test_native_element_properties_are_validated():
     for bad in ({"valign": "side"}, {"max_lines": 0}, {"stroke_fill": "red"}, {"direction": "x"}):
         with pytest.raises(vol.Invalid):
             validate({"version": 1, "elements": [{**element, **bad}]}, preset)
+
+
+async def test_dither_values_are_normalised_and_checked(hass):
+    blank, zero, named = _compiled(
+        hass,
+        {"type": "image", "image": "data:image/png;base64,AAAA", "dither": ""},
+        {"type": "rectangle", "dither": 0},
+        {"type": "rectangle", "dither": "bayer8"},
+    )
+    assert blank["dither"] is True
+    assert zero["dither"] is False
+    assert named["dither"] == "bayer8"
+    with pytest.raises(vol.Invalid):
+        _compiled(hass, {"type": "rectangle", "dither": "bogus"})
+
+
+async def test_sensor_template_scales_pixel_settings_and_passes_dither(hass):
+    hass.states.async_set("sensor.t", "5")
+    template = validate_template(
+        {
+            "width": 100,
+            "height": 100,
+            "document": {
+                "version": 1,
+                "elements": [
+                    {
+                        "id": "n",
+                        "type": "rounded_rectangle",
+                        "x": 0,
+                        "y": 0,
+                        "width": 100,
+                        "height": 100,
+                        "line_width": 10,
+                        "radius": 20,
+                    }
+                ],
+            },
+        }
+    )
+    document = validate(
+        {
+            "version": 1,
+            "elements": [
+                {
+                    "id": "s",
+                    "type": "sensor",
+                    "entity_id": "sensor.t",
+                    "x": 0,
+                    "y": 0,
+                    "width": 50,
+                    "height": 50,
+                    "template": "default",
+                    "dither": "atkinson",
+                }
+            ],
+        },
+        DevicePreset("t", "T", 100, 100, "BW"),
+    )
+    (item,) = compile_payload(hass, document, {"default": template})
+    assert (item["width"], item["radius"]) == (5, 10)
+    assert item["dither"] == "atkinson"

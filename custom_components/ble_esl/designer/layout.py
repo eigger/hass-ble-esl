@@ -14,6 +14,25 @@ import voluptuous as vol
 from .specs import GEOMETRY, frozen_corners, resolve_templates, spec_payload, templates_in
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
+
+
+def _dither(value):
+    """None (no override), a bool, or one of imagespec's dither methods."""
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return bool(value)
+    if isinstance(value, str):
+        if not value.strip():
+            return None
+        try:
+            imagespec.resolve_dither_method(value)
+        except ValueError as err:
+            raise vol.Invalid(str(err)) from err
+        return value
+    raise vol.Invalid("Dither is a method name, or yes or no")
+
+
 ELEMENT = vol.Schema(
     {
         vol.Required("id"): str,
@@ -47,7 +66,7 @@ ELEMENT = vol.Schema(
         vol.Optional("font_size", default=24): vol.All(int, vol.Range(min=8, max=200)),
         vol.Optional("text", default="Text"): str,
         vol.Optional("image", default=""): str,
-        vol.Optional("dither"): vol.Any(None, bool, str),
+        vol.Optional("dither"): _dither,
         vol.Optional("rotate"): vol.Coerce(float),
         vol.Optional("circle"): bool,
         vol.Optional("image_fit", default="contain"): vol.In(("contain", "fill", "stretch")),
@@ -546,6 +565,18 @@ def live_payload(hass, document, templates=None, forecasts=None):
     return compile_payload(hass, document, templates, forecasts, keep_templates=True)
 
 
+# Pixel settings that shrink with a sensor template drawn smaller than designed.
+_SCALED_PIXELS = {
+    "min_font_size": 1,
+    "padding": 0,
+    "line_spacing": 0,
+    "line_width": 1,
+    "radius": 0,
+    "stroke_width": 0,
+    "thickness": 1,
+}
+
+
 def _optional(element, **keys):
     """The imagespec keys the element sets, under the names imagespec gives them."""
     return {name: element[key] for name, key in keys.items() if element.get(key) is not None}
@@ -610,6 +641,9 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     child["width"] = max(1, round(child["width"] * sx))
                     child["height"] = max(1, round(child["height"] * sy))
                     child["font_size"] = max(8, round(child["font_size"] * min(sx, sy)))
+                    for key, minimum in _SCALED_PIXELS.items():
+                        if child.get(key) is not None:
+                            child[key] = max(minimum, round(child[key] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested))
                 continue
         if element["type"] == "imagespec":
@@ -785,6 +819,7 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                             "fit": "shrink_ellipsis",
                             "color": color,
                             "align": element["align"],
+                            **_optional(element, font="font"),
                         }
                     )
                 continue
@@ -803,6 +838,7 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "fit": "shrink_ellipsis",
                         "color": color,
                         "align": element["align"],
+                        **_optional(element, font="font"),
                     }
                 )
                 y += label_height

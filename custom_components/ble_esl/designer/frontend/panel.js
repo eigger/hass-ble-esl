@@ -42,6 +42,17 @@ const optionalProperties = new Set([
   "direction",
   "thickness",
 ]);
+// Whole-number ranges the schema accepts, kept when a value is typed.
+const propertyRanges = {
+  max_lines: [1, 20],
+  min_font_size: [1, 200],
+  padding: [0, 100],
+  line_spacing: [0, 100],
+  line_width: [1, 20],
+  radius: [0, 200],
+  stroke_width: [0, 20],
+  thickness: [1, 100],
+};
 const shapeTypes = [
   "rectangle",
   "rounded_rectangle",
@@ -951,7 +962,6 @@ export class BleEslDesigner extends HTMLElement {
         (type === "rounded_rectangle"
           ? number("radius", "Corner radius", 0, 200, "auto")
           : "");
-    if (type === "line") html += number("line_width", "Line width", 1, 20, "1");
     if (type === "icon")
       html +=
         number("stroke_width", "Outline width", 0, 20, "0") +
@@ -1319,14 +1329,19 @@ export class BleEslDesigner extends HTMLElement {
               Math.min(element.width, element.height),
             );
           if (shapeTypes.includes(element.type)) {
+            const hollow = element.type !== "line" && element.filled === false;
+            const paint = hollow
+              ? `fill="none" stroke="currentColor" stroke-width="${element.line_width || 1}" vector-effect="non-scaling-stroke"`
+              : 'fill="currentColor"';
+            const radius =
+              element.radius ?? Math.min(element.width, element.height) / 5;
             const shape =
               element.type === "triangle"
-                ? '<polygon points="50,0 100,100 0,100"/>'
+                ? `<polygon points="50,0 100,100 0,100" ${paint}/>`
                 : element.type === "ellipse"
-                  ? '<ellipse cx="50" cy="50" rx="50" ry="50"/>'
-                  : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? 15 : 0}"/>`;
-            const hollow = element.type !== "line" && element.filled === false;
-            content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" fill="${hollow ? "none" : "currentColor"}" ${hollow ? `stroke="currentColor" stroke-width="${(element.line_width || 1) * 2}" vector-effect="non-scaling-stroke"` : ""} aria-hidden="true">${shape}</svg>`;
+                  ? `<ellipse cx="50" cy="50" rx="50" ry="50" ${paint}/>`
+                  : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
+            content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
           }
           const rendered = this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
@@ -1914,9 +1929,10 @@ export class BleEslDesigner extends HTMLElement {
       input.value === ""
     )
       delete this.element[key];
-    else if (key === "dither")
-      this.element.dither = input.value === "none" ? false : input.value;
-    else
+    else if (key === "dither") {
+      if (input.value === "") delete this.element.dither;
+      else this.element.dither = input.value === "none" ? false : input.value;
+    } else
       this.element[key] =
         input.type === "checkbox"
           ? input.checked
@@ -1927,6 +1943,11 @@ export class BleEslDesigner extends HTMLElement {
       this.element.font_size = Math.max(
         8,
         Math.min(200, this.element.font_size),
+      );
+    if (propertyRanges[key] && this.element[key] !== undefined)
+      this.element[key] = Math.max(
+        propertyRanges[key][0],
+        Math.min(propertyRanges[key][1], Math.round(this.element[key])),
       );
     if (key === "decimals" && this.element.decimals !== undefined)
       this.element.decimals = Math.max(0, Math.min(6, this.element.decimals));
