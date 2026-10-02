@@ -11,7 +11,7 @@ from homeassistant.util import dt as dt_util
 import imagespec
 import voluptuous as vol
 
-from .specs import GEOMETRY, resolve_templates, spec_payload, templates_in
+from .specs import GEOMETRY, frozen_corners, resolve_templates, spec_payload, templates_in
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
 ELEMENT = vol.Schema(
@@ -567,6 +567,10 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                 if keep_templates or element.get("_spec_resolved")
                 else resolve_templates(hass, element["spec"], set())
             )
+            if keep_templates and frozen_corners(element["spec"]):
+                # Corners are percentages of the frame: only the rendered text
+                # can be turned into them, so they are as of now.
+                spec = {**spec, "points": resolve_templates(hass, spec["points"], set())}
             payload.append(spec_payload(spec, x, y, width, height))
             continue
         if element["type"] in ("progress_bar", "gauge"):

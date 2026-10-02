@@ -204,6 +204,11 @@ def _points(value, x, y, width, height):
         ) from err
 
 
+def frozen_corners(spec):
+    """A polygon whose corners come from a template: a live payload cannot keep it."""
+    return spec.get("type") == "polygon" and bool(templates_in(spec.get("points", "")))
+
+
 def templates_in(value):
     """Strings in a spec that Home Assistant renders when the payload is built."""
     if isinstance(value, str):

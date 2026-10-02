@@ -41,7 +41,7 @@ from .layout import (
     validate_template,
 )
 from .rendering import render_document, snapshot_layers
-from .specs import describe, templates_in
+from .specs import describe, frozen_corners, templates_in
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
@@ -294,6 +294,11 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
+        issues.extend(
+            f"{element['id']}: the polygon's corners are as of now in the live YAML"
+            for element in document["elements"]
+            if element["type"] == "imagespec" and frozen_corners(element["spec"])
+        )
         result = export_yaml(
             payload,
             document["background"],

@@ -1229,6 +1229,7 @@ test("the YAML keeps a template as written, or shows today's value", async ({
   // An automation should keep the template, so that is what is offered first.
   await expect(yaml).toHaveValue(/value: '\{\{ states\(''sensor.office_temperature''\) \}\} °C'/);
   await dialog.getByLabel(/Keep templates/).uncheck();
+  await expect(dialog.getByLabel(/Keep templates/)).toBeFocused();
   await expect(yaml).toHaveValue(/value: 21\.3 °C/);
   await dialog.getByLabel(/Keep templates/).check();
   await dialog.getByRole("tab", { name: "Automation action" }).click();

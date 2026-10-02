@@ -355,3 +355,22 @@ async def test_there_is_no_live_export_without_templates(hass, wolink_entry):
     result = await hass.data[KEY].export(wolink_entry, document)
     assert "live_payload" not in result
     assert "live_service" not in result
+
+
+async def test_a_templated_polygon_and_a_list_template_still_export(hass, wolink_entry):
+    document = spec_document(
+        element(
+            "p", "polygon", 5, 5, 40, 40, points="{{ '0,0;100,0;50,100' }}", fill="{{ 'black' }}"
+        ),
+        element("s", "sparkline", 60, 5, 80, 30, values="{{ [1, 2, 3] }}"),
+    )
+    result = await hass.data[KEY].export(wolink_entry, document)
+    now = yaml.safe_load(result["payload"])
+    live = yaml.safe_load(result["live_payload"])
+    assert now[1]["values"] == [1, 2, 3]
+    # The corners are as of now, everything else keeps its template.
+    assert live[0]["points"] == now[0]["points"]
+    assert live[0]["fill"] == "{{ 'black' }}"
+    assert live[1]["values"] == "{{ [1, 2, 3] }}"
+    assert any("polygon's corners are as of now" in issue for issue in result["issues"])
+    assert resolve_templates(hass, live, set()) == now

@@ -30,6 +30,24 @@ def template_syntax(value, path="payload"):
     return [found for child, item in children for found in template_syntax(item, child)]
 
 
+def plain(value):
+    """The value as YAML can write it: Home Assistant returns its own list, dict
+    and str subclasses from a rendered template."""
+    if isinstance(value, dict):
+        return {str(key): plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [plain(item) for item in value]
+    if isinstance(value, bool):
+        return bool(value)
+    if isinstance(value, int):
+        return int(value)
+    if isinstance(value, float):
+        return float(value)
+    if isinstance(value, str):
+        return str(value)
+    return value
+
+
 def export_yaml(payload, background, device_id, issues=(), live=None):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
 
@@ -45,6 +63,8 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
         default_flow_style=False,
         width=10**6,
     )
+    payload = plain(payload)
+    live = None if live is None else plain(live)
     service = {
         "action": "ble_esl.write",
         "target": {"device_id": device_id or "<your device>"},

@@ -66,7 +66,7 @@ export class YamlDialog extends HTMLElement {
         .join("")}</div>
       <p class="muted">${esc(hint)} ${
         this.live
-          ? "Templates stay as written: Home Assistant renders them each time the automation runs."
+          ? "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now."
           : "Values are as of now: the payload is the one the preview and the tag are rendered from, so use Auto update sensor to keep a tag current."
       }</p>
       ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> Keep templates (values follow the sensors)</label>` : ""}
@@ -86,6 +86,8 @@ export class YamlDialog extends HTMLElement {
     if (!box) return;
     this.live = box.checked;
     this.render();
+    // The dialog is rebuilt: keep the keyboard where it was.
+    this.shadowRoot.querySelector("[data-live]")?.focus();
   }
   async click(event) {
     const button = event
@@ -95,6 +97,7 @@ export class YamlDialog extends HTMLElement {
     if (button.dataset.view) {
       this.view = button.dataset.view;
       this.render();
+      this.shadowRoot.querySelector(`[data-view="${this.view}"]`)?.focus();
     } else if ("close" in button.dataset) {
       this.close();
     } else if ("copy" in button.dataset) {
