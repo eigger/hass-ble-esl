@@ -517,31 +517,40 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
 test("the header and the toolbar stay in view while the panel scrolls", async ({
   page,
 }) => {
-  const tops = () =>
+  const bars = () =>
     page.evaluate(() => {
       const host = window.panel,
         root = host.shadowRoot,
-        top = (selector) =>
-          root.querySelector(selector).getBoundingClientRect().top -
-          host.getBoundingClientRect().top;
-      return {
-        scroll: host.scrollTop,
-        header: top("header"),
-        toolbar: top(".toolbar"),
-      };
+        rect = (selector) => {
+          const box = root.querySelector(selector).getBoundingClientRect(),
+            origin = host.getBoundingClientRect().top;
+          return { top: box.top - origin, bottom: box.bottom - origin };
+        };
+      return { header: rect("header"), toolbar: rect(".toolbar") };
     });
-  await page.evaluate(() => {
-    window.panel.style.height = "450px";
-  });
-  const before = await tops();
+  // A wide screen has a one-row toolbar, a medium one wraps it to two rows.
+  for (const width of [1440, 900]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(() => {
+      window.panel.style.height = "450px";
+      window.panel.scrollTop = 400;
+    });
+    expect(await page.evaluate(() => window.panel.scrollTop)).toBeGreaterThan(
+      0,
+    );
+    const { header, toolbar } = await bars();
+    expect(header.top).toBe(0);
+    expect(toolbar.top).toBe(header.bottom);
+    expect(await page.evaluate(() => window.panel.style.scrollPaddingTop)).toBe(
+      `${toolbar.bottom}px`,
+    );
+  }
+  // On a phone the bars scroll away with the page.
+  await page.setViewportSize({ width: 600, height: 1000 });
   await page.evaluate(() => {
     window.panel.scrollTop = 400;
   });
-  const after = await tops();
-  expect(after.scroll).toBeGreaterThan(0);
-  expect(after.header).toBe(0);
-  expect(after.toolbar).toBeGreaterThanOrEqual(56);
-  expect(after.toolbar).toBeLessThan(before.toolbar + 1);
+  expect((await bars()).header.top).toBeLessThan(0);
 });
 test("images can be uploaded, resized and used as state-specific template parts", async ({
   page,
