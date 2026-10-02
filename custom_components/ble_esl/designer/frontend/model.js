@@ -19,10 +19,17 @@ export const emptyDocument = () => ({
   elements: [],
 });
 export function clampBox(element, tag) {
-  element.width = Math.max(1, Math.round(element.width));
-  element.height = Math.max(1, Math.round(element.height));
-  element.x = Math.round(element.x);
-  element.y = Math.round(element.y);
+  // The frame stays on the label: a box beyond it widens the scrollable
+  // area, which resizes the preview and makes the screen flicker.
+  const fit = (position, size, limit) => {
+    const length = Math.min(Math.max(1, Math.round(size)), limit);
+    return [
+      Math.min(Math.max(0, Math.round(position)), limit - length),
+      length,
+    ];
+  };
+  [element.x, element.width] = fit(element.x, element.width, tag.width);
+  [element.y, element.height] = fit(element.y, element.height, tag.height);
   return element;
 }
 export function newElement(type, tag, entity) {

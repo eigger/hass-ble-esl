@@ -740,16 +740,19 @@ export class BleEslDesigner extends HTMLElement {
       return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
     // Grow by what the frame grew, as the selection box does, so the box
     // stays on the image while the frame is dragged.
-    const dw = record ? element.width - record.size[0] : 0,
-      dh = record ? element.height - record.size[1] : 0,
+    const grows = record && element.type !== "text",
+      dw = grows ? element.width - record.size[0] : 0,
+      dh = grows ? element.height - record.size[1] : 0,
       width = Math.max(1, bounds[2] - bounds[0] + dw),
       height = Math.max(1, bounds[3] - bounds[1] + dh);
     return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0]}px;top:${offset[1]}px;width:${width}px;height:${height}px">`;
   }
   layerLabel(item) {
-    return item.type === "imagespec"
-      ? specLabel(item)
-      : item.label || item.entity_id || item.text || item.type;
+    if (item.type === "imagespec") return specLabel(item);
+    if (item.type === "text") return item.text || item.type;
+    if (item.type === "icon") return item.icon || item.type;
+    // "text" is only a leftover default on the other kinds.
+    return item.label || item.entity_id || item.type.replaceAll("_", " ");
   }
   specDefinition(element) {
     return this.specs?.types.find((type) => type.type === element.spec?.type);
@@ -816,7 +819,9 @@ export class BleEslDesigner extends HTMLElement {
       document: this.document,
       element_id: element.id,
     });
-    const index = this.document.elements.findIndex((el) => el.id === element.id);
+    const index = this.document.elements.findIndex(
+      (el) => el.id === element.id,
+    );
     if (index < 0) {
       // Deleted or undone while the server worked: nothing to replace.
       this.status = "The element changed; nothing was converted";
@@ -833,7 +838,9 @@ export class BleEslDesigner extends HTMLElement {
     this.document.elements.splice(index, 1, ...result.elements);
     this.selected = result.elements[0].id;
     this.error = false;
-    const skipped = result.issues.length ? `; ${result.issues.length} not converted` : "";
+    const skipped = result.issues.length
+      ? `; ${result.issues.length} not converted`
+      : "";
     this.status =
       result.different_pixels === 0
         ? `Converted to ${result.elements.length} elements, drawn exactly as before${skipped}`
@@ -1221,7 +1228,7 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
+          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
                   const bounds = visible || box;
@@ -1291,6 +1298,9 @@ export class BleEslDesigner extends HTMLElement {
   // undefined: not known, use the frame. null: rendered with nothing visible.
   visibleBounds(element) {
     const record = this.layerRecords?.[element.id];
+    // A text box is its frame: the text fits into it, so its box must not
+    // follow the ink and jump back when the frame is resized.
+    if (element.type === "text") return undefined;
     if (!record || record.shape !== this.shape(element)) return undefined;
     const dw = element.width - record.size[0],
       dh = element.height - record.size[1],
@@ -1730,7 +1740,10 @@ export class BleEslDesigner extends HTMLElement {
     if (input.id === "search") {
       this.search = input.value;
       this.renderEntities();
-    } else if (input.dataset.spec && ["text", "textarea"].includes(input.type)) {
+    } else if (
+      input.dataset.spec &&
+      ["text", "textarea"].includes(input.type)
+    ) {
       this.specInput(input);
     } else if (
       input.dataset.property &&
@@ -1749,8 +1762,7 @@ export class BleEslDesigner extends HTMLElement {
       const layer = this.shadowRoot.querySelector(
         `[data-select="${this.selected}"]`,
       );
-      if (layer)
-        layer.textContent = this.layerLabel(this.element);
+      if (layer) layer.textContent = this.layerLabel(this.element);
     }
   }
   updateProperty(input) {
@@ -2019,12 +2031,33 @@ export class BleEslDesigner extends HTMLElement {
           clearTimeout(this.previewTimer);
         }
         if (resize) {
-          const west = resize.endsWith("w"),
-            north = resize.startsWith("n");
-          element.width = Math.max(1, start.width + (west ? -dx : dx));
-          element.height = Math.max(1, start.height + (north ? -dy : dy));
-          element.x = west ? start.x + start.width - element.width : start.x;
-          element.y = north ? start.y + start.height - element.height : start.y;
+          // The dragged edge stops at the label's edge; the other stays put.
+          const edge = (from, size, limit, lower, delta) => {
+            const [near, far] = lower
+              ? [
+                  Math.min(Math.max(0, from + delta), from + size - 1),
+                  from + size,
+                ]
+              : [
+                  from,
+                  Math.max(Math.min(limit, from + size + delta), from + 1),
+                ];
+            return [near, far - near];
+          };
+          [element.x, element.width] = edge(
+            start.x,
+            start.width,
+            this.tag.width,
+            resize.endsWith("w"),
+            dx,
+          );
+          [element.y, element.height] = edge(
+            start.y,
+            start.height,
+            this.tag.height,
+            resize.startsWith("n"),
+            dy,
+          );
         } else {
           element.x = start.x + dx;
           element.y = start.y + dy;
