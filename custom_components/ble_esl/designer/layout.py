@@ -183,7 +183,7 @@ def validate_spec(element):
     issues = [
         issue
         for issue in imagespec.validate([payload])
-        if "unknown key" in issue.message or not _is_template(payload, issue.path)
+        if issue.message.startswith("unknown key") or not _is_template(payload, issue.path)
     ]
     if issues:
         raise vol.Invalid(
