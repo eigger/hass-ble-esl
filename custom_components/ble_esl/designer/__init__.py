@@ -31,6 +31,7 @@ from .export import export_yaml
 from .layout import (
     bindings,
     compile_payload,
+    live_payload,
     output_type,
     sensor_values,
     substitute,
@@ -293,7 +294,13 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
-        result = export_yaml(payload, document["background"], entry.runtime_data.device_id, issues)
+        result = export_yaml(
+            payload,
+            document["background"],
+            entry.runtime_data.device_id,
+            issues,
+            live_payload(self.hass, document, self.templates, forecasts),
+        )
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
 

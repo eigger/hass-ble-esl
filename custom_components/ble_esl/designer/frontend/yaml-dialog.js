@@ -22,12 +22,18 @@ export class YamlDialog extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
+    this.shadowRoot.addEventListener("change", (event) => this.change(event));
   }
   open(result, onClose) {
     this.result = result;
     this.onClose = onClose;
     this.view = "payload";
+    // With templates in the design the automation should keep them.
+    this.live = "live_payload" in result;
     this.render();
+  }
+  get text() {
+    return this.result[(this.live ? "live_" : "") + this.view];
   }
   close() {
     this.remove();
@@ -48,6 +54,7 @@ export class YamlDialog extends HTMLElement {
       button[aria-selected="true"],button.primary{background:#166d75;color:white;border-color:#166d75}
       textarea{flex:1;min-height:280px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical;padding:10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
+      .check{display:flex;gap:6px;align-items:center;font-size:13px}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
     </style><dialog aria-label="Payload YAML"><form method="dialog">
       <h2>Payload YAML</h2>
@@ -57,9 +64,14 @@ export class YamlDialog extends HTMLElement {
             `<button type="button" role="tab" data-view="${key}" aria-selected="${key === this.view}">${label}</button>`,
         )
         .join("")}</div>
-      <p class="muted">${esc(hint)} Values are as of now: the payload is the one the preview and the tag are rendered from, so use Auto update sensor to keep a tag current.</p>
+      <p class="muted">${esc(hint)} ${
+        this.live
+          ? "Templates stay as written: Home Assistant renders them each time the automation runs."
+          : "Values are as of now: the payload is the one the preview and the tag are rendered from, so use Auto update sensor to keep a tag current."
+      }</p>
+      ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> Keep templates (values follow the sensors)</label>` : ""}
       ${this.result.issues.length ? `<ul class="issues">${this.result.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
-      <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.result[this.view])}</textarea>
+      <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
       <div class="actions"><button type="button" data-copy class="primary">Copy</button><button type="button" data-close>Close</button></div>
     </form></dialog>`;
     const dialog = this.shadowRoot.querySelector("dialog");
@@ -68,6 +80,12 @@ export class YamlDialog extends HTMLElement {
       this.close();
     });
     dialog.showModal();
+  }
+  change(event) {
+    const box = event.composedPath().find((node) => node.dataset?.live !== undefined);
+    if (!box) return;
+    this.live = box.checked;
+    this.render();
   }
   async click(event) {
     const button = event
@@ -82,7 +100,7 @@ export class YamlDialog extends HTMLElement {
     } else if ("copy" in button.dataset) {
       let copied = true;
       try {
-        await navigator.clipboard.writeText(this.result[this.view]);
+        await navigator.clipboard.writeText(this.text);
       } catch {
         this.shadowRoot.querySelector("textarea").select();
         copied = document.execCommand("copy");

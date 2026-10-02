@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer.export import export_yaml
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
+    live_payload,
     sensor_values,
     substitute,
     validate,
@@ -124,8 +125,10 @@ async def api(request):
     if msg["action"] == "send":
         return web.json_response({"status": "demo_only"})
     if msg["action"] == "export":
-        payload = compile_payload(HASS, document, TEMPLATES, await demo_forecasts())
-        result = export_yaml(payload, document["background"], None)
+        forecasts = await demo_forecasts()
+        payload = compile_payload(HASS, document, TEMPLATES, forecasts)
+        live = live_payload(HASS, document, TEMPLATES, forecasts)
+        result = export_yaml(payload, document["background"], None, (), live)
         return web.json_response({**result, "writable": tag["writable"]})
     return await preview(document, preset)
 

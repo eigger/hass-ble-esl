@@ -511,7 +511,20 @@ def resolve_component(hass, element):
     return element, state
 
 
-def compile_payload(hass, document, templates=None, forecasts=None):
+def live_payload(hass, document, templates=None, forecasts=None):
+    """The payload with imagespec templates left as written, for an automation.
+
+    None when no element has one: the payload as it is then already is it.
+    """
+    if not any(
+        element["type"] == "imagespec" and templates_in(element["spec"])
+        for element in document["elements"]
+    ):
+        return None
+    return compile_payload(hass, document, templates, forecasts, keep_templates=True)
+
+
+def compile_payload(hass, document, templates=None, forecasts=None, keep_templates=False):
     """Snapshot HA values on its event loop; render them later in the executor."""
     payload = []
     for element in document["elements"]:
@@ -551,7 +564,7 @@ def compile_payload(hass, document, templates=None, forecasts=None):
         if element["type"] == "imagespec":
             spec = (
                 element["spec"]
-                if element.get("_spec_resolved")
+                if keep_templates or element.get("_spec_resolved")
                 else resolve_templates(hass, element["spec"], set())
             )
             payload.append(spec_payload(spec, x, y, width, height))

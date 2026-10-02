@@ -327,3 +327,31 @@ def test_a_template_does_not_hide_a_misspelt_key_or_a_wrong_value_elsewhere():
     polygon["spec"]["bogus"] = 1
     with pytest.raises(vol.Invalid, match="bogus"):
         validate(spec_document(polygon), PRESET)
+
+
+async def test_the_live_export_keeps_templates_and_renders_to_the_same_payload(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.5")
+    document = spec_document(
+        element(
+            "t", "text", 5, 5, 100, 30, value="{{ states('sensor.room') }} °C", size="{{ 10 + 10 }}"
+        ),
+        element("r", "rectangle", 5, 40, 60, 20),
+    )
+    result = await hass.data[KEY].export(wolink_entry, document)
+    now = yaml.safe_load(result["payload"])
+    live = yaml.safe_load(result["live_payload"])
+    assert now[0]["value"] == "21.5 °C"
+    assert live[0]["value"] == "{{ states('sensor.room') }} °C"
+    assert live[0]["size"] == "{{ 10 + 10 }}"
+    # What the automation will render is what the designer shows now.
+    assert resolve_templates(hass, live, set()) == now
+    service = yaml.safe_load(result["live_service"])
+    assert service["action"] == "ble_esl.write"
+    assert service["data"]["payload"] == live
+
+
+async def test_there_is_no_live_export_without_templates(hass, wolink_entry):
+    document = spec_document(element("r", "rectangle", 5, 40, 60, 20))
+    result = await hass.data[KEY].export(wolink_entry, document)
+    assert "live_payload" not in result
+    assert "live_service" not in result
