@@ -163,4 +163,4 @@ export class DynamicFields extends HTMLElement {
     }, 300);
   }
 }
-customElements.define("ble-esl-dynamic-fields", DynamicFields);
+if (!customElements.get("ble-esl-dynamic-fields")) customElements.define("ble-esl-dynamic-fields", DynamicFields);

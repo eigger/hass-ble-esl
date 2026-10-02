@@ -2592,4 +2592,4 @@ async function loadEntityPicker() {
   }
 }
 
-customElements.define("ble-esl-designer", BleEslDesigner);
+if (!customElements.get("ble-esl-designer")) customElements.define("ble-esl-designer", BleEslDesigner);
