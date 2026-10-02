@@ -70,7 +70,7 @@ The older components (sensor, text, icon, image, shapes, progress bar, gauge) ar
 
 For a sensor shown as a plain value the value text becomes a template that follows the sensor, rounded as the component asked and with its unit; an unavailable state shows as it did before.
 
-These stay as text, as they were drawn: a weather or binary sensor, a sensor that is not available now, one with a data field or field templates, a bare number without a unit (Home Assistant turns a template's number back into a number and the format is lost) and a unit with a quote or backslash in it. The last two say why. Text that has template syntax in it (a unit or a name that contains `{{`) is **left out** instead, with the reason, because as an imagespec element Home Assistant would run it; the pixel count then shows what is missing.
+These stay as text, as they were drawn: a weather or binary sensor, a sensor that is not available now, one with a data field or field templates, a bare number without a unit (Home Assistant reads a template whose result is only a number as a number, so 21.50 would become 21.5) and a unit with a quote, backslash or line break in it. The last two say why. Text that has template syntax in it (a unit or a name that contains `{{`) is **left out** instead, with the reason, because as an imagespec element Home Assistant would run it; the pixel count then shows what is missing.
 
 The status line says whether the result is drawn exactly as before (`0` pixels differ) or by how much it is not.
 
