@@ -114,7 +114,7 @@ def test_first_buffer_pixel(extra, first):
 
 @pytest.mark.parametrize(
     ("key", "corner"),
-    [("290-bwr", (0, 127)), ("370", (239, 0))],
+    [("290-bwr", (0, 127)), ("370", (415, 239))],
 )
 def test_first_buffer_pixel_with_led_top_left(key, corner):
     p = PRESETS[key]

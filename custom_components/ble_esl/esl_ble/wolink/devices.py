@@ -78,7 +78,7 @@ PRESETS: dict[str, DevicePreset] = {
         ),
         _preset("154", '1.54" BWRY', 200, 200, rotation=270),
         _preset("213", '2.13" BWRY', 250, 122, rotation=270),
-        _preset("370", '3.7" BWRY', 240, 416, rotation=90),
+        _preset("370", '3.7" BWRY', 416, 240, rotation=270, mirror_y=True),
         _preset("583", '5.83" BWRY', 648, 480, rotation=270),
         _preset("102", '10.2" BWR', 960, 640, rotation=270, colors="BWR"),
         _preset("133", '13.3" BWR', 1600, 1200, rotation=270, colors="BWR"),

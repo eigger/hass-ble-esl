@@ -28,7 +28,9 @@ def test_presets_catalog():
     assert PRESETS["290-bwr"].extra.get("display_version") == 0x0303
 
     assert PRESETS["350"].extra.get("display_version") == 0x0201
-    assert PRESETS["370"].extra.get("rotation") == 90
+    assert (PRESETS["370"].width, PRESETS["370"].height) == (416, 240)
+    assert PRESETS["370"].extra.get("rotation") == 270
+    assert PRESETS["370"].extra.get("mirror_y") is True
     assert PRESETS["750"].extra.get("rotation") == 0
 
     assert PRESETS["102"].colors == "BWR"
