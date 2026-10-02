@@ -26,9 +26,10 @@ CONNECT_ATTEMPTS = 2
 
 bleak_retry_connector defaults to 4 attempts, each waiting a fixed 20 s
 for a connect response — 81 s of holding the BLE lock on a tag that will
-not connect, while every other tag waits. Two keeps one quick retry within the same attempt (a sleeping
-tag often answers the second try) and leaves the rest to the
-integration's own retry loop, which also re-resolves the device.
+not connect, while every other tag waits. Two keeps one quick retry within
+the same attempt (a sleeping tag often answers the second try) and leaves
+the rest to the integration's own retry loop, which also re-resolves the
+device.
 """
 
 ATTEMPT_TIMEOUT_S = 600.0
