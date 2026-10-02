@@ -760,8 +760,10 @@ export class BleEslDesigner extends HTMLElement {
       this.fitPreview();
     }
     // The bars wrap with the width: follow their real height.
+    // and the panel itself, as the bars turn static on a short window.
     for (const bar of this.shadowRoot.querySelectorAll("header, .toolbar"))
       this.resizeObserver.observe(bar);
+    this.resizeObserver.observe(this);
     this.stickyOffsets();
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) {

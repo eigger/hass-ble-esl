@@ -535,14 +535,22 @@ test("the header and the toolbar stay in view while the panel scrolls", async ({
       window.panel.style.height = "450px";
       window.panel.scrollTop = 400;
     });
+    // The panel measures the bars after the resize, not at once.
+    await expect
+      .poll(async () => {
+        const { header, toolbar } = await bars();
+        const padding = await page.evaluate(() =>
+          parseFloat(window.panel.style.scrollPaddingTop),
+        );
+        return [
+          header.top,
+          toolbar.top === header.bottom,
+          Math.abs(padding - toolbar.bottom) < 1,
+        ];
+      })
+      .toEqual([0, true, true]);
     expect(await page.evaluate(() => window.panel.scrollTop)).toBeGreaterThan(
       0,
-    );
-    const { header, toolbar } = await bars();
-    expect(header.top).toBe(0);
-    expect(toolbar.top).toBe(header.bottom);
-    expect(await page.evaluate(() => window.panel.style.scrollPaddingTop)).toBe(
-      `${toolbar.bottom}px`,
     );
   }
   // On a phone the bars scroll away with the page.
