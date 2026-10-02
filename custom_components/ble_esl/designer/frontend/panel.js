@@ -1440,7 +1440,13 @@ export class BleEslDesigner extends HTMLElement {
                   : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
             content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
           }
-          const rendered = this.layerPreviews[element.id];
+          // A dragged image is shown by its own <img> (laid out in the
+          // frame) until the next render: the cropped layer cannot follow a
+          // frame that is resized.
+          const rendered =
+            element.type === "image" && this.gesture
+              ? undefined
+              : this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
           const box = [0, 0, element.width, element.height];
           const hitBounds =
@@ -1520,7 +1526,9 @@ export class BleEslDesigner extends HTMLElement {
     const record = this.layerRecords?.[element.id];
     // A text box is its frame: the text fits into it, so its box must not
     // follow the ink and jump back when the frame is resized.
-    if (element.type === "text") return undefined;
+    // An image is its frame as well: "contain" leaves margins around the
+    // picture, and a box on the ink would not match what x/y/size move.
+    if (element.type === "text" || element.type === "image") return undefined;
     if (!record || record.shape !== this.shape(element)) return undefined;
     const dw = element.width - record.size[0],
       dh = element.height - record.size[1],
