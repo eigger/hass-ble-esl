@@ -13,6 +13,7 @@ import {
   palette,
   emptyDocument,
   clampBox,
+  onLabel,
   newElement,
 } from "./model.js";
 const esc = (value) =>
@@ -67,7 +68,7 @@ const textFont = new FontFace(
   .load()
   .then((font) => document.fonts.add(font));
 const style = `
-.mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}button:hover{border-color:#257d86}button:disabled{opacity:.45;cursor:default}button.primary{background:#166d75;color:white;border-color:#166d75}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}.editor-bar{display:flex;align-items:center;gap:12px;padding:0 24px 12px}.editor-bar .spacer{flex:1}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:7px;border:0;background:transparent}.icon-button[aria-expanded="true"]{background:var(--secondary-background-color,#e9eff2)}.icon-button.danger:hover{color:#c33;background:#c331}.context-menu{position:fixed;z-index:1000;width:220px;padding:6px;background:var(--card-background-color,white);box-shadow:0 5px 24px #0003;border:1px solid var(--divider-color,#ddd);border-radius:8px}.context-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0}.context-menu kbd{margin-left:auto}.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:14px}.panel-heading h2{flex:1;margin:0}.delete-handle{position:absolute;right:0;top:-24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:2px;border:1px solid #16838c;color:#b33;background:var(--card-background-color,white);z-index:5;border-radius:4px}.delete-handle svg{width:18px;height:18px}.context-menu kbd{float:right;font-size:11px;color:var(--secondary-text-color,#637083)}.template-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 24px 14px}.template-controls input[type="number"]{width:75px}.tabs{display:flex;gap:4px;margin-left:auto}.tabs button[aria-pressed="true"]{background:#166d75;color:white}.tile-icon{position:absolute;left:4px;top:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center}.tile-copy{margin-left:48px;padding:6px 0}.tile-copy .value{font-size:18px}.el ha-icon{--mdc-icon-size:32px}.el.icon-content ha-icon{--mdc-icon-size:inherit}.state-rules{margin:0}.template-note{margin:0 24px 12px}.picker{display:flex;gap:5px;flex-wrap:wrap}.swatch{width:28px;height:28px;padding:0;background:var(--swatch);border:1px solid #888;border-radius:50%}.swatch[aria-pressed="true"]{outline:2px solid #16838c;outline-offset:2px}.align-button{width:32px;height:32px;padding:5px}.align-button[aria-pressed="true"]{background:#16838c22;border-color:#16838c}.align-button svg{width:20px;height:20px}.icon-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:200px;overflow:auto}.icon-picker button{padding:6px}.icon-picker ha-icon{--mdc-icon-size:24px}.state-rules input{width:100%}.muted.help{display:none}.canvas-wrap + p{display:none}.workspace{display:grid;grid-template-columns:240px minmax(320px,1fr) 260px;gap:18px;padding:0 24px 24px}.workspace.library-closed{grid-template-columns:minmax(0,1fr) 260px}.workspace.inspector-closed{grid-template-columns:240px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace.library-closed .library,.workspace.inspector-closed .inspector{display:none}.card{min-width:0;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dfe5eb);border-radius:10px;padding:16px}h2{font-size:15px;margin:0 0 14px}p{line-height:1.5}.muted{color:var(--secondary-text-color,#637083);font-size:12px}.entity-preview{margin:12px 0 20px}.entity-state{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--divider-color,#ddd);border-radius:8px}.entity-state .state-copy{flex:1;min-width:0}.entity-state .state-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.entity-state .state-value{font-size:18px;margin-top:4px}.entity-state ha-state-icon{--mdc-icon-size:28px}.entity-state button{flex:none}ha-entity-picker{display:block;width:100%;margin-bottom:12px}.entity{display:block;text-align:left;width:100%;margin:5px 0}.entity small{display:block;color:var(--secondary-text-color,#637083);font-size:11px;overflow:hidden;text-overflow:ellipsis}.entity[draggable]{cursor:grab}.tools{display:flex;flex-wrap:wrap;gap:6px}.canvas-wrap{min-width:0;overflow:auto;height:420px;min-height:0;display:flex;align-items:center;justify-content:flex-start;background:repeating-conic-gradient(#edf0f4 0% 25%,#f6f8fa 0% 50%) 50%/16px 16px;border-radius:6px;padding:30px}.stage-space{margin:auto;flex:none;position:relative}.stage{position:relative;transform-origin:top left;background:white;color:black;box-shadow:0 8px 24px #15293825;outline:1px solid #c5ced9;touch-action:none}.el{position:absolute;overflow:visible;cursor:move;outline:1px dashed transparent;touch-action:none;user-select:none}.el{pointer-events:none}.el .content{pointer-events:none}.hit-area{position:absolute;pointer-events:auto}.el:hover .hit-area{outline:1px dashed #1c8990}.el.editing .content{pointer-events:auto}.el.editing .hit-area{pointer-events:none}.el.selected{outline:1px solid #16838c}.el .content{height:100%;overflow:hidden;font-family:LabelText, sans-serif}.el.editing .content{visibility:visible!important;-webkit-user-select:text;user-select:text;cursor:text;white-space:pre-wrap;outline:0}.el.rendered .content{visibility:hidden}.layer-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.el.editing .layer-preview,.stage.exact-mode .layer-preview{display:none}.label{font-size:12px;height:18px;white-space:nowrap;overflow:hidden}.value{white-space:nowrap;overflow:hidden}.handle{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;background:#16838c;cursor:nwse-resize;z-index:3}.exact{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.stage.exact-mode .content{visibility:hidden}.stage.exact-mode .el{background:transparent!important}.stage.exact-mode .el.selected{z-index:100}.status{min-height:24px;padding:0 24px 12px;color:var(--secondary-text-color,#637083)}.error{color:#c33}.props{display:grid;grid-template-columns:1fr 1fr;gap:9px}.props label{font-size:12px;display:flex;flex-direction:column;gap:5px}.props label.check{flex-direction:row;align-items:center}.props .wide{grid-column:1/-1}.props input,.props select,.props textarea{width:100%;min-width:0}.check{display:flex;align-items:center;gap:7px;margin:12px 0}.check input{width:auto}.layers{margin-top:16px;max-height:150px;overflow:auto}.layer{display:block;width:100%;text-align:left;margin:4px 0}.layer.active{border-color:#16838c}.side-column{display:flex;flex-direction:column;gap:18px}.side-column .layers{margin-top:0}.footer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}@media(max-width:1050px){.workspace{grid-template-columns:200px 1fr}.inspector{grid-column:1/-1}.props{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.workspace.library-closed,.workspace.inspector-closed,.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.toolbar,.editor-bar,.template-controls{padding:12px}header{flex-wrap:wrap;padding:4px 12px}header span{display:none}.workspace{padding:0 12px 12px;grid-template-columns:minmax(0,1fr)}.library,.inspector{grid-column:auto}.entities{height:150px}.canvas-wrap{height:300px}.props{grid-template-columns:1fr 1fr}}
+.mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}button:hover{border-color:#257d86}button:disabled{opacity:.45;cursor:default}button.primary{background:#166d75;color:white;border-color:#166d75}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}.editor-bar{display:flex;align-items:center;gap:12px;padding:0 24px 12px}.editor-bar .spacer{flex:1}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:7px;border:0;background:transparent}.icon-button[aria-expanded="true"]{background:var(--secondary-background-color,#e9eff2)}.icon-button.danger:hover{color:#c33;background:#c331}.context-menu{position:fixed;z-index:1000;width:220px;padding:6px;background:var(--card-background-color,white);box-shadow:0 5px 24px #0003;border:1px solid var(--divider-color,#ddd);border-radius:8px}.context-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0}.context-menu kbd{margin-left:auto}.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:14px}.panel-heading h2{flex:1;margin:0}.delete-handle{position:absolute;right:0;top:-24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:2px;border:1px solid #16838c;color:#b33;background:var(--card-background-color,white);z-index:5;border-radius:4px}.delete-handle svg{width:18px;height:18px}.context-menu kbd{float:right;font-size:11px;color:var(--secondary-text-color,#637083)}.template-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 24px 14px}.template-controls input[type="number"]{width:75px}.tabs{display:flex;gap:4px;margin-left:auto}.tabs button[aria-pressed="true"]{background:#166d75;color:white}.tile-icon{position:absolute;left:4px;top:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center}.tile-copy{margin-left:48px;padding:6px 0}.tile-copy .value{font-size:18px}.el ha-icon{--mdc-icon-size:32px}.el.icon-content ha-icon{--mdc-icon-size:inherit}.state-rules{margin:0}.template-note{margin:0 24px 12px}.picker{display:flex;gap:5px;flex-wrap:wrap}.swatch{width:28px;height:28px;padding:0;background:var(--swatch);border:1px solid #888;border-radius:50%}.swatch[aria-pressed="true"]{outline:2px solid #16838c;outline-offset:2px}.align-button{width:32px;height:32px;padding:5px}.align-button[aria-pressed="true"]{background:#16838c22;border-color:#16838c}.align-button svg{width:20px;height:20px}.icon-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:200px;overflow:auto}.icon-picker button{padding:6px}.icon-picker ha-icon{--mdc-icon-size:24px}.state-rules input{width:100%}.muted.help{display:none}.canvas-wrap + p{display:none}.workspace{display:grid;grid-template-columns:240px minmax(320px,1fr) 260px;gap:18px;padding:0 24px 24px}.workspace.library-closed{grid-template-columns:minmax(0,1fr) 260px}.workspace.inspector-closed{grid-template-columns:240px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace.library-closed .library,.workspace.inspector-closed .inspector{display:none}.card{min-width:0;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dfe5eb);border-radius:10px;padding:16px}h2{font-size:15px;margin:0 0 14px}p{line-height:1.5}.muted{color:var(--secondary-text-color,#637083);font-size:12px}.entity-preview{margin:12px 0 20px}.entity-state{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--divider-color,#ddd);border-radius:8px}.entity-state .state-copy{flex:1;min-width:0}.entity-state .state-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.entity-state .state-value{font-size:18px;margin-top:4px}.entity-state ha-state-icon{--mdc-icon-size:28px}.entity-state button{flex:none}ha-entity-picker{display:block;width:100%;margin-bottom:12px}.entity{display:block;text-align:left;width:100%;margin:5px 0}.entity small{display:block;color:var(--secondary-text-color,#637083);font-size:11px;overflow:hidden;text-overflow:ellipsis}.entity[draggable]{cursor:grab}.tools{display:flex;flex-wrap:wrap;gap:6px}.canvas-wrap{min-width:0;overflow:auto;height:420px;min-height:0;display:flex;align-items:center;justify-content:flex-start;background:repeating-conic-gradient(#edf0f4 0% 25%,#f6f8fa 0% 50%) 50%/16px 16px;border-radius:6px;padding:30px}.stage-space{margin:auto;flex:none;position:relative}.stage{position:relative;transform-origin:top left;background:white;color:black;box-shadow:0 8px 24px #15293825;outline:1px solid #c5ced9;touch-action:none}.el{position:absolute;overflow:visible;cursor:move;outline:1px dashed transparent;touch-action:none;user-select:none}.el{pointer-events:none}.el .content{pointer-events:none}.hit-area{position:absolute;pointer-events:auto}.el:hover .hit-area{outline:1px dashed #1c8990}.el.editing .content{pointer-events:auto}.el.editing .hit-area{pointer-events:none}.el.selected{outline:1px solid #16838c}.el .content{height:100%;overflow:hidden;font-family:LabelText, sans-serif}.el.editing .content{visibility:visible!important;-webkit-user-select:text;user-select:text;cursor:text;white-space:pre-wrap;outline:0}.el.rendered .content{visibility:hidden}.layer-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.el.editing .layer-preview,.stage.exact-mode .layer-preview{display:none}.label{font-size:12px;height:18px;white-space:nowrap;overflow:hidden}.value{white-space:nowrap;overflow:hidden}.handle{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;background:#16838c;cursor:nwse-resize;z-index:3}.exact{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.stage.exact-mode .content{visibility:hidden}.stage.exact-mode .el{background:transparent!important}.stage.exact-mode .el.selected{z-index:100}.status{min-height:24px;padding:0 24px 12px;color:var(--secondary-text-color,#637083)}.error{color:#c33}.props{display:grid;grid-template-columns:1fr 1fr;gap:9px}.props label{font-size:12px;display:flex;flex-direction:column;gap:5px}.props label.check{flex-direction:row;align-items:center}.props .wide{grid-column:1/-1}.props input,.props select,.props textarea{width:100%;min-width:0}.check{display:flex;align-items:center;gap:7px;margin:12px 0}.check input{width:auto}.layers{margin-top:16px;max-height:150px;overflow:auto}.layer-row{display:flex;align-items:center;gap:4px;margin:4px 0}.layer-row .layer{flex:1;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-row .icon-button{flex:none;width:32px;height:32px;padding:4px}.layer-row .icon-button svg{width:18px;height:18px}.layer{display:block;width:100%;text-align:left;margin:4px 0}.layer.active{border-color:#16838c}.side-column{display:flex;flex-direction:column;gap:18px}.side-column .layers{margin-top:0}.footer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}@media(max-width:1050px){.workspace{grid-template-columns:200px 1fr}.inspector{grid-column:1/-1}.props{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.workspace.library-closed,.workspace.inspector-closed,.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.toolbar,.editor-bar,.template-controls{padding:12px}header{flex-wrap:wrap;padding:4px 12px}header span{display:none}.workspace{padding:0 12px 12px;grid-template-columns:minmax(0,1fr)}.library,.inspector{grid-column:auto}.entities{height:150px}.canvas-wrap{height:300px}.props{grid-template-columns:1fr 1fr}}
 `;
 
 export class BleEslDesigner extends HTMLElement {
@@ -641,7 +642,7 @@ export class BleEslDesigner extends HTMLElement {
             .reverse()
             .map(
               (item) =>
-                `<button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(this.layerLabel(item))}</button>`,
+                `<div class="layer-row"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(this.layerLabel(item))}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="Delete ${esc(this.layerLabel(item))}" title="Delete">${icon("delete")}</button></div>`,
             )
             .join("")}</div></section></aside></div>`
         : ""
@@ -740,16 +741,19 @@ export class BleEslDesigner extends HTMLElement {
       return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
     // Grow by what the frame grew, as the selection box does, so the box
     // stays on the image while the frame is dragged.
-    const dw = record ? element.width - record.size[0] : 0,
-      dh = record ? element.height - record.size[1] : 0,
+    const grows = record && element.type !== "text",
+      dw = grows ? element.width - record.size[0] : 0,
+      dh = grows ? element.height - record.size[1] : 0,
       width = Math.max(1, bounds[2] - bounds[0] + dw),
       height = Math.max(1, bounds[3] - bounds[1] + dh);
     return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0]}px;top:${offset[1]}px;width:${width}px;height:${height}px">`;
   }
   layerLabel(item) {
-    return item.type === "imagespec"
-      ? specLabel(item)
-      : item.label || item.entity_id || item.text || item.type;
+    if (item.type === "imagespec") return specLabel(item);
+    if (item.type === "text") return item.text || item.type;
+    if (item.type === "icon") return item.icon || item.type;
+    // "text" is only a leftover default on the other kinds.
+    return item.label || item.entity_id || item.type.replaceAll("_", " ");
   }
   specDefinition(element) {
     return this.specs?.types.find((type) => type.type === element.spec?.type);
@@ -816,7 +820,9 @@ export class BleEslDesigner extends HTMLElement {
       document: this.document,
       element_id: element.id,
     });
-    const index = this.document.elements.findIndex((el) => el.id === element.id);
+    const index = this.document.elements.findIndex(
+      (el) => el.id === element.id,
+    );
     if (index < 0) {
       // Deleted or undone while the server worked: nothing to replace.
       this.status = "The element changed; nothing was converted";
@@ -833,7 +839,9 @@ export class BleEslDesigner extends HTMLElement {
     this.document.elements.splice(index, 1, ...result.elements);
     this.selected = result.elements[0].id;
     this.error = false;
-    const skipped = result.issues.length ? `; ${result.issues.length} not converted` : "";
+    const skipped = result.issues.length
+      ? `; ${result.issues.length} not converted`
+      : "";
     this.status =
       result.different_pixels === 0
         ? `Converted to ${result.elements.length} elements, drawn exactly as before${skipped}`
@@ -1221,7 +1229,7 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
+          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
                   const bounds = visible || box;
@@ -1291,6 +1299,9 @@ export class BleEslDesigner extends HTMLElement {
   // undefined: not known, use the frame. null: rendered with nothing visible.
   visibleBounds(element) {
     const record = this.layerRecords?.[element.id];
+    // A text box is its frame: the text fits into it, so its box must not
+    // follow the ink and jump back when the frame is resized.
+    if (element.type === "text") return undefined;
     if (!record || record.shape !== this.shape(element)) return undefined;
     const dw = element.width - record.size[0],
       dh = element.height - record.size[1],
@@ -1454,6 +1465,20 @@ export class BleEslDesigner extends HTMLElement {
       this.add(button.dataset.add);
       return;
     }
+    if (button.dataset.deleteLayer) {
+      const kept = this.selected;
+      this.selected = button.dataset.deleteLayer;
+      this.transform("delete");
+      if (
+        kept &&
+        kept !== button.dataset.deleteLayer &&
+        this.document.elements.some((el) => el.id === kept)
+      ) {
+        this.selected = kept;
+        this.render();
+      }
+      return;
+    }
     if (button.dataset.select) {
       this.selected = button.dataset.select;
       this.render();
@@ -1589,9 +1614,10 @@ export class BleEslDesigner extends HTMLElement {
     if (action === "duplicate") {
       const copy = clone(element);
       copy.id = createId();
-      copy.x += 8;
-      copy.y += 8;
-      clampBox(copy, this.tag);
+      // Step back instead when the copy would be clamped onto the original.
+      copy.x += copy.x + copy.width + 8 > this.tag.width ? -8 : 8;
+      copy.y += copy.y + copy.height + 8 > this.tag.height ? -8 : 8;
+      clampBox(copy, this.tag, onLabel(element, this.tag));
       elements.push(copy);
       this.selected = copy.id;
     }
@@ -1715,7 +1741,7 @@ export class BleEslDesigner extends HTMLElement {
       this.tag[input.id === "template-width" ? "width" : "height"] = Number(
         input.value,
       );
-      this.document.elements.forEach((el) => clampBox(el, this.tag));
+      this.document.elements.forEach((el) => clampBox(el, this.tag, false));
       const stage = this.shadowRoot.querySelector(".stage");
       stage.style.width = `${this.tag.width}px`;
       stage.style.height = `${this.tag.height}px`;
@@ -1730,7 +1756,10 @@ export class BleEslDesigner extends HTMLElement {
     if (input.id === "search") {
       this.search = input.value;
       this.renderEntities();
-    } else if (input.dataset.spec && ["text", "textarea"].includes(input.type)) {
+    } else if (
+      input.dataset.spec &&
+      ["text", "textarea"].includes(input.type)
+    ) {
       this.specInput(input);
     } else if (
       input.dataset.property &&
@@ -1741,6 +1770,7 @@ export class BleEslDesigner extends HTMLElement {
       if (this.typingProperty !== input) {
         this.checkpoint();
         this.typingProperty = input;
+        this.typedOnLabel = onLabel(this.element, this.tag);
       }
       this.updateProperty(input);
       this.edited(false);
@@ -1749,8 +1779,7 @@ export class BleEslDesigner extends HTMLElement {
       const layer = this.shadowRoot.querySelector(
         `[data-select="${this.selected}"]`,
       );
-      if (layer)
-        layer.textContent = this.layerLabel(this.element);
+      if (layer) layer.textContent = this.layerLabel(this.element);
     }
   }
   updateProperty(input) {
@@ -1787,7 +1816,8 @@ export class BleEslDesigner extends HTMLElement {
       );
     if (key === "decimals" && this.element.decimals !== undefined)
       this.element.decimals = Math.max(0, Math.min(6, this.element.decimals));
-    clampBox(this.element, this.tag);
+    // Typed geometry is kept to the label when the field is committed.
+    clampBox(this.element, this.tag, false);
   }
   async change(event) {
     const input = event.target,
@@ -1811,7 +1841,7 @@ export class BleEslDesigner extends HTMLElement {
         16,
         Math.min(1000, Number(input.value)),
       );
-      this.document.elements.forEach((el) => clampBox(el, this.tag));
+      this.document.elements.forEach((el) => clampBox(el, this.tag, false));
       this.edited();
       return;
     }
@@ -1887,7 +1917,14 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (input.dataset.property && this.element) {
-      if (["text", "textarea", "number"].includes(input.type)) return;
+      if (["text", "textarea", "number"].includes(input.type)) {
+        if (["x", "y", "width", "height"].includes(input.dataset.property)) {
+          // Judged before the edit: an off-label imported frame stays put.
+          clampBox(this.element, this.tag, this.typedOnLabel ?? true);
+          this.edited();
+        }
+        return;
+      }
       this.checkpoint();
       this.updateProperty(input);
       this.edited();
@@ -1962,11 +1999,12 @@ export class BleEslDesigner extends HTMLElement {
     if (this.element && directions[event.key]) {
       event.preventDefault();
       this.checkpoint();
-      const step = event.shiftKey ? 10 : 1,
+      const before = clone(this.element),
+        step = event.shiftKey ? 10 : 1,
         [x, y] = directions[event.key];
       this.element.x += x * step;
       this.element.y += y * step;
-      clampBox(this.element, this.tag);
+      clampBox(this.element, this.tag, onLabel(before, this.tag));
       this.edited();
       this.focusElement();
     }
@@ -1993,7 +2031,10 @@ export class BleEslDesigner extends HTMLElement {
       start = clone(element),
       resize = event.target.closest(".handle")?.dataset.corner,
       startX = event.clientX,
-      startY = event.clientY;
+      startY = event.clientY,
+      // An element that hangs off the label (an imported frame) is not pulled
+      // back by the first move.
+      bound = onLabel(start, this.tag);
     let moved = false;
     // A plain click leaves the exact preview alone; only a drag swaps it for
     // the movable layers.
@@ -2019,17 +2060,45 @@ export class BleEslDesigner extends HTMLElement {
           clearTimeout(this.previewTimer);
         }
         if (resize) {
-          const west = resize.endsWith("w"),
-            north = resize.startsWith("n");
-          element.width = Math.max(1, start.width + (west ? -dx : dx));
-          element.height = Math.max(1, start.height + (north ? -dy : dy));
-          element.x = west ? start.x + start.width - element.width : start.x;
-          element.y = north ? start.y + start.height - element.height : start.y;
+          // The dragged edge stops at the label's edge; the other stays put.
+          const edge = (from, size, limit, lower, delta) => {
+            if (!bound)
+              return lower
+                ? [
+                    from + Math.min(delta, size - 1),
+                    size - Math.min(delta, size - 1),
+                  ]
+                : [from, Math.max(1, size + delta)];
+            const [near, far] = lower
+              ? [
+                  Math.min(Math.max(0, from + delta), from + size - 1),
+                  from + size,
+                ]
+              : [
+                  from,
+                  Math.max(Math.min(limit, from + size + delta), from + 1),
+                ];
+            return [near, far - near];
+          };
+          [element.x, element.width] = edge(
+            start.x,
+            start.width,
+            this.tag.width,
+            resize.endsWith("w"),
+            dx,
+          );
+          [element.y, element.height] = edge(
+            start.y,
+            start.height,
+            this.tag.height,
+            resize.startsWith("n"),
+            dy,
+          );
         } else {
           element.x = start.x + dx;
           element.y = start.y + dy;
         }
-        clampBox(element, this.tag);
+        clampBox(element, this.tag, bound);
         this.drawStage();
       },
       { signal: controller.signal },

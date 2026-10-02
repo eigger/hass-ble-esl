@@ -18,11 +18,24 @@ export const emptyDocument = () => ({
   interval: 60,
   elements: [],
 });
-export function clampBox(element, tag) {
-  element.width = Math.max(1, Math.round(element.width));
-  element.height = Math.max(1, Math.round(element.height));
-  element.x = Math.round(element.x);
-  element.y = Math.round(element.y);
+export const onLabel = (element, tag) =>
+  element.x >= 0 &&
+  element.y >= 0 &&
+  element.x + element.width <= tag.width &&
+  element.y + element.height <= tag.height;
+// Keeps the frame on the label: a box beyond it widens the scrollable area,
+// which resizes the preview and makes the screen flicker. enforce=false only
+// rounds, for an element that already hangs off the label (an imported one
+// whose frame is a guess) so that editing it does not make it jump.
+export function clampBox(element, tag, enforce = true) {
+  const fit = (position, size, limit) => {
+    const length = Math.max(1, Math.round(size));
+    if (!enforce) return [Math.round(position), length];
+    const width = Math.min(length, limit);
+    return [Math.min(Math.max(0, Math.round(position)), limit - width), width];
+  };
+  [element.x, element.width] = fit(element.x, element.width, tag.width);
+  [element.y, element.height] = fit(element.y, element.height, tag.height);
   return element;
 }
 export function newElement(type, tag, entity) {

@@ -356,19 +356,18 @@ test("icon picker font is registered and loaded in the document", async ({
     .toBe(true);
 });
 
-test("elements can move beyond display edges without clamping", async ({
-  page,
-}) => {
+test("elements stay on the display", async ({ page }) => {
   await page.locator('[data-add="text"]').click();
   await page.locator('[data-property="x"]').fill("-20");
+  await page.locator('[data-property="x"]').press("Tab");
+  await expect.poll(() => page.evaluate(() => window.panel.element.x)).toBe(0);
+  await page.locator('[data-property="x"]').fill("9999");
+  await page.locator('[data-property="x"]').press("Tab");
   await expect
-    .poll(() => page.evaluate(() => window.panel.element.x))
-    .toBe(-20);
-  await page.locator(".el.selected").focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect
-    .poll(() => page.evaluate(() => window.panel.element.x))
-    .toBe(-21);
+    .poll(() =>
+      page.evaluate(() => window.panel.element.x + window.panel.element.width),
+    )
+    .toBe(await page.evaluate(() => window.panel.tag.width));
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
@@ -967,7 +966,7 @@ test("the display exports as the payload and a ready write action", async ({
 const rendered = (page) =>
   // The box comes from the last render, so wait for one to exist.
   page.waitForFunction(
-    () => window.panel.visibleBounds(window.panel.element) !== undefined,
+    () => !!window.panel.layerRecords?.[window.panel.element.id],
   );
 const selectionBox = (page) =>
   page.locator(".selection-box").evaluate((node) => ({
@@ -992,10 +991,7 @@ for (const type of ["rectangle", "text"]) {
     const handle = await page
       .locator('.handle[data-corner="se"]')
       .boundingBox();
-    const [x, y] = [
-      handle.x + handle.width / 2,
-      handle.y + handle.height / 2,
-    ];
+    const [x, y] = [handle.x + handle.width / 2, handle.y + handle.height / 2];
     await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.move(x + 80, y + 30);
@@ -1020,37 +1016,29 @@ for (const type of ["rectangle", "text"]) {
   });
 }
 
-test("the selection box does not keep the old text size after a font size change", async ({
+test("a text box keeps its frame after a font size change and a render", async ({
   page,
 }) => {
   await page.locator('[data-add="text"]').click();
   await rendered(page);
-  const text = await selectionBox(page);
-  // One task, so no render can arrive between the edit and the reading.
-  const right = await page.evaluate(() => {
+  await page.evaluate(() => {
     const input = window.panel.shadowRoot.querySelector(
       '[data-property="font_size"]',
     );
     input.value = "12";
     input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-    const box = window.panel.shadowRoot.querySelector(".selection-box");
-    return {
-      box: [box.style.width, box.style.height],
-      frame: [
-        `${window.panel.element.width}px`,
-        `${window.panel.element.height}px`,
-      ],
-    };
   });
-  // The old text bounds are not shown: the frame stands in.
-  expect(right.box).toEqual(right.frame);
-  // The new render arrives and the box fits the smaller text.
-  await rendered(page);
-  expect((await selectionBox(page)).width).toBeLessThan(text.width);
+  await page.waitForFunction(() =>
+    window.panel.layerRecords[window.panel.element.id].shape.includes(
+      '"font_size":12',
+    ),
+  );
+  const frame = await elementSize(page);
+  expect(await selectionBox(page)).toEqual(frame);
 });
 
 test("saving keeps the selection box on the content", async ({ page }) => {
-  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
   await rendered(page);
   const before = await selectionBox(page);
   // The server hands the document back with its defaults filled in.
@@ -1109,7 +1097,9 @@ test("an imagespec element is added from the list, edited by its fields and expo
   const yaml = page
     .locator("ble-esl-yaml-dialog dialog")
     .getByLabel("YAML", { exact: true });
-  await expect(yaml).toHaveValue(/- type: pie\n {2}values: A,1;B,3\n {2}inner_radius: 20/);
+  await expect(yaml).toHaveValue(
+    /- type: pie\n {2}values: A,1;B,3\n {2}inner_radius: 20/,
+  );
   // Position keys come from the frame, in display coordinates.
   await expect(yaml).toHaveValue(/ {2}x: 48\n {2}y: 48\n {2}radius: 39/);
 });
@@ -1231,7 +1221,9 @@ test("the YAML keeps a template as written, or shows today's value", async ({
   const dialog = page.locator("ble-esl-yaml-dialog dialog");
   const yaml = dialog.getByLabel("YAML", { exact: true });
   // An automation should keep the template, so that is what is offered first.
-  await expect(yaml).toHaveValue(/value: '\{\{ states\(''sensor.office_temperature''\) \}\} °C'/);
+  await expect(yaml).toHaveValue(
+    /value: '\{\{ states\(''sensor.office_temperature''\) \}\} °C'/,
+  );
   await dialog.getByLabel(/Keep templates/).uncheck();
   await expect(dialog.getByLabel(/Keep templates/)).toBeFocused();
   await expect(yaml).toHaveValue(/value: 21\.3 °C/);
@@ -1257,7 +1249,9 @@ test("a pasted payload becomes elements and what cannot be placed is listed", as
   await expect(page.locator(".layer")).toHaveCount(2);
   await expect(page.locator("img.exact")).toBeVisible();
   // The elements are there already: only closing is left.
-  await expect(dialog.getByRole("button", { name: "Add to display" })).toHaveCount(0);
+  await expect(
+    dialog.getByRole("button", { name: "Add to display" }),
+  ).toHaveCount(0);
   await dialog.getByRole("button", { name: "Close" }).click();
   await expect(page.locator("ble-esl-import-dialog")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Import YAML" })).toBeFocused();
@@ -1315,4 +1309,32 @@ test("pressing Convert twice converts once", async ({ page, request }) => {
   await expect(page.locator("img.exact")).toBeVisible();
   await page.getByRole("button", { name: "Convert to elements" }).dblclick();
   await expect(page.locator(".layer")).toHaveCount(3);
+});
+
+test("a layer can be deleted from the layer list", async ({ page }) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
+  await expect(page.locator(".layer")).toHaveCount(2);
+  await page
+    .locator(".layer-row")
+    .first()
+    .getByRole("button", { name: /Delete/ })
+    .click();
+  await expect(page.locator(".layer")).toHaveCount(1);
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    1,
+  );
+});
+
+test("deleting another layer keeps the selection", async ({ page }) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
+  const kept = await page.evaluate(() => window.panel.selected);
+  await page
+    .locator(".layer-row")
+    .last()
+    .getByRole("button", { name: /Delete/ })
+    .click();
+  expect(await page.evaluate(() => window.panel.selected)).toBe(kept);
+  await expect(page.locator(".layer")).toHaveCount(1);
 });
