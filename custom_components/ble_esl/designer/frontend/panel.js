@@ -2115,11 +2115,12 @@ export class BleEslDesigner extends HTMLElement {
           // Show the value the element kept: it may have been clamped to the
           // allowed range, or refused as out of range.
           const key = input.dataset.property,
+            snapshot = clone(this.document),
             before = JSON.stringify(this.element[key]);
           this.updateProperty(input);
           input.value = this.element[key] ?? "";
           if (JSON.stringify(this.element[key]) !== before) {
-            if (this.typingProperty !== input) this.checkpoint();
+            if (this.typingProperty !== input) this.pushUndo(snapshot);
             this.edited(false);
           }
         }

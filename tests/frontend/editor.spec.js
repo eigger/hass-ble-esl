@@ -1371,6 +1371,10 @@ test("a number outside its range is corrected in the field", async ({
   await field.press("Tab");
   await expect(field).toHaveValue("20");
   expect(await page.evaluate(() => window.panel.element.max_lines)).toBe(20);
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  expect(
+    await page.evaluate(() => window.panel.element.max_lines),
+  ).toBeUndefined();
   const size = page.locator('[data-property="font_size"]');
   await size.fill("4");
   await size.press("Tab");
@@ -1393,8 +1397,9 @@ test("Refresh tags keeps the tag being edited and its unsaved design", async ({
 }) => {
   await page.locator("#tag").selectOption("demo-discovery");
   await page.locator('[data-add="text"]').click();
+  await page.evaluate(() => (window.__oldTags = window.panel.tags));
   await page.locator('[data-action="reload"]').click();
-  await page.waitForFunction(() => !window.panel.busy);
+  await page.waitForFunction(() => window.panel.tags !== window.__oldTags);
   expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
     1,
   );
