@@ -481,6 +481,31 @@ test("template mode has no send or preview button and offers every sensor", asyn
   ).toBe("binary_sensor.window");
 });
 
+test("an uploaded photo is stored upright, with its EXIF orientation applied", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add image", exact: true }).click();
+  // 4×2 pixels with orientation 6: shown upright it is 2×4.
+  await page
+    .getByLabel("Upload image", { exact: true })
+    .setInputFiles("tests/frontend/fixtures/exif-rotated.jpg");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.panel.element.image.startsWith("data:image/jpeg"),
+      ),
+    )
+    .toBe(true);
+  const size = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve([image.naturalWidth, image.naturalHeight]);
+        image.src = window.panel.element.image;
+      }),
+  );
+  expect(size).toEqual([2, 4]);
+});
 test("images can be uploaded, resized and used as state-specific template parts", async ({
   page,
 }) => {

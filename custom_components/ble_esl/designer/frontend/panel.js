@@ -2175,9 +2175,26 @@ export class BleEslDesigner extends HTMLElement {
       if (!file) return;
       const element = this.element;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        let image = reader.result;
+        // The renderer ignores a photo's EXIF orientation, which the browser
+        // applies: a portrait phone photo would print turned 90°. Redrawing
+        // it here bakes the orientation into the pixels.
+        if (file.type === "image/jpeg") {
+          try {
+            const bitmap = await createImageBitmap(file);
+            const canvas = document.createElement("canvas");
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            canvas.getContext("2d").drawImage(bitmap, 0, 0);
+            bitmap.close();
+            image = canvas.toDataURL("image/jpeg", 0.92);
+          } catch {
+            // Keep the file as it is when the browser cannot decode it.
+          }
+        }
         this.checkpoint();
-        element.image = reader.result;
+        element.image = image;
         this.edited();
       };
       reader.readAsDataURL(file);
