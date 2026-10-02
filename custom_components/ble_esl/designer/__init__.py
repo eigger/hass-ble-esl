@@ -20,6 +20,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
+from homeassistant.loader import async_get_integration
 import voluptuous as vol
 
 from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
@@ -79,13 +80,15 @@ class Designer:
         if self.panel_registered:
             return
         self.panel_registered = True
+        integration = await async_get_integration(self.hass, DOMAIN)
         await panel_custom.async_register_panel(
             self.hass,
             PANEL,
             PANEL,
             sidebar_title="ESL Designer",
             sidebar_icon="mdi:label-outline",
-            module_url="/ble_esl_designer/panel.js?v=6",
+            module_url=f"/ble_esl_designer/{integration.version}/panel.js",
+            config={"version": str(integration.version)},
             require_admin=True,
         )
 
@@ -498,9 +501,15 @@ async def async_setup_designer(hass):
     designer.documents = await designer.store.async_load() or {}
     designer.templates = await designer.template_store.async_load() or {}
     websocket_api.async_register_command(hass, websocket_designer)
+    integration = await async_get_integration(hass, DOMAIN)
     await hass.http.async_register_static_paths(
         [
-            StaticPathConfig("/ble_esl_designer", str(Path(__file__).parent / "frontend"), False),
+            # Versioned URL so an update never serves stale cached modules.
+            StaticPathConfig(
+                f"/ble_esl_designer/{integration.version}",
+                str(Path(__file__).parent / "frontend"),
+                False,
+            ),
             StaticPathConfig(
                 "/ble_esl_designer_fonts", str(Path(__file__).parent.parent / "fonts"), True
             ),
