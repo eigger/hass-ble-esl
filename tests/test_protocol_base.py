@@ -11,6 +11,7 @@ import pytest
 
 from custom_components.ble_esl import esl_ble
 from custom_components.ble_esl.esl_ble.base import (
+    CONNECT_ATTEMPTS,
     STAGE_HANDSHAKE,
     STAGE_MAP,
     STAGE_TRANSFER,
@@ -249,6 +250,31 @@ def test_write_prepared_times_connect_and_session_around_the_writer(monkeypatch)
         assert trace.failed_stage is None
 
     asyncio.run(_test())
+
+
+def test_write_prepared_caps_the_connect_attempts(monkeypatch):
+    """One write attempt must not hold the BLE lock for bleak_retry_connector's
+    default four 20 s connects: the cap has to reach establish_connection."""
+    seen = {}
+    connect = fake_connect(FakeClient())
+
+    async def spy(*args, **kwargs):
+        seen.update(kwargs)
+        return await connect(*args, **kwargs)
+
+    monkeypatch.setattr(session_mod, "establish_connection", spy)
+
+    class Protocol(_Protocol):
+        id = "t4"
+
+        async def write_session(self, client, address, preset, prepared, *, trace, **kwargs):
+            return WriteResult(success=True)
+
+    async def _test():
+        await Protocol().write_prepared(FakeDevice(), PRESET, _prepared())
+
+    asyncio.run(_test())
+    assert seen["max_attempts"] == CONNECT_ATTEMPTS
 
 
 def test_new_trace_maps_the_handshake_to_auth():

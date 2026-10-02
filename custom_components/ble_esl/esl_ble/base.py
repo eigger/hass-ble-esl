@@ -24,9 +24,9 @@ _LOGGER = logging.getLogger(__name__)
 CONNECT_ATTEMPTS = 2
 """Connection attempts inside one write attempt.
 
-bleak_retry_connector defaults to 4 attempts of a fixed 20 s each — 81 s
-of holding the BLE lock on a tag that will not connect, while every other
-tag waits. Two keeps one quick retry within the same attempt (a sleeping
+bleak_retry_connector defaults to 4 attempts, each waiting a fixed 20 s
+for a connect response — 81 s of holding the BLE lock on a tag that will
+not connect, while every other tag waits. Two keeps one quick retry within the same attempt (a sleeping
 tag often answers the second try) and leaves the rest to the
 integration's own retry loop, which also re-resolves the device.
 """
@@ -39,8 +39,9 @@ Every protocol step has its own timeout, but a GATT write has none: a
 proxy that dies mid-transfer can leave the attempt hanging, and since it
 holds the BLE lock, every other tag's writes hang with it. The bound is
 generous so it never cuts a legitimate write, even the slowest: connecting
-retries for up to ~40 s, a 13.3" WOLINK image takes ~1 min to transfer
-(more on a paced retry) and up to 2 min to refresh — about 5 min in all.
+retries for ~40 s when the tag stays silent (longer if a proxy stalls), a
+13.3" WOLINK image takes ~1 min to transfer (more on a paced retry) and up
+to 2 min to refresh — about 5 min in all.
 """
 
 # The stages a write goes through, as the writers time them on the
