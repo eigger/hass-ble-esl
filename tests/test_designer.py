@@ -364,8 +364,13 @@ async def test_preview_is_one_render_of_the_exported_payload(hass, wolink_entry)
     with decode_png(result["png"]) as actual:
         assert actual.tobytes() == expected.tobytes()
         assert actual.getpixel((90, 70)) == (255, 0, 0)
-    with decode_png(result["layers"]["overlay"]) as layer:
-        assert layer.getpixel((99, 59))[3] == 0
+    # The layers are the display's elements: stacked where they sit, they make it.
+    stacked = Image.new("RGB", actual.size, "yellow")
+    for element in doc["elements"]:
+        left, top = result["layers"]["_offsets"].get(element["id"], (0, 0))
+        with decode_png(result["layers"][element["id"]]) as layer:
+            stacked.paste(layer, (element["x"] + left, element["y"] + top), layer)
+    assert stacked.tobytes() == actual.tobytes()
 
 
 async def test_send_writes_the_pixels_of_the_exported_payload(hass, wolink_entry, tag_writer):
@@ -735,9 +740,10 @@ async def test_general_field_templates_control_color_icon_background_and_size(ha
         "background": "white",
         "width": 40,
     }
+    # The layer is what the icon draws, as the display shows it.
+    left, top, right, bottom = result["layers"]["_bounds"]["icon"]
     with Image.open(BytesIO(base64.b64decode(result["layers"]["icon"].split(",")[1]))) as image:
-        assert image.size == (40, 32)
-        assert image.getpixel((39, 31)) == (255, 255, 255, 255)
+        assert image.size == (right - left, bottom - top)
 
 
 async def test_dynamic_text_is_not_overwritten_by_a_second_binding_resolution(hass, wolink_entry):

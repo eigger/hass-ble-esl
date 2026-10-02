@@ -89,7 +89,7 @@ A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements 
 
 ## Visual editor
 
-Open **ESL Designer** in the HA sidebar to arrange text, images, shapes and sensor components with drag-and-drop, layering and keyboard controls. Configure each component with native HA entity/icon pickers, create reusable sensor templates, or use Jinja to control individual fields. The live pixel preview is one render of the same payload that is sent to the tag. **Payload YAML** shows that payload, or a complete `ble_esl.write` action, ready to paste into an automation or script (values are those of the moment; Auto update sensor keeps a tag current). Bluetooth Send saves the design first; Auto update sensor keeps it current.
+Open **ESL Designer** in the HA sidebar to arrange text, images, shapes and sensor components with drag-and-drop, layering and keyboard controls. Configure each component with native HA entity/icon pickers, add any [imagespec element](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (shapes, text, QR/bar codes, charts, tables, …) from **All elements** and edit every one of its fields (Jinja templates allowed), create reusable sensor templates, or use Jinja to control individual fields. The live pixel preview is one render of the same payload that is sent to the tag. **Payload YAML** shows that payload, or a complete `ble_esl.write` action, ready to paste into an automation or script (values are those of the moment; Auto update sensor keeps a tag current). Bluetooth Send saves the design first; Auto update sensor keeps it current.
 
 Existing YAML actions remain available.
 
@@ -104,7 +104,7 @@ Both actions take a standard `target:` (a tag device, one of its entities, or an
 
 | Parameter | Default | Description |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/main/docs/elements.md) (required) |
+| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (required) |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | Render to **Preview Content** only |
@@ -132,7 +132,7 @@ Layouts are rendered by **[imagespec](https://github.com/eigger/imagespec)**; it
 
 | Topic | Link |
 |-------|------|
-| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/main/docs/elements.md) |
+| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) |
 | All element fields & defaults | [imagespec README — Element Reference](https://github.com/eigger/imagespec#elements-reference) |
 | Layout, palette, LLM authoring guide | [imagespec/docs/authoring.md](https://github.com/eigger/imagespec/blob/main/docs/authoring.md) |
 | Dithering (per-element only) | [imagespec/docs/dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md) |

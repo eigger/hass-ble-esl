@@ -40,6 +40,7 @@ from .layout import (
     validate_template,
 )
 from .rendering import render_document, snapshot_layers
+from .specs import describe, templates_in
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
@@ -159,6 +160,11 @@ class Designer:
             )
             for el in elements
             for source in el.get("field_templates", {}).values()
+        ] + [
+            TrackTemplate(Template(source, self.hass), None)
+            for el in elements
+            if el["type"] == "imagespec"
+            for source in templates_in(el["spec"])
         ]
         if tracked:
             self.template_listeners[entry.entry_id] = async_track_template_result(
@@ -253,8 +259,10 @@ class Designer:
         preset = self.preset(entry)
         document = validate(document, preset)
         forecasts = await self.forecasts(document)
-        payload = compile_payload(self.hass, document, self.templates, forecasts)
         snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
+        # The elements' payloads in order are the document's payload: one
+        # evaluation of every template serves the display and the layers.
+        payload = [item for _, part in snapshots for item in part]
         image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
@@ -305,9 +313,9 @@ class Designer:
         if state is None:
             raise HomeAssistantError("Choose an available sample entity")
         document = substitute(template["document"], sensor_values(state, {}), state.state, state)
-        payload = compile_payload(self.hass, document)
-        preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         snapshots = snapshot_layers(self.hass, document, {}, {})
+        payload = [item for _, part in snapshots for item in part]
+        preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         image, layers = await self.render(preset, document, payload, snapshots)
         buffer = BytesIO()
         image.save(buffer, "PNG")
@@ -347,6 +355,7 @@ class Designer:
         vol.Required("action"): vol.In(
             (
                 "list",
+                "specs",
                 "save",
                 "preview",
                 "export",
@@ -368,7 +377,9 @@ class Designer:
 async def websocket_designer(hass, connection, msg):
     designer = hass.data[KEY]
     action = msg["action"]
-    if action == "templates":
+    if action == "specs":
+        result = describe()
+    elif action == "templates":
         result = designer.templates
     elif action == "save_template":
         result = await designer.save_template(msg["key"], msg["template"])

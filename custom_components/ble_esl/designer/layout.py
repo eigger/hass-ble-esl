@@ -2,11 +2,16 @@
 
 from copy import deepcopy
 from datetime import timedelta
+import re
 from types import SimpleNamespace
 
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
+import imagespec
 import voluptuous as vol
+
+from .specs import GEOMETRY, resolve_templates, spec_payload, templates_in
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
 ELEMENT = vol.Schema(
@@ -26,8 +31,10 @@ ELEMENT = vol.Schema(
                 "ellipse",
                 "triangle",
                 "rounded_rectangle",
+                "imagespec",
             )
         ),
+        vol.Optional("spec", default=dict): dict,
         vol.Required("x"): int,
         vol.Required("y"): int,
         vol.Required("width"): vol.All(int, vol.Range(min=1)),
@@ -136,7 +143,52 @@ def validate(document, preset):
         element["background"] = "transparent"
         if element["type"] == "sensor" and not element["entity_id"]:
             raise vol.Invalid("Sensor elements need an entity_id")
+        if element["type"] == "imagespec":
+            validate_spec(element)
     return result
+
+
+_PATH_STEP = re.compile(r"\.(\w+)|\[(\d+)\]")
+
+
+def _is_template(payload, path):
+    """Whether the value an imagespec issue points at is a template string."""
+    value = [payload]
+    for key, index in _PATH_STEP.findall(path):
+        try:
+            value = value[int(index)] if index else value[key]
+        except (KeyError, IndexError, TypeError):
+            return False
+    return bool(templates_in(value))
+
+
+def validate_spec(element):
+    """An imagespec element must be one the designer places, with what it needs."""
+    spec = element["spec"]
+    name = spec.get("type")
+    if not isinstance(name, str) or name not in GEOMETRY:
+        hint = " (row and column are a stack with a direction)" if name in ("row", "column") else ""
+        raise vol.Invalid(f"Choose an element type{hint}")
+    if name == "polygon" and templates_in(spec.get("points", "")):
+        # Its corners are known only once the template is rendered.
+        spec = {**spec, "points": "0,0"}
+    try:
+        payload = spec_payload(
+            spec, element["x"], element["y"], element["width"], element["height"]
+        )
+    except HomeAssistantError as err:
+        raise vol.Invalid(str(err)) from err
+    # A field that holds a template is checked once the template is rendered.
+    # A misspelt key is wrong whatever it holds.
+    issues = [
+        issue
+        for issue in imagespec.validate([payload])
+        if issue.message.startswith("unknown key") or not _is_template(payload, issue.path)
+    ]
+    if issues:
+        raise vol.Invalid(
+            f"{name} {issues[0].path.removeprefix('[0]').lstrip('.')}: {issues[0].message}"
+        )
 
 
 def bindings(document):
@@ -317,6 +369,12 @@ def validate_template(template):
         }
     )
     result = schema(deepcopy(template))
+    if any(
+        element.get("type") == "imagespec"
+        for element in result["document"].get("elements", [])
+        if isinstance(element, dict)
+    ):
+        raise vol.Invalid("Sensor templates cannot contain imagespec elements")
     result["document"] = validate(
         result["document"],
         DevicePreset("template", "Template", result["width"], result["height"], "BWRY"),
@@ -490,6 +548,14 @@ def compile_payload(hass, document, templates=None, forecasts=None):
                     child["font_size"] = max(8, round(child["font_size"] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested))
                 continue
+        if element["type"] == "imagespec":
+            spec = (
+                element["spec"]
+                if element.get("_spec_resolved")
+                else resolve_templates(hass, element["spec"], set())
+            )
+            payload.append(spec_payload(spec, x, y, width, height))
+            continue
         if element["type"] in ("progress_bar", "gauge"):
             low, high, value = element["min_value"], element["max_value"], element["value"]
             # No reading, or a field template that collapsed the range.
