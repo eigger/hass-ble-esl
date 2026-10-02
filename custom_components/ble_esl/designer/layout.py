@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from datetime import timedelta
+import re
 from types import SimpleNamespace
 
 from homeassistant.exceptions import HomeAssistantError
@@ -147,6 +148,20 @@ def validate(document, preset):
     return result
 
 
+_PATH_STEP = re.compile(r"\.(\w+)|\[(\d+)\]")
+
+
+def _is_template(payload, path):
+    """Whether the value an imagespec issue points at is a template string."""
+    value = [payload]
+    for key, index in _PATH_STEP.findall(path):
+        try:
+            value = value[int(index)] if index else value[key]
+        except (KeyError, IndexError, TypeError):
+            return False
+    return bool(templates_in(value))
+
+
 def validate_spec(element):
     """An imagespec element must be one the designer places, with what it needs."""
     spec = element["spec"]
@@ -154,15 +169,19 @@ def validate_spec(element):
     if not isinstance(name, str) or name not in GEOMETRY:
         hint = " (row and column are a stack with a direction)" if name in ("row", "column") else ""
         raise vol.Invalid(f"Choose an element type{hint}")
-    if templates_in(spec):
-        return  # Checked once its templates are rendered.
+    if name == "polygon" and templates_in(spec.get("points", "")):
+        return  # Its corners are known only once the template is rendered.
     try:
         payload = spec_payload(
             spec, element["x"], element["y"], element["width"], element["height"]
         )
     except HomeAssistantError as err:
         raise vol.Invalid(str(err)) from err
-    if issues := imagespec.validate([payload]):
+    # A field that holds a template is checked once the template is rendered.
+    issues = [
+        issue for issue in imagespec.validate([payload]) if not _is_template(payload, issue.path)
+    ]
+    if issues:
         raise vol.Invalid(
             f"{name} {issues[0].path.removeprefix('[0]').lstrip('.')}: {issues[0].message}"
         )

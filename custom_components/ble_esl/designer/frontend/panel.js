@@ -737,9 +737,13 @@ export class BleEslDesigner extends HTMLElement {
       record = this.layerRecords?.[element.id];
     if (!offset || !bounds)
       return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
-    const sx = record ? element.width / record.size[0] : 1,
-      sy = record ? element.height / record.size[1] : 1;
-    return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0] * sx}px;top:${offset[1] * sy}px;width:${(bounds[2] - bounds[0]) * sx}px;height:${(bounds[3] - bounds[1]) * sy}px">`;
+    // Grow by what the frame grew, as the selection box does, so the box
+    // stays on the image while the frame is dragged.
+    const dw = record ? element.width - record.size[0] : 0,
+      dh = record ? element.height - record.size[1] : 0,
+      width = Math.max(1, bounds[2] - bounds[0] + dw),
+      height = Math.max(1, bounds[3] - bounds[1] + dh);
+    return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0]}px;top:${offset[1]}px;width:${width}px;height:${height}px">`;
   }
   layerLabel(item) {
     return item.type === "imagespec"
@@ -1560,7 +1564,9 @@ export class BleEslDesigner extends HTMLElement {
     clearTimeout(this.previewTimer);
     this.previewSequence++;
     this.preview = null;
+    // The exact image would show the old text under the one being typed.
     this.shadowRoot.querySelector(".stage").classList.remove("exact-mode");
+    this.shadowRoot.querySelector(".stage img.exact")?.remove();
     const node = this.shadowRoot.querySelector(`[data-id="${this.selected}"]`);
     node.classList.add("editing");
     const content = node.querySelector(".content");

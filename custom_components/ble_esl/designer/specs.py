@@ -48,7 +48,7 @@ GEOMETRY = {
     "text_box": ("origin", ("x", "y")),
     "multiline": ("origin", ("x", "start_y")),
     "table": ("origin", ("x", "y")),
-    "rich_text": ("origin", ("x", "y")),
+    "rich_text": ("midline", ("x", "y")),
     "icon": ("icon", ("x", "y", "size")),
     "qrcode": ("rect", RECT),
     "barcode": ("rect", RECT),
@@ -100,7 +100,13 @@ EXAMPLES = {
     "text": ({"value": "Text", "size": 20}, 100, 30),
     "text_box": ({"value": "Text", "size": 20, "fill": "black", "color": "white"}, 100, 36),
     "multiline": (
-        {"value": "Line 1|Line 2", "delimiter": "|", "offset_y": 22, "size": 18},
+        {
+            "value": "Line 1|Line 2",
+            "delimiter": "|",
+            "offset_y": 22,
+            "size": 18,
+            "anchor": "la",
+        },
         100,
         50,
     ),
@@ -175,6 +181,8 @@ def spec_payload(spec, x, y, width, height):
         values = (x, y, width, height)
     elif role == "icon":
         values = (x, y, min(width, height))
+    elif role == "midline":
+        values = (x, y + height // 2)
     elif role == "points":
         return {**payload, "points": _points(spec.get("points", ""), x, y, width, height)}
     else:

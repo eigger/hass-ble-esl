@@ -1198,3 +1198,17 @@ test("a polygon's corners and a whole-list template can be typed", async ({
     "{{ [1, 2, 3] }}",
   );
 });
+
+test("clicking a text to edit it leaves no rendered copy of the old text under it", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await expect(page.locator("img.exact")).toBeVisible();
+  // Deselect, then click the text itself: a click starts editing it.
+  await page.mouse.click(5, 300);
+  const hit = page.locator(".el .hit-area");
+  const box = await hit.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(page.locator(".el.editing")).toHaveCount(1);
+  await expect(page.locator("img.exact")).toHaveCount(0);
+});

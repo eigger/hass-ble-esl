@@ -14,7 +14,11 @@ def snapshot_layers(hass, document, templates, forecasts):
     """Resolve HA state on the event loop, before CPU work enters the executor."""
     layers = []
     for element in document["elements"]:
+        placed = (element["x"], element["y"])
         element = resolve_component(hass, element)[0]
+        # A field template can move the element: its layer is placed by the
+        # frame the editor holds, so it is measured from there.
+        element["_placed"] = placed
         if element["type"] == "imagespec":
             # Rendered once here: the layer and the display share these values,
             # and the entities say which state changes redraw the preview.
@@ -48,7 +52,7 @@ def element_layer(hass, preset, element, payload, previews):
     box = alpha.getbbox()
     if box is None:
         return png_url(Image.new("RGBA", (element["width"], element["height"])))
-    x, y = element["x"], element["y"]
+    x, y = element.get("_placed", (element["x"], element["y"]))
     previews["_offsets"][element["id"]] = [box[0] - x, box[1] - y]
     previews["_bounds"][element["id"]] = [box[0] - x, box[1] - y, box[2] - x, box[3] - y]
     return png_url(layer.crop(box))

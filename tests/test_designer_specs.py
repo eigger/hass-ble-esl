@@ -270,3 +270,48 @@ async def test_the_preview_knows_which_entities_a_template_reads(hass, wolink_en
     )
     layers = (await hass.data[KEY].preview(wolink_entry, document))["layers"]
     assert layers["_dependencies"]["t"] == ["sensor.room"]
+
+
+@pytest.mark.parametrize("type_", ["multiline", "rich_text"])
+async def test_text_blocks_start_inside_their_frame(hass, type_):
+    spec, width, height = new_spec(type_)
+    payload = spec_payload(spec, 20, 30, width, height)
+    preset = DevicePreset("test", "test", 250, 122, "BWRY")
+    image = await hass.async_add_executor_job(partial(render_image, hass, preset, [payload]))
+    top, bottom = ImageChops.difference(image, Image.new("RGB", image.size, "white")).getbbox()[
+        1::2
+    ]
+    assert top >= 29, "drawn above the frame"
+    assert bottom <= 30 + height + 1, "drawn below the frame"
+
+
+def test_a_template_in_one_field_does_not_excuse_a_missing_required_one():
+    star = element("s", "star_rating", 0, 0, 80, 20, size="{{ 12 }}")
+    del star["spec"]["rating"]
+    with pytest.raises(vol.Invalid, match="star_rating rating"):
+        validate(spec_document(star), PRESET)
+
+
+async def test_a_layer_is_placed_where_the_editor_holds_the_element(hass, wolink_entry):
+    # A field template moves the element on the display; its layer is still
+    # positioned from the frame in the document.
+    rectangle = {
+        "id": "moved",
+        "type": "rectangle",
+        "x": 10,
+        "y": 10,
+        "width": 40,
+        "height": 20,
+        "color": "red",
+        "field_templates": {"x": "{{ 120 }}"},
+    }
+    document = {"version": 1, "elements": [rectangle]}
+    result = await hass.data[KEY].preview(wolink_entry, document)
+    with Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))) as shown:
+        stacked = Image.new("RGB", shown.size, "white")
+        left, top = result["layers"]["_offsets"]["moved"]
+        with Image.open(
+            BytesIO(base64.b64decode(result["layers"]["moved"].split(",")[1]))
+        ) as layer:
+            stacked.paste(layer, (10 + left, 10 + top), layer)
+        assert stacked.tobytes() == shown.tobytes()
