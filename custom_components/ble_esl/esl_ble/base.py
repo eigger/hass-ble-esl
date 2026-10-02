@@ -21,6 +21,16 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+CONNECT_ATTEMPTS = 2
+"""Connection attempts inside one write attempt.
+
+bleak_retry_connector defaults to 4 attempts of a fixed 20 s each — 81 s
+of holding the BLE lock on a tag that will not connect, while every other
+tag waits. Two keeps one quick retry within the same attempt (a sleeping
+tag often answers the second try) and leaves the rest to the
+integration's own retry loop, which also re-resolves the device.
+"""
+
 ATTEMPT_TIMEOUT_S = 600.0
 """Upper bound on one write attempt, connecting included (applied by the
 integration's run_attempts()).
@@ -29,7 +39,7 @@ Every protocol step has its own timeout, but a GATT write has none: a
 proxy that dies mid-transfer can leave the attempt hanging, and since it
 holds the BLE lock, every other tag's writes hang with it. The bound is
 generous so it never cuts a legitimate write, even the slowest: connecting
-retries for up to ~1.5 min, a 13.3" WOLINK image takes ~1 min to transfer
+retries for up to ~40 s, a 13.3" WOLINK image takes ~1 min to transfer
 (more on a paced retry) and up to 2 min to refresh — about 5 min in all.
 """
 
@@ -419,7 +429,9 @@ class EslProtocol(ABC):
         turns that into the failure sensors and decides about a retry.
         """
         trace = trace if trace is not None else self.new_trace()
-        async with ble_session(ble_device, trace=trace) as client:
+        async with ble_session(
+            ble_device, trace=trace, max_attempts=CONNECT_ATTEMPTS
+        ) as client:
             return await self.write_session(
                 client,
                 ble_device.address,
