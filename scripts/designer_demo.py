@@ -108,6 +108,14 @@ async def setup_hass(app):
 
 
 async def api(request):
+    """What Home Assistant does with a failed command: the message goes to the panel."""
+    try:
+        return await handle(request)
+    except HomeAssistantError as err:
+        return web.Response(status=400, text=str(err))
+
+
+async def handle(request):
     msg = await request.json()
     if msg["action"] == "specs":
         return web.json_response(describe())
