@@ -97,3 +97,32 @@ export function newElement(type, tag, entity) {
     element.color = palette(tag.colors).includes("red") ? "red" : "black";
   return clampBox(element, tag);
 }
+// The EXIF orientation (1-8) of a JPEG, or 1 when it has none. The tag lives
+// in the first APP1 segment, so only the head of the file needs reading.
+export function jpegOrientation(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.byteLength < 4 || view.getUint16(0) !== 0xffd8) return 1;
+  let offset = 2;
+  while (offset + 4 <= view.byteLength) {
+    const marker = view.getUint16(offset),
+      length = view.getUint16(offset + 2);
+    if (marker === 0xffe1 && view.getUint32(offset + 4) === 0x45786966) {
+      const tiff = offset + 10,
+        little = view.getUint16(tiff) === 0x4949,
+        entries = view.getUint16(
+          tiff + view.getUint32(tiff + 4, little),
+          little,
+        );
+      for (let index = 0; index < entries; index++) {
+        const entry = tiff + view.getUint32(tiff + 4, little) + 2 + index * 12;
+        if (entry + 12 > view.byteLength) return 1;
+        if (view.getUint16(entry, little) === 0x0112)
+          return view.getUint16(entry + 8, little) || 1;
+      }
+      return 1;
+    }
+    if ((marker & 0xff00) !== 0xff00 || marker === 0xffda) return 1;
+    offset += 2 + length;
+  }
+  return 1;
+}
