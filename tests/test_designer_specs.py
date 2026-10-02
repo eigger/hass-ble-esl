@@ -12,6 +12,7 @@ import voluptuous as vol
 import yaml
 
 from custom_components.ble_esl.designer import KEY
+from custom_components.ble_esl.designer.importer import different_pixels, elements_from, payloads
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
     validate,
@@ -19,8 +20,10 @@ from custom_components.ble_esl.designer.layout import (
 )
 from custom_components.ble_esl.designer.specs import (
     GEOMETRY,
+    ImportProblem,
     describe,
     element_types,
+    from_payload,
     new_spec,
     resolve_templates,
     spec_payload,
@@ -374,3 +377,219 @@ async def test_a_templated_polygon_and_a_list_template_still_export(hass, wolink
     assert live[1]["values"] == "{{ [1, 2, 3] }}"
     assert any("polygon's corners are as of now" in issue for issue in result["issues"])
     assert resolve_templates(hass, live, set()) == now
+
+
+@pytest.mark.parametrize("type_", element_types())
+@pytest.mark.parametrize(("width", "height"), [(None, None), (30, 30), (200, 90), (17, 5)])
+def test_a_payload_becomes_the_same_payload_through_its_frame(type_, width, height):
+    spec, default_width, default_height = new_spec(type_)
+    payload = spec_payload(spec, 7, 5, width or default_width, height or default_height)
+    again, x, y, w, h = from_payload(payload)
+    assert spec_payload(again, x, y, w, h) == payload
+
+
+def test_row_and_column_are_a_stack_with_their_direction():
+    spec, _, _, _, _ = from_payload(
+        {"type": "column", "x": 3, "y": 4, "width": 50, "height": 60, "elements": []}
+    )
+    assert spec["type"] == "stack"
+    assert spec["direction"] == "vertical"
+
+
+@pytest.mark.parametrize(
+    ("item", "reason"),
+    [
+        (
+            {"type": "rectangle", "x_start": "{{ 1 }}", "y_start": 0, "x_end": 9, "y_end": 9},
+            "template",
+        ),
+        (
+            {"type": "line", "x_start": 0, "y_start": 0, "x_end": 9, "y_end": 9},
+            "horizontal or vertical",
+        ),
+        ({"type": "text", "value": "no y", "x": 3}, "'y'"),
+        ({"type": "nonsense"}, "not an imagespec element"),
+        ({"type": "polygon", "points": "0,0;1"}, "points"),
+        ({"x": 1}, "type"),
+    ],
+)
+def test_what_the_designer_cannot_place_says_why(item, reason):
+    with pytest.raises(ImportProblem, match=reason):
+        from_payload(item)
+
+
+async def test_what_the_designer_exports_it_imports_unchanged(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.5")
+    document = spec_document(
+        element("pie", "pie", 5, 5, 60, 60),
+        element("qr", "qrcode", 80, 5, 60, 60, data="{{ states('sensor.room') }}"),
+        element("box", "rectangle", 150, 5, 40, 40, fill=None),
+        element("poly", "polygon", 150, 60, 41, 31),
+        element("txt", "text", 5, 80, 100, 30, value="{{ states('sensor.room') }} °C"),
+    )
+    manager = hass.data[KEY]
+    exported = await manager.export(wolink_entry, document)
+    for text in (exported["live_service"], exported["live_payload"], exported["payload"]):
+        result = await manager.import_yaml(wolink_entry, text)
+        assert result["issues"] == []
+        assert len(result["elements"]) == 5
+        assert result["different_pixels"] == 0
+    live = await manager.import_yaml(wolink_entry, exported["live_payload"])
+    texts = {e["spec"]["type"]: e["spec"] for e in live["elements"]}
+    assert texts["text"]["value"] == "{{ states('sensor.room') }} °C"
+
+
+async def test_import_keeps_what_it_can_place_and_says_what_it_cannot(hass, wolink_entry):
+    text = yaml.safe_dump(
+        [
+            {"type": "text", "value": "placed", "x": 4, "y": 4},
+            {"type": "text", "value": "no y, so it flows", "x": 4},
+            {"type": "line", "x_start": 0, "y_start": 0, "x_end": 20, "y_end": 20},
+            {"type": "circle", "x": 60, "y": 60, "radius": 10},
+        ]
+    )
+    result = await hass.data[KEY].import_yaml(wolink_entry, text)
+    assert [e["spec"]["type"] for e in result["elements"]] == ["text", "circle"]
+    assert len(result["issues"]) == 2
+    assert "#2 text" in result["issues"][0]
+    assert "#3 line" in result["issues"][1]
+
+
+@pytest.mark.parametrize("text", ["a: [", "just text", "[1, 2]", "data: {payload: 3}"])
+async def test_import_rejects_what_is_not_a_payload(hass, wolink_entry, text):
+    with pytest.raises(HomeAssistantError):
+        await hass.data[KEY].import_yaml(wolink_entry, text)
+
+
+async def test_import_counts_the_pixels_that_differ(hass):
+    preset = DevicePreset("test", "test", 250, 122, "BWR")
+    items = [
+        {"type": "rectangle", "x_start": 10, "y_start": 10, "x_end": 49, "y_end": 29, "fill": "red"}
+    ]
+    elements, imported, issues = elements_from(items, preset)
+    assert issues == []
+    original, rebuilt = payloads(hass, imported, elements)
+    same = await hass.async_add_executor_job(different_pixels, hass, preset, original, rebuilt)
+    assert same == 0
+    elements[0]["x"] += 10  # what a change the designer introduced would look like
+    original, rebuilt = payloads(hass, imported, elements)
+    moved = await hass.async_add_executor_job(different_pixels, hass, preset, original, rebuilt)
+    assert moved > 0
+
+
+async def test_import_over_the_websocket(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "import_yaml",
+            "entry_id": wolink_entry.entry_id,
+            "text": "- {type: circle, x: 40, y: 40, radius: 12}",
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"]["different_pixels"] == 0
+    assert result["result"]["elements"][0]["spec"]["type"] == "circle"
+
+
+def test_a_yaml_alias_is_refused():
+    from custom_components.ble_esl.designer.importer import parse
+
+    bomb = "a: &a [1, 2, 3]\nb: &b [*a, *a]\npayload: [{type: text, value: *b, x: 1, y: 1}]"
+    with pytest.raises(HomeAssistantError, match="aliases"):
+        parse(bomb)
+
+
+def test_yaml_nested_too_deeply_is_refused_not_raised():
+    from custom_components.ble_esl.designer.importer import parse
+
+    with pytest.raises(HomeAssistantError, match="nested too deeply"):
+        parse("[" * 5000 + "]" * 5000)
+
+
+def test_the_alias_message_says_what_to_do():
+    from custom_components.ble_esl.designer.importer import parse
+
+    with pytest.raises(HomeAssistantError, match="write the repeated values out"):
+        parse("- &a {type: circle, x: 1, y: 1, radius: 2}\n- *a")
+
+
+def test_too_much_text_is_refused():
+    from custom_components.ble_esl.designer.importer import parse
+
+    with pytest.raises(HomeAssistantError, match="too much"):
+        parse("- {type: text, value: " + "x" * 300_000 + ", x: 1, y: 1}")
+
+
+async def test_a_display_holds_a_hundred_elements_and_import_keeps_to_it(hass, wolink_entry):
+    text = yaml.safe_dump(
+        [{"type": "circle", "x": 20 + i % 100, "y": 20, "radius": 3} for i in range(120)]
+    )
+    manager = hass.data[KEY]
+    result = await manager.import_yaml(wolink_entry, text)
+    assert len(result["elements"]) == 100
+    assert sum("holds at most" in issue for issue in result["issues"]) == 20
+    room = await manager.import_yaml(wolink_entry, text, 95)
+    assert len(room["elements"]) == 5
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        {"type": "circle", "x": float("nan"), "y": 5, "radius": 5},
+        {"type": "circle", "x": 5, "y": 5, "radius": float("inf")},
+        {
+            "type": "line",
+            "x_start": 0,
+            "y_start": 5,
+            "x_end": 20,
+            "y_end": 5,
+            "width": float("nan"),
+        },
+        {"type": "polygon", "points": "nan,0;10,0;5,10"},
+    ],
+)
+def test_a_number_that_is_not_one_is_listed_not_raised(item):
+    elements, _, issues = elements_from([item], PRESET)
+    assert elements == []
+    assert len(issues) == 1
+
+
+def test_numbers_written_as_text_are_numbers():
+    elements, _, issues = elements_from(
+        [{"type": "circle", "x": "40", "y": "30.0", "radius": "9"}], PRESET
+    )
+    assert issues == []
+    assert (elements[0]["x"], elements[0]["y"]) == (30, 20)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        {"type": "line", "x_start": 10, "y_start": 5, "x_end": 11, "y_end": 5, "width": 6},
+        {"type": "line", "x_start": 10, "y_start": 5, "x_end": 10, "y_end": 5, "width": 4},
+        {"type": "line", "x_start": 7, "y_start": 2, "x_end": 7, "y_end": 4, "width": 8},
+        {"type": "line", "x_start": 0, "y_start": 5, "x_end": 90, "y_end": 5, "width": 3},
+    ],
+)
+def test_a_short_thick_line_stays_the_line_it_was(line):
+    spec, x, y, width, height = from_payload(line)
+    assert spec_payload(spec, x, y, width, height) == line
+
+
+def test_an_icon_without_a_size_is_given_the_default_one():
+    spec, x, y, width, height = from_payload({"type": "icon", "value": "mdi:home", "x": 4, "y": 6})
+    assert (width, height) == (32, 32)
+    assert spec_payload(spec, x, y, width, height)["size"] == 32
+
+
+async def test_importing_templates_works_from_the_event_loop_in_debug(hass, wolink_entry):
+    # Home Assistant checks that templates are rendered on the loop in debug mode.
+    hass.config.debug = True
+    hass.states.async_set("sensor.room", "21.5")
+    text = "- {type: text, value: \"{{ states('sensor.room') }} C\", x: 5, y: 5}"
+    result = await hass.data[KEY].import_yaml(wolink_entry, text)
+    assert result["issues"] == []
+    assert result["different_pixels"] == 0

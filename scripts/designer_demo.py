@@ -12,10 +12,17 @@ import sys
 
 from aiohttp import web
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer.export import export_yaml
+from custom_components.ble_esl.designer.importer import (
+    different_pixels,
+    elements_from,
+    parse as parse_payload,
+    payloads,
+)
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
     live_payload,
@@ -118,6 +125,27 @@ async def api(request):
         return web.json_response(TAGS)
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
+    if msg["action"] == "import_yaml":
+        try:
+            items, background = parse_payload(msg["text"])
+        except HomeAssistantError as err:
+            # Home Assistant carries the message to the panel; so does the demo.
+            return web.Response(status=400, text=str(err))
+        elements, imported, issues = elements_from(
+            items, preset, max(0, 100 - msg.get("existing", 0))
+        )
+        different = None
+        if elements:
+            original, rebuilt = payloads(HASS, imported, elements)
+            different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
+        return web.json_response(
+            {
+                "elements": elements,
+                "issues": issues,
+                "different_pixels": different,
+                "background": background,
+            }
+        )
     document = validate(msg["document"], preset)
     if msg["action"] == "save":
         tag["document"] = document

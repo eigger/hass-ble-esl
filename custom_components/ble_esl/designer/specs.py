@@ -9,6 +9,7 @@ other keys are exactly imagespec's own, edited through ``imagespec.specs()``.
 """
 
 from copy import deepcopy
+import math
 import re
 
 from homeassistant.exceptions import HomeAssistantError
@@ -207,6 +208,123 @@ def _points(value, x, y, width, height):
 def frozen_corners(spec):
     """A polygon whose corners come from a template: a live payload cannot keep it."""
     return spec.get("type") == "polygon" and bool(templates_in(spec.get("points", "")))
+
+
+class ImportProblem(ValueError):
+    """An element of a pasted payload the designer cannot place, and why."""
+
+
+def _finite(value):
+    """A number from what a payload holds: a number, or text that is one."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, str):
+        try:
+            value = float(value.strip())
+        except ValueError:
+            return None
+    if isinstance(value, (int, float)) and math.isfinite(value):
+        return value
+    return None
+
+
+def _number(item, key):
+    if key not in item:
+        raise ImportProblem(
+            f"no '{key}': an element without a position is laid out after the previous "
+            "one, which the designer cannot place"
+        )
+    value = _finite(item[key])
+    if value is None:
+        raise ImportProblem(f"'{key}' must be a number (a template cannot place an element)")
+    return round(value)
+
+
+def from_payload(item):
+    """The designer's spec and frame for an imagespec element: the inverse of spec_payload.
+
+    Returns (spec, x, y, width, height). Raises ImportProblem when the element
+    cannot be placed, for example a line that is neither horizontal nor vertical.
+    """
+    if not isinstance(item, dict) or not isinstance(item.get("type"), str):
+        raise ImportProblem("an element needs a 'type'")
+    name = item["type"]
+    spec = dict(item)
+    if name in ("row", "column"):
+        spec["type"] = name = "stack"
+        spec.setdefault("direction", "horizontal" if item["type"] == "row" else "vertical")
+    if name not in GEOMETRY:
+        raise ImportProblem(f"'{name}' is not an imagespec element")
+    role, keys = GEOMETRY[name]
+    _, default_width, default_height = new_spec(name)
+    for key in keys:
+        spec.pop(key, None)
+    if role == "box":
+        x0, y0, x1, y1 = (_number(item, key) for key in keys)
+        x, y = min(x0, x1), min(y0, y1)
+        return spec, x, y, abs(x1 - x0) + 1, abs(y1 - y0) + 1
+    if role == "line":
+        x0, x1 = _number(item, "x_start"), _number(item, "x_end")
+        y0, y1 = _number(item, "y_start"), _number(item, "y_end")
+        raw = item.get("width", 1)
+        if isinstance(raw, float) and not math.isfinite(raw):
+            raise ImportProblem("'width' must be a finite number")
+        stroke = max(1, round(_finite(raw) or 1))  # a template: the stroke is unknown here
+        if y0 == y1:
+            # Horizontal needs a frame wider than it is tall, however thick the stroke.
+            length = abs(x1 - x0) + 1
+            height = max(1, min(stroke, length - 1))
+            return spec, min(x0, x1), y0 - height // 2, length, height
+        if x0 == x1:
+            length = abs(y1 - y0) + 1
+            width = max(1, min(stroke, length - 1))
+            return spec, x0 - width // 2, min(y0, y1), width, length
+        raise ImportProblem("a line must be horizontal or vertical")
+    if role == "circle":
+        cx, cy, radius = (_number(item, key) for key in keys)
+        radius = max(1, radius)
+        return spec, cx - radius - 1, cy - radius - 1, 2 * radius + 2, 2 * radius + 2
+    if role == "icon":
+        x, y = _number(item, keys[0]), _number(item, keys[1])
+        size = max(1, _number(item, "size")) if "size" in item else default_width
+        return spec, x, y, size, size
+    if role == "rect":
+        x, y = _number(item, keys[0]), _number(item, keys[1])
+        size = []
+        for key, default in zip(keys[2:], (default_width, default_height), strict=True):
+            size.append(max(1, _number(item, key)) if key in item else default)
+        return spec, x, y, size[0], size[1]
+    if role == "midline":
+        x, middle = _number(item, keys[0]), _number(item, keys[1])
+        return spec, x, middle - default_height // 2, default_width, default_height
+    if role == "points":
+        try:
+            corners = [
+                (float(px), float(py))
+                for px, py in (
+                    pair.split(",")
+                    for pair in str(item.get("points", "")).split(";")
+                    if pair.strip()
+                )
+            ]
+        except ValueError as err:
+            raise ImportProblem("'points' must be \"x,y;x,y;...\"") from err
+        if not all(math.isfinite(value) for corner in corners for value in corner):
+            raise ImportProblem("'points' must be finite numbers")
+        if len(corners) < 3:
+            raise ImportProblem("a polygon needs at least three points")
+        left = round(min(px for px, _ in corners))
+        top = round(min(py for _, py in corners))
+        width = max(1, round(max(px for px, _ in corners)) - left) + 1
+        height = max(1, round(max(py for _, py in corners)) - top) + 1
+        spec["points"] = ";".join(
+            f"{round((px - left) * 100 / (width - 1), 4):g},{round((py - top) * 100 / (height - 1), 4):g}"
+            for px, py in corners
+        )
+        return spec, left, top, width, height
+    # origin: drawn from the frame's top left at its own size
+    x, y = _number(item, keys[0]), _number(item, keys[1])
+    return spec, x, y, default_width, default_height
 
 
 def templates_in(value):
