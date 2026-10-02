@@ -63,6 +63,11 @@ export class ImportDialog extends HTMLElement {
     if ("close" in button.dataset) return this.close();
     const mode = button.dataset.mode;
     if (!mode) return;
+    // One request at a time: a second click would add everything again.
+    if (this.pending) return;
+    this.pending = true;
+    for (const other of this.shadowRoot.querySelectorAll(".actions button"))
+      other.disabled = true;
     const text = this.shadowRoot.querySelector("textarea").value;
     try {
       const result = await this.panel.importYaml(text, mode === "replace");
@@ -78,6 +83,8 @@ export class ImportDialog extends HTMLElement {
       );
     } catch (error) {
       this.render(error.message || String(error));
+    } finally {
+      this.pending = false;
     }
   }
 }

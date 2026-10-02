@@ -21,6 +21,7 @@ from custom_components.ble_esl.designer.importer import (
     different_pixels,
     elements_from,
     parse as parse_payload,
+    payloads,
 )
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
@@ -130,12 +131,13 @@ async def api(request):
         except HomeAssistantError as err:
             # Home Assistant carries the message to the panel; so does the demo.
             return web.Response(status=400, text=str(err))
-        elements, imported, issues = elements_from(items, preset)
-        different = (
-            await asyncio.to_thread(different_pixels, HASS, preset, imported, elements)
-            if elements
-            else None
+        elements, imported, issues = elements_from(
+            items, preset, max(0, 100 - msg.get("existing", 0))
         )
+        different = None
+        if elements:
+            original, rebuilt = payloads(HASS, imported, elements)
+            different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
         return web.json_response(
             {
                 "elements": elements,

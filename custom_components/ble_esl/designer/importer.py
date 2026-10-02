@@ -11,6 +11,18 @@ from ..renderer import render_image
 from .layout import compile_payload, validate
 from .specs import ImportProblem, from_payload, resolve_templates
 
+MAX_TEXT = 256 * 1024
+MAX_ELEMENTS = 100  # What a display holds: layout.DOCUMENT
+
+
+class _NoAliases(yaml.SafeLoader):
+    """A pasted payload is data: an alias would let a few bytes become megabytes."""
+
+    def compose_node(self, parent, index):
+        if self.check_event(yaml.AliasEvent):
+            raise yaml.YAMLError("YAML aliases (&anchor, *alias) are not accepted here")
+        return super().compose_node(parent, index)
+
 
 def parse(text):
     """The payload list (and background) in what was pasted.
@@ -18,8 +30,10 @@ def parse(text):
     It may be the list itself, a mapping with ``payload``, or a whole
     ``ble_esl.write`` action (``data.payload``), as the YAML dialog shows it.
     """
+    if len(text) > MAX_TEXT:
+        raise HomeAssistantError(f"That is too much to import (over {MAX_TEXT // 1024} KB)")
     try:
-        loaded = yaml.safe_load(text)
+        loaded = yaml.load(text, Loader=_NoAliases)
     except yaml.YAMLError as err:
         raise HomeAssistantError(f"This is not YAML: {err}") from err
     data = loaded
@@ -35,11 +49,17 @@ def parse(text):
     return data, background if isinstance(background, str) else None
 
 
-def elements_from(items, preset):
-    """Designer elements for each placeable item, what could not be placed, and why."""
+def elements_from(items, preset, room=MAX_ELEMENTS):
+    """Designer elements for each placeable item, what could not be placed, and why.
+
+    At most ``room`` elements: a display holds no more than that.
+    """
     elements, imported, issues = [], [], []
     for number, item in enumerate(items, 1):
         label = f"#{number} {item.get('type', '?')}"
+        if len(elements) >= room:
+            issues.append(f"{label}: left out, a display holds at most {MAX_ELEMENTS} elements")
+            continue
         try:
             spec, x, y, width, height = from_payload(item)
             element = validate(
@@ -59,9 +79,7 @@ def elements_from(items, preset):
                 },
                 preset,
             )["elements"][0]
-        except ImportProblem as err:
-            issues.append(f"{label}: {err}")
-        except (vol.Invalid, HomeAssistantError) as err:
+        except (ImportProblem, vol.Invalid, HomeAssistantError, ValueError, OverflowError) as err:
             issues.append(f"{label}: {err}")
         else:
             elements.append(element)
@@ -69,13 +87,22 @@ def elements_from(items, preset):
     return elements, imported, issues
 
 
-def different_pixels(hass, preset, imported, elements, background="white"):
-    """How many pixels differ between the pasted payload and what the designer builds.
+def payloads(hass, imported, elements):
+    """The pasted payload and the designer's, templates rendered.
+
+    On the event loop: Home Assistant renders templates there.
+    """
+    return (
+        resolve_templates(hass, imported, set()),
+        compile_payload(hass, {"elements": elements}),
+    )
+
+
+def different_pixels(hass, preset, original, rebuilt, background="white"):
+    """How many pixels differ between the two payloads once drawn.
 
     Zero means the designer will write exactly what the automation did.
     """
-    original = resolve_templates(hass, imported, set())
-    rebuilt = compile_payload(hass, {"elements": elements})
     before = render_image(hass, preset, original, background=background)
     after = render_image(hass, preset, rebuilt, background=background)
     differing = ImageChops.difference(before, after).convert("L").point(lambda v: 255 if v else 0)

@@ -1269,3 +1269,13 @@ test("a payload that is not YAML says so and changes nothing", async ({
   await expect(dialog.getByRole("status")).toContainText("Paste a payload");
   await expect(page.locator(".layer")).toHaveCount(0);
 });
+
+test("pressing Add twice adds the payload once", async ({ page }) => {
+  await page.getByRole("button", { name: "Import YAML" }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog
+    .getByLabel("YAML to import")
+    .fill("[{type: circle, x: 40, y: 40, radius: 12}]");
+  await dialog.getByRole("button", { name: "Add to display" }).dblclick();
+  await expect(page.locator(".layer")).toHaveCount(1);
+});

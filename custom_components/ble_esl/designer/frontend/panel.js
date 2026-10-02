@@ -800,6 +800,8 @@ export class BleEslDesigner extends HTMLElement {
     const result = await this.api("import_yaml", {
       entry_id: this.tag.entry_id,
       text,
+      // A display holds a limited number of elements; the server keeps to it.
+      existing: replace ? 0 : this.document.elements.length,
     });
     if (result.elements.length) {
       this.checkpoint();
