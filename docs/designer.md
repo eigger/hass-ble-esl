@@ -68,6 +68,8 @@ What stays as of the moment: the older sensor components (see [Convert to elemen
 
 The older components (sensor, text, icon, image, shapes, progress bar, gauge) are drawn from settings the designer keeps. **Convert to elements** (in the properties panel) turns the selected one into the plain imagespec elements it is drawn with, in its place, one undo step. Each field is then editable, and the YAML is ordinary imagespec.
 
+The properties panel groups its fields: **Content** (what the element shows or is bound to), **Position & size** (px), **Style**, and a collapsed **Advanced**. With nothing selected it offers the display **Background**. In **Layers**, each row can be hidden (eye), moved forward or backward, or deleted. The toolbar says *Unsaved changes* until you save, and the browser asks before leaving a page with unsaved work. A message in red can be dismissed with ×.
+
 Their properties panel also has the optional settings imagespec offers for what each draws: text and sensors (vertical align, fit, max lines, min font size, padding, line spacing, font file), shapes (filled or outline only, outline width, corner radius), icons (outline width and colour), images (rotate, crop to circle), progress bars (direction, corner radius, outline width, percentage), gauges (arc thickness, show value), and **Dither** for any of them. A setting left blank keeps imagespec's default, and **Visible** hides an element without deleting it.
 
 For a sensor shown as a plain value the value text becomes a template that follows the sensor, rounded as the component asked and with its unit; an unavailable state shows as it did before.

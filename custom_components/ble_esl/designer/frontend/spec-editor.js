@@ -33,8 +33,11 @@ function setPath(spec, path, value) {
       delete chain[index - 1][keys[index - 1]];
 }
 
-const label = (field) =>
-  `${esc(field.name.replaceAll("_", " "))}${field.required ? " *" : ""}`;
+// "x_start" reads as "X start"; a required field is starred.
+const label = (field) => {
+  const name = field.name.replaceAll("_", " ");
+  return `${esc(name[0].toUpperCase() + name.slice(1))}${field.required ? " *" : ""}`;
+};
 const hint = (field) => (field.doc ? ` title="${esc(field.doc)}"` : "");
 const placeholder = (field) =>
   field.default === undefined ? "" : ` placeholder="${esc(field.default)}"`;
@@ -112,7 +115,7 @@ function fieldsHtml(fields, spec, colors, prefix = "") {
 // its type, except the position keys the frame supplies.
 export function specEditorHtml(definition, spec, colors, ditherMethods) {
   if (!definition) return "";
-  const dither = `<label>dither<select data-spec="dither" data-kind="enum" aria-label="dither"><option value="">none</option>${ditherMethods
+  const dither = `<label>dither<select data-spec="dither" data-kind="enum" aria-label="dither"><option value="">off (default)</option>${ditherMethods
     .filter((method) => method !== "none")
     .map(
       (method) =>
@@ -128,6 +131,25 @@ const find = (fields, path) => {
   return rest.length ? find(field?.fields || [], rest.join(".")) : field;
 };
 
+// A red border alone does not say what is wrong: say it under the field.
+function flag(input, message) {
+  const holder = input.closest("label") || input.parentElement;
+  let note = holder.querySelector(".field-error");
+  if (!message) {
+    note?.remove();
+    input.removeAttribute("aria-invalid");
+    return;
+  }
+  input.setAttribute("aria-invalid", "true");
+  if (!note) {
+    note = document.createElement("span");
+    note.className = "field-error";
+    note.setAttribute("role", "alert");
+    holder.append(note);
+  }
+  note.textContent = message;
+}
+
 // Apply one input to the spec. Returns false when the input is not a value yet
 // (half-typed JSON or a number), so the spec keeps its last good value.
 export function applySpecInput(input, spec, definition) {
@@ -138,7 +160,7 @@ export function applySpecInput(input, spec, definition) {
         : find(definition?.fields || [], path);
   if (!field) return false;
   const raw = input.value;
-  input.removeAttribute("aria-invalid");
+  flag(input, "");
   if (raw === "__keep") return true;
   if (raw === "") {
     setPath(spec, path, undefined);
@@ -151,7 +173,7 @@ export function applySpecInput(input, spec, definition) {
     } catch {
       // A template standing for the whole list is rendered when it is built.
       if (!TEMPLATE.test(raw)) {
-        input.setAttribute("aria-invalid", "true");
+        flag(input, "Not valid JSON: check the brackets and quotes");
         return false;
       }
     }
@@ -160,7 +182,7 @@ export function applySpecInput(input, spec, definition) {
     else if (raw.trim() !== "" && Number.isFinite(Number(raw)))
       value = Number(raw);
     else {
-      input.setAttribute("aria-invalid", "true");
+      flag(input, "Enter a number, or a {{ template }}");
       return false;
     }
   } else if (field.kind === "boolean") value = raw === "true";

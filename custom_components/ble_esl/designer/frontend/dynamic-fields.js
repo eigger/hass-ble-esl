@@ -149,7 +149,8 @@ export class DynamicFields extends HTMLElement {
           this.shadowRoot.querySelector("[role=status]").textContent = "";
         }
       } catch (error) {
-        if (this.isConnected)
+        // An older request failing must not overwrite a newer one's result.
+        if (seq === this.sequence && this.isConnected)
           this.shadowRoot.querySelector("[role=status]").textContent =
             error.message;
       } finally {
