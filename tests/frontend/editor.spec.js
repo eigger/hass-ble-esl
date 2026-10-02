@@ -359,8 +359,10 @@ test("icon picker font is registered and loaded in the document", async ({
 test("elements stay on the display", async ({ page }) => {
   await page.locator('[data-add="text"]').click();
   await page.locator('[data-property="x"]').fill("-20");
+  await page.locator('[data-property="x"]').press("Tab");
   await expect.poll(() => page.evaluate(() => window.panel.element.x)).toBe(0);
   await page.locator('[data-property="x"]').fill("9999");
+  await page.locator('[data-property="x"]').press("Tab");
   await expect
     .poll(() =>
       page.evaluate(() => window.panel.element.x + window.panel.element.width),
@@ -1036,7 +1038,7 @@ test("a text box keeps its frame after a font size change and a render", async (
 });
 
 test("saving keeps the selection box on the content", async ({ page }) => {
-  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
   await rendered(page);
   const before = await selectionBox(page);
   // The server hands the document back with its defaults filled in.
@@ -1307,4 +1309,19 @@ test("pressing Convert twice converts once", async ({ page, request }) => {
   await expect(page.locator("img.exact")).toBeVisible();
   await page.getByRole("button", { name: "Convert to elements" }).dblclick();
   await expect(page.locator(".layer")).toHaveCount(3);
+});
+
+test("a layer can be deleted from the layer list", async ({ page }) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
+  await expect(page.locator(".layer")).toHaveCount(2);
+  await page
+    .locator(".layer-row")
+    .first()
+    .getByRole("button", { name: /Delete/ })
+    .click();
+  await expect(page.locator(".layer")).toHaveCount(1);
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    1,
+  );
 });
