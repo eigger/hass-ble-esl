@@ -1286,7 +1286,11 @@ test("pressing Add twice adds the payload once", async ({ page }) => {
 
 test("a sensor converts to elements whose value is a template", async ({
   page,
+  request,
 }) => {
+  // A sensor template saved by an earlier test would expand the sensor into
+  // more elements than the plain one converted here.
+  await request.post("/reset");
   await pickSensor(page, "sensor.office_temperature");
   await expect(page.locator("img.exact")).toBeVisible();
   await page.getByRole("button", { name: "Convert to elements" }).click();
@@ -1305,7 +1309,8 @@ test("a sensor converts to elements whose value is a template", async ({
   await expect(page.locator(".layer")).toHaveCount(1);
 });
 
-test("pressing Convert twice converts once", async ({ page }) => {
+test("pressing Convert twice converts once", async ({ page, request }) => {
+  await request.post("/reset");
   await pickSensor(page, "sensor.office_temperature");
   await expect(page.locator("img.exact")).toBeVisible();
   await page.getByRole("button", { name: "Convert to elements" }).dblclick();
