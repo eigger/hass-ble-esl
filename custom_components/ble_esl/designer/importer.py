@@ -133,11 +133,13 @@ def value_template(element, state, items):
             templated,
             "a bare number stays as text: written as a template it would lose its format",
         )
-    value = f"'%.{decimals}f'|format(v|float(0))" if numeric else "v"
+    # A state that is not a number is shown as reported, as the designer does.
+    value = f"('%.{decimals}f'|format(n) if n is not none else v)" if numeric else "v"
     if unit:
         value = f"({value}) ~ ' {unit}'"
+    number = "{% set n = v|float(none) %}" if numeric else ""
     template = (
-        f"{{% set v = states('{state.entity_id}') %}}"
+        f"{{% set v = states('{state.entity_id}') %}}{number}"
         f"{{{{ v|capitalize if v in ['unavailable', 'unknown'] else {value} }}}}"
     )
     wanted = shown + (f" {unit}" if unit else "")

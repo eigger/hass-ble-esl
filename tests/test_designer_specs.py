@@ -617,8 +617,9 @@ async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, woli
     assert result["different_pixels"] == 0
     values = [e["spec"].get("value") for e in result["elements"]]
     template = (
-        "{% set v = states('sensor.room') %}{{ v|capitalize if v in ['unavailable', 'unknown'] "
-        "else ('%.1f'|format(v|float(0))) ~ ' °C' }}"
+        "{% set v = states('sensor.room') %}{% set n = v|float(none) %}"
+        "{{ v|capitalize if v in ['unavailable', 'unknown'] "
+        "else (('%.1f'|format(n) if n is not none else v)) ~ ' °C' }}"
     )
     assert template in values
     types = [e["spec"]["type"] for e in result["elements"]]
@@ -631,6 +632,10 @@ async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, woli
     hass.states.async_set("sensor.room", "unavailable", {"unit_of_measurement": "°C"})
     payload = compile_payload(hass, {"elements": result["elements"]})
     assert any(item.get("value") == "Unavailable" for item in payload)
+    # Neither unavailable nor a number: shown as reported, not as 0.0.
+    hass.states.async_set("sensor.room", "error", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "error °C" for item in payload)
 
 
 async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
