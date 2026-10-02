@@ -1414,7 +1414,7 @@ export class BleEslDesigner extends HTMLElement {
           if (element.type === "sensor")
             content = this.sensorContent(element, state, label);
           if (element.type === "image" && element.image)
-            content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}">`;
+            content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}${element.circle ? ";border-radius:50%" : ""}${element.rotate ? `;transform:rotate(${Number(element.rotate) || 0}deg)` : ""}">`;
           if (element.type === "text")
             content = esc(this.tokenText(element.text)).replace(/\n/g, "<br>");
           if (element.type === "icon")
@@ -1443,8 +1443,13 @@ export class BleEslDesigner extends HTMLElement {
           // A dragged image is shown by its own <img> (laid out in the
           // frame) until the next render: the cropped layer cannot follow a
           // frame that is resized.
+          const record = this.layerRecords?.[element.id];
           const rendered =
-            element.type === "image" && this.gesture
+            element.type === "image" &&
+            (this.gesture ||
+              !record ||
+              record.size[0] !== element.width ||
+              record.size[1] !== element.height)
               ? undefined
               : this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
@@ -1500,7 +1505,7 @@ export class BleEslDesigner extends HTMLElement {
   // changes nothing on screen, so what the last render still describes stays.
   adoptDocument(saved) {
     const current = this.document.elements
-      .filter((el) => this.visibleBounds(el) !== undefined)
+      .filter((el) => el.type === "image" || this.visibleBounds(el) !== undefined)
       .map((el) => el.id);
     this.document = saved;
     const records = this.layerRecords || {};
