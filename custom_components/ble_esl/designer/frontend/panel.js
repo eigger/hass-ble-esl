@@ -1448,6 +1448,7 @@ export class BleEslDesigner extends HTMLElement {
             element.type === "image" &&
             (this.gesture ||
               !record ||
+              record.shape !== this.shape(element) ||
               record.size[0] !== element.width ||
               record.size[1] !== element.height)
               ? undefined
@@ -1505,7 +1506,7 @@ export class BleEslDesigner extends HTMLElement {
   // changes nothing on screen, so what the last render still describes stays.
   adoptDocument(saved) {
     const current = this.document.elements
-      .filter((el) => el.type === "image" || this.visibleBounds(el) !== undefined)
+      .filter((el) => (el.type === "image" ? !!this.layerRecords?.[el.id] : this.visibleBounds(el) !== undefined))
       .map((el) => el.id);
     this.document = saved;
     const records = this.layerRecords || {};
