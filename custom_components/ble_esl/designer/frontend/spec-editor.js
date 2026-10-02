@@ -29,7 +29,8 @@ function setPath(spec, path, value) {
   if (value === undefined) delete chain.at(-1)[last];
   else chain.at(-1)[last] = value;
   for (let index = chain.length - 1; index > 0; index--)
-    if (!Object.keys(chain[index]).length) delete chain[index - 1][keys[index - 1]];
+    if (!Object.keys(chain[index]).length)
+      delete chain[index - 1][keys[index - 1]];
 }
 
 const label = (field) =>
@@ -51,7 +52,9 @@ function control(field, value, path, colors) {
         ([key, text]) =>
           `<option value="${key}" ${state === key ? "selected" : ""}>${text}</option>`,
       )
-      .join("")}${typeof value === "string" ? `<option selected value="__keep">${esc(value)}</option>` : ""}</select>`;
+      .join(
+        "",
+      )}${typeof value === "string" ? `<option selected value="__keep">${esc(value)}</option>` : ""}</select>`;
   }
   if (field.kind === "enum" || field.enum) {
     const options = [...(field.enum || [])].map(String);
@@ -59,7 +62,10 @@ function control(field, value, path, colors) {
       value !== undefined && !options.includes(String(value))
         ? [String(value)]
         : [];
-    return `<select ${attrs}><option value="">${field.default === undefined ? "—" : `default (${esc(field.default)})`}</option>${[...options, ...extra]
+    return `<select ${attrs}><option value="">${field.default === undefined ? "—" : `default (${esc(field.default)})`}</option>${[
+      ...options,
+      ...extra,
+    ]
       .map(
         (option) =>
           `<option value="${esc(option)}" ${String(value) === option ? "selected" : ""}>${esc(option)}</option>`,
@@ -72,7 +78,10 @@ function control(field, value, path, colors) {
       typeof value === "string" && value && !options.includes(value)
         ? [value]
         : [];
-    return `<select ${attrs}><option value="">${field.default === undefined ? "none" : `default (${esc(field.default)})`}</option>${[...options, ...extra]
+    return `<select ${attrs}><option value="">${field.default === undefined ? "none" : `default (${esc(field.default)})`}</option>${[
+      ...options,
+      ...extra,
+    ]
       .map(
         (color) =>
           `<option value="${esc(color)}" ${value === color ? "selected" : ""}>${esc(color)}</option>`,

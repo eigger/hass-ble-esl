@@ -82,7 +82,9 @@ export class YamlDialog extends HTMLElement {
     dialog.showModal();
   }
   change(event) {
-    const box = event.composedPath().find((node) => node.dataset?.live !== undefined);
+    const box = event
+      .composedPath()
+      .find((node) => node.dataset?.live !== undefined);
     if (!box) return;
     this.live = box.checked;
     this.render();

@@ -1340,3 +1340,65 @@ test("deleting another layer keeps the selection", async ({ page }) => {
   expect(await page.evaluate(() => window.panel.selected)).toBe(kept);
   await expect(page.locator(".layer")).toHaveCount(1);
 });
+
+test("new elements do not land exactly on top of each other", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="text"]').click();
+  const positions = await page.evaluate(() =>
+    window.panel.document.elements.map((el) => `${el.x},${el.y}`),
+  );
+  expect(new Set(positions).size).toBe(2);
+});
+
+test("undo keeps the selection when the element still exists", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator(".el.selected").focus();
+  await page.keyboard.press("ArrowRight");
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  expect(await page.evaluate(() => window.panel.element?.x)).toBe(8);
+});
+
+test("a number outside its range is corrected in the field", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  const field = page.locator('[data-property="max_lines"]');
+  await field.fill("50");
+  await field.press("Tab");
+  await expect(field).toHaveValue("20");
+  expect(await page.evaluate(() => window.panel.element.max_lines)).toBe(20);
+  const size = page.locator('[data-property="font_size"]');
+  await size.fill("4");
+  await size.press("Tab");
+  await expect(size).toHaveValue("8");
+});
+
+test("Ctrl+S inside a field saves instead of opening the browser dialog", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-property="x"]').focus();
+  await page.keyboard.press("Control+s");
+  await expect
+    .poll(() => page.evaluate(() => window.panel.status))
+    .toBe("Display saved");
+});
+
+test("Refresh tags keeps the tag being edited and its unsaved design", async ({
+  page,
+}) => {
+  await page.locator("#tag").selectOption("demo-discovery");
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-action="reload"]').click();
+  await page.waitForFunction(() => !window.panel.busy);
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    1,
+  );
+  expect(await page.evaluate(() => window.panel.tag.entry_id)).toBe(
+    "demo-discovery",
+  );
+});
