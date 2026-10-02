@@ -642,6 +642,8 @@ test("four corner handles follow visible content and backgrounds have no control
   const element = await page.locator(".el.selected").boundingBox();
   const selection = await page.locator(".selection-box").boundingBox();
   expect(selection.height).toBeLessThan(element.height);
+  // The longer properties panel can leave the page scrolled past the canvas.
+  await page.locator(".stage").scrollIntoViewIfNeeded();
   const handle = await page.locator('.handle[data-corner="nw"]').boundingBox();
   const old = await page.evaluate(() => ({ ...window.panel.element }));
   await page.mouse.move(

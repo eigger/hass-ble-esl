@@ -14,6 +14,30 @@ import voluptuous as vol
 from .specs import GEOMETRY, frozen_corners, resolve_templates, spec_payload, templates_in
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
+
+
+def _dither(value):
+    """None (no override), a bool, or one of imagespec's dither methods."""
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int | float):
+        return bool(value)
+    if isinstance(value, str):
+        word = value.strip().lower()
+        if not word:
+            return None
+        if word in ("true", "on", "yes", "1"):
+            return True
+        if word in ("false", "off", "no", "0"):
+            return False
+        try:
+            imagespec.resolve_dither_method(value)
+        except ValueError as err:
+            raise vol.Invalid(str(err)) from err
+        return value
+    raise vol.Invalid("Dither is a method name, or yes or no")
+
+
 ELEMENT = vol.Schema(
     {
         vol.Required("id"): str,
@@ -47,6 +71,9 @@ ELEMENT = vol.Schema(
         vol.Optional("font_size", default=24): vol.All(int, vol.Range(min=8, max=200)),
         vol.Optional("text", default="Text"): str,
         vol.Optional("image", default=""): str,
+        vol.Optional("dither"): _dither,
+        vol.Optional("rotate"): vol.Coerce(float),
+        vol.Optional("circle"): bool,
         vol.Optional("image_fit", default="contain"): vol.In(("contain", "fill", "stretch")),
         vol.Optional("icon", default="{{icon}}"): str,
         vol.Optional("state", default=""): str,
@@ -91,6 +118,22 @@ ELEMENT = vol.Schema(
         vol.Optional("show_unit", default=True): bool,
         vol.Optional("decimals"): vol.All(int, vol.Range(min=0, max=6)),
         vol.Optional("align", default="left"): vol.In(("left", "center", "right")),
+        vol.Optional("valign"): vol.In(("top", "middle", "bottom")),
+        vol.Optional("fit"): vol.In(("shrink", "ellipsis", "shrink_ellipsis")),
+        vol.Optional("max_lines"): vol.All(int, vol.Range(min=1, max=20)),
+        vol.Optional("min_font_size"): vol.All(int, vol.Range(min=1, max=200)),
+        vol.Optional("padding"): vol.All(int, vol.Range(min=0, max=100)),
+        vol.Optional("line_spacing"): vol.All(int, vol.Range(min=0, max=100)),
+        vol.Optional("font"): str,
+        vol.Optional("stroke_width"): vol.All(int, vol.Range(min=0, max=20)),
+        vol.Optional("stroke_fill"): COLOR,
+        vol.Optional("filled"): bool,
+        vol.Optional("line_width"): vol.All(int, vol.Range(min=1, max=20)),
+        vol.Optional("radius"): vol.All(int, vol.Range(min=0, max=200)),
+        vol.Optional("direction"): vol.In(("right", "left", "up", "down")),
+        vol.Optional("show_percentage"): bool,
+        vol.Optional("show_value"): bool,
+        vol.Optional("thickness"): vol.All(int, vol.Range(min=1, max=100)),
     }
 )
 DOCUMENT = vol.Schema(
@@ -121,6 +164,8 @@ def validate(document, preset):
         if element["id"] in ids:
             raise vol.Invalid("Element IDs must be unique")
         ids.add(element["id"])
+        if element.get("stroke_fill", "black") not in palette:
+            raise vol.Invalid("Element colour is not supported by this tag")
         if element["color"] not in palette or element["background"] not in palette | {
             "transparent"
         }:
@@ -433,6 +478,7 @@ DYNAMIC_FIELDS = {
     "label",
     "decimals",
     "image_fit",
+    "dither",
     "visible",
 }
 
@@ -524,13 +570,54 @@ def live_payload(hass, document, templates=None, forecasts=None):
     return compile_payload(hass, document, templates, forecasts, keep_templates=True)
 
 
+# Pixel settings that shrink with a sensor template drawn smaller than designed.
+_SCALED_PIXELS = {
+    "min_font_size": 1,
+    "padding": 0,
+    "line_spacing": 0,
+    "line_width": 1,
+    "radius": 0,
+    "stroke_width": 0,
+    "thickness": 1,
+}
+
+
+def _optional(element, **keys):
+    """The imagespec keys the element sets, under the names imagespec gives them."""
+    return {name: element[key] for name, key in keys.items() if element.get(key) is not None}
+
+
+def _text_options(element):
+    return _optional(
+        element,
+        valign="valign",
+        fit="fit",
+        max_lines="max_lines",
+        min_size="min_font_size",
+        padding="padding",
+        line_spacing="line_spacing",
+        font="font",
+    )
+
+
+def _set_dither(payload, start, dither):
+    if dither is not None:
+        for item in payload[start:]:
+            item.setdefault("dither", dither)
+
+
 def compile_payload(hass, document, templates=None, forecasts=None, keep_templates=False):
     """Snapshot HA values on its event loop; render them later in the executor."""
     payload = []
+    pending = None
     for element in document["elements"]:
+        if pending:
+            _set_dither(payload, *pending)
+            pending = None
         element, _bound_state = resolve_component(hass, element)
         if not element["visible"]:
             continue
+        pending = (len(payload), element.get("dither"))
         x, y, width, height = (element[key] for key in ("x", "y", "width", "height"))
         color = element["color"]
         state = hass.states.get(element["entity_id"]) if element["type"] == "sensor" else None
@@ -559,6 +646,9 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     child["width"] = max(1, round(child["width"] * sx))
                     child["height"] = max(1, round(child["height"] * sy))
                     child["font_size"] = max(8, round(child["font_size"] * min(sx, sy)))
+                    for key, minimum in _SCALED_PIXELS.items():
+                        if child.get(key) is not None:
+                            child[key] = max(minimum, round(child[key] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested))
                 continue
         if element["type"] == "imagespec":
@@ -590,6 +680,14 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "fill": color,
                         "background": "white",
                         "outline": color,
+                        **_optional(
+                            element,
+                            direction="direction",
+                            radius="radius",
+                            show_percentage="show_percentage",
+                            width="line_width",
+                            font="font",
+                        ),
                     }
                 )
             else:
@@ -604,9 +702,10 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "max_value": high,
                         "fill": color,
                         "background": "white",
-                        "show_value": True,
+                        "show_value": element.get("show_value", True),
                         "size": element["font_size"],
                         "color": color,
+                        **_optional(element, width="thickness", font="font"),
                     }
                 )
             continue
@@ -621,7 +720,8 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "ysize": height,
                         "url": element["image"],
                         "mode": element["image_fit"],
-                        "dither": True,
+                        "dither": True if element.get("dither") is None else element["dither"],
+                        **_optional(element, rotate="rotate", circle="circle"),
                     }
                 )
             continue
@@ -635,17 +735,25 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     "value": element["icon"],
                     "color": color,
                     "anchor": "lt",
+                    **_optional(element, stroke_width="stroke_width", stroke_fill="stroke_fill"),
                 }
             )
             continue
         if element["type"] in ("rectangle", "line", "ellipse", "triangle", "rounded_rectangle"):
+            # A line is always solid; the other shapes can be an outline only.
+            fill = (
+                {}
+                if element["type"] != "line" and element.get("filled") is False
+                else {"fill": color}
+            )
+            outline = {"outline": color, **_optional(element, width="line_width")}
             if element["type"] == "triangle":
                 payload.append(
                     {
                         "type": "polygon",
                         "points": f"{x + width // 2},{y};{x + width - 1},{y + height - 1};{x},{y + height - 1}",
-                        "fill": color,
-                        "outline": color,
+                        **fill,
+                        **outline,
                     }
                 )
             else:
@@ -656,10 +764,14 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "y_start": y,
                         "x_end": x + width - 1,
                         "y_end": y + height - 1,
-                        "fill": color,
-                        "outline": color,
+                        **fill,
+                        **outline,
                         **(
-                            {"radius": max(1, min(width, height) // 5)}
+                            {
+                                "radius": element["radius"]
+                                if element.get("radius") is not None
+                                else max(1, min(width, height) // 5)
+                            }
                             if element["type"] == "rounded_rectangle"
                             else {}
                         ),
@@ -712,6 +824,7 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                             "fit": "shrink_ellipsis",
                             "color": color,
                             "align": element["align"],
+                            **_optional(element, font="font"),
                         }
                     )
                 continue
@@ -730,6 +843,7 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                         "fit": "shrink_ellipsis",
                         "color": color,
                         "align": element["align"],
+                        **_optional(element, font="font"),
                     }
                 )
                 y += label_height
@@ -753,7 +867,10 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     "max_lines": 3 if element["type"] == "text" else 1,
                     "color": color,
                     "align": element["align"],
+                    **_text_options(element),
                 }
             )
 
+    if pending:
+        _set_dither(payload, *pending)
     return payload

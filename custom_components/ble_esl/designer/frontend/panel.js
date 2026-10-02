@@ -26,6 +26,33 @@ const esc = (value) =>
   );
 const icon = (name) =>
   `<svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${name === "menu" ? '<path d="M4 6h16M4 12h16M4 18h16"/>' : '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>'}</svg>`;
+// Settings the inspector leaves unset until asked: blank means imagespec's default.
+const optionalProperties = new Set([
+  "valign",
+  "fit",
+  "max_lines",
+  "min_font_size",
+  "padding",
+  "line_spacing",
+  "font",
+  "line_width",
+  "radius",
+  "stroke_width",
+  "rotate",
+  "direction",
+  "thickness",
+]);
+// Whole-number ranges the schema accepts, kept when a value is typed.
+const propertyRanges = {
+  max_lines: [1, 20],
+  min_font_size: [1, 200],
+  padding: [0, 100],
+  line_spacing: [0, 100],
+  line_width: [1, 20],
+  radius: [0, 200],
+  stroke_width: [0, 20],
+  thickness: [1, 100],
+};
 const shapeTypes = [
   "rectangle",
   "rounded_rectangle",
@@ -890,6 +917,85 @@ export class BleEslDesigner extends HTMLElement {
     const save = this.shadowRoot.querySelector('[data-action="save"]');
     if (save) save.innerHTML = toolIcon("save") + "·";
   }
+  // Optional settings of the older kinds: left blank they keep imagespec's
+  // default, so a design that never sets one draws as before.
+  extraProperties(element) {
+    const type = element.type,
+      text = ["sensor", "text"].includes(type),
+      shape = shapeTypes.includes(type) && type !== "line";
+    const choice = (key, label, options, fallback = "default") =>
+      `<label>${label}<select data-property="${key}" aria-label="${label}"><option value="">${fallback}</option>${options.map((value) => `<option value="${value}" ${element[key] === value ? "selected" : ""}>${value.replaceAll("_", " ")}</option>`).join("")}</select></label>`;
+    const number = (key, label, min, max, placeholder = "") =>
+      `<label>${label}<input data-property="${key}" type="number" step="1" min="${min}" max="${max}" placeholder="${placeholder}" value="${esc(element[key] ?? "")}"></label>`;
+    const flag = (key, label, fallback) =>
+      `<label class="wide check"><input type="checkbox" data-property="${key}" ${(element[key] ?? fallback) ? "checked" : ""}>${label}</label>`;
+    const methods = (
+      this.specs?.dither_methods?.length
+        ? this.specs.dither_methods
+        : ["none", "floyd"]
+    ).filter((method) => method !== "none");
+    const dither =
+      element.dither === true
+        ? "floyd"
+        : element.dither === false
+          ? "none"
+          : (element.dither ?? "");
+    let html = "";
+    if (text)
+      html +=
+        choice("valign", "Vertical align", ["top", "middle", "bottom"]) +
+        choice(
+          "fit",
+          "Fit",
+          ["shrink", "ellipsis", "shrink_ellipsis"],
+          "default (shrink ellipsis)",
+        ) +
+        number("max_lines", "Max lines", 1, 20, type === "text" ? "3" : "1") +
+        number("min_font_size", "Min font size", 1, 200, "8") +
+        number("padding", "Padding", 0, 100, "0") +
+        number("line_spacing", "Line spacing", 0, 100, "2") +
+        `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
+    if (shape)
+      html +=
+        flag("filled", "Filled", true) +
+        number("line_width", "Outline width", 1, 20, "1") +
+        (type === "rounded_rectangle"
+          ? number("radius", "Corner radius", 0, 200, "auto")
+          : "");
+    if (type === "icon")
+      html +=
+        number("stroke_width", "Outline width", 0, 20, "0") +
+        this.colorPicker(
+          "stroke_fill",
+          element.stroke_fill ?? "white",
+          "Outline colour",
+        );
+    if (type === "image")
+      html +=
+        number("rotate", "Rotate (°)", -360, 360, "0") +
+        flag("circle", "Crop to circle", false);
+    if (type === "progress_bar")
+      html +=
+        choice(
+          "direction",
+          "Direction",
+          ["right", "left", "up", "down"],
+          "default (right)",
+        ) +
+        number("radius", "Corner radius", 0, 200, "0") +
+        number("line_width", "Outline width", 1, 20, "1") +
+        flag("show_percentage", "Show percentage", false);
+    if (type === "gauge")
+      html +=
+        number("thickness", "Arc thickness", 1, 100, "8") +
+        flag("show_value", "Show value", true);
+    if (["progress_bar", "gauge"].includes(type))
+      html += `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
+    return (
+      html +
+      `<label class="wide">Dither<select data-property="dither" aria-label="Dither"><option value="">${type === "image" ? "default (floyd)" : "default (whole image)"}</option><option value="none" ${dither === "none" ? "selected" : ""}>none</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`
+    );
+  }
   properties(element) {
     if (!element)
       return '<p class="muted wide">Click a block to move, resize, or bind it to an entity.</p>';
@@ -908,6 +1014,14 @@ export class BleEslDesigner extends HTMLElement {
           this.specs?.dither_methods || [],
         )
       );
+    if (["progress_bar", "gauge"].includes(element.type))
+      html +=
+        field("min_value", "Minimum", "number") +
+        field("max_value", "Maximum", "number") +
+        field("value", "Value", "number", true) +
+        (element.type === "gauge"
+          ? field("font_size", "Font size", "number")
+          : "");
     if (["sensor", "text"].includes(element.type))
       html +=
         field("font_size", "Font size", "number") +
@@ -917,10 +1031,12 @@ export class BleEslDesigner extends HTMLElement {
       html += `<label class="wide">Shape<select data-property="type" aria-label="Shape">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
 
     if (element.type === "image")
-      html += `<label class="wide">Image<input id="image-file" aria-label="Upload image" type="file" accept="image/*"></label><label class="wide">Fit<select data-property="image_fit" aria-label="Image fit">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>`;
+      html += `<label class="wide">Image URL<input data-property="image" aria-label="Image URL" placeholder="Paste a URL, or upload below" value="${esc(element.image?.startsWith("data:") ? "" : (element.image ?? ""))}"></label><label class="wide">Image<input id="image-file" aria-label="Upload image" type="file" accept="image/*"></label><label class="wide">Fit<select data-property="image_fit" aria-label="Image fit">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>`;
     if (element.type === "icon")
       html += `<label class="wide">Icon<button class="icon-choice" data-action="pick-icon" aria-label="Choose icon">${this.iconGlyph(this.tokenText(element.icon), 24)}<span>${element.icon === "{{icon}}" ? "HA state icon" : esc(element.icon.replace("mdi:", ""))}</span></button><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="Search icons" placeholder="Search icons"><button data-icon="{{icon}}">HA state icon</button><div class="icon-picker"></div></div><input data-property="icon" aria-label="Icon name" value="${esc(element.icon)}" hidden></label>`;
 
+    html += this.extraProperties(element);
+    html += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>Visible</label>`;
     if (this.mode === "template" && element.type === "icon")
       html += this.stateIconRows(element);
     if (this.mode === "template" && element.type !== "icon")
@@ -1213,13 +1329,19 @@ export class BleEslDesigner extends HTMLElement {
               Math.min(element.width, element.height),
             );
           if (shapeTypes.includes(element.type)) {
+            const hollow = element.type !== "line" && element.filled === false;
+            const paint = hollow
+              ? `fill="none" stroke="currentColor" stroke-width="${(element.line_width || 1) * 2}" vector-effect="non-scaling-stroke"`
+              : 'fill="currentColor"';
+            const radius =
+              element.radius ?? Math.min(element.width, element.height) / 5;
             const shape =
               element.type === "triangle"
-                ? '<polygon points="50,0 100,100 0,100"/>'
+                ? `<polygon points="50,0 100,100 0,100" ${paint}/>`
                 : element.type === "ellipse"
-                  ? '<ellipse cx="50" cy="50" rx="50" ry="50"/>'
-                  : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? 15 : 0}"/>`;
-            content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" fill="currentColor" aria-hidden="true">${shape}</svg>`;
+                  ? `<ellipse cx="50" cy="50" rx="50" ry="50" ${paint}/>`
+                  : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
+            content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
           }
           const rendered = this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
@@ -1801,8 +1923,16 @@ export class BleEslDesigner extends HTMLElement {
         this.element.decimals = defaults.decimals;
       this.element.show_unit = defaults.show_unit;
     }
-    if (key === "decimals" && input.value === "") delete this.element[key];
-    else
+    if (
+      (key === "decimals" || optionalProperties.has(key)) &&
+      input.type !== "checkbox" &&
+      input.value === ""
+    )
+      delete this.element[key];
+    else if (key === "dither") {
+      if (input.value === "") delete this.element.dither;
+      else this.element.dither = input.value === "none" ? false : input.value;
+    } else
       this.element[key] =
         input.type === "checkbox"
           ? input.checked
@@ -1813,6 +1943,11 @@ export class BleEslDesigner extends HTMLElement {
       this.element.font_size = Math.max(
         8,
         Math.min(200, this.element.font_size),
+      );
+    if (propertyRanges[key] && this.element[key] !== undefined)
+      this.element[key] = Math.max(
+        propertyRanges[key][0],
+        Math.min(propertyRanges[key][1], Math.round(this.element[key])),
       );
     if (key === "decimals" && this.element.decimals !== undefined)
       this.element.decimals = Math.max(0, Math.min(6, this.element.decimals));
