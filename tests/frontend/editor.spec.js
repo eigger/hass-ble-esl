@@ -1470,3 +1470,11 @@ test("the inspector groups its fields and an error message can be dismissed", as
     page.getByRole("button", { name: "Save (unsaved changes)" }),
   ).toBeVisible();
 });
+
+test("the add-element hints show for a display and not for sensor templates", async ({
+  page,
+}) => {
+  await expect(page.locator("#library .hint")).toHaveCount(2);
+  await page.getByRole("button", { name: "Sensor templates" }).click();
+  await expect(page.locator("#library .hint")).toHaveCount(1);
+});

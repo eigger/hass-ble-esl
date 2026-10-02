@@ -17,7 +17,7 @@ Open **ESL Designer** in the Home Assistant sidebar (it appears once a tag is co
 
 | To | Do |
 |---|---|
-| Add a text, shape, icon or image | The buttons under **Components**, one click each (**＋ Add component** opens the older components' own editor: a value from an entity, progress bar, gauge, conditional icon) |
+| Add a text, shape, icon or image | The four icon buttons under **Components**, one click each. **＋ Add component** opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon |
 | Add a sensor | Pick it in **Entities**: one sensor component that draws the icon, name and value. **Configure** edits it; [Convert to elements](#convert-to-elements) splits it into elements |
 | Add **any** imagespec element | **All elements** → choose one → **Add**. All thirty types are there: shapes, text (tables and multi-line text too), codes (QR, bar, data matrix), charts, media (icon, image), layout containers, widgets |
 | Move, resize | Drag the element or its corner handle; arrow keys nudge one pixel, Shift ten |
