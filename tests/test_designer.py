@@ -917,3 +917,69 @@ async def test_send_refuses_a_resized_tag_before_publishing(hass, wolink_entry, 
         await manager.send(wolink_entry, document())
     assert data.image_store.images.preview is before
     assert tag_writer.write_prepared.await_count == 0
+
+
+def _compiled(hass, *elements):
+    base = {"x": 4, "y": 5, "width": 40, "height": 30}
+    document = validate(
+        {
+            "version": 1,
+            "elements": [
+                {"id": f"e{index}", **base, **element} for index, element in enumerate(elements)
+            ],
+        },
+        DevicePreset("t", "T", 100, 100, "BWR"),
+    )
+    return compile_payload(hass, document)
+
+
+async def test_native_element_properties_reach_the_payload(hass):
+    payload = _compiled(
+        hass,
+        {"type": "text", "text": "hi", "valign": "middle", "max_lines": 2, "padding": 3, "font": "a.ttf"},
+        {"type": "ellipse", "filled": False, "line_width": 3},
+        {"type": "rounded_rectangle", "radius": 7},
+        {"type": "icon", "icon": "mdi:home", "stroke_width": 2, "stroke_fill": "red"},
+        {"type": "image", "image": "data:image/png;base64,AAAA", "rotate": 90, "circle": True, "dither": "atkinson"},
+        {"type": "progress_bar", "value": 50, "direction": "up", "show_percentage": True, "radius": 4},
+        {"type": "gauge", "value": 50, "thickness": 5, "show_value": False},
+        {"type": "rectangle", "dither": False},
+    )
+    text, ellipse, rounded, icon, image, bar, gauge, rectangle = payload
+    assert text["valign"] == "middle"
+    assert text["max_lines"] == 2
+    assert text["padding"] == 3
+    assert text["font"] == "a.ttf"
+    assert "fill" not in ellipse
+    assert ellipse["width"] == 3
+    assert rounded["radius"] == 7
+    assert (icon["stroke_width"], icon["stroke_fill"]) == (2, "red")
+    assert (image["rotate"], image["circle"], image["dither"]) == (90, True, "atkinson")
+    assert (bar["direction"], bar["show_percentage"], bar["radius"]) == ("up", True, 4)
+    assert (gauge["width"], gauge["show_value"]) == (5, False)
+    assert rectangle["dither"] is False
+
+
+async def test_native_element_defaults_are_unchanged(hass):
+    text, ellipse, image, gauge = _compiled(
+        hass,
+        {"type": "text", "text": "hi"},
+        {"type": "ellipse"},
+        {"type": "image", "image": "data:image/png;base64,AAAA"},
+        {"type": "gauge", "value": 5},
+    )
+    assert {"valign", "padding", "font", "dither"}.isdisjoint(text)
+    assert ellipse["fill"] == "black"
+    assert "width" not in ellipse
+    assert image["dither"] is True
+    assert gauge["show_value"] is True
+    assert "width" not in gauge
+
+
+def test_native_element_properties_are_validated():
+    preset = DevicePreset("t", "T", 100, 100, "BW")
+    element = {"id": "a", "type": "text", "x": 0, "y": 0, "width": 10, "height": 10}
+    validate({"version": 1, "elements": [{**element, "valign": "bottom"}]}, preset)
+    for bad in ({"valign": "side"}, {"max_lines": 0}, {"stroke_fill": "red"}, {"direction": "x"}):
+        with pytest.raises(vol.Invalid):
+            validate({"version": 1, "elements": [{**element, **bad}]}, preset)

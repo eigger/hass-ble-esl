@@ -68,6 +68,8 @@ What stays as of the moment: the older sensor components (see [Convert to elemen
 
 The older components (sensor, text, icon, image, shapes, progress bar, gauge) are drawn from settings the designer keeps. **Convert to elements** (in the properties panel) turns the selected one into the plain imagespec elements it is drawn with, in its place, one undo step. Each field is then editable, and the YAML is ordinary imagespec.
 
+Their properties panel also has the optional settings imagespec offers for what each draws: text and sensors (vertical align, fit, max lines, min font size, padding, line spacing, font file), shapes (filled or outline only, outline width, corner radius), icons (outline width and colour), images (rotate, crop to circle), progress bars (direction, corner radius, outline width, percentage), gauges (arc thickness, show value), and **Dither** for any of them. A setting left blank keeps imagespec's default, and **Visible** hides an element without deleting it.
+
 For a sensor shown as a plain value the value text becomes a template that follows the sensor, rounded as the component asked and with its unit; an unavailable state shows as it did before.
 
 These stay as text, as they were drawn: a weather or binary sensor, a sensor that is not available now, one with a data field or field templates, a bare number without a unit (Home Assistant reads a template whose result is only a number as a number, so 21.50 would become 21.5) and a unit with a quote, backslash or line break in it. The last two say why. Text that has template syntax in it (a unit or a name that contains `{{`) is **left out** instead, with the reason, because as an imagespec element Home Assistant would run it; the pixel count then shows what is missing.
