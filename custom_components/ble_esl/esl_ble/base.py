@@ -429,9 +429,7 @@ class EslProtocol(ABC):
         turns that into the failure sensors and decides about a retry.
         """
         trace = trace if trace is not None else self.new_trace()
-        async with ble_session(
-            ble_device, trace=trace, max_attempts=CONNECT_ATTEMPTS
-        ) as client:
+        async with ble_session(ble_device, trace=trace, max_attempts=CONNECT_ATTEMPTS) as client:
             return await self.write_session(
                 client,
                 ble_device.address,
