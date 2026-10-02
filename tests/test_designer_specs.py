@@ -502,6 +502,20 @@ def test_a_yaml_alias_is_refused():
         parse(bomb)
 
 
+def test_yaml_nested_too_deeply_is_refused_not_raised():
+    from custom_components.ble_esl.designer.importer import parse
+
+    with pytest.raises(HomeAssistantError, match="nested too deeply"):
+        parse("[" * 5000 + "]" * 5000)
+
+
+def test_the_alias_message_says_what_to_do():
+    from custom_components.ble_esl.designer.importer import parse
+
+    with pytest.raises(HomeAssistantError, match="write the repeated values out"):
+        parse("- &a {type: circle, x: 1, y: 1, radius: 2}\n- *a")
+
+
 def test_too_much_text_is_refused():
     from custom_components.ble_esl.designer.importer import parse
 

@@ -20,7 +20,10 @@ class _NoAliases(yaml.SafeLoader):
 
     def compose_node(self, parent, index):
         if self.check_event(yaml.AliasEvent):
-            raise yaml.YAMLError("YAML aliases (&anchor, *alias) are not accepted here")
+            raise yaml.YAMLError(
+                "YAML aliases (&anchor, *alias, <<: *merge) are not accepted here: "
+                "write the repeated values out before pasting"
+            )
         return super().compose_node(parent, index)
 
 
@@ -36,6 +39,8 @@ def parse(text):
         loaded = yaml.load(text, Loader=_NoAliases)
     except yaml.YAMLError as err:
         raise HomeAssistantError(f"This is not YAML: {err}") from err
+    except RecursionError as err:
+        raise HomeAssistantError("This is not usable YAML: it is nested too deeply") from err
     data = loaded
     if isinstance(loaded, dict) and isinstance(loaded.get("data"), dict):
         data = loaded["data"]
