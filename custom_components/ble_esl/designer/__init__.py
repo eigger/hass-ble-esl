@@ -352,8 +352,14 @@ class Designer:
             raise HomeAssistantError("That is an imagespec element already")
         alone = {"elements": [element]}
         forecasts = await self.forecasts(alone)
+        # Checked once the element is known to turn into how many: see below.
         snapshots = snapshot_layers(self.hass, alone, self.templates, forecasts)
         items = snapshots[0][1]
+        if len(document["elements"]) - 1 + len(items) > 100:
+            raise HomeAssistantError(
+                f"Converting would make {len(document['elements']) - 1 + len(items)} elements; "
+                "a display holds 100"
+            )
         state = self.hass.states.get(element["entity_id"]) if element["entity_id"] else None
         elements, issues, original, rebuilt = convert(self.hass, element, state, items, preset)
         different = None

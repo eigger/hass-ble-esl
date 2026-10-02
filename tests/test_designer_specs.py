@@ -616,13 +616,21 @@ async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, woli
     assert result["issues"] == []
     assert result["different_pixels"] == 0
     values = [e["spec"].get("value") for e in result["elements"]]
-    assert "{{ '%.1f'|format(states('sensor.room')|float(0)) }} °C" in values
+    template = (
+        "{% set v = states('sensor.room') %}{{ v|capitalize if v in ['unavailable', 'unknown'] "
+        "else ('%.1f'|format(v|float(0))) ~ ' °C' }}"
+    )
+    assert template in values
     types = [e["spec"]["type"] for e in result["elements"]]
     assert types.count("icon") == 1
     # The template follows the sensor: it renders to what the display showed.
     hass.states.async_set("sensor.room", "23.04", {"unit_of_measurement": "°C"})
     payload = compile_payload(hass, {"elements": result["elements"]})
     assert any(item.get("value") == "23.0 °C" for item in payload)
+    # Gone, it shows what the designer shows then: no number, no unit.
+    hass.states.async_set("sensor.room", "unavailable", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "Unavailable" for item in payload)
 
 
 async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
@@ -630,7 +638,7 @@ async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
     document = {"version": 1, "elements": [sensor("s", "sensor.mode")]}
     result = await hass.data[KEY].convert(wolink_entry, document, "s")
     assert result["different_pixels"] == 0
-    assert "{{ states('sensor.mode') }}" in [e["spec"].get("value") for e in result["elements"]]
+    assert any("states('sensor.mode')" in str(e["spec"].get("value")) for e in result["elements"])
 
 
 @pytest.mark.parametrize(
@@ -698,3 +706,45 @@ async def test_convert_over_the_websocket(hass, wolink_entry, hass_ws_client):
     assert result["success"]
     assert result["result"]["different_pixels"] == 0
     assert result["result"]["elements"]
+
+
+@pytest.mark.parametrize(
+    ("state", "attributes", "fields", "reason"),
+    [
+        ("21.5", {}, {"decimals": 2}, "bare number"),
+        ("21.50", {}, {}, "bare number"),
+        ("21.5", {"unit_of_measurement": "ft'"}, {}, "misread"),
+        ("21.5", {"unit_of_measurement": 'in"'}, {}, "misread"),
+    ],
+)
+async def test_a_value_that_a_template_would_change_stays_text(
+    hass, wolink_entry, state, attributes, fields, reason
+):
+    hass.states.async_set("sensor.odd", state, attributes)
+    document = {"version": 1, "elements": [sensor("s", "sensor.odd", **fields)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["different_pixels"] == 0
+    assert not any("{" in str(e["spec"].get("value", "")) for e in result["elements"])
+    assert any(reason in issue for issue in result["issues"])
+
+
+async def test_converting_cannot_pass_the_hundred_elements_a_display_holds(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "5", {"unit_of_measurement": "W"})
+    shapes = [
+        {"id": f"r{i}", "type": "rectangle", "x": i, "y": 0, "width": 4, "height": 4}
+        for i in range(99)
+    ]
+    document = {"version": 1, "elements": [*shapes, sensor("s", "sensor.room")]}
+    with pytest.raises(HomeAssistantError, match="holds 100"):
+        await hass.data[KEY].convert(wolink_entry, document, "s")
+
+
+@pytest.mark.parametrize("unit", ["{{ 7*7 }}", "{#x", "{% if %}"])
+async def test_a_unit_that_is_template_syntax_is_left_out_not_executed(hass, wolink_entry, unit):
+    hass.states.async_set("sensor.odd", "21.5", {"unit_of_measurement": unit})
+    document = {"version": 1, "elements": [sensor("s", "sensor.odd")]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert any("template syntax" in issue for issue in result["issues"])
+    assert not any(templates_in(e["spec"]) for e in result["elements"])
+    # The value text is missing from what it draws: the comparison says so.
+    assert result["different_pixels"] > 0

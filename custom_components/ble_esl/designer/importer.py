@@ -9,7 +9,7 @@ import yaml
 
 from ..renderer import render_image
 from .layout import as_number, compile_payload, format_decimals, normalize_unit, validate
-from .specs import ImportProblem, from_payload, resolve_templates
+from .specs import ImportProblem, from_payload, resolve_templates, templates_in
 
 MAX_TEXT = 256 * 1024
 MAX_ELEMENTS = 100  # What a display holds: layout.DOCUMENT
@@ -96,33 +96,56 @@ def value_template(element, state, items):
     """The payload with a sensor's value text turned into a template, as a copy.
 
     Only a sensor shown as a plain value can be written as one: its text is the
-    state, rounded as asked, and the unit. Anything else (a weather or binary
-    sensor, a state that is not available, a data field or field templates) is
-    left as it is.
+    state, rounded as asked, and the unit, and the template follows the
+    designer's own rules (an unavailable state shows as such, without the unit).
+    Anything else is left as it is, and why is returned: a weather or binary
+    sensor, a state that is not available, a data field, field templates, a
+    unit that would itself be read as a template, and a bare number (Home
+    Assistant turns the text of a template that is only a number back into one,
+    so 21.50 would come out as 21.5).
+
+    Returns (the payload, a reason or None).
     """
     templated = [dict(item) for item in items]
+    if element["type"] != "sensor" or state is None:
+        return templated, None
     if (
-        element["type"] != "sensor"
-        or state is None
-        or state.entity_id.startswith(("weather.", "binary_sensor."))
+        state.entity_id.startswith(("weather.", "binary_sensor."))
         or state.state in ("unavailable", "unknown")
         or element.get("data_field")
         or element.get("field_templates")
     ):
-        return templated
+        return templated, None
     shown = state.state
-    expression = f"states('{state.entity_id}')"
-    if "decimals" in element:
-        shown = format_decimals(state.state, element["decimals"])
-        if shown != state.state or as_number(state.state) is not None:
-            expression = f"'%.{element['decimals']}f'|format(states('{state.entity_id}')|float(0))"
+    decimals = element.get("decimals")
+    numeric = decimals is not None and as_number(state.state) is not None
+    if decimals is not None:
+        shown = format_decimals(state.state, decimals)
     unit = normalize_unit(state.attributes.get("unit_of_measurement", ""))
-    suffix = f" {unit}" if element.get("show_unit", True) and unit else ""
+    unit = unit if element.get("show_unit", True) else ""
+    if any(char in unit for char in "'\"\\\n"):
+        return (
+            templated,
+            "the unit has characters a template would misread, so the value stays as text",
+        )
+    if not unit and as_number(shown) is not None:
+        return (
+            templated,
+            "a bare number stays as text: written as a template it would lose its format",
+        )
+    value = f"'%.{decimals}f'|format(v|float(0))" if numeric else "v"
+    if unit:
+        value = f"({value}) ~ ' {unit}'"
+    template = (
+        f"{{% set v = states('{state.entity_id}') %}}"
+        f"{{{{ v|capitalize if v in ['unavailable', 'unknown'] else {value} }}}}"
+    )
+    wanted = shown + (f" {unit}" if unit else "")
     for item in reversed(templated):
-        if item.get("type") == "text_fit" and item.get("value") == shown + suffix:
-            item["value"] = "{{ " + expression + " }}" + suffix
+        if item.get("type") == "text_fit" and item.get("value") == wanted:
+            item["value"] = template
             break
-    return templated
+    return templated, None
 
 
 def convert(hass, element, state, items, preset):
@@ -130,11 +153,22 @@ def convert(hass, element, state, items, preset):
 
     Returns (elements, issues, original payload, rebuilt payload).
     """
-    templated = value_template(element, state, items)
+    # Text with template syntax in it (a sensor's unit can say anything) would be
+    # rendered as a template once it is an imagespec element: leave it out, and
+    # let the comparison show what that costs.
+    plain = [item for item in items if not templates_in(item)]
+    left_out = [item for item in items if templates_in(item)]
+    templated, reason = value_template(element, state, plain)
     elements, imported, issues = elements_from(templated, preset)
+    if reason:
+        issues.append(reason)
+    issues.extend(
+        f"{item.get('type')}: left out, its text has template syntax that would be rendered"
+        for item in left_out
+    )
     kept = {id(item) for item in imported}
-    original = [item for item, copy in zip(items, templated, strict=True) if id(copy) in kept]
-    return elements, issues, original, compile_payload(hass, {"elements": elements})
+    original = [item for item, copy in zip(plain, templated, strict=True) if id(copy) in kept]
+    return elements, issues, [*original, *left_out], compile_payload(hass, {"elements": elements})
 
 
 def payloads(hass, imported, elements):

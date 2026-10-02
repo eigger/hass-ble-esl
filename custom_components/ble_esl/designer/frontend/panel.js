@@ -799,7 +799,16 @@ export class BleEslDesigner extends HTMLElement {
   // exactly they draw what it did.
   async convertSelected() {
     const element = this.element;
-    if (!element) return;
+    // One at a time: the element has to be where the request left it.
+    if (!element || this.converting) return;
+    this.converting = true;
+    try {
+      await this.convertElement(element);
+    } finally {
+      this.converting = false;
+    }
+  }
+  async convertElement(element) {
     this.status = "Converting…";
     this.renderStatus();
     const result = await this.api("convert", {
@@ -807,6 +816,13 @@ export class BleEslDesigner extends HTMLElement {
       document: this.document,
       element_id: element.id,
     });
+    const index = this.document.elements.findIndex((el) => el.id === element.id);
+    if (index < 0) {
+      // Deleted or undone while the server worked: nothing to replace.
+      this.status = "The element changed; nothing was converted";
+      this.renderStatus();
+      return;
+    }
     if (!result.elements.length) {
       this.error = true;
       this.status = result.issues.join("; ") || "Nothing to convert";
@@ -814,7 +830,6 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     this.checkpoint();
-    const index = this.document.elements.indexOf(element);
     this.document.elements.splice(index, 1, ...result.elements);
     this.selected = result.elements[0].id;
     this.error = false;

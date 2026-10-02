@@ -886,6 +886,10 @@ test("inline editing still gets a caret when the click resets the selection", as
     ),
   );
   await page.locator(".el.selected .content").click();
+  // Let the emulated reset and the panel's second selection happen, as they
+  // do before a person's first key: typing into the middle of them is a race
+  // of the test, not of the panel.
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
   await page.keyboard.type("Caret");
   await expect(page.locator('[data-property="text"]')).toHaveValue("Caret");
 });
@@ -1299,4 +1303,11 @@ test("a sensor converts to elements whose value is a template", async ({
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Undo", exact: false }).click();
   await expect(page.locator(".layer")).toHaveCount(1);
+});
+
+test("pressing Convert twice converts once", async ({ page }) => {
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.getByRole("button", { name: "Convert to elements" }).dblclick();
+  await expect(page.locator(".layer")).toHaveCount(3);
 });
