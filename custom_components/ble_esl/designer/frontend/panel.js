@@ -1509,37 +1509,47 @@ export class BleEslDesigner extends HTMLElement {
   selectionMarkup() {
     const element = this.element;
     if (!element) return "";
+    const visible = this.visibleBounds(element),
+      [left, top, right, bottom] =
+        visible || [0, 0, element.width, element.height],
+      width = right - left,
+      height = bottom - top;
     const handleSize =
       (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
-    const moveTarget = `<span class="move-handle" aria-label="Move selected element" style="position:absolute;left:${element.width / 2 - handleSize / 2}px;top:${element.height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(element.width, element.height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
-    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : element.width}px;top:${corner.startsWith("n") ? -handleSize : element.height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
+    const moveTarget = `<span class="move-handle" aria-label="Move selected element" style="position:absolute;left:${width / 2 - handleSize / 2}px;top:${height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(width, height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
+    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x + left}px;top:${element.y + top}px;width:${width}px;height:${height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
   }
   updateSelectionOverlay() {
     const overlay = this.shadowRoot.querySelector(".selection-box"),
       element = this.element;
     if (!overlay || !element) return;
+    const visible = this.visibleBounds(element),
+      [left, top, right, bottom] =
+        visible || [0, 0, element.width, element.height],
+      width = right - left,
+      height = bottom - top;
     const handleSize =
       (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
-    overlay.style.left = `${element.x}px`;
-    overlay.style.top = `${element.y}px`;
-    overlay.style.width = `${element.width}px`;
-    overlay.style.height = `${element.height}px`;
+    overlay.style.left = `${element.x + left}px`;
+    overlay.style.top = `${element.y + top}px`;
+    overlay.style.width = `${width}px`;
+    overlay.style.height = `${height}px`;
     overlay.style.outlineWidth = `${1.5 / this.zoom}px`;
     for (const handle of overlay.querySelectorAll(".handle")) {
       const corner = handle.dataset.corner;
-      handle.style.left = `${corner.endsWith("w") ? -handleSize : element.width}px`;
-      handle.style.top = `${corner.startsWith("n") ? -handleSize : element.height}px`;
+      handle.style.left = `${corner.endsWith("w") ? -handleSize : width}px`;
+      handle.style.top = `${corner.startsWith("n") ? -handleSize : height}px`;
       handle.style.width = `${handleSize}px`;
       handle.style.height = `${handleSize}px`;
     }
     const moveTarget = overlay.querySelector(".move-handle");
     if (moveTarget) {
-      moveTarget.style.left = `${element.width / 2 - handleSize / 2}px`;
-      moveTarget.style.top = `${element.height / 2 - handleSize / 2}px`;
+      moveTarget.style.left = `${width / 2 - handleSize / 2}px`;
+      moveTarget.style.top = `${height / 2 - handleSize / 2}px`;
       moveTarget.style.width = `${handleSize}px`;
       moveTarget.style.height = `${handleSize}px`;
       moveTarget.style.display =
-        Math.max(element.width, element.height) * this.zoom < 36
+        Math.max(width, height) * this.zoom < 36
           ? "grid"
           : "none";
     }
@@ -2569,7 +2579,6 @@ export class BleEslDesigner extends HTMLElement {
       return;
     const node = event.target.closest("[data-id]");
     if (!node) {
-      this.lastCanvasClick = null;
       if (this.selected && !this.busy && event.target.closest(".canvas-wrap")) {
         this.finishTextEdit();
         this.selected = null;
@@ -2577,24 +2586,8 @@ export class BleEslDesigner extends HTMLElement {
       }
       return;
     }
-    const clicked = this.document.elements.find(
-        (item) => item.id === node.dataset.id,
-      ),
-      resize = event.target.closest(".handle")?.dataset.corner,
-      selectionOverlay = event.target.closest(".selection-box"),
-      moveTarget = event.target.closest(".move-handle"),
-      previousClick = this.lastCanvasClick,
-      editTextOnRelease =
-        !resize &&
-        (!selectionOverlay || moveTarget) &&
-        clicked?.type === "text" &&
-        previousClick?.id === clicked.id &&
-        performance.now() - previousClick.time <= 500 &&
-        Math.hypot(
-          event.clientX - previousClick.x,
-          event.clientY - previousClick.y,
-        ) <= 5;
-    if (!editTextOnRelease) this.lastCanvasClick = null;
+    const resize = event.target.closest(".handle")?.dataset.corner,
+      selectionOverlay = event.target.closest(".selection-box");
     event.preventDefault();
     this.selected = node.dataset.id;
     const element = this.element,
@@ -2649,21 +2642,13 @@ export class BleEslDesigner extends HTMLElement {
           this.drawStage();
           if (!this.preview) this.queuePreview();
         }
-        if (editTextOnRelease && !moved && !resize && element.type === "text") {
-          this.lastCanvasClick = null;
-          this.beginTextEdit();
-        } else if (
+        if (
           !moved &&
           !resize &&
-          (!selectionOverlay || moveTarget) &&
+          (!selectionOverlay || event.target.closest(".move-handle")) &&
           element.type === "text"
         ) {
-          this.lastCanvasClick = {
-            id: element.id,
-            x: startX,
-            y: startY,
-            time: performance.now(),
-          };
+          this.beginTextEdit();
         }
       }
     };
@@ -2681,7 +2666,6 @@ export class BleEslDesigner extends HTMLElement {
           return;
         if (!moved) {
           moved = true;
-          this.lastCanvasClick = null;
           this.preview = null;
           this.previewSequence++;
           clearTimeout(this.previewTimer);
