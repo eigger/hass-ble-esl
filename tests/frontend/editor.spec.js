@@ -514,6 +514,52 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
   });
   expect(size).toEqual([2, 4]);
 });
+test("the header and the toolbar stay in view while the panel scrolls", async ({
+  page,
+}) => {
+  const bars = () =>
+    page.evaluate(() => {
+      const host = window.panel,
+        root = host.shadowRoot,
+        rect = (selector) => {
+          const box = root.querySelector(selector).getBoundingClientRect(),
+            origin = host.getBoundingClientRect().top;
+          return { top: box.top - origin, bottom: box.bottom - origin };
+        };
+      return { header: rect("header"), toolbar: rect(".toolbar") };
+    });
+  // A wide screen has a one-row toolbar, a medium one wraps it to two rows.
+  for (const width of [1440, 900]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(() => {
+      window.panel.style.height = "450px";
+      window.panel.scrollTop = 400;
+    });
+    // The panel measures the bars after the resize, not at once.
+    await expect
+      .poll(async () => {
+        const { header, toolbar } = await bars();
+        const padding = await page.evaluate(() =>
+          parseFloat(window.panel.style.scrollPaddingTop),
+        );
+        return [
+          header.top,
+          toolbar.top === header.bottom,
+          Math.abs(padding - toolbar.bottom) < 1,
+        ];
+      })
+      .toEqual([0, true, true]);
+    expect(await page.evaluate(() => window.panel.scrollTop)).toBeGreaterThan(
+      0,
+    );
+  }
+  // On a phone the bars scroll away with the page.
+  await page.setViewportSize({ width: 600, height: 1000 });
+  await page.evaluate(() => {
+    window.panel.scrollTop = 400;
+  });
+  expect((await bars()).header.top).toBeLessThan(0);
+});
 test("images can be uploaded, resized and used as state-specific template parts", async ({
   page,
 }) => {

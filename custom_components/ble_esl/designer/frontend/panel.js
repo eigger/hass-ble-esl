@@ -114,7 +114,10 @@ export class BleEslDesigner extends HTMLElement {
     this.redoStack = [];
     this.zoom = 1;
     this.zoomMode = "fit";
-    this.resizeObserver = new ResizeObserver(() => this.fitPreview());
+    this.resizeObserver = new ResizeObserver(() => {
+      this.fitPreview();
+      this.stickyOffsets();
+    });
     this.search = "";
     this.libraryEntity = "";
     this.status = "";
@@ -701,7 +704,7 @@ export class BleEslDesigner extends HTMLElement {
     );
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px),(max-height:600px){header,.toolbar{position:static}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -756,6 +759,12 @@ export class BleEslDesigner extends HTMLElement {
       this.resizeObserver.observe(previewWindow);
       this.fitPreview();
     }
+    // The bars wrap with the width: follow their real height.
+    // and the panel itself, as the bars turn static on a short window.
+    for (const bar of this.shadowRoot.querySelectorAll("header, .toolbar"))
+      this.resizeObserver.observe(bar);
+    this.resizeObserver.observe(this);
+    this.stickyOffsets();
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) {
       menu.hass = this.hass;
@@ -788,6 +797,18 @@ export class BleEslDesigner extends HTMLElement {
     const modal = document.createElement("ble-esl-component-editor");
     this.shadowRoot.append(modal);
     modal.open(this, element);
+  }
+  // The toolbar sticks under the header, and a control scrolled into view must
+  // land below both bars instead of behind them.
+  stickyOffsets() {
+    const header = this.shadowRoot.querySelector("header"),
+      toolbar = this.shadowRoot.querySelector(".toolbar");
+    if (!header || !toolbar) return;
+    const fixed = getComputedStyle(header).position === "sticky";
+    this.style.setProperty("--bar-top", `${header.offsetHeight}px`);
+    this.style.scrollPaddingTop = fixed
+      ? `${header.offsetHeight + toolbar.offsetHeight}px`
+      : "";
   }
   fitPreview() {
     if (this.zoomMode !== "fit" || !this.tag) return;
