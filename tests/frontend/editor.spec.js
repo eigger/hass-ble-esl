@@ -1325,3 +1325,16 @@ test("a layer can be deleted from the layer list", async ({ page }) => {
     1,
   );
 });
+
+test("deleting another layer keeps the selection", async ({ page }) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
+  const kept = await page.evaluate(() => window.panel.selected);
+  await page
+    .locator(".layer-row")
+    .last()
+    .getByRole("button", { name: /Delete/ })
+    .click();
+  expect(await page.evaluate(() => window.panel.selected)).toBe(kept);
+  await expect(page.locator(".layer")).toHaveCount(1);
+});

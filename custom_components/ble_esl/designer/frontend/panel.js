@@ -1469,7 +1469,11 @@ export class BleEslDesigner extends HTMLElement {
       const kept = this.selected;
       this.selected = button.dataset.deleteLayer;
       this.transform("delete");
-      if (kept !== button.dataset.deleteLayer && this.element) {
+      if (
+        kept &&
+        kept !== button.dataset.deleteLayer &&
+        this.document.elements.some((el) => el.id === kept)
+      ) {
         this.selected = kept;
         this.render();
       }
