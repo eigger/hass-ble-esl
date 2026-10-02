@@ -1331,7 +1331,7 @@ export class BleEslDesigner extends HTMLElement {
           if (shapeTypes.includes(element.type)) {
             const hollow = element.type !== "line" && element.filled === false;
             const paint = hollow
-              ? `fill="none" stroke="currentColor" stroke-width="${element.line_width || 1}" vector-effect="non-scaling-stroke"`
+              ? `fill="none" stroke="currentColor" stroke-width="${(element.line_width || 1) * 2}" vector-effect="non-scaling-stroke"`
               : 'fill="currentColor"';
             const radius =
               element.radius ?? Math.min(element.width, element.height) / 5;

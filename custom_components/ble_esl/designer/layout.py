@@ -20,11 +20,16 @@ def _dither(value):
     """None (no override), a bool, or one of imagespec's dither methods."""
     if value is None or isinstance(value, bool):
         return value
-    if isinstance(value, int):
+    if isinstance(value, int | float):
         return bool(value)
     if isinstance(value, str):
-        if not value.strip():
+        word = value.strip().lower()
+        if not word:
             return None
+        if word in ("true", "on", "yes", "1"):
+            return True
+        if word in ("false", "off", "no", "0"):
+            return False
         try:
             imagespec.resolve_dither_method(value)
         except ValueError as err:

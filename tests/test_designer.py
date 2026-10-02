@@ -1011,6 +1011,12 @@ async def test_dither_values_are_normalised_and_checked(hass):
         {"type": "rectangle", "dither": 0},
         {"type": "rectangle", "dither": "bayer8"},
     )
+    off, on = _compiled(
+        hass,
+        {"type": "rectangle", "dither": "off"},
+        {"type": "rectangle", "dither": 1.0},
+    )
+    assert (off["dither"], on["dither"]) == (False, True)
     assert blank["dither"] is True
     assert zero["dither"] is False
     assert named["dither"] == "bayer8"
