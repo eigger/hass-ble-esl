@@ -119,6 +119,8 @@ async def test_write_reports_the_radio_it_went_through(
     assert attrs["via_type"] == "proxy"
     assert attrs["rssi"] == -71
     assert attrs["paths"] == 1
+    # No link handle: `via` is only the loudest scanner, and the report says so.
+    assert attrs["via_unconfirmed"] is True
     assert attrs["transfer_s"] == 0.1  # the protocol's own stages follow
 
     # With the handle (newer habluetooth), the scanner actually used wins,
@@ -131,6 +133,7 @@ async def test_write_reports_the_radio_it_went_through(
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via"] == "esp-livingroom (AA:BB:CC:00:00:01)" and attrs["rssi"] == -71
     assert attrs["paths"] == 2
+    assert "via_unconfirmed" not in attrs  # the link names the radio it took
     # The radio with the strongest advertisement is named when it is not the one used.
     assert attrs["advertised_via"] == "esp-kitchen (AA:BB:CC:00:00:02)"
 
