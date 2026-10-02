@@ -28,7 +28,7 @@ from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .export import export_yaml
-from .importer import different_pixels, elements_from, parse, payloads
+from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
     bindings,
     compile_payload,
@@ -341,6 +341,38 @@ class Designer:
             "background": background,
         }
 
+    async def convert(self, entry, document, element_id):
+        """One element of the old kinds as imagespec elements to edit field by field."""
+        preset = self.preset(entry)
+        document = validate(document, preset)
+        element = next((el for el in document["elements"] if el["id"] == element_id), None)
+        if element is None:
+            raise HomeAssistantError("That element is not in the display")
+        if element["type"] == "imagespec":
+            raise HomeAssistantError("That is an imagespec element already")
+        alone = {"elements": [element]}
+        forecasts = await self.forecasts(alone)
+        # Checked once the element is known to turn into how many: see below.
+        snapshots = snapshot_layers(self.hass, alone, self.templates, forecasts)
+        items = snapshots[0][1]
+        if len(document["elements"]) - 1 + len(items) > 100:
+            raise HomeAssistantError(
+                f"Converting would make {len(document['elements']) - 1 + len(items)} elements; "
+                "a display holds 100"
+            )
+        state = self.hass.states.get(element["entity_id"]) if element["entity_id"] else None
+        elements, issues, original, rebuilt = convert(self.hass, element, state, items, preset)
+        different = None
+        if elements:
+            try:
+                async with self.render_lock:
+                    different = await self.hass.async_add_executor_job(
+                        partial(different_pixels, self.hass, preset, original, rebuilt)
+                    )
+            except HomeAssistantError as err:
+                issues.append(f"render: {err}")
+        return {"elements": elements, "issues": issues, "different_pixels": different}
+
     async def save_template(self, key, template):
         if not key or ":" not in key:
             raise HomeAssistantError("Choose a sensor type")
@@ -404,6 +436,7 @@ class Designer:
                 "preview",
                 "export",
                 "import_yaml",
+                "convert",
                 "send",
                 "templates",
                 "save_template",
@@ -414,6 +447,7 @@ class Designer:
         vol.Optional("document"): dict,
         vol.Optional("text"): str,
         vol.Optional("existing"): vol.All(int, vol.Range(min=0, max=1000)),
+        vol.Optional("element_id"): str,
         vol.Optional("template"): dict,
         vol.Optional("key"): str,
         vol.Optional("entity_id"): str,
@@ -448,6 +482,10 @@ async def websocket_designer(hass, connection, msg):
     elif action == "import_yaml":
         result = await designer.import_yaml(
             designer.entry(msg["entry_id"]), msg["text"], msg.get("existing", 0)
+        )
+    elif action == "convert":
+        result = await designer.convert(
+            designer.entry(msg["entry_id"]), msg["document"], msg["element_id"]
         )
     else:
         entry = designer.entry(msg["entry_id"])

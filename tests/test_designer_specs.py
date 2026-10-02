@@ -593,3 +593,163 @@ async def test_importing_templates_works_from_the_event_loop_in_debug(hass, woli
     result = await hass.data[KEY].import_yaml(wolink_entry, text)
     assert result["issues"] == []
     assert result["different_pixels"] == 0
+
+
+def sensor(id_, entity_id, **fields):
+    return {
+        "id": id_,
+        "type": "sensor",
+        "entity_id": entity_id,
+        "x": 8,
+        "y": 8,
+        "width": 180,
+        "height": 70,
+        "font_size": 32,
+        **fields,
+    }
+
+
+async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.26", {"unit_of_measurement": "°C"})
+    document = {"version": 1, "elements": [sensor("s", "sensor.room", decimals=1)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["issues"] == []
+    assert result["different_pixels"] == 0
+    values = [e["spec"].get("value") for e in result["elements"]]
+    template = (
+        "{% set v = states('sensor.room') %}{% set n = v|float(none) %}"
+        "{{ v|capitalize if v in ['unavailable', 'unknown'] "
+        "else (('%.1f'|format(n) if n is not none else v)) ~ ' °C' }}"
+    )
+    assert template in values
+    types = [e["spec"]["type"] for e in result["elements"]]
+    assert types.count("icon") == 1
+    # The template follows the sensor: it renders to what the display showed.
+    hass.states.async_set("sensor.room", "23.04", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "23.0 °C" for item in payload)
+    # Gone, it shows what the designer shows then: no number, no unit.
+    hass.states.async_set("sensor.room", "unavailable", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "Unavailable" for item in payload)
+    # Neither unavailable nor a number: shown as reported, not as 0.0.
+    hass.states.async_set("sensor.room", "error", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "error °C" for item in payload)
+
+
+async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
+    hass.states.async_set("sensor.mode", "eco")
+    document = {"version": 1, "elements": [sensor("s", "sensor.mode")]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["different_pixels"] == 0
+    assert any("states('sensor.mode')" in str(e["spec"].get("value")) for e in result["elements"])
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "state", "attributes"),
+    [
+        ("sensor.gone", "unavailable", {}),
+        ("binary_sensor.door", "on", {"device_class": "door"}),
+        ("weather.home", "sunny", {"temperature": 20}),
+    ],
+)
+async def test_a_sensor_that_is_not_a_plain_value_converts_as_it_stands(
+    hass, wolink_entry, entity_id, state, attributes
+):
+    hass.states.async_set(entity_id, state, attributes)
+    document = {"version": 1, "elements": [sensor("s", entity_id)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["elements"]
+    assert result["different_pixels"] == 0
+    assert not any("{{" in str(e["spec"]) for e in result["elements"])
+
+
+async def test_a_shape_converts_to_the_same_shape(hass, wolink_entry):
+    document = {
+        "version": 1,
+        "elements": [
+            {
+                "id": "r",
+                "type": "rounded_rectangle",
+                "x": 10,
+                "y": 10,
+                "width": 60,
+                "height": 30,
+                "color": "red",
+            }
+        ],
+    }
+    result = await hass.data[KEY].convert(wolink_entry, document, "r")
+    assert [e["spec"]["type"] for e in result["elements"]] == ["rectangle"]
+    assert result["different_pixels"] == 0
+
+
+async def test_only_an_element_of_the_old_kinds_can_be_converted(hass, wolink_entry):
+    manager = hass.data[KEY]
+    document = spec_document(element("a", "circle", 0, 0, 40, 40))
+    with pytest.raises(HomeAssistantError, match="already"):
+        await manager.convert(wolink_entry, document, "a")
+    with pytest.raises(HomeAssistantError, match="not in the display"):
+        await manager.convert(wolink_entry, document, "nope")
+
+
+async def test_convert_over_the_websocket(hass, wolink_entry, hass_ws_client):
+    hass.states.async_set("sensor.room", "5")
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "convert",
+            "entry_id": wolink_entry.entry_id,
+            "element_id": "s",
+            "document": {"version": 1, "elements": [sensor("s", "sensor.room")]},
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"]["different_pixels"] == 0
+    assert result["result"]["elements"]
+
+
+@pytest.mark.parametrize(
+    ("state", "attributes", "fields", "reason"),
+    [
+        ("21.5", {}, {"decimals": 2}, "bare number"),
+        ("21.50", {}, {}, "bare number"),
+        ("21.5", {"unit_of_measurement": "ft'"}, {}, "misread"),
+        ("21.5", {"unit_of_measurement": 'in"'}, {}, "misread"),
+    ],
+)
+async def test_a_value_that_a_template_would_change_stays_text(
+    hass, wolink_entry, state, attributes, fields, reason
+):
+    hass.states.async_set("sensor.odd", state, attributes)
+    document = {"version": 1, "elements": [sensor("s", "sensor.odd", **fields)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["different_pixels"] == 0
+    assert not any("{" in str(e["spec"].get("value", "")) for e in result["elements"])
+    assert any(reason in issue for issue in result["issues"])
+
+
+async def test_converting_cannot_pass_the_hundred_elements_a_display_holds(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "5", {"unit_of_measurement": "W"})
+    shapes = [
+        {"id": f"r{i}", "type": "rectangle", "x": i, "y": 0, "width": 4, "height": 4}
+        for i in range(99)
+    ]
+    document = {"version": 1, "elements": [*shapes, sensor("s", "sensor.room")]}
+    with pytest.raises(HomeAssistantError, match="holds 100"):
+        await hass.data[KEY].convert(wolink_entry, document, "s")
+
+
+@pytest.mark.parametrize("unit", ["{{ 7*7 }}", "{#x", "{% if %}"])
+async def test_a_unit_that_is_template_syntax_is_left_out_not_executed(hass, wolink_entry, unit):
+    hass.states.async_set("sensor.odd", "21.5", {"unit_of_measurement": unit})
+    document = {"version": 1, "elements": [sensor("s", "sensor.odd")]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert any("template syntax" in issue for issue in result["issues"])
+    assert not any(templates_in(e["spec"]) for e in result["elements"])
+    # The value text is missing from what it draws: the comparison says so.
+    assert result["different_pixels"] > 0

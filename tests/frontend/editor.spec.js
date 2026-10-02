@@ -886,6 +886,10 @@ test("inline editing still gets a caret when the click resets the selection", as
     ),
   );
   await page.locator(".el.selected .content").click();
+  // Let the emulated reset and the panel's second selection happen, as they
+  // do before a person's first key: typing into the middle of them is a race
+  // of the test, not of the panel.
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
   await page.keyboard.type("Caret");
   await expect(page.locator('[data-property="text"]')).toHaveValue("Caret");
 });
@@ -1278,4 +1282,37 @@ test("pressing Add twice adds the payload once", async ({ page }) => {
     .fill("[{type: circle, x: 40, y: 40, radius: 12}]");
   await dialog.getByRole("button", { name: "Add to display" }).dblclick();
   await expect(page.locator(".layer")).toHaveCount(1);
+});
+
+test("a sensor converts to elements whose value is a template", async ({
+  page,
+  request,
+}) => {
+  // A sensor template saved by an earlier test would expand the sensor into
+  // more elements than the plain one converted here.
+  await request.post("/reset");
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.getByRole("button", { name: "Convert to elements" }).click();
+  await expect(page.locator(".status")).toContainText(
+    "drawn exactly as before",
+  );
+  await expect(page.locator(".layer")).toHaveCount(3);
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const yaml = page
+    .locator("ble-esl-yaml-dialog dialog")
+    .getByLabel("YAML", { exact: true });
+  await expect(yaml).toHaveValue(/states\(''sensor\.office_temperature''\)/);
+  // Undo brings the sensor back as one element.
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  await expect(page.locator(".layer")).toHaveCount(1);
+});
+
+test("pressing Convert twice converts once", async ({ page, request }) => {
+  await request.post("/reset");
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.getByRole("button", { name: "Convert to elements" }).dblclick();
+  await expect(page.locator(".layer")).toHaveCount(3);
 });
