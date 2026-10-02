@@ -1466,8 +1466,13 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.deleteLayer) {
+      const kept = this.selected;
       this.selected = button.dataset.deleteLayer;
       this.transform("delete");
+      if (kept !== button.dataset.deleteLayer && this.element) {
+        this.selected = kept;
+        this.render();
+      }
       return;
     }
     if (button.dataset.select) {
@@ -1608,7 +1613,7 @@ export class BleEslDesigner extends HTMLElement {
       // Step back instead when the copy would be clamped onto the original.
       copy.x += copy.x + copy.width + 8 > this.tag.width ? -8 : 8;
       copy.y += copy.y + copy.height + 8 > this.tag.height ? -8 : 8;
-      clampBox(copy, this.tag);
+      clampBox(copy, this.tag, onLabel(element, this.tag));
       elements.push(copy);
       this.selected = copy.id;
     }
@@ -1761,6 +1766,7 @@ export class BleEslDesigner extends HTMLElement {
       if (this.typingProperty !== input) {
         this.checkpoint();
         this.typingProperty = input;
+        this.typedOnLabel = onLabel(this.element, this.tag);
       }
       this.updateProperty(input);
       this.edited(false);
@@ -1909,7 +1915,8 @@ export class BleEslDesigner extends HTMLElement {
     if (input.dataset.property && this.element) {
       if (["text", "textarea", "number"].includes(input.type)) {
         if (["x", "y", "width", "height"].includes(input.dataset.property)) {
-          clampBox(this.element, this.tag);
+          // Judged before the edit: an off-label imported frame stays put.
+          clampBox(this.element, this.tag, this.typedOnLabel ?? true);
           this.edited();
         }
         return;
