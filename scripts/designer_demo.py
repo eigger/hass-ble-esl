@@ -148,8 +148,8 @@ async def demo_forecasts():
 
 async def preview(document, preset):
     forecasts = await demo_forecasts()
-    payload = compile_payload(HASS, document, TEMPLATES, forecasts)
     snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts)
+    payload = [item for _, part in snapshots for item in part]
     image, layers = await asyncio.to_thread(
         render_document, HASS, preset, document, payload, snapshots
     )

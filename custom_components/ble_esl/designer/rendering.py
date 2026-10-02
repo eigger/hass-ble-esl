@@ -1,14 +1,13 @@
 """Render the display exactly as a write would, plus movable editor layers."""
 
 import base64
-from copy import deepcopy
 from io import BytesIO
 
 from PIL import Image, ImageChops
 
-from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from .layout import compile_payload, resolve_component
+from .specs import resolve_templates
 
 
 def snapshot_layers(hass, document, templates, forecasts):
@@ -16,10 +15,14 @@ def snapshot_layers(hass, document, templates, forecasts):
     layers = []
     for element in document["elements"]:
         element = resolve_component(hass, element)[0]
-        local = deepcopy(element)
-        if element["type"] != "imagespec":
-            local["x"] = local["y"] = 0
-        payload = compile_payload(hass, {"elements": [local]}, templates, forecasts)
+        if element["type"] == "imagespec":
+            # Rendered once here: the layer and the display share these values,
+            # and the entities say which state changes redraw the preview.
+            entities = set()
+            element["spec"] = resolve_templates(hass, element["spec"], entities)
+            element["_spec_resolved"] = True
+            element["_template_entities"] = sorted(entities)
+        payload = compile_payload(hass, {"elements": [element]}, templates, forecasts)
         layers.append((element, payload))
     return layers
 
@@ -30,8 +33,13 @@ def png_url(image):
     return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 
-def spec_layer(hass, preset, element, payload, previews):
-    """The transparent layer of one imagespec element, cropped to what it draws."""
+def element_layer(hass, preset, element, payload, previews):
+    """The transparent layer of one element, cropped to what it draws.
+
+    An element can draw beyond its frame (a barcode's quiet zone, a chart's
+    labels, a glyph's overhang), so the layer is all of it, placed relative to
+    the frame, not the frame's own crop.
+    """
     light = render_image(hass, preset, payload, background="white")
     dark = render_image(hass, preset, payload, background="black")
     alpha = ImageChops.difference(light, dark).convert("L").point(lambda value: 0 if value else 255)
@@ -54,7 +62,7 @@ def render_document(hass, preset, document, payload, snapshots):
     to the tag and an automation using the exported YAML cannot differ.
 
     The layers only exist to select and drag elements. imagespec returns RGB, so
-    each is rendered against black and white: pixels that differ were untouched
+    each is rendered, at its place on the display, against black and white: pixels that differ were untouched
     by the element and become transparent, without mistaking intentionally white
     text or fills for transparency. Font drawing uses imagespec's monochrome
     masks, so covered pixels are exact.
@@ -62,35 +70,7 @@ def render_document(hass, preset, document, payload, snapshots):
     canvas = render_image(hass, preset, payload, background=document["background"])
     previews = {"_bounds": {}, "_offsets": {}, "_values": {}, "_dependencies": {}}
     for element, element_payload in snapshots:
-        if element["type"] == "imagespec":
-            # Such an element can draw beyond its frame (a barcode's quiet zone,
-            # a chart's labels), so its layer is the whole of what it draws.
-            previews["_values"][element["id"]] = {}
-            previews["_dependencies"][element["id"]] = []
-            previews[element["id"]] = spec_layer(hass, preset, element, element_payload, previews)
-            continue
-        local = DevicePreset("layer", "Layer", element["width"], element["height"], preset.colors)
-        background = element["background"]
-        light = render_image(
-            hass,
-            local,
-            element_payload,
-            background="white" if background == "transparent" else background,
-        )
-        dark = render_image(
-            hass,
-            local,
-            element_payload,
-            background="black" if background == "transparent" else background,
-        )
         previews["_values"][element["id"]] = element.get("_templated_fields", {})
         previews["_dependencies"][element["id"]] = element.get("_template_entities", [])
-        alpha = (
-            ImageChops.difference(light, dark).convert("L").point(lambda value: 0 if value else 255)
-        )
-        layer = light.convert("RGBA")
-        layer.putalpha(alpha)
-        if bounds := alpha.getbbox():
-            previews["_bounds"][element["id"]] = bounds
-        previews[element["id"]] = png_url(layer)
+        previews[element["id"]] = element_layer(hass, preset, element, element_payload, previews)
     return canvas, previews

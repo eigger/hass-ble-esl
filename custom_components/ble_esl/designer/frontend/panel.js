@@ -767,27 +767,46 @@ export class BleEslDesigner extends HTMLElement {
             )
             .join("")}</optgroup>`,
       )
-      .join("")}</select></label>`;
+      .join(
+        "",
+      )}</select></label><button class="wide" data-action="add-spec">Add</button>`;
   }
   addSpec(type) {
     const definition = this.specs.types.find((item) => item.type === type);
     if (!definition) return;
     this.checkpoint();
     const element = newSpecElement(definition, newElement, this.tag);
+    if (type === "plot") {
+      // The example names a sensor nobody has; start from one that records numbers.
+      const sensor = this.entities().find(
+        (state) =>
+          state.entity_id.startsWith("sensor.") &&
+          Number.isFinite(Number.parseFloat(state.state)),
+      );
+      if (sensor) element.spec.data[0].entity = sensor.entity_id;
+    }
     this.document.elements.push(element);
     this.selected = element.id;
     this.edited();
     this.focusElement();
   }
+  // Undo steps only for edits that took: half-typed input changes nothing.
+  pushUndo(snapshot) {
+    this.undoStack.push(snapshot);
+    if (this.undoStack.length > 100) this.undoStack.shift();
+    this.redoStack = [];
+  }
   specInput(input) {
     const element = this.element;
     if (element?.type !== "imagespec") return;
-    if (this.typingProperty !== input) {
-      this.checkpoint();
-      this.typingProperty = input;
-    }
+    const first = this.typingProperty !== input,
+      before = first ? clone(this.document) : null;
     if (!applySpecInput(input, element.spec, this.specDefinition(element)))
       return;
+    if (first) {
+      this.pushUndo(before);
+      this.typingProperty = input;
+    }
     this.edited(false);
     const save = this.shadowRoot.querySelector('[data-action="save"]');
     if (save) save.innerHTML = toolIcon("save") + "·";
@@ -1131,7 +1150,7 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
+          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || element.text || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
                   const bounds = visible || box;
@@ -1239,6 +1258,11 @@ export class BleEslDesigner extends HTMLElement {
       this.switchMode(
         button.dataset.action === "template-mode" ? "template" : "display",
       );
+      return;
+    }
+    if (button.dataset.action === "add-spec") {
+      const type = this.shadowRoot.querySelector("#add-spec")?.value;
+      if (type) this.addSpec(type);
       return;
     }
     if (button.dataset.action === "add-current-entity") {
@@ -1749,15 +1773,22 @@ export class BleEslDesigner extends HTMLElement {
       this.edited();
       return;
     }
-    if (id === "add-spec") {
-      if (input.value) this.addSpec(input.value);
-      return;
-    }
+    // Chosen with the Add button: arrow keys move through the list, they
+    // must not add an element at every step.
+    if (id === "add-spec") return;
     if (input.dataset.spec) {
       if (input.matches("select") && this.element?.type === "imagespec") {
-        this.checkpoint();
-        if (applySpecInput(input, this.element.spec, this.specDefinition(this.element)))
+        const before = clone(this.document);
+        if (
+          applySpecInput(
+            input,
+            this.element.spec,
+            this.specDefinition(this.element),
+          )
+        ) {
+          this.pushUndo(before);
           this.edited();
+        }
       }
       return;
     }
@@ -1976,6 +2007,12 @@ export class BleEslDesigner extends HTMLElement {
             .querySelector(".canvas-wrap")
             ?.previousElementSibling?.querySelector("span");
           if (title) title.textContent = "Exact rendered preview";
+          if (this.error) {
+            // The render that failed has been fixed.
+            this.error = false;
+            this.status = "Exact rendered preview";
+            this.renderStatus();
+          }
         }
       } catch (error) {
         if (sequence === this.previewSequence) this.report(error);

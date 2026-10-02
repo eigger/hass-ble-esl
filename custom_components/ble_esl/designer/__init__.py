@@ -259,8 +259,10 @@ class Designer:
         preset = self.preset(entry)
         document = validate(document, preset)
         forecasts = await self.forecasts(document)
-        payload = compile_payload(self.hass, document, self.templates, forecasts)
         snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
+        # The elements' payloads in order are the document's payload: one
+        # evaluation of every template serves the display and the layers.
+        payload = [item for _, part in snapshots for item in part]
         image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
@@ -311,9 +313,9 @@ class Designer:
         if state is None:
             raise HomeAssistantError("Choose an available sample entity")
         document = substitute(template["document"], sensor_values(state, {}), state.state, state)
-        payload = compile_payload(self.hass, document)
-        preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         snapshots = snapshot_layers(self.hass, document, {}, {})
+        payload = [item for _, part in snapshots for item in part]
+        preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         image, layers = await self.render(preset, document, payload, snapshots)
         buffer = BytesIO()
         image.save(buffer, "PNG")

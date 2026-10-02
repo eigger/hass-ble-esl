@@ -49,10 +49,10 @@ GEOMETRY = {
     "multiline": ("origin", ("x", "start_y")),
     "table": ("origin", ("x", "y")),
     "rich_text": ("origin", ("x", "y")),
-    "icon": ("origin", ("x", "y")),
-    "qrcode": ("origin", ("x", "y")),
-    "barcode": ("origin", ("x", "y")),
-    "datamatrix": ("origin", ("x", "y")),
+    "icon": ("icon", ("x", "y", "size")),
+    "qrcode": ("rect", RECT),
+    "barcode": ("rect", RECT),
+    "datamatrix": ("rect", RECT),
     "legend": ("origin", ("x", "y")),
     "star_rating": ("origin", ("x", "y")),
     "rectangle_pattern": ("origin", ("x_start", "y_start")),
@@ -104,7 +104,7 @@ EXAMPLES = {
         100,
         50,
     ),
-    "new_multiline": ({"value": "Several lines\nof text", "size": 18}, 110, 50),
+    "new_multiline": ({"value": "Several lines\nof text", "size": 18}, 110, 60),
     "text_fit": ({"value": "Fit this text", "size": 24}, 120, 40),
     "table": ({"columns": [60, 60], "rows": [["A", "B"], ["1", "2"]], "font_size": 14}, 120, 60),
     "rich_text": (
@@ -173,17 +173,27 @@ def spec_payload(spec, x, y, width, height):
         values = (x + width // 2, y + height // 2, max(1, min(width, height) // 2 - 1))
     elif role == "rect":
         values = (x, y, width, height)
+    elif role == "icon":
+        values = (x, y, min(width, height))
     elif role == "points":
-        points = ";".join(
-            f"{x + round(float(px) * (width - 1) / 100)},{y + round(float(py) * (height - 1) / 100)}"
-            for px, py in (
-                pair.split(",") for pair in str(spec.get("points", "")).split(";") if pair
-            )
-        )
-        return {**payload, "points": points}
+        return {**payload, "points": _points(spec.get("points", ""), x, y, width, height)}
     else:
         values = (x, y)
     return {**payload, **dict(zip(keys, values, strict=True))}
+
+
+def _points(value, x, y, width, height):
+    """A polygon's "x,y;x,y;..." in percent of the frame, as display coordinates."""
+    try:
+        pairs = [pair.split(",") for pair in str(value).split(";") if pair.strip()]
+        return ";".join(
+            f"{x + round(float(px) * (width - 1) / 100)},{y + round(float(py) * (height - 1) / 100)}"
+            for px, py in pairs
+        )
+    except ValueError as err:
+        raise HomeAssistantError(
+            f'polygon points {value!r} must be "x,y;x,y;..." in percent of the frame'
+        ) from err
 
 
 def templates_in(value):
@@ -214,8 +224,12 @@ def resolve_templates(hass, value, entities):
     return value
 
 
-def _field(field, skip=()):
+def _field(field, percent=False):
     result = {"name": field.name, "kind": field.kind, "required": field.required}
+    if percent and field.name == "points":
+        # The frame places the polygon, so its corners are relative to it.
+        result["doc"] = 'Corners as "x,y;x,y;..." in percent (0-100) of the element frame'
+        return result
     if field.default is not UNSET:
         result["default"] = field.default
     if field.doc:
@@ -249,7 +263,11 @@ def describe():
                     "doc": spec.doc,
                     "role": role,
                     "geometry": list(keys),
-                    "fields": [_field(field) for field in spec.fields if field.name not in keys],
+                    "fields": [
+                        _field(field, role == "points")
+                        for field in spec.fields
+                        if field.name not in keys or role == "points"
+                    ],
                     "example": example,
                     "width": width,
                     "height": height,

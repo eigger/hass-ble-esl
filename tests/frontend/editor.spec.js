@@ -1087,6 +1087,7 @@ test("an imagespec element is added from the list, edited by its fields and expo
   page,
 }) => {
   await page.getByLabel("Add element").selectOption("pie");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.locator(".layer.active")).toHaveText("pie");
   await page.locator('[data-spec="values"]').fill("A,1;B,3");
   await page.locator('[data-spec="inner_radius"]').fill("20");
@@ -1110,6 +1111,8 @@ test("an imagespec element is added from the list, edited by its fields and expo
 });
 
 test("every imagespec element can be added and rendered", async ({ page }) => {
+  // Each preview renders every element added so far.
+  test.setTimeout(120_000);
   const types = await page.evaluate(() =>
     window.panel.specs.types.map((type) => type.type),
   );
@@ -1130,6 +1133,7 @@ test("a click on an element keeps the exact preview and a drag swaps in the laye
   page,
 }) => {
   await page.getByLabel("Add element").selectOption("pie");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.locator("img.exact")).toBeVisible();
   const hit = page.locator(".el.selected .hit-area");
   const box = await hit.boundingBox();
@@ -1142,4 +1146,55 @@ test("a click on an element keeps the exact preview and a drag swaps in the laye
   await expect(page.locator("img.exact")).toHaveCount(0);
   await page.mouse.up();
   await expect(page.locator("img.exact")).toBeVisible();
+});
+
+test("choosing in the element list adds nothing until Add is pressed", async ({
+  page,
+}) => {
+  const list = page.getByLabel("Add element");
+  await list.focus();
+  for (const key of ["ArrowDown", "ArrowDown", "ArrowDown"])
+    await page.keyboard.press(key);
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    0,
+  );
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    1,
+  );
+});
+
+test("an error shown for a broken value is cleared once the value is fixed", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("text");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.locator("img.exact")).toBeVisible();
+  const value = page.locator('[data-spec="value"]');
+  await value.fill("{{ 1 / 0 }}");
+  await expect(page.locator(".status")).toHaveClass(/error/);
+  await value.fill("fixed");
+  await expect(page.locator(".status")).not.toHaveClass(/error/);
+  await expect(page.locator("img.exact")).toBeVisible();
+});
+
+test("a polygon's corners and a whole-list template can be typed", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("polygon");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.locator('[data-spec="points"]').fill("0,0;100,0;50,100");
+  expect(await page.evaluate(() => window.panel.element.spec.points)).toBe(
+    "0,0;100,0;50,100",
+  );
+  await page.getByLabel("Add element").selectOption("sparkline");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.locator('[data-spec="values"]').fill("{{ [1, 2, 3] }}");
+  await expect(page.locator('[data-spec="values"]')).not.toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  expect(await page.evaluate(() => window.panel.element.spec.values)).toBe(
+    "{{ [1, 2, 3] }}",
+  );
 });

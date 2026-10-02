@@ -4,15 +4,21 @@ import base64
 from functools import partial
 from io import BytesIO
 
+from homeassistant.exceptions import HomeAssistantError
 import imagespec
-from PIL import Image
+from PIL import Image, ImageChops
 import pytest
 import voluptuous as vol
 import yaml
 
 from custom_components.ble_esl.designer import KEY
-from custom_components.ble_esl.designer.layout import compile_payload, validate
+from custom_components.ble_esl.designer.layout import (
+    compile_payload,
+    validate,
+    validate_template,
+)
 from custom_components.ble_esl.designer.specs import (
+    GEOMETRY,
     describe,
     element_types,
     new_spec,
@@ -65,14 +71,35 @@ async def test_element_renders(hass, type_, width, height):
     assert image.size == (250, 122)
 
 
-@pytest.mark.parametrize("type_", [t for t in element_types() if t not in NEEDS_RECORDER])
-async def test_element_draws_something_inside_its_frame(hass, type_):
-    spec, width, height = new_spec(type_)
-    payload = spec_payload(spec, 20, 20, width, height)
+FRAME_FILLING = ("box", "line", "circle", "rect", "icon")
+
+
+@pytest.mark.parametrize(
+    "type_",
+    [t for t in element_types() if GEOMETRY[t][0] in FRAME_FILLING and t not in NEEDS_RECORDER],
+)
+@pytest.mark.parametrize(("width", "height"), [(None, None), (200, 90)])
+async def test_a_frame_sized_element_draws_inside_its_frame(hass, type_, width, height):
+    spec, default_width, default_height = new_spec(type_)
+    width, height = width or default_width, height or default_height
+    payload = spec_payload(spec, 20, 15, width, height)
     preset = DevicePreset("test", "test", 250, 122, "BWRY")
     image = await hass.async_add_executor_job(partial(render_image, hass, preset, [payload]))
-    assert image.getbbox() is not None
-    assert image.convert("L").point(lambda v: 255 - v).getbbox() is not None
+    drawn = ImageChops.difference(image, Image.new("RGB", image.size, "white")).getbbox()
+    assert drawn is not None, "nothing was drawn"
+    left, top, right, bottom = drawn
+    # A pixel of slack for strokes centred on the frame's edge.
+    assert left >= 19 and top >= 14, drawn
+    assert right <= 20 + width + 1 and bottom <= 15 + height + 1, drawn
+
+
+@pytest.mark.parametrize("type_", ["qrcode", "barcode", "datamatrix", "icon"])
+def test_the_frame_sizes_codes_and_icons(type_):
+    spec, _, _ = new_spec(type_)
+    small = spec_payload(spec, 0, 0, 30, 30)
+    large = spec_payload(spec, 0, 0, 90, 70)
+    assert small != large
+    assert imagespec.validate([small, large]) == []
 
 
 def test_frame_supplies_the_position_keys():
@@ -192,12 +219,54 @@ async def test_the_specs_action_describes_every_element(hass, wolink_entry, hass
     assert "floyd" in result["result"]["dither_methods"]
 
 
-async def test_a_layer_keeps_what_an_element_draws_beyond_its_frame(hass, wolink_entry):
-    # A barcode's quiet zone and bars run past the 120x50 frame it starts in.
-    document = spec_document(element("code", "barcode", 20, 60, 120, 50))
+async def test_a_layer_keeps_what_a_text_draws_past_its_frame(hass, wolink_entry):
+    # 40px glyphs in a 20x10 frame: the frame is nowhere near what is drawn.
+    document = spec_document(element("big", "text", 10, 10, 20, 10, value="WIDE", size=40))
     layers = (await hass.data[KEY].preview(wolink_entry, document))["layers"]
-    left, top, right, bottom = layers["_bounds"]["code"]
-    assert right - left > 120
-    assert layers["_offsets"]["code"] == [left, top]
-    with Image.open(BytesIO(base64.b64decode(layers["code"].split(",")[1]))) as layer:
-        assert layer.size == (right - left, bottom - top)
+    left, top, right, bottom = layers["_bounds"]["big"]
+    assert right - left > 20
+    assert bottom - top > 10
+
+
+def test_a_polygons_corners_are_editable_in_percent_of_the_frame():
+    polygon = next(item for item in describe()["types"] if item["type"] == "polygon")
+    points = next(field for field in polygon["fields"] if field["name"] == "points")
+    assert "percent" in points["doc"]
+    spec, _, _ = new_spec("polygon")
+    bad = {**spec, "points": "50,0;100"}
+    with pytest.raises(HomeAssistantError, match="polygon points"):
+        spec_payload(bad, 0, 0, 40, 40)
+
+
+def test_validation_names_what_is_wrong_with_an_element():
+    for bad in ({"type": ["circle"]}, {"type": "row"}, {"type": "nonsense"}):
+        document = spec_document({**element("a", "circle", 0, 0, 40, 40), "spec": bad})
+        with pytest.raises(vol.Invalid, match="element type"):
+            validate(document, PRESET)
+    star = element("s", "star_rating", 0, 0, 80, 20)
+    del star["spec"]["rating"]
+    with pytest.raises(vol.Invalid, match="star_rating"):
+        validate(spec_document(star), PRESET)
+    # An element waiting on a template is checked once the template is rendered.
+    star["spec"]["rating"] = "{{ 3 }}"
+    validate(spec_document(star), PRESET)
+
+
+def test_sensor_templates_cannot_hold_imagespec_elements():
+    template = {
+        "width": 100,
+        "height": 60,
+        "sensor_type": "output:numeric",
+        "document": spec_document(element("a", "circle", 0, 0, 40, 40)),
+    }
+    with pytest.raises(vol.Invalid, match="imagespec"):
+        validate_template(template)
+
+
+async def test_the_preview_knows_which_entities_a_template_reads(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.5")
+    document = spec_document(
+        element("t", "text", 5, 5, 100, 30, value="{{ states('sensor.room') }}")
+    )
+    layers = (await hass.data[KEY].preview(wolink_entry, document))["layers"]
+    assert layers["_dependencies"]["t"] == ["sensor.room"]

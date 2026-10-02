@@ -39,7 +39,7 @@ const placeholder = (field) =>
   field.default === undefined ? "" : ` placeholder="${esc(field.default)}"`;
 
 function control(field, value, path, colors) {
-  const attrs = `data-spec="${esc(path)}" data-kind="${field.kind}" aria-label="${esc(path.replaceAll("_", " "))}"`;
+  const attrs = `data-spec="${esc(path)}" data-kind="${field.kind}" aria-label="${esc(path.replaceAll("_", " "))}${field.required ? " (required)" : ""}"`;
   if (field.kind === "boolean") {
     const state = typeof value === "boolean" ? String(value) : "";
     return `<select ${attrs}>${[
@@ -80,7 +80,7 @@ function control(field, value, path, colors) {
       .join("")}</select>`;
   }
   if (field.kind === "number")
-    return `<input ${attrs} type="text" inputmode="decimal" value="${esc(value ?? "")}"${placeholder(field)}>`;
+    return `<input ${attrs} type="text" value="${esc(value ?? "")}"${placeholder(field)}>`;
   if (["array", "elements", "object"].includes(field.kind))
     return `<textarea ${attrs} data-json rows="3" spellcheck="false"${placeholder(field)}>${value === undefined ? "" : esc(JSON.stringify(value, null, 1))}</textarea>`;
   if (LONG.has(field.name))
@@ -140,8 +140,11 @@ export function applySpecInput(input, spec, definition) {
     try {
       value = JSON.parse(raw);
     } catch {
-      input.setAttribute("aria-invalid", "true");
-      return false;
+      // A template standing for the whole list is rendered when it is built.
+      if (!TEMPLATE.test(raw)) {
+        input.setAttribute("aria-invalid", "true");
+        return false;
+      }
     }
   } else if (field.kind === "number") {
     if (TEMPLATE.test(raw)) value = raw;
