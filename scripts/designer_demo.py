@@ -18,6 +18,7 @@ from homeassistant.util import dt as dt_util
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer.export import export_yaml
 from custom_components.ble_esl.designer.importer import (
+    convert,
     different_pixels,
     elements_from,
     parse as parse_payload,
@@ -147,6 +148,21 @@ async def api(request):
             }
         )
     document = validate(msg["document"], preset)
+    if msg["action"] == "convert":
+        element = next((el for el in document["elements"] if el["id"] == msg["element_id"]), None)
+        if element is None or element["type"] == "imagespec":
+            return web.Response(status=400, text="That element cannot be converted")
+        snapshots = snapshot_layers(
+            HASS, {"elements": [element]}, TEMPLATES, await demo_forecasts()
+        )
+        state = HASS.states.get(element["entity_id"]) if element["entity_id"] else None
+        elements, issues, original, rebuilt = convert(HASS, element, state, snapshots[0][1], preset)
+        different = None
+        if elements:
+            different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
+        return web.json_response(
+            {"elements": elements, "issues": issues, "different_pixels": different}
+        )
     if msg["action"] == "save":
         tag["document"] = document
         return web.json_response(document)

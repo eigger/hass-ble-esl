@@ -8,7 +8,7 @@ import voluptuous as vol
 import yaml
 
 from ..renderer import render_image
-from .layout import compile_payload, validate
+from .layout import as_number, compile_payload, format_decimals, normalize_unit, validate
 from .specs import ImportProblem, from_payload, resolve_templates
 
 MAX_TEXT = 256 * 1024
@@ -90,6 +90,51 @@ def elements_from(items, preset, room=MAX_ELEMENTS):
             elements.append(element)
             imported.append(item)
     return elements, imported, issues
+
+
+def value_template(element, state, items):
+    """The payload with a sensor's value text turned into a template, as a copy.
+
+    Only a sensor shown as a plain value can be written as one: its text is the
+    state, rounded as asked, and the unit. Anything else (a weather or binary
+    sensor, a state that is not available, a data field or field templates) is
+    left as it is.
+    """
+    templated = [dict(item) for item in items]
+    if (
+        element["type"] != "sensor"
+        or state is None
+        or state.entity_id.startswith(("weather.", "binary_sensor."))
+        or state.state in ("unavailable", "unknown")
+        or element.get("data_field")
+        or element.get("field_templates")
+    ):
+        return templated
+    shown = state.state
+    expression = f"states('{state.entity_id}')"
+    if "decimals" in element:
+        shown = format_decimals(state.state, element["decimals"])
+        if shown != state.state or as_number(state.state) is not None:
+            expression = f"'%.{element['decimals']}f'|format(states('{state.entity_id}')|float(0))"
+    unit = normalize_unit(state.attributes.get("unit_of_measurement", ""))
+    suffix = f" {unit}" if element.get("show_unit", True) and unit else ""
+    for item in reversed(templated):
+        if item.get("type") == "text_fit" and item.get("value") == shown + suffix:
+            item["value"] = "{{ " + expression + " }}" + suffix
+            break
+    return templated
+
+
+def convert(hass, element, state, items, preset):
+    """An element of the old kinds as imagespec elements, and how exactly they draw it.
+
+    Returns (elements, issues, original payload, rebuilt payload).
+    """
+    templated = value_template(element, state, items)
+    elements, imported, issues = elements_from(templated, preset)
+    kept = {id(item) for item in imported}
+    original = [item for item, copy in zip(items, templated, strict=True) if id(copy) in kept]
+    return elements, issues, original, compile_payload(hass, {"elements": elements})
 
 
 def payloads(hass, imported, elements):

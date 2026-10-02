@@ -593,3 +593,108 @@ async def test_importing_templates_works_from_the_event_loop_in_debug(hass, woli
     result = await hass.data[KEY].import_yaml(wolink_entry, text)
     assert result["issues"] == []
     assert result["different_pixels"] == 0
+
+
+def sensor(id_, entity_id, **fields):
+    return {
+        "id": id_,
+        "type": "sensor",
+        "entity_id": entity_id,
+        "x": 8,
+        "y": 8,
+        "width": 180,
+        "height": 70,
+        "font_size": 32,
+        **fields,
+    }
+
+
+async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, wolink_entry):
+    hass.states.async_set("sensor.room", "21.26", {"unit_of_measurement": "°C"})
+    document = {"version": 1, "elements": [sensor("s", "sensor.room", decimals=1)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["issues"] == []
+    assert result["different_pixels"] == 0
+    values = [e["spec"].get("value") for e in result["elements"]]
+    assert "{{ '%.1f'|format(states('sensor.room')|float(0)) }} °C" in values
+    types = [e["spec"]["type"] for e in result["elements"]]
+    assert types.count("icon") == 1
+    # The template follows the sensor: it renders to what the display showed.
+    hass.states.async_set("sensor.room", "23.04", {"unit_of_measurement": "°C"})
+    payload = compile_payload(hass, {"elements": result["elements"]})
+    assert any(item.get("value") == "23.0 °C" for item in payload)
+
+
+async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
+    hass.states.async_set("sensor.mode", "eco")
+    document = {"version": 1, "elements": [sensor("s", "sensor.mode")]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["different_pixels"] == 0
+    assert "{{ states('sensor.mode') }}" in [e["spec"].get("value") for e in result["elements"]]
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "state", "attributes"),
+    [
+        ("sensor.gone", "unavailable", {}),
+        ("binary_sensor.door", "on", {"device_class": "door"}),
+        ("weather.home", "sunny", {"temperature": 20}),
+    ],
+)
+async def test_a_sensor_that_is_not_a_plain_value_converts_as_it_stands(
+    hass, wolink_entry, entity_id, state, attributes
+):
+    hass.states.async_set(entity_id, state, attributes)
+    document = {"version": 1, "elements": [sensor("s", entity_id)]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["elements"]
+    assert result["different_pixels"] == 0
+    assert not any("{{" in str(e["spec"]) for e in result["elements"])
+
+
+async def test_a_shape_converts_to_the_same_shape(hass, wolink_entry):
+    document = {
+        "version": 1,
+        "elements": [
+            {
+                "id": "r",
+                "type": "rounded_rectangle",
+                "x": 10,
+                "y": 10,
+                "width": 60,
+                "height": 30,
+                "color": "red",
+            }
+        ],
+    }
+    result = await hass.data[KEY].convert(wolink_entry, document, "r")
+    assert [e["spec"]["type"] for e in result["elements"]] == ["rectangle"]
+    assert result["different_pixels"] == 0
+
+
+async def test_only_an_element_of_the_old_kinds_can_be_converted(hass, wolink_entry):
+    manager = hass.data[KEY]
+    document = spec_document(element("a", "circle", 0, 0, 40, 40))
+    with pytest.raises(HomeAssistantError, match="already"):
+        await manager.convert(wolink_entry, document, "a")
+    with pytest.raises(HomeAssistantError, match="not in the display"):
+        await manager.convert(wolink_entry, document, "nope")
+
+
+async def test_convert_over_the_websocket(hass, wolink_entry, hass_ws_client):
+    hass.states.async_set("sensor.room", "5")
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "convert",
+            "entry_id": wolink_entry.entry_id,
+            "element_id": "s",
+            "document": {"version": 1, "elements": [sensor("s", "sensor.room")]},
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"]["different_pixels"] == 0
+    assert result["result"]["elements"]

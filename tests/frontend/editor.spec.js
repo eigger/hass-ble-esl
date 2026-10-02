@@ -1279,3 +1279,24 @@ test("pressing Add twice adds the payload once", async ({ page }) => {
   await dialog.getByRole("button", { name: "Add to display" }).dblclick();
   await expect(page.locator(".layer")).toHaveCount(1);
 });
+
+test("a sensor converts to elements whose value is a template", async ({
+  page,
+}) => {
+  await pickSensor(page, "sensor.office_temperature");
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.getByRole("button", { name: "Convert to elements" }).click();
+  await expect(page.locator(".status")).toContainText(
+    "drawn exactly as before",
+  );
+  await expect(page.locator(".layer")).toHaveCount(3);
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  const yaml = page
+    .locator("ble-esl-yaml-dialog dialog")
+    .getByLabel("YAML", { exact: true });
+  await expect(yaml).toHaveValue(/states\(''sensor\.office_temperature''\)/);
+  // Undo brings the sensor back as one element.
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  await expect(page.locator(".layer")).toHaveCount(1);
+});
