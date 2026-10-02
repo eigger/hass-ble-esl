@@ -1414,7 +1414,7 @@ export class BleEslDesigner extends HTMLElement {
           if (element.type === "sensor")
             content = this.sensorContent(element, state, label);
           if (element.type === "image" && element.image)
-            content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}">`;
+            content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}${element.circle ? ";border-radius:50%" : ""}${element.rotate ? `;transform:rotate(${Number(element.rotate) || 0}deg)` : ""}">`;
           if (element.type === "text")
             content = esc(this.tokenText(element.text)).replace(/\n/g, "<br>");
           if (element.type === "icon")
@@ -1440,7 +1440,19 @@ export class BleEslDesigner extends HTMLElement {
                   : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
             content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
           }
-          const rendered = this.layerPreviews[element.id];
+          // A dragged image is shown by its own <img> (laid out in the
+          // frame) until the next render: the cropped layer cannot follow a
+          // frame that is resized.
+          const record = this.layerRecords?.[element.id];
+          const rendered =
+            element.type === "image" &&
+            (this.gesture ||
+              !record ||
+              record.shape !== this.shape(element) ||
+              record.size[0] !== element.width ||
+              record.size[1] !== element.height)
+              ? undefined
+              : this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
           const box = [0, 0, element.width, element.height];
           const hitBounds =
@@ -1494,7 +1506,7 @@ export class BleEslDesigner extends HTMLElement {
   // changes nothing on screen, so what the last render still describes stays.
   adoptDocument(saved) {
     const current = this.document.elements
-      .filter((el) => this.visibleBounds(el) !== undefined)
+      .filter((el) => (el.type === "image" ? !!this.layerRecords?.[el.id] : this.visibleBounds(el) !== undefined))
       .map((el) => el.id);
     this.document = saved;
     const records = this.layerRecords || {};
@@ -1520,7 +1532,9 @@ export class BleEslDesigner extends HTMLElement {
     const record = this.layerRecords?.[element.id];
     // A text box is its frame: the text fits into it, so its box must not
     // follow the ink and jump back when the frame is resized.
-    if (element.type === "text") return undefined;
+    // An image is its frame as well: "contain" leaves margins around the
+    // picture, and a box on the ink would not match what x/y/size move.
+    if (element.type === "text" || element.type === "image") return undefined;
     if (!record || record.shape !== this.shape(element)) return undefined;
     const dw = element.width - record.size[0],
       dh = element.height - record.size[1],
