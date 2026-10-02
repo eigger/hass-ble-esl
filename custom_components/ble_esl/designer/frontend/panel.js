@@ -80,6 +80,10 @@ const toolIcon = (name) =>
       send: '<path d="m7 7 10 10-5 4V3l5 4L7 17"/>',
       undo: '<path d="M8 4 3 9l5 5M3 9h10a7 7 0 0 1 0 14"/>',
       redo: '<path d="m16 4 5 5-5 5M21 9H11a7 7 0 0 0 0 14"/>',
+      eyeoff:
+        '<path d="M3 3l18 18M10.6 6.2A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 4M6.1 7.1A17 17 0 0 0 2 12s4 7 10 7a9.7 9.7 0 0 0 4-.9"/>',
+      up: '<path d="m6 15 6-6 6 6"/>',
+      down: '<path d="m6 9 6 6 6-6"/>',
     }[name]
   }</svg>`;
 const iconFont = new FontFace(
@@ -95,7 +99,7 @@ const textFont = new FontFace(
   .load()
   .then((font) => document.fonts.add(font));
 const style = `
-.mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}button:hover{border-color:#257d86}button:disabled{opacity:.45;cursor:default}button.primary{background:#166d75;color:white;border-color:#166d75}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}.editor-bar{display:flex;align-items:center;gap:12px;padding:0 24px 12px}.editor-bar .spacer{flex:1}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:7px;border:0;background:transparent}.icon-button[aria-expanded="true"]{background:var(--secondary-background-color,#e9eff2)}.icon-button.danger:hover{color:#c33;background:#c331}.context-menu{position:fixed;z-index:1000;width:220px;padding:6px;background:var(--card-background-color,white);box-shadow:0 5px 24px #0003;border:1px solid var(--divider-color,#ddd);border-radius:8px}.context-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0}.context-menu kbd{margin-left:auto}.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:14px}.panel-heading h2{flex:1;margin:0}.delete-handle{position:absolute;right:0;top:-24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:2px;border:1px solid #16838c;color:#b33;background:var(--card-background-color,white);z-index:5;border-radius:4px}.delete-handle svg{width:18px;height:18px}.context-menu kbd{float:right;font-size:11px;color:var(--secondary-text-color,#637083)}.template-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 24px 14px}.template-controls input[type="number"]{width:75px}.tabs{display:flex;gap:4px;margin-left:auto}.tabs button[aria-pressed="true"]{background:#166d75;color:white}.tile-icon{position:absolute;left:4px;top:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center}.tile-copy{margin-left:48px;padding:6px 0}.tile-copy .value{font-size:18px}.el ha-icon{--mdc-icon-size:32px}.el.icon-content ha-icon{--mdc-icon-size:inherit}.state-rules{margin:0}.template-note{margin:0 24px 12px}.picker{display:flex;gap:5px;flex-wrap:wrap}.swatch{width:28px;height:28px;padding:0;background:var(--swatch);border:1px solid #888;border-radius:50%}.swatch[aria-pressed="true"]{outline:2px solid #16838c;outline-offset:2px}.align-button{width:32px;height:32px;padding:5px}.align-button[aria-pressed="true"]{background:#16838c22;border-color:#16838c}.align-button svg{width:20px;height:20px}.icon-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:200px;overflow:auto}.icon-picker button{padding:6px}.icon-picker ha-icon{--mdc-icon-size:24px}.state-rules input{width:100%}.muted.help{display:none}.canvas-wrap + p{display:none}.workspace{display:grid;grid-template-columns:240px minmax(320px,1fr) 260px;gap:18px;padding:0 24px 24px}.workspace.library-closed{grid-template-columns:minmax(0,1fr) 260px}.workspace.inspector-closed{grid-template-columns:240px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace.library-closed .library,.workspace.inspector-closed .inspector{display:none}.card{min-width:0;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dfe5eb);border-radius:10px;padding:16px}h2{font-size:15px;margin:0 0 14px}p{line-height:1.5}.muted{color:var(--secondary-text-color,#637083);font-size:12px}.entity-preview{margin:12px 0 20px}.entity-state{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--divider-color,#ddd);border-radius:8px}.entity-state .state-copy{flex:1;min-width:0}.entity-state .state-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.entity-state .state-value{font-size:18px;margin-top:4px}.entity-state ha-state-icon{--mdc-icon-size:28px}.entity-state button{flex:none}ha-entity-picker{display:block;width:100%;margin-bottom:12px}.entity{display:block;text-align:left;width:100%;margin:5px 0}.entity small{display:block;color:var(--secondary-text-color,#637083);font-size:11px;overflow:hidden;text-overflow:ellipsis}.entity[draggable]{cursor:grab}.tools{display:flex;flex-wrap:wrap;gap:6px}.canvas-wrap{min-width:0;overflow:auto;height:420px;min-height:0;display:flex;align-items:center;justify-content:flex-start;background:repeating-conic-gradient(#edf0f4 0% 25%,#f6f8fa 0% 50%) 50%/16px 16px;border-radius:6px;padding:30px}.stage-space{margin:auto;flex:none;position:relative}.stage{position:relative;transform-origin:top left;background:white;color:black;box-shadow:0 8px 24px #15293825;outline:1px solid #c5ced9;touch-action:none}.el{position:absolute;overflow:visible;cursor:move;outline:1px dashed transparent;touch-action:none;user-select:none}.el{pointer-events:none}.el .content{pointer-events:none}.hit-area{position:absolute;pointer-events:auto}.el:hover .hit-area{outline:1px dashed #1c8990}.el.editing .content{pointer-events:auto}.el.editing .hit-area{pointer-events:none}.el.selected{outline:1px solid #16838c}.el .content{height:100%;overflow:hidden;font-family:LabelText, sans-serif}.el.editing .content{visibility:visible!important;-webkit-user-select:text;user-select:text;cursor:text;white-space:pre-wrap;outline:0}.el.rendered .content{visibility:hidden}.layer-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.el.editing .layer-preview,.stage.exact-mode .layer-preview{display:none}.label{font-size:12px;height:18px;white-space:nowrap;overflow:hidden}.value{white-space:nowrap;overflow:hidden}.handle{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;background:#16838c;cursor:nwse-resize;z-index:3}.exact{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.stage.exact-mode .content{visibility:hidden}.stage.exact-mode .el{background:transparent!important}.stage.exact-mode .el.selected{z-index:100}.status{min-height:24px;padding:0 24px 12px;color:var(--secondary-text-color,#637083)}.error{color:#c33}.props{display:grid;grid-template-columns:1fr 1fr;gap:9px}.props label{font-size:12px;display:flex;flex-direction:column;gap:5px}.props label.check{flex-direction:row;align-items:center}.props .wide{grid-column:1/-1}.props input,.props select,.props textarea{width:100%;min-width:0}.check{display:flex;align-items:center;gap:7px;margin:12px 0}.check input{width:auto}.layers{margin-top:16px;max-height:150px;overflow:auto}.layer-row{display:flex;align-items:center;gap:4px;margin:4px 0}.layer-row .layer{flex:1;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-row .icon-button{flex:none;width:32px;height:32px;padding:4px}.layer-row .icon-button svg{width:18px;height:18px}.layer{display:block;width:100%;text-align:left;margin:4px 0}.layer.active{border-color:#16838c}.side-column{display:flex;flex-direction:column;gap:18px}.side-column .layers{margin-top:0}.footer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}@media(max-width:1050px){.workspace{grid-template-columns:200px 1fr}.inspector{grid-column:1/-1}.props{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.workspace.library-closed,.workspace.inspector-closed,.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.toolbar,.editor-bar,.template-controls{padding:12px}header{flex-wrap:wrap;padding:4px 12px}header span{display:none}.workspace{padding:0 12px 12px;grid-template-columns:minmax(0,1fr)}.library,.inspector{grid-column:auto}.entities{height:150px}.canvas-wrap{height:300px}.props{grid-template-columns:1fr 1fr}}
+.mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}button:hover{border-color:#257d86}button:disabled{opacity:.45;cursor:default}button.primary{background:#166d75;color:white;border-color:#166d75}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}.editor-bar{display:flex;align-items:center;gap:12px;padding:0 24px 12px}.editor-bar .spacer{flex:1}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:7px;border:0;background:transparent}.icon-button[aria-expanded="true"]{background:var(--secondary-background-color,#e9eff2)}.icon-button.danger:hover{color:#c33;background:#c331}.context-menu{position:fixed;z-index:1000;width:220px;padding:6px;background:var(--card-background-color,white);box-shadow:0 5px 24px #0003;border:1px solid var(--divider-color,#ddd);border-radius:8px}.context-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0}.context-menu kbd{margin-left:auto}.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:14px}.panel-heading h2{flex:1;margin:0}.delete-handle{position:absolute;right:0;top:-24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:2px;border:1px solid #16838c;color:#b33;background:var(--card-background-color,white);z-index:5;border-radius:4px}.delete-handle svg{width:18px;height:18px}.context-menu kbd{float:right;font-size:11px;color:var(--secondary-text-color,#637083)}.template-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 24px 14px}.template-controls input[type="number"]{width:75px}.tabs{display:flex;gap:4px;margin-left:auto}.tabs button[aria-pressed="true"]{background:#166d75;color:white}.tile-icon{position:absolute;left:4px;top:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center}.tile-copy{margin-left:48px;padding:6px 0}.tile-copy .value{font-size:18px}.el ha-icon{--mdc-icon-size:32px}.el.icon-content ha-icon{--mdc-icon-size:inherit}.state-rules{margin:0}.template-note{margin:0 24px 12px}.picker{display:flex;gap:5px;flex-wrap:wrap}.swatch{width:28px;height:28px;padding:0;background:var(--swatch);border:1px solid #888;border-radius:50%}.swatch[aria-pressed="true"]{outline:2px solid #16838c;outline-offset:2px}.align-button{width:32px;height:32px;padding:5px}.align-button[aria-pressed="true"]{background:#16838c22;border-color:#16838c}.align-button svg{width:20px;height:20px}.icon-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:200px;overflow:auto}.icon-picker button{padding:6px}.icon-picker ha-icon{--mdc-icon-size:24px}.state-rules input{width:100%}.muted.help{display:none}.workspace{display:grid;grid-template-columns:240px minmax(320px,1fr) 260px;gap:18px;padding:0 24px 24px}.workspace.library-closed{grid-template-columns:minmax(0,1fr) 260px}.workspace.inspector-closed{grid-template-columns:240px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace.library-closed .library,.workspace.inspector-closed .inspector{display:none}.card{min-width:0;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dfe5eb);border-radius:10px;padding:16px}h2{font-size:15px;margin:0 0 14px}p{line-height:1.5}.muted{color:var(--secondary-text-color,#637083);font-size:12px}.entity-preview{margin:12px 0 20px}.entity-state{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--divider-color,#ddd);border-radius:8px}.entity-state .state-copy{flex:1;min-width:0}.entity-state .state-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.entity-state .state-value{font-size:18px;margin-top:4px}.entity-state ha-state-icon{--mdc-icon-size:28px}.entity-state button{flex:none}ha-entity-picker{display:block;width:100%;margin-bottom:12px}.entity{display:block;text-align:left;width:100%;margin:5px 0}.entity small{display:block;color:var(--secondary-text-color,#637083);font-size:11px;overflow:hidden;text-overflow:ellipsis}.entity[draggable]{cursor:grab}.tools{display:flex;flex-wrap:wrap;gap:6px}.canvas-wrap{min-width:0;overflow:auto;height:420px;min-height:0;display:flex;align-items:center;justify-content:flex-start;background:repeating-conic-gradient(var(--secondary-background-color,#edf0f4) 0% 25%,var(--primary-background-color,#f6f8fa) 0% 50%) 50%/16px 16px;border-radius:6px;padding:30px}.stage-space{margin:auto;flex:none;position:relative}.stage{position:relative;transform-origin:top left;background:white;color:black;box-shadow:0 8px 24px #15293825;outline:1px solid #c5ced9;touch-action:none}.el{position:absolute;overflow:visible;cursor:move;outline:1px dashed transparent;touch-action:none;user-select:none}.el{pointer-events:none}.el .content{pointer-events:none}.hit-area{position:absolute;pointer-events:auto}.el:hover .hit-area{outline:1px dashed #1c8990}.el.editing .content{pointer-events:auto}.el.editing .hit-area{pointer-events:none}.el.selected{outline:1px solid #16838c}.el .content{height:100%;overflow:hidden;font-family:LabelText, sans-serif}.el.editing .content{visibility:visible!important;-webkit-user-select:text;user-select:text;cursor:text;white-space:pre-wrap;outline:0}.el.rendered .content{visibility:hidden}.layer-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.el.editing .layer-preview,.stage.exact-mode .layer-preview{display:none}.label{font-size:12px;height:18px;white-space:nowrap;overflow:hidden}.value{white-space:nowrap;overflow:hidden}.handle{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;background:#16838c;cursor:nwse-resize;z-index:3}.exact{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.stage.exact-mode .content{visibility:hidden}.stage.exact-mode .el{background:transparent!important}.stage.exact-mode .el.selected{z-index:100}.status{min-height:24px;padding:0 24px 12px;color:var(--secondary-text-color,#637083)}.error{color:#c33}.props{display:grid;grid-template-columns:1fr 1fr;gap:9px}.props label{font-size:12px;display:flex;flex-direction:column;gap:5px}.props label.check{flex-direction:row;align-items:center}.props .wide{grid-column:1/-1}.props input,.props select,.props textarea{width:100%;min-width:0}.check{display:flex;align-items:center;gap:7px;margin:12px 0}.check input{width:auto}.layers{margin-top:16px;max-height:260px;overflow:auto}.layer-row{display:flex;align-items:center;gap:4px;margin:4px 0}.layer-row .layer{flex:1;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-row .icon-button{flex:none;width:32px;height:32px;padding:4px}.layer-row .icon-button svg{width:18px;height:18px}.layer{display:block;width:100%;text-align:left;margin:4px 0}.layer.active{border-color:#16838c}.side-column{display:flex;flex-direction:column;gap:18px}.side-column .layers{margin-top:0}.footer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}@media(max-width:1050px){.workspace{grid-template-columns:200px 1fr}.inspector{grid-column:1/-1}.props{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.workspace.library-closed,.workspace.inspector-closed,.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.toolbar,.editor-bar,.template-controls{padding:12px}header{flex-wrap:wrap;padding:4px 12px}header span{display:none}.workspace{padding:0 12px 12px;grid-template-columns:minmax(0,1fr)}.library,.inspector{grid-column:auto}.entities{height:150px}.canvas-wrap{height:300px}.props{grid-template-columns:1fr 1fr}}
 `;
 
 export class BleEslDesigner extends HTMLElement {
@@ -189,10 +193,26 @@ export class BleEslDesigner extends HTMLElement {
     return this._hass;
   }
   connectedCallback() {
+    this.beforeUnload = (event) => {
+      // Work set aside by switching between Display and Sensor templates counts.
+      if (
+        this.dirty ||
+        this.drafts.size ||
+        (this.mode === "template" && this.displaySession?.dirty) ||
+        [...this.templateDrafts].some(
+          ([key, draft]) =>
+            draft.dirty &&
+            !(this.mode === "template" && key === this.templateKey),
+        )
+      )
+        event.preventDefault();
+    };
+    window.addEventListener("beforeunload", this.beforeUnload);
     this.render();
     if (this.hass && !this.started) this.boot();
   }
   disconnectedCallback() {
+    window.removeEventListener("beforeunload", this.beforeUnload);
     clearTimeout(this.previewTimer);
     this.previewSequence++;
     this.gesture?.abort();
@@ -264,12 +284,31 @@ export class BleEslDesigner extends HTMLElement {
     if (this.undoStack.length > 100) this.undoStack.shift();
     this.redoStack = [];
   }
+  // Without a full render: show that there is something to save, and that
+  // the picture is no longer the exact render.
+  markDirty() {
+    const save = this.shadowRoot.querySelector('[data-action="save"]');
+    if (save) {
+      save.innerHTML = toolIcon("save") + "·";
+      save.setAttribute("aria-label", "Save (unsaved changes)");
+      save.title = "Save (unsaved changes) (⌘/Ctrl S)";
+    }
+    const badge = this.shadowRoot.querySelector("#dirty-badge");
+    if (badge) badge.hidden = false;
+    const title = this.shadowRoot
+      .querySelector(".canvas-wrap")
+      ?.previousElementSibling?.querySelector("span");
+    if (title) title.textContent = "Editing preview";
+  }
   edited(render = true) {
     this.dirty = true;
     this.preview = null;
     this.previewSequence++;
     if (render) this.render();
-    else this.drawStage();
+    else {
+      this.drawStage();
+      this.markDirty();
+    }
     this.queuePreview();
   }
   report(error) {
@@ -282,6 +321,13 @@ export class BleEslDesigner extends HTMLElement {
     if (node) {
       node.textContent = this.status;
       node.classList.toggle("error", !!this.error);
+      if (this.error && this.status) {
+        const dismiss = document.createElement("button");
+        dismiss.dataset.action = "dismiss-status";
+        dismiss.setAttribute("aria-label", "Dismiss message");
+        dismiss.textContent = "×";
+        node.append(dismiss);
+      }
     }
   }
   get element() {
@@ -654,7 +700,7 @@ export class BleEslDesigner extends HTMLElement {
     );
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="Save" title="Save">${toolIcon("save")}${this.dirty ? "·" : ""}</button><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto update sensor</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum update interval">↻ <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span><nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -678,19 +724,29 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div></div></div><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + Z undoes</p></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>Keyboard &amp; mouse tips</summary><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits a text element · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
             .map(
               (item) =>
-                `<div class="layer-row"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(this.layerLabel(item))}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="Delete ${esc(this.layerLabel(item))}" title="Delete">${icon("delete")}</button></div>`,
+                `<div class="layer-row ${item.visible === false ? "hidden-layer" : ""}"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}">${esc(this.layerLabel(item))}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="visible" aria-label="${item.visible === false ? "Show" : "Hide"} ${esc(this.layerLabel(item))}" aria-pressed="${item.visible === false}" title="${item.visible === false ? "Hidden: click to show" : "Hide"}">${toolIcon(item.visible === false ? "eyeoff" : "preview")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="up" aria-label="Move ${esc(this.layerLabel(item))} forward" title="Bring forward">${toolIcon("up")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="down" aria-label="Move ${esc(this.layerLabel(item))} backward" title="Send backward">${toolIcon("down")}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="Delete ${esc(this.layerLabel(item))}" title="Delete">${icon("delete")}</button></div>`,
             )
             .join("")}</div></section></aside></div>`
         : ""
     }`;
     this.renderEntities();
     this.bindEntityPickers();
+    this.shadowRoot
+      .querySelector("details.advanced")
+      ?.addEventListener("toggle", (event) => {
+        this.advancedOpen = event.target.open;
+      });
+    this.shadowRoot
+      .querySelector("details.tips")
+      ?.addEventListener("toggle", (event) => {
+        this.tipsOpen = event.target.open;
+      });
     this.drawStage();
     this.renderStatus();
     this.resizeObserver.disconnect();
@@ -802,7 +858,12 @@ export class BleEslDesigner extends HTMLElement {
     if (item.type === "text") return item.text || item.type;
     if (item.type === "icon") return item.icon || item.type;
     // "text" is only a leftover default on the other kinds.
-    return item.label || item.entity_id || item.type.replaceAll("_", " ");
+    const state = this.hass?.states[item.entity_id];
+    return (
+      item.label ||
+      (state ? this.entityName(state) : item.entity_id) ||
+      item.type.replaceAll("_", " ")
+    );
   }
   specDefinition(element) {
     return this.specs?.types.find((type) => type.type === element.spec?.type);
@@ -937,8 +998,7 @@ export class BleEslDesigner extends HTMLElement {
       this.typingProperty = input;
     }
     this.edited(false);
-    const save = this.shadowRoot.querySelector('[data-action="save"]');
-    if (save) save.innerHTML = toolIcon("save") + "·";
+    this.markDirty();
   }
   // Optional settings of the older kinds: left blank they keep imagespec's
   // default, so a design that never sets one draws as before.
@@ -963,9 +1023,10 @@ export class BleEslDesigner extends HTMLElement {
         : element.dither === false
           ? "none"
           : (element.dither ?? "");
-    let html = "";
+    let style = "",
+      advanced = "";
     if (text)
-      html +=
+      advanced +=
         choice("valign", "Vertical align", ["top", "middle", "bottom"]) +
         choice(
           "fit",
@@ -979,14 +1040,14 @@ export class BleEslDesigner extends HTMLElement {
         number("line_spacing", "Line spacing", 0, 100, "2") +
         `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
     if (shape)
-      html +=
+      style +=
         flag("filled", "Filled", true) +
         number("line_width", "Outline width", 1, 20, "1") +
         (type === "rounded_rectangle"
           ? number("radius", "Corner radius", 0, 200, "auto")
           : "");
     if (type === "icon")
-      html +=
+      advanced +=
         number("stroke_width", "Outline width", 0, 20, "0") +
         this.colorPicker(
           "stroke_fill",
@@ -994,11 +1055,11 @@ export class BleEslDesigner extends HTMLElement {
           "Outline colour",
         );
     if (type === "image")
-      html +=
+      style +=
         number("rotate", "Rotate (°)", -360, 360, "0") +
         flag("circle", "Crop to circle", false);
     if (type === "progress_bar")
-      html +=
+      style +=
         choice(
           "direction",
           "Direction",
@@ -1009,27 +1070,33 @@ export class BleEslDesigner extends HTMLElement {
         number("line_width", "Outline width", 1, 20, "1") +
         flag("show_percentage", "Show percentage", false);
     if (type === "gauge")
-      html +=
+      style +=
         number("thickness", "Arc thickness", 1, 100, "8") +
         flag("show_value", "Show value", true);
     if (["progress_bar", "gauge"].includes(type))
-      html += `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
-    return (
-      html +
-      `<label class="wide">Dither<select data-property="dither" aria-label="Dither"><option value="">${type === "image" ? "default (floyd)" : "default (whole image)"}</option><option value="none" ${dither === "none" ? "selected" : ""}>none</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`
-    );
+      advanced += `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
+    advanced += `<label class="wide">Dither<select data-property="dither" aria-label="Dither"><option value="">${type === "image" ? "default (floyd)" : "off (default)"}</option><option value="none" ${dither === "none" ? "selected" : ""}>none</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`;
+    return { style, advanced };
   }
   properties(element) {
     if (!element)
-      return '<p class="muted wide">Click a block to move, resize, or bind it to an entity.</p>';
+      return `<p class="muted wide">Click a block to move, resize, or bind it to an entity.</p>${this.mode === "display" ? `<h3 class="wide group-title">Display</h3>${this.colorPicker("display-background", this.document.background, "Background")}` : ""}`;
     const field = (key, label, type = "text", wide = false) =>
       `<label class="${wide ? "wide" : ""}">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
-    let html = ["x", "y", "width", "height"]
-      .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
-      .join("");
+    const group = (title, body) =>
+      body ? `<h3 class="wide group-title">${title}</h3>${body}` : "";
+    const position = group(
+      "Position & size (px)",
+      ["x", "y", "width", "height"]
+        .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
+        .join(""),
+    );
+    let html = "",
+      style = "",
+      picker = "";
     if (element.type === "imagespec")
       return (
-        html +
+        position +
         specEditorHtml(
           this.specDefinition(element),
           element.spec,
@@ -1041,25 +1108,25 @@ export class BleEslDesigner extends HTMLElement {
       html +=
         field("min_value", "Minimum", "number") +
         field("max_value", "Maximum", "number") +
-        field("value", "Value", "number", true) +
-        (element.type === "gauge"
-          ? field("font_size", "Font size", "number")
-          : "");
+        field("value", "Value", "number", true);
+    if (element.type === "gauge")
+      style += field("font_size", "Font size", "number");
     if (["sensor", "text"].includes(element.type))
-      html +=
+      style +=
         field("font_size", "Font size", "number") +
         `<label>Align<div class="picker" role="group" aria-label="Text alignment">${["left", "center", "right"].map((value) => `<button class="align-button" data-pick="align" data-value="${value}" aria-label="Align ${value}" title="Align ${value}" aria-pressed="${element.align === value}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 9h12M3 14h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 19h12"/></svg></button>`).join("")}</div></label>`;
-    html += this.colorPicker("color", element.color, "Colour");
+    style += this.colorPicker("color", element.color, "Colour");
     if (shapeTypes.includes(element.type))
-      html += `<label class="wide">Shape<select data-property="type" aria-label="Shape">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
+      style += `<label class="wide">Shape<select data-property="type" aria-label="Shape">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
 
     if (element.type === "image")
       html += `<label class="wide">Image URL<input data-property="image" aria-label="Image URL" placeholder="Paste a URL, or upload below" value="${esc(element.image?.startsWith("data:") ? "" : (element.image ?? ""))}"></label><label class="wide">Image<input id="image-file" aria-label="Upload image" type="file" accept="image/*"></label><label class="wide">Fit<select data-property="image_fit" aria-label="Image fit">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>`;
     if (element.type === "icon")
       html += `<label class="wide">Icon<button class="icon-choice" data-action="pick-icon" aria-label="Choose icon">${this.iconGlyph(this.tokenText(element.icon), 24)}<span>${element.icon === "{{icon}}" ? "HA state icon" : esc(element.icon.replace("mdi:", ""))}</span></button><input data-property="icon" aria-label="Icon name" value="${esc(element.icon)}" hidden></label>`;
 
-    html += this.extraProperties(element);
-    html += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>Visible</label>`;
+    const extra = this.extraProperties(element);
+    style += extra.style;
+    style += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>Visible</label>`;
     if (this.mode === "template" && element.type === "icon")
       html += this.stateIconRows(element);
     if (this.mode === "template" && element.type !== "icon")
@@ -1139,7 +1206,7 @@ export class BleEslDesigner extends HTMLElement {
         .join(
           "",
         )}<option value="__new__">＋ Create template…</option></select></label>`;
-      html += `<ha-entity-picker class="wide" data-property="entity_id"></ha-entity-picker>`;
+      picker = `<ha-entity-picker class="wide" data-property="entity_id"></ha-entity-picker>`;
       html += `<label class="wide check"><input type="checkbox" data-property="show_label" ${element.show_label ? "checked" : ""}>Show label</label>`;
       if (element.show_label)
         html += field("label", "Label override", "text", true);
@@ -1161,7 +1228,14 @@ export class BleEslDesigner extends HTMLElement {
           );
       }
     }
-    return html;
+    return (
+      group("Content", picker + html) +
+      position +
+      group("Style", style) +
+      (extra.advanced
+        ? `<details class="wide advanced" ${this.advancedOpen ? "open" : ""}><summary>Advanced</summary><div class="props">${extra.advanced}</div></details>`
+        : "")
+    );
   }
   // Pickers created before HA defined the element keep their properties as
   // plain fields that can shadow the upgraded element's accessors. Swap in
@@ -1374,7 +1448,7 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
+          return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
             element.id === this.selected
               ? (() => {
                   const bounds = visible || box;
@@ -1650,6 +1724,35 @@ export class BleEslDesigner extends HTMLElement {
       }
       return;
     }
+    if (button.dataset.layerAction) {
+      const elements = this.document.elements,
+        index = elements.findIndex((el) => el.id === button.dataset.layer),
+        item = elements[index];
+      if (!item) return;
+      const target =
+        button.dataset.layerAction === "up"
+          ? index + 1
+          : button.dataset.layerAction === "down"
+            ? index - 1
+            : index;
+      if (target < 0 || target >= elements.length) return;
+      this.checkpoint();
+      if (button.dataset.layerAction === "visible")
+        item.visible = item.visible === false;
+      else
+        [elements[index], elements[target]] = [
+          elements[target],
+          elements[index],
+        ];
+      this.edited();
+      // The panel was rebuilt: keep keyboard focus on the same control.
+      this.shadowRoot
+        .querySelector(
+          `[data-layer="${CSS.escape(item.id)}"][data-layer-action="${button.dataset.layerAction}"]`,
+        )
+        ?.focus();
+      return;
+    }
     if (button.dataset.select) {
       this.selected = button.dataset.select;
       this.render();
@@ -1657,6 +1760,13 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     const action = button.dataset.action;
+    if (action === "dismiss-status") {
+      this.error = false;
+      this.status = "Ready";
+      this.renderStatus();
+      this.shadowRoot.querySelector(".stage")?.focus();
+      return;
+    }
     try {
       if (["save", "preview", "send"].includes(action)) {
         this.busy = true;
@@ -1766,7 +1876,11 @@ export class BleEslDesigner extends HTMLElement {
           url = URL.createObjectURL(blob),
           link = document.createElement("a");
         link.href = url;
-        link.download = "label-display.json";
+        link.download = `${
+          (this.mode === "template" ? this.templateName : this.tag?.title)
+            ?.replace(/[\\/:*?"<>|\s]+/g, "-")
+            .replace(/^[-.]+|[-.]+$/g, "") || "label-display"
+        }.json`;
         link.click();
         URL.revokeObjectURL(url);
       } else if (action === "import")
@@ -1903,8 +2017,7 @@ export class BleEslDesigner extends HTMLElement {
         `[data-select="${this.selected}"]`,
       );
       if (layer) layer.textContent = this.element.text;
-      const save = this.shadowRoot.querySelector('[data-action="save"]');
-      if (save) save.innerHTML = toolIcon("save") + "·";
+      this.markDirty();
       return;
     }
     if (input.id === "template-name") {
@@ -1950,8 +2063,7 @@ export class BleEslDesigner extends HTMLElement {
       }
       this.updateProperty(input);
       this.edited(false);
-      const save = this.shadowRoot.querySelector('[data-action="save"]');
-      if (save) save.innerHTML = toolIcon("save") + "·";
+      this.markDirty();
       const layer = this.shadowRoot.querySelector(
         `[data-select="${this.selected}"]`,
       );

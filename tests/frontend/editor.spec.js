@@ -422,7 +422,7 @@ test("create template starts with the selected sensor and applies the saved styl
   await page
     .getByLabel("Template name", { exact: true })
     .fill("My temperature");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: /^Save/ }).click();
   await page.getByRole("button", { name: "Display", exact: true }).click();
   expect(
     await page.evaluate(
@@ -1044,7 +1044,7 @@ test("saving keeps the selection box on the content", async ({ page }) => {
   await rendered(page);
   const before = await selectionBox(page);
   // The server hands the document back with its defaults filled in.
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: /^Save/ }).click();
   await expect(page.locator(".status")).toContainText("Display saved");
   expect(await selectionBox(page)).toEqual(before);
 });
@@ -1366,6 +1366,7 @@ test("a number outside its range is corrected in the field", async ({
   page,
 }) => {
   await page.locator('[data-add="text"]').click();
+  await page.locator("details.advanced summary").click();
   const field = page.locator('[data-property="max_lines"]');
   await field.fill("50");
   await field.press("Tab");
@@ -1406,4 +1407,66 @@ test("Refresh tags keeps the tag being edited and its unsaved design", async ({
   expect(await page.evaluate(() => window.panel.tag.entry_id)).toBe(
     "demo-discovery",
   );
+});
+
+test("layers can be hidden and reordered, and the display background is set from the properties", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  await page.locator('[data-add="rectangle"]').click();
+  const order = () =>
+    page.evaluate(() => window.panel.document.elements.map((el) => el.type));
+  expect(await order()).toEqual(["text", "rectangle"]);
+  // The list shows the front element first; "Move forward" on the text lifts it.
+  await page
+    .getByRole("button", { name: /^Move .* forward$/ })
+    .last()
+    .click();
+  expect(await order()).toEqual(["rectangle", "text"]);
+  await page
+    .getByRole("button", { name: /^Hide / })
+    .first()
+    .click();
+  expect(
+    await page.evaluate(() => window.panel.document.elements.at(-1).visible),
+  ).toBe(false);
+  await expect(page.locator(".el.hidden-el")).toHaveCount(1);
+  await page.getByRole("button", { name: /^Show / }).click();
+  await page.locator(".canvas-wrap").click({ position: { x: 4, y: 4 } });
+  expect(await page.evaluate(() => window.panel.selected)).toBeNull();
+  await expect(page.locator(".inspector .group-title")).toHaveText("Display");
+  await page
+    .getByRole("button", { name: "Background: black", exact: true })
+    .click();
+  expect(await page.evaluate(() => window.panel.document.background)).toBe(
+    "black",
+  );
+  await expect(page.locator(".stage")).toHaveCSS(
+    "background-color",
+    "rgb(0, 0, 0)",
+  );
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  expect(await page.evaluate(() => window.panel.document.background)).toBe(
+    "white",
+  );
+});
+
+test("the inspector groups its fields and an error message can be dismissed", async ({
+  page,
+}) => {
+  await page.locator('[data-add="text"]').click();
+  const titles = await page
+    .locator(".inspector .group-title")
+    .allTextContents();
+  expect(titles).toEqual(["Content", "Position & size (px)", "Style"]);
+  await expect(page.locator("details.advanced")).toBeVisible();
+  await page.evaluate(() => window.panel.report(new Error("Broken")));
+  await expect(page.locator(".status")).toContainText("Broken");
+  await page.getByRole("button", { name: "Dismiss message" }).click();
+  await expect(page.locator(".status.error")).toHaveCount(0);
+  await page.locator('[data-property="x"]').fill("12");
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save (unsaved changes)" }),
+  ).toBeVisible();
 });
