@@ -514,6 +514,35 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
   });
   expect(size).toEqual([2, 4]);
 });
+test("the header and the toolbar stay in view while the panel scrolls", async ({
+  page,
+}) => {
+  const tops = () =>
+    page.evaluate(() => {
+      const host = window.panel,
+        root = host.shadowRoot,
+        top = (selector) =>
+          root.querySelector(selector).getBoundingClientRect().top -
+          host.getBoundingClientRect().top;
+      return {
+        scroll: host.scrollTop,
+        header: top("header"),
+        toolbar: top(".toolbar"),
+      };
+    });
+  await page.evaluate(() => {
+    window.panel.style.height = "450px";
+  });
+  const before = await tops();
+  await page.evaluate(() => {
+    window.panel.scrollTop = 400;
+  });
+  const after = await tops();
+  expect(after.scroll).toBeGreaterThan(0);
+  expect(after.header).toBe(0);
+  expect(after.toolbar).toBeGreaterThanOrEqual(56);
+  expect(after.toolbar).toBeLessThan(before.toolbar + 1);
+});
 test("images can be uploaded, resized and used as state-specific template parts", async ({
   page,
 }) => {
