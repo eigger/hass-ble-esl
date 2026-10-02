@@ -1432,7 +1432,7 @@ test("layers can be hidden and reordered, and the display background is set from
   ).toBe(false);
   await expect(page.locator(".el.hidden-el")).toHaveCount(1);
   await page.getByRole("button", { name: /^Show / }).click();
-  await page.locator(".stage").click({ position: { x: 1, y: 1 } });
+  await page.keyboard.press("Escape");
   await page.evaluate(() => {
     window.panel.selected = null;
     window.panel.render();
@@ -1443,6 +1443,14 @@ test("layers can be hidden and reordered, and the display background is set from
     .click();
   expect(await page.evaluate(() => window.panel.document.background)).toBe(
     "black",
+  );
+  await expect(page.locator(".stage")).toHaveCSS(
+    "background-color",
+    "rgb(0, 0, 0)",
+  );
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  expect(await page.evaluate(() => window.panel.document.background)).toBe(
+    "white",
   );
 });
 

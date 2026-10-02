@@ -194,7 +194,14 @@ export class BleEslDesigner extends HTMLElement {
   }
   connectedCallback() {
     this.beforeUnload = (event) => {
-      if (this.dirty || this.drafts.size) event.preventDefault();
+      // Work set aside by switching between Display and Sensor templates counts.
+      if (
+        this.dirty ||
+        this.drafts.size ||
+        (this.mode === "template" && this.displaySession?.dirty) ||
+        [...this.templateDrafts.values()].some((draft) => draft.dirty)
+      )
+        event.preventDefault();
     };
     window.addEventListener("beforeunload", this.beforeUnload);
     this.render();
@@ -280,7 +287,7 @@ export class BleEslDesigner extends HTMLElement {
     if (save) {
       save.innerHTML = toolIcon("save") + "·";
       save.setAttribute("aria-label", "Save (unsaved changes)");
-      save.title = "Save (unsaved changes)";
+      save.title = "Save (unsaved changes) (⌘/Ctrl S)";
     }
     const badge = this.shadowRoot.querySelector("#dirty-badge");
     if (badge) badge.hidden = false;
@@ -713,7 +720,7 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips"><summary>Keyboard &amp; mouse tips</summary><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits a text element · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>Keyboard &amp; mouse tips</summary><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits a text element · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
@@ -730,6 +737,11 @@ export class BleEslDesigner extends HTMLElement {
       .querySelector("details.advanced")
       ?.addEventListener("toggle", (event) => {
         this.advancedOpen = event.target.open;
+      });
+    this.shadowRoot
+      .querySelector("details.tips")
+      ?.addEventListener("toggle", (event) => {
+        this.tipsOpen = event.target.open;
       });
     this.drawStage();
     this.renderStatus();
@@ -1729,6 +1741,12 @@ export class BleEslDesigner extends HTMLElement {
           elements[index],
         ];
       this.edited();
+      // The panel was rebuilt: keep keyboard focus on the same control.
+      this.shadowRoot
+        .querySelector(
+          `[data-layer="${CSS.escape(item.id)}"][data-layer-action="${button.dataset.layerAction}"]`,
+        )
+        ?.focus();
       return;
     }
     if (button.dataset.select) {
@@ -1742,6 +1760,7 @@ export class BleEslDesigner extends HTMLElement {
       this.error = false;
       this.status = "Ready";
       this.renderStatus();
+      this.shadowRoot.querySelector(".stage")?.focus();
       return;
     }
     try {
@@ -1853,7 +1872,11 @@ export class BleEslDesigner extends HTMLElement {
           url = URL.createObjectURL(blob),
           link = document.createElement("a");
         link.href = url;
-        link.download = `${(this.mode === "template" ? this.templateName : this.tag?.title || "label-display").replace(/[^\w.-]+/g, "-")}.json`;
+        link.download = `${
+          (this.mode === "template" ? this.templateName : this.tag?.title)
+            ?.replace(/[\\/:*?"<>|\s]+/g, "-")
+            .replace(/^[-.]+|[-.]+$/g, "") || "label-display"
+        }.json`;
         link.click();
         URL.revokeObjectURL(url);
       } else if (action === "import")
