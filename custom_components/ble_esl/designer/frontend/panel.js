@@ -121,6 +121,7 @@ export class BleEslDesigner extends HTMLElement {
     this.search = "";
     this.libraryEntity = "";
     this.status = "";
+    this.errorSource = null;
     this.preview = null;
     this.layerPreviews = {};
     this.dirty = false;
@@ -293,10 +294,18 @@ export class BleEslDesigner extends HTMLElement {
     this.undoStack.push(clone(this.document));
     if (this.undoStack.length > 100) this.undoStack.shift();
     this.redoStack = [];
+    this.syncHistoryControls();
+  }
+  syncHistoryControls() {
+    const undo = this.shadowRoot.querySelector('[data-action="undo"]'),
+      redo = this.shadowRoot.querySelector('[data-action="redo"]');
+    if (undo) undo.disabled = !this.undoStack.length || this.busy;
+    if (redo) redo.disabled = !this.redoStack.length || this.busy;
   }
   // Without a full render: show that there is something to save, and that
   // the picture is no longer the exact render.
   markDirty() {
+    this.syncHistoryControls();
     const save = this.shadowRoot.querySelector('[data-action="save"]');
     if (save) {
       save.innerHTML = toolIcon("save") + "·";
@@ -321,9 +330,10 @@ export class BleEslDesigner extends HTMLElement {
     }
     this.queuePreview();
   }
-  report(error) {
+  report(error, source = "operation") {
     this.status = error.message || String(error);
     this.error = true;
+    this.errorSource = source;
     this.renderStatus();
   }
   renderStatus() {
@@ -975,6 +985,7 @@ export class BleEslDesigner extends HTMLElement {
     }
     if (!result.elements.length) {
       this.error = true;
+      this.errorSource = "operation";
       this.status = result.issues.join("; ") || "Nothing to convert";
       this.renderStatus();
       return;
@@ -983,6 +994,7 @@ export class BleEslDesigner extends HTMLElement {
     this.document.elements.splice(index, 1, ...result.elements);
     this.selected = result.elements[0].id;
     this.error = false;
+    this.errorSource = null;
     const skipped = result.issues.length
       ? `; ${result.issues.length} not converted`
       : "";
@@ -1018,6 +1030,7 @@ export class BleEslDesigner extends HTMLElement {
     this.undoStack.push(snapshot);
     if (this.undoStack.length > 100) this.undoStack.shift();
     this.redoStack = [];
+    this.syncHistoryControls();
   }
   specInput(input) {
     const element = this.element;
@@ -1473,17 +1486,17 @@ export class BleEslDesigner extends HTMLElement {
                   : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
             content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
           }
-          // A dragged image is shown by its own <img> (laid out in the
-          // frame) until the next render: the cropped layer cannot follow a
-          // frame that is resized.
           const record = this.layerRecords?.[element.id];
+          const stale =
+            !record ||
+            record.shape !== this.shape(element) ||
+            record.size[0] !== element.width ||
+            record.size[1] !== element.height;
+          if (element.type === "imagespec" && stale)
+            content = `<div role="status" aria-label="Preview updating" title="This element needs a renderer preview to show its current appearance" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">Preview updating…</div>`;
           const rendered =
-            element.type === "image" &&
-            (this.gesture ||
-              !record ||
-              record.shape !== this.shape(element) ||
-              record.size[0] !== element.width ||
-              record.size[1] !== element.height)
+            (this.gesture && element.type === "image") ||
+            stale
               ? undefined
               : this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
@@ -1905,6 +1918,7 @@ export class BleEslDesigner extends HTMLElement {
     const action = button.dataset.action;
     if (action === "dismiss-status") {
       this.error = false;
+      this.errorSource = null;
       this.status = "Ready";
       this.renderStatus();
       this.shadowRoot.querySelector(".stage")?.focus();
@@ -1916,6 +1930,7 @@ export class BleEslDesigner extends HTMLElement {
         this.gestureFinish?.(false);
         this.busy = true;
         this.error = false;
+        this.errorSource = null;
         this.status = action === "send" ? "Sending display…" : "Working…";
         this.render();
         if (this.pendingUploads.size)
@@ -2009,6 +2024,7 @@ export class BleEslDesigner extends HTMLElement {
       } else if (action === "yaml") {
         this.busy = true;
         this.error = false;
+        this.errorSource = null;
         this.status = "Exporting payload…";
         this.render();
         this.yamlExport = await this.api("export", {
@@ -2034,7 +2050,7 @@ export class BleEslDesigner extends HTMLElement {
         this.shadowRoot.querySelector("#file").click();
       else this.transform(action);
     } catch (error) {
-      this.report(error);
+      this.report(error, action === "preview" ? "preview" : "operation");
     } finally {
       this.busy = false;
       this.render();
@@ -2369,6 +2385,7 @@ export class BleEslDesigner extends HTMLElement {
       this.pendingUploads.add(upload);
       this.busy = true;
       this.error = false;
+      this.errorSource = null;
       this.status = "Loading image…";
       this.render();
       upload.catch((error) => this.report(error)).finally(() => {
@@ -2608,13 +2625,15 @@ export class BleEslDesigner extends HTMLElement {
     };
     if (inCanvas && this.element && directions[event.key]) {
       event.preventDefault();
-      this.checkpoint();
       const before = clone(this.element),
+        snapshot = clone(this.document),
         step = event.shiftKey ? 10 : 1,
         [x, y] = directions[event.key];
       this.element.x += x * step;
       this.element.y += y * step;
       clampBox(this.element, this.tag, onLabel(before, this.tag));
+      if (this.element.x === before.x && this.element.y === before.y) return;
+      this.pushUndo(snapshot);
       this.edited();
       this.focusElement();
     }
@@ -2651,7 +2670,73 @@ export class BleEslDesigner extends HTMLElement {
       // An element that hangs off the label (an imported frame) is not pulled
       // back by the first move.
       bound = onLabel(start, this.tag);
-    let moved = false;
+    let moved = false,
+      pendingMove = null,
+      gestureFrame = 0;
+    const applyMove = (move) => {
+      const dx = Math.round((move.clientX - startX) / this.zoom),
+        dy = Math.round((move.clientY - startY) / this.zoom);
+      if (
+        !moved &&
+        Math.hypot(move.clientX - startX, move.clientY - startY) < 3
+      )
+        return;
+      if (!moved) {
+        moved = true;
+        this.preview = null;
+        this.previewSequence++;
+        clearTimeout(this.previewTimer);
+      }
+      if (resize) {
+        // The dragged edge stops at the label's edge; the other stays put.
+        const edge = (from, size, limit, lower, delta) => {
+          if (!bound)
+            return lower
+              ? [
+                  from + Math.min(delta, size - 1),
+                  size - Math.min(delta, size - 1),
+                ]
+              : [from, Math.max(1, size + delta)];
+          const [near, far] = lower
+            ? [
+                Math.min(Math.max(0, from + delta), from + size - 1),
+                from + size,
+              ]
+            : [
+                from,
+                Math.max(Math.min(limit, from + size + delta), from + 1),
+              ];
+          return [near, far - near];
+        };
+        [element.x, element.width] = edge(
+          start.x,
+          start.width,
+          this.tag.width,
+          resize.endsWith("w"),
+          dx,
+        );
+        [element.y, element.height] = edge(
+          start.y,
+          start.height,
+          this.tag.height,
+          resize.startsWith("n"),
+          dy,
+        );
+      } else {
+        element.x = start.x + dx;
+        element.y = start.y + dy;
+      }
+      clampBox(element, this.tag, bound);
+      this.snapGuides = this.alignmentGuides(element, resize);
+      this.drawStage();
+    };
+    const flushPendingMove = () => {
+      if (gestureFrame) cancelAnimationFrame(gestureFrame);
+      gestureFrame = 0;
+      const move = pendingMove;
+      pendingMove = null;
+      if (move) applyMove(move);
+    };
     // A plain click leaves the exact preview alone; only a drag swaps it for
     // the movable layers.
     this.render();
@@ -2660,6 +2745,9 @@ export class BleEslDesigner extends HTMLElement {
     this.gesture = controller;
     const previewBeforeGesture = this.preview;
     const cancelGesture = () => {
+      if (gestureFrame) cancelAnimationFrame(gestureFrame);
+      gestureFrame = 0;
+      pendingMove = null;
       controller.abort();
       if (this.gesture !== controller) return;
       this.gesture = null;
@@ -2674,6 +2762,8 @@ export class BleEslDesigner extends HTMLElement {
     };
     this.gestureCancel = cancelGesture;
     const finishGesture = (editText = true) => {
+      if (this.gesture !== controller) return;
+      flushPendingMove();
       controller.abort();
       if (this.gesture !== controller) return;
       this.gesture = null;
@@ -2712,68 +2802,33 @@ export class BleEslDesigner extends HTMLElement {
       "pointermove",
       (move) => {
         if (move.pointerId !== pointerId) return;
-        const dx = Math.round((move.clientX - startX) / this.zoom),
-          dy = Math.round((move.clientY - startY) / this.zoom);
         if (
           !moved &&
-          Math.hypot(move.clientX - startX, move.clientY - startY) < 3
-        )
-          return;
-        if (!moved) {
+          Math.hypot(move.clientX - startX, move.clientY - startY) >= 3
+        ) {
           moved = true;
           this.preview = null;
           this.previewSequence++;
           clearTimeout(this.previewTimer);
         }
-        if (resize) {
-          // The dragged edge stops at the label's edge; the other stays put.
-          const edge = (from, size, limit, lower, delta) => {
-            if (!bound)
-              return lower
-                ? [
-                    from + Math.min(delta, size - 1),
-                    size - Math.min(delta, size - 1),
-                  ]
-                : [from, Math.max(1, size + delta)];
-            const [near, far] = lower
-              ? [
-                  Math.min(Math.max(0, from + delta), from + size - 1),
-                  from + size,
-                ]
-              : [
-                  from,
-                  Math.max(Math.min(limit, from + size + delta), from + 1),
-                ];
-            return [near, far - near];
-          };
-          [element.x, element.width] = edge(
-            start.x,
-            start.width,
-            this.tag.width,
-            resize.endsWith("w"),
-            dx,
-          );
-          [element.y, element.height] = edge(
-            start.y,
-            start.height,
-            this.tag.height,
-            resize.startsWith("n"),
-            dy,
-          );
-        } else {
-          element.x = start.x + dx;
-          element.y = start.y + dy;
-        }
-        clampBox(element, this.tag, bound);
-        this.snapGuides = this.alignmentGuides(element, resize);
-        this.drawStage();
+        pendingMove = move;
+        if (gestureFrame) return;
+        gestureFrame = requestAnimationFrame(() => {
+          gestureFrame = 0;
+          const latest = pendingMove;
+          pendingMove = null;
+          if (latest) applyMove(latest);
+        });
       },
       { signal: controller.signal },
     );
     window.addEventListener(
       "pointerup",
       (up) => {
-        if (up.pointerId === pointerId) finishGesture();
+        if (up.pointerId === pointerId) {
+          flushPendingMove();
+          finishGesture();
+        }
       },
       { signal: controller.signal },
     );
@@ -2834,15 +2889,17 @@ export class BleEslDesigner extends HTMLElement {
             .querySelector(".canvas-wrap")
             ?.previousElementSibling?.querySelector("span");
           if (title) title.textContent = "Exact rendered preview";
-          if (this.error) {
+          if (this.error && this.errorSource === "preview") {
             // The render that failed has been fixed.
             this.error = false;
+            this.errorSource = null;
             this.status = "Exact rendered preview";
             this.renderStatus();
           }
         }
       } catch (error) {
-        if (sequence === this.previewSequence) this.report(error);
+        if (sequence === this.previewSequence)
+          this.report(error, "preview");
       } finally {
         this.previewInFlight = false;
         if (this.previewQueued) {
