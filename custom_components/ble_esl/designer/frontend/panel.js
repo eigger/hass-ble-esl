@@ -734,7 +734,7 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><p class="hint">The four icon buttons add a text, shape, icon or image in one click. <b>＋ Add component</b> opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.</p><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>Keyboard &amp; mouse tips</summary><p class="muted">Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits a text element · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><p class="hint">The four icon buttons add a text, shape, icon or image in one click. <b>＋ Add component</b> opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.</p><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>Keyboard &amp; mouse tips</summary><p class="muted">Click selects · Arrow keys move 1 px · Shift + arrows move 10 px · Double-click or Enter edits text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
@@ -843,8 +843,7 @@ export class BleEslDesigner extends HTMLElement {
     stage.style.transform = `scale(${this.zoom})`;
     space.style.width = `${this.tag.width * this.zoom}px`;
     space.style.height = `${this.tag.height * this.zoom}px`;
-    const trash = this.shadowRoot.querySelector(".delete-handle");
-    if (trash) trash.style.transform = `scale(${1 / this.zoom})`;
+    this.updateSelectionOverlay();
     const option = this.shadowRoot.querySelector('#zoom option[value="fit"]');
     if (option) option.textContent = `Fit (${Math.round(this.zoom * 100)}%)`;
   }
@@ -1494,17 +1493,10 @@ export class BleEslDesigner extends HTMLElement {
           const hitArea = hitBounds
             ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
             : "";
-          return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""} ${element.id === this.selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}${
-            element.id === this.selected
-              ? (() => {
-                  const bounds = visible || box;
-                  const [left, top, right, bottom] = bounds;
-                  return `<div class="selection-box" style="position:absolute;left:${left}px;top:${top}px;width:${right - left}px;height:${bottom - top}px;outline:2px solid var(--primary-color,#16838b);pointer-events:none">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -3 : right - left - 3}px;top:${corner.startsWith("n") ? -3 : bottom - top - 3}px;right:auto;bottom:auto;width:6px;height:6px;pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
-                })()
-              : ""
-          }</div>`;
+          const selected = element.id === this.selected;
+          return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""} ${selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}</div>`;
         })
-        .join("");
+        .join("") + this.selectionMarkup();
     if (focusedId) this.focusElement();
     stage.querySelectorAll("ha-state-icon").forEach((icon) => {
       const element = this.document.elements.find(
@@ -1513,6 +1505,46 @@ export class BleEslDesigner extends HTMLElement {
       icon.hass = this.hass;
       icon.stateObj = this.hass.states[element.entity_id];
     });
+  }
+  selectionMarkup() {
+    const element = this.element;
+    if (!element) return "";
+    const handleSize =
+      (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
+    const moveTarget = `<span class="move-handle" aria-label="Move selected element" style="position:absolute;left:${element.width / 2 - handleSize / 2}px;top:${element.height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(element.width, element.height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
+    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : element.width}px;top:${corner.startsWith("n") ? -handleSize : element.height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
+  }
+  updateSelectionOverlay() {
+    const overlay = this.shadowRoot.querySelector(".selection-box"),
+      element = this.element;
+    if (!overlay || !element) return;
+    const handleSize =
+      (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
+    overlay.style.left = `${element.x}px`;
+    overlay.style.top = `${element.y}px`;
+    overlay.style.width = `${element.width}px`;
+    overlay.style.height = `${element.height}px`;
+    overlay.style.outlineWidth = `${1.5 / this.zoom}px`;
+    for (const handle of overlay.querySelectorAll(".handle")) {
+      const corner = handle.dataset.corner;
+      handle.style.left = `${corner.endsWith("w") ? -handleSize : element.width}px`;
+      handle.style.top = `${corner.startsWith("n") ? -handleSize : element.height}px`;
+      handle.style.width = `${handleSize}px`;
+      handle.style.height = `${handleSize}px`;
+    }
+    const moveTarget = overlay.querySelector(".move-handle");
+    if (moveTarget) {
+      moveTarget.style.left = `${element.width / 2 - handleSize / 2}px`;
+      moveTarget.style.top = `${element.height / 2 - handleSize / 2}px`;
+      moveTarget.style.width = `${handleSize}px`;
+      moveTarget.style.height = `${handleSize}px`;
+      moveTarget.style.display =
+        Math.max(element.width, element.height) * this.zoom < 36
+          ? "grid"
+          : "none";
+    }
+    const trash = overlay.querySelector(".delete-handle");
+    if (trash) trash.style.transform = `scale(${1 / this.zoom})`;
   }
   // Content bounds come from the last render and are relative to the element.
   // Moving the element keeps them. Resizing it grows or shrinks them with the
@@ -2022,6 +2054,7 @@ export class BleEslDesigner extends HTMLElement {
     this.shadowRoot.querySelector(".stage img.exact")?.remove();
     const node = this.shadowRoot.querySelector(`[data-id="${this.selected}"]`);
     node.classList.add("editing");
+    this.shadowRoot.querySelector(".move-handle")?.setAttribute("hidden", "");
     const content = node.querySelector(".content");
     content.textContent = this.element.text;
     content.contentEditable = "plaintext-only";
@@ -2467,9 +2500,24 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (editing) return;
-    if (event.key === "Enter" && this.element?.type === "text") {
+    const interactiveControl = event.target.closest(
+        "button, a, input, select, textarea, [contenteditable=true]",
+      ),
+      canvasNode = interactiveControl
+        ? null
+        : event.target.closest(".el[data-id]"),
+      inCanvas =
+        !!canvasNode ||
+        (!!event.target.closest(".stage") && !interactiveControl);
+    if (canvasNode && ["Enter", " "].includes(event.key)) {
       event.preventDefault();
-      this.beginTextEdit();
+      if (this.selected !== canvasNode.dataset.id) {
+        this.selected = canvasNode.dataset.id;
+        this.render();
+        this.focusElement();
+      }
+      if (event.key === "Enter" && this.element?.type === "text")
+        this.beginTextEdit();
       return;
     }
     const cmd = event.metaKey || event.ctrlKey,
@@ -2485,7 +2533,7 @@ export class BleEslDesigner extends HTMLElement {
           ?.click();
       return;
     }
-    if (key === "delete" || key === "backspace") {
+    if (inCanvas && (key === "delete" || key === "backspace")) {
       event.preventDefault();
       this.transform("delete");
       return;
@@ -2496,7 +2544,7 @@ export class BleEslDesigner extends HTMLElement {
       ArrowUp: [0, -1],
       ArrowDown: [0, 1],
     };
-    if (this.element && directions[event.key]) {
+    if (inCanvas && this.element && directions[event.key]) {
       event.preventDefault();
       this.checkpoint();
       const before = clone(this.element),
@@ -2521,6 +2569,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     const node = event.target.closest("[data-id]");
     if (!node) {
+      this.lastCanvasClick = null;
       if (this.selected && !this.busy && event.target.closest(".canvas-wrap")) {
         this.finishTextEdit();
         this.selected = null;
@@ -2528,11 +2577,28 @@ export class BleEslDesigner extends HTMLElement {
       }
       return;
     }
+    const clicked = this.document.elements.find(
+        (item) => item.id === node.dataset.id,
+      ),
+      resize = event.target.closest(".handle")?.dataset.corner,
+      selectionOverlay = event.target.closest(".selection-box"),
+      moveTarget = event.target.closest(".move-handle"),
+      previousClick = this.lastCanvasClick,
+      editTextOnRelease =
+        !resize &&
+        (!selectionOverlay || moveTarget) &&
+        clicked?.type === "text" &&
+        previousClick?.id === clicked.id &&
+        performance.now() - previousClick.time <= 500 &&
+        Math.hypot(
+          event.clientX - previousClick.x,
+          event.clientY - previousClick.y,
+        ) <= 5;
+    if (!editTextOnRelease) this.lastCanvasClick = null;
     event.preventDefault();
     this.selected = node.dataset.id;
     const element = this.element,
       start = clone(element),
-      resize = event.target.closest(".handle")?.dataset.corner,
       startX = event.clientX,
       startY = event.clientY,
       pointerId = event.pointerId,
@@ -2561,7 +2627,7 @@ export class BleEslDesigner extends HTMLElement {
       }
     };
     this.gestureCancel = cancelGesture;
-    const finishGesture = (editText = true) => {
+    const finishGesture = () => {
       controller.abort();
       if (this.gesture !== controller) return;
       this.gesture = null;
@@ -2583,7 +2649,22 @@ export class BleEslDesigner extends HTMLElement {
           this.drawStage();
           if (!this.preview) this.queuePreview();
         }
-        if (editText && !resize && element.type === "text") this.beginTextEdit();
+        if (editTextOnRelease && !moved && !resize && element.type === "text") {
+          this.lastCanvasClick = null;
+          this.beginTextEdit();
+        } else if (
+          !moved &&
+          !resize &&
+          (!selectionOverlay || moveTarget) &&
+          element.type === "text"
+        ) {
+          this.lastCanvasClick = {
+            id: element.id,
+            x: startX,
+            y: startY,
+            time: performance.now(),
+          };
+        }
       }
     };
     this.gestureFinish = finishGesture;
@@ -2600,6 +2681,7 @@ export class BleEslDesigner extends HTMLElement {
           return;
         if (!moved) {
           moved = true;
+          this.lastCanvasClick = null;
           this.preview = null;
           this.previewSequence++;
           clearTimeout(this.previewTimer);
