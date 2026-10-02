@@ -15,6 +15,7 @@ import {
   clampBox,
   onLabel,
   newElement,
+  jpegOrientation,
 } from "./model.js";
 const esc = (value) =>
   String(value ?? "").replace(
@@ -2173,11 +2174,40 @@ export class BleEslDesigner extends HTMLElement {
     if (id === "image-file") {
       const file = input.files[0];
       if (!file) return;
-      const element = this.element;
+      const id = this.element.id,
+        sequence = (this.uploadSequence = (this.uploadSequence || 0) + 1);
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        let image = reader.result;
+        // The renderer ignores a photo's EXIF orientation, which the browser
+        // applies: a portrait phone photo would print turned 90°. A photo that
+        // carries one is redrawn (and, as a tag is small, capped in size) so
+        // the orientation is in its pixels. The rest is kept byte for byte.
+        try {
+          const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer());
+          if (jpegOrientation(head) > 1) {
+            const bitmap = await createImageBitmap(file, {
+              imageOrientation: "from-image",
+            });
+            const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height)),
+              canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+            canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            bitmap.close();
+            const redrawn = canvas.toDataURL("image/jpeg", 0.92);
+            // A canvas the browser refuses gives "data:," rather than an error.
+            if (redrawn.length > 100) image = redrawn;
+          }
+        } catch {
+          // Keep the file as it is when the browser cannot decode it.
+        }
+        // Reading took a moment: the element may be gone, the document swapped
+        // (saved, another tag) or a later upload may have started.
+        const element = this.document.elements.find((item) => item.id === id);
+        if (!element || sequence !== this.uploadSequence) return;
         this.checkpoint();
-        element.image = reader.result;
+        element.image = image;
         this.edited();
       };
       reader.readAsDataURL(file);

@@ -481,6 +481,39 @@ test("template mode has no send or preview button and offers every sensor", asyn
   ).toBe("binary_sensor.window");
 });
 
+test("an uploaded photo is stored upright, with its EXIF orientation applied", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add image", exact: true }).click();
+  // 4×2 pixels with orientation 6: shown upright it is 2×4.
+  await page
+    .getByLabel("Upload image", { exact: true })
+    .setInputFiles("tests/frontend/fixtures/exif-rotated.jpg");
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.panel.element.image.startsWith("data:image/jpeg"),
+      ),
+    )
+    .toBe(true);
+  // What is stored is what the tag's renderer reads: the pixel size in the
+  // JPEG's own header, which an <img> (it applies EXIF itself) would hide.
+  const size = await page.evaluate(async () => {
+    const bytes = new Uint8Array(
+      await (await fetch(window.panel.element.image)).arrayBuffer(),
+    );
+    const view = new DataView(bytes.buffer);
+    let offset = 2;
+    while (offset + 9 < bytes.length) {
+      const marker = view.getUint16(offset);
+      if (marker === 0xffc0 || marker === 0xffc2)
+        return [view.getUint16(offset + 7), view.getUint16(offset + 5)];
+      offset += 2 + view.getUint16(offset + 2);
+    }
+    return null;
+  });
+  expect(size).toEqual([2, 4]);
+});
 test("images can be uploaded, resized and used as state-specific template parts", async ({
   page,
 }) => {
