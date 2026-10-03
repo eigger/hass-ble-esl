@@ -214,7 +214,7 @@ def _exc_for(error: str | BaseException) -> BaseException:
             NotificationTimeout(
                 0.4,
                 step="START",
-                message="No response from tag to START after 3 probes (0.4s each)",
+                message="No response from tag to START",  # the type decides, not "probes"
             ),
             {},
             "picksmart",
@@ -223,6 +223,15 @@ def _exc_for(error: str | BaseException) -> BaseException:
         # A GATT profile that is not the protocol's is blesession's own sentence.
         (
             "session",
+            GattMismatch("ETAG service 0000ffe0 is missing"),
+            {},
+            "etag",
+            "Connected, but the tag does not expose the GATT service or "
+            "characteristic the protocol needs (or its write size is too small): "
+            "another model or firmware, or a link that has not negotiated its MTU.",
+        ),
+        (
+            "auth",
             GattMismatch("ETAG service 0000ffe0 is missing"),
             {},
             "etag",
