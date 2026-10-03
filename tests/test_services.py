@@ -34,6 +34,11 @@ from custom_components.ble_esl.services import _likely_cause
 PAYLOAD = [{"type": "text", "value": "hi", "x": 0, "y": 0}]
 
 
+def text_payload(value: str) -> list[dict[str, str]]:
+    """Build a valid imagespec text element for write-ordering tests."""
+    return [{"type": "text", "value": value}]
+
+
 async def call(hass: HomeAssistant, service: str, target, **data) -> None:
     await hass.services.async_call(
         DOMAIN, service, {"device_id": target, "payload": PAYLOAD, **data}, blocking=True
@@ -294,6 +299,22 @@ async def test_empty_payload_list_is_allowed_for_blank_screen(
     response = await respond(hass, "write", device_id_of(hass), payload=[], dry_run=True)
 
     assert response[device_id_of(hass)] == {"status": "preview"}
+    assert tag_writer.write_prepared.await_count == 0
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+@pytest.mark.parametrize("payload", [None, False, 0, {}])
+async def test_write_services_reject_non_list_payloads(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str, payload
+) -> None:
+    with pytest.raises(Exception, match="expected list"):
+        await hass.services.async_call(
+            DOMAIN,
+            service,
+            {"device_id": device_id_of(hass), "payload": payload},
+            blocking=True,
+        )
+
     assert tag_writer.write_prepared.await_count == 0
 
 
@@ -695,14 +716,14 @@ async def test_debounce_is_trailing_edge_with_last_payload(
     await hass.services.async_call(
         DOMAIN,
         "write_guarded",
-        {"device_id": device_id, "payload": "first", "debounce_override_ms": 5000},
+        {"device_id": device_id, "payload": text_payload("first"), "debounce_override_ms": 5000},
         blocking=True,
     )
     await advance(hass, freezer, 3)
     await hass.services.async_call(
         DOMAIN,
         "write_guarded",
-        {"device_id": device_id, "payload": "second!", "debounce_override_ms": 5000},
+        {"device_id": device_id, "payload": text_payload("second!"), "debounce_override_ms": 5000},
         blocking=True,
     )
     await advance(hass, freezer, 3)  # 6 s after the first call: timer was restarted
@@ -710,7 +731,7 @@ async def test_debounce_is_trailing_edge_with_last_payload(
 
     await advance(hass, freezer, 3)  # 6 s after the second call
     assert tag_writer.write_prepared.await_count == 1
-    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("second!")
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len(str(text_payload("second!")))
     assert wolink_entry.runtime_data.pending_write_cancel is None
 
 
@@ -727,7 +748,9 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
     resume_older_render = asyncio.Event()
 
     def delayed_executor(func, *args):
-        if getattr(func, "func", None) is svc.render_image and func.args[2] == "older":
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload(
+            "older"
+        ):
 
             async def run_older_render():
                 older_render_started.set()
@@ -743,7 +766,7 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
                 hass,
                 "write_guarded",
                 device_id,
-                payload="older",
+                payload=text_payload("older"),
                 debounce_override_ms=5000,
             )
         )
@@ -753,7 +776,7 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
             hass,
             "write_guarded",
             device_id,
-            payload="newer payload",
+            payload=text_payload("newer payload"),
             debounce_override_ms=5000,
         )
         assert newer_response[device_id]["status"] == "scheduled"
@@ -768,7 +791,7 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
     assert entry.runtime_data.preview_coordinator.data == newer_preview
     await advance(hass, freezer, 6)
     assert tag_writer.write_prepared.await_count == 1
-    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("newer payload")
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len(str(text_payload("newer payload")))
 
 
 async def test_newer_plain_write_invalidates_older_guarded_render(
@@ -784,7 +807,9 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
     resume_older_render = asyncio.Event()
 
     def delayed_executor(func, *args):
-        if getattr(func, "func", None) is svc.render_image and func.args[2] == "older guarded":
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload(
+            "older guarded"
+        ):
 
             async def run_older_render():
                 older_render_started.set()
@@ -800,13 +825,13 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
                 hass,
                 "write_guarded",
                 device_id,
-                payload="older guarded",
+                payload=text_payload("older guarded"),
                 debounce_override_ms=5000,
             )
         )
         await older_render_started.wait()
 
-        newer_response = await respond(hass, "write", device_id, payload="newer")
+        newer_response = await respond(hass, "write", device_id, payload=text_payload("newer"))
         assert newer_response[device_id]["status"] == "written"
         newer_preview = entry.runtime_data.preview_coordinator.data
 
@@ -817,7 +842,7 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
     assert entry.runtime_data.pending_write_cancel is None
     assert entry.runtime_data.preview_coordinator.data == newer_preview
     assert tag_writer.write_prepared.await_count == 1
-    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("newer")
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len(str(text_payload("newer")))
 
 
 async def test_immediate_write_cancels_pending_debounced_write(
@@ -845,7 +870,7 @@ async def test_fired_debounced_write_dropped_when_superseded(
     await hass.services.async_call(
         DOMAIN,
         "write_guarded",
-        {"device_id": device_id, "payload": "stale", "debounce_override_ms": 1000},
+        {"device_id": device_id, "payload": text_payload("stale"), "debounce_override_ms": 1000},
         blocking=True,
     )
     await advance(hass, freezer, 2, settle=False)  # timer fired; the write is queued on the lock
@@ -855,7 +880,10 @@ async def test_fired_debounced_write_dropped_when_superseded(
     generation = wolink_entry.runtime_data.write_generation
     immediate = hass.async_create_task(
         hass.services.async_call(
-            DOMAIN, "write", {"device_id": device_id, "payload": "fresh!!"}, blocking=True
+            DOMAIN,
+            "write",
+            {"device_id": device_id, "payload": text_payload("fresh!!")},
+            blocking=True,
         )
     )
     while wolink_entry.runtime_data.write_generation == generation:
@@ -865,7 +893,7 @@ async def test_fired_debounced_write_dropped_when_superseded(
     await debounced_writes_done()
 
     assert tag_writer.write_prepared.await_count == 1
-    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("fresh!!")
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len(str(text_payload("fresh!!")))
 
 
 async def test_unload_cancels_pending_debounced_write(
@@ -1093,13 +1121,13 @@ async def test_response_guarded_statuses(
     assert (await respond(hass, "write_guarded", device_id))[device_id] == {"status": "duplicate"}
 
     entry.runtime_data.write_lock = True
-    assert (await respond(hass, "write_guarded", device_id, payload="new"))[device_id] == {
-        "status": "locked"
-    }
+    assert (await respond(hass, "write_guarded", device_id, payload=text_payload("new")))[
+        device_id
+    ] == {"status": "locked"}
     entry.runtime_data.write_lock = False
 
     response = await respond(
-        hass, "write_guarded", device_id, payload="newer", debounce_override_ms=5000
+        hass, "write_guarded", device_id, payload=text_payload("newer"), debounce_override_ms=5000
     )
     assert response[device_id] == {"status": "scheduled", "delay_ms": 5000}
     await advance(hass, freezer, 6)

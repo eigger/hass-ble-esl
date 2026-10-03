@@ -26,7 +26,7 @@ async def test_diagnostics_content_and_redaction(
     assert await async_setup_component(hass, "diagnostics", {})
     entry = await setup_entry(hass, options={CONF_RETRY_COUNT: 2})
     await hass.services.async_call(
-        DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
+        DOMAIN, "write", {"device_id": device_id_of(hass), "payload": []}, blocking=True
     )
 
     result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
@@ -69,11 +69,11 @@ async def test_diagnostics_content_and_redaction(
     tag_writer.write_result = fail("boom", connect=0.5)
     with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
-            DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
+            DOMAIN, "write", {"device_id": device_id_of(hass), "payload": []}, blocking=True
         )
     tag_writer.write_result = ok(transfer=0.1)
     await hass.services.async_call(
-        DOMAIN, "write", {"device_id": device_id_of(hass), "payload": "p"}, blocking=True
+        DOMAIN, "write", {"device_id": device_id_of(hass), "payload": []}, blocking=True
     )
     result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
     assert result["write_state"]["last_write"]["success"] is True
