@@ -12,7 +12,7 @@ from datetime import timedelta
 from threading import Event
 from unittest.mock import patch
 
-from blesession import LinkInfo, NotificationTimeout, SessionDropped, generic_cause
+from blesession import GattMismatch, LinkInfo, NotificationTimeout, SessionDropped, generic_cause
 from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
@@ -176,8 +176,11 @@ async def test_likely_cause_reads_stage_error_and_radio(
     assert failed["likely_cause"].startswith("No radio currently sees the tag")
 
 
-def _exc_for(error: str) -> BaseException:
-    """The error blesession would have raised for this text."""
+def _exc_for(error: str | BaseException) -> BaseException:
+    """The error blesession would have raised for this text; an exception
+    instance is used as given, for the cases that depend on its type."""
+    if isinstance(error, BaseException):
+        return error
     if "No response" in error:
         return NotificationTimeout(1, step="step", message=error)
     if "link dropped" in error:
@@ -203,6 +206,29 @@ def _exc_for(error: str) -> BaseException:
             {},
             "xte",
             "The tag did not answer the handshake: not ready, or the link dropped.",
+        ),
+        # The PICKSMART START probe, which gives up after N unanswered tries,
+        # reads differently from any other unanswered handshake step.
+        (
+            "auth",
+            NotificationTimeout(
+                0.4,
+                step="START",
+                message="No response from tag to START after 3 probes (0.4s each)",
+            ),
+            {},
+            "picksmart",
+            "The tag did not answer START after connecting (not ready yet); usually transient.",
+        ),
+        # A GATT profile that is not the protocol's is blesession's own sentence.
+        (
+            "session",
+            GattMismatch("ETAG service 0000ffe0 is missing"),
+            {},
+            "etag",
+            "Connected, but the tag does not expose the GATT service or "
+            "characteristic the protocol needs (or its write size is too small): "
+            "another model or firmware, or a link that has not negotiated its MTU.",
         ),
         (
             "auth",
@@ -256,9 +282,11 @@ def _exc_for(error: str) -> BaseException:
 )
 def test_likely_cause_wording(stage, error, via, protocol, expected) -> None:
     """The tag's own sentences first; blesession's generic ones where it has none."""
-    sentence = _likely_cause(stage, error, _exc_for(error), via, protocol)
+    exc = _exc_for(error)
+    error = str(exc)
+    sentence = _likely_cause(stage, error, exc, via, protocol)
     if sentence is None:
-        sentence = generic_cause(stage, error, via, noun="tag")
+        sentence = generic_cause(stage, error, via, exc=exc, noun="tag")
     assert sentence == expected
 
 
