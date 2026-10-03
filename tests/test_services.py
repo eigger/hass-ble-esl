@@ -748,7 +748,9 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
     resume_older_render = asyncio.Event()
 
     def delayed_executor(func, *args):
-        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload("older"):
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload(
+            "older"
+        ):
 
             async def run_older_render():
                 older_render_started.set()
@@ -805,7 +807,9 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
     resume_older_render = asyncio.Event()
 
     def delayed_executor(func, *args):
-        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload("older guarded"):
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == text_payload(
+            "older guarded"
+        ):
 
             async def run_older_render():
                 older_render_started.set()
@@ -1117,9 +1121,9 @@ async def test_response_guarded_statuses(
     assert (await respond(hass, "write_guarded", device_id))[device_id] == {"status": "duplicate"}
 
     entry.runtime_data.write_lock = True
-    assert (await respond(hass, "write_guarded", device_id, payload=text_payload("new")))[device_id] == {
-        "status": "locked"
-    }
+    assert (await respond(hass, "write_guarded", device_id, payload=text_payload("new")))[
+        device_id
+    ] == {"status": "locked"}
     entry.runtime_data.write_lock = False
 
     response = await respond(
