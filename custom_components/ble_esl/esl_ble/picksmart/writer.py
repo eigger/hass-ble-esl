@@ -245,9 +245,11 @@ class PickSmartSession:
         pacing: float | None = None,
     ) -> bytes:
         """Write `packet` and return the tag's reply; `pace` adds the retry pacing."""
-        replies.clear()
-        await self.client.write_gatt_char(uuid, packet, response=False)
         delay = self.pacing_s if pacing is None else pacing
-        if pace and delay > 0:
-            await asyncio.sleep(delay)
-        return await replies.next(REPLY_TIMEOUT_S if timeout is None else timeout, step=step)
+        return await replies.request(
+            uuid,
+            packet,
+            timeout=REPLY_TIMEOUT_S if timeout is None else timeout,
+            step=step,
+            pace_s=delay if pace else 0.0,
+        )

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- BLE session reporting uses `blesession 0.5.0`. Request/reply exchanges (ETAG, PICKSMART) use `Notifications.request()`, and chunked uploads (WOLINK, XTE) use `write_chunks()`, so a link that has already dropped fails as `SessionDropped` instead of a backend write error.
+
 ## 1.0.0
 
 First stable release of BLE ESL.
