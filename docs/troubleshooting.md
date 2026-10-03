@@ -20,7 +20,7 @@ The same breakdown is in the **diagnostics download** (device page → ⋮ → *
 
 Two more entities help, but read them for what they are:
 
-- **Display In Sync** (binary) — on when the last image *rendered* is the one the tag *received*. Off after a `dry_run`, or after a write that failed following a new render; `unknown` until the tag has received an image at all. It can also become `unknown` after a reload during an active transfer, because the tag may finish after the integration reloads. It does not know what the panel physically shows.
+- **Display In Sync** (binary) — on when the last image *rendered* matches the last known image the tag *received*; off when they differ, for example when a `dry_run` or failed write rendered a different image. It is `unknown` when either image is unknown, including after a reload during an active write because the tag may finish after the integration reloads. It does not know what the panel physically shows.
 - **Connectivity** (binary) — on **while a write is in progress**, from the first attempt to the final result, including connection retries; off otherwise. It is not "the tag is nearby", nor "the link is up".
 
 ## Reading a failure
