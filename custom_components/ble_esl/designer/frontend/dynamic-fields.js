@@ -29,6 +29,17 @@ const esc = (value) =>
         char
       ],
   );
+const focusSelectorFor = (element) => {
+  if (!element) return null;
+  if (element.id) return `#${CSS.escape(element.id)}`;
+  const identity = [...element.attributes]
+    .filter((attribute) => attribute.name.startsWith("data-"))
+    .map(
+      (attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`,
+    )
+    .join("");
+  return identity ? `${element.tagName.toLowerCase()}${identity}` : null;
+};
 export class DynamicFields extends HTMLElement {
   constructor() {
     super();
@@ -37,6 +48,7 @@ export class DynamicFields extends HTMLElement {
   }
   open(owner) {
     this.owner = owner;
+    this.opener = owner.shadowRoot.activeElement;
     this.hass = owner.hass;
     this.templates = clone(owner.draft.field_templates || {});
     this.field = Object.keys(this.templates)[0] || "color";
@@ -48,9 +60,10 @@ export class DynamicFields extends HTMLElement {
     clearTimeout(this.timer);
     this.sequence++;
     this.remove();
+    this.opener?.focus({ preventScroll: true });
   }
   render() {
-    this.shadowRoot.innerHTML = `<style>:host{font:inherit;color:var(--primary-text-color)}dialog{padding:24px;width:min(850px,calc(100vw - 64px));border:0;border-radius:16px;color:inherit;background:var(--card-background-color,white)}dialog::backdrop{background:#0006}header,footer,.tools{display:flex;gap:12px;align-items:center}h2{flex:1;margin:0 0 12px}.body{display:grid;grid-template-columns:180px 1fr;gap:20px}.fields{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}button,input,select,textarea{font:inherit;color:inherit;background:inherit;border:1px solid var(--divider-color,#ccd4dc);border-radius:6px;padding:10px}button{cursor:pointer}.active{border-color:var(--primary-color,#16838b);color:var(--primary-color,#16838b)}textarea{box-sizing:border-box;width:100%;height:240px;font:14px/1.5 monospace;margin-top:12px;resize:vertical}.hint{font-size:12px;opacity:.75}pre{overflow:auto;white-space:pre-wrap;padding:12px;background:var(--secondary-background-color,#eee)}img{max-width:200px;max-height:100px;image-rendering:pixelated}.error{color:var(--error-color,#c33)}footer{justify-content:flex-end;margin-top:16px}@media(max-width:600px){.body{grid-template-columns:1fr}.fields{flex-direction:row;max-height:80px}.tools{flex-wrap:wrap}}</style><dialog aria-label="Dynamic fields"><header><h2>Dynamic fields</h2><button id="close" aria-label="Close dynamic fields">×</button></header><div class="body"><aside class="fields">${fields.map((field) => `<button data-field="${field}" class="${field === this.field ? "active" : ""}">${esc(field.replaceAll("_", " "))}${this.templates[field] ? " ƒ" : ""}</button>`).join("")}</aside><section><div class="tools"><strong>${esc(this.field.replaceAll("_", " "))}</strong><select id="insert" aria-label="Insert template"><option value="">＋ Insert template…</option><option value="state">State value</option><option value="binary">Binary condition</option><option value="numeric">Numeric condition</option><option value="attribute">Attribute</option><option value="entity">Another HA entity</option></select><button id="remove">Use static value</button></div><textarea id="template" aria-label="Field template" spellcheck="false" placeholder="{{ 'red' if value | float(0) >= 20 else 'black' }}">${esc(this.templates[this.field] || "")}</textarea><p class="hint">HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.</p><strong>Resolved value</strong><pre id="result">—</pre><div class="error" role="status"></div><img id="preview" alt="Dynamic field pixel preview"></section></div><footer><button id="cancel">Cancel</button><button id="apply">Apply templates</button></footer></dialog>`;
+    this.shadowRoot.innerHTML = `<style>:host{font:inherit;color:var(--primary-text-color)}dialog{padding:24px;width:min(850px,calc(100vw - 64px));border:0;border-radius:16px;color:inherit;background:var(--card-background-color,white)}dialog::backdrop{background:#0006}header,footer,.tools{display:flex;gap:12px;align-items:center}h2{flex:1;margin:0 0 12px}.body{display:grid;grid-template-columns:180px 1fr;gap:20px}.fields{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}button,input,select,textarea{font:inherit;color:inherit;background:inherit;border:1px solid var(--divider-color,#ccd4dc);border-radius:6px;padding:10px}button{cursor:pointer}.active{border-color:var(--primary-color,#16838b);color:var(--primary-color,#16838b)}textarea{box-sizing:border-box;width:100%;height:240px;font:14px/1.5 monospace;margin-top:12px;resize:vertical}.hint{font-size:12px;opacity:.75}pre{overflow:auto;white-space:pre-wrap;padding:12px;background:var(--secondary-background-color,#eee)}img{max-width:200px;max-height:100px;image-rendering:pixelated}.error{color:var(--error-color,#c33)}footer{justify-content:flex-end;margin-top:16px}@media(max-width:600px){.body{grid-template-columns:1fr}.fields{flex-direction:row;max-height:80px}.tools{flex-wrap:wrap}}</style><dialog aria-label="Dynamic fields"><header><h2>Dynamic fields</h2><button id="close" aria-label="Close dynamic fields">×</button></header><div class="body"><aside class="fields">${fields.map((field) => `<button data-field="${field}" aria-pressed="${field === this.field}" class="${field === this.field ? "active" : ""}">${esc(field.replaceAll("_", " "))}${this.templates[field] ? " ƒ" : ""}</button>`).join("")}</aside><section><div class="tools"><strong>${esc(this.field.replaceAll("_", " "))}</strong><select id="insert" aria-label="Insert template"><option value="">＋ Insert template…</option><option value="state">State value</option><option value="binary">Binary condition</option><option value="numeric">Numeric condition</option><option value="attribute">Attribute</option><option value="entity">Another HA entity</option></select><button id="remove">Use static value</button></div><textarea id="template" aria-label="Field template" spellcheck="false" placeholder="{{ 'red' if value | float(0) >= 20 else 'black' }}">${esc(this.templates[this.field] || "")}</textarea><p class="hint">HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.</p><strong>Resolved value</strong><pre id="result">—</pre><div class="error" role="status"></div><img id="preview" alt="Dynamic field pixel preview"></section></div><footer><button id="cancel">Cancel</button><button id="apply">Apply templates</button></footer></dialog>`;
     const root = this.shadowRoot;
     root.querySelector("dialog").addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -59,9 +72,8 @@ export class DynamicFields extends HTMLElement {
     root.querySelectorAll("[data-field]").forEach(
       (button) =>
         (button.onclick = () => {
-          this.field = button.dataset.field;
-          this.render();
-          root.querySelector("dialog").showModal();
+      this.field = button.dataset.field;
+          this.redraw();
           this.preview();
         }),
     );
@@ -73,8 +85,7 @@ export class DynamicFields extends HTMLElement {
     };
     root.querySelector("#remove").onclick = () => {
       delete this.templates[this.field];
-      this.render();
-      root.querySelector("dialog").showModal();
+      this.redraw("#template");
       this.preview();
     };
     root.querySelector("#insert").onchange = (event) => {
@@ -99,6 +110,19 @@ export class DynamicFields extends HTMLElement {
     };
     for (const id of ["close", "cancel"])
       root.querySelector("#" + id).onclick = () => this.close();
+  }
+  redraw(fallback = "#template") {
+    const active = this.shadowRoot.activeElement,
+      selector = focusSelectorFor(active),
+      wasOpen = this.shadowRoot.querySelector("dialog")?.open;
+    this.render();
+    if (wasOpen) {
+      this.shadowRoot.querySelector("dialog").showModal();
+      ((selector && this.shadowRoot.querySelector(selector)) ||
+        this.shadowRoot.querySelector(fallback))?.focus({
+        preventScroll: true,
+      });
+    }
   }
   updateHass(hass) {
     const ids = [
