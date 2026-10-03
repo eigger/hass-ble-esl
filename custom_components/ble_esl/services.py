@@ -60,7 +60,7 @@ from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
-WRITE_SERVICE_SCHEMA = vol.Schema({vol.Required("payload"): object}, extra=vol.ALLOW_EXTRA)
+WRITE_SERVICE_SCHEMA = vol.Schema({vol.Required("payload"): list}, extra=vol.ALLOW_EXTRA)
 
 
 @callback
