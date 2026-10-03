@@ -214,6 +214,8 @@ class WriteJob:
     write may still be finishing."""
     lifecycle_generation: int
     """Runtime generation captured at render time; unload invalidates queued jobs."""
+    request_generation: int | None
+    """Request order for guarded service writes; older renders are discarded."""
     preset: DevicePreset
     image: Image.Image
     image_png: bytes
@@ -230,7 +232,12 @@ class WriteJob:
 
 
 async def build_write_job(
-    hass: HomeAssistant, entry: BleEslConfigEntry, service: ServiceCall
+    hass: HomeAssistant,
+    entry: BleEslConfigEntry,
+    service: ServiceCall,
+    *,
+    request_generation: int | None = None,
+    preview_generation: int | None = None,
 ) -> WriteJob:
     """Render the payload for `entry` and collect the write options.
 
@@ -239,7 +246,13 @@ async def build_write_job(
     through the same retry/failure path for both services and a debounced
     write never uses a stale handle.
     """
-    return await build_write_job_from_data(hass, entry, service.data)
+    return await build_write_job_from_data(
+        hass,
+        entry,
+        service.data,
+        request_generation=request_generation,
+        preview_generation=preview_generation,
+    )
 
 
 async def build_write_job_from_data(
@@ -248,10 +261,14 @@ async def build_write_job_from_data(
     service_data: Mapping[str, Any],
     *,
     image: Image.Image | None = None,
+    request_generation: int | None = None,
+    preview_generation: int | None = None,
 ) -> WriteJob:
     """Render data supplied by a service or the visual designer."""
     data = entry.runtime_data
     lifecycle_generation = data.lifecycle_generation
+    if preview_generation is None:
+        preview_generation = request_generation
     options = {**entry.data, **entry.options}
     protocol = data.protocol
 
@@ -275,13 +292,16 @@ async def build_write_job_from_data(
     buffer = BytesIO()
     image.save(buffer, "PNG")
     image_png = buffer.getvalue()
-    if lifecycle_generation == data.lifecycle_generation:
+    if lifecycle_generation == data.lifecycle_generation and (
+        preview_generation is None or preview_generation == data.request_generation
+    ):
         data.preview_coordinator.async_set_updated_data(image_png)
         data.image_store.set_preview(image_png, now())
 
     return WriteJob(
         data=data,
         lifecycle_generation=lifecycle_generation,
+        request_generation=request_generation,
         preset=preset,
         image=image,
         image_png=image_png,
@@ -380,6 +400,9 @@ def _dropped(job: WriteJob) -> _Decline | None:
     """A superseded debounce or unloaded-entry write waiting on the BLE lock."""
     if job.lifecycle_generation != job.data.lifecycle_generation:
         _LOGGER.debug("Write for unloaded entry %s dropped", job.address)
+        return "dropped"
+    if job.request_generation is not None and job.request_generation != job.data.request_generation:
+        _LOGGER.debug("Superseded guarded write for %s dropped", job.address)
         return "dropped"
     if job.generation is not None and job.generation != job.data.write_generation:
         _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
@@ -669,10 +692,17 @@ async def _async_write(hass: HomeAssistant, service: ServiceCall) -> ServiceResp
     dry_run = service.data.get("dry_run", False)
 
     async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
-        job = await build_write_job(hass, entry, service)
+        data = entry.runtime_data
+        preview_generation: int | None = None
+        if not dry_run:
+            # A newer physical write supersedes guarded work still rendering,
+            # without making concurrent plain writes cancel one another.
+            data.request_generation += 1
+            preview_generation = data.request_generation
+            cancel_pending_write(data)
+        job = await build_write_job(hass, entry, service, preview_generation=preview_generation)
         if dry_run:
             return WriteOutcome("preview")
-        cancel_pending_write(job.data)
         return await run_ble_write(hass, job)
 
     return await _for_each_target(hass, service, handle)
@@ -683,8 +713,21 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
     dry_run = service.data.get("dry_run", False)
 
     async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
-        job = await build_write_job(hass, entry, service)
-        data = job.data
+        data = entry.runtime_data
+        request_generation: int | None = None
+        if not dry_run:
+            data.request_generation += 1
+            request_generation = data.request_generation
+            # Invalidate a previous debounce as soon as this request arrives,
+            # even if its render takes longer than the old timer.
+            cancel_pending_write(data)
+        job = await build_write_job(
+            hass,
+            entry,
+            service,
+            request_generation=request_generation,
+            preview_generation=request_generation,
+        )
         options = {**entry.data, **entry.options}
         job.prevent_duplicate_send = bool(
             options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
@@ -693,10 +736,11 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.
             return WriteOutcome("preview")
+        if (status := _dropped(job)) is not None:
+            return WriteOutcome(status)
         if (status := _duplicate(job)) is not None:
             # A request for the already displayed image supersedes any
             # different payload that is still waiting to be sent.
-            cancel_pending_write(data)
             return WriteOutcome(status)
         if (status := _locked(job)) is not None:
             return WriteOutcome(status)

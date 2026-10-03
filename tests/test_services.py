@@ -690,6 +690,112 @@ async def test_debounce_is_trailing_edge_with_last_payload(
     assert wolink_entry.runtime_data.pending_write_cancel is None
 
 
+async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_order(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    """An older slow render cannot replace a newer guarded request."""
+    from custom_components.ble_esl import services as svc
+
+    entry = await setup_entry(hass)
+    device_id = device_id_of(hass)
+    original_render = svc.render_image
+    older_render_started = Event()
+    resume_older_render = Event()
+
+    def delayed_render(hass_arg, preset, payload, **kwargs):
+        if payload == "older":
+            older_render_started.set()
+            if not resume_older_render.wait(timeout=5):
+                raise TimeoutError("test did not resume older render")
+        return original_render(hass_arg, preset, payload, **kwargs)
+
+    with patch.object(svc, "render_image", delayed_render):
+        older = hass.async_create_task(
+            respond(
+                hass,
+                "write_guarded",
+                device_id,
+                payload="older",
+                debounce_override_ms=5000,
+            )
+        )
+        for _ in range(500):
+            if older_render_started.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert older_render_started.is_set()
+
+        newer_response = await respond(
+            hass,
+            "write_guarded",
+            device_id,
+            payload="newer payload",
+            debounce_override_ms=5000,
+        )
+        assert newer_response[device_id]["status"] == "scheduled"
+        pending_cancel = entry.runtime_data.pending_write_cancel
+        newer_preview = entry.runtime_data.preview_coordinator.data
+
+        resume_older_render.set()
+        older_response = await older
+
+    assert older_response[device_id] == {"status": "dropped"}
+    assert entry.runtime_data.pending_write_cancel is pending_cancel
+    assert entry.runtime_data.preview_coordinator.data == newer_preview
+    await advance(hass, freezer, 6)
+    assert tag_writer.write_prepared.await_count == 1
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("newer payload")
+
+
+async def test_newer_plain_write_invalidates_older_guarded_render(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """A newer immediate write prevents an older guarded render from scheduling."""
+    from custom_components.ble_esl import services as svc
+
+    entry = await setup_entry(hass)
+    device_id = device_id_of(hass)
+    original_render = svc.render_image
+    older_render_started = Event()
+    resume_older_render = Event()
+
+    def delayed_render(hass_arg, preset, payload, **kwargs):
+        if payload == "older guarded":
+            older_render_started.set()
+            if not resume_older_render.wait(timeout=5):
+                raise TimeoutError("test did not resume older render")
+        return original_render(hass_arg, preset, payload, **kwargs)
+
+    with patch.object(svc, "render_image", delayed_render):
+        older = hass.async_create_task(
+            respond(
+                hass,
+                "write_guarded",
+                device_id,
+                payload="older guarded",
+                debounce_override_ms=5000,
+            )
+        )
+        for _ in range(500):
+            if older_render_started.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert older_render_started.is_set()
+
+        newer_response = await respond(hass, "write", device_id, payload="newer")
+        assert newer_response[device_id]["status"] == "written"
+        newer_preview = entry.runtime_data.preview_coordinator.data
+
+        resume_older_render.set()
+        older_response = await older
+
+    assert older_response[device_id] == {"status": "dropped"}
+    assert entry.runtime_data.pending_write_cancel is None
+    assert entry.runtime_data.preview_coordinator.data == newer_preview
+    assert tag_writer.write_prepared.await_count == 1
+    assert tag_writer.sent_image().getpixel((0, 0))[0] == len("newer")
+
+
 async def test_immediate_write_cancels_pending_debounced_write(
     hass: HomeAssistant, wolink_entry, tag_writer, freezer
 ) -> None:
@@ -785,7 +891,7 @@ async def test_unload_drops_immediate_write_queued_on_lock(
     assert tag_writer.write_prepared.await_count == 0
 
 
-async def test_unload_during_render_drops_write_without_updating_preview(
+async def test_unload_during_render_drops_guarded_write_without_updating_preview(
     hass: HomeAssistant, wolink_entry, tag_writer
 ) -> None:
     """A render that finishes after unload cannot send or persist a preview."""
@@ -804,7 +910,14 @@ async def test_unload_during_render_drops_write_without_updating_preview(
         return original_render(*args, **kwargs)
 
     with patch.object(svc, "render_image", blocking_render):
-        write_task = hass.async_create_task(respond(hass, "write", device_id))
+        write_task = hass.async_create_task(
+            respond(
+                hass,
+                "write_guarded",
+                device_id,
+                debounce_override_ms=5000,
+            )
+        )
         for _ in range(500):
             if render_started.is_set():
                 break
@@ -817,6 +930,7 @@ async def test_unload_during_render_drops_write_without_updating_preview(
 
     assert response[device_id] == {"status": "dropped"}
     assert data.preview_coordinator.data is None
+    assert data.pending_write_cancel is None
     assert tag_writer.write_prepared.await_count == 0
 
 
