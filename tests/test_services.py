@@ -12,7 +12,7 @@ from datetime import timedelta
 from threading import Event
 from unittest.mock import patch
 
-from blesession import LinkInfo, SessionDropped, generic_cause
+from blesession import LinkInfo, NotificationTimeout, SessionDropped, generic_cause
 from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
@@ -176,6 +176,15 @@ async def test_likely_cause_reads_stage_error_and_radio(
     assert failed["likely_cause"].startswith("No radio currently sees the tag")
 
 
+def _exc_for(error: str) -> BaseException:
+    """The error blesession would have raised for this text."""
+    if "No response" in error:
+        return NotificationTimeout(1, step="step", message=error)
+    if "link dropped" in error:
+        return SessionDropped(error)
+    return ConnectionError(error)
+
+
 @pytest.mark.parametrize(
     ("stage", "error", "via", "protocol", "expected"),
     [
@@ -247,7 +256,7 @@ async def test_likely_cause_reads_stage_error_and_radio(
 )
 def test_likely_cause_wording(stage, error, via, protocol, expected) -> None:
     """The tag's own sentences first; blesession's generic ones where it has none."""
-    sentence = _likely_cause(stage, error, via, protocol)
+    sentence = _likely_cause(stage, error, _exc_for(error), via, protocol)
     if sentence is None:
         sentence = generic_cause(stage, error, via, noun="tag")
     assert sentence == expected

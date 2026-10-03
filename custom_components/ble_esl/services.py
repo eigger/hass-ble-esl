@@ -21,7 +21,16 @@ import logging
 import time
 from typing import Any, Literal, cast
 
-from blesession import Attempt, placement, report_attempt, run_attempts, stages
+from blesession import (
+    Attempt,
+    GattMismatch,
+    NotificationTimeout,
+    SessionDropped,
+    placement,
+    report_attempt,
+    run_attempts,
+    stages,
+)
 from blesession.hass import ble_device_or_raise, radio_facts
 from homeassistant.core import (
     HomeAssistant,
@@ -327,25 +336,30 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
 
 
 def _likely_cause(
-    stage: str | None, error: str, facts: dict[str, Any], protocol_id: str
+    stage: str | None,
+    error: str,
+    exc: BaseException,
+    facts: Mapping[str, Any],
+    protocol_id: str,
 ) -> str | None:
     """The tag's own reading of a failure, or None for blesession's generic one.
 
     Keyed on where the attempt died (`stage`, blesession's primary
-    vocabulary), the error text and the protocol. The generic sentences
+    vocabulary), the error (its type where blesession raised it, its text for
+    the protocols' own errors) and the protocol. The generic sentences
     (no radio sees the tag, the link never came up, a weak signal) come
     from the library; only what is specific to these tags lives here.
     """
     err = error.lower()
-    if "link dropped" in err:
-        # The link went away mid-session (blesession ends the wait the moment
-        # it does, rather than running the step's timeout out). Nothing about
-        # the protocol reads that better than the generic `link_lost`.
+    if isinstance(exc, SessionDropped | GattMismatch):
+        # A link that went away mid-session (blesession ends the wait the
+        # moment it does) or a tag that lacks the GATT profile: nothing about
+        # the protocol reads either better than the generic sentences.
         return None
-    no_reply = "no response" in err
+    no_reply = isinstance(exc, NotificationTimeout)
     where = placement(facts, noun="tag")
     if stage == stages.AUTH:
-        if "probes" in err:
+        if isinstance(exc, NotificationTimeout) and exc.step == "START":
             return (
                 "The tag did not answer START after connecting (not ready yet); usually transient."
             )
@@ -387,7 +401,9 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
         attempt,
         operation="write",
         facts=radio_facts(hass, job.address, attempt.trace.link),
-        cause=lambda stage, _detail, error, facts: _likely_cause(stage, error, facts, protocol_id),
+        cause=lambda stage, _detail, error, facts, exc: _likely_cause(
+            stage, error, exc, facts, protocol_id
+        ),
         noun="tag",
         attempts=job.max_retries,
     )

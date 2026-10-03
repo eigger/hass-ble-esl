@@ -8,7 +8,7 @@ import inspect
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace
+from blesession import Notifications, SessionTrace, characteristic_or_raise
 
 from ..base import (
     STAGE_FINISH,
@@ -134,16 +134,13 @@ class EtagSession:
             _close(packets)  # never needed when the link failed first
 
     def _characteristic(self) -> BleakGATTCharacteristic:
-        service = self.client.services.get_service(SERVICE_UUID)
-        char = service.get_characteristic(CHARACTERISTIC_UUID) if service is not None else None
-        if char is None:
-            raise EtagError("ETAG FFE0/FFE1 characteristic missing")
-        if char.max_write_without_response_size < MAX_PACKET:
-            raise EtagError(
-                f"Bluetooth write size {char.max_write_without_response_size} is too small "
-                f"for the app's {MAX_PACKET}-byte packets"
-            )
-        return char
+        return characteristic_or_raise(
+            self.client,
+            SERVICE_UUID,
+            CHARACTERISTIC_UUID,
+            min_write_size=MAX_PACKET,
+            label="ETAG",
+        )
 
     async def _run(
         self,

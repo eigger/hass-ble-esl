@@ -5,7 +5,13 @@ import gc
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from blesession import NotificationTimeout, SessionDropped, SessionTrace, session as session_mod
+from blesession import (
+    GattMismatch,
+    NotificationTimeout,
+    SessionDropped,
+    SessionTrace,
+    session as session_mod,
+)
 from blesession.testing import FakeClient
 from PIL import Image
 import pytest
@@ -117,7 +123,7 @@ async def test_unsupported_firmware_is_refused_without_retry():
 )
 async def test_link_problems_are_reported_and_close_the_unused_encode(kwargs, match):
     prepared = asyncio.get_running_loop().create_future()
-    with pytest.raises(EtagError, match=match):
+    with pytest.raises(GattMismatch, match=match):
         await writer.write_session(FakeTag(**kwargs), "AA", PRESET, prepared, trace=_trace())
     prepared.cancel()
     gc.collect()  # the unawaited wrapper coroutine would warn here

@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace, write_chunks
+from blesession import Notifications, SessionTrace, characteristic_or_raise, write_chunks
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
@@ -86,18 +86,16 @@ class XteSession:
                 await self._command(replies, write_char, bytes((CMD_END, 0)), size, REPLY_END)
 
     def _characteristics(self) -> tuple[BleakGATTCharacteristic, BleakGATTCharacteristic]:
-        service = self.client.services.get_service(SERVICE_UUID)
-        if service is None:
-            raise XteError("XTE service missing")
-        write_char = service.get_characteristic(WRITE_UUID)
-        notify_char = service.get_characteristic(NOTIFY_UUID)
-        if write_char is None or notify_char is None:
-            raise XteError("XTE characteristics missing")
-        if (
-            "write-without-response" not in write_char.properties
-            or "notify" not in notify_char.properties
-        ):
-            raise XteError("XTE characteristic properties do not match")
+        write_char = characteristic_or_raise(
+            self.client,
+            SERVICE_UUID,
+            WRITE_UUID,
+            properties=("write-without-response",),
+            label="XTE",
+        )
+        notify_char = characteristic_or_raise(
+            self.client, SERVICE_UUID, NOTIFY_UUID, properties=("notify",), label="XTE"
+        )
         return write_char, notify_char
 
     def chunk_size(self, write_char: BleakGATTCharacteristic) -> int:

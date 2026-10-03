@@ -4,7 +4,8 @@
 
 ### Changed
 
-- Updated to `blesession 0.5.1`. Request/reply exchanges (ETAG, PICKSMART) use `Notifications.request()`, and chunked uploads (WOLINK, XTE) use `write_chunks()`. On those exchanges, a link that has already dropped now fails as `SessionDropped` instead of a backend write error, and a request's write is bounded by the same timeout as its reply (the PICKSMART START probe gives its write a separate, longer limit).
+- Updated to `blesession 0.6.0`. The ETAG and XTE GATT lookups use `characteristic_or_raise()`, so a missing service, characteristic, property or too-small write size is reported as blesession's `GattMismatch` (own failure sentence) instead of the protocol error, with slightly different wording. The failure sentences read the error's type (`NotificationTimeout`, `SessionDropped`) instead of matching its text.
+- Request/reply exchanges (ETAG, PICKSMART) use `Notifications.request()`, and chunked uploads (WOLINK, XTE) use `write_chunks()`. On those exchanges, a link that has already dropped now fails as `SessionDropped` instead of a backend write error, and a request's write is bounded by the same timeout as its reply (the PICKSMART START probe gives its write a separate, longer limit).
 
 ## 1.0.0
 

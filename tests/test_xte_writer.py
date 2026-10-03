@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
-from blesession import SessionTrace
+from blesession import GattMismatch, SessionTrace
 from PIL import Image
 import pytest
 
@@ -123,7 +123,7 @@ def test_invalid_write_size_and_missing_service():
         asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), MAC)))
     assert client.writes == []
     client.services.get_service = lambda uuid: None
-    with pytest.raises(XteError, match="service missing"):
+    with pytest.raises(GattMismatch, match=r"service .* is missing"):
         asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), MAC)))
 
 
