@@ -89,7 +89,7 @@ A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements 
 
 ## Visual editor
 
-Open **ESL Designer** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send saves the design first; Auto update sensor keeps the tag current.
+Open **ESL Designer** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send saves the design first; Auto update sensor keeps the tag current.
 
 **[Designer guide →](docs/designer.md)**
 
@@ -106,7 +106,7 @@ Both actions take a standard `target:` (a tag device, one of its entities, or an
 
 | Parameter | Default | Description |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
+| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | Render to **Preview Content** only |
@@ -134,7 +134,7 @@ Layouts are rendered by **[imagespec](https://github.com/eigger/imagespec)**; it
 
 | Topic | Link |
 |-------|------|
-| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) |
+| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) |
 | All element fields & defaults | [imagespec README — Element Reference](https://github.com/eigger/imagespec#elements-reference) |
 | Layout, palette, LLM authoring guide | [imagespec/docs/authoring.md](https://github.com/eigger/imagespec/blob/main/docs/authoring.md) |
 | Dithering (per-element only) | [imagespec/docs/dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md) |
