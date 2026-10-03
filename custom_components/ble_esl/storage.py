@@ -77,6 +77,11 @@ class ImageStore:
         self._images.preview = StoredImage(png, at)
         self._schedule_save()
 
+    def clear_written(self) -> None:
+        """Forget the last image when a write was interrupted by unload."""
+        self._images.written = None
+        self._schedule_save()
+
     async def async_flush(self) -> None:
         """Write now; for unload, so a reload inside the save delay loses nothing."""
         await self._store.async_save(self._as_dict())

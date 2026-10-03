@@ -986,6 +986,42 @@ async def test_unload_during_render_drops_guarded_write_without_updating_preview
     assert tag_writer.write_prepared.await_count == 0
 
 
+async def test_reload_during_transfer_forgets_uncertain_last_image(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """A late transfer completion cannot restore a stale duplicate baseline."""
+    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    device_id = device_id_of(hass)
+    old_data = entry.runtime_data
+    previous_payload = PAYLOAD
+    next_payload = text_payload("new image")
+    await call(hass, "write", device_id, payload=previous_payload)
+
+    transfer_started = asyncio.Event()
+    finish_transfer = asyncio.Event()
+
+    async def delayed_write(ble_device, preset, image, **kwargs):
+        transfer_started.set()
+        await finish_transfer.wait()
+        return WriteResult(success=True)
+
+    tag_writer.write_hook = delayed_write
+    write_task = hass.async_create_task(call(hass, "write", device_id, payload=next_payload))
+    await transfer_started.wait()
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    assert entry.runtime_data.last_image_data is None
+
+    finish_transfer.set()
+    await write_task
+    assert old_data.last_image_data is None
+    assert old_data.image_store.images.written is None
+
+    response = await respond(hass, "write_guarded", device_id, payload=previous_payload)
+    assert response[device_id]["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 3
+
+
 # ── Unexpected errors ────────────────────────────────────────────────────
 
 
