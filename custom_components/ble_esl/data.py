@@ -64,6 +64,8 @@ class BleEslRuntimeData:
     generation no longer matches."""
     lifecycle_generation: int = 0
     """Bumped when the entry unloads so queued writes from this runtime are dropped."""
+    request_generation: int = 0
+    """Order of non-preview service writes, reserved before rendering begins."""
     reports: SessionReports = field(default_factory=SessionReports)
     """blesession's two report slots, filled by services.execute_write.
 
