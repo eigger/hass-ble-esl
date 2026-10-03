@@ -35,6 +35,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import async_extract_config_entry_ids
 from homeassistant.util.dt import now
 from PIL import Image
+import voluptuous as vol
 
 from .const import (
     CONF_DEBOUNCE_MS,
@@ -59,6 +60,8 @@ from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
+WRITE_SERVICE_SCHEMA = vol.Schema({vol.Required("payload"): object}, extra=vol.ALLOW_EXTRA)
+
 
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
@@ -67,12 +70,14 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_WRITE,
         partial(_async_write, hass),
+        schema=WRITE_SERVICE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_WRITE_GUARDED,
         partial(_async_write_guarded, hass),
+        schema=WRITE_SERVICE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
 
