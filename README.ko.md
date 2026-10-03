@@ -105,7 +105,7 @@ data:
 
 | 파라미터 | 기본값 | 설명 |
 |---|---|---|
-| `payload` | — | [imagespec 요소](https://github.com/eigger/imagespec/blob/main/docs/elements.md) 목록 (필수) |
+| `payload` | — | [imagespec 요소](https://github.com/eigger/imagespec/blob/main/docs/elements.md) 목록 (필수). 의도적으로 빈 화면을 보내려면 `[]` 사용 |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | **Preview Content**에 렌더링만 |

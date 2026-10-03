@@ -106,7 +106,7 @@ Both actions take a standard `target:` (a tag device, one of its entities, or an
 
 | Parameter | Default | Description |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (required) |
+| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v0.5.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | Render to **Preview Content** only |

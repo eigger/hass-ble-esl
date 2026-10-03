@@ -17,6 +17,8 @@ Renders the payload and sends it to the tag (unless `dry_run: true`).
 | `background` | no | `white` | `white`, `black`, `red`, or `yellow` |
 | `dry_run` | no | `false` | Render only; updates **Preview Content** image entity without BLE send |
 
+`payload` must be a list of elements. Use `payload: []` for an intentional blank screen; `null`, strings, numbers and mappings are rejected.
+
 Basic example:
 
 ```yaml
@@ -243,10 +245,10 @@ Every tag is one device with these entities:
 | Temperature | sensor | Only on protocols that report it in the write session (easyTag) |
 | Signal Strength | sensor | RSSI of the last advertisement |
 | Connectivity | binary sensor | On while a write is in progress, including its retries |
-| Display In Sync | binary sensor | The last rendered image is the one the tag received; off after a `dry_run` or a failed write |
+| Display In Sync | binary sensor | On when the last rendered image matches the last known written image; off when they differ; unknown when either image is unknown |
 | Write Duration | sensor | Seconds of the last write; attributes describe the attempt |
 | Failure Count / Last Failure Time | sensor | Failed writes so far, and when the last one happened — its attributes hold that write's [breakdown](#write-breakdown) |
-| Last Updated Content | image | Last image the tag received; kept across restarts (`.storage`), as is what **Prevent Duplicate Send** compares against |
+| Last Updated Content | image | Last image the tag received; kept across restarts (`.storage`) and used by **Prevent Duplicate Send**. Cleared if an entry is unloaded during an active write because the tag may finish after reload. |
 | Preview Content | image | Last image rendered, sent or not (`dry_run` too); kept across restarts |
 | Alias | text | Free-form label for the tag |
 | Write Lock | switch | On: nothing is sent to the tag; both actions only update the preview |
