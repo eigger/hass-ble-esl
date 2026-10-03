@@ -229,6 +229,7 @@ Both actions can return what happened to each target. Ask for it with `response_
 | `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
 | `locked` | Write lock switch is on; preview updated only | |
 | `preview` | `dry_run`: rendered only | |
+| `dropped` | A queued write was superseded or its config entry unloaded before it reached the BLE lock | |
 
 When a response is requested, a failed tag is **reported instead of raising**, so the automation continues and can branch on it. Without `response_variable` a failure still raises (and stops the automation) as before. Targeting no loaded tag at all always raises.
 
@@ -264,7 +265,7 @@ Every write attempt is recorded on the **Write Duration** sensor's attributes an
 | `likely_cause_key` | Present when `likely_cause` is one of the shared generic sentences (`connect.no_slot`, `link_lost`, `transfer.no_answer`, …): its stable name, for a template that wants to render its own wording. A sentence written for these tags has no key |
 | `failed_stage` | On a failure, where it died: `unreachable` (no radio saw the tag), `connect` (link never came up), `session` (connected, failed before the protocol's first stage), `auth` (the handshake: START / auth / size command — `failed_detail: handshake`), `transfer` (sending the image), `finish` (completion wait — the panel refresh on WOLINK/easyTag, the end-command reply on XTE). `error` has the detail |
 | `failed_detail` | The tag's own name for the stage, when it differs from the shared one (`handshake` for `auth`) |
-| `skipped` | Present instead of `error` when a guard stopped the write as it reached the BLE lock: `locked`, `duplicate` or `dropped` (a debounced write superseded by a newer one). `success` is `false` — nothing was sent — but it is not a failure, and the Failure Count / Last Failure Time sensors are untouched |
+| `skipped` | Present instead of `error` when a guard stopped the write as it reached the BLE lock: `locked`, `duplicate` or `dropped` (a debounced write superseded by a newer one, or a queued write invalidated by entry unload). `success` is `false` — nothing was sent — but it is not a failure, and the Failure Count / Last Failure Time sensors are untouched |
 | `pacing_s` | Present when this attempt was sent slower than usual: 0.05 s per earlier attempt that failed mid-transfer |
 | `via` / `via_type` | The radio the write went through, as `name (MAC)`: a Bluetooth **proxy** (`esp-livingroom (AA:BB:…)`) or a local **adapter** (`hci0 (00:1A:…)`) |
 | `via_unconfirmed` | `true` when `via` is only the radio that heard the tag best, not one the connection is known to have used (the write failed to connect, or the route was unknown). Absent when `via` is the radio the link took |

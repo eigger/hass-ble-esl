@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+from threading import Event
 from unittest.mock import patch
 
 from blesession import LinkInfo, SessionDropped, generic_cause
@@ -757,6 +758,65 @@ async def test_unload_drops_debounced_write_queued_on_lock(
     assert await hass.config_entries.async_unload(wolink_entry.entry_id)
     lock.release()
     await debounced_writes_done()
+    assert tag_writer.write_prepared.await_count == 0
+
+
+async def test_unload_drops_immediate_write_queued_on_lock(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """An immediate call waiting on the BLE lock is dropped on entry unload."""
+    device_id = device_id_of(hass)
+    data = wolink_entry.runtime_data
+    lock = hass.data[DATA_LOCK]
+    await lock.acquire()
+
+    write_task = hass.async_create_task(respond(hass, "write", device_id))
+    for _ in range(500):
+        if data.write_serial.locked():
+            break
+        await asyncio.sleep(0.01)
+    assert data.write_serial.locked()
+
+    assert await hass.config_entries.async_unload(wolink_entry.entry_id)
+    lock.release()
+
+    response = await write_task
+    assert response[device_id] == {"status": "dropped"}
+    assert tag_writer.write_prepared.await_count == 0
+
+
+async def test_unload_during_render_drops_write_without_updating_preview(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """A render that finishes after unload cannot send or persist a preview."""
+    from custom_components.ble_esl import services as svc
+
+    device_id = device_id_of(hass)
+    data = wolink_entry.runtime_data
+    original_render = svc.render_image
+    render_started = Event()
+    resume_render = Event()
+
+    def blocking_render(*args, **kwargs):
+        render_started.set()
+        if not resume_render.wait(timeout=5):
+            raise TimeoutError("test did not resume blocked render")
+        return original_render(*args, **kwargs)
+
+    with patch.object(svc, "render_image", blocking_render):
+        write_task = hass.async_create_task(respond(hass, "write", device_id))
+        for _ in range(500):
+            if render_started.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert render_started.is_set()
+
+        assert await hass.config_entries.async_unload(wolink_entry.entry_id)
+        resume_render.set()
+        response = await write_task
+
+    assert response[device_id] == {"status": "dropped"}
+    assert data.preview_coordinator.data is None
     assert tag_writer.write_prepared.await_count == 0
 
 

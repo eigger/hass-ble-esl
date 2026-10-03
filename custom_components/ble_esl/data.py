@@ -62,6 +62,8 @@ class BleEslRuntimeData:
     """Bumped whenever a pending write is cancelled; a debounced write that
     already fired but is still queued on the BLE lock is dropped if its
     generation no longer matches."""
+    lifecycle_generation: int = 0
+    """Bumped when the entry unloads so queued writes from this runtime are dropped."""
     reports: SessionReports = field(default_factory=SessionReports)
     """blesession's two report slots, filled by services.execute_write.
 
