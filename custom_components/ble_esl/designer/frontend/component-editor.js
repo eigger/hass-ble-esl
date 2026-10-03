@@ -8,6 +8,17 @@ const esc = (value) =>
         char
       ],
   );
+const focusSelectorFor = (element) => {
+  if (!element) return null;
+  if (element.id) return `#${CSS.escape(element.id)}`;
+  const identity = [...element.attributes]
+    .filter((attribute) => attribute.name.startsWith("data-"))
+    .map(
+      (attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`,
+    )
+    .join("");
+  return identity ? `${element.tagName.toLowerCase()}${identity}` : null;
+};
 const components = [
   ["text", "Text / value", "mdi:format-text"],
   ["icon", "Icon", "mdi:star-outline"],
@@ -25,6 +36,7 @@ export class ComponentEditor extends HTMLElement {
   }
   open(panel, element) {
     this.panel = panel;
+    this.opener = panel.shadowRoot.activeElement;
     this.hass = panel.hass;
     this.original = element;
     this.draft = element ? clone(element) : newElement("text", panel.tag);
@@ -35,10 +47,11 @@ export class ComponentEditor extends HTMLElement {
     this.shadowRoot.querySelector("dialog").showModal();
     this.queuePreview();
   }
-  close() {
+  close(restoreFocus = true) {
     clearTimeout(this.timer);
     this.sequence++;
     this.remove();
+    if (restoreFocus) this.opener?.focus({ preventScroll: true });
   }
   picker(value, label, target) {
     const picker = document.createElement("ha-icon-picker");
@@ -92,7 +105,7 @@ export class ComponentEditor extends HTMLElement {
     const numeric = ["gauge", "progress_bar"].includes(d.type);
     const conditional = d.type === "conditional_icon";
     this.shadowRoot.innerHTML = `<style>:host{font-family:var(--primary-font-family,Roboto,Arial);color:var(--primary-text-color)}dialog{width:min(960px,calc(100vw - 40px));max-height:90vh;padding:0;border:0;border-radius:16px;background:var(--card-background-color,white);color:inherit;box-shadow:0 12px 70px #0005}dialog::backdrop{background:#0006}header,footer{display:flex;align-items:center;gap:12px;padding:16px 24px}header h2{margin:0;flex:1}button,input,select,textarea{font:inherit}button{padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;background:var(--card-background-color,white);color:inherit;cursor:pointer}button.active,.primary{border-color:var(--primary-color,#16838b);color:var(--primary-color,#16838b)}.content{padding:0 24px 20px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(180px,1fr);gap:24px}[hidden]{display:none!important}.types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;grid-column:1/-1}.types button{display:flex;gap:6px;align-items:center;justify-content:center}.controls{display:flex;flex-direction:column;gap:14px}label{display:flex;flex-direction:column;gap:6px}input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:6px;background:inherit;color:inherit}.pair{display:flex;gap:8px}.pair>*{flex:1;min-width:0}.preview{position:sticky;top:0;align-self:start;min-height:220px;display:flex;flex-direction:column;gap:12px}.pixels{height:240px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e5e9ec 0% 25%,transparent 0% 50%) 0/16px 16px;border-radius:8px}.pixels img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.state{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;display:flex;gap:10px;align-items:center}.rules{display:flex;flex-direction:column;gap:10px}.rule{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px}.rule .pair{align-items:end}.remove{flex:0!important}.hint{font-size:12px;opacity:.7}.error{color:var(--error-color,#c33)}footer{justify-content:flex-end;border-top:1px solid var(--divider-color,#ddd)}ha-icon-picker,ha-entity-picker{display:block;min-width:0} @media(max-width:650px){.content{grid-template-columns:1fr}.types{grid-template-columns:repeat(2,1fr)}.preview{position:static}.pixels{height:160px}}</style>
-      <dialog aria-label="Component editor"><header><h2>${this.original ? (d.type === "sensor" ? "Edit sensor" : "Edit component") : "Add component"}</h2><button id="close" aria-label="Close component editor">×</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${name}</button>`).join("")}</div><section class="controls"><button id="dynamic">ƒ Dynamic fields…</button><ha-entity-picker id="source"></ha-entity-picker><label>Data<select id="field" aria-label="Component data"><option value="">${this.panel.mode === "template" ? "Static / template tokens" : d.type === "sensor" ? "Sensor tile (value, unit and name)" : "Static content"}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? "Entity name" : field === "state" ? "State value" : field === "attribute" ? "Attribute" : field[0].toUpperCase() + field.slice(1)}</option>`).join("")}</select></label>${
+      <dialog aria-label="Component editor"><header><h2>${this.original ? (d.type === "sensor" ? "Edit sensor" : "Edit component") : "Add component"}</h2><button id="close" aria-label="Close component editor">×</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" aria-pressed="${d.type === type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${name}</button>`).join("")}</div><section class="controls"><button id="dynamic">ƒ Dynamic fields…</button><ha-entity-picker id="source"></ha-entity-picker><label>Data<select id="field" aria-label="Component data"><option value="">${this.panel.mode === "template" ? "Static / template tokens" : d.type === "sensor" ? "Sensor tile (value, unit and name)" : "Static content"}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? "Entity name" : field === "state" ? "State value" : field === "attribute" ? "Attribute" : field[0].toUpperCase() + field.slice(1)}</option>`).join("")}</select></label>${
         d.data_field === "attribute"
           ? `<label>Attribute<select id="attribute" aria-label="Component attribute">${Object.keys(
               this.hass.states[d.entity_id || this.panel.sampleEntity]
@@ -214,7 +227,8 @@ export class ComponentEditor extends HTMLElement {
       else this.panel.document.elements.push(clone(d));
       this.panel.selected = d.id;
       this.panel.edited();
-      this.close();
+      this.close(false);
+      this.panel.focusElement();
     };
     this.ensureIcons();
     this.currentState();
@@ -260,9 +274,21 @@ export class ComponentEditor extends HTMLElement {
   }
   redraw() {
     const dialog = this.shadowRoot.querySelector("dialog");
-    const wasOpen = dialog.open;
+    const wasOpen = dialog.open,
+      active = this.shadowRoot.activeElement,
+      selector = focusSelectorFor(active),
+      removedRule = active?.matches("[data-remove]");
     this.render();
-    if (wasOpen) this.shadowRoot.querySelector("dialog").showModal();
+    if (wasOpen) {
+      this.shadowRoot.querySelector("dialog").showModal();
+      let target = selector ? this.shadowRoot.querySelector(selector) : null;
+      if (target?.closest("[hidden]")) target = null;
+      if (!target && removedRule)
+        target = this.shadowRoot.querySelector("#add-state");
+      (target || this.shadowRoot.querySelector("#field"))?.focus({
+        preventScroll: true,
+      });
+    }
     this.queuePreview();
   }
   currentState() {
