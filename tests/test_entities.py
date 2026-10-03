@@ -101,7 +101,11 @@ async def test_display_in_sync_tracks_preview_vs_written(
     await hass.services.async_call(
         DOMAIN,
         "write",
-        {"device_id": device_id, "payload": "something else", "dry_run": True},
+        {
+            "device_id": device_id,
+            "payload": [{"type": "text", "value": "something else"}],
+            "dry_run": True,
+        },
         blocking=True,
     )
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "off"

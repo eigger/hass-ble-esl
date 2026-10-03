@@ -307,7 +307,7 @@ async def test_empty_payload_list_is_allowed_for_blank_screen(
 async def test_write_services_reject_non_list_payloads(
     hass: HomeAssistant, wolink_entry, tag_writer, service: str, payload
 ) -> None:
-    with pytest.raises(Exception, match="expected a list"):
+    with pytest.raises(Exception, match="expected list"):
         await hass.services.async_call(
             DOMAIN,
             service,
