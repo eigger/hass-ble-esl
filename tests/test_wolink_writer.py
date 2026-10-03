@@ -405,6 +405,31 @@ def test_wolink_refreshed_status():
         client._refreshed(bytes([0x01, 0x01]))
 
 
+def test_wolink_upload_records_sends_when_a_chunk_write_fails():
+    """`sends` keeps the count of completed writes when the transfer dies midway."""
+
+    async def _test():
+        mock_ble = MagicMock()
+        mock_ble.mtu_size = 247
+        calls = 0
+
+        async def mock_write(char, data, response=True):
+            nonlocal calls
+            calls += 1
+            if calls == 3:
+                raise RuntimeError("write failed")
+
+        mock_ble.write_gatt_char = AsyncMock(side_effect=mock_write)
+        client = WolinkSession(mock_ble, MAC)
+        trace = SessionTrace()
+        with pytest.raises(RuntimeError):
+            await client.upload(b"x" * 700, trace)
+        assert trace.facts["parts"] == 3
+        assert trace.facts["sends"] == 2
+
+    asyncio.run(_test())
+
+
 def test_wolink_chunk_sizing_from_mtu():
     """Chunk size scales with MTU (MTU - 9) with a floor of 200B and 506B cap."""
 

@@ -4,7 +4,7 @@
 
 ### Changed
 
-- BLE session reporting uses `blesession 0.5.0`. Request/reply exchanges (ETAG, PICKSMART) use `Notifications.request()`, and chunked uploads (WOLINK, XTE) use `write_chunks()`, so a link that has already dropped fails as `SessionDropped` instead of a backend write error.
+- Updated to `blesession 0.5.0`. Request/reply exchanges (ETAG, PICKSMART) use `Notifications.request()`, and chunked uploads (WOLINK, XTE) use `write_chunks()`. A link that has already dropped now fails as `SessionDropped` instead of a backend write error, and a request's write is bounded by the same timeout as its reply (the PICKSMART START probe keeps its write unbounded).
 
 ## 1.0.0
 

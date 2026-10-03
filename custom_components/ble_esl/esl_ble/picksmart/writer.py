@@ -119,9 +119,13 @@ class PickSmartSession:
         for probe in range(1, START_PROBE_ATTEMPTS + 1):
             trace.note(start_probes=probe)
             try:
-                reply = await self._ask(
-                    replies, self.command_uuid, start_command(), "START", START_PROBE_TIMEOUT_S
+                # Not _ask(): its timeout would also bound the write, and a slow
+                # write is not a silent tag.
+                replies.clear()
+                await self.client.write_gatt_char(
+                    self.command_uuid, start_command(), response=False
                 )
+                reply = await replies.next(START_PROBE_TIMEOUT_S, step="START")
                 break
             except NotificationTimeout:
                 if probe == START_PROBE_ATTEMPTS:
