@@ -154,10 +154,10 @@ class EtagSession:
         paced: bool = False,
     ) -> None:
         for packet in batch:
-            replies.clear()
             _LOGGER.debug("ETAG %s tx: %s", self.address, packet.hex())
-            await self.client.write_gatt_char(char, packet, response=False)
-            reply = await replies.next(self.reply_timeout_s, step=f"command {packet[1]:#04x}")
+            reply = await replies.request(
+                char, packet, timeout=self.reply_timeout_s, step=f"command {packet[1]:#04x}"
+            )
             _LOGGER.debug("ETAG %s rx: %s", self.address, reply.hex())
             check_reply(packet, reply)
             if paced and self.pacing_s:

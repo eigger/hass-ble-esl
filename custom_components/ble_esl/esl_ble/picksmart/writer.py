@@ -120,7 +120,12 @@ class PickSmartSession:
             trace.note(start_probes=probe)
             try:
                 reply = await self._ask(
-                    replies, self.command_uuid, start_command(), "START", START_PROBE_TIMEOUT_S
+                    replies,
+                    self.command_uuid,
+                    start_command(),
+                    "START",
+                    START_PROBE_TIMEOUT_S,
+                    write_timeout=REPLY_TIMEOUT_S,  # a slow write is not a silent tag
                 )
                 break
             except NotificationTimeout:
@@ -243,11 +248,15 @@ class PickSmartSession:
         *,
         pace: bool = False,
         pacing: float | None = None,
+        write_timeout: float | None = None,
     ) -> bytes:
         """Write `packet` and return the tag's reply; `pace` adds the retry pacing."""
-        replies.clear()
-        await self.client.write_gatt_char(uuid, packet, response=False)
         delay = self.pacing_s if pacing is None else pacing
-        if pace and delay > 0:
-            await asyncio.sleep(delay)
-        return await replies.next(REPLY_TIMEOUT_S if timeout is None else timeout, step=step)
+        return await replies.request(
+            uuid,
+            packet,
+            timeout=REPLY_TIMEOUT_S if timeout is None else timeout,
+            step=step,
+            write_timeout=write_timeout,
+            pace_s=delay if pace else 0.0,
+        )

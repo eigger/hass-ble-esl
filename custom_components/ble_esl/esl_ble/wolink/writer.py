@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace
+from blesession import Notifications, SessionTrace, write_chunks
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import AUTH_CHAR, DATA_CHAR, DEVICE_ERRORS, ERROR_UNLOCK_FAILED, STATUS_CHAR
@@ -135,17 +135,18 @@ class WolinkSession:
         """Write `payload` in MTU-sized chunks; `sends` records how far it got."""
         pacing = self.pacing_s if pacing_s is None else max(0.0, pacing_s)
         size = self.chunk_size()
-        sends = 0
-        trace.note(parts=(len(payload) + size - 1) // size, sends=sends, chunk_size=size)
-        try:
-            for offset in range(0, len(payload), size):
-                chunk = write_data_command(offset, payload[offset : offset + size])
-                await self.client.write_gatt_char(DATA_CHAR, chunk, response=True)
-                sends += 1
-                if pacing > 0:
-                    await asyncio.sleep(pacing)
-        finally:
-            trace.note(sends=sends)
+        trace.note(parts=(len(payload) + size - 1) // size, sends=0, chunk_size=size)
+        await write_chunks(
+            self.client,
+            DATA_CHAR,
+            payload,
+            size,
+            step="upload",
+            response=True,
+            gap_s=pacing,
+            wrap=write_data_command,
+            on_chunk=lambda sent: trace.note(sends=sent),
+        )
 
     def _refreshed(self, frame: bytes) -> bool:
         _LOGGER.debug("WOLINK status from %s after refresh: %s", self.address, frame.hex())

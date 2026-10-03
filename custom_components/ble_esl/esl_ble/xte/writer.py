@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace
+from blesession import Notifications, SessionTrace, write_chunks
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
@@ -134,7 +134,6 @@ class XteSession:
         The pause is per frame, not per ATT write: at a 20-byte limit a block
         is up to 61 writes.
         """
-        for offset in range(0, len(frame), size):
-            await self.client.write_gatt_char(char, frame[offset : offset + size], response=False)
+        await write_chunks(self.client, char, frame, size, step="write")
         if self.pacing_s:
             await asyncio.sleep(self.pacing_s)

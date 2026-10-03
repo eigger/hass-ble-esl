@@ -172,6 +172,48 @@ def _fast_probe(monkeypatch, timeout=0.02, attempts=3, settle=0.0):
     monkeypatch.setattr(f"{WRITER}.NOTIFY_SETTLE_S", settle)
 
 
+def test_picksmart_slow_start_write_is_not_a_silent_tag(monkeypatch):
+    """The probe timeout bounds the wait for the reply, not the write itself."""
+
+    async def _test():
+        _fast_probe(monkeypatch, timeout=0.02)
+        mock_client = MagicMock()
+        starts = 0
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            nonlocal starts
+            if char == CMD_UUID and data[0] == 0x01:
+                starts += 1
+                await asyncio.sleep(0.1)  # slower than the probe timeout
+                mock_client._handler(None, bytearray([0x01, 0xF4, 0x00]))
+            elif char == CMD_UUID and data[0] == 0x02:
+                mock_client._handler(None, bytearray([0x02]))
+            elif char == CMD_UUID and data[0] == 0x03:
+                mock_client._handler(None, bytearray([0x05, 0x00]) + (0).to_bytes(4, "little"))
+            elif char == IMG_UUID:
+                part = int.from_bytes(data[0:4], "little")
+                mock_client._handler(
+                    None, bytearray([0x05, 0x00]) + (part + 1).to_bytes(4, "little")
+                )
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
+        await client.send(
+            prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+            quicklz=False,
+            trace=SessionTrace(),
+        )
+        assert starts == 1
+
+    asyncio.run(_test())
+
+
 def test_picksmart_start_is_probed_until_the_tag_answers(monkeypatch):
     """A START the tag drops (not ready after subscribing) is resent; the
     first answered one proves subscription and readiness end to end."""
