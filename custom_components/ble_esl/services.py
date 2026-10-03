@@ -564,6 +564,16 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             if last.ok:
                 result = last.result
                 assert result is not None
+                if job.lifecycle_generation != data.lifecycle_generation:
+                    # The tag may have accepted this image, but unload has
+                    # already invalidated this runtime and its persisted
+                    # last-image record. Do not repopulate stale state.
+                    return WriteOutcome(
+                        "written",
+                        attempts=last.number,
+                        duration_s=round(time.monotonic() - data.start_time, 2),
+                        timing=timing,
+                    )
                 # Session-based protocols (e.g. easyTag) report battery/temp
                 # in the write result; others update passively from adverts.
                 if result.battery_mv is not None:

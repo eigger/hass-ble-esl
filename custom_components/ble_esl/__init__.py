@@ -215,8 +215,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
         designer.remove_panel_if_unused(entry.entry_id)
         # Invalidate every queued write from this runtime, including an
         # immediate write waiting on the shared BLE lock.
-        entry.runtime_data.lifecycle_generation += 1
-        cancel_pending_write(entry.runtime_data)
+        data = entry.runtime_data
+        data.lifecycle_generation += 1
+        cancel_pending_write(data)
+        if data.start_time is not None:
+            # A physical transfer may complete after reload. Its outcome
+            # cannot safely update the next runtime, so do not claim that the
+            # pre-transfer image is still on the tag.
+            data.last_image_data = None
+            data.image_coordinator.async_set_updated_data(None)
+            data.image_store.clear_written()
         # The images are saved with a delay; a reload must not race it.
-        await entry.runtime_data.image_store.async_flush()
+        await data.image_store.async_flush()
     return unload_ok
