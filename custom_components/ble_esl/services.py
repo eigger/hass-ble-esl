@@ -682,11 +682,14 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
             options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
         )
 
-        if (status := _duplicate(job)) is not None:
-            return WriteOutcome(status)
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.
             return WriteOutcome("preview")
+        if (status := _duplicate(job)) is not None:
+            # A request for the already displayed image supersedes any
+            # different payload that is still waiting to be sent.
+            cancel_pending_write(data)
+            return WriteOutcome(status)
         if (status := _locked(job)) is not None:
             return WriteOutcome(status)
 
