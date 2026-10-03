@@ -273,6 +273,30 @@ async def test_dry_run_only_updates_preview(hass: HomeAssistant, wolink_entry, t
     assert wolink_entry.runtime_data.last_image_data is None  # not counted as sent
 
 
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_payload_is_required_for_write_services(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str
+) -> None:
+    with pytest.raises(Exception, match=r"required key not provided.*payload"):
+        await hass.services.async_call(
+            DOMAIN,
+            service,
+            {"device_id": device_id_of(hass)},
+            blocking=True,
+        )
+
+    assert tag_writer.write_prepared.await_count == 0
+
+
+async def test_empty_payload_list_is_allowed_for_blank_screen(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    response = await respond(hass, "write", device_id_of(hass), payload=[], dry_run=True)
+
+    assert response[device_id_of(hass)] == {"status": "preview"}
+    assert tag_writer.write_prepared.await_count == 0
+
+
 async def test_unavailable_handle_counts_as_failed_attempts(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:

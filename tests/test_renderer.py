@@ -43,6 +43,15 @@ def test_render_image_bwr():
     assert image.size == (960, 640)
 
 
+def test_empty_payload_renders_solid_background():
+    """An explicit empty element list is a valid blank-screen request."""
+    image = render_image(_hass(), PRESETS["290"], [], background="yellow")
+
+    assert {image.getpixel((x, y)) for x in range(image.width) for y in range(image.height)} == {
+        image.getpixel((0, 0))
+    }
+
+
 def test_render_image_per_element_dither():
     """Service has no dither; use per-element dither for photos/charts only."""
     preset = DevicePreset(
