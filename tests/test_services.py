@@ -698,18 +698,22 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
 
     entry = await setup_entry(hass)
     device_id = device_id_of(hass)
-    original_render = svc.render_image
-    older_render_started = Event()
-    resume_older_render = Event()
+    original_executor = hass.async_add_executor_job
+    older_render_started = asyncio.Event()
+    resume_older_render = asyncio.Event()
 
-    def delayed_render(hass_arg, preset, payload, **kwargs):
-        if payload == "older":
-            older_render_started.set()
-            if not resume_older_render.wait(timeout=5):
-                raise TimeoutError("test did not resume older render")
-        return original_render(hass_arg, preset, payload, **kwargs)
+    def delayed_executor(func, *args):
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == "older":
 
-    with patch.object(svc, "render_image", delayed_render):
+            async def run_older_render():
+                older_render_started.set()
+                await resume_older_render.wait()
+                return await original_executor(func, *args)
+
+            return hass.async_create_task(run_older_render())
+        return original_executor(func, *args)
+
+    with patch.object(hass, "async_add_executor_job", delayed_executor):
         older = hass.async_create_task(
             respond(
                 hass,
@@ -719,11 +723,7 @@ async def test_guarded_requests_keep_arrival_order_when_renders_finish_out_of_or
                 debounce_override_ms=5000,
             )
         )
-        for _ in range(500):
-            if older_render_started.is_set():
-                break
-            await asyncio.sleep(0.01)
-        assert older_render_started.is_set()
+        await older_render_started.wait()
 
         newer_response = await respond(
             hass,
@@ -755,18 +755,22 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
 
     entry = await setup_entry(hass)
     device_id = device_id_of(hass)
-    original_render = svc.render_image
-    older_render_started = Event()
-    resume_older_render = Event()
+    original_executor = hass.async_add_executor_job
+    older_render_started = asyncio.Event()
+    resume_older_render = asyncio.Event()
 
-    def delayed_render(hass_arg, preset, payload, **kwargs):
-        if payload == "older guarded":
-            older_render_started.set()
-            if not resume_older_render.wait(timeout=5):
-                raise TimeoutError("test did not resume older render")
-        return original_render(hass_arg, preset, payload, **kwargs)
+    def delayed_executor(func, *args):
+        if getattr(func, "func", None) is svc.render_image and func.args[2] == "older guarded":
 
-    with patch.object(svc, "render_image", delayed_render):
+            async def run_older_render():
+                older_render_started.set()
+                await resume_older_render.wait()
+                return await original_executor(func, *args)
+
+            return hass.async_create_task(run_older_render())
+        return original_executor(func, *args)
+
+    with patch.object(hass, "async_add_executor_job", delayed_executor):
         older = hass.async_create_task(
             respond(
                 hass,
@@ -776,11 +780,7 @@ async def test_newer_plain_write_invalidates_older_guarded_render(
                 debounce_override_ms=5000,
             )
         )
-        for _ in range(500):
-            if older_render_started.is_set():
-                break
-            await asyncio.sleep(0.01)
-        assert older_render_started.is_set()
+        await older_render_started.wait()
 
         newer_response = await respond(hass, "write", device_id, payload="newer")
         assert newer_response[device_id]["status"] == "written"
