@@ -277,7 +277,7 @@ async def test_dry_run_only_updates_preview(hass: HomeAssistant, wolink_entry, t
 async def test_payload_is_required_for_write_services(
     hass: HomeAssistant, wolink_entry, tag_writer, service: str
 ) -> None:
-    with pytest.raises(HomeAssistantError, match="payload"):
+    with pytest.raises(Exception, match=r"required key not provided.*payload"):
         await hass.services.async_call(
             DOMAIN,
             service,
