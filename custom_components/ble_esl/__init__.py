@@ -213,9 +213,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
         designer = hass.data[DESIGNER_KEY]
         designer.detach(entry.entry_id)
         designer.remove_panel_if_unused(entry.entry_id)
-        # Cancels a pending debounce timer and bumps the generation, so a
-        # debounced write that already fired but is still queued on the BLE
-        # lock is dropped instead of writing to an unloaded entry's tag.
+        # Invalidate every queued write from this runtime, including an
+        # immediate write waiting on the shared BLE lock.
+        entry.runtime_data.lifecycle_generation += 1
         cancel_pending_write(entry.runtime_data)
         # The images are saved with a delay; a reload must not race it.
         await entry.runtime_data.image_store.async_flush()

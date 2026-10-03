@@ -127,8 +127,7 @@ class WriteOutcome:
              duplicate  write_guarded: unchanged image, not sent
              locked     the write-lock switch is on, not sent
              preview    dry_run: rendered only
-             dropped    internal only (a fired debounced write superseded
-                        on the lock); never reaches a service response
+             dropped    superseded or unloaded before reaching the BLE lock
     """
 
     status: WriteStatus
@@ -172,19 +171,20 @@ async def _for_each_target(
     branch on them. Programming errors always raise.
     """
     targets = await async_targeted_entries(hass, service)
+    device_ids = [entry.runtime_data.device_id for entry in targets]
     results = await asyncio.gather(*(handler(entry) for entry in targets), return_exceptions=True)
 
     outcomes: dict[str, WriteOutcome] = {}
     errors: list[str] = []
     unexpected: list[BaseException] = []
-    for entry, result in zip(targets, results, strict=True):
+    for device_id, result in zip(device_ids, results, strict=True):
         if isinstance(result, WriteOutcome):
-            outcomes[entry.runtime_data.device_id] = result
+            outcomes[device_id] = result
         elif isinstance(result, WriteFailed):
-            outcomes[entry.runtime_data.device_id] = result.outcome
+            outcomes[device_id] = result.outcome
             errors.append(str(result))
         elif isinstance(result, HomeAssistantError):
-            outcomes[entry.runtime_data.device_id] = WriteOutcome("failed", error=str(result))
+            outcomes[device_id] = WriteOutcome("failed", error=str(result))
             errors.append(str(result))
         else:
             unexpected.append(result)
@@ -212,6 +212,8 @@ class WriteJob:
     """The entry's runtime data, captured rather than re-read from the entry:
     HA drops entry.runtime_data on unload while a background (debounced)
     write may still be finishing."""
+    lifecycle_generation: int
+    """Runtime generation captured at render time; unload invalidates queued jobs."""
     preset: DevicePreset
     image: Image.Image
     image_png: bytes
@@ -249,6 +251,7 @@ async def build_write_job_from_data(
 ) -> WriteJob:
     """Render data supplied by a service or the visual designer."""
     data = entry.runtime_data
+    lifecycle_generation = data.lifecycle_generation
     options = {**entry.data, **entry.options}
     protocol = data.protocol
 
@@ -272,11 +275,13 @@ async def build_write_job_from_data(
     buffer = BytesIO()
     image.save(buffer, "PNG")
     image_png = buffer.getvalue()
-    data.preview_coordinator.async_set_updated_data(image_png)
-    data.image_store.set_preview(image_png, now())
+    if lifecycle_generation == data.lifecycle_generation:
+        data.preview_coordinator.async_set_updated_data(image_png)
+        data.image_store.set_preview(image_png, now())
 
     return WriteJob(
         data=data,
+        lifecycle_generation=lifecycle_generation,
         preset=preset,
         image=image,
         image_png=image_png,
@@ -372,11 +377,14 @@ def _locked(job: WriteJob) -> _Decline | None:
 
 
 def _dropped(job: WriteJob) -> _Decline | None:
-    """A debounced write whose generation was bumped while it waited."""
-    if job.generation is None or job.generation == job.data.write_generation:
-        return None
-    _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
-    return "dropped"
+    """A superseded debounce or unloaded-entry write waiting on the BLE lock."""
+    if job.lifecycle_generation != job.data.lifecycle_generation:
+        _LOGGER.debug("Write for unloaded entry %s dropped", job.address)
+        return "dropped"
+    if job.generation is not None and job.generation != job.data.write_generation:
+        _LOGGER.debug("Superseded debounced write for %s dropped", job.address)
+        return "dropped"
+    return None
 
 
 def _duplicate(job: WriteJob) -> _Decline | None:
