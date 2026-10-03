@@ -524,6 +524,87 @@ async def test_duplicate_guard_ignores_failed_write(
     assert tag_writer.write_prepared.await_count == 2
 
 
+async def test_duplicate_request_cancels_pending_debounced_write(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    """Returning to the displayed image cancels a different pending payload."""
+    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    device_id = device_id_of(hass)
+
+    await call(hass, "write_guarded", device_id, debounce_override_ms=0)
+    await call(
+        hass,
+        "write_guarded",
+        device_id,
+        payload=[{"type": "text", "value": "different", "x": 0, "y": 0}],
+        debounce_override_ms=5000,
+    )
+    assert entry.runtime_data.pending_write_cancel is not None
+
+    await call(hass, "write_guarded", device_id)
+
+    assert entry.runtime_data.pending_write_cancel is None
+    await advance(hass, freezer, 6)
+    assert tag_writer.write_prepared.await_count == 1
+
+
+async def test_duplicate_dry_run_preserves_pending_debounced_write(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    """A preview of the displayed image does not cancel a real pending write."""
+    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    device_id = device_id_of(hass)
+
+    await call(hass, "write_guarded", device_id, debounce_override_ms=0)
+    await call(
+        hass,
+        "write_guarded",
+        device_id,
+        payload=[{"type": "text", "value": "different", "x": 0, "y": 0}],
+        debounce_override_ms=5000,
+    )
+    generation = entry.runtime_data.write_generation
+    pending_cancel = entry.runtime_data.pending_write_cancel
+
+    response = await respond(hass, "write_guarded", device_id, dry_run=True)
+
+    assert response[device_id] == {"status": "preview"}
+    assert entry.runtime_data.write_generation == generation
+    assert entry.runtime_data.pending_write_cancel is pending_cancel
+    await advance(hass, freezer, 6)
+    assert tag_writer.write_prepared.await_count == 2
+
+
+async def test_duplicate_request_drops_fired_debounced_write_waiting_for_lock(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    """A duplicate request supersedes a timer that already fired on the lock."""
+    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    device_id = device_id_of(hass)
+    lock = hass.data[DATA_LOCK]
+    await call(hass, "write_guarded", device_id, debounce_override_ms=0)
+    await lock.acquire()
+    await call(
+        hass,
+        "write_guarded",
+        device_id,
+        payload=[{"type": "text", "value": "different", "x": 0, "y": 0}],
+        debounce_override_ms=1000,
+    )
+    await advance(hass, freezer, 2, settle=False)
+    assert entry.runtime_data.pending_write_cancel is None
+    assert tag_writer.write_prepared.await_count == 1
+
+    generation = entry.runtime_data.write_generation
+    response = await respond(hass, "write_guarded", device_id)
+    assert response[device_id] == {"status": "duplicate"}
+    assert entry.runtime_data.write_generation > generation
+
+    lock.release()
+    await debounced_writes_done()
+    assert tag_writer.write_prepared.await_count == 1
+
+
 async def test_duplicate_guard_rechecked_under_lock(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
