@@ -1,6 +1,10 @@
+import asyncio
+import concurrent.futures
 import logging
 import os
+import threading
 
+from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.exceptions import HomeAssistantError
 from imagespec import RenderContext, RenderError, render
@@ -8,11 +12,18 @@ from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
 
+# How long a render thread waits for the recorder to answer one history query.
+HISTORY_TIMEOUT_S = 60
+
 PALETTES: dict[str, list[str]] = {
     "BW": ["black", "white"],
     "BWR": ["black", "white", "red"],
     "BWRY": ["black", "white", "red", "yellow"],
 }
+
+
+async def _run_on_recorder(hass, func):
+    return await get_instance(hass).async_add_executor_job(func)
 
 
 def _make_context(hass, *, default_font, palette):
@@ -34,14 +45,32 @@ def _make_context(hass, *, default_font, palette):
         return None
 
     def history_provider(entity_ids, start, end):
-        return get_significant_states(
-            hass,
-            start_time=start,
-            entity_ids=list(entity_ids),
-            significant_changes_only=False,
-            minimal_response=True,
-            no_attributes=False,
-        )
+        """Read history on the recorder's executor, as Home Assistant requires.
+
+        The render runs on a generic executor thread (CPU-bound, so it must not
+        hold the recorder's database thread); only the query is handed over, and
+        this thread waits for it. Callers must therefore be off the event loop, as every
+        render already is; on the loop this would block the very thing it waits for.
+        """
+        if hass.loop_thread_id == threading.get_ident():
+            raise RuntimeError("render_image must run in an executor, not on the event loop")
+
+        def query():
+            return get_significant_states(
+                hass,
+                start_time=start,
+                entity_ids=list(entity_ids),
+                significant_changes_only=False,
+                minimal_response=True,
+                no_attributes=False,
+            )
+
+        future = asyncio.run_coroutine_threadsafe(_run_on_recorder(hass, query), hass.loop)
+        try:
+            return future.result(HISTORY_TIMEOUT_S)
+        except concurrent.futures.TimeoutError as err:
+            future.cancel()
+            raise HomeAssistantError("Timed out reading history from the recorder") from err
 
     return RenderContext(
         font_resolver=font_resolver,

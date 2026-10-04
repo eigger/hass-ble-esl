@@ -1,4 +1,10 @@
-from unittest.mock import MagicMock
+from concurrent.futures import ThreadPoolExecutor
+import threading
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
+
+from homeassistant.exceptions import HomeAssistantError
+import pytest
 
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
@@ -74,3 +80,71 @@ def test_render_image_per_element_dither():
 
     unique_dither = {img_dither.getpixel((x, y)) for y in range(h) for x in range(w)}
     assert unique_dither == {(0, 0, 0), (255, 255, 255)}
+
+
+_PLOT = {
+    "type": "plot",
+    "x_start": 0,
+    "y_start": 0,
+    "x_end": 100,
+    "y_end": 50,
+    "duration": 3600,
+    "data": [{"entity": "sensor.pressure"}],
+}
+
+
+async def test_plot_reads_history_on_the_recorder_executor(hass):
+    """Home Assistant warns when history is read off the recorder's executor.
+
+    The render stays on the generic executor; only the query is handed to the
+    recorder, and the render thread waits for it without blocking the loop.
+    """
+    recorder_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="fake_recorder")
+    seen = {}
+
+    class FakeRecorder:
+        def async_add_executor_job(self, func):
+            return hass.loop.run_in_executor(recorder_pool, func)
+
+    def fake_history(_hass, **kwargs):
+        seen["query"] = threading.current_thread().name
+        seen["entity_ids"] = kwargs["entity_ids"]
+        stamp = "2026-10-04T00:00:00+00:00"
+        head = SimpleNamespace(state="1.0", last_changed=stamp)
+        return {
+            "sensor.pressure": [head, {"state": "2.0", "last_changed": "2026-10-04T00:30:00+00:00"}]
+        }
+
+    def render():
+        seen["render"] = threading.current_thread().name
+        seen["render_id"] = threading.get_ident()
+        return render_image(hass, PRESETS["290"], [_PLOT])
+
+    try:
+        with (
+            patch("custom_components.ble_esl.renderer.get_instance", return_value=FakeRecorder()),
+            patch("custom_components.ble_esl.renderer.get_significant_states", fake_history),
+        ):
+            await hass.async_add_executor_job(render)
+    finally:
+        recorder_pool.shutdown()
+
+    assert seen["query"].startswith("fake_recorder")
+    assert not seen["render"].startswith("fake_recorder")
+    assert seen["render_id"] != hass.loop_thread_id
+    assert seen["entity_ids"] == ["sensor.pressure"]
+
+
+async def test_plot_history_timeout_is_a_render_error(hass):
+    """A recorder that never answers fails the render instead of hanging it."""
+
+    class StuckRecorder:
+        def async_add_executor_job(self, func):
+            return hass.loop.create_future()
+
+    with (
+        patch("custom_components.ble_esl.renderer.get_instance", return_value=StuckRecorder()),
+        patch("custom_components.ble_esl.renderer.HISTORY_TIMEOUT_S", 0.05),
+        pytest.raises(HomeAssistantError, match="recorder"),
+    ):
+        await hass.async_add_executor_job(render_image, hass, PRESETS["290"], [_PLOT])
