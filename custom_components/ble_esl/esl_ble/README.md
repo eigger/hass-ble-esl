@@ -98,7 +98,10 @@ the BLE lock, the attempt bound, the retries and the report.
   (`asyncio.TimeoutError` alone has no message). A wait also ends the moment
   the link drops, as `blesession.SessionDropped` rather than the step's full
   timeout — so a re-probe loop of your own must catch `NotificationTimeout`,
-  not every error, or it will keep probing a link that is already gone.
+  not every error, or it will keep probing a link that is already gone. A
+  write that never returns is a `blesession.WriteTimeout`, which *is* a
+  `NotificationTimeout`: re-raise it ahead of that `except`, because a hung
+  write is the adapter or proxy, not a silent tag, and does not deserve a probe.
 * Add `pacing_s` to whatever pause the protocol already has between data packets;
   the integration passes a value above 0 only after an earlier attempt failed
   in the `transfer` stage.

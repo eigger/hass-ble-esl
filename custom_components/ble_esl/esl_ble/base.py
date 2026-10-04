@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
-from blesession import SessionTrace, ble_session, stages
+from blesession import DeviceError, SessionTrace, ble_session, stages
 from bluetooth_sensor_state_data import BluetoothData
 from sensor_state_data import BinarySensorDeviceClass, SensorLibrary
 
@@ -141,10 +141,13 @@ class WriteResult:
     """Only for read_status() on a protocol without one ("not supported")."""
 
 
-class WriteRefused(Exception):
+class WriteRefused(DeviceError):
     """A protocol declined the write: a preset or tag it cannot encode for,
     found before connecting (see XTE) or right after (ETAG's panel firmware).
-    Not a BLE failure, and not worth retrying."""
+    Not a BLE failure, and not worth retrying: `retryable` is False, so
+    blesession's `default_retry_if` stops at it."""
+
+    retryable = False
 
 
 def battery_percent(volts: float, min_v: float, max_v: float) -> int:

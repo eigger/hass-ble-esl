@@ -23,9 +23,13 @@ from typing import Any, Literal, cast
 
 from blesession import (
     Attempt,
+    DeviceError,
+    Failure,
     GattMismatch,
     NotificationTimeout,
     SessionDropped,
+    WriteTimeout,
+    default_retry_if,
     placement,
     report_attempt,
     run_attempts,
@@ -63,7 +67,8 @@ from .const import (
 from .data import BleEslRuntimeData
 from .device import resolve_preset
 from .esl_ble import WriteResult
-from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset, WriteRefused
+from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset
+from .esl_ble.wolink.const import ERROR_UNLOCK_FAILED
 from .renderer import render_image
 from .types import BleEslConfigEntry
 
@@ -335,26 +340,24 @@ async def _update_duration_loop(data: BleEslRuntimeData) -> None:
         await asyncio.sleep(1)
 
 
-def _likely_cause(
-    stage: str | None,
-    error: str,
-    exc: BaseException,
-    facts: Mapping[str, Any],
-    protocol_id: str,
-) -> str | None:
+def _likely_cause(failure: Failure, protocol_id: str) -> str | None:
     """The tag's own reading of a failure, or None for blesession's generic one.
 
     Keyed on where the attempt died (`stage`, blesession's primary
-    vocabulary), the error (its type where blesession raised it, its text for
-    the protocols' own errors) and the protocol. The generic sentences
+    vocabulary), the error (its type, and the device's `code` where it has
+    one; the text only for the protocols' own errors that have neither) and the
+    protocol. The generic sentences
     (no radio sees the tag, the link never came up, a weak signal) come
     from the library; only what is specific to these tags lives here.
     """
+    stage, error, exc, facts = failure.stage, failure.error, failure.exc, failure.facts
     err = error.lower()
-    if isinstance(exc, SessionDropped | GattMismatch):
+    if isinstance(exc, SessionDropped | GattMismatch | WriteTimeout):
         # A link that went away mid-session (blesession ends the wait the
-        # moment it does) or a tag that lacks the GATT profile: nothing about
-        # the protocol reads either better than the generic sentences.
+        # moment it does), a tag that lacks the GATT profile, or a write that
+        # never returned (a WriteTimeout is a NotificationTimeout: tested
+        # first so it does not read as a silent tag): nothing about the
+        # protocol reads any of them better than the generic sentences.
         return None
     no_reply = isinstance(exc, NotificationTimeout)
     where = placement(facts, noun="tag")
@@ -365,7 +368,7 @@ def _likely_cause(
             )
         if no_reply:
             return None
-        if "device error 5" in err:
+        if isinstance(exc, DeviceError) and exc.code == ERROR_UNLOCK_FAILED:
             return "The tag rejected authentication: not a WOLINK tag, or different firmware."
         return "The tag answered the handshake unexpectedly; the protocol or model may not match."
     if stage == stages.TRANSFER:
@@ -378,7 +381,7 @@ def _likely_cause(
         return f"The transfer failed: {error or 'unknown error'}.{where}"
     if stage == stages.FINISH:
         # What the tag was expected to say depends on the protocol.
-        if "device error" in err:
+        if isinstance(exc, DeviceError) and exc.code is not None:
             return f"The tag reported an error after the transfer: {error}."
         if protocol_id == "xte":
             if no_reply:
@@ -401,9 +404,7 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
         attempt,
         operation="write",
         facts=radio_facts(hass, job.address, attempt.trace.link),
-        cause=lambda stage, _detail, error, facts, exc: _likely_cause(
-            stage, error, exc, facts, protocol_id
-        ),
+        cause=lambda failure: _likely_cause(failure, protocol_id),
         noun="tag",
         attempts=job.max_retries,
     )
@@ -481,13 +482,13 @@ async def _attempt(
 
 def _retry(attempt: Attempt[WriteResult]) -> bool:
     """Whether a failed attempt deserves another; also books the pacing."""
-    if attempt.timed_out:
+    if not default_retry_if(attempt):
         # A timed-out attempt is a dead transport (a proxy gone mid-write);
         # another 10 minutes on the same path helps nobody, and the next
-        # automation run is the real retry.
-        return False
-    if isinstance(attempt.error, WriteRefused):
-        # The protocol declined the tag or preset; nothing about a retry changes that.
+        # automation run is the real retry. An error that says it is final
+        # (`retryable = False`) is the other case: a protocol that declined
+        # the tag or preset (WriteRefused), or a tag that lacks the GATT
+        # profile (GattMismatch); nothing about a retry changes either.
         return False
     if attempt.failed_stage == stages.TRANSFER:
         attempt.state["transfer_failures"] = attempt.state.get("transfer_failures", 0) + 1

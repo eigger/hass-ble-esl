@@ -12,7 +12,19 @@ from datetime import timedelta
 from threading import Event
 from unittest.mock import patch
 
-from blesession import GattMismatch, LinkInfo, NotificationTimeout, SessionDropped, generic_cause
+from blesession import (
+    Attempt,
+    AttemptTimedOut,
+    DeviceError,
+    Failure,
+    GattMismatch,
+    LinkInfo,
+    NotificationTimeout,
+    SessionDropped,
+    SessionTrace,
+    WriteTimeout,
+    generic_cause,
+)
 from bt import register_adapter, register_proxy
 from conftest import IDENT, device_id_of, setup_entry, wolink_service_info
 from homeassistant.core import HomeAssistant
@@ -28,8 +40,9 @@ from custom_components.ble_esl.const import (
     DATA_LOCK,
     DOMAIN,
 )
-from custom_components.ble_esl.esl_ble.base import WriteResult
-from custom_components.ble_esl.services import _likely_cause
+from custom_components.ble_esl.esl_ble.base import STAGE_TRANSFER, WriteRefused, WriteResult
+from custom_components.ble_esl.esl_ble.wolink.writer import WolinkError
+from custom_components.ble_esl.services import _likely_cause, _retry
 
 PAYLOAD = [{"type": "text", "value": "hi", "x": 0, "y": 0}]
 
@@ -241,7 +254,7 @@ def _exc_for(error: str | BaseException) -> BaseException:
         ),
         (
             "auth",
-            "device error 5: unlock (auth) failed",
+            WolinkError(5),
             {},
             "wolink",
             "The tag rejected authentication: not a WOLINK tag, or different firmware.",
@@ -264,10 +277,45 @@ def _exc_for(error: str | BaseException) -> BaseException:
         ),
         (
             "finish",
-            "device error 2: epd write error",
+            WolinkError(2),
             {},
             "wolink",
             "The tag reported an error after the transfer: device error 2: epd write error.",
+        ),
+        # A write that never returned is blesession's `write_timeout`, not a
+        # silent tag, even though a WriteTimeout is a NotificationTimeout.
+        (
+            "finish",
+            WriteTimeout(10, step="command 0x04"),
+            {},
+            "xte",
+            "A write to the tag did not complete in time: the adapter or proxy "
+            "stopped taking data (wedged, busy, or gone).",
+        ),
+        # Wherever it happens, a write that never returned is not a silent tag.
+        (
+            "auth",
+            WriteTimeout(10, step="START"),
+            {},
+            "picksmart",
+            "A write to the tag did not complete in time: the adapter or proxy "
+            "stopped taking data (wedged, busy, or gone).",
+        ),
+        (
+            "transfer",
+            WriteTimeout(10, step="upload"),
+            {},
+            "wolink",
+            "A write to the tag did not complete in time: the adapter or proxy "
+            "stopped taking data (wedged, busy, or gone).",
+        ),
+        # A device error without a code is not "the tag reported an error code".
+        (
+            "finish",
+            DeviceError("Truncated XTE response"),
+            {},
+            "xte",
+            "The end of the transfer failed: Truncated XTE response.",
         ),
         # A link that went away mid-session is blesession's `link_lost`, not
         # a protocol failure: no per-stage reading of ours improves on it.
@@ -293,7 +341,7 @@ def test_likely_cause_wording(stage, error, via, protocol, expected) -> None:
     """The tag's own sentences first; blesession's generic ones where it has none."""
     exc = _exc_for(error)
     error = str(exc)
-    sentence = _likely_cause(stage, error, exc, via, protocol)
+    sentence = _likely_cause(Failure(stage, None, error, exc, via), protocol)
     if sentence is None:
         sentence = generic_cause(stage, error, via, exc=exc, noun="tag")
     assert sentence == expected
@@ -1492,3 +1540,43 @@ async def test_timed_out_attempt_is_not_retried(
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
     assert failed["timed_out"] is True and failed["failed_stage"] == "transfer"
     assert "cut at its bound" in failed["likely_cause"]
+
+
+@pytest.mark.parametrize(
+    ("error", "retried"),
+    [
+        (NotificationTimeout(1, step="x"), True),
+        (WolinkError(2), True),
+        # What the tag exposes does not change between attempts...
+        (GattMismatch("ETAG service is missing"), False),
+        (WriteRefused("Unsupported XTE preset"), False),
+        # ...but a write size read before the MTU is negotiated can.
+        (GattMismatch("ETAG write size 20 is too small", retryable=True), True),
+    ],
+)
+def test_only_an_error_that_can_change_is_retried(error, retried) -> None:
+    """The retry decision reads the error's own `retryable`; pacing is booked on top."""
+    attempt = Attempt(number=1, trace=SessionTrace(), error=error)
+    assert _retry(attempt) is retried
+    assert "transfer_failures" not in attempt.state  # no stage failed here: no pacing
+
+
+def test_a_retry_after_a_transfer_failure_books_pacing_a_final_error_does_not() -> None:
+    trace = SessionTrace()
+    with pytest.raises(NotificationTimeout), trace.timed(STAGE_TRANSFER):
+        raise NotificationTimeout(1, step="part 3")
+    retried = Attempt(number=1, trace=trace, error=NotificationTimeout(1, step="part 3"))
+    assert _retry(retried) is True
+    assert retried.state["transfer_failures"] == 1
+
+    trace = SessionTrace()
+    with pytest.raises(WriteRefused), trace.timed(STAGE_TRANSFER):
+        raise WriteRefused("declined")
+    final = Attempt(number=1, trace=trace, error=WriteRefused("declined"))
+    assert _retry(final) is False
+    assert "transfer_failures" not in final.state
+
+
+def test_a_timed_out_attempt_is_not_retried() -> None:
+    attempt = Attempt(number=1, trace=SessionTrace(), error=AttemptTimedOut(600), timed_out=True)
+    assert _retry(attempt) is False
