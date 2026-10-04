@@ -7,7 +7,14 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import DeviceError, Notifications, NotificationTimeout, SessionTrace
+from blesession import (
+    DeviceError,
+    GattMismatch,
+    Notifications,
+    NotificationTimeout,
+    SessionTrace,
+    WriteTimeout,
+)
 
 from ..base import STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
@@ -67,7 +74,7 @@ async def write_session(
     ]
     if len(uuids) < 2:
         # Before any protocol stage: reported as a `session` failure.
-        raise PickSmartError(f"Insufficient characteristics: {uuids}")
+        raise GattMismatch(f"PICKSMART insufficient characteristics: {uuids}")
     command_uuid, image_uuid = sorted(uuids, key=lambda uuid: int(uuid[4:8], 16))[:2]
     session = PickSmartSession(client, command_uuid, image_uuid, address, pacing_s=pacing_s)
     quicklz = preset.extra.get("encoding") == "quicklz"
@@ -128,6 +135,11 @@ class PickSmartSession:
                     write_timeout=REPLY_TIMEOUT_S,  # a slow write is not a silent tag
                 )
                 break
+            except WriteTimeout:
+                # The write itself never returned: the adapter or proxy, not a
+                # tag that has not woken yet. Probing again would only hang
+                # the same way, and the failure should read as what it is.
+                raise
             except NotificationTimeout:
                 if probe == START_PROBE_ATTEMPTS:
                     raise NotificationTimeout(

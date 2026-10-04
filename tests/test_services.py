@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 from blesession import (
     Attempt,
+    DeviceError,
     Failure,
     GattMismatch,
     LinkInfo,
@@ -38,7 +39,7 @@ from custom_components.ble_esl.const import (
     DATA_LOCK,
     DOMAIN,
 )
-from custom_components.ble_esl.esl_ble.base import WriteRefused, WriteResult
+from custom_components.ble_esl.esl_ble.base import STAGE_TRANSFER, WriteRefused, WriteResult
 from custom_components.ble_esl.esl_ble.wolink.writer import WolinkError
 from custom_components.ble_esl.services import _likely_cause, _retry
 
@@ -289,6 +290,31 @@ def _exc_for(error: str | BaseException) -> BaseException:
             "xte",
             "A write to the tag did not complete in time: the adapter or proxy "
             "stopped taking data (wedged, busy, or gone).",
+        ),
+        # Wherever it happens, a write that never returned is not a silent tag.
+        (
+            "auth",
+            WriteTimeout(10, step="START"),
+            {},
+            "picksmart",
+            "A write to the tag did not complete in time: the adapter or proxy "
+            "stopped taking data (wedged, busy, or gone).",
+        ),
+        (
+            "transfer",
+            WriteTimeout(10, step="upload"),
+            {},
+            "wolink",
+            "A write to the tag did not complete in time: the adapter or proxy "
+            "stopped taking data (wedged, busy, or gone).",
+        ),
+        # A device error without a code is not "the tag reported an error code".
+        (
+            "finish",
+            DeviceError("Truncated XTE response"),
+            {},
+            "xte",
+            "The end of the transfer failed: Truncated XTE response.",
         ),
         # A link that went away mid-session is blesession's `link_lost`, not
         # a protocol failure: no per-stage reading of ours improves on it.
@@ -1529,4 +1555,29 @@ async def test_timed_out_attempt_is_not_retried(
 )
 def test_only_an_error_that_can_change_is_retried(error, retried) -> None:
     """The retry decision reads the error's own `retryable`; pacing is booked on top."""
-    assert _retry(Attempt(number=1, trace=SessionTrace(), error=error)) is retried
+    attempt = Attempt(number=1, trace=SessionTrace(), error=error)
+    assert _retry(attempt) is retried
+    assert "transfer_failures" not in attempt.state  # no stage failed here: no pacing
+
+
+def test_a_retry_after_a_transfer_failure_books_pacing_a_final_error_does_not() -> None:
+    trace = SessionTrace()
+    with pytest.raises(NotificationTimeout), trace.timed(STAGE_TRANSFER):
+        raise NotificationTimeout(1, step="part 3")
+    retried = Attempt(number=1, trace=trace, error=NotificationTimeout(1, step="part 3"))
+    assert _retry(retried) is True
+    assert retried.state["transfer_failures"] == 1
+
+    trace = SessionTrace()
+    with pytest.raises(WriteRefused), trace.timed(STAGE_TRANSFER):
+        raise WriteRefused("declined")
+    final = Attempt(number=1, trace=trace, error=WriteRefused("declined"))
+    assert _retry(final) is False
+    assert "transfer_failures" not in final.state
+
+
+def test_a_timed_out_attempt_is_not_retried() -> None:
+    from blesession import AttemptTimedOut
+
+    attempt = Attempt(number=1, trace=SessionTrace(), error=AttemptTimedOut(600), timed_out=True)
+    assert _retry(attempt) is False

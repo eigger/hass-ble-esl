@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
-from blesession import ConnectFailed, NotificationTimeout, SessionTrace, session as session_mod
+from blesession import (
+    ConnectFailed,
+    GattMismatch,
+    NotificationTimeout,
+    SessionTrace,
+    WriteTimeout,
+    session as session_mod,
+)
 from PIL import Image
 import pytest
 
@@ -214,6 +221,41 @@ def test_picksmart_slow_start_write_is_not_a_silent_tag(monkeypatch):
     asyncio.run(_test())
 
 
+def test_picksmart_a_hung_start_write_is_not_probed_again(monkeypatch):
+    """A START write that never returns is the adapter or proxy, not a tag that
+    has not woken yet: it is a WriteTimeout straight away, not N silent probes."""
+
+    async def _test():
+        _fast_probe(monkeypatch, timeout=0.02)
+        monkeypatch.setattr(f"{WRITER}.REPLY_TIMEOUT_S", 0.05)
+        mock_client = MagicMock()
+        starts = 0
+
+        async def mock_start_notify(char, handler):
+            mock_client._handler = handler
+
+        async def mock_write(char, data, response=False):
+            nonlocal starts
+            if char == CMD_UUID and data[0] == 0x01:
+                starts += 1
+                await asyncio.sleep(3600)
+
+        mock_client.start_notify = AsyncMock(side_effect=mock_start_notify)
+        mock_client.stop_notify = AsyncMock()
+        mock_client.write_gatt_char = AsyncMock(side_effect=mock_write)
+
+        client = PickSmartSession(mock_client, CMD_UUID, IMG_UUID, MAC)
+        with pytest.raises(WriteTimeout) as info:
+            await client.send(
+                prepare(PRESETS["0x0033"], Image.new("RGB", (296, 128), "white"), MAC),
+                quicklz=False,
+                trace=SessionTrace(),
+            )
+        assert info.value.step == "START" and starts == 1
+
+    asyncio.run(_test())
+
+
 def test_picksmart_start_is_probed_until_the_tag_answers(monkeypatch):
     """A START the tag drops (not ready after subscribing) is resent; the
     first answered one proves subscription and readiness end to end."""
@@ -295,7 +337,7 @@ def test_picksmart_start_probes_exhausted_is_descriptive(monkeypatch):
         )
         mock_client.services = []
         trace = SessionTrace()
-        with pytest.raises(PickSmartError, match="Insufficient characteristics"):
+        with pytest.raises(GattMismatch, match="insufficient characteristics"):
             await esl_ble.get("picksmart").write_prepared(
                 MagicMock(address=MAC), PRESETS["0x0033"], _done(b""), trace=trace
             )

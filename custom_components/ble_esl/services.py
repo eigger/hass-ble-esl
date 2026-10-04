@@ -344,8 +344,9 @@ def _likely_cause(failure: Failure, protocol_id: str) -> str | None:
     """The tag's own reading of a failure, or None for blesession's generic one.
 
     Keyed on where the attempt died (`stage`, blesession's primary
-    vocabulary), the error (its type where blesession raised it, its text for
-    the protocols' own errors) and the protocol. The generic sentences
+    vocabulary), the error (its type, and the device's `code` where it has
+    one; the text only for the protocols' own errors that have neither) and the
+    protocol. The generic sentences
     (no radio sees the tag, the link never came up, a weak signal) come
     from the library; only what is specific to these tags lives here.
     """
