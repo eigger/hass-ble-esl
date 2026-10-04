@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace, write_chunks
+from blesession import DeviceError, Notifications, SessionTrace, write_chunks
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import AUTH_CHAR, DATA_CHAR, DEVICE_ERRORS, ERROR_UNLOCK_FAILED, STATUS_CHAR
@@ -36,12 +36,11 @@ MAX_CHUNK = 506  # 512-byte ATT attribute limit minus the 6-byte command header
 MTU_OVERHEAD = 9  # ATT write header (3) and command header (6)
 
 
-class WolinkError(Exception):
-    """The tag reported an error code."""
+class WolinkError(DeviceError):
+    """The tag reported an error code (`code`)."""
 
     def __init__(self, code: int) -> None:
-        self.code = code
-        super().__init__(f"device error {code}: {DEVICE_ERRORS.get(code, 'unknown')}")
+        super().__init__(f"device error {code}: {DEVICE_ERRORS.get(code, 'unknown')}", code=code)
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> PreparedImage:

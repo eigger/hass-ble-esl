@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import struct
 
+from blesession import DeviceError
+
 from .const import BLOCK_DATA_SIZE
 
 # Manufacturer data (company id 0x5258 stripped):
@@ -104,7 +106,7 @@ def blocks(obj: bytes) -> list[bytes]:
     return out
 
 
-class XteError(Exception):
+class XteError(DeviceError):
     """The tag or protocol reported an error."""
 
 

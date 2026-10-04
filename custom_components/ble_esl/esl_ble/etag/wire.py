@@ -5,6 +5,8 @@ from __future__ import annotations
 import struct
 from typing import TYPE_CHECKING
 
+from blesession import DeviceError
+
 from .const import CMD_IMAGE, CMD_VERSION, REPLIES
 
 if TYPE_CHECKING:
@@ -23,7 +25,7 @@ HEADER = ">BBBHHH"
 MAX_PACKET = struct.calcsize(HEADER) + CHUNK + 1
 
 
-class EtagError(Exception):
+class EtagError(DeviceError):
     """The tag's reply was unusable, or the link cannot carry the app's packets."""
 
 

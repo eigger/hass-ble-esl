@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Awaitable
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, SessionTrace
+from blesession import DeviceError, Notifications, SessionTrace
 
 from ..base import STAGE_FINISH, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from PIL import Image
 
 
-class EasyTagError(Exception):
+class EasyTagError(DeviceError):
     """The tag's reply was unusable."""
 
 

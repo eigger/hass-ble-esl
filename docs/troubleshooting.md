@@ -69,6 +69,10 @@ The image was sent; the tag did not confirm.
 
 - **`error` starts with *The link dropped …*** (`likely_cause_key: link_lost`) — the tag went away mid-session: out of range, the battery gave out under load, or the proxy/adapter reset. The wait ends the moment the link goes rather than running the step's timeout out, so `transfer_s` / `finish_s` show when it happened and the retry starts straight away. Once in a while is normal at the edge of range; repeatedly means `rssi` and `via` — move the tag or the proxy.
 
+- **`likely_cause_key: write_timeout`** — a write to the tag never returned (each write is bounded at 10 seconds), so the adapter or proxy stopped taking data: usually a wedged adapter or a proxy that is busy or has died, not a silent tag. Restart the adapter or proxy if it repeats. Unlike *The link dropped …*, the link had not been reported lost.
+
+- **`likely_cause_key: session.gatt_mismatch`** — the tag connected but does not expose the service or characteristic the protocol needs (or its write size is too small): another model or firmware than the preset assumes, or a link that has not negotiated its MTU. A missing service or characteristic is **not retried**; a too-small write size is, because it can be a link that has not yet negotiated its MTU.
+
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used (if `via_unconfirmed` is `true`, it is only the one that heard the tag best).
 - **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
 - **`start_probes` above 1 on successful writes** (PickSmart) — the tag was slow to answer after connecting. Harmless once in a while, but it is where a marginal link shows first; if it is 2–3 on most writes, treat it like a `transfer` problem.

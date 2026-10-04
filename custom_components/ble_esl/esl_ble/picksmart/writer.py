@@ -7,7 +7,7 @@ from collections.abc import Awaitable
 import logging
 from typing import TYPE_CHECKING
 
-from blesession import Notifications, NotificationTimeout, SessionTrace
+from blesession import DeviceError, Notifications, NotificationTimeout, SessionTrace
 
 from ..base import STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class PickSmartError(Exception):
+class PickSmartError(DeviceError):
     """The tag answered out of protocol."""
 
 
