@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+### Fixed
+
+- `plot` elements read their history on the recorder's executor, so Home Assistant no longer logs "accesses the database without the database executor". The render itself still runs on the generic executor; only the query is handed to the recorder.
+
 ## 1.1.0
 
 ### Changed
