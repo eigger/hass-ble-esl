@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 from blesession import (
     Attempt,
+    AttemptTimedOut,
     DeviceError,
     Failure,
     GattMismatch,
@@ -1577,7 +1578,5 @@ def test_a_retry_after_a_transfer_failure_books_pacing_a_final_error_does_not() 
 
 
 def test_a_timed_out_attempt_is_not_retried() -> None:
-    from blesession import AttemptTimedOut
-
     attempt = Attempt(number=1, trace=SessionTrace(), error=AttemptTimedOut(600), timed_out=True)
     assert _retry(attempt) is False
