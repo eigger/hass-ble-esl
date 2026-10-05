@@ -329,7 +329,6 @@ export class BleEslDesigner extends HTMLElement {
       if (this.loading) {
         this.loading.error = error.message || String(error);
         this.render();
-        this.shadowRoot.querySelector(".loading button")?.focus();
       } else {
         this.refreshing = false;
         this.report(error);
@@ -338,7 +337,7 @@ export class BleEslDesigner extends HTMLElement {
     }
   }
   stepDone(key) {
-    if (!this.loading) return;
+    if (!this.loading || this.loading.error) return;
     const step = this.loading.steps.find((item) => item.key === key);
     if (step) step.done = true;
     const node = this.shadowRoot.querySelector(".loading");
@@ -362,6 +361,8 @@ export class BleEslDesigner extends HTMLElement {
       menu.hass = this.hass;
       menu.narrow = this.narrow;
     }
+    // Every re-render of the error (e.g. the click handler's) keeps the focus.
+    this.shadowRoot.querySelector(".loading button")?.focus();
   }
   api(action, extra = {}) {
     return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
@@ -569,7 +570,8 @@ export class BleEslDesigner extends HTMLElement {
     return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">State icon</button></div>`;
   }
   switchMode(mode) {
-    if (mode === this.mode) return;
+    // boot() resets the mode and the tag when it ends.
+    if (mode === this.mode || this.refreshing) return;
     if (mode === "template") {
       this.displaySession = {
         tag: this.tag,
