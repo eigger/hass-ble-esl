@@ -665,6 +665,11 @@ export class BleEslDesigner extends HTMLElement {
     this.queuePreview();
   }
   createSensorTemplate() {
+    if (this.refreshing) {
+      // switchMode() would decline: put the picker back instead.
+      this.render();
+      return;
+    }
     const element = this.element;
     const state = this.hass.states[element.entity_id];
     const type = "output:" + this.outputType(state);
