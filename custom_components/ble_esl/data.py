@@ -67,7 +67,7 @@ class BleEslRuntimeData:
     request_generation: int = 0
     """Order of non-preview service writes, reserved before rendering begins."""
     reports: SessionReports = field(default_factory=SessionReports)
-    """blesession's two report slots, filled by services.execute_write.
+    """blesession's report slots and failure count, filled by services.execute_write.
 
     `last` is the most recent write *attempt* as blesession's report: outcome,
     where it failed and why, the radio, the per-stage timings (see
@@ -77,17 +77,14 @@ class BleEslRuntimeData:
     `duplicate` / `dropped`) rather than an error, so "nothing was sent" is as
     readable as a failure.
 
-    `last_failure` is the final attempt of the most recent failed *write* —
-    every retry exhausted — shown as the Last Failure Time sensor's
-    attributes. A later successful write replaces `last` but leaves it in
-    place, so an intermittent failure can still be read after the fact.
-
-    Per write rather than per attempt: that is what the Last Failure Time
-    timestamp and the Failure Count sensor beside it count, so recording an
-    attempt that a later retry recovered from would leave the attributes
-    describing a different event than the state. blesession's own
-    `SessionReports` docstring calls this the case for filing the attempt
-    `run_attempts()` returns instead of every one."""
+    Every attempt is recorded, and blesession tells them apart by whether
+    another attempt follows (`retrying`): a failed attempt a retry follows goes
+    to `last_retry` only, so `last_failure`, `failures` and `last_failure_at`
+    describe *writes* that failed with every retry exhausted — what the Last
+    Failure Time sensor (state and attributes) and the Failure Count sensor
+    show (services.track_reports publishes them). A later successful write
+    replaces `last` but leaves `last_failure` in place, so an intermittent
+    failure can still be read after the fact."""
 
     @property
     def label(self) -> str:

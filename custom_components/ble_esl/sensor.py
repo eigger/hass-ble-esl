@@ -242,8 +242,8 @@ class BleEslDurationSensorEntity(BleEslCoordinatorEntity[float], SensorEntity):
         the write path can be monitored from the entity instead of debug logs.
 
         Published by each write's final duration update — and, for a write a
-        guard stopped before any attempt ran, by the one execute_write fires
-        in its place, since only a coordinator update rewrites attributes."""
+        guard stopped before any attempt ran, by the one services.track_reports
+        fires in its place, since only a coordinator update rewrites attributes."""
         return self._data.reports.last
 
     @callback
