@@ -87,27 +87,51 @@ const toolIcon = (name) =>
       down: '<path d="m6 9 6 6 6-6"/>',
     }[name]
   }</svg>`;
-const iconFont = new FontFace(
-  "LabelMDI",
-  "url(/ble_esl_designer_fonts/materialdesignicons-webfont.ttf)",
-)
-  .load()
-  .then((font) => document.fonts.add(font));
-const textFont = new FontFace(
-  "LabelText",
-  "url(/ble_esl_designer_fonts/NotoSansKR-Regular.ttf)",
-)
-  .load()
-  .then((font) => document.fonts.add(font));
+let fontsLoading;
+// Started at import so the download overlaps the panel's other requests; a
+// failure is forgotten so that Retry downloads the fonts again.
+function loadFonts() {
+  fontsLoading ||= Promise.all(
+    [
+      ["LabelMDI", "materialdesignicons-webfont.ttf"],
+      ["LabelText", "NotoSansKR-Regular.ttf"],
+    ].map(([family, file]) =>
+      new FontFace(family, `url(/ble_esl_designer_fonts/${file})`)
+        .load()
+        .then((font) => document.fonts.add(font)),
+    ),
+  ).catch((error) => {
+    fontsLoading = undefined;
+    throw error;
+  });
+  return fontsLoading;
+}
+loadFonts().catch(() => {});
+const loadingStyle = `.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:64px 24px;color:var(--secondary-text-color,#637083)}.loading p{margin:0}.loading progress{width:min(360px,80%);height:8px;accent-color:#166d75}.loading .error{color:#c33}@keyframes spin{to{transform:rotate(360deg)}}.spinning svg{animation:spin 1s linear infinite}`;
 const style = `
 .mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}button:hover{border-color:#257d86}button:disabled{opacity:.45;cursor:default}button.primary{background:#166d75;color:white;border-color:#166d75}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}.editor-bar{display:flex;align-items:center;gap:12px;padding:0 24px 12px}.editor-bar .spacer{flex:1}.icon-button{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:7px;border:0;background:transparent}.icon-button[aria-expanded="true"]{background:var(--secondary-background-color,#e9eff2)}.icon-button.danger:hover{color:#c33;background:#c331}.context-menu{position:fixed;z-index:1000;width:220px;padding:6px;background:var(--card-background-color,white);box-shadow:0 5px 24px #0003;border:1px solid var(--divider-color,#ddd);border-radius:8px}.context-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0}.context-menu kbd{margin-left:auto}.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:14px}.panel-heading h2{flex:1;margin:0}.delete-handle{position:absolute;right:0;top:-24px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:2px;border:1px solid #16838c;color:#b33;background:var(--card-background-color,white);z-index:5;border-radius:4px}.delete-handle svg{width:18px;height:18px}.context-menu kbd{float:right;font-size:11px;color:var(--secondary-text-color,#637083)}.template-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 24px 14px}.template-controls input[type="number"]{width:75px}.tabs{display:flex;gap:4px;margin-left:auto}.tabs button[aria-pressed="true"]{background:#166d75;color:white}.tile-icon{position:absolute;left:4px;top:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center}.tile-copy{margin-left:48px;padding:6px 0}.tile-copy .value{font-size:18px}.el ha-icon{--mdc-icon-size:32px}.el.icon-content ha-icon{--mdc-icon-size:inherit}.state-rules{margin:0}.template-note{margin:0 24px 12px}.picker{display:flex;gap:5px;flex-wrap:wrap}.swatch{width:28px;height:28px;padding:0;background:var(--swatch);border:1px solid #888;border-radius:50%}.swatch[aria-pressed="true"]{outline:2px solid #16838c;outline-offset:2px}.align-button{width:32px;height:32px;padding:5px}.align-button[aria-pressed="true"]{background:#16838c22;border-color:#16838c}.align-button svg{width:20px;height:20px}.icon-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:200px;overflow:auto}.icon-picker button{padding:6px}.icon-picker ha-icon{--mdc-icon-size:24px}.state-rules input{width:100%}.muted.help{display:none}.workspace{display:grid;grid-template-columns:240px minmax(320px,1fr) 260px;gap:18px;padding:0 24px 24px}.workspace.library-closed{grid-template-columns:minmax(0,1fr) 260px}.workspace.inspector-closed{grid-template-columns:240px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace.library-closed .library,.workspace.inspector-closed .inspector{display:none}.card{min-width:0;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dfe5eb);border-radius:10px;padding:16px}h2{font-size:15px;margin:0 0 14px}p{line-height:1.5}.muted{color:var(--secondary-text-color,#637083);font-size:12px}.entity-preview{margin:12px 0 20px}.entity-state{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--divider-color,#ddd);border-radius:8px}.entity-state .state-copy{flex:1;min-width:0}.entity-state .state-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.entity-state .state-value{font-size:18px;margin-top:4px}.entity-state ha-state-icon{--mdc-icon-size:28px}.entity-state button{flex:none}ha-entity-picker{display:block;width:100%;margin-bottom:12px}.entity{display:block;text-align:left;width:100%;margin:5px 0}.entity small{display:block;color:var(--secondary-text-color,#637083);font-size:11px;overflow:hidden;text-overflow:ellipsis}.entity[draggable]{cursor:grab}.tools{display:flex;flex-wrap:wrap;gap:6px}.canvas-wrap{min-width:0;overflow:auto;height:420px;min-height:0;display:flex;align-items:center;justify-content:flex-start;background:repeating-conic-gradient(var(--secondary-background-color,#edf0f4) 0% 25%,var(--primary-background-color,#f6f8fa) 0% 50%) 50%/16px 16px;border-radius:6px;padding:30px}.stage-space{margin:auto;flex:none;position:relative}.stage{position:relative;transform-origin:top left;background:white;color:black;box-shadow:0 8px 24px #15293825;outline:1px solid #c5ced9;touch-action:none}.el{position:absolute;overflow:visible;cursor:move;outline:1px dashed transparent;touch-action:none;user-select:none}.el{pointer-events:none}.el .content{pointer-events:none}.hit-area{position:absolute;pointer-events:auto}.el:hover .hit-area{outline:1px dashed #1c8990}.el.editing .content{pointer-events:auto}.el.editing .hit-area{pointer-events:none}.el.selected{outline:1px solid #16838c}.el .content{height:100%;overflow:hidden;font-family:LabelText, sans-serif}.el.editing .content{visibility:visible!important;-webkit-user-select:text;user-select:text;cursor:text;white-space:pre-wrap;outline:0}.el.rendered .content{visibility:hidden}.layer-preview{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.el.editing .layer-preview,.stage.exact-mode .layer-preview{display:none}.label{font-size:12px;height:18px;white-space:nowrap;overflow:hidden}.value{white-space:nowrap;overflow:hidden}.handle{position:absolute;right:-3px;bottom:-3px;width:6px;height:6px;background:#16838c;cursor:nwse-resize;z-index:3}.exact{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}.stage.exact-mode .content{visibility:hidden}.stage.exact-mode .el{background:transparent!important}.stage.exact-mode .el.selected{z-index:100}.status{min-height:24px;padding:0 24px 12px;color:var(--secondary-text-color,#637083)}.error{color:#c33}.props{display:grid;grid-template-columns:1fr 1fr;gap:9px}.props label{font-size:12px;display:flex;flex-direction:column;gap:5px}.props label.check{flex-direction:row;align-items:center}.props .wide{grid-column:1/-1}.props input,.props select,.props textarea{width:100%;min-width:0}.check{display:flex;align-items:center;gap:7px;margin:12px 0}.check input{width:auto}.layers{margin-top:16px;max-height:260px;overflow:auto}.layer-row{display:flex;align-items:center;gap:4px;margin:4px 0}.layer-row .layer{flex:1;min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-row .icon-button{flex:none;width:32px;height:32px;padding:4px}.layer-row .icon-button svg{width:18px;height:18px}.layer{display:block;width:100%;text-align:left;margin:4px 0}.layer.active{border-color:#16838c}.side-column{display:flex;flex-direction:column;gap:18px}.side-column .layers{margin-top:0}.footer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}@media(max-width:1050px){.workspace{grid-template-columns:200px 1fr}.inspector{grid-column:1/-1}.props{grid-template-columns:repeat(4,1fr)}}@media(min-width:651px) and (max-width:1050px){.workspace{grid-template-columns:200px minmax(0,1fr)}.workspace.library-closed{grid-template-columns:minmax(0,1fr)}.workspace.inspector-closed{grid-template-columns:200px minmax(0,1fr)}.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.workspace .inspector{grid-column:1/-1}}@media(max-width:650px){.workspace.library-closed,.workspace.inspector-closed,.workspace.library-closed.inspector-closed{grid-template-columns:minmax(0,1fr)}.toolbar,.editor-bar,.template-controls{padding:12px}header{flex-wrap:wrap;padding:4px 12px}header span{display:none}.workspace{padding:0 12px 12px;grid-template-columns:minmax(0,1fr)}.library,.inspector{grid-column:auto}.entities{height:150px}.canvas-wrap{height:300px}.props{grid-template-columns:1fr 1fr}}
 `;
+
+const LOADING_STEPS = [
+  ["fonts", "fonts"],
+  ["icons", "icons"],
+  ["templates", "templates"],
+  ["specs", "component specs"],
+  ["tags", "devices"],
+];
 
 export class BleEslDesigner extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.tags = [];
+    // Shown instead of the editor until the first boot() has its data.
+    this.loading = {
+      error: null,
+      steps: LOADING_STEPS.map(([key, label]) => ({ key, label, done: false })),
+    };
+    this.ready = false;
+    this.refreshing = false;
     this.document = emptyDocument();
     this.selected = null;
     this.undoStack = [];
@@ -231,6 +255,24 @@ export class BleEslDesigner extends HTMLElement {
   }
   async boot() {
     this.started = true;
+    const initial = !this.ready;
+    // A request that outlives a failed attempt must not touch the next one.
+    const run = (this.bootRun = (this.bootRun || 0) + 1);
+    if (initial) {
+      this.loading = {
+        error: null,
+        steps: LOADING_STEPS.map(([key, label]) => ({
+          key,
+          label,
+          done: false,
+        })),
+      };
+    } else {
+      this.refreshing = true;
+      this.error = false;
+      this.status = "Refreshing tags…";
+    }
+    this.render();
     try {
       // The tag list must not wait for HA's lazily loaded entity picker:
       // in Safari the card helpers that load it may never settle.
@@ -243,14 +285,34 @@ export class BleEslDesigner extends HTMLElement {
           if (this.isConnected) this.upgradeEntityPickers();
         });
       }
-      await Promise.all([iconFont, textFont]);
-      this.icons = await fetch(new URL("./icons.json", import.meta.url)).then(
-        (response) => response.json(),
-      );
-      this.templates = await this.api("templates");
-      this.specs = await this.api("specs");
-      this.tags = await this.api("list");
+      const step = (key, promise) =>
+        Promise.resolve(promise).then((value) => {
+          if (run === this.bootRun) this.stepDone(key);
+          return value;
+        });
+      // Fonts and icons are fetched once; Refresh only re-reads the tags.
+      const [, icons, templates, specs, tags] = await Promise.all([
+        step("fonts", initial && loadFonts()),
+        step(
+          "icons",
+          initial &&
+            fetch(new URL("./icons.json", import.meta.url)).then((response) =>
+              response.json(),
+            ),
+        ),
+        step("templates", this.api("templates")),
+        step("specs", this.api("specs")),
+        step("tags", this.api("list")),
+      ]);
+      if (icons) this.icons = icons;
+      this.templates = templates;
+      this.specs = specs;
+      this.tags = tags;
       this.mode = "display";
+      // Reveal the editor before load(): it renders.
+      this.ready = true;
+      this.loading = null;
+      this.refreshing = false;
       // Stay on the tag being edited: load() files an unsaved design under
       // the tag it is leaving, so this.tag must still be that one.
       const tag =
@@ -264,8 +326,43 @@ export class BleEslDesigner extends HTMLElement {
         this.render();
       }
     } catch (error) {
-      this.report(error);
+      if (this.loading) {
+        this.loading.error = error.message || String(error);
+        this.render();
+      } else {
+        this.refreshing = false;
+        this.report(error);
+        this.render();
+      }
     }
+  }
+  stepDone(key) {
+    if (!this.loading || this.loading.error) return;
+    const step = this.loading.steps.find((item) => item.key === key);
+    if (step) step.done = true;
+    const node = this.shadowRoot.querySelector(".loading");
+    if (node) node.innerHTML = this.loadingInner();
+  }
+  loadingInner() {
+    const { error, steps } = this.loading;
+    if (error)
+      return `<p class="error">${esc(error)}</p><button data-action="reload">Retry</button>`;
+    const done = steps.filter((item) => item.done).length;
+    const waiting = steps.find((item) => !item.done);
+    return `<p>Loading ${esc(waiting?.label || "designer")}… (${done}/${steps.length})</p><progress aria-label="Loading designer" max="${steps.length}" value="${done}"></progress>`;
+  }
+  headerHtml() {
+    return `<header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span>${this._panelInfo?.config?.version ? `<span class="version" title="BLE ESL integration version">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing ? "disabled" : ""}>Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing ? "disabled" : ""}>Sensor templates</button></nav></header>`;
+  }
+  renderLoading() {
+    this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
+    const menu = this.shadowRoot.querySelector("ha-menu-button");
+    if (menu) {
+      menu.hass = this.hass;
+      menu.narrow = this.narrow;
+    }
+    // Every re-render of the error (e.g. the click handler's) keeps the focus.
+    this.shadowRoot.querySelector(".loading button")?.focus();
   }
   api(action, extra = {}) {
     return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
@@ -473,7 +570,8 @@ export class BleEslDesigner extends HTMLElement {
     return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">State icon</button></div>`;
   }
   switchMode(mode) {
-    if (mode === this.mode) return;
+    // boot() resets the mode and the tag when it ends.
+    if (mode === this.mode || this.refreshing) return;
     if (mode === "template") {
       this.displaySession = {
         tag: this.tag,
@@ -567,6 +665,11 @@ export class BleEslDesigner extends HTMLElement {
     this.queuePreview();
   }
   createSensorTemplate() {
+    if (this.refreshing) {
+      // switchMode() would decline: put the picker back instead.
+      this.render();
+      return;
+    }
     const element = this.element;
     const state = this.hass.states[element.entity_id];
     const type = "output:" + this.outputType(state);
@@ -709,6 +812,11 @@ export class BleEslDesigner extends HTMLElement {
     return `<button class="icon-button" data-action="${action}" aria-label="Toggle ${label} panel" aria-controls="${id}" title="${open ? "Hide" : "Show"} ${label}" aria-expanded="${open}">${icon("menu")}</button>`;
   }
   render() {
+    if (this.loading) {
+      this.resizeObserver.disconnect();
+      this.renderLoading();
+      return;
+    }
     this.finishTextEdit();
     const activeControl = this.shadowRoot.activeElement;
     let focusSelector = null;
@@ -745,7 +853,7 @@ export class BleEslDesigner extends HTMLElement {
     );
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px),(max-height:600px){header,.toolbar{position:static}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3}</style><header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span>${this._panelInfo?.config?.version ? `<span class="version" title="BLE ESL integration version">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}">Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}">Sensor templates</button></nav></header>${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} class="icon-button" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px),(max-height:600px){header,.toolbar{position:static}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -2053,6 +2161,8 @@ export class BleEslDesigner extends HTMLElement {
           this.error = ["locked", "failed"].includes(result.status);
         }
       } else if (action === "reload") {
+        // Retry after a failed first load shows the error instead.
+        if (this.refreshing || (this.loading && !this.loading.error)) return;
         this.started = false;
         await this.boot();
         return;

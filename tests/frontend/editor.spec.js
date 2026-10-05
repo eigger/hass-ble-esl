@@ -1488,6 +1488,70 @@ test("Refresh tags keeps the tag being edited and its unsaved design", async ({
   );
 });
 
+test("entering the designer shows loading progress under the header until the tags are in", async ({
+  page,
+}) => {
+  let release;
+  const gate = new Promise((resolve) => (release = resolve));
+  await page.route("**/api/designer", async (route) => {
+    if (route.request().postDataJSON().action === "list") await gate;
+    await route.continue();
+  });
+  await page.goto("/");
+  await expect(page.locator("header h1")).toBeVisible();
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  await expect(page.locator(".loading")).toContainText("devices");
+  await expect(page.locator(".toolbar")).toHaveCount(0);
+  await expect(page.locator(".workspace")).toHaveCount(0);
+  await expect(page.locator('[data-action="template-mode"]')).toBeDisabled();
+  release();
+  await expect(page.locator(".workspace")).toBeVisible();
+  await expect(page.locator(".loading")).toHaveCount(0);
+  await expect(page.locator('[data-action="template-mode"]')).toBeEnabled();
+});
+
+test("a failed first load shows the error and Retry recovers", async ({
+  page,
+}) => {
+  let fail = true;
+  await page.route("**/api/designer", async (route) => {
+    if (fail && route.request().postDataJSON().action === "specs")
+      await route.fulfill({ status: 500, body: "boom" });
+    else await route.continue();
+  });
+  await page.goto("/");
+  await expect(page.locator(".loading .error")).toContainText("boom");
+  await expect(page.locator(".workspace")).toHaveCount(0);
+  fail = false;
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.locator(".workspace")).toBeVisible();
+  await expect(page.locator(".loading")).toHaveCount(0);
+});
+
+test("Refresh tags keeps the editor on screen while it reloads", async ({
+  page,
+}) => {
+  let release;
+  const gate = new Promise((resolve) => (release = resolve));
+  let hold = false;
+  await page.route("**/api/designer", async (route) => {
+    if (hold && route.request().postDataJSON().action === "list") await gate;
+    await route.continue();
+  });
+  await page.locator('[data-add="text"]').click();
+  hold = true;
+  await page.locator('[data-action="reload"]').click();
+  await expect(page.locator('[data-action="reload"]')).toBeDisabled();
+  await expect(page.locator(".workspace")).toBeVisible();
+  await expect(page.locator('[data-action="template-mode"]')).toBeDisabled();
+  await expect(page.locator(".loading")).toHaveCount(0);
+  release();
+  await expect(page.locator('[data-action="reload"]')).toBeEnabled();
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    1,
+  );
+});
+
 test("layers can be hidden and reordered, and the display background is set from the properties", async ({
   page,
 }) => {
