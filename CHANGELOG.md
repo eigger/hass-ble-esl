@@ -4,6 +4,7 @@
 
 ### Changed
 
+- The ESL Designer now shows loading progress (fonts, icons, templates, component specs, devices) under its header and reveals the editor once they are loaded, instead of a blank toolbar. These requests now run in parallel, and a failed first load shows the error with a Retry button. Refresh tags keeps the editor on screen and only disables its button while it reloads.
 - Requires `blesession>=0.9.0` (was `>=0.8.0`). The Failure Count and Last Failure Time sensors now come from blesession's `SessionReports` (`failures`, `last_failure_at`); their values are unchanged: one failure per write that failed with every retry exhausted, none for an attempt a retry recovered from or a write a guard declined.
 - While a write waits to retry a failed attempt, the Write Duration sensor's attributes carry `retrying: true` for that attempt (blesession's report key). The attempt that ends a write never has it.
 - The diagnostics download's `sensors.last_failure` is now in UTC (`+00:00`) instead of Home Assistant's local time zone. It is the same moment; the sensor's state is unaffected.
