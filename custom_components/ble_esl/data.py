@@ -80,11 +80,14 @@ class BleEslRuntimeData:
     Every attempt is recorded, and blesession tells them apart by whether
     another attempt follows (`retrying`): a failed attempt a retry follows goes
     to `last_retry` only, so `last_failure`, `failures` and `last_failure_at`
-    describe *writes* that failed with every retry exhausted — what the Last
-    Failure Time sensor (state and attributes) and the Failure Count sensor
-    show (services.track_reports publishes them). A later successful write
-    replaces `last` but leaves `last_failure` in place, so an intermittent
-    failure can still be read after the fact."""
+    describe *writes* that failed with every retry exhausted. A write is
+    counted once, by the attempt that ended it failed — including one that
+    ended early on an error that says it is final or on the attempt bound —
+    and never by an attempt a retry followed or one a guard declined. That is
+    what the Last Failure Time sensor (state and attributes) and the Failure
+    Count sensor show (services.track_reports publishes them). A later
+    successful write replaces `last` but leaves `last_failure` in place, so an
+    intermittent failure can still be read after the fact."""
 
     @property
     def label(self) -> str:

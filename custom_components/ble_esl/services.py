@@ -499,10 +499,8 @@ def _retry(attempt: Attempt[WriteResult]) -> bool:
 def track_reports(data: BleEslRuntimeData) -> None:
     """Publish what `data.reports` records to the sensors that show it.
 
-    blesession keeps the count and the time of the failed writes
-    (`failures`, `last_failure_at`): a write is counted once, by the attempt
-    that ended it failed, never by an attempt a retry followed or one a
-    guard declined. The coordinators only carry those values to the Failure
+    What counts as a failed write is `BleEslRuntimeData.reports`' rule; the
+    coordinators only carry `failures` / `last_failure_at` to the Failure
     Count and Last Failure Time entities.
 
     A write a guard declined on arrival (no attempt ran, so `start_time` was
@@ -569,10 +567,8 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
         # Write Duration sensor's attributes always describe the last one —
         # including an attempt a guard declined, which reports as
         # `success: false` with `skipped: locked` / `duplicate` / `dropped`
-        # and so says why nothing was sent. blesession sorts each report:
-        # an attempt another follows (`retrying`) goes to `last_retry` only,
-        # and only the attempt that ends the write failed becomes
-        # `last_failure` and counts once (see track_reports).
+        # and so says why nothing was sent. Which slot and count it lands in
+        # is BleEslRuntimeData.reports' rule.
         try:
             report = _report(hass, job, attempt)
         except Exception:
