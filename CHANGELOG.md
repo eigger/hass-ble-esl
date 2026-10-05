@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2
+
+### Changed
+
+- Updated to `blesession 0.8.0`. The only behaviour change is in the library's own log: a failed unsubscribe is now logged by the `blesession.subscribe` logger instead of `blesession.notifications`. The integration's write paths are unchanged.
+
 ## 1.1.1
 
 ### Fixed
