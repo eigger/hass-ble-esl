@@ -67,7 +67,7 @@ async def async_get_config_entry_diagnostics(
             "parsed": parsed,
         }
 
-    last_failure = data.last_failure_coordinator.data
+    last_failure = data.reports.last_failure_at
     diagnostics = {
         "entry": {
             "version": entry.version,
@@ -109,7 +109,7 @@ async def async_get_config_entry_diagnostics(
         "sensors": {
             "connectivity": data.connectivity_coordinator.data,
             "write_duration_s": data.duration_coordinator.data,
-            "failure_count": data.failure_coordinator.data,
+            "failure_count": data.reports.failures,
             "last_failure": last_failure.isoformat() if last_failure else None,
             "battery_v": data.battery_coordinator.data,
             "temperature_c": data.temperature_coordinator.data,

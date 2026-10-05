@@ -30,6 +30,7 @@ from blesession import (
     SessionDropped,
     WriteTimeout,
     default_retry_if,
+    fallback_report,
     placement,
     report_attempt,
     run_attempts,
@@ -495,6 +496,38 @@ def _retry(attempt: Attempt[WriteResult]) -> bool:
     return True
 
 
+def track_reports(data: BleEslRuntimeData) -> None:
+    """Publish what `data.reports` records to the sensors that show it.
+
+    What counts as a failed write is `BleEslRuntimeData.reports`' rule; the
+    coordinators only carry `failures` / `last_failure_at` to the Failure
+    Count and Last Failure Time entities.
+
+    A write a guard declined on arrival (no attempt ran, so `start_time` was
+    never set and nothing touched the duration sensor) wakes the Write
+    Duration entity once with the value it already has: it rewrites its
+    attributes only when its coordinator fires, and `async_set_updated_data`
+    notifies whether or not the value changed. The `skipped` report then
+    reaches the entity instead of sitting in `reports.last`, where only the
+    diagnostics download would find it. The state stays the last real
+    write's duration; nothing was written now. A write that did start
+    publishes its outcome from execute_write's `finally`.
+    """
+    reports = data.reports
+
+    def publish() -> None:
+        kind = reports.last_kind
+        if kind == "failure":
+            data.failure_coordinator.async_set_updated_data(reports.failures)
+            data.last_failure_coordinator.async_set_updated_data(reports.last_failure_at)
+        elif kind == "skipped" and data.start_time is None:
+            duration = data.duration_coordinator
+            duration.async_set_updated_data(duration.data)
+
+    # Lives as long as the runtime data; nothing outlives it to remove it.
+    reports.add_listener(publish)
+
+
 async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
     """Write with retries, tracking duration/connectivity and the result sensors.
 
@@ -534,9 +567,18 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
         # Write Duration sensor's attributes always describe the last one —
         # including an attempt a guard declined, which reports as
         # `success: false` with `skipped: locked` / `duplicate` / `dropped`
-        # and so says why nothing was sent.
-        data.reports.last = _report(hass, job, attempt)
-        _LOGGER.debug("Write to %s timing: %s", address, data.reports.last)
+        # and so says why nothing was sent. Which slot and count it lands in
+        # is BleEslRuntimeData.reports' rule.
+        try:
+            report = _report(hass, job, attempt)
+        except Exception:
+            # A report that cannot be built must not end the write: file the
+            # minimal one, which keeps whether the attempt is retried or was
+            # declined, so it is still counted (or not) the same way.
+            _LOGGER.exception("Could not build the write report for %s", address)
+            report = fallback_report("write", attempt=attempt)
+        data.reports.record(report)
+        _LOGGER.debug("Write to %s timing: %s", address, report)
         if attempt.error is not None:
             # Not `attempt.ok`: a declined attempt is not a failure, and the
             # guard has already said why it was skipped.
@@ -563,20 +605,10 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                 name=f"write to {address}",
             )
             if last.skipped is not None:
-                if not started:
-                    # Declined on arrival — no attempt ran, so nothing here
-                    # touched the duration sensor, and the entity rewrites
-                    # its attributes only when its coordinator fires. Wake it
-                    # once with the value it already has: `async_set_updated_data`
-                    # notifies listeners whether or not the value changed, so
-                    # the `skipped` report on_attempt just filed reaches the
-                    # entity instead of sitting in reports.last, where only
-                    # the diagnostics download would find it. The state stays
-                    # the last real write's duration; nothing was written now.
-                    duration = data.duration_coordinator
-                    duration.async_set_updated_data(duration.data)
                 # blesession types `skipped` as Any. The guard only returns _Decline.
                 return WriteOutcome(cast(_Decline, last.skipped))
+            # Not copied: `as_response` deep-copies it (dataclasses.asdict), so
+            # nothing a caller does to the response reaches the reports.
             timing = data.reports.last
             if last.ok:
                 result = last.result
@@ -610,15 +642,6 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
                     timing=timing,
                 )
 
-            data.failure_coordinator.async_set_updated_data(
-                (data.failure_coordinator.data or 0) + 1
-            )
-            # Filed in both slots here, not from on_attempt: `last_failure`
-            # means the write that failed with every retry exhausted, which
-            # is what the timestamp beside it records. A copy, so nothing
-            # that later touches the report in place can change it.
-            data.reports.record(dict(timing or {}))
-            data.last_failure_coordinator.async_set_updated_data(now())
             assert last.error is not None
             raise WriteFailed(
                 address,

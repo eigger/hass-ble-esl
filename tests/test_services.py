@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+import logging
 from threading import Event
 from unittest.mock import patch
 
@@ -502,8 +503,116 @@ async def test_recovered_attempt_is_not_a_write_failure(
 
     assert data.reports.last["success"] is True  # attempt 2
     assert data.reports.last_failure is None
+    # The attempt a retry recovered from is kept as blesession's `last_retry`.
+    retry = data.reports.last_retry
+    assert (retry["attempt"], retry["error"], retry["retrying"]) == (1, "first try", True)
+    assert data.reports.failures == 0
+    assert data.reports.last_failure_at is None
     assert sensor(hass, "failure_count") == "0"
     assert sensor(hass, "last_failure_time") == "unknown"
+
+
+async def test_failure_count_is_once_per_write_and_time_follows_the_last(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
+) -> None:
+    """Each attempt is recorded, but only the one that ends the write failed
+    counts: three failed attempts are one failure, and Last Failure Time is
+    blesession's `last_failure_at` for the latest failed write."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
+    data = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
+    tag_writer.write_result = fail("boom", connect=0.5)
+
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "write", device_id_of(hass))
+    first_at = data.reports.last_failure_at
+    assert data.reports.failures == 1
+    assert sensor(hass, "failure_count") == "1"
+    # The timestamp state is published to the second.
+    assert dt_util.parse_datetime(sensor(hass, "last_failure_time")) == first_at.replace(
+        microsecond=0
+    )
+    # Attempts 1 and 2 were retried, not failures; attempt 3 is the failure.
+    assert data.reports.last_retry["attempt"] == 2
+    assert "retrying" not in data.reports.last_failure
+    assert data.reports.last_failure is data.reports.last
+
+    freezer.tick(timedelta(minutes=5))
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "write", device_id_of(hass))
+    assert data.reports.failures == 2
+    assert sensor(hass, "failure_count") == "2"
+    assert data.reports.last_failure_at == first_at + timedelta(minutes=5)
+    assert dt_util.parse_datetime(
+        sensor(hass, "last_failure_time")
+    ) == data.reports.last_failure_at.replace(microsecond=0)
+
+
+async def test_a_final_error_is_one_attempt_and_one_failure(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """An error that says it is final (`retryable = False`) ends the write on
+    attempt 1 even with retries left: blesession files it as the failure
+    (`retrying` is not set), so it counts once and leaves no `last_retry`."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
+    data = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
+    tag_writer.write_result = fail("Unsupported preset", exc=WriteRefused)
+
+    with pytest.raises(HomeAssistantError, match="after 1 attempts: Unsupported preset"):
+        await call(hass, "write", device_id_of(hass))
+
+    assert tag_writer.write_prepared.await_count == 1
+    assert sensor(hass, "failure_count") == "1"
+    assert data.reports.last_retry is None
+    failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+    assert (failed["attempt"], failed["error"]) == (1, "Unsupported preset")
+    assert "retrying" not in failed
+
+
+async def test_a_report_that_cannot_be_built_does_not_stop_the_write(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, caplog
+) -> None:
+    """A bug building the breakdown files blesession's fallback report, which
+    keeps whether the attempt is retried: the write goes on, and a failed
+    write still counts once."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 2})
+    data = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
+    from custom_components.ble_esl import services as svc
+
+    def broken(hass, job, attempt):
+        raise ValueError("bug")
+
+    tag_writer.write_result = fail("boom", connect=0.5)
+    with patch.object(svc, "_report", broken):
+        with pytest.raises(HomeAssistantError, match="after 2 attempts: boom"):
+            await call(hass, "write", device_id_of(hass))
+        assert tag_writer.write_prepared.await_count == 2
+        # The bug is not swallowed silently: one error with its traceback per attempt.
+        logged = [
+            r
+            for r in caplog.records
+            if r.levelno == logging.ERROR and "Could not build the write report" in r.message
+        ]
+        assert len(logged) == 2
+        assert all(r.exc_info and r.exc_info[0] is ValueError for r in logged)
+        assert data.reports.last_retry == {
+            "operation": "write",
+            "success": False,
+            "error": "boom",
+            "failed_stage": "connect",
+            "attempt": 1,
+            "retrying": True,
+        }
+        assert sensor(hass, "failure_count") == "1"
+        failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
+        assert (failed["attempt"], failed["error"]) == (2, "boom")
+        assert "retrying" not in failed
+
+        tag_writer.write_result = ok(transfer=0.1)
+        assert (await respond(hass, "write", device_id_of(hass)))[device_id_of(hass)][
+            "status"
+        ] == "written"
+    assert data.reports.last == {"operation": "write", "success": True, "attempt": 1}
+    assert sensor(hass, "failure_count") == "1"
 
 
 async def test_retry_pacing_follows_only_transfer_failures(
@@ -609,6 +718,27 @@ async def test_multi_device_call_continues_after_failure(
     assert tag_writer.write_prepared.await_count == 2  # both attempted
     failures = sorted(sensor(hass, "failure_count", ident) for ident in ("54200001", "54200002"))
     assert failures == ["0", "1"]
+
+
+async def test_every_failing_target_counts_its_own_failure_once(
+    hass: HomeAssistant, enable_bluetooth, tag_writer
+) -> None:
+    """Each tag keeps its own reports: when every target fails after its
+    retries, every tag's Failure Count is 1, not one shared count."""
+    await setup_entry(hass, address="66:66:54:20:00:01", options={CONF_RETRY_COUNT: 2})
+    await setup_entry(hass, address="66:66:54:20:00:02", options={CONF_RETRY_COUNT: 2})
+    tag_writer.write_result = fail("boom")
+
+    targets = [device_id_of(hass, "66:66:54:20:00:01"), device_id_of(hass, "66:66:54:20:00:02")]
+    with pytest.raises(HomeAssistantError, match="boom"):
+        await call(hass, "write", targets)
+
+    assert tag_writer.write_prepared.await_count == 4  # two attempts each
+    for ident in ("54200001", "54200002"):
+        assert sensor(hass, "failure_count", ident) == "1"
+        assert sensor(hass, "last_failure_time", ident) != "unknown"
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        assert entry.runtime_data.reports.failures == 1
 
 
 async def test_multi_target_pipelines_encodes(
@@ -1129,16 +1259,19 @@ async def test_unexpected_error_keeps_other_targets_failures_as_note(
     attempt raises is one) keeps its traceback and the other tags' failures."""
     from custom_components.ble_esl import services as svc
 
-    real_report = svc._report
+    real_guard = svc._guard
 
-    def report(hass, job, attempt):
+    def guard(job):
+        # The guard is the pipeline's own code under the BLE lock; blesession
+        # propagates what it raises. (A report that fails to build is no
+        # longer such a bug: it is filed as a fallback report.)
         if job.address == "66:66:54:20:00:01":
             raise ValueError("bug")
-        return real_report(hass, job, attempt)
+        return real_guard(job)
 
     tag_writer.write_result = fail("boom")
     targets = [device_id_of(hass, "66:66:54:20:00:01"), device_id_of(hass, "66:66:54:20:00:02")]
-    with patch.object(svc, "_report", report), pytest.raises(ValueError, match="bug") as excinfo:
+    with patch.object(svc, "_guard", guard), pytest.raises(ValueError, match="bug") as excinfo:
         await call(hass, "write", targets)
     assert any("boom" in note for note in getattr(excinfo.value, "__notes__", []))
 
@@ -1454,6 +1587,9 @@ async def test_declined_attempt_is_reported_as_skipped(
     assert report["success"] is False
     assert report["skipped"] == "locked"  # a scalar: it goes on the entity
     assert "error" not in report
+    # Attempt 1 failed with a retry to follow, so it is a retry, not a failure.
+    assert data.reports.last_retry["retrying"] is True
+    assert data.reports.failures == 0
     # Declining is not failing: the write ends as "locked", so the failure
     # sensors stay where they were.
     assert sensor(hass, "failure_count") == "0"
@@ -1477,11 +1613,18 @@ async def test_write_declined_before_any_attempt_reaches_the_entity(
     assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"]
 
     written_duration = sensor(hass, "write_duration")
+    wakes: list[float] = []
+    remove = data.duration_coordinator.async_add_listener(
+        lambda: wakes.append(data.duration_coordinator.data)
+    )
 
     data.write_lock = True
     assert (await respond(hass, "write", device_id_of(hass)))[device_id_of(hass)] == {
         "status": "locked"
     }
+    remove()
+    # Woken exactly once, with the value it already had.
+    assert wakes == [float(written_duration)]
 
     assert tag_writer.write_prepared.await_count == 1  # the first write only
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes

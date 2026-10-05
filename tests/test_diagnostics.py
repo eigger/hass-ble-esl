@@ -91,6 +91,10 @@ async def test_diagnostics_content_and_redaction(
         "connect_s": 0.5,
     }
     assert result["sensors"]["failure_count"] == 1
+    # The count and the time are blesession's, the same values the sensors show.
+    reports = entry.runtime_data.reports
+    assert reports.failures == 1
+    assert result["sensors"]["last_failure"] == reports.last_failure_at.isoformat()
 
 
 async def test_diagnostics_masks_mac_in_name_and_survives_parse_errors(

@@ -37,7 +37,7 @@ from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
 from .designer import KEY as DESIGNER_KEY, async_setup_designer
 from .device import format_model_name, resolve_preset
-from .services import async_setup_services, cancel_pending_write
+from .services import async_setup_services, cancel_pending_write, track_reports
 from .storage import ImageStore
 from .types import BleEslConfigEntry
 
@@ -188,6 +188,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
         # the switch entity is added is already gated.
         write_lock=bool(entry.data.get(WRITE_LOCK, False)),
     )
+    track_reports(entry.runtime_data)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(bt_coordinator.async_start())
