@@ -256,6 +256,8 @@ export class BleEslDesigner extends HTMLElement {
   async boot() {
     this.started = true;
     const initial = !this.ready;
+    // A request that outlives a failed attempt must not touch the next one.
+    const run = (this.bootRun = (this.bootRun || 0) + 1);
     if (initial) {
       this.loading = {
         error: null,
@@ -285,7 +287,7 @@ export class BleEslDesigner extends HTMLElement {
       }
       const step = (key, promise) =>
         Promise.resolve(promise).then((value) => {
-          this.stepDone(key);
+          if (run === this.bootRun) this.stepDone(key);
           return value;
         });
       // Fonts and icons are fetched once; Refresh only re-reads the tags.
@@ -324,9 +326,10 @@ export class BleEslDesigner extends HTMLElement {
         this.render();
       }
     } catch (error) {
-      if (initial) {
+      if (this.loading) {
         this.loading.error = error.message || String(error);
         this.render();
+        this.shadowRoot.querySelector(".loading button")?.focus();
       } else {
         this.refreshing = false;
         this.report(error);
@@ -350,7 +353,7 @@ export class BleEslDesigner extends HTMLElement {
     return `<p>Loading ${esc(waiting?.label || "designer")}… (${done}/${steps.length})</p><progress aria-label="Loading designer" max="${steps.length}" value="${done}"></progress>`;
   }
   headerHtml() {
-    return `<header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span>${this._panelInfo?.config?.version ? `<span class="version" title="BLE ESL integration version">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading ? "disabled" : ""}>Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading ? "disabled" : ""}>Sensor templates</button></nav></header>`;
+    return `<header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span>${this._panelInfo?.config?.version ? `<span class="version" title="BLE ESL integration version">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing ? "disabled" : ""}>Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing ? "disabled" : ""}>Sensor templates</button></nav></header>`;
   }
   renderLoading() {
     this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;

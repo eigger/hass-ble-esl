@@ -1543,6 +1543,7 @@ test("Refresh tags keeps the editor on screen while it reloads", async ({
   await page.locator('[data-action="reload"]').click();
   await expect(page.locator('[data-action="reload"]')).toBeDisabled();
   await expect(page.locator(".workspace")).toBeVisible();
+  await expect(page.locator('[data-action="template-mode"]')).toBeDisabled();
   await expect(page.locator(".loading")).toHaveCount(0);
   release();
   await expect(page.locator('[data-action="reload"]')).toBeEnabled();
