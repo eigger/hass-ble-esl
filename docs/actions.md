@@ -254,7 +254,7 @@ Every tag is one device with these entities:
 | Write Lock | switch | On: nothing is sent to the tag; both actions only update the preview |
 
 - **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt (see [Write breakdown](#write-breakdown)); the same data is in the diagnostics download.
-- **Battery:** the tag voltage is mapped linearly to **Battery** (%) over 2.5–2.9 V for every protocol that reports a voltage (PickSmart and WOLINK from the advertisement, easyTag from the write session), and a **Battery** binary sensor (low battery) turns on at 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
+- **Battery:** the tag voltage is mapped linearly to **Battery** (%) over the protocol's cell range — 2.2–3.0 V for PickSmart (its advertisement reports voltage in coarse 0.1 V steps), 2.5–2.9 V for WOLINK (advertisement) and easyTag (write session) — and a **Battery** binary sensor (low battery) turns on at or below that range's minimum, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.
 
 ## Write breakdown
 

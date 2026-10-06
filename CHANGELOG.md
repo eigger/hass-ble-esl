@@ -2,6 +2,10 @@
 
 ## 1.1.3
 
+### Fixed
+
+- PickSmart battery percentage mapped the cell voltage over 2.5–2.9 V, too narrow for its 0.1 V advertisement resolution, so a normal 2.8↔2.9 V flutter swung the sensor 75%↔100%. PickSmart now maps over its 2.2–3.0 V cell range (set in its `const.py`); WOLINK and easyTag keep the 2.5–2.9 V default.
+
 ### Changed
 
 - The ESL Designer now shows loading progress (fonts, icons, templates, component specs, devices) under its header and reveals the editor once they are loaded, instead of a blank toolbar. These requests now run in parallel, and a failed first load shows the error with a Retry button. Refresh tags keeps the editor on screen and only disables its button while it reloads.

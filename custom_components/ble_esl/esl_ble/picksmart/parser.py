@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..base import BATTERY_MAX_VOLTAGE, BATTERY_MIN_VOLTAGE, BleParser
-from .const import BRAND, MANUFACTURER_ID, SERVICE_UUIDS
+from ..base import BleParser
+from .const import BATTERY_MAX_VOLTAGE, BATTERY_MIN_VOLTAGE, BRAND, MANUFACTURER_ID, SERVICE_UUIDS
 from .wire import parse_advertisement
 
 if TYPE_CHECKING:

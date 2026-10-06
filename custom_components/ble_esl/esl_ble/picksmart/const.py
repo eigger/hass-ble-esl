@@ -5,6 +5,10 @@ from __future__ import annotations
 BRAND = "Gicisky"
 MANUFACTURER_ID = 0x5053
 
+# PickSmart cell range; wider than the base default (its voltage byte is 0.1 V coarse).
+BATTERY_MIN_VOLTAGE = 2.2
+BATTERY_MAX_VOLTAGE = 3.0
+
 SERVICE_UUID_PREFIX = "0000f"
 SERVICE_UUIDS = (
     "0000fef0-0000-1000-8000-00805f9b34fb",
