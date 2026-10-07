@@ -30,6 +30,7 @@ from .layout import (
     validate,
     validate_template,
 )
+from .manager import tag_metadata
 from .rendering import render_document, snapshot_layers
 from .specs import describe, frozen_corners
 
@@ -344,6 +345,7 @@ async def websocket_designer(hass, connection, msg):
     elif action == "list":
         result = [
             {
+                **tag_metadata(hass, entry),
                 "entry_id": entry.entry_id,
                 "title": entry.title,
                 "width": (preset := designer.preset(entry)).width,
