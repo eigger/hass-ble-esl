@@ -30,7 +30,7 @@ from .layout import (
     validate,
     validate_template,
 )
-from .manager import tag_metadata
+from .manager import AutomationLinks, tag_metadata
 from .rendering import render_document, snapshot_layers
 from .specs import describe, frozen_corners
 
@@ -43,6 +43,7 @@ class Designer:
 
     def __init__(self, hass):
         self.hass = hass
+        self.automation_links = AutomationLinks(hass)
         self.store = Store(hass, 1, f"{DOMAIN}.designer")
         self.documents = {}
         self.template_store = Store(hass, 1, f"{DOMAIN}.sensor_templates")
@@ -317,6 +318,9 @@ class Designer:
                 "templates",
                 "save_template",
                 "preview_template",
+                "automations",
+                "link_automation",
+                "unlink_automation",
             )
         ),
         vol.Optional("entry_id"): str,
@@ -327,6 +331,7 @@ class Designer:
         vol.Optional("template"): dict,
         vol.Optional("key"): str,
         vol.Optional("entity_id"): str,
+        vol.Optional("link_id"): str,
     }
 )
 @websocket_api.require_admin
@@ -356,6 +361,15 @@ async def websocket_designer(hass, connection, msg):
             }
             for entry in hass.config_entries.async_loaded_entries(DOMAIN)
         ]
+    elif action == "automations":
+        result = designer.automation_links.describe(designer.entry(msg["entry_id"]))
+    elif action in ("link_automation", "unlink_automation"):
+        result = await designer.automation_links.update(
+            designer.entry(msg["entry_id"]),
+            msg["entity_id"],
+            remove=action == "unlink_automation",
+            link_id=msg.get("link_id"),
+        )
     elif action == "import_yaml":
         result = await designer.import_yaml(
             designer.entry(msg["entry_id"]), msg["text"], msg.get("existing", 0)
@@ -384,6 +398,7 @@ async def async_setup_designer(hass):
     if migrated:
         await designer.store.async_save(designer.documents)
     designer.templates = await designer.template_store.async_load() or {}
+    await designer.automation_links.load()
     websocket_api.async_register_command(hass, websocket_designer)
     integration = await async_get_integration(hass, DOMAIN)
     await hass.http.async_register_static_paths(
