@@ -407,3 +407,86 @@ test("successful image timestamp changes reload the thumbnail at the same proxy 
     /updated=2026-10-08T01%3A23%3A45%2B00%3A00/,
   );
 });
+
+test("manager headers and embedded designer toolbar remain visible in real scrolling containers", async ({
+  page,
+}) => {
+  for (const [width, height] of [
+    [1440, 477],
+    [900, 477],
+    [390, 844],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => {
+      const manager = window.manager;
+      // Enough cards to overflow even in a wide, tall dashboard.
+      manager.tags = Array.from({ length: 12 }, (_, index) => ({
+        ...manager.tags[0],
+        entry_id: `scroll-${index}`,
+      }));
+      manager.renderCards();
+    });
+    const before = await page
+      .locator("ble-esl-manager")
+      .evaluate(
+        (host) =>
+          host.shadowRoot.querySelector("header").getBoundingClientRect().top,
+      );
+    await page
+      .locator(".dashboard-content")
+      .evaluate((node) => (node.scrollTop = 500));
+    expect(
+      await page
+        .locator(".dashboard-content")
+        .evaluate((node) => node.scrollTop),
+    ).toBeGreaterThan(0);
+    expect(
+      await page
+        .locator("ble-esl-manager")
+        .evaluate(
+          (host) =>
+            host.shadowRoot.querySelector("header").getBoundingClientRect().top,
+        ),
+    ).toBe(before);
+    expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(
+      0,
+    );
+    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await expect(page.locator("#dashboard .card")).toHaveCount(2);
+    await page
+      .locator('[data-action="edit"][data-entry="demo-writable"]')
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Send to tag", exact: true }),
+    ).toBeVisible();
+    await page
+      .locator("ble-esl-designer")
+      .evaluate((host) => (host.scrollTop = 500));
+    await expect
+      .poll(() =>
+        page.locator("ble-esl-designer").evaluate((host) => {
+          const root = host.shadowRoot;
+          const header = root.querySelector("header").getBoundingClientRect();
+          const toolbar = root
+            .querySelector(".toolbar")
+            .getBoundingClientRect();
+          const nav = host
+            .getRootNode()
+            .querySelector(".editor-nav")
+            .getBoundingClientRect();
+          return [
+            host.scrollTop > 0,
+            Math.abs(header.top - nav.bottom) < 1,
+            Math.abs(toolbar.top - header.bottom) < 1,
+          ];
+        }),
+      )
+      .toEqual([true, true, true]);
+    expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(
+      0,
+    );
+    if (width === 1440)
+      await page.screenshot({ path: "artifacts/manager-fixed-header.png" });
+    await page.locator('[data-action="dashboard"]').click();
+  }
+});
