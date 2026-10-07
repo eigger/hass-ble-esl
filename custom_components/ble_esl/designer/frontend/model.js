@@ -14,8 +14,6 @@ export const palette = (colors) => [
 export const emptyDocument = () => ({
   version: 1,
   background: "white",
-  auto_update: false,
-  interval: 60,
   elements: [],
 });
 export const onLabel = (element, tag) =>

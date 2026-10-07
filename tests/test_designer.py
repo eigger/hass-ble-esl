@@ -3,7 +3,6 @@
 import base64
 from functools import partial
 from io import BytesIO
-import threading
 from unittest.mock import patch
 
 from homeassistant.components.frontend import DATA_PANELS
@@ -68,7 +67,8 @@ async def test_panel_preview_save_and_restore(hass: HomeAssistant, wolink_entry)
         "sensor.room_temperature", "21.26", {"friendly_name": "Office", "unit_of_measurement": "°C"}
     )
     saved = await designer.save(entry, document())
-    assert saved["auto_update"] is False
+    assert "auto_update" not in saved
+    assert "interval" not in saved
     result = await designer.preview(entry, saved)
     with Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))) as image:
         assert image.size == (296, 128)
@@ -79,11 +79,12 @@ async def test_panel_preview_save_and_restore(hass: HomeAssistant, wolink_entry)
     assert designer.documents[entry.entry_id] == saved
 
 
-async def test_send_duplicate_and_lock(hass: HomeAssistant, wolink_entry, tag_writer):
+async def test_manual_send_rewrites_and_respects_lock(
+    hass: HomeAssistant, wolink_entry, tag_writer
+):
     designer = hass.data[KEY]
     entry = wolink_entry
     assert (await designer.send(entry, document()))["status"] == "written"
-    assert (await designer.send(entry, document(), automatic=True))["status"] == "duplicate"
     assert tag_writer.write_prepared.await_count == 1
     # An explicit Send rewrites the same image, e.g. after the tag was reset.
     assert (await designer.send(entry, document()))["status"] == "written"
@@ -95,22 +96,15 @@ async def test_send_duplicate_and_lock(hass: HomeAssistant, wolink_entry, tag_wr
     assert tag_writer.write_prepared.await_count == 2
 
 
-async def test_auto_update_coalesces_and_detaches(hass: HomeAssistant, wolink_entry):
+async def test_legacy_save_never_sends_on_sensor_changes(hass, wolink_entry, tag_writer):
     designer = hass.data[KEY]
-    entry = wolink_entry
-    doc = {**document(), "auto_update": True, "interval": 60}
-    with patch("custom_components.ble_esl.designer.async_call_later") as later:
-        saved = await designer.save(entry, doc)
-        assert saved["auto_update"] is True
-        assert later.call_count == 1
-        hass.states.async_set("sensor.room_temperature", "25")
-        await hass.async_block_till_done()
-        assert later.call_count == 1
-        assert entry.entry_id in designer.listeners
-        await hass.config_entries.async_unload(entry.entry_id)
-        assert entry.entry_id not in designer.listeners
-        assert entry.entry_id not in designer.timers
-        later.return_value.assert_called_once()
+    saved = await designer.save(wolink_entry, {**document(), "auto_update": True, "interval": 10})
+    assert "auto_update" not in saved
+    assert "interval" not in saved
+    hass.states.async_set("sensor.room_temperature", "25")
+    await hass.async_block_till_done()
+    assert tag_writer.write_prepared.await_count == 0
+    assert (await designer.store.async_load())[wolink_entry.entry_id] == saved
 
 
 async def test_websocket_list_preview_validation_and_admin(
@@ -769,18 +763,18 @@ async def test_dynamic_text_is_not_overwritten_by_a_second_binding_resolution(ha
     assert result["layers"]["_values"]["text"]["text"] == "Power: 42"
 
 
-async def test_template_references_track_other_entities_for_auto_updates(hass, wolink_entry):
+async def test_template_references_refresh_preview_without_sending(hass, wolink_entry, tag_writer):
     manager = hass.data[KEY]
     hass.states.async_set("sensor.other", "1")
     doc = document()
-    doc["auto_update"] = True
     doc["elements"][0]["field_templates"] = {
         "color": "{{ 'red' if states('sensor.other') | int > 0 else 'black' }}"
     }
-    await manager.save(wolink_entry, doc)
-    assert wolink_entry.entry_id in manager.template_listeners
-    manager.detach(wolink_entry.entry_id)
-    assert wolink_entry.entry_id not in manager.template_listeners
+    saved = await manager.save(wolink_entry, doc)
+    assert (await manager.preview(wolink_entry, saved))["payload"][0]["color"] == "red"
+    hass.states.async_set("sensor.other", "0")
+    assert (await manager.preview(wolink_entry, saved))["payload"][0]["color"] == "black"
+    assert tag_writer.write_prepared.await_count == 0
 
 
 async def test_sensor_component_can_be_configured_in_a_reusable_template(hass, wolink_entry):
@@ -860,38 +854,6 @@ async def test_missing_attribute_and_non_numeric_state_render(hass, wolink_entry
     result = await hass.data[KEY].preview(wolink_entry, doc)
     assert result["payload"][2]["value"] == "calibrating °C"
     assert not any(item["type"] == "progress_bar" for item in result["payload"])
-
-
-async def test_template_tracker_schedules_on_the_event_loop(hass, wolink_entry):
-    manager = hass.data[KEY]
-    hass.states.async_set("sensor.other", "0")
-    doc = document()
-    doc["auto_update"] = True
-    doc["elements"][0]["field_templates"] = {
-        "color": "{{ 'red' if states('sensor.other') | int > 0 else 'black' }}"
-    }
-    threads = []
-    with patch.object(
-        manager, "schedule", side_effect=lambda _id: threads.append(threading.get_ident())
-    ):
-        await manager.save(wolink_entry, doc)
-        threads.clear()
-        hass.states.async_set("sensor.other", "1")
-        await hass.async_block_till_done()
-    assert threads
-    assert set(threads) == {hass.loop_thread_id}
-    manager.detach(wolink_entry.entry_id)
-
-
-async def test_auto_send_failure_is_logged_and_throttled(hass, wolink_entry, caplog):
-    manager = hass.data[KEY]
-    manager.documents[wolink_entry.entry_id] = validate(
-        document(), wolink_entry.runtime_data.preset
-    )
-    with patch.object(manager, "send", side_effect=ValueError("boom")):
-        await manager.auto_send(wolink_entry.entry_id)
-    assert "Automatic display update failed" in caplog.text
-    assert wolink_entry.entry_id in manager.last_sent
 
 
 async def test_panel_follows_loaded_tags(hass, wolink_entry):
@@ -1069,3 +1031,23 @@ async def test_sensor_template_scales_pixel_settings_and_passes_dither(hass):
     (item,) = compile_payload(hass, document, {"default": template})
     assert (item["width"], item["radius"]) == (5, 10)
     assert item["dither"] == "atkinson"
+
+
+async def test_loaded_legacy_designs_are_migrated_durably(hass, wolink_entry, tag_writer):
+    from custom_components.ble_esl.designer import Designer, async_setup_designer
+
+    store = Designer(hass).store
+    legacy = {**document(), "auto_update": True, "interval": 10}
+    await store.async_save({"unloaded_tag": legacy})
+    # Registration is unrelated to persisted document migration.
+    with (
+        patch("custom_components.ble_esl.designer.websocket_api.async_register_command"),
+        patch("custom_components.ble_esl.designer.async_get_integration"),
+        patch("homeassistant.components.http.HomeAssistantHTTP.async_register_static_paths"),
+    ):
+        await async_setup_designer(hass)
+    migrated = await store.async_load()
+    assert "auto_update" not in migrated["unloaded_tag"]
+    assert "interval" not in migrated["unloaded_tag"]
+    assert migrated["unloaded_tag"]["elements"] == legacy["elements"]
+    assert tag_writer.write_prepared.await_count == 0

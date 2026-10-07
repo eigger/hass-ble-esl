@@ -820,8 +820,7 @@ export class BleEslDesigner extends HTMLElement {
     this.finishTextEdit();
     const activeControl = this.shadowRoot.activeElement;
     let focusSelector = null;
-    if (activeControl?.id)
-      focusSelector = `#${CSS.escape(activeControl.id)}`;
+    if (activeControl?.id) focusSelector = `#${CSS.escape(activeControl.id)}`;
     else if (activeControl?.classList?.contains("el"))
       focusSelector = `.el[data-id="${CSS.escape(activeControl.dataset.id)}"]`;
     else if (activeControl?.classList?.contains("stage"))
@@ -830,8 +829,7 @@ export class BleEslDesigner extends HTMLElement {
       const identity = [...activeControl.attributes]
         .filter((attribute) => attribute.name.startsWith("data-"))
         .map(
-          (attribute) =>
-            `[${attribute.name}="${CSS.escape(attribute.value)}"]`,
+          (attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`,
         )
         .join("");
       if (identity)
@@ -853,7 +851,7 @@ export class BleEslDesigner extends HTMLElement {
     );
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><label class="check" ${this.mode === "template" ? "hidden" : ""}><input id="auto" type="checkbox" ${this.document.auto_update ? "checked" : ""} ${!tag?.writable ? "disabled" : ""}>Auto-send when data changes</label>${this.document.auto_update && this.mode === "display" ? `<label title="Minimum time between automatic sends">Every <input id="interval" aria-label="Update interval" type="number" min="10" max="86400" value="${this.document.interval}" style="width:75px"> s</label>` : ""}<button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -1643,8 +1641,7 @@ export class BleEslDesigner extends HTMLElement {
           if (element.type === "imagespec" && stale)
             content = `<div role="status" aria-label="Preview updating" title="This element needs a renderer preview to show its current appearance" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">Preview updating…</div>`;
           const rendered =
-            (this.gesture && element.type === "image") ||
-            stale
+            (this.gesture && element.type === "image") || stale
               ? undefined
               : this.layerPreviews[element.id];
           const visible = this.visibleBounds(element);
@@ -1677,8 +1674,12 @@ export class BleEslDesigner extends HTMLElement {
     const element = this.element;
     if (!element) return "";
     const visible = this.visibleBounds(element),
-      [left, top, right, bottom] =
-        visible || [0, 0, element.width, element.height],
+      [left, top, right, bottom] = visible || [
+        0,
+        0,
+        element.width,
+        element.height,
+      ],
       width = right - left,
       height = bottom - top;
     const handleSize =
@@ -1741,8 +1742,12 @@ export class BleEslDesigner extends HTMLElement {
       element = this.element;
     if (!overlay || !element) return;
     const visible = this.visibleBounds(element),
-      [left, top, right, bottom] =
-        visible || [0, 0, element.width, element.height],
+      [left, top, right, bottom] = visible || [
+        0,
+        0,
+        element.width,
+        element.height,
+      ],
       width = right - left,
       height = bottom - top;
     const handleSize =
@@ -1766,9 +1771,7 @@ export class BleEslDesigner extends HTMLElement {
       moveTarget.style.width = `${handleSize}px`;
       moveTarget.style.height = `${handleSize}px`;
       moveTarget.style.display =
-        Math.max(width, height) * this.zoom < 36
-          ? "grid"
-          : "none";
+        Math.max(width, height) * this.zoom < 36 ? "grid" : "none";
     }
     const trash = overlay.querySelector(".delete-handle");
     if (trash) trash.style.transform = `scale(${1 / this.zoom})`;
@@ -1799,7 +1802,11 @@ export class BleEslDesigner extends HTMLElement {
   // changes nothing on screen, so what the last render still describes stays.
   adoptDocument(saved) {
     const current = this.document.elements
-      .filter((el) => (el.type === "image" ? !!this.layerRecords?.[el.id] : this.visibleBounds(el) !== undefined))
+      .filter((el) =>
+        el.type === "image"
+          ? !!this.layerRecords?.[el.id]
+          : this.visibleBounds(el) !== undefined,
+      )
       .map((el) => el.id);
     this.document = saved;
     const records = this.layerRecords || {};
@@ -2496,16 +2503,23 @@ export class BleEslDesigner extends HTMLElement {
             // carries one is redrawn (and, as a tag is small, capped in size) so
             // the orientation is in its pixels. The rest is kept byte for byte.
             try {
-              const head = new Uint8Array(await file.slice(0, 65536).arrayBuffer());
+              const head = new Uint8Array(
+                await file.slice(0, 65536).arrayBuffer(),
+              );
               if (jpegOrientation(head) > 1) {
                 const bitmap = await createImageBitmap(file, {
                   imageOrientation: "from-image",
                 });
-                const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height)),
+                const scale = Math.min(
+                    1,
+                    2048 / Math.max(bitmap.width, bitmap.height),
+                  ),
                   canvas = document.createElement("canvas");
                 canvas.width = Math.max(1, Math.round(bitmap.width * scale));
                 canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-                canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                canvas
+                  .getContext("2d")
+                  .drawImage(bitmap, 0, 0, canvas.width, canvas.height);
                 bitmap.close();
                 const redrawn = canvas.toDataURL("image/jpeg", 0.92);
                 // A canvas the browser refuses gives "data:," rather than an error.
@@ -2514,7 +2528,9 @@ export class BleEslDesigner extends HTMLElement {
             } catch {
               // Keep the file as it is when the browser cannot decode it.
             }
-            const element = ownerDocument.elements.find((item) => item.id === id);
+            const element = ownerDocument.elements.find(
+              (item) => item.id === id,
+            );
             if (
               !element ||
               sequence !== this.uploadSequence ||
@@ -2533,7 +2549,8 @@ export class BleEslDesigner extends HTMLElement {
             reject(error);
           }
         };
-        reader.onerror = () => reject(reader.error || new Error("Image upload failed"));
+        reader.onerror = () =>
+          reject(reader.error || new Error("Image upload failed"));
         reader.readAsDataURL(file);
       });
       this.pendingUploads.add(upload);
@@ -2542,11 +2559,13 @@ export class BleEslDesigner extends HTMLElement {
       this.errorSource = null;
       this.status = "Loading image…";
       this.render();
-      upload.catch((error) => this.report(error)).finally(() => {
-        this.pendingUploads.delete(upload);
-        this.busy = false;
-        this.render();
-      });
+      upload
+        .catch((error) => this.report(error))
+        .finally(() => {
+          this.pendingUploads.delete(upload);
+          this.busy = false;
+          this.render();
+        });
       return;
     }
     if (id === "file") {
@@ -2575,15 +2594,9 @@ export class BleEslDesigner extends HTMLElement {
       }
       return;
     }
-    if (["auto", "interval", "background"].includes(id)) {
+    if (id === "background") {
       this.checkpoint();
-      if (id === "auto") this.document.auto_update = input.checked;
-      if (id === "interval")
-        this.document.interval = Math.max(
-          10,
-          Math.min(86400, Number(input.value) || 60),
-        );
-      if (id === "background") this.document.background = input.value;
+      this.document.background = input.value;
       this.edited();
       return;
     }
@@ -2856,10 +2869,7 @@ export class BleEslDesigner extends HTMLElement {
                 Math.min(Math.max(0, from + delta), from + size - 1),
                 from + size,
               ]
-            : [
-                from,
-                Math.max(Math.min(limit, from + size + delta), from + 1),
-              ];
+            : [from, Math.max(Math.min(limit, from + size + delta), from + 1)];
           return [near, far - near];
         };
         [element.x, element.width] = edge(
@@ -3052,8 +3062,7 @@ export class BleEslDesigner extends HTMLElement {
           }
         }
       } catch (error) {
-        if (sequence === this.previewSequence)
-          this.report(error, "preview");
+        if (sequence === this.previewSequence) this.report(error, "preview");
       } finally {
         this.previewInFlight = false;
         if (this.previewQueued) {
@@ -3080,4 +3089,5 @@ async function loadEntityPicker() {
   }
 }
 
-if (!customElements.get("ble-esl-designer")) customElements.define("ble-esl-designer", BleEslDesigner);
+if (!customElements.get("ble-esl-designer"))
+  customElements.define("ble-esl-designer", BleEslDesigner);

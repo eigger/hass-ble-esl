@@ -18,8 +18,6 @@ test.beforeEach(async ({ page }) => {
       version: 1,
       elements: [],
       background: "white",
-      auto_update: false,
-      interval: 60,
     };
     window.panel.render();
   });
@@ -27,6 +25,8 @@ test.beforeEach(async ({ page }) => {
 test("sensor defaults, keyboard, dragging, resize, undo, save and preview", async ({
   page,
 }) => {
+  await expect(page.locator("#auto")).toHaveCount(0);
+  await expect(page.locator("#interval")).toHaveCount(0);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await pickSensor(page, "sensor.office_temperature");
@@ -84,8 +84,6 @@ test("entity drag and drop, discovery-only tag and narrow screen", async ({
       version: 1,
       elements: [],
       background: "white",
-      auto_update: false,
-      interval: 60,
     };
     window.panel.render();
   });
@@ -157,8 +155,6 @@ test("sensor and text can be added when HA is served over plain HTTP", async ({
       version: 1,
       elements: [],
       background: "white",
-      auto_update: false,
-      interval: 60,
     };
     window.panel.render();
   });

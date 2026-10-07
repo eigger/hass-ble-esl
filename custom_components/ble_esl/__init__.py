@@ -194,7 +194,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     entry.async_on_unload(bt_coordinator.async_start())
     designer = hass.data[DESIGNER_KEY]
     await designer.register_panel()
-    designer.attach(entry)
     return True
 
 
@@ -202,7 +201,6 @@ async def async_remove_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> N
     """Delete the entry's stored images along with the entry."""
     await ImageStore(hass, entry.entry_id).async_remove()
     designer = hass.data[DESIGNER_KEY]
-    designer.detach(entry.entry_id)
     designer.documents.pop(entry.entry_id, None)
     await designer.store.async_save(designer.documents)
 
@@ -212,7 +210,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         designer = hass.data[DESIGNER_KEY]
-        designer.detach(entry.entry_id)
         designer.remove_panel_if_unused(entry.entry_id)
         # Invalidate every queued write from this runtime, including an
         # immediate write waiting on the shared BLE lock.
