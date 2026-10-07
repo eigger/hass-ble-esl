@@ -4,7 +4,6 @@ import asyncio
 import base64
 from functools import partial
 from io import BytesIO
-import logging
 from pathlib import Path
 import time
 
@@ -12,14 +11,7 @@ from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.event import (
-    TrackTemplate,
-    async_call_later,
-    async_track_state_change_event,
-    async_track_template_result,
-)
 from homeassistant.helpers.storage import Store
-from homeassistant.helpers.template import Template
 from homeassistant.loader import async_get_integration
 import voluptuous as vol
 
@@ -31,27 +23,22 @@ from ..services import build_write_job_from_data, cancel_pending_write, run_ble_
 from .export import export_yaml
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
-    bindings,
     compile_payload,
     live_payload,
-    output_type,
     sensor_values,
     substitute,
-    template_key,
-    template_variables,
     validate,
     validate_template,
 )
 from .rendering import render_document, snapshot_layers
-from .specs import describe, frozen_corners, templates_in
+from .specs import describe, frozen_corners
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
-_LOGGER = logging.getLogger(__name__)
 
 
 class Designer:
-    """Persist layouts and subscribe only to each loaded tag's bound entities."""
+    """Persist layouts and render them for preview or explicit transmission."""
 
     def __init__(self, hass):
         self.hass = hass
@@ -60,12 +47,7 @@ class Designer:
         self.template_store = Store(hass, 1, f"{DOMAIN}.sensor_templates")
         self.templates = {}
         self.forecast_cache = {}
-        self.listeners = {}
-        self.template_listeners = {}
-        self.timers = {}
-        self.last_sent = {}
         self.locks = {}
-        self.tasks = {}
         self.render_lock = asyncio.Lock()
         self.panel_registered = False
 
@@ -104,117 +86,10 @@ class Designer:
 
     async def save(self, entry, document):
         document = validate(document, self.preset(entry))
-        if document["auto_update"] and not getattr(entry.runtime_data.protocol, "writable", True):
-            raise HomeAssistantError("This tag supports discovery only")
         self.documents[entry.entry_id] = document
         await self.store.async_save(self.documents)
         cancel_pending_write(entry.runtime_data)
-        self.attach(entry)
         return document
-
-    @callback
-    def detach(self, entry_id):
-        if task := self.tasks.pop(entry_id, None):
-            task.cancel()
-        if tracker := self.template_listeners.pop(entry_id, None):
-            tracker.async_remove()
-        if unsubscribe := self.listeners.pop(entry_id, None):
-            unsubscribe()
-        if cancel := self.timers.pop(entry_id, None):
-            cancel()
-
-    @callback
-    def attach(self, entry):
-        self.detach(entry.entry_id)
-        document = self.documents.get(entry.entry_id)
-        if not document or not document["auto_update"]:
-            return
-        elements = list(document["elements"])
-        for element in document["elements"]:
-            if element["type"] != "sensor":
-                continue
-            state = self.hass.states.get(element["entity_id"])
-            key = element.get("template", "auto")
-            if key == "auto" and state is not None:
-                key = next(
-                    (
-                        key
-                        for key in (
-                            template_key(state),
-                            state.entity_id.split(".")[0] + ":default",
-                            "output:" + output_type(state),
-                        )
-                        if key in self.templates
-                    ),
-                    "default",
-                )
-            if key in self.templates:
-                elements.extend(
-                    {**child, "entity_id": child["entity_id"] or element["entity_id"]}
-                    for child in self.templates[key]["document"]["elements"]
-                )
-        entities = bindings({"elements": elements})
-        if entities:
-            self.listeners[entry.entry_id] = async_track_state_change_event(
-                self.hass, entities, partial(self.changed, entry.entry_id)
-            )
-        tracked = [
-            TrackTemplate(
-                Template(source, self.hass),
-                template_variables(self.hass.states.get(el["entity_id"]), el),
-            )
-            for el in elements
-            for source in el.get("field_templates", {}).values()
-        ] + [
-            TrackTemplate(Template(source, self.hass), None)
-            for el in elements
-            if el["type"] == "imagespec"
-            for source in templates_in(el["spec"])
-        ]
-        if tracked:
-            self.template_listeners[entry.entry_id] = async_track_template_result(
-                self.hass, tracked, partial(self.template_changed, entry.entry_id)
-            )
-        self.schedule(entry.entry_id)
-
-    @callback
-    def changed(self, entry_id, event):
-        self.schedule(entry_id)
-
-    @callback
-    def template_changed(self, entry_id, event, updates):
-        # Must stay a callback: a plain function would run in the executor.
-        self.schedule(entry_id)
-
-    @callback
-    def schedule(self, entry_id):
-        if entry_id in self.timers:
-            return
-        interval = self.documents[entry_id]["interval"]
-        delay = max(2, self.last_sent.get(entry_id, 0) + interval - time.monotonic())
-
-        @callback
-        def fire(_now):
-            self.timers.pop(entry_id)
-            self.tasks[entry_id] = self.hass.async_create_background_task(
-                self.auto_send(entry_id), f"ESL designer {entry_id}"
-            )
-
-        self.timers[entry_id] = async_call_later(self.hass, delay, fire)
-
-    async def auto_send(self, entry_id):
-        try:
-            await self.send(self.entry(entry_id), self.documents[entry_id], automatic=True)
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            # A failed render must not retry on every state change: count it
-            # against the interval like a send.
-            self.last_sent[entry_id] = time.monotonic()
-            _LOGGER.exception("Automatic display update failed for %s", entry_id)
-        finally:
-            if self.tasks.get(entry_id) is asyncio.current_task():
-                self.tasks.pop(entry_id)
 
     async def forecasts(self, document):
         needed = {
@@ -253,7 +128,7 @@ class Designer:
 
     async def render(self, preset, document, payload, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
-        # clients and automatic writes to one render worker at a time.
+        # clients to one render worker at a time.
         async with self.render_lock:
             return await self.hass.async_add_executor_job(
                 partial(render_document, self.hass, preset, document, payload, snapshots)
@@ -383,7 +258,6 @@ class Designer:
         await self.template_store.async_save(self.templates)
         for entry in self.hass.config_entries.async_loaded_entries(DOMAIN):
             cancel_pending_write(entry.runtime_data)
-            self.attach(entry)
         return self.templates[key]
 
     async def preview_template(self, template, entity_id):
@@ -404,7 +278,7 @@ class Designer:
             "layers": layers,
         }
 
-    async def send(self, entry, document, automatic=False):
+    async def send(self, entry, document):
         if not getattr(entry.runtime_data.protocol, "writable", True):
             raise HomeAssistantError("This tag protocol does not support image writes")
         generation = entry.runtime_data.write_generation
@@ -419,11 +293,9 @@ class Designer:
                 raise HomeAssistantError("The tag's display size changed; reload the designer")
             service_data = {"payload": payload, "background": document["background"]}
             job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
-            # An explicit Send always writes, e.g. to restore a reset tag;
-            # automatic updates skip an image the tag already shows.
-            job.prevent_duplicate_send = automatic
+            # Explicit sends also restore a tag that was reset externally.
+            job.prevent_duplicate_send = False
             job.generation = generation
-            self.last_sent[entry.entry_id] = time.monotonic()
             outcome = await run_ble_write(self.hass, job)
             return outcome.as_response()
 
@@ -499,6 +371,16 @@ async def websocket_designer(hass, connection, msg):
 async def async_setup_designer(hass):
     designer = hass.data[KEY] = Designer(hass)
     designer.documents = await designer.store.async_load() or {}
+    # Old designs may have opted into automatic writes. Discard those options
+    # durably without validating against a possibly unavailable tag preset.
+    migrated = False
+    for document in designer.documents.values():
+        for key in ("auto_update", "interval"):
+            if key in document:
+                document.pop(key)
+                migrated = True
+    if migrated:
+        await designer.store.async_save(designer.documents)
     designer.templates = await designer.template_store.async_load() or {}
     websocket_api.async_register_command(hass, websocket_designer)
     integration = await async_get_integration(hass, DOMAIN)

@@ -16,7 +16,7 @@ const views = [
 ];
 // The display as YAML for an automation: exactly the payload the preview and
 // the tag are rendered from, as produced by the server. Values are those of
-// this moment; the tag keeps up with sensors through Auto update sensor.
+// this moment; schedule transmissions through Home Assistant automations.
 export class YamlDialog extends HTMLElement {
   constructor() {
     super();
@@ -67,7 +67,7 @@ export class YamlDialog extends HTMLElement {
       <p class="muted">${esc(hint)} ${
         this.live
           ? "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now."
-          : "Values are as of now: the payload is the one the preview and the tag are rendered from, so use Auto update sensor to keep a tag current."
+          : "Values are as of now. Use the automation action to schedule tag updates in Home Assistant."
       }</p>
       ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> Keep templates (values follow the sensors)</label>` : ""}
       ${this.result.issues.length ? `<ul class="issues">${this.result.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
@@ -114,4 +114,5 @@ export class YamlDialog extends HTMLElement {
     }
   }
 }
-if (!customElements.get("ble-esl-yaml-dialog")) customElements.define("ble-esl-yaml-dialog", YamlDialog);
+if (!customElements.get("ble-esl-yaml-dialog"))
+  customElements.define("ble-esl-yaml-dialog", YamlDialog);

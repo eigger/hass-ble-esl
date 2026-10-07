@@ -141,15 +141,18 @@ DOCUMENT = vol.Schema(
         vol.Required("version"): 1,
         vol.Required("elements"): vol.All([ELEMENT], vol.Length(max=100)),
         vol.Optional("background", default="white"): COLOR,
-        vol.Optional("auto_update", default=False): bool,
-        vol.Optional("interval", default=60): vol.All(int, vol.Range(min=10, max=86400)),
     }
 )
 
 
 def validate(document, preset):
     """Reject invalid documents before replacing a saved layout."""
-    result = DOCUMENT(deepcopy(document))
+    document = deepcopy(document)
+    # Accept stale browser sessions and imported legacy designs without
+    # retaining their removed automatic transmission settings.
+    document.pop("auto_update", None)
+    document.pop("interval", None)
+    result = DOCUMENT(document)
     palette = (
         {"black", "white"}
         | ({"red"} if "R" in preset.colors else set())
