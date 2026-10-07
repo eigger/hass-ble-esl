@@ -127,6 +127,45 @@ for index, tag in enumerate(TAGS):
         "3.2",
         {"success": index == 0, "error": None if index == 0 else "Bluetooth connection timed out"},
     )
+AUTOMATIONS = [
+    {
+        "entity_id": "automation.morning",
+        "name": "Morning information",
+        "state": "on",
+        "id": "morning",
+    },
+    {
+        "entity_id": "automation.temperature",
+        "name": "Temperature display",
+        "state": "on",
+        "id": "temperature",
+    },
+    {"entity_id": "automation.night", "name": "Night screen", "state": "off", "id": "night"},
+    {"entity_id": "automation.weekly", "name": "Weekly summary", "state": "off", "id": "weekly"},
+]
+AUTOMATION_LINKS = {
+    "demo-writable": ["automation.morning", "automation.temperature", "automation.night"]
+}
+for automation in AUTOMATIONS:
+    STATES[automation["entity_id"]] = {
+        "entity_id": automation["entity_id"],
+        "state": automation["state"],
+        "attributes": {"friendly_name": automation["name"], "id": automation["id"]},
+    }
+
+
+def demo_automations(entry_id):
+    manual = AUTOMATION_LINKS.get(entry_id, [])
+    return {
+        "linked": [
+            {**item, "source": "manual", "missing": False, "link_id": item["id"]}
+            for item in AUTOMATIONS
+            if item["entity_id"] in manual
+        ],
+        "available": AUTOMATIONS,
+    }
+
+
 HASS = None
 
 
@@ -162,6 +201,13 @@ async def handle(request):
         return await preview(document, preset)
     if msg["action"] == "list":
         return web.json_response(TAGS)
+    if msg["action"] in ("automations", "link_automation", "unlink_automation"):
+        links = AUTOMATION_LINKS.setdefault(msg["entry_id"], [])
+        if msg["action"] == "link_automation" and msg["entity_id"] not in links:
+            links.append(msg["entity_id"])
+        elif msg["action"] == "unlink_automation" and msg["entity_id"] in links:
+            links.remove(msg["entity_id"])
+        return web.json_response(demo_automations(msg["entry_id"]))
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
     if msg["action"] == "import_yaml":
@@ -252,6 +298,12 @@ async def preview(document, preset):
 async def reset(request):
     """Fresh saved state, so each browser project starts alike."""
     TEMPLATES.clear()
+    AUTOMATION_LINKS.clear()
+    AUTOMATION_LINKS["demo-writable"] = [
+        "automation.morning",
+        "automation.temperature",
+        "automation.night",
+    ]
     for tag in TAGS:
         tag["document"] = None
     return web.json_response({})

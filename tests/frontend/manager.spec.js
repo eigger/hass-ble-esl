@@ -181,3 +181,229 @@ test("choosing another card during editor boot honors latest selection", async (
     page.getByRole("button", { name: "Send to tag", exact: true }),
   ).toBeDisabled();
 });
+
+test("multiple automations show count, state, editor links and manual association controls", async ({
+  page,
+}) => {
+  const card = page.locator('[data-entry="demo-writable"]').first();
+  await expect(card).toContainText("3 automations · 2 active");
+  await card.locator('[data-action="automations"]').click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator(".row")).toHaveCount(3);
+  await expect(
+    dialog.getByRole("link", { name: "Night screen" }),
+  ).toHaveAttribute("href", "/config/automation/edit/night");
+  await expect(dialog).toContainText("Inactive");
+  const mutation = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      request.postDataJSON()?.action === "link_automation",
+  );
+  await dialog
+    .getByLabel("Existing automation")
+    .selectOption("automation.weekly");
+  await dialog
+    .getByRole("button", { name: "Link automation", exact: true })
+    .click();
+  expect((await mutation).postDataJSON()).toEqual({
+    type: "ble_esl/designer",
+    action: "link_automation",
+    entry_id: "demo-writable",
+    entity_id: "automation.weekly",
+  });
+  await expect(dialog.locator(".row")).toHaveCount(4);
+  await dialog
+    .getByRole("button", { name: "Unlink Weekly summary", exact: true })
+    .click();
+  await expect(dialog.locator(".row")).toHaveCount(3);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(card).toContainText("3 automations · 2 active");
+  await card.getByRole("button", { name: "Edit design" }).click();
+  await page
+    .getByRole("button", { name: "Connected automations", exact: true })
+    .click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator(".row")).toHaveCount(3);
+});
+
+test("zero and one automation summaries and mobile bottom sheet", async ({
+  page,
+}) => {
+  const card = page.locator('[data-entry="demo-discovery"]').first();
+  await expect(card).toContainText("Link automation");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await card.locator('[data-action="automations"]').click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await expect(dialog).toContainText("No connected automations");
+  await dialog.getByLabel("Search automations").fill("Night");
+  await dialog
+    .getByLabel("Existing automation")
+    .selectOption("automation.night");
+  await dialog
+    .getByRole("button", { name: "Link automation", exact: true })
+    .click();
+  await expect(dialog.locator(".row")).toHaveCount(1);
+  await page.screenshot({
+    path: "artifacts/manager-automations-mobile.png",
+  });
+  const box = await dialog.boundingBox();
+  expect(Math.abs(box.y + box.height - 844)).toBeLessThan(2);
+  await dialog.getByRole("button", { name: "Close automations" }).click();
+  await expect(card).toContainText("Night screen · Inactive");
+});
+
+test("detected associations have no unlink control and missing associations have no unsafe edit link", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const manager = window.manager;
+    const callWS = manager.hass.callWS;
+    manager.hass = {
+      ...manager.hass,
+      callWS: async (msg) =>
+        msg.action === "automations"
+          ? {
+              linked: [
+                {
+                  entity_id: "automation.morning",
+                  name: "Morning information",
+                  state: "on",
+                  id: "morning",
+                  source: "detected",
+                  missing: false,
+                },
+                {
+                  entity_id: "automation.weekly",
+                  name: "Deleted automation",
+                  state: "unavailable",
+                  id: "removed",
+                  source: "manual",
+                  missing: true,
+                  link_id: "removed-registry-id",
+                },
+              ],
+              available: [],
+            }
+          : callWS(msg),
+    };
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await expect(dialog).toContainText("References this ESL");
+  await expect(
+    dialog.getByRole("button", { name: "Unlink Morning information" }),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole("link", { name: "Deleted automation" }),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole("button", { name: "Unlink Deleted automation" }),
+  ).toBeEnabled();
+});
+
+test("automation dialog preserves keyboard focus across unrelated and relevant HA updates", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  const unlink = dialog.getByRole("button", {
+    name: "Unlink Night screen",
+    exact: true,
+  });
+  await unlink.focus();
+  await page.evaluate(() => {
+    const manager = window.manager;
+    manager.hass = { ...manager.hass, states: { ...manager.hass.states } };
+  });
+  await expect(unlink).toBeFocused();
+  await page.evaluate(() => {
+    const manager = window.manager;
+    manager.hass = {
+      ...manager.hass,
+      states: {
+        ...manager.hass.states,
+        "automation.night": {
+          ...manager.hass.states["automation.night"],
+          state: "on",
+        },
+      },
+    };
+  });
+  await expect(unlink).toBeFocused();
+  await expect(
+    dialog.locator(".row").filter({ hasText: "Night screen" }),
+  ).toContainText("Active");
+});
+
+test("closing a pending link and opening another ESL keeps the result associated with original ESL", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const manager = window.manager;
+    const callWS = manager.hass.callWS;
+    manager.hass = {
+      ...manager.hass,
+      callWS: async (msg) => {
+        if (msg.action !== "link_automation") return callWS(msg);
+        const result = await callWS(msg);
+        return new Promise(
+          (resolve) => (window.releaseLink = () => resolve(result)),
+        );
+      },
+    };
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByLabel("Existing automation")
+    .selectOption("automation.weekly");
+  await dialog
+    .getByRole("button", { name: "Link automation", exact: true })
+    .click();
+  await page.waitForFunction(() => window.releaseLink);
+  await dialog.getByRole("button", { name: "Close automations" }).click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-discovery"]')
+    .click();
+  await expect(dialog).toContainText("No connected automations");
+  await page.evaluate(() => window.releaseLink());
+  await expect(dialog.locator(".row")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Close automations" }).click();
+  await expect(
+    page.locator('[data-entry="demo-writable"]').first(),
+  ).toContainText("4 automations · 2 active");
+  await expect(
+    page.locator('[data-entry="demo-discovery"]').first(),
+  ).toContainText("Link automation");
+});
+
+test("successful image timestamp changes reload the thumbnail at the same proxy URL", async ({
+  page,
+}) => {
+  const card = page.locator('[data-entry="demo-writable"]').first();
+  const before = await card.locator("img").getAttribute("src");
+  await page.evaluate(() => {
+    const manager = window.manager;
+    const image = manager.hass.states["image.demo_0_last_updated_content"];
+    manager.hass = {
+      ...manager.hass,
+      states: {
+        ...manager.hass.states,
+        [image.entity_id]: { ...image, state: "2026-10-08T01:23:45+00:00" },
+      },
+    };
+  });
+  await expect(card.locator("img")).not.toHaveAttribute("src", before);
+  await expect(card.locator("img")).toHaveAttribute(
+    "src",
+    /updated=2026-10-08T01%3A23%3A45%2B00%3A00/,
+  );
+});
