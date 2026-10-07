@@ -9,7 +9,21 @@
       margin: 0;
       font-family: system-ui;
     }
+    html {
+      height: 100%;
+    }
+    body.manager-demo {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.manager-demo > ble-esl-manager {
+      flex: 1;
+      min-height: 0;
+    }
     .demo {
+      flex: none;
       padding: 8px 24px;
       background: #e3f2f2;
       color: #23595d;
@@ -116,6 +130,7 @@
     await import(managerMode ? "/frontend/manager.js" : "/frontend/panel.js");
     let panel = document.querySelector("ble-esl-designer");
     if (managerMode) {
+      document.body.classList.add("manager-demo");
       const manager = document.createElement("ble-esl-manager");
       panel.replaceWith(manager);
       panel = manager;
