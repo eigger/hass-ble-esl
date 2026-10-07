@@ -411,11 +411,21 @@ test("successful image timestamp changes reload the thumbnail at the same proxy 
 test("manager headers and embedded designer toolbar remain visible in real scrolling containers", async ({
   page,
 }) => {
+  // Exercise navigation while list requests are slow: click() returns before
+  // the async dashboard refresh has finished replacing the cards.
+  await page.route("**/api/designer", async (route) => {
+    if (route.request().postDataJSON()?.action === "list")
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    await route.continue();
+  });
   for (const [width, height] of [
     [1440, 477],
     [900, 477],
     [390, 844],
   ]) {
+    await expect(
+      page.getByRole("button", { name: "Refresh", exact: true }),
+    ).toBeEnabled();
     await page.setViewportSize({ width, height });
     await page.evaluate(() => {
       const manager = window.manager;
@@ -488,5 +498,9 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
     if (width === 1440)
       await page.screenshot({ path: "artifacts/manager-fixed-header.png" });
     await page.locator('[data-action="dashboard"]').click();
+    await expect(
+      page.getByRole("button", { name: "Refresh", exact: true }),
+    ).toBeEnabled();
+    await expect(page.locator("#dashboard .card")).toHaveCount(2);
   }
 });
