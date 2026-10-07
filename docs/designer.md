@@ -4,7 +4,15 @@
 
 The designer is a visual way to make the **payload** of a [`ble_esl.write`](actions.md) action. What it shows, what it sends to the tag and the YAML it gives you are the same payload, drawn by the same [imagespec](https://github.com/eigger/imagespec) renderer, so a design you finish here is one you can paste into an automation and get the same picture.
 
-Open **ESL Designer** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Pick the tag at the top: the canvas has its size and colours.
+Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit design** on a tag card: the canvas has its size and colours.
+
+## ESL dashboard
+
+ESL Manager opens a card dashboard showing each tag's alias from its existing text entity, device name, resolution and colors, battery, display synchronization, latest transmission result, and duration. Click the alias or a status to open its entity details to edit the alias or inspect a transmission error. Search by alias/device name and filter errors or tags that are not in sync.
+
+The image and **Last successful send** come from `last_updated_content`: the last successfully transmitted image and its timestamp. A failed transmission preserves these values while updating the latest error and duration. Synchronization comes from `display_in_sync`, comparing the successful image with the preview image. Missing/unavailable values show `—` or an unknown state.
+
+Choose **Edit design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
 - [Making a design](#making-a-design)
 - [Payload YAML: using the design in an automation](#payload-yaml)

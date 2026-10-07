@@ -97,6 +97,36 @@ TAGS = [
         "document": None,
     },
 ]
+for index, tag in enumerate(TAGS):
+    tag["device_id"] = f"demo-device-{index}"
+    tag["entities"] = {
+        key: f"{domain}.demo_{index}_{key}"
+        for key, domain in {
+            "alias": "text",
+            "battery": "sensor",
+            "last_updated_content": "image",
+            "display_in_sync": "binary_sensor",
+            "write_duration": "sensor",
+            "last_failure_time": "sensor",
+            "failure_count": "sensor",
+        }.items()
+    }
+
+    def demo_state(key, value, attributes=None, tag=tag):
+        entity_id = tag["entities"][key]
+        STATES[entity_id] = {"entity_id": entity_id, "state": value, "attributes": attributes or {}}
+
+    demo_state("alias", ["Living room", "Desk display"][index])
+    demo_state("battery", ["85", "42"][index], {"unit_of_measurement": "%"})
+    demo_state(
+        "last_updated_content", dt_util.utcnow().isoformat(), {"entity_picture": "/demo-image"}
+    )
+    demo_state("display_in_sync", "on" if index == 0 else "off")
+    demo_state(
+        "write_duration",
+        "3.2",
+        {"success": index == 0, "error": None if index == 0 else "Bluetooth connection timed out"},
+    )
 HASS = None
 
 
@@ -238,6 +268,31 @@ async def states(request):
 app = web.Application()
 app.on_startup.append(setup_hass)
 app.router.add_get("/", index)
+
+
+async def demo_image(request):
+    preset = DevicePreset("demo", "demo", 250, 122, "BWR")
+    payload = [
+        {
+            "type": "text_fit",
+            "x": 12,
+            "y": 12,
+            "width": 226,
+            "height": 32,
+            "value": "Living room",
+            "color": "red",
+        },
+        {"type": "text_fit", "x": 12, "y": 52, "width": 226, "height": 54, "value": "21.3 °C"},
+    ]
+    image, _ = await asyncio.to_thread(
+        render_document, HASS, preset, {"background": "white", "elements": []}, payload, []
+    )
+    buffer = BytesIO()
+    image.save(buffer, "PNG")
+    return web.Response(body=buffer.getvalue(), content_type="image/png")
+
+
+app.router.add_get("/demo-image", demo_image)
 app.router.add_get("/states", states)
 app.router.add_post("/api/designer", api)
 app.router.add_post("/reset", reset)

@@ -30,6 +30,7 @@ from .layout import (
     validate,
     validate_template,
 )
+from .manager import tag_metadata
 from .rendering import render_document, snapshot_layers
 from .specs import describe, frozen_corners
 
@@ -66,10 +67,10 @@ class Designer:
         await panel_custom.async_register_panel(
             self.hass,
             PANEL,
-            PANEL,
-            sidebar_title="ESL Designer",
-            sidebar_icon="mdi:label-outline",
-            module_url=f"/ble_esl_designer/{integration.version}/panel.js",
+            "ble-esl-manager",
+            sidebar_title="ESL Manager",
+            sidebar_icon="mdi:label-multiple",
+            module_url=f"/ble_esl_designer/{integration.version}/manager.js",
             config={"version": str(integration.version)},
             require_admin=True,
         )
@@ -344,6 +345,7 @@ async def websocket_designer(hass, connection, msg):
     elif action == "list":
         result = [
             {
+                **tag_metadata(hass, entry),
                 "entry_id": entry.entry_id,
                 "title": entry.title,
                 "width": (preset := designer.preset(entry)).width,

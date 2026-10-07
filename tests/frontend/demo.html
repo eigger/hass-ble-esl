@@ -112,8 +112,15 @@
         2500,
       );
     } else customElements.define("ha-entity-picker", DemoEntityPicker);
-    await import("/frontend/panel.js");
-    const panel = document.querySelector("ble-esl-designer");
+    const managerMode = new URLSearchParams(location.search).has("manager");
+    await import(managerMode ? "/frontend/manager.js" : "/frontend/panel.js");
+    let panel = document.querySelector("ble-esl-designer");
+    if (managerMode) {
+      const manager = document.createElement("ble-esl-manager");
+      panel.replaceWith(manager);
+      panel = manager;
+      window.manager = manager;
+    }
     const states = await fetch("/states").then((response) => response.json());
     panel.hass = {
       states,

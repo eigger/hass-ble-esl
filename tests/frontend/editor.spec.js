@@ -1234,6 +1234,12 @@ test("choosing in the element list adds nothing until Add is pressed", async ({
   expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
     0,
   );
+  // Native select keyboard behavior differs between macOS and Linux.
+  // Explicitly select a value before testing the Add button on both platforms.
+  await list.selectOption("text");
+  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
+    0,
+  );
   await page.getByRole("button", { name: "Add", exact: true }).click();
   expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
     1,
