@@ -40,7 +40,7 @@ test("HA locale translates dashboard and automations while preserving authored n
   ).toBeVisible();
   await expect(page.locator(".row .name")).toHaveText(names);
   await page.getByLabel("Close automations").click();
-  await setLanguage(page, "fr");
+  await setLanguage(page, "sv");
   await expect(
     page.getByRole("heading", { name: "ESL Manager" }),
   ).toBeVisible();
@@ -199,3 +199,114 @@ test("locale switches preserve invalid spec drafts and translate validation with
   await expect(json).toHaveValue("[1,");
   expect(await page.evaluate(() => window.panel.document)).toEqual(arrayDraft);
 });
+
+// Keep Designer's language support in step with the integration's translations.
+test("locale catalogs match component languages and preserve interpolation tokens", async () => {
+  const { readdirSync } = await import("node:fs");
+  const { messages } =
+    await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+  const { language, supportedLanguages, t } =
+    await import("../../custom_components/ble_esl/designer/frontend/i18n.js");
+  const componentLanguages = readdirSync(
+    new URL("../../custom_components/ble_esl/translations/", import.meta.url),
+  )
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => name.slice(0, -5))
+    .sort();
+  expect([...supportedLanguages].sort()).toEqual(componentLanguages);
+  const tokens = (text) =>
+    [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+  for (const code of supportedLanguages) {
+    expect(Object.keys(messages[code]).sort()).toEqual(
+      Object.keys(messages.en).sort(),
+    );
+    for (const [key, value] of Object.entries(messages[code])) {
+      expect(value.trim(), `${code}: ${key}`).not.toBe("");
+      expect(tokens(value), `${code}: ${key}`).toEqual(tokens(key));
+      expect(value, `${code}: ${key}`).not.toMatch(
+        /__ESL|\n|<script|\[\d{4}\]/,
+      );
+      if (key.includes("{{ template }}"))
+        expect(value).toContain("{{ template }}");
+      if (key.includes("value, entity, entity_id, attributes"))
+        expect(value).toContain("value, entity, entity_id, attributes");
+    }
+  }
+  for (const [requested, expected] of [
+    ["de-DE", "de"],
+    ["fr_CA", "fr"],
+    ["pt-br", "pt-BR"],
+    ["pt", "pt-BR"],
+    ["zh-Hans", "zh-Hans"],
+    ["zh_Hant", "zh-Hant"],
+    ["zh-CN", "zh-Hans"],
+    ["zh-SG", "zh-Hans"],
+    ["zh-TW", "zh-Hant"],
+    ["zh-HK", "zh-Hant"],
+    ["zh-Hant-HK", "zh-Hant"],
+    ["sv", "en"],
+  ])
+    expect(language({ locale: { language: requested } })).toBe(expected);
+  expect(language({ language: "ja" })).toBe("ja");
+  expect(language()).toBe("en");
+  expect(t({ language: "ja" }, "Battery {value}", { value: "85%" })).toContain(
+    "85%",
+  );
+});
+
+const localizedControls = [
+  ["de", "Speichern"],
+  ["es", "Guardar"],
+  ["fr", "Enregistrer"],
+  ["it", "Salva"],
+  ["ja", "保存"],
+  ["nl", "Opslaan"],
+  ["pl", "Zapisz"],
+  ["pt-BR", "Salvar"],
+  ["ru", "Сохранить"],
+  ["zh-Hans", "保存"],
+  ["zh-Hant", "保存"],
+];
+for (const [code, save] of localizedControls) {
+  test(`dashboard, automation dialog and designer use ${code} UI copy`, async ({
+    page,
+  }) => {
+    const { messages } =
+      await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+    const copy = messages[code];
+    await page.goto(`/?manager&lang=${code}`);
+    await expect(
+      page.getByRole("heading", { name: copy["ESL Manager"], exact: true }),
+    ).toBeVisible();
+    const card = page.locator('[data-entry="demo-writable"]').first();
+    await expect(card).toContainText("Living room");
+    await expect(card).toContainText(copy["Last successful send"]);
+    await card.locator('[data-action="automations"]').click();
+    const dialog = page.locator("ble-esl-automation-dialog");
+    await expect(
+      dialog.getByRole("heading", {
+        name: copy["Connected automations"],
+        exact: true,
+      }),
+    ).toBeVisible();
+    await dialog.locator(".close").click();
+    await card.locator('[data-action="edit"]').click();
+    await expect(
+      page
+        .locator("ble-esl-designer")
+        .getByRole("button", { name: save, exact: true }),
+    ).toBeVisible();
+    await page.locator('ble-esl-designer [data-add="text"]').click();
+    await page
+      .locator('[data-property="text"]')
+      .fill('Save {{ states("sensor.demo_temperature") }}');
+    await page.locator('[data-action="yaml"]').click();
+    const yaml = page.locator("ble-esl-yaml-dialog");
+    await expect(
+      yaml.getByRole("heading", { name: copy["Payload YAML"], exact: true }),
+    ).toBeVisible();
+    expect(await yaml.locator("textarea").inputValue()).toContain(
+      'Save {{ states("sensor.demo_temperature") }}',
+    );
+  });
+}
