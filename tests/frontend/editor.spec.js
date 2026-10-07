@@ -528,9 +528,14 @@ test("the header and the toolbar stay in view while the panel scrolls", async ({
         };
       return { header: rect("header"), toolbar: rect(".toolbar") };
     });
-  // A wide screen has a one-row toolbar, a medium one wraps it to two rows.
-  for (const width of [1440, 900]) {
-    await page.setViewportSize({ width, height: 1000 });
+  // Cover wrapped toolbars and short desktop windows as well as tall ones.
+  for (const [width, height] of [
+    [1440, 1000],
+    [900, 1000],
+    [1440, 477],
+    [900, 477],
+  ]) {
+    await page.setViewportSize({ width, height });
     await page.evaluate(() => {
       window.panel.style.height = "450px";
       window.panel.scrollTop = 400;
