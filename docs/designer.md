@@ -2,6 +2,8 @@
 
 **English** | **[한국어](ko/designer.md)**
 
+ESL Manager and the Designer follow your Home Assistant profile language. All 13 integration languages are supported: English, Korean, German, Spanish, French, Italian, Japanese, Dutch, Polish, Brazilian Portuguese, Russian, Simplified Chinese and Traditional Chinese. Regional language codes select the matching catalog; unsupported languages use English. Changing the UI language preserves drafts and open editing dialogs. Device aliases, automation names, design text, Jinja templates and exported YAML keep their original content. Renderer documentation and server diagnostics remain in their original language.
+
 The designer is a visual way to make the **payload** of a [`ble_esl.write`](actions.md) action. What it shows, what it sends to the tag and the YAML it gives you are the same payload, drawn by the same [imagespec](https://github.com/eigger/imagespec) renderer, so a design you finish here is one you can paste into an automation and get the same picture.
 
 Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit design** on a tag card: the canvas has its size and colours.

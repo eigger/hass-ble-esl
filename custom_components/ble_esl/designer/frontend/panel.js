@@ -1,3 +1,4 @@
+import { t, language, rerenderWithDialogs } from "./i18n.js";
 import "./component-editor.js";
 import "./yaml-dialog.js";
 import "./import-dialog.js";
@@ -195,6 +196,42 @@ export class BleEslDesigner extends HTMLElement {
   set hass(value) {
     const previous = this._hass;
     this._hass = value;
+    if (language(previous) !== language(value) && this.started) {
+      // Partially typed JSON/numbers live in controls until they are valid.
+      // Preserve that raw draft without putting invalid values into the spec.
+      const specDrafts = [
+        ...this.shadowRoot.querySelectorAll("[data-spec]"),
+      ].map((input) => ({
+        path: input.dataset.spec,
+        value: input.value,
+        invalid: input.getAttribute("aria-invalid") === "true",
+        focused: input === this.shadowRoot.activeElement,
+        start: input.selectionStart,
+        end: input.selectionEnd,
+      }));
+      rerenderWithDialogs(this.shadowRoot, value, () => this.render());
+      for (const draft of specDrafts) {
+        const input = this.shadowRoot.querySelector(
+          `[data-spec="${CSS.escape(draft.path)}"]`,
+        );
+        if (!input) continue;
+        input.value = draft.value;
+        if (draft.invalid && this.element?.type === "imagespec")
+          applySpecInput(
+            input,
+            clone(this.element.spec),
+            this.specDefinition(this.element),
+            value,
+          );
+        if (draft.focused) {
+          input.focus({ preventScroll: true });
+          if (typeof draft.start === "number")
+            input.setSelectionRange(draft.start, draft.end);
+        }
+      }
+      for (const dialog of document.querySelectorAll("ble-esl-import-dialog"))
+        if (dialog.panel === this) dialog.updateHass(value);
+    }
     this.renderEntityPreview();
     this.shadowRoot
       .querySelector("ble-esl-component-editor")
@@ -346,13 +383,13 @@ export class BleEslDesigner extends HTMLElement {
   loadingInner() {
     const { error, steps } = this.loading;
     if (error)
-      return `<p class="error">${esc(error)}</p><button data-action="reload">Retry</button>`;
+      return `<p class="error">${esc(error)}</p><button data-action="reload">${t(this.hass, "Retry")}</button>`;
     const done = steps.filter((item) => item.done).length;
     const waiting = steps.find((item) => !item.done);
-    return `<p>Loading ${esc(waiting?.label || "designer")}… (${done}/${steps.length})</p><progress aria-label="Loading designer" max="${steps.length}" value="${done}"></progress>`;
+    return `<p>${esc(t(this.hass, "Loading {step}… ({done}/{count})", { step: t(this.hass, waiting?.label || "designer"), done, count: steps.length }))}</p><progress aria-label="${t(this.hass, "Loading designer")}" max="${steps.length}" value="${done}"></progress>`;
   }
   headerHtml() {
-    return `<header><ha-menu-button></ha-menu-button><h1>ESL Designer</h1><span>Live Home Assistant data on e-paper</span>${this._panelInfo?.config?.version ? `<span class="version" title="BLE ESL integration version">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="Designer mode"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing ? "disabled" : ""}>Display</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing ? "disabled" : ""}>Sensor templates</button></nav></header>`;
+    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${this._panelInfo?.config?.version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing ? "disabled" : ""}>${t(this.hass, "Sensor templates")}</button></nav></header>`;
   }
   renderLoading() {
     this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
@@ -406,15 +443,15 @@ export class BleEslDesigner extends HTMLElement {
     const save = this.shadowRoot.querySelector('[data-action="save"]');
     if (save) {
       save.innerHTML = toolIcon("save") + "·";
-      save.setAttribute("aria-label", "Save (unsaved changes)");
-      save.title = "Save (unsaved changes) (⌘/Ctrl S)";
+      save.setAttribute("aria-label", t(this.hass, "Save (unsaved changes)"));
+      save.title = t(this.hass, "Save (unsaved changes) (⌘/Ctrl S)");
     }
     const badge = this.shadowRoot.querySelector("#dirty-badge");
     if (badge) badge.hidden = false;
     const title = this.shadowRoot
       .querySelector(".canvas-wrap")
       ?.previousElementSibling?.querySelector("span");
-    if (title) title.textContent = "Editing preview";
+    if (title) title.textContent = t(this.hass, "Editing preview");
   }
   edited(render = true) {
     this.dirty = true;
@@ -436,12 +473,12 @@ export class BleEslDesigner extends HTMLElement {
   renderStatus() {
     const node = this.shadowRoot.querySelector(".status");
     if (node) {
-      node.textContent = this.status;
+      node.textContent = t(this.hass, this.status);
       node.classList.toggle("error", !!this.error);
       if (this.error && this.status) {
         const dismiss = document.createElement("button");
         dismiss.dataset.action = "dismiss-status";
-        dismiss.setAttribute("aria-label", "Dismiss message");
+        dismiss.setAttribute("aria-label", t(this.hass, "Dismiss message"));
         dismiss.textContent = "×";
         node.append(dismiss);
       }
@@ -469,7 +506,7 @@ export class BleEslDesigner extends HTMLElement {
   value(element) {
     if (element.type === "text") return element.text;
     const state = this.hass.states[element.entity_id];
-    if (!state) return "Unavailable";
+    if (!state) return t(this.hass, "Unavailable");
     if (
       element.decimals !== undefined &&
       !["unknown", "unavailable"].includes(state.state)
@@ -556,18 +593,18 @@ export class BleEslDesigner extends HTMLElement {
   }
   templateControls() {
     if (this.mode !== "template") return "";
-    return `<div class="template-controls"><div style="min-width:240px;max-width:360px"><ha-entity-picker id="template-sample"></ha-entity-picker><span class="muted">${this.outputType(this.sampleState())} output</span></div><label>Name <input id="template-name" aria-label="Template name" value="${esc(this.templateName)}"></label><label>Template <select id="template-type" aria-label="Template">${this.templateTypes()
+    return `<div class="template-controls"><div style="min-width:240px;max-width:360px"><ha-entity-picker id="template-sample"></ha-entity-picker><span class="muted">${this.outputType(this.sampleState())} output</span></div><label>${t(this.hass, "Name")} <input id="template-name" aria-label="${t(this.hass, "Template name")}" value="${esc(this.templateName)}"></label><label>${t(this.hass, "Template")} <select id="template-type" aria-label="${t(this.hass, "Template")}">${this.templateTypes()
       .map(
         (key) =>
           `<option value="${esc(key)}" ${key === this.templateKey ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? key.split(":")[1] + " template" : key.replace(":", " · ")))}</option>`,
       )
       .join(
         "",
-      )}</select></label><label>W <input id="template-width" aria-label="Template width" type="number" min="16" max="1000" value="${this.tag?.width}"></label><label>H <input id="template-height" aria-label="Template height" type="number" min="16" max="1000" value="${this.tag?.height}"></label></div>`;
+      )}</select></label><label>W <input id="template-width" aria-label="${t(this.hass, "Template width")}" type="number" min="16" max="1000" value="${this.tag?.width}"></label><label>H <input id="template-height" aria-label="${t(this.hass, "Template height")}" type="number" min="16" max="1000" value="${this.tag?.height}"></label></div>`;
   }
   templateParts() {
     if (this.mode !== "template") return "";
-    return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">State icon</button></div>`;
+    return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">${t(this.hass, "State icon")}</button></div>`;
   }
   switchMode(mode) {
     // boot() resets the mode and the tag when it ends.
@@ -804,12 +841,12 @@ export class BleEslDesigner extends HTMLElement {
     ]
       .map(
         (color) =>
-          `<button class="swatch" style="--swatch:${color};${color === "transparent" ? "background:repeating-conic-gradient(#ccc 0% 25%,white 0% 50%) 50%/8px 8px" : ""}" data-pick="${key}" data-value="${color}" aria-label="${label}: ${color}" title="${color}" aria-pressed="${value === color}"></button>`,
+          `<button class="swatch" style="--swatch:${color};${color === "transparent" ? "background:repeating-conic-gradient(#ccc 0% 25%,white 0% 50%) 50%/8px 8px" : ""}" data-pick="${key}" data-value="${color}" aria-label="${label}: ${t(this.hass, color)}" title="${t(this.hass, color)}" aria-pressed="${value === color}"></button>`,
       )
       .join("")}</div></label>`;
   }
   panelMenu(action, open, label, id) {
-    return `<button class="icon-button" data-action="${action}" aria-label="Toggle ${label} panel" aria-controls="${id}" title="${open ? "Hide" : "Show"} ${label}" aria-expanded="${open}">${icon("menu")}</button>`;
+    return `<button class="icon-button" data-action="${action}" aria-label="${t(this.hass, "Toggle {label} panel", { label: t(this.hass, label) })}" aria-controls="${id}" title="${open ? t(this.hass, "Hide") : t(this.hass, "Show")} ${t(this.hass, label)}" aria-expanded="${open}">${icon("menu")}</button>`;
   }
   render() {
     if (this.loading) {
@@ -851,7 +888,7 @@ export class BleEslDesigner extends HTMLElement {
     );
     const tag = this.tag,
       element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="Tag" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="Refresh tags" title="Refresh tags">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? "Save (unsaved changes)" : "Save"}" title="${this.dirty ? "Save (unsaved changes)" : "Save"} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>Unsaved changes</span><button class="primary icon-button" aria-label="Send to tag" title="Send to tag" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="Undo" title="Undo (⌘/Ctrl Z)">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="Zoom out">−</button><label><select id="zoom" aria-label="Preview zoom"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>Fit</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -873,15 +910,15 @@ export class BleEslDesigner extends HTMLElement {
       )
       .join(
         "",
-      )}</select></label><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="fit" aria-label="Fit preview">Fit</button></div><div class="status" role="status"></div>${
+      )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="fit" aria-label="${t(this.hass, "Fit preview")}">${t(this.hass, "Fit")}</button></div><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? "Template parts" : "Entities"}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>Components</h2><p class="hint">The four icon buttons add a text, shape, icon or image in one click. <b>＋ Add component</b> opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.</p><button data-action="add-component">＋ Add component</button><div class="tools"><button class="icon-button" data-add="text" aria-label="Add text" title="Text">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="Add shape" title="Shape">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="Add icon" title="Icon">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="Add image" title="Image">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>Payload YAML</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>Import YAML</button><button data-action="export">Export JSON</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>Import JSON</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? "Exact rendered preview" : "Editing preview"}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="Display canvas" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? '<div class="empty-note">Choose a sample sensor above to preview this template.</div>' : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>Keyboard &amp; mouse tips</summary><p id="canvas-tips" class="muted">Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? "Element properties" : "Select an element"}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">Configure</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template">Convert to elements</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>Layers</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Template parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "The four icon buttons add a text, shape, icon or image in one click.")} <b>${t(this.hass, "＋ Add component")}</b> ${t(this.hass, "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
             .map(
               (item) =>
-                `<div class="layer-row ${item.visible === false ? "hidden-layer" : ""}"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}" aria-pressed="${item.id === this.selected}">${esc(this.layerLabel(item))}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="visible" aria-label="${item.visible === false ? "Show" : "Hide"} ${esc(this.layerLabel(item))}" aria-pressed="${item.visible === false}" title="${item.visible === false ? "Hidden: click to show" : "Hide"}">${toolIcon(item.visible === false ? "eyeoff" : "preview")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="up" aria-label="Move ${esc(this.layerLabel(item))} forward" title="Bring forward">${toolIcon("up")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="down" aria-label="Move ${esc(this.layerLabel(item))} backward" title="Send backward">${toolIcon("down")}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="Delete ${esc(this.layerLabel(item))}" title="Delete">${icon("delete")}</button></div>`,
+                `<div class="layer-row ${item.visible === false ? "hidden-layer" : ""}"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}" aria-pressed="${item.id === this.selected}">${esc(this.layerLabel(item))}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="visible" aria-label="${item.visible === false ? t(this.hass, "Show") : t(this.hass, "Hide")} ${esc(this.layerLabel(item))}" aria-pressed="${item.visible === false}" title="${item.visible === false ? t(this.hass, "Hidden: click to show") : t(this.hass, "Hide")}">${toolIcon(item.visible === false ? "eyeoff" : "preview")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="up" aria-label="${esc(t(this.hass, "Move {label} forward", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Bring forward")}">${toolIcon("up")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="down" aria-label="${esc(t(this.hass, "Move {label} backward", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Send backward")}">${toolIcon("down")}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="${esc(t(this.hass, "Delete {label}", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Delete")}">${icon("delete")}</button></div>`,
             )
             .join("")}</div></section></aside></div>`
         : ""
@@ -934,8 +971,10 @@ export class BleEslDesigner extends HTMLElement {
       // render() rebuilds the shadow tree, so the dialog opens after it.
       const dialog = document.createElement("ble-esl-yaml-dialog");
       this.shadowRoot.append(dialog);
-      dialog.open(this.yamlExport, () =>
-        this.shadowRoot.querySelector('[data-action="yaml"]')?.focus(),
+      dialog.open(
+        this.yamlExport,
+        () => this.shadowRoot.querySelector('[data-action="yaml"]')?.focus(),
+        this.hass,
       );
       this.yamlExport = null;
     }
@@ -999,7 +1038,8 @@ export class BleEslDesigner extends HTMLElement {
     space.style.height = `${this.tag.height * this.zoom}px`;
     this.updateSelectionOverlay();
     const option = this.shadowRoot.querySelector('#zoom option[value="fit"]');
-    if (option) option.textContent = `Fit (${Math.round(this.zoom * 100)}%)`;
+    if (option)
+      option.textContent = `${t(this.hass, "Fit")} (${Math.round(this.zoom * 100)}%)`;
   }
   stateIconRows(element) {
     const sample = this.sampleState();
@@ -1013,15 +1053,15 @@ export class BleEslDesigner extends HTMLElement {
         ...Object.keys(element.state_icons || {}),
       ]),
     ];
-    return `<div class="wide"><strong>State → icon</strong>${states
+    return `<div class="wide"><strong>${t(this.hass, "State → icon")}</strong>${states
       .map((state) => {
         const name = element.state_icons?.[state] || "{{icon}}";
         const stateObj = sample && { ...sample, state };
-        return `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="min-width:48px">${esc(state)}</span><span>→</span><button class="icon-choice" data-action="pick-icon" data-icon-state="${esc(state)}" aria-label="Choose icon for ${esc(state)}">${this.iconGlyph(name === "{{icon}}" ? this.defaultIcon(stateObj) : name)}<span>${name === "{{icon}}" ? "HA state icon" : esc(name.replace("mdi:", ""))}</span></button></div>`;
+        return `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="min-width:48px">${esc(state)}</span><span>→</span><button class="icon-choice" data-action="pick-icon" data-icon-state="${esc(state)}" aria-label="Choose icon for ${esc(state)}">${this.iconGlyph(name === "{{icon}}" ? this.defaultIcon(stateObj) : name)}<span>${name === "{{icon}}" ? t(this.hass, "HA state icon") : esc(name.replace("mdi:", ""))}</span></button></div>`;
       })
       .join(
         "",
-      )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="New icon state" placeholder="Another state"><button data-action="add-icon-state" aria-label="Add state mapping">+</button></div><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="Search icons" placeholder="Search icons"><button data-icon="{{icon}}">HA state icon</button><div class="icon-picker"></div></div></div>`;
+      )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="${t(this.hass, "New icon state")}" placeholder="${t(this.hass, "Another state")}"><button data-action="add-icon-state" aria-label="${t(this.hass, "Add state mapping")}">+</button></div><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="${t(this.hass, "Search icons")}" placeholder="${t(this.hass, "Search icons")}"><button data-icon="{{icon}}">${t(this.hass, "HA state icon")}</button><div class="icon-picker"></div></div></div>`;
   }
   // The layer of an element that draws beyond its frame is cropped to what it
   // drew: it sits at an offset from the frame and follows the frame's scale.
@@ -1061,7 +1101,7 @@ export class BleEslDesigner extends HTMLElement {
     const groups = {};
     for (const type of this.specs.types)
       (groups[type.category] ||= []).push(type.type);
-    return `<p class="hint wide">Every element type the tag can draw, set field by field: choose one, then press <b>Add</b>.</p><label class="wide">All elements<select id="add-spec" aria-label="Add element"><option value="">Add element…</option>${Object.entries(
+    return `<p class="hint wide">${t(this.hass, "Every element type the tag can draw, set field by field: choose one, then press")} <b>${t(this.hass, "Add")}</b>.</p><label class="wide">${t(this.hass, "All elements")}<select id="add-spec" aria-label="${t(this.hass, "Add element")}"><option value="">${t(this.hass, "Add element…")}</option>${Object.entries(
       groups,
     )
       .map(
@@ -1075,7 +1115,7 @@ export class BleEslDesigner extends HTMLElement {
       )
       .join(
         "",
-      )}</select></label><button class="wide" data-action="add-spec">Add</button>`;
+      )}</select></label><button class="wide" data-action="add-spec">${t(this.hass, "Add")}</button>`;
   }
   addSpec(type) {
     const definition = this.specs.types.find((item) => item.type === type);
@@ -1140,12 +1180,22 @@ export class BleEslDesigner extends HTMLElement {
     this.error = false;
     this.errorSource = null;
     const skipped = result.issues.length
-      ? `; ${result.issues.length} not converted`
+      ? {
+          key: "; {count} not converted",
+          values: { count: result.issues.length },
+        }
       : "";
-    this.status =
-      result.different_pixels === 0
-        ? `Converted to ${result.elements.length} elements, drawn exactly as before${skipped}`
-        : `Converted to ${result.elements.length} elements; ${result.different_pixels ?? "?"} pixels differ from before${skipped}`;
+    this.status = {
+      key:
+        result.different_pixels === 0
+          ? "Converted to {count} elements, drawn exactly as before{skipped}"
+          : "Converted to {count} elements; {pixels} pixels differ from before{skipped}",
+      values: {
+        count: result.elements.length,
+        pixels: result.different_pixels ?? "?",
+        skipped,
+      },
+    };
     this.edited();
   }
   // A pasted payload as elements, added to the display or replacing it.
@@ -1181,7 +1231,14 @@ export class BleEslDesigner extends HTMLElement {
     if (element?.type !== "imagespec") return;
     const first = this.typingProperty !== input,
       before = first ? clone(this.document) : null;
-    if (!applySpecInput(input, element.spec, this.specDefinition(element)))
+    if (
+      !applySpecInput(
+        input,
+        element.spec,
+        this.specDefinition(element),
+        this.hass,
+      )
+    )
       return;
     if (first) {
       this.pushUndo(before);
@@ -1197,7 +1254,7 @@ export class BleEslDesigner extends HTMLElement {
       text = ["sensor", "text"].includes(type),
       shape = shapeTypes.includes(type) && type !== "line";
     const choice = (key, label, options, fallback = "default") =>
-      `<label>${label}<select data-property="${key}" aria-label="${label}"><option value="">${fallback}</option>${options.map((value) => `<option value="${value}" ${element[key] === value ? "selected" : ""}>${value.replaceAll("_", " ")}</option>`).join("")}</select></label>`;
+      `<label>${label}<select data-property="${key}" aria-label="${label}"><option value="">${t(this.hass, fallback)}</option>${options.map((value) => `<option value="${value}" ${element[key] === value ? "selected" : ""}>${t(this.hass, value.replaceAll("_", " "))}</option>`).join("")}</select></label>`;
     const number = (key, label, min, max, placeholder = "") =>
       `<label>${label}<input data-property="${key}" type="number" step="1" min="${min}" max="${max}" placeholder="${placeholder}" value="${esc(element[key] ?? "")}"></label>`;
     const flag = (key, label, fallback) =>
@@ -1217,66 +1274,76 @@ export class BleEslDesigner extends HTMLElement {
       advanced = "";
     if (text)
       advanced +=
-        choice("valign", "Vertical align", ["top", "middle", "bottom"]) +
+        choice("valign", t(this.hass, "Vertical align"), [
+          "top",
+          "middle",
+          "bottom",
+        ]) +
         choice(
           "fit",
-          "Fit",
+          t(this.hass, "Fit"),
           ["shrink", "ellipsis", "shrink_ellipsis"],
           "default (shrink ellipsis)",
         ) +
-        number("max_lines", "Max lines", 1, 20, type === "text" ? "3" : "1") +
-        number("min_font_size", "Min font size", 1, 200, "8") +
-        number("padding", "Padding", 0, 100, "0") +
-        number("line_spacing", "Line spacing", 0, 100, "2") +
-        `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
+        number(
+          "max_lines",
+          t(this.hass, "Max lines"),
+          1,
+          20,
+          type === "text" ? "3" : "1",
+        ) +
+        number("min_font_size", t(this.hass, "Min font size"), 1, 200, "8") +
+        number("padding", t(this.hass, "Padding"), 0, 100, "0") +
+        number("line_spacing", t(this.hass, "Line spacing"), 0, 100, "2") +
+        `<label class="wide">${t(this.hass, "Font file")}<input data-property="font" placeholder="${t(this.hass, "Default font")}" value="${esc(element.font ?? "")}"></label>`;
     if (shape)
       style +=
-        flag("filled", "Filled", true) +
-        number("line_width", "Outline width", 1, 20, "1") +
+        flag("filled", t(this.hass, "Filled"), true) +
+        number("line_width", t(this.hass, "Outline width"), 1, 20, "1") +
         (type === "rounded_rectangle"
-          ? number("radius", "Corner radius", 0, 200, "auto")
+          ? number("radius", t(this.hass, "Corner radius"), 0, 200, "auto")
           : "");
     if (type === "icon")
       advanced +=
-        number("stroke_width", "Outline width", 0, 20, "0") +
+        number("stroke_width", t(this.hass, "Outline width"), 0, 20, "0") +
         this.colorPicker(
           "stroke_fill",
           element.stroke_fill ?? "white",
-          "Outline colour",
+          t(this.hass, "Outline colour"),
         );
     if (type === "image")
       style +=
-        number("rotate", "Rotate (°)", -360, 360, "0") +
-        flag("circle", "Crop to circle", false);
+        number("rotate", t(this.hass, "Rotate (°)"), -360, 360, "0") +
+        flag("circle", t(this.hass, "Crop to circle"), false);
     if (type === "progress_bar")
       style +=
         choice(
           "direction",
-          "Direction",
+          t(this.hass, "Direction"),
           ["right", "left", "up", "down"],
           "default (right)",
         ) +
-        number("radius", "Corner radius", 0, 200, "0") +
-        number("line_width", "Outline width", 1, 20, "1") +
-        flag("show_percentage", "Show percentage", false);
+        number("radius", t(this.hass, "Corner radius"), 0, 200, "0") +
+        number("line_width", t(this.hass, "Outline width"), 1, 20, "1") +
+        flag("show_percentage", t(this.hass, "Show percentage"), false);
     if (type === "gauge")
       style +=
-        number("thickness", "Arc thickness", 1, 100, "8") +
-        flag("show_value", "Show value", true);
+        number("thickness", t(this.hass, "Arc thickness"), 1, 100, "8") +
+        flag("show_value", t(this.hass, "Show value"), true);
     if (["progress_bar", "gauge"].includes(type))
-      advanced += `<label class="wide">Font file<input data-property="font" placeholder="Default font" value="${esc(element.font ?? "")}"></label>`;
-    advanced += `<label class="wide">Dither<select data-property="dither" aria-label="Dither"><option value="">${type === "image" ? "default (floyd)" : "off (default)"}</option><option value="none" ${dither === "none" ? "selected" : ""}>none</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`;
+      advanced += `<label class="wide">${t(this.hass, "Font file")}<input data-property="font" placeholder="${t(this.hass, "Default font")}" value="${esc(element.font ?? "")}"></label>`;
+    advanced += `<label class="wide">${t(this.hass, "Dither")}<select data-property="dither" aria-label="${t(this.hass, "Dither")}"><option value="">${type === "image" ? t(this.hass, "default (floyd)") : t(this.hass, "off (default)")}</option><option value="none" ${dither === "none" ? "selected" : ""}>${t(this.hass, "none")}</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`;
     return { style, advanced };
   }
   properties(element) {
     if (!element)
-      return `<p class="muted wide">Click a block to move, resize, or bind it to an entity.</p>${this.mode === "display" ? `<h3 class="wide group-title">Display</h3>${this.colorPicker("display-background", this.document.background, "Background")}` : ""}`;
+      return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
     const field = (key, label, type = "text", wide = false) =>
       `<label class="${wide ? "wide" : ""}">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
     const group = (title, body) =>
       body ? `<h3 class="wide group-title">${title}</h3>${body}` : "";
     const position = group(
-      "Position & size (px)",
+      t(this.hass, "Position & size (px)"),
       ["x", "y", "width", "height"]
         .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
         .join(""),
@@ -1292,35 +1359,36 @@ export class BleEslDesigner extends HTMLElement {
           element.spec,
           this.tag.colors,
           this.specs?.dither_methods || [],
+          this.hass,
         )
       );
     if (["progress_bar", "gauge"].includes(element.type))
       html +=
-        field("min_value", "Minimum", "number") +
-        field("max_value", "Maximum", "number") +
-        field("value", "Value", "number", true);
+        field("min_value", t(this.hass, "Minimum"), "number") +
+        field("max_value", t(this.hass, "Maximum"), "number") +
+        field("value", t(this.hass, "Value"), "number", true);
     if (element.type === "gauge")
-      style += field("font_size", "Font size", "number");
+      style += field("font_size", t(this.hass, "Font size"), "number");
     if (["sensor", "text"].includes(element.type))
       style +=
-        field("font_size", "Font size", "number") +
-        `<label>Align<div class="picker" role="group" aria-label="Text alignment">${["left", "center", "right"].map((value) => `<button class="align-button" data-pick="align" data-value="${value}" aria-label="Align ${value}" title="Align ${value}" aria-pressed="${element.align === value}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 9h12M3 14h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 19h12"/></svg></button>`).join("")}</div></label>`;
-    style += this.colorPicker("color", element.color, "Colour");
+        field("font_size", t(this.hass, "Font size"), "number") +
+        `<label>${t(this.hass, "Align")}<div class="picker" role="group" aria-label="${t(this.hass, "Text alignment")}">${["left", "center", "right"].map((value) => `<button class="align-button" data-pick="align" data-value="${value}" aria-label="${t(this.hass, `Align ${value}`)}" title="${t(this.hass, `Align ${value}`)}" aria-pressed="${element.align === value}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 9h12M3 14h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 19h12"/></svg></button>`).join("")}</div></label>`;
+    style += this.colorPicker("color", element.color, t(this.hass, "Colour"));
     if (shapeTypes.includes(element.type))
-      style += `<label class="wide">Shape<select data-property="type" aria-label="Shape">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
+      style += `<label class="wide">${t(this.hass, "Shape")}<select data-property="type" aria-label="${t(this.hass, "Shape")}">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
 
     if (element.type === "image")
-      html += `<label class="wide">Image URL<input data-property="image" aria-label="Image URL" placeholder="Paste a URL, or upload below" value="${esc(element.image?.startsWith("data:") ? "" : (element.image ?? ""))}"></label><label class="wide">Image<input id="image-file" aria-label="Upload image" type="file" accept="image/*"></label><label class="wide">Fit<select data-property="image_fit" aria-label="Image fit">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>`;
+      html += `<label class="wide">${t(this.hass, "Image URL")}<input data-property="image" aria-label="${t(this.hass, "Image URL")}" placeholder="${t(this.hass, "Paste a URL, or upload below")}" value="${esc(element.image?.startsWith("data:") ? "" : (element.image ?? ""))}"></label><label class="wide">${t(this.hass, "Image")}<input id="image-file" aria-label="${t(this.hass, "Upload image")}" type="file" accept="image/*"></label><label class="wide">${t(this.hass, "Fit")}<select data-property="image_fit" aria-label="${t(this.hass, "Image fit")}">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${t(this.hass, value)}</option>`).join("")}</select></label>`;
     if (element.type === "icon")
-      html += `<label class="wide">Icon<button class="icon-choice" data-action="pick-icon" aria-label="Choose icon">${this.iconGlyph(this.tokenText(element.icon), 24)}<span>${element.icon === "{{icon}}" ? "HA state icon" : esc(element.icon.replace("mdi:", ""))}</span></button><input data-property="icon" aria-label="Icon name" value="${esc(element.icon)}" hidden></label>`;
+      html += `<label class="wide">${t(this.hass, "Icon")}<button class="icon-choice" data-action="pick-icon" aria-label="${t(this.hass, "Choose icon")}">${this.iconGlyph(this.tokenText(element.icon), 24)}<span>${element.icon === "{{icon}}" ? t(this.hass, "HA state icon") : esc(element.icon.replace("mdi:", ""))}</span></button><input data-property="icon" aria-label="${t(this.hass, "Icon name")}" value="${esc(element.icon)}" hidden></label>`;
 
     const extra = this.extraProperties(element);
     style += extra.style;
-    style += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>Visible</label>`;
+    style += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>${t(this.hass, "Visible")}</label>`;
     if (this.mode === "template" && element.type === "icon")
       html += this.stateIconRows(element);
     if (this.mode === "template" && element.type !== "icon")
-      html += `<label class="wide">Show for state<input data-property="state" aria-label="Visible state" placeholder="All states" list="template-states" value="${esc(element.state || "")}"><datalist id="template-states">${[
+      html += `<label class="wide">${t(this.hass, "Show for state")}<input data-property="state" aria-label="${t(this.hass, "Visible state")}" placeholder="${t(this.hass, "All states")}" list="template-states" value="${esc(element.state || "")}"><datalist id="template-states">${[
         ...new Set([
           "on",
           "off",
@@ -1351,15 +1419,15 @@ export class BleEslDesigner extends HTMLElement {
         .map((state) => `<option value="${esc(state)}"></option>`)
         .join("")}</datalist></label>`;
     if (element.type === "text")
-      html += `<label class="wide">Text<textarea data-property="text" rows="3">${esc(element.text)}</textarea></label>`;
+      html += `<label class="wide">${t(this.hass, "Text")}<textarea data-property="text" rows="3">${esc(element.text)}</textarea></label>`;
     if (element.type === "sensor") {
       if (element.entity_id.startsWith("weather."))
-        html += `<label>When<select data-property="weather_when" aria-label="Weather time">${[
-          ["now", "Now"],
-          ["later_today", "Later today"],
-          ["tomorrow", "Tomorrow"],
-          ["in_2_days", "In 2 days"],
-          ["in_3_days", "In 3 days"],
+        html += `<label>${t(this.hass, "When")}<select data-property="weather_when" aria-label="${t(this.hass, "Weather time")}">${[
+          ["now", t(this.hass, "Now")],
+          ["later_today", t(this.hass, "Later today")],
+          ["tomorrow", t(this.hass, "Tomorrow")],
+          ["in_2_days", t(this.hass, "In 2 days")],
+          ["in_3_days", t(this.hass, "In 3 days")],
         ]
           .map(
             ([key, label]) =>
@@ -1367,21 +1435,21 @@ export class BleEslDesigner extends HTMLElement {
           )
           .join(
             "",
-          )}</select></label><label>Show<select data-property="weather_field" aria-label="Weather value">${[
-          ["condition", "Condition"],
-          ["temperature", "Temperature"],
-          ["templow", "Low temperature"],
-          ["precipitation", "Rain / snow"],
-          ["precipitation_probability", "Rain chance"],
-          ["wind_speed", "Wind speed"],
-          ["humidity", "Humidity"],
+          )}</select></label><label>${t(this.hass, "Show")}<select data-property="weather_field" aria-label="${t(this.hass, "Weather value")}">${[
+          ["condition", t(this.hass, "Condition")],
+          ["temperature", t(this.hass, "Temperature")],
+          ["templow", t(this.hass, "Low temperature")],
+          ["precipitation", t(this.hass, "Rain / snow")],
+          ["precipitation_probability", t(this.hass, "Rain chance")],
+          ["wind_speed", t(this.hass, "Wind speed")],
+          ["humidity", t(this.hass, "Humidity")],
         ]
           .map(
             ([key, label]) =>
               `<option value="${key}" ${(element.weather_field || "condition") === key ? "selected" : ""}>${label}</option>`,
           )
           .join("")}</select></label>`;
-      html += `<label class="wide">Template<select data-property="template" aria-label="Sensor template"><option value="auto">By sensor type</option><option value="default" ${element.template === "default" ? "selected" : ""}>HA tile</option>${Object.keys(
+      html += `<label class="wide">${t(this.hass, "Template")}<select data-property="template" aria-label="${t(this.hass, "Sensor template")}"><option value="auto">${t(this.hass, "By sensor type")}</option><option value="default" ${element.template === "default" ? "selected" : ""}>${t(this.hass, "HA tile")}</option>${Object.keys(
         this.templates,
       )
         .filter(
@@ -1395,11 +1463,11 @@ export class BleEslDesigner extends HTMLElement {
         )
         .join(
           "",
-        )}<option value="__new__">＋ Create template…</option></select></label>`;
+        )}<option value="__new__">${t(this.hass, "＋ Create template…")}</option></select></label>`;
       picker = `<ha-entity-picker class="wide" data-property="entity_id"></ha-entity-picker>`;
-      html += `<label class="wide check"><input type="checkbox" data-property="show_label" ${element.show_label ? "checked" : ""}>Show label</label>`;
+      html += `<label class="wide check"><input type="checkbox" data-property="show_label" ${element.show_label ? "checked" : ""}>${t(this.hass, "Show label")}</label>`;
       if (element.show_label)
-        html += field("label", "Label override", "text", true);
+        html += field("label", t(this.hass, "Label override"), "text", true);
       const state = this.hass.states[element.entity_id];
       const numeric =
         state &&
@@ -1408,22 +1476,22 @@ export class BleEslDesigner extends HTMLElement {
           ? element.weather_field && element.weather_field !== "condition"
           : state.state.trim() !== "" && Number.isFinite(Number(state.state)));
       if (numeric) {
-        html += `<label class="wide check"><input type="checkbox" data-property="show_unit" ${element.show_unit ? "checked" : ""}>Show unit</label>`;
+        html += `<label class="wide check"><input type="checkbox" data-property="show_unit" ${element.show_unit ? "checked" : ""}>${t(this.hass, "Show unit")}</label>`;
         if (element.show_unit)
           html += field(
             "decimals",
-            "Decimals (auto when blank)",
+            t(this.hass, "Decimals (auto when blank)"),
             "number",
             true,
           );
       }
     }
     return (
-      group("Content", picker + html) +
+      group(t(this.hass, "Content"), picker + html) +
       position +
-      group("Style", style) +
+      group(t(this.hass, "Style"), style) +
       (extra.advanced
-        ? `<details class="wide advanced" ${this.advancedOpen ? "open" : ""}><summary>Advanced</summary><div class="props">${extra.advanced}</div></details>`
+        ? `<details class="wide advanced" ${this.advancedOpen ? "open" : ""}><summary>${t(this.hass, "Advanced")}</summary><div class="props">${extra.advanced}</div></details>`
         : "")
     );
   }
@@ -1457,8 +1525,8 @@ export class BleEslDesigner extends HTMLElement {
       "select",
       "counter",
     ];
-    picker.label = "Sensor";
-    picker.searchLabel = "Search sensors";
+    picker.label = t(this.hass, "Sensor");
+    picker.searchLabel = t(this.hass, "Search sensors");
     picker.allowCustomEntity = false;
     picker.value = this.libraryEntity;
     picker.addEventListener("value-changed", (event) => {
@@ -1495,16 +1563,18 @@ export class BleEslDesigner extends HTMLElement {
     const bound = this.shadowRoot.querySelector(
       'ha-entity-picker[data-property="entity_id"]',
     );
-    if (bound) configure(bound, this.element.entity_id, "Bound entity");
+    if (bound)
+      configure(bound, this.element.entity_id, t(this.hass, "Bound entity"));
     const sample = this.shadowRoot.querySelector("#template-sample");
-    if (sample) configure(sample, this.sampleEntity, "Sample sensor");
+    if (sample)
+      configure(sample, this.sampleEntity, t(this.hass, "Sample sensor"));
   }
   renderEntityPreview() {
     const node = this.shadowRoot.querySelector(".entity-preview");
     const state = this.hass?.states[this.libraryEntity];
     if (!node) return;
     node.innerHTML = state
-      ? `<div class="entity-state" data-entity="${esc(state.entity_id)}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${esc(this.entityName(state))}</div><div class="state-value">${esc(this.hass.formatEntityState?.(state) || state.state)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="Add selected sensor" title="Add selected sensor">+</button></div>`
+      ? `<div class="entity-state" data-entity="${esc(state.entity_id)}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${esc(this.entityName(state))}</div><div class="state-value">${esc(this.hass.formatEntityState?.(state) || state.state)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="${t(this.hass, "Add selected sensor")}" title="${t(this.hass, "Add selected sensor")}">+</button></div>`
       : "";
     const icon = node.querySelector("ha-state-icon");
     if (icon) {
@@ -1594,7 +1664,7 @@ export class BleEslDesigner extends HTMLElement {
     stage.classList.toggle("exact-mode", !!this.preview);
     stage.innerHTML =
       (this.preview
-        ? `<img class="exact" src="${this.preview}" alt="Exact rendered display">`
+        ? `<img class="exact" src="${this.preview}" alt="${t(this.hass, "Exact rendered display")}">`
         : "") +
       this.document.elements
         .map((element, index) => {
@@ -1639,7 +1709,7 @@ export class BleEslDesigner extends HTMLElement {
             record.size[0] !== element.width ||
             record.size[1] !== element.height;
           if (element.type === "imagespec" && stale)
-            content = `<div role="status" aria-label="Preview updating" title="This element needs a renderer preview to show its current appearance" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">Preview updating…</div>`;
+            content = `<div role="status" aria-label="${t(this.hass, "Preview updating")}" title="${t(this.hass, "This element needs a renderer preview to show its current appearance")}" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">${t(this.hass, "Preview updating…")}</div>`;
           const rendered =
             (this.gesture && element.type === "image") || stale
               ? undefined
@@ -1684,8 +1754,8 @@ export class BleEslDesigner extends HTMLElement {
       height = bottom - top;
     const handleSize =
       (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
-    const moveTarget = `<span class="move-handle" aria-label="Move selected element" style="position:absolute;left:${width / 2 - handleSize / 2}px;top:${height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(width, height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
-    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x + left}px;top:${element.y + top}px;width:${width}px;height:${height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="Resize ${corner}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="Delete selected element" title="Delete" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
+    const moveTarget = `<span class="move-handle" aria-label="${t(this.hass, "Move selected element")}" style="position:absolute;left:${width / 2 - handleSize / 2}px;top:${height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(width, height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
+    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x + left}px;top:${element.y + top}px;width:${width}px;height:${height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="${t(this.hass, "Resize {corner}", { corner })}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="${t(this.hass, "Delete selected element")}" title="${t(this.hass, "Delete")}" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
   }
   alignmentGuidesMarkup() {
     if (!this.snapGuides?.length) return "";
@@ -2162,7 +2232,10 @@ export class BleEslDesigner extends HTMLElement {
             locked: "Not sent: the tag's write lock is on",
             duplicate: "Not sent: the display is unchanged",
             dropped: "Not sent: a newer write replaced this one",
-            failed: `Sending failed${result.error ? `: ${result.error}` : ""}`,
+            failed: {
+              key: "Sending failed{error}",
+              values: { error: result.error ? `: ${result.error}` : "" },
+            },
           };
           this.status = sent[result.status] || result.status;
           this.error = ["locked", "failed"].includes(result.status);
@@ -2265,15 +2338,15 @@ export class BleEslDesigner extends HTMLElement {
     const menu = document.createElement("div");
     menu.className = "context-menu";
     menu.setAttribute("role", "menu");
-    menu.setAttribute("aria-label", "Element actions");
+    menu.setAttribute("aria-label", t(this.hass, "Element actions"));
     menu.style.left = `${Math.min(event.clientX, window.innerWidth - 228)}px`;
     menu.style.top = `${Math.min(event.clientY, window.innerHeight - 220)}px`;
     menu.innerHTML = [
-      ["duplicate", "Duplicate", "⌘/Ctrl D"],
-      ["delete", "Delete", "⌫"],
-      ["back", "Send back", ""],
-      ["front", "Bring front", ""],
-      ["center", "Center horizontally", ""],
+      ["duplicate", t(this.hass, "Duplicate"), "⌘/Ctrl D"],
+      ["delete", t(this.hass, "Delete"), "⌫"],
+      ["back", t(this.hass, "Send back"), ""],
+      ["front", t(this.hass, "Bring front"), ""],
+      ["center", t(this.hass, "Center horizontally"), ""],
     ]
       .map(
         ([action, label, key]) =>
@@ -2299,7 +2372,7 @@ export class BleEslDesigner extends HTMLElement {
     content.contentEditable = "plaintext-only";
     content.dataset.editText = this.selected;
     content.setAttribute("role", "textbox");
-    content.setAttribute("aria-label", "Edit display text");
+    content.setAttribute("aria-label", t(this.hass, "Edit display text"));
     this.editingTextId = this.selected;
     content.focus();
     const text =
@@ -2550,7 +2623,9 @@ export class BleEslDesigner extends HTMLElement {
           }
         };
         reader.onerror = () =>
-          reject(reader.error || new Error("Image upload failed"));
+          reject(
+            reader.error || new Error(t(this.hass, "Image upload failed")),
+          );
         reader.readAsDataURL(file);
       });
       this.pendingUploads.add(upload);
@@ -3052,7 +3127,7 @@ export class BleEslDesigner extends HTMLElement {
           const title = this.shadowRoot
             .querySelector(".canvas-wrap")
             ?.previousElementSibling?.querySelector("span");
-          if (title) title.textContent = "Exact rendered preview";
+          if (title) title.textContent = t(this.hass, "Exact rendered preview");
           if (this.error && this.errorSource === "preview") {
             // The render that failed has been fixed.
             this.error = false;

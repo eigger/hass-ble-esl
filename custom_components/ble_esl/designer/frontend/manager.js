@@ -1,3 +1,4 @@
+import { t, language, bindStatic, localize } from "./i18n.js";
 import "./panel.js";
 import "./automation-dialog.js";
 
@@ -29,7 +30,8 @@ class EslManager extends HTMLElement {
     this.query = "";
     this.filter = "all";
     this.view = "dashboard";
-    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>ESL Manager</h1><button data-action="refresh">Refresh</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="Search ESLs" placeholder="Search aliases or devices"><select id="filter" aria-label="Filter ESLs"><option value="all">All ESLs</option><option value="error">Errors</option><option value="unsynced">Not in sync</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><p class="message" role="alert" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">← Dashboard</button><span>Designer</span><button data-action="editor-automations">Connected automations</button></div><div id="editor-slot"></div></section>`;
+    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Manager")}</h1><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><p class="message" role="alert" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span>${t(this.hass, "Designer")}</span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
+    bindStatic(this.shadowRoot);
     this.automationDialog = document.createElement("ble-esl-automation-dialog");
     this.shadowRoot.append(this.automationDialog);
     this.addEventListener("automations-changed", (event) => {
@@ -70,6 +72,8 @@ class EslManager extends HTMLElement {
   set hass(value) {
     const previous = this._hass;
     this._hass = value;
+    localize(this.shadowRoot, value);
+    if (this.messageKey) this.message(this.messageKey);
     if (this.editor) this.editor.hass = value;
     this.automationDialog.updateHass(value);
     const menu = this.shadowRoot.querySelector("ha-menu-button");
@@ -77,6 +81,7 @@ class EslManager extends HTMLElement {
     menu.narrow = this.narrow;
     if (this.isConnected && !this.started) this.refresh();
     else if (
+      language(previous) !== language(value) ||
       this.tags.some((tag) =>
         Object.values(tag.entities || {}).some(
           (id) => previous?.states[id] !== value.states[id],
@@ -107,7 +112,8 @@ class EslManager extends HTMLElement {
   }
   message(error = "") {
     const node = this.shadowRoot.querySelector(".message");
-    node.textContent = error;
+    this.messageKey = error;
+    node.textContent = t(this.hass, error);
     node.hidden = !error;
     node.classList.toggle("error", !!error);
   }
@@ -116,7 +122,10 @@ class EslManager extends HTMLElement {
     this.message();
     const button = this.shadowRoot.querySelector('[data-action="refresh"]');
     button.disabled = true;
-    this.shadowRoot.querySelector(".summary").textContent = "Loading ESLs…";
+    this.shadowRoot.querySelector(".summary").textContent = t(
+      this.hass,
+      "Loading ESLs…",
+    );
     try {
       this.tags = await this.api("list");
       this.renderCards();
@@ -161,9 +170,9 @@ class EslManager extends HTMLElement {
   }
   automationLabel(tag) {
     if (this.automationErrors.has(tag.entry_id))
-      return "Automations unavailable · Retry";
+      return t(this.hass, "Automations unavailable · Retry");
     const data = this.automationCache.get(tag.entry_id);
-    if (!data) return "Loading automations…";
+    if (!data) return t(this.hass, "Loading automations…");
     const linked = data.linked.map((item) => {
       const state = !item.missing && this.hass.states[item.entity_id];
       return state
@@ -174,11 +183,14 @@ class EslManager extends HTMLElement {
           }
         : { ...item, state: "unavailable" };
     });
-    if (!linked.length) return "Link automation";
+    if (!linked.length) return t(this.hass, "Link automation");
     const active = linked.filter((item) => item.state === "on").length;
     if (linked.length === 1)
-      return `${linked[0].name} · ${linked[0].missing || !["on", "off"].includes(linked[0].state) ? "Unavailable" : active ? "Active" : "Inactive"}`;
-    return `${linked.length} automations · ${active} active`;
+      return `${linked[0].name} · ${linked[0].missing || !["on", "off"].includes(linked[0].state) ? t(this.hass, "Unavailable") : active ? t(this.hass, "Active") : t(this.hass, "Inactive")}`;
+    return t(this.hass, "{count} automations · {active} active", {
+      count: linked.length,
+      active,
+    });
   }
   showAutomations(tag, anchor) {
     this.automationDialog.show(
@@ -239,10 +251,10 @@ class EslManager extends HTMLElement {
     const error = this.hasError(tag);
     const synced = valid(sync) && sync.state === "on";
     const syncLabel = !valid(sync)
-      ? "Sync unknown"
+      ? t(this.hass, "Sync unknown")
       : synced
-        ? "In sync"
-        : "Not in sync";
+        ? t(this.hass, "In sync")
+        : t(this.hass, "Not in sync");
     const at = valid(image) ? image.state : null;
     // ImageEntity's state is its image_last_updated timestamp. Never use last_changed:
     // that can be the entity's restore time rather than the last successful write.
@@ -256,15 +268,18 @@ class EslManager extends HTMLElement {
       valid(duration) && Number.isFinite(Number(duration.state))
         ? `${Number(duration.state).toFixed(1)} s`
         : "—";
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="top"><div><h2>${this.entityButton(tag, "alias", alias, 'class="alias" title="Edit alias"')}</h2><div class="muted">${e(tag.title)}</div><div class="muted">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="battery">${this.entityButton(tag, "battery", valid(battery) ? `Battery ${battery.state}${battery.attributes.unit_of_measurement || "%"}` : "Battery —")}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="Last successful image for ${e(alias)}"><img src="${e(url)}" alt="Last successful image for ${e(alias)}"></button>` : '<span class="muted">No successful image</span>'}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? "Transmission error" : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? "No transmission result" : duration.attributes.skipped ? `Skipped: ${duration.attributes.skipped}` : "No error", `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>Last successful send</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : "No successful send")}"`)}</dd><dt>Transmission duration</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>Automations</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">Edit design</button></div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="top"><div><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="muted">${e(tag.title)}</div><div class="muted">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="battery">${this.entityButton(tag, "battery", valid(battery) ? t(this.hass, "Battery {value}", { value: `${battery.state}${battery.attributes.unit_of_measurement || "%"}` }) : t(this.hass, "Battery —"))}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">${t(this.hass, "Edit design")}</button></div></article>`;
   }
   renderCards() {
     const errors = this.tags.filter((tag) => this.hasError(tag)).length;
     const unsynced = this.tags.filter(
       (tag) => this.state(tag, "display_in_sync")?.state === "off",
     ).length;
-    this.shadowRoot.querySelector(".summary").textContent =
-      `${this.tags.length} ESLs · ${errors} errors · ${unsynced} not in sync`;
+    this.shadowRoot.querySelector(".summary").textContent = t(
+      this.hass,
+      "{count} ESLs · {errors} errors · {unsynced} not in sync",
+      { count: this.tags.length, errors, unsynced },
+    );
     const query = this.query.toLocaleLowerCase().trim();
     const tags = this.tags.filter(
       (tag) =>
@@ -280,7 +295,7 @@ class EslManager extends HTMLElement {
     const action = focused?.dataset.action;
     grid.innerHTML =
       tags.map((tag) => this.card(tag)).join("") ||
-      `<div class="empty">${this.tags.length ? "No ESLs match your search or filter." : "Add a BLE ESL device in Settings → Devices & services."}</div>`;
+      `<div class="empty">${this.tags.length ? t(this.hass, "No ESLs match your search or filter.") : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
     if (entry && (entity || action))
       grid
         .querySelector(

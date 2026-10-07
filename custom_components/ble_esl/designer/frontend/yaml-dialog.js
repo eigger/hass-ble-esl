@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -24,12 +25,17 @@ export class YamlDialog extends HTMLElement {
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
     this.shadowRoot.addEventListener("change", (event) => this.change(event));
   }
-  open(result, onClose) {
+  open(result, onClose, hass) {
+    this.hass = hass;
     this.result = result;
     this.onClose = onClose;
     this.view = "payload";
     // With templates in the design the automation should keep them.
     this.live = "live_payload" in result;
+    this.render();
+  }
+  updateHass(hass) {
+    this.hass = hass;
     this.render();
   }
   get text() {
@@ -56,23 +62,29 @@ export class YamlDialog extends HTMLElement {
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .check{display:flex;gap:6px;align-items:center;font-size:13px}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
-    </style><dialog aria-label="Payload YAML"><form method="dialog">
-      <h2>Payload YAML</h2>
+    </style><dialog aria-label="${t(this.hass, "Payload YAML")}"><form method="dialog">
+      <h2>${t(this.hass, "Payload YAML")}</h2>
       <div class="tabs" role="tablist">${shown
         .map(
           ([key, label]) =>
-            `<button type="button" role="tab" data-view="${key}" aria-selected="${key === this.view}">${label}</button>`,
+            `<button type="button" role="tab" data-view="${key}" aria-selected="${key === this.view}">${t(this.hass, label)}</button>`,
         )
         .join("")}</div>
-      <p class="muted">${esc(hint)} ${
+      <p class="muted">${esc(t(this.hass, hint))} ${
         this.live
-          ? "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now."
-          : "Values are as of now. Use the automation action to schedule tag updates in Home Assistant."
+          ? t(
+              this.hass,
+              "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
+            )
+          : t(
+              this.hass,
+              "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
+            )
       }</p>
-      ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> Keep templates (values follow the sensors)</label>` : ""}
+      ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
       ${this.result.issues.length ? `<ul class="issues">${this.result.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
       <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
-      <div class="actions"><button type="button" data-copy class="primary">Copy</button><button type="button" data-close>Close</button></div>
+      <div class="actions"><button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
     </form></dialog>`;
     const dialog = this.shadowRoot.querySelector("dialog");
     dialog.addEventListener("cancel", (event) => {
@@ -110,7 +122,9 @@ export class YamlDialog extends HTMLElement {
         this.shadowRoot.querySelector("textarea").select();
         copied = document.execCommand("copy");
       }
-      button.textContent = copied ? "Copied" : "Press Ctrl+C to copy";
+      button.textContent = copied
+        ? t(this.hass, "Copied")
+        : t(this.hass, "Press Ctrl+C to copy");
     }
   }
 }

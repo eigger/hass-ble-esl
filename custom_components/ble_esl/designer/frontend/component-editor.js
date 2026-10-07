@@ -1,3 +1,4 @@
+import { t, language, rerenderWithDialogs } from "./i18n.js";
 import "./dynamic-fields.js";
 import { clone, newElement } from "./model.js";
 const esc = (value) =>
@@ -13,9 +14,7 @@ const focusSelectorFor = (element) => {
   if (element.id) return `#${CSS.escape(element.id)}`;
   const identity = [...element.attributes]
     .filter((attribute) => attribute.name.startsWith("data-"))
-    .map(
-      (attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`,
-    )
+    .map((attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`)
     .join("");
   return identity ? `${element.tagName.toLowerCase()}${identity}` : null;
 };
@@ -88,15 +87,19 @@ export class ComponentEditor extends HTMLElement {
         this.picker(
           draft.icon,
           draft.type === "conditional_icon"
-            ? "Fallback icon (blank = HA)"
-            : "Icon (blank = HA)",
+            ? t(this.hass, "Fallback icon (blank = HA)")
+            : t(this.hass, "Icon (blank = HA)"),
           (value) => (draft.icon = value),
         ),
       );
     this.shadowRoot.querySelectorAll("[data-rule-icon]").forEach((node) => {
       const rule = draft.icon_rules[Number(node.dataset.ruleIcon)];
       node.replaceChildren(
-        this.picker(rule.icon, "Rule icon", (value) => (rule.icon = value)),
+        this.picker(
+          rule.icon,
+          t(this.hass, "Rule icon"),
+          (value) => (rule.icon = value),
+        ),
       );
     });
   }
@@ -105,9 +108,9 @@ export class ComponentEditor extends HTMLElement {
     const numeric = ["gauge", "progress_bar"].includes(d.type);
     const conditional = d.type === "conditional_icon";
     this.shadowRoot.innerHTML = `<style>:host{font-family:var(--primary-font-family,Roboto,Arial);color:var(--primary-text-color)}dialog{width:min(960px,calc(100vw - 40px));max-height:90vh;padding:0;border:0;border-radius:16px;background:var(--card-background-color,white);color:inherit;box-shadow:0 12px 70px #0005}dialog::backdrop{background:#0006}header,footer{display:flex;align-items:center;gap:12px;padding:16px 24px}header h2{margin:0;flex:1}button,input,select,textarea{font:inherit}button{padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;background:var(--card-background-color,white);color:inherit;cursor:pointer}button.active,.primary{border-color:var(--primary-color,#16838b);color:var(--primary-color,#16838b)}.content{padding:0 24px 20px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(180px,1fr);gap:24px}[hidden]{display:none!important}.types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;grid-column:1/-1}.types button{display:flex;gap:6px;align-items:center;justify-content:center}.controls{display:flex;flex-direction:column;gap:14px}label{display:flex;flex-direction:column;gap:6px}input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:6px;background:inherit;color:inherit}.pair{display:flex;gap:8px}.pair>*{flex:1;min-width:0}.preview{position:sticky;top:0;align-self:start;min-height:220px;display:flex;flex-direction:column;gap:12px}.pixels{height:240px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e5e9ec 0% 25%,transparent 0% 50%) 0/16px 16px;border-radius:8px}.pixels img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.state{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;display:flex;gap:10px;align-items:center}.rules{display:flex;flex-direction:column;gap:10px}.rule{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px}.rule .pair{align-items:end}.remove{flex:0!important}.hint{font-size:12px;opacity:.7}.error{color:var(--error-color,#c33)}footer{justify-content:flex-end;border-top:1px solid var(--divider-color,#ddd)}ha-icon-picker,ha-entity-picker{display:block;min-width:0} @media(max-width:650px){.content{grid-template-columns:1fr}.types{grid-template-columns:repeat(2,1fr)}.preview{position:static}.pixels{height:160px}}</style>
-      <dialog aria-label="Component editor"><header><h2>${this.original ? (d.type === "sensor" ? "Edit sensor" : "Edit component") : "Add component"}</h2><button id="close" aria-label="Close component editor">×</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" aria-pressed="${d.type === type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${name}</button>`).join("")}</div><section class="controls"><button id="dynamic">ƒ Dynamic fields…</button><ha-entity-picker id="source"></ha-entity-picker><label>Data<select id="field" aria-label="Component data"><option value="">${this.panel.mode === "template" ? "Static / template tokens" : d.type === "sensor" ? "Sensor tile (value, unit and name)" : "Static content"}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? "Entity name" : field === "state" ? "State value" : field === "attribute" ? "Attribute" : field[0].toUpperCase() + field.slice(1)}</option>`).join("")}</select></label>${
+      <dialog aria-label="${t(this.hass, "Component editor")}"><header><h2>${this.original ? (d.type === "sensor" ? t(this.hass, "Edit sensor") : t(this.hass, "Edit component")) : t(this.hass, "Add component")}</h2><button id="close" aria-label="${t(this.hass, "Close component editor")}">×</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" aria-pressed="${d.type === type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${t(this.hass, name)}</button>`).join("")}</div><section class="controls"><button id="dynamic">${t(this.hass, "ƒ Dynamic fields…")}</button><ha-entity-picker id="source"></ha-entity-picker><label>${t(this.hass, "Data")}<select id="field" aria-label="${t(this.hass, "Component data")}"><option value="">${this.panel.mode === "template" ? t(this.hass, "Static / template tokens") : d.type === "sensor" ? t(this.hass, "Sensor tile (value, unit and name)") : t(this.hass, "Static content")}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? t(this.hass, "Entity name") : field === "state" ? t(this.hass, "State value") : field === "attribute" ? t(this.hass, "Attribute") : t(this.hass, field[0].toUpperCase() + field.slice(1))}</option>`).join("")}</select></label>${
         d.data_field === "attribute"
-          ? `<label>Attribute<select id="attribute" aria-label="Component attribute">${Object.keys(
+          ? `<label>${t(this.hass, "Attribute")}<select id="attribute" aria-label="${t(this.hass, "Component attribute")}">${Object.keys(
               this.hass.states[d.entity_id || this.panel.sampleEntity]
                 ?.attributes || {},
             )
@@ -118,13 +121,13 @@ export class ComponentEditor extends HTMLElement {
               .join("")}</select></label>`
           : ""
       }
-      ${d.type === "text" ? `<label>Text<textarea id="text" aria-label="Component text" ${d.data_field ? "disabled" : ""}>${esc(d.text)}</textarea></label><div class="pair"><label>Font size<input id="font_size" aria-label="Component font size" type="number" value="${d.font_size}"></label><label>Decimals<input id="decimals" aria-label="Component decimals" type="number" min="0" max="6" placeholder="Automatic" value="${d.decimals ?? ""}"></label></div>` : ""}
+      ${d.type === "text" ? `<label>${t(this.hass, "Text")}<textarea id="text" aria-label="${t(this.hass, "Component text")}" ${d.data_field ? "disabled" : ""}>${esc(d.text)}</textarea></label><div class="pair"><label>${t(this.hass, "Font size")}<input id="font_size" aria-label="${t(this.hass, "Component font size")}" type="number" value="${d.font_size}"></label><label>${t(this.hass, "Decimals")}<input id="decimals" aria-label="${t(this.hass, "Component decimals")}" type="number" min="0" max="6" placeholder="${t(this.hass, "Automatic")}" value="${d.decimals ?? ""}"></label></div>` : ""}
       ${["icon", "conditional_icon"].includes(d.type) ? '<div id="fallback-icon"></div>' : ""}
-      ${conditional ? `<div class="rules"><strong>State → icon</strong><span class="hint">First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.</span>${d.icon_rules.map((rule, index) => `<div class="rule"><div class="pair">${rule.kind === "range" ? `<label>From ≥<input type="number" step="any" data-rule="${index}" data-key="min" aria-label="Range ${index + 1} minimum" value="${rule.min ?? ""}"></label><label>To &lt;<input type="number" step="any" data-rule="${index}" data-key="max" aria-label="Range ${index + 1} maximum" value="${rule.max ?? ""}"></label>` : `<label>State<input data-rule="${index}" data-key="state" aria-label="Rule ${index + 1} state" value="${esc(rule.state)}"></label>`}<button class="remove" data-remove="${index}" aria-label="Remove rule ${index + 1}">×</button></div><div data-rule-icon="${index}"></div></div>`).join("")}<div class="pair"><button id="add-state">＋ State</button><button id="add-range">＋ Range</button></div></div>` : ""}
-      ${numeric ? `<div class="pair"><label>Minimum<input id="min_value" aria-label="Component minimum" type="number" value="${d.min_value ?? 0}"></label><label>Maximum<input id="max_value" aria-label="Component maximum" type="number" value="${d.max_value ?? 100}"></label></div>${!d.data_field ? `<label>Value<input id="value" type="number" value="${d.value ?? 0}"></label>` : ""}` : ""}
-      ${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].includes(d.type) ? `<label>Shape<select id="shape" aria-label="Component shape">${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].map((type) => `<option value="${type}" ${type === d.type ? "selected" : ""}>${type.replaceAll("_", " ")}</option>`).join("")}</select></label>` : ""}
-      ${d.type === "image" ? '<label>Image<input id="upload" type="file" accept="image/*"></label>' : ""}
-      <div class="pair"><label>Width<input id="width" aria-label="Component width" type="number" min="1" value="${d.width}"></label><label>Height<input id="height" aria-label="Component height" type="number" min="1" value="${d.height}"></label></div></section><section class="preview"><strong>Live preview</strong><div class="state" id="current-state"></div><div class="pixels"><img id="pixels" alt="Component pixel preview"></div><div class="error" role="status"></div></section></div><footer><button id="cancel">Cancel</button><button id="apply" class="primary">${this.original ? "Apply" : "Add to display"}</button></footer></dialog>`;
+      ${conditional ? `<div class="rules"><strong>${t(this.hass, "State → icon")}</strong><span class="hint">${t(this.hass, "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.")}</span>${d.icon_rules.map((rule, index) => `<div class="rule"><div class="pair">${rule.kind === "range" ? `<label>${t(this.hass, "From ≥")}<input type="number" step="any" data-rule="${index}" data-key="min" aria-label="Range ${index + 1} minimum" value="${rule.min ?? ""}"></label><label>To &lt;<input type="number" step="any" data-rule="${index}" data-key="max" aria-label="Range ${index + 1} maximum" value="${rule.max ?? ""}"></label>` : `<label>${t(this.hass, "State")}<input data-rule="${index}" data-key="state" aria-label="Rule ${index + 1} state" value="${esc(rule.state)}"></label>`}<button class="remove" data-remove="${index}" aria-label="Remove rule ${index + 1}">×</button></div><div data-rule-icon="${index}"></div></div>`).join("")}<div class="pair"><button id="add-state">${t(this.hass, "＋ State")}</button><button id="add-range">${t(this.hass, "＋ Range")}</button></div></div>` : ""}
+      ${numeric ? `<div class="pair"><label>${t(this.hass, "Minimum")}<input id="min_value" aria-label="${t(this.hass, "Component minimum")}" type="number" value="${d.min_value ?? 0}"></label><label>${t(this.hass, "Maximum")}<input id="max_value" aria-label="${t(this.hass, "Component maximum")}" type="number" value="${d.max_value ?? 100}"></label></div>${!d.data_field ? `<label>${t(this.hass, "Value")}<input id="value" type="number" value="${d.value ?? 0}"></label>` : ""}` : ""}
+      ${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].includes(d.type) ? `<label>${t(this.hass, "Shape")}<select id="shape" aria-label="${t(this.hass, "Component shape")}">${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].map((type) => `<option value="${type}" ${type === d.type ? "selected" : ""}>${type.replaceAll("_", " ")}</option>`).join("")}</select></label>` : ""}
+      ${d.type === "image" ? `<label>${t(this.hass, "Image")}<input id="upload" type="file" accept="image/*"></label>` : ""}
+      <div class="pair"><label>${t(this.hass, "Width")}<input id="width" aria-label="${t(this.hass, "Component width")}" type="number" min="1" value="${d.width}"></label><label>${t(this.hass, "Height")}<input id="height" aria-label="${t(this.hass, "Component height")}" type="number" min="1" value="${d.height}"></label></div></section><section class="preview"><strong>${t(this.hass, "Live preview")}</strong><div class="state" id="current-state"></div><div class="pixels"><img id="pixels" alt="${t(this.hass, "Component pixel preview")}"></div><div class="error" role="status"></div></section></div><footer><button id="cancel">${t(this.hass, "Cancel")}</button><button id="apply" class="primary">${this.original ? t(this.hass, "Apply") : t(this.hass, "Add to display")}</button></footer></dialog>`;
     const root = this.shadowRoot;
     root.querySelector("dialog").addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -218,8 +221,10 @@ export class ComponentEditor extends HTMLElement {
       root.querySelector("#" + id).onclick = () => this.close();
     root.querySelector("#apply").onclick = () => {
       if (d.type === "sensor" && !d.entity_id) {
-        root.querySelector("[role=status]").textContent =
-          "Choose an entity for the sensor tile.";
+        root.querySelector("[role=status]").textContent = t(
+          this.hass,
+          "Choose an entity for the sensor tile.",
+        );
         return;
       }
       this.panel.checkpoint();
@@ -239,8 +244,8 @@ export class ComponentEditor extends HTMLElement {
     source.hass = this.hass;
     source.label =
       this.panel.mode === "template"
-        ? "Data source (blank = sample sensor)"
-        : "Data source";
+        ? t(this.hass, "Data source (blank = sample sensor)")
+        : t(this.hass, "Data source");
     source.allowCustomEntity = false;
     source.value = d.entity_id || "";
     source.addEventListener("value-changed", (event) => {
@@ -297,7 +302,7 @@ export class ComponentEditor extends HTMLElement {
     const node = this.shadowRoot.querySelector("#current-state");
     node.innerHTML = state
       ? `<ha-state-icon></ha-state-icon><span>${esc(this.panel.entityName(state))}<br><strong>${esc(this.hass.formatEntityState?.(state) || state.state)}</strong></span>`
-      : "Static content";
+      : t(this.hass, "Static content");
     const icon = node.querySelector("ha-state-icon");
     if (icon) {
       icon.hass = this.hass;
@@ -305,11 +310,14 @@ export class ComponentEditor extends HTMLElement {
     }
   }
   updateHass(hass) {
+    const changedLanguage = language(this.hass) !== language(hass);
     const id = this.draft.entity_id || this.panel.sampleEntity;
     const changed = [id, ...(this.templateEntities || [])].some(
       (id) => this.hass.states[id] !== hass.states[id],
     );
     this.hass = hass;
+    if (changedLanguage)
+      rerenderWithDialogs(this.shadowRoot, hass, () => this.redraw());
     const picker = this.shadowRoot.querySelector("#source");
     if (picker) picker.hass = hass;
     this.currentState();
@@ -364,4 +372,5 @@ export class ComponentEditor extends HTMLElement {
     }, 250);
   }
 }
-if (!customElements.get("ble-esl-component-editor")) customElements.define("ble-esl-component-editor", ComponentEditor);
+if (!customElements.get("ble-esl-component-editor"))
+  customElements.define("ble-esl-component-editor", ComponentEditor);
