@@ -138,6 +138,9 @@
     }
     const states = await fetch("/states").then((response) => response.json());
     panel.hass = {
+      locale: {
+        language: new URLSearchParams(location.search).get("lang") || "en",
+      },
       states,
       formatEntityName: (state) => state.attributes.friendly_name,
       formatEntityState: (state) =>

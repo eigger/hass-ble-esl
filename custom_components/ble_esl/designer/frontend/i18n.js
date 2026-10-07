@@ -1,0 +1,489 @@
+// Translate UI copy only. Entity names, design content and payloads stay untouched.
+const ko = {
+  "Sending failed{error}": "전송 실패{error}",
+  "component specs": "컴포넌트 정의",
+  "{count} ESLs · {errors} errors · {unsynced} not in sync":
+    "ESL {count}개 · 오류 {errors}개 · 동기화 필요 {unsynced}개",
+  "{count} automations · {active} active": "자동화 {count}개 · 활성 {active}개",
+  "Battery {value}": "배터리 {value}",
+  "Last successful image for {alias}": "{alias}의 마지막 전송 성공 이미지",
+  "Skipped: {reason}": "건너뜀: {reason}",
+  "Text / value": "텍스트 / 값",
+  "Conditional icon": "조건부 아이콘",
+  "Progress bar": "진행 막대",
+  "Keyboard &amp; mouse tips": "키보드 및 마우스 안내",
+  "Keyboard & mouse tips": "키보드 및 마우스 안내",
+  "Display sent and acknowledged": "화면 전송 및 확인 완료",
+  "Not sent: the tag's write lock is on": "전송하지 않음: ESL 쓰기 잠금 활성",
+  "Not sent: the display is unchanged": "전송하지 않음: 화면 변경 없음",
+  "Not sent: a newer write replaced this one":
+    "전송하지 않음: 새로운 전송으로 대체됨",
+  "Sending failed": "전송 실패",
+  "Loading {step}… ({done}/{count})": "{step} 불러오는 중… ({done}/{count})",
+  "sensor templates": "센서 템플릿",
+  "element types": "요소 유형",
+  "tags and displays": "ESL 및 화면",
+  "default (shrink ellipsis)": "기본값 (축소 및 말줄임)",
+  "default (right)": "기본값 (오른쪽)",
+  "default (floyd)": "기본값 (floyd)",
+  "off (default)": "끄기 (기본값)",
+  "shrink ellipsis": "축소 및 말줄임",
+  "rounded rectangle": "둥근 사각형",
+  "default ({value})": "기본값 ({value})",
+  " (required)": " (필수)",
+  "Text fields accept Jinja templates, e.g.":
+    "텍스트 필드에 Jinja 템플릿을 사용할 수 있습니다. 예:",
+  "Not valid JSON: check the brackets and quotes":
+    "올바른 JSON이 아닙니다. 괄호와 따옴표를 확인하세요",
+  "Enter a number, or a {{ template }}":
+    "숫자 또는 {{ template }}을 입력하세요",
+  "Toggle {label} panel": "{label} 패널 열기/닫기",
+  "Move {label} forward": "{label} 앞으로 이동",
+  "Move {label} backward": "{label} 뒤로 이동",
+  "Delete {label}": "{label} 삭제",
+  "Resize {corner}": "{corner} 크기 변경",
+  "Converted to {count} elements, drawn exactly as before{skipped}":
+    "요소 {count}개로 변환됨. 이전과 동일하게 표시{skipped}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
+    "요소 {count}개로 변환됨. 이전과 {pixels}픽셀 차이{skipped}",
+  "; {count} not converted": "; {count}개 변환하지 못함",
+  "{count} placed, {skipped} skipped.": "{count}개 배치, {skipped}개 건너뜀.",
+  "Font size": "글꼴 크기",
+  "Min value": "최솟값",
+  "Max value": "최댓값",
+  "Image fit": "이미지 맞춤",
+  "Show label": "이름 표시",
+  "Show unit": "단위 표시",
+  "Align left": "왼쪽 정렬",
+  "Align center": "가운데 정렬",
+  "Align right": "오른쪽 정렬",
+  "Add a BLE ESL device in Settings → Devices & services first.":
+    "먼저 설정 → 기기 및 서비스에서 BLE ESL 기기를 추가하세요.",
+  "Add a BLE ESL device in Settings → Devices & services.":
+    "설정 → 기기 및 서비스에서 BLE ESL 기기를 추가하세요.",
+  "Add component": "컴포넌트 추가",
+  "Add element": "요소 추가",
+  "Add element…": "요소 추가…",
+  "Add icon": "아이콘 추가",
+  "Add image": "이미지 추가",
+  "Add selected sensor": "선택한 센서 추가",
+  "Add shape": "도형 추가",
+  "Add state mapping": "상태 매핑 추가",
+  "Add text": "텍스트 추가",
+  "Add to display": "화면에 추가",
+  "All ESLs": "모든 ESL",
+  "All elements": "모든 요소",
+  "All states": "모든 상태",
+  "Another HA entity": "다른 HA 엔티티",
+  "Another state": "다른 상태",
+  "Apply templates": "템플릿 적용",
+  "Arc thickness": "호 두께",
+  "Automations unavailable · Retry": "자동화를 불러올 수 없음 · 재시도",
+  "BLE ESL integration version": "BLE ESL 통합 버전",
+  "Battery —": "배터리 —",
+  "Binary condition": "이진 조건",
+  "Bound entity": "연결된 엔티티",
+  "Bring forward": "앞으로 이동",
+  "Bring front": "맨 앞으로 이동",
+  "By sensor type": "센서 유형별",
+  "Center horizontally": "가로 가운데 정렬",
+  "Checking display…": "화면 확인 중…",
+  "Choose a sample sensor above to preview this template.":
+    "위에서 미리보기에 사용할 센서를 선택하세요.",
+  "Choose an automation…": "자동화를 선택하세요…",
+  "Choose an entity for the sensor tile.":
+    "센서 타일에 사용할 엔티티를 선택하세요.",
+  "Choose an existing automation.": "기존 자동화를 선택하세요.",
+  "Choose icon": "아이콘 선택",
+  "Click a block to move, resize, or bind it to an entity.":
+    "블록을 클릭하여 이동하거나 크기를 변경하고 엔티티를 연결하세요.",
+  "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
+    "클릭으로 선택 · 텍스트 클릭으로 편집 · 드래그로 이동 · 모서리를 드래그하여 크기 변경 · 가장자리와 중앙에 정렬 안내선 표시 · 방향키로 1 px 이동 · Shift + 방향키로 10 px 이동 · Enter로 텍스트 편집 · Delete / Backspace로 삭제 · 우클릭으로 메뉴 · ⌘/Ctrl + D 복제 · ⌘/Ctrl + S 저장 · ⌘/Ctrl + Z 실행 취소 · ⌘/Ctrl + Shift + Z 다시 실행",
+  "Close automations": "자동화 닫기",
+  "Close component editor": "컴포넌트 편집기 닫기",
+  "Close dynamic fields": "동적 필드 닫기",
+  "Component attribute": "컴포넌트 속성",
+  "Component data": "컴포넌트 데이터",
+  "Component decimals": "컴포넌트 소수 자릿수",
+  "Component editor": "컴포넌트 편집기",
+  "Component font size": "컴포넌트 글꼴 크기",
+  "Component height": "컴포넌트 높이",
+  "Component maximum": "컴포넌트 최댓값",
+  "Component minimum": "컴포넌트 최솟값",
+  "Component pixel preview": "컴포넌트 픽셀 미리보기",
+  "Component shape": "컴포넌트 도형",
+  "Component text": "컴포넌트 텍스트",
+  "Component width": "컴포넌트 너비",
+  "Connected automations": "연결된 자동화",
+  "Convert to elements": "요소로 변환",
+  "Converting…": "변환 중…",
+  "Corner radius": "모서리 반경",
+  "Crop to circle": "원형으로 자르기",
+  "Data source": "데이터 소스",
+  "Data source (blank = sample sensor)": "데이터 소스 (비워두면 샘플 센서)",
+  "Decimals (auto when blank)": "소수 자릿수 (비워두면 자동)",
+  "Default font": "기본 글꼴",
+  "Delete selected element": "선택한 요소 삭제",
+  "Designer mode": "디자이너 모드",
+  "Discovery only: preview is available; sending is not supported yet.":
+    "검색만 지원: 미리보기는 가능하지만 전송은 아직 지원하지 않습니다.",
+  "Dismiss message": "메시지 닫기",
+  "Display canvas": "화면 캔버스",
+  "Display saved": "화면 저장됨",
+  "Dynamic field pixel preview": "동적 필드 픽셀 미리보기",
+  "Dynamic fields": "동적 필드",
+  "ESL Designer": "ESL 디자이너",
+  "ESL Manager": "ESL 매니저",
+  "Edit alias": "별칭 편집",
+  "Edit component": "컴포넌트 편집",
+  "Edit design": "디자인 편집",
+  "Edit display text": "화면 텍스트 편집",
+  "Edit sensor": "센서 편집",
+  "Editing preview": "편집 미리보기",
+  "Element actions": "요소 작업",
+  "Element properties": "요소 속성",
+  "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
+    "요소 템플릿은 입력한 그대로 유지되며 자동화 실행 시 Home Assistant가 렌더링합니다. 센서 컴포넌트와 필드 템플릿은 현재 값입니다.",
+  "Entity name": "엔티티 이름",
+  "Every element type the tag can draw, set field by field: choose one, then press":
+    "ESL이 표시할 수 있는 요소를 필드별로 설정합니다. 유형을 선택한 후 누르세요:",
+  "Exact rendered display": "실제 렌더링 화면",
+  "Exact rendered preview": "실제 렌더링 미리보기",
+  "Existing automation": "기존 자동화",
+  "Export JSON": "JSON 내보내기",
+  "Exporting payload…": "페이로드 내보내는 중…",
+  "Fallback icon (blank = HA)": "대체 아이콘 (비워두면 HA)",
+  "Field template": "필드 템플릿",
+  "Filter ESLs": "ESL 필터",
+  "Finish the current editor operation before switching ESLs.":
+    "진행 중인 편집 작업을 마친 후 다른 ESL로 전환하세요.",
+  "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
+    "첫 번째 일치 규칙을 적용합니다. 범위는 하한을 포함하고 상한을 제외합니다. 경계를 비워두면 제한하지 않습니다.",
+  "Fit preview": "미리보기 맞춤",
+  "Font file": "글꼴 파일",
+  "From ≥": "시작 ≥",
+  "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
+    "HA Jinja 템플릿입니다. 변수: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() 등 HA 템플릿 함수를 사용할 수 있습니다.",
+  "HA state icon": "HA 상태 아이콘",
+  "HA tile": "HA 타일",
+  "Hidden: click to show": "숨김: 클릭하여 표시",
+  "Icon (blank = HA)": "아이콘 (비워두면 HA)",
+  "Icon name": "아이콘 이름",
+  "Image URL": "이미지 URL",
+  "Image added": "이미지 추가됨",
+  "Image upload failed": "이미지 업로드 실패",
+  "Import JSON": "JSON 가져오기",
+  "Import YAML": "YAML 가져오기",
+  "In 2 days": "모레",
+  "In 3 days": "3일 후",
+  "In sync": "동기화됨",
+  "Insert template": "템플릿 삽입",
+  "Keep templates (values follow the sensors)":
+    "템플릿 유지 (센서 값에 따라 변경)",
+  "Label override": "표시 이름 재정의",
+  "Last successful send": "마지막 전송 성공",
+  "Later today": "오늘 이후",
+  "Line spacing": "줄 간격",
+  "Link automation": "자동화 연결",
+  "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
+    "기존 자동화를 이 ESL에 연결합니다. 자동화 동작을 변경하거나 디자인을 적용하지 않습니다.",
+  "Live Home Assistant data on e-paper":
+    "전자종이에 표시하는 Home Assistant 데이터",
+  "Live preview": "미리보기",
+  "Loading ESLs…": "ESL 불러오는 중…",
+  "Loading automations…": "자동화 불러오는 중…",
+  "Loading designer": "디자이너 불러오는 중",
+  "Loading image…": "이미지 불러오는 중…",
+  "Loading…": "불러오는 중…",
+  "Low temperature": "최저 기온",
+  "Max lines": "최대 줄 수",
+  "Min font size": "최소 글꼴 크기",
+  "Move selected element": "선택한 요소 이동",
+  "New icon state": "새 아이콘 상태",
+  "No ESLs match your search or filter.":
+    "검색 또는 필터에 맞는 ESL이 없습니다.",
+  "No connected automations": "연결된 자동화 없음",
+  "No error": "오류 없음",
+  "No matching automations": "일치하는 자동화 없음",
+  "No successful image": "전송 성공 이미지 없음",
+  "No successful send": "전송 성공 기록 없음",
+  "No transmission result": "전송 결과 없음",
+  "Not in sync": "동기화 필요",
+  "Nothing could be placed.": "배치할 수 있는 요소가 없습니다.",
+  "Nothing to convert": "변환할 요소 없음",
+  "Numeric condition": "숫자 조건",
+  "Outline colour": "윤곽선 색상",
+  "Outline width": "윤곽선 두께",
+  "Paste a URL, or upload below": "URL을 붙여넣거나 아래에서 업로드하세요",
+  "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
+    "페이로드 (imagespec 요소 목록) 또는 ble_esl.write 동작 전체를 붙여넣으세요. 템플릿이나 흐름 레이아웃으로 배치된 요소는 디자이너에 배치할 수 없으며 목록으로 표시합니다.",
+  "Payload YAML": "페이로드 YAML",
+  "Payload exported": "페이로드 내보냄",
+  "Position & size (px)": "위치 및 크기 (px)",
+  "Press Ctrl+C to copy": "Ctrl+C를 눌러 복사하세요",
+  "Preview updating": "미리보기 갱신 중",
+  "Preview updating…": "미리보기 갱신 중…",
+  "Preview zoom": "미리보기 확대/축소",
+  "Rain / snow": "비 / 눈",
+  "Rain chance": "강수 확률",
+  "Redo (⌘/Ctrl Shift Z)": "다시 실행 (⌘/Ctrl Shift Z)",
+  "Refresh tags": "ESL 새로고침",
+  "Refreshing tags…": "ESL 새로고침 중…",
+  "Remove manual link": "수동 연결 제거",
+  "Replace display": "화면 대체",
+  "Resolved value": "해석된 값",
+  "Rotate (°)": "회전 (°)",
+  "Rule icon": "규칙 아이콘",
+  "Sample sensor": "샘플 센서",
+  "Save (unsaved changes)": "저장 (미저장 변경 사항)",
+  "Save (unsaved changes) (⌘/Ctrl S)": "저장 (미저장 변경 사항) (⌘/Ctrl S)",
+  "Search ESLs": "ESL 검색",
+  "Search aliases or devices": "별칭 또는 기기 검색",
+  "Search automations": "자동화 검색",
+  "Search by name": "이름으로 검색",
+  "Search icons": "아이콘 검색",
+  "Search sensors": "센서 검색",
+  "Select an element": "요소 선택",
+  "Send back": "맨 뒤로 이동",
+  "Send backward": "뒤로 이동",
+  "Send to tag": "ESL에 전송",
+  "Sending display…": "화면 전송 중…",
+  "Sensor template": "센서 템플릿",
+  "Sensor templates": "센서 템플릿",
+  "Sensor tile (value, unit and name)": "센서 타일 (값, 단위, 이름)",
+  "Show for state": "표시할 상태",
+  "Show percentage": "백분율 표시",
+  "Show value": "값 표시",
+  "State icon": "상태 아이콘",
+  "State value": "상태 값",
+  "State → icon": "상태 → 아이콘",
+  "Static / template tokens": "고정값 / 템플릿 토큰",
+  "Static content": "고정 내용",
+  "Sync unknown": "동기화 상태 알 수 없음",
+  "Template height": "템플릿 높이",
+  "Template name": "템플릿 이름",
+  "Template parts": "템플릿 구성",
+  "Template saved": "템플릿 저장됨",
+  "Template width": "템플릿 너비",
+  "Text alignment": "텍스트 정렬",
+  "The element changed; nothing was converted":
+    "요소가 변경되어 변환하지 않았습니다",
+  "The four icon buttons add a text, shape, icon or image in one click.":
+    "아이콘 버튼으로 텍스트, 도형, 아이콘, 이미지를 바로 추가할 수 있습니다.",
+  "This element needs a renderer preview to show its current appearance":
+    "현재 모습을 표시하려면 렌더링 미리보기가 필요합니다",
+  "Transmission duration": "전송 소요 시간",
+  "Transmission error": "전송 오류",
+  "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
+    "필드별 편집을 위해 imagespec 요소로 변환합니다. 센서 값은 템플릿으로 바뀝니다",
+  "Undo (⌘/Ctrl Z)": "실행 취소 (⌘/Ctrl Z)",
+  "Unsaved changes": "미저장 변경 사항",
+  "Upload image": "이미지 업로드",
+  "Use static value": "고정값 사용",
+  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
+    "현재 시점의 값입니다. Home Assistant 자동화 동작으로 ESL 업데이트를 예약하세요.",
+  "Vertical align": "세로 정렬",
+  "Visible state": "표시할 상태",
+  "Weather time": "날씨 시점",
+  "Weather value": "날씨 값",
+  "Wind speed": "풍속",
+  "Working…": "작업 중…",
+  "YAML to import": "가져올 YAML",
+  "Zoom in": "확대",
+  "Zoom out": "축소",
+  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
+    "컴포넌트 편집기에서 센서 값, 진행 막대, 게이지, 조건부 아이콘 등을 선택할 수 있습니다.",
+  "ƒ Dynamic fields…": "ƒ 동적 필드…",
+  "← Dashboard": "← 대시보드",
+  "＋ Add component": "＋ 컴포넌트 추가",
+  "＋ Create template…": "＋ 템플릿 생성…",
+  "＋ Insert template…": "＋ 템플릿 삽입…",
+  "＋ Range": "＋ 범위",
+  "＋ State": "＋ 상태",
+  "Automation action": "자동화 동작",
+  "Paste under `payload:` of a ble_esl.write action.":
+    "ble_esl.write 동작의 `payload:` 아래에 붙여넣으세요.",
+  "A complete action for a script or automation.":
+    "스크립트 또는 자동화에 사용할 완전한 동작입니다.",
+  " · References this ESL": " · 이 ESL 참조",
+  " · Linked manually": " · 수동 연결",
+  Active: "활성",
+  Add: "추가",
+  Advanced: "고급",
+  Align: "정렬",
+  Apply: "적용",
+  Attribute: "속성",
+  Automatic: "자동",
+  Automations: "자동화",
+  Background: "배경",
+  Cancel: "취소",
+  Close: "닫기",
+  Colour: "색상",
+  Components: "컴포넌트",
+  Condition: "조건",
+  Configure: "설정",
+  Content: "내용",
+  Copied: "복사됨",
+  Copy: "복사",
+  Data: "데이터",
+  Decimals: "소수 자릿수",
+  Delete: "삭제",
+  Designer: "디자이너",
+  Direction: "방향",
+  Display: "화면",
+  Dither: "디더링",
+  Duplicate: "복제",
+  Entities: "엔티티",
+  Errors: "오류",
+  Filled: "채우기",
+  Fit: "맞춤",
+  Height: "높이",
+  Hide: "숨기기",
+  Humidity: "습도",
+  Icon: "아이콘",
+  Image: "이미지",
+  Inactive: "비활성",
+  Layers: "레이어",
+  Maximum: "최댓값",
+  Minimum: "최솟값",
+  Name: "이름",
+  Now: "현재",
+  Padding: "여백",
+  Ready: "준비됨",
+  Redo: "다시 실행",
+  Refresh: "새로고침",
+  Retry: "재시도",
+  Save: "저장",
+  Sensor: "센서",
+  Shape: "도형",
+  Show: "표시",
+  State: "상태",
+  Style: "스타일",
+  Tag: "ESL",
+  Temperature: "기온",
+  Template: "템플릿",
+  Text: "텍스트",
+  Tomorrow: "내일",
+  Unavailable: "사용할 수 없음",
+  Undo: "실행 취소",
+  Unlink: "연결 해제",
+  Value: "값",
+  Visible: "표시됨",
+  When: "조건",
+  Width: "너비",
+  Payload: "페이로드",
+  Gauge: "게이지",
+  Unit: "단위",
+  designer: "디자이너",
+  fonts: "글꼴",
+  icons: "아이콘",
+  default: "기본값",
+  none: "없음",
+  left: "왼쪽",
+  center: "가운데",
+  right: "오른쪽",
+  top: "위쪽",
+  middle: "중앙",
+  bottom: "아래쪽",
+  up: "위쪽",
+  down: "아래쪽",
+  contain: "비율 유지",
+  fill: "채우기",
+  stretch: "늘리기",
+  shrink: "축소",
+  ellipsis: "말줄임",
+  rectangle: "사각형",
+  ellipse: "타원",
+  triangle: "삼각형",
+  line: "선",
+  black: "검정",
+  white: "흰색",
+  red: "빨강",
+  yellow: "노랑",
+  transparent: "투명",
+  yes: "예",
+  no: "아니요",
+  entities: "엔티티",
+  properties: "속성",
+  Color: "색상",
+  Label: "표시 이름",
+  templates: "템플릿",
+  devices: "기기",
+};
+export const language = (hass) =>
+  String(hass?.locale?.language || hass?.language || "en")
+    .toLowerCase()
+    .split(/[-_]/)[0] === "ko"
+    ? "ko"
+    : "en";
+export function t(hass, key, values = {}) {
+  if (key && typeof key === "object") return t(hass, key.key, key.values);
+  const text = language(hass) === "ko" ? ko[key] || key : key;
+  return text.replace(/\{(\w+)\}/g, (match, name) =>
+    Object.hasOwn(values, name)
+      ? values[name] && typeof values[name] === "object"
+        ? t(hass, values[name])
+        : String(values[name])
+      : match,
+  );
+}
+// These bindings are captured only from constructor markup, before user data is inserted.
+const bindings = new WeakMap();
+export function bindStatic(root) {
+  const copy = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const key = node.textContent.trim();
+    if (Object.hasOwn(ko, key)) copy.push({ node, key });
+  }
+  for (const node of root.querySelectorAll("*"))
+    for (const attr of ["title", "aria-label", "placeholder", "alt"])
+      if (Object.hasOwn(ko, node.getAttribute(attr)))
+        copy.push({ node, attr, key: node.getAttribute(attr) });
+  bindings.set(root, copy);
+}
+export function localize(root, hass) {
+  for (const { node, attr, key } of bindings.get(root) || [])
+    if (attr) node.setAttribute(attr, t(hass, key));
+    else node.textContent = t(hass, key);
+}
+
+// Preserve modal hosts and their drafts when the surrounding markup changes language.
+export function rerenderWithDialogs(root, hass, render) {
+  const selector =
+    "ble-esl-component-editor, ble-esl-dynamic-fields, ble-esl-import-dialog, ble-esl-yaml-dialog";
+  const hosts = [...root.querySelectorAll(selector)];
+  const opened = [];
+  const inspect = (host) => {
+    const dialog = host.shadowRoot.querySelector("dialog");
+    if (dialog?.open) {
+      const active = host.shadowRoot.activeElement;
+      opened.push({
+        host,
+        activeId: active?.id,
+        selectionStart: active?.selectionStart,
+        selectionEnd: active?.selectionEnd,
+      });
+    }
+    for (const child of host.shadowRoot.querySelectorAll(selector))
+      inspect(child);
+  };
+  for (const host of hosts) inspect(host);
+  for (const { host } of [...opened].reverse())
+    host.shadowRoot.querySelector("dialog").close();
+  for (const host of hosts) host.remove();
+  render();
+  for (const host of hosts) {
+    root.append(host);
+    host.updateHass?.(hass);
+  }
+  for (const { host, activeId, selectionStart, selectionEnd } of opened) {
+    const dialog = host.shadowRoot.querySelector("dialog");
+    if (!dialog.open) dialog.showModal();
+    const active = activeId ? host.shadowRoot.getElementById(activeId) : null;
+    active?.focus({ preventScroll: true });
+    if (typeof selectionStart === "number")
+      active?.setSelectionRange(selectionStart, selectionEnd);
+  }
+}
