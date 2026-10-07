@@ -14,6 +14,15 @@ The image and **Last successful send** come from `last_updated_content`: the las
 
 Choose **Edit design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
+
+## Existing automation associations
+
+Open **Automations** on a card or **Connected automations** above the Designer. Cards show **Link automation** for zero associations, the name and state for one, or the count and active count for several. The list opens beside the card on desktop and as a bottom sheet on mobile. Each available automation name links to its HA editor.
+
+Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Payload YAML** to supply the design to an automation.
+
+Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
+
 - [Making a design](#making-a-design)
 - [Payload YAML: using the design in an automation](#payload-yaml)
 - [Import YAML: editing an existing payload](#import-yaml)

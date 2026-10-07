@@ -1,4 +1,5 @@
 import "./panel.js";
+import "./automation-dialog.js";
 
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
@@ -22,10 +23,25 @@ class EslManager extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.tags = [];
+    this.automationCache = new Map();
+    this.automationErrors = new Set();
+    this.automationVersions = new Map();
     this.query = "";
     this.filter = "all";
     this.view = "dashboard";
-    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>ESL Manager</h1><button data-action="refresh">Refresh</button></header><div class="controls"><input id="search" type="search" aria-label="Search ESLs" placeholder="Search aliases or devices"><select id="filter" aria-label="Filter ESLs"><option value="all">All ESLs</option><option value="error">Errors</option><option value="unsynced">Not in sync</option></select></div><div class="summary" role="status"></div><div class="grid"></div></section><p class="message" role="alert" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">← Dashboard</button><span>Designer</span></div><div id="editor-slot"></div></section>`;
+    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>ESL Manager</h1><button data-action="refresh">Refresh</button></header><div class="controls"><input id="search" type="search" aria-label="Search ESLs" placeholder="Search aliases or devices"><select id="filter" aria-label="Filter ESLs"><option value="all">All ESLs</option><option value="error">Errors</option><option value="unsynced">Not in sync</option></select></div><div class="summary" role="status"></div><div class="grid"></div></section><p class="message" role="alert" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">← Dashboard</button><span>Designer</span><button data-action="editor-automations">Connected automations</button></div><div id="editor-slot"></div></section>`;
+    this.automationDialog = document.createElement("ble-esl-automation-dialog");
+    this.shadowRoot.append(this.automationDialog);
+    this.addEventListener("automations-changed", (event) => {
+      const entryId = event.detail.entry_id;
+      this.automationVersions.set(
+        entryId,
+        (this.automationVersions.get(entryId) || 0) + 1,
+      );
+      this.automationCache.set(entryId, event.detail.data);
+      this.automationErrors.delete(event.detail.entry_id);
+      this.renderCards();
+    });
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
     this.shadowRoot
       .querySelector("#search")
@@ -55,6 +71,7 @@ class EslManager extends HTMLElement {
     const previous = this._hass;
     this._hass = value;
     if (this.editor) this.editor.hass = value;
+    this.automationDialog.updateHass(value);
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     menu.hass = value;
     menu.narrow = this.narrow;
@@ -64,6 +81,11 @@ class EslManager extends HTMLElement {
         Object.values(tag.entities || {}).some(
           (id) => previous?.states[id] !== value.states[id],
         ),
+      ) ||
+      Object.keys({ ...previous?.states, ...value.states }).some(
+        (id) =>
+          id.startsWith("automation.") &&
+          previous?.states[id] !== value.states[id],
       )
     )
       this.renderCards();
@@ -98,11 +120,81 @@ class EslManager extends HTMLElement {
     try {
       this.tags = await this.api("list");
       this.renderCards();
+      await this.loadAutomations();
     } catch (error) {
       this.message(error.message || String(error));
     } finally {
       button.disabled = false;
     }
+  }
+  async loadAutomations() {
+    const run = (this.automationRun = (this.automationRun || 0) + 1);
+    const tags = [...this.tags];
+    // Bound concurrent requests when many ESLs are configured.
+    for (let offset = 0; offset < tags.length; offset += 4) {
+      await Promise.all(
+        tags.slice(offset, offset + 4).map(async (tag) => {
+          const version = this.automationVersions.get(tag.entry_id);
+          try {
+            const data = await this.api("automations", {
+              entry_id: tag.entry_id,
+            });
+            if (
+              run !== this.automationRun ||
+              version !== this.automationVersions.get(tag.entry_id)
+            )
+              return;
+            this.automationCache.set(tag.entry_id, data);
+            this.automationErrors.delete(tag.entry_id);
+          } catch (error) {
+            if (
+              run === this.automationRun &&
+              version === this.automationVersions.get(tag.entry_id)
+            )
+              this.automationErrors.add(tag.entry_id);
+          }
+        }),
+      );
+      if (run !== this.automationRun) return;
+      this.renderCards();
+    }
+  }
+  automationLabel(tag) {
+    if (this.automationErrors.has(tag.entry_id))
+      return "Automations unavailable · Retry";
+    const data = this.automationCache.get(tag.entry_id);
+    if (!data) return "Loading automations…";
+    const linked = data.linked.map((item) => {
+      const state = !item.missing && this.hass.states[item.entity_id];
+      return state
+        ? {
+            ...item,
+            state: state.state,
+            name: state.attributes.friendly_name || item.name,
+          }
+        : { ...item, state: "unavailable" };
+    });
+    if (!linked.length) return "Link automation";
+    const active = linked.filter((item) => item.state === "on").length;
+    if (linked.length === 1)
+      return `${linked[0].name} · ${linked[0].missing || !["on", "off"].includes(linked[0].state) ? "Unavailable" : active ? "Active" : "Inactive"}`;
+    return `${linked.length} automations · ${active} active`;
+  }
+  showAutomations(tag, anchor) {
+    this.automationDialog.show(
+      this.hass,
+      { ...tag, name: this.alias(tag) },
+      anchor,
+      () => {
+        if (anchor.isConnected) anchor.focus();
+        else
+          this.shadowRoot
+            .querySelector(
+              `[data-action="automations"][data-entry="${CSS.escape(tag.entry_id)}"]`,
+            )
+            ?.focus();
+      },
+    );
   }
   state(tag, key) {
     return this.hass?.states[tag.entities?.[key]];
@@ -154,12 +246,17 @@ class EslManager extends HTMLElement {
     const at = valid(image) ? image.state : null;
     // ImageEntity's state is its image_last_updated timestamp. Never use last_changed:
     // that can be the entity's restore time rather than the last successful write.
-    const url = valid(image) && image.attributes.entity_picture;
+    const picture = valid(image) && image.attributes.entity_picture;
+    // ImageEntity's proxy URL/token stays constant across successful writes.
+    // Include its state timestamp so the browser fetches the new image.
+    const url = picture
+      ? `${picture}${picture.includes("?") ? "&" : "?"}updated=${encodeURIComponent(at)}`
+      : null;
     const durationValue =
       valid(duration) && Number.isFinite(Number(duration.state))
         ? `${Number(duration.state).toFixed(1)} s`
         : "—";
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="top"><div><h2>${this.entityButton(tag, "alias", alias, 'class="alias" title="Edit alias"')}</h2><div class="muted">${e(tag.title)}</div><div class="muted">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="battery">${this.entityButton(tag, "battery", valid(battery) ? `Battery ${battery.state}${battery.attributes.unit_of_measurement || "%"}` : "Battery —")}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="Last successful image for ${e(alias)}"><img src="${e(url)}" alt="Last successful image for ${e(alias)}"></button>` : '<span class="muted">No successful image</span>'}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? "Transmission error" : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? "No transmission result" : duration.attributes.skipped ? `Skipped: ${duration.attributes.skipped}` : "No error", `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>Last successful send</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : "No successful send")}"`)}</dd><dt>Transmission duration</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">Edit design</button></div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="top"><div><h2>${this.entityButton(tag, "alias", alias, 'class="alias" title="Edit alias"')}</h2><div class="muted">${e(tag.title)}</div><div class="muted">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="battery">${this.entityButton(tag, "battery", valid(battery) ? `Battery ${battery.state}${battery.attributes.unit_of_measurement || "%"}` : "Battery —")}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="Last successful image for ${e(alias)}"><img src="${e(url)}" alt="Last successful image for ${e(alias)}"></button>` : '<span class="muted">No successful image</span>'}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? "Transmission error" : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? "No transmission result" : duration.attributes.skipped ? `Skipped: ${duration.attributes.skipped}` : "No error", `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>Last successful send</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : "No successful send")}"`)}</dd><dt>Transmission duration</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>Automations</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">Edit design</button></div></article>`;
   }
   renderCards() {
     const errors = this.tags.filter((tag) => this.hasError(tag)).length;
@@ -237,6 +334,20 @@ class EslManager extends HTMLElement {
     const button = event.target.closest("[data-action]");
     if (!button) return;
     if (button.dataset.action === "refresh") await this.refresh();
+    if (button.dataset.action === "automations") {
+      const tag = this.tags.find(
+        (tag) => tag.entry_id === button.dataset.entry,
+      );
+      if (tag) this.showAutomations(tag, button);
+    }
+    if (button.dataset.action === "editor-automations") {
+      const entry =
+        this.editor?.mode === "template"
+          ? this.editor.displaySession?.tag
+          : this.editor?.tag;
+      const tag = this.tags.find((tag) => tag.entry_id === entry?.entry_id);
+      if (tag) this.showAutomations(tag, button);
+    }
     if (button.dataset.action === "edit") {
       const tag = this.tags.find(
         (tag) => tag.entry_id === button.dataset.entry,
