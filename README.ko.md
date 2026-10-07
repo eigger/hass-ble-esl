@@ -90,7 +90,7 @@ data:
 
 ## 비주얼 에디터
 
-사이드바의 **ESL Designer**로 payload를 눈으로 보며 만듭니다. 요소를 끌어 옮기고 크기를 바꾸고 겹쳐 놓으며, [imagespec 요소](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) 서른 가지(도형, 텍스트, QR / 바코드, 차트, 표 등)를 모두 추가해 각 필드를 편집할 수 있고, Jinja 템플릿도 쓸 수 있습니다. 미리보기, 태그로 보내는 이미지, 내보내는 **Payload YAML**(payload, 또는 템플릿을 쓴 그대로 둔 완성된 `ble_esl.write` 액션. 그래서 자동화가 센서를 따라갑니다)은 같은 렌더러가 그리는 같은 payload입니다. **Import YAML**은 이미 가진 액션의 payload를 디자이너로 가져오고, **Convert to elements**는 센서나 기존 컴포넌트를 평범한 요소로 바꿉니다. Bluetooth Send는 디자인을 먼저 저장하고 사용자가 요청할 때만 전송합니다. 디자이너는 센서 변경 시 자동 전송하지 않습니다. 내보낸 액션으로 Home Assistant 자동화에서 갱신 시점을 설정하세요.
+사이드바의 **ESL Manager**로 payload를 눈으로 보며 만듭니다. 요소를 끌어 옮기고 크기를 바꾸고 겹쳐 놓으며, [imagespec 요소](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) 서른 가지(도형, 텍스트, QR / 바코드, 차트, 표 등)를 모두 추가해 각 필드를 편집할 수 있고, Jinja 템플릿도 쓸 수 있습니다. 미리보기, 태그로 보내는 이미지, 내보내는 **Payload YAML**(payload, 또는 템플릿을 쓴 그대로 둔 완성된 `ble_esl.write` 액션. 그래서 자동화가 센서를 따라갑니다)은 같은 렌더러가 그리는 같은 payload입니다. **Import YAML**은 이미 가진 액션의 payload를 디자이너로 가져오고, **Convert to elements**는 센서나 기존 컴포넌트를 평범한 요소로 바꿉니다. Bluetooth Send는 디자인을 먼저 저장하고 사용자가 요청할 때만 전송합니다. 디자이너는 센서 변경 시 자동 전송하지 않습니다. 내보낸 액션으로 Home Assistant 자동화에서 갱신 시점을 설정하세요.
 
 **[디자이너 가이드 →](docs/ko/designer.md)**
 

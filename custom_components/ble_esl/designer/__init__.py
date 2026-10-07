@@ -67,10 +67,10 @@ class Designer:
         await panel_custom.async_register_panel(
             self.hass,
             PANEL,
-            PANEL,
-            sidebar_title="ESL Designer",
-            sidebar_icon="mdi:label-outline",
-            module_url=f"/ble_esl_designer/{integration.version}/panel.js",
+            "ble-esl-manager",
+            sidebar_title="ESL Manager",
+            sidebar_icon="mdi:label-multiple",
+            module_url=f"/ble_esl_designer/{integration.version}/manager.js",
             config={"version": str(integration.version)},
             require_admin=True,
         )
