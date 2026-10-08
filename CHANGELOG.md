@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.2.0b4
 
 ### Changed
 
+- README shows the ESL Manager dashboard.
 - ESL Manager no longer shifts its search box and drop-downs sideways when the filter or search changes the number of cards (the scrollbar space is reserved), and the filter and sort drop-downs keep a fixed width.
 - The Designer's template entry point is now the first block of the left panel (**Browse templates**, with a short explanation), and the toolbar and left-panel buttons and drop-downs share one height.
 
