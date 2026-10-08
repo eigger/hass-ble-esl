@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.0b1
+
+### Added
+
+- ESL Manager card dashboard with each tag's alias, battery, display size, last successful image and send time, transmission duration, and error status. The sidebar uses `mdi:label-multiple`.
+- Existing Home Assistant automations can be viewed and associated with tags, including multiple automations per tag.
+- Manager and Designer now follow Home Assistant's selected language, supporting English, Korean, German, Spanish, French, Italian, Japanese, Dutch, Polish, Brazilian Portuguese, Russian, Simplified Chinese, and Traditional Chinese. Switching languages preserves the current design and unsaved edits.
+
+### Changed
+
+- Designer sends are manual only. The Auto update sensor option and Designer's automatic send scheduler have been removed; use Home Assistant automations for scheduled or event-triggered sends. Associating an automation in Manager does not create or change its actions.
+- Requires `imagespec[datamatrix]>=1.0.1` (was `>=1.0.0`).
+
+### Fixed
+
+- Manager and Designer headers stay visible while dashboard cards and editor content scroll, including short desktop windows and mobile layouts.
+
 ## 1.1.3
 
 ### Changed
@@ -50,4 +67,3 @@ First stable release of BLE ESL.
 - Existing valid payloads and stored designer layouts keep their format.
 - Automations or scripts that call a write action without `payload` must add one before upgrading.
 - Requires Home Assistant 2025.12 or newer.
-
