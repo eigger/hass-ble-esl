@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Automation design imports and previews use separate preview parameters for action-local variables. Missing parameters block rendering instead of logging undefined-variable warnings or substituting empty values. Saving preserves the original Jinja expressions and excludes preview parameters.
+- Separated the 3D Print example's Python helper from its YAML so the entire example can be parsed.
+
 ## 1.2.0b2
 
 ### Added

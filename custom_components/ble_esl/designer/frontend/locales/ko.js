@@ -203,6 +203,26 @@ export default {
     "자동화 페이로드를 가져왔습니다. 디자인을 편집한 뒤 이 자동화에 저장하세요.",
   "The current design cannot be saved as a payload.":
     "현재 디자인을 페이로드로 저장할 수 없습니다.",
+  "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
+    "미리보기 변수 {name}의 JSON 값을 입력하세요. 문자열은 따옴표로 감싸고 숫자, true/false, 배열 또는 객체를 입력할 수 있습니다. 이 값은 저장되지 않습니다.",
+  "This preview parameter is still undefined: {name}":
+    "미리보기 변수가 아직 정의되지 않았습니다: {name}",
+  "Preview parameter must be valid JSON.":
+    "미리보기 변수는 올바른 JSON이어야 합니다.",
+  "Preview parameter must contain finite JSON values without prototype keys.":
+    "미리보기 변수에는 프로토타입 키 없이 유한한 JSON 값만 사용할 수 있습니다.",
+  "Too many preview parameters are missing.":
+    "미리보기 변수가 너무 많이 누락되었습니다.",
+  "Preview parameter entry was cancelled.":
+    "미리보기 변수 입력을 취소했습니다.",
+  "Import needs a preview parameter: {name}":
+    "가져오기에 미리보기 변수가 필요합니다: {name}",
+  "Preview parameters": "미리보기 변수",
+  "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
+    "미리보기와 검증에만 사용할 변수를 JSON 객체로 편집하세요.",
+  "Preview parameters must be a JSON object with finite values and no prototype keys.":
+    "미리보기 변수는 유한한 값으로 이루어지고 프로토타입 키가 없는 JSON 객체여야 합니다.",
+  "Preview parameters are too large.": "미리보기 변수가 너무 큽니다.",
   "This automation changed since it was imported. Reopen it before saving.":
     "가져온 뒤 자동화가 변경되었습니다. 저장하기 전에 다시 여세요.",
   "The selected write action changed since import. Reopen the automation before saving.":

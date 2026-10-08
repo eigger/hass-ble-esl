@@ -3,6 +3,7 @@
 import base64
 from functools import partial
 from io import BytesIO
+import json
 
 from homeassistant.exceptions import HomeAssistantError
 import imagespec
@@ -352,6 +353,71 @@ async def test_the_live_export_keeps_templates_and_renders_to_the_same_payload(h
     service = yaml.safe_load(result["live_service"])
     assert service["action"] == "ble_esl.write"
     assert service["data"]["payload"] == live
+
+
+async def test_import_requires_preview_parameters_without_losing_source_jinja(hass, wolink_entry):
+    manager = hass.data[KEY]
+    payload = [{"type": "text", "x": 5, "y": 5, "value": "{{ font_bold }}"}]
+
+    missing = await manager.import_payload(wolink_entry, payload, "white")
+    assert missing["missing_parameters"] == ["font_bold"]
+    assert missing["elements"] == []
+
+    imported = await manager.import_payload(
+        wolink_entry, payload, "white", preview_variables={"font_bold": "sample.ttf"}
+    )
+    assert imported["issues"] == []
+    assert imported["different_pixels"] == 0
+    assert imported["elements"][0]["spec"]["value"] == "{{ font_bold }}"
+
+
+async def test_optional_undefined_template_variables_do_not_require_parameters(hass, wolink_entry):
+    payload = [
+        {
+            "type": "text",
+            "x": 5,
+            "y": 5,
+            "value": "{{ optional_name | default('ESL') }}",
+        }
+    ]
+    result = await hass.data[KEY].import_payload(wolink_entry, payload, "white")
+    assert "missing_parameters" not in result
+    assert result["issues"] == []
+    assert result["different_pixels"] == 0
+
+
+async def test_standalone_yaml_import_reports_missing_parameter_without_partial_result(
+    hass, wolink_entry
+):
+    result = await hass.data[KEY].import_yaml(
+        wolink_entry,
+        "- type: text\n  x: 5\n  y: 5\n  value: '{{ font_bold }}'\n",
+    )
+    assert result["missing_parameters"] == ["font_bold"]
+    assert result["elements"] == []
+
+
+async def test_export_uses_preview_parameters_but_keeps_original_jinja(hass, wolink_entry):
+    document = spec_document(element("t", "text", 5, 5, 100, 30, value="{{ font_bold }}"))
+    result = await hass.data[KEY].export(
+        wolink_entry,
+        document,
+        preview_variables={"font_bold": "sample.ttf"},
+        automation_edit=True,
+    )
+    assert result["validation_errors"] == []
+    assert result["payload_data"][0]["value"] == "{{ font_bold }}"
+    assert "sample.ttf" not in json.dumps(result["payload_data"])
+
+
+async def test_preview_parameters_reject_non_json_values(hass, wolink_entry):
+    with pytest.raises(HomeAssistantError, match="finite JSON"):
+        await hass.data[KEY].import_payload(
+            wolink_entry,
+            [{"type": "text", "x": 5, "y": 5, "value": "{{ font_bold }}"}],
+            "white",
+            preview_variables={"font_bold": float("nan")},
+        )
 
 
 async def test_there_is_no_live_export_without_templates(hass, wolink_entry):

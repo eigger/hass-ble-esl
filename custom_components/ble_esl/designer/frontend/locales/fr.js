@@ -464,4 +464,24 @@ export default {
     "The automation import is no longer current.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Background is not part of the automation payload. Restore the imported background before saving.",
+  "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
+    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+  "This preview parameter is still undefined: {name}":
+    "This preview parameter is still undefined: {name}",
+  "Preview parameter must be valid JSON.":
+    "Preview parameter must be valid JSON.",
+  "Preview parameter must contain finite JSON values without prototype keys.":
+    "Preview parameter must contain finite JSON values without prototype keys.",
+  "Too many preview parameters are missing.":
+    "Too many preview parameters are missing.",
+  "Preview parameters": "Preview parameters",
+  "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
+    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+  "Preview parameters must be a JSON object with finite values and no prototype keys.":
+    "Preview parameters must be a JSON object with finite values and no prototype keys.",
+  "Preview parameters are too large.": "Preview parameters are too large.",
+  "Preview parameter entry was cancelled.":
+    "Preview parameter entry was cancelled.",
+  "Import needs a preview parameter: {name}":
+    "Import needs a preview parameter: {name}",
 };

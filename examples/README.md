@@ -16,6 +16,16 @@ your own device. A 4.2" (400×300) example runs unchanged on a Gicisky or Poshij
 For a different resolution (e.g. 2.13" WOLINK is 250×122, not 250×128), adjust
 the coordinates.
 
+These files include complete automations and individual action snippets. The
+3D Print automation requires the separate [Pyscript helper](./gicisky/4.2-3d-print.md).
+
+Running an example as an automation and editing it in ESL Manager have different
+requirements. The designer accepts a list of at most 100 payload elements with
+fixed coordinates. Examples that generate the whole payload with Jinja, use
+templated coordinates, or exceed that limit cannot currently be imported for
+editing. Fonts, images, entities, and service responses also need to be available
+in your Home Assistant instance.
+
 ## All examples
 
 | Size | Brand | Example | Preview | YAML |

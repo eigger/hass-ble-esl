@@ -33,6 +33,15 @@ Use **Unlink** to remove a manual association. Detected references remain visibl
 
 Choose **Edit design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
 
+Automation variables are preview parameters in this session. Safe literal values
+from the automation can supply defaults; missing values require JSON input, such
+as `"fonts/CookieRunBold.ttf"`, `true`, or `23`. **Preview parameters** lets you
+change those sample values after import. The designer does not run the preceding
+automation actions or service calls. Parameters are used only to preview and
+validate the design; saving keeps the original `{{ ... }}` expressions. Cancelled
+input and rendering errors prevent saving. Dynamic coordinates cannot be turned
+into fixed coordinates through preview parameters.
+
 - [Making a design](#making-a-design)
 - [Payload YAML: using the design in an automation](#payload-yaml)
 - [Import YAML: editing an existing payload](#import-yaml)

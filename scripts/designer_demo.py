@@ -5,6 +5,7 @@ Run from the repository root: .venv/bin/python scripts/designer_demo.py
 
 import asyncio
 import base64
+from copy import deepcopy
 from datetime import timedelta
 from html import escape
 from io import BytesIO
@@ -18,6 +19,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from custom_components.ble_esl.designer import _preview_variable_map
 from custom_components.ble_esl.designer.export import automation_draft, export_yaml
 from custom_components.ble_esl.designer.importer import (
     convert,
@@ -35,7 +37,11 @@ from custom_components.ble_esl.designer.layout import (
     validate_template,
 )
 from custom_components.ble_esl.designer.rendering import render_document, snapshot_layers
-from custom_components.ble_esl.designer.specs import describe
+from custom_components.ble_esl.designer.specs import (
+    MissingTemplateParameter,
+    describe,
+    frozen_corners,
+)
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -187,6 +193,7 @@ AUTOMATION_CONFIGS = {
     }
     for item in AUTOMATIONS
 }
+DEFAULT_AUTOMATION_CONFIGS = deepcopy(AUTOMATION_CONFIGS)
 for automation in AUTOMATIONS:
     STATES[automation["entity_id"]] = {
         "entity_id": automation["entity_id"],
@@ -277,7 +284,20 @@ async def handle(request):
         )
         different = None
         if elements:
-            original, rebuilt = payloads(HASS, imported, elements)
+            try:
+                original, rebuilt = payloads(
+                    HASS, imported, elements, _preview_variable_map(msg.get("preview_variables"))
+                )
+            except MissingTemplateParameter as err:
+                return web.json_response(
+                    {
+                        "missing_parameters": [err.name],
+                        "elements": [],
+                        "issues": [],
+                        "different_pixels": None,
+                        "background": background,
+                    }
+                )
             different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
         return web.json_response(
             {
@@ -310,21 +330,44 @@ async def handle(request):
         return web.json_response({"status": "demo_only"})
     if msg["action"] in ("export", "automation"):
         forecasts = await demo_forecasts()
-        payload = compile_payload(HASS, document, TEMPLATES, forecasts)
-        live = live_payload(HASS, document, TEMPLATES, forecasts)
+        variables = _preview_variable_map(msg.get("preview_variables"))
+        payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
+        dynamic_geometry = [
+            element
+            for element in document["elements"]
+            if element["type"] == "imagespec" and frozen_corners(element.get("spec", {}))
+        ]
+        automation_edit = msg.get("automation_edit", False)
+        issues = []
+        if automation_edit and dynamic_geometry:
+            issues.extend(
+                f"blocking: {element['id']}: templated polygon corners cannot be safely saved"
+                for element in dynamic_geometry
+            )
+            live = None
+        else:
+            live = live_payload(HASS, document, TEMPLATES, forecasts)
         result = export_yaml(
             payload,
             document["background"],
             tag["device_id"] if msg["action"] == "automation" else None,
-            (),
+            issues,
             live,
         )
         if msg["action"] == "automation":
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")
             result["automation"] = automation_draft(result, tag["title"])
-        return web.json_response({**result, "payload_data": payload, "writable": tag["writable"]})
-    return await preview(document, preset)
+        return web.json_response(
+            {
+                **result,
+                "payload_data": None
+                if result["validation_errors"]
+                else (live if live is not None else payload),
+                "writable": tag["writable"],
+            }
+        )
+    return await preview(document, preset, msg.get("preview_variables"))
 
 
 async def demo_forecasts():
@@ -343,9 +386,10 @@ async def demo_forecasts():
     }
 
 
-async def preview(document, preset):
+async def preview(document, preset, preview_variables=None):
     forecasts = await demo_forecasts()
-    snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts)
+    variables = _preview_variable_map(preview_variables)
+    snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts, variables)
     payload = [item for _, part in snapshots for item in part]
     image, layers = await asyncio.to_thread(
         render_document, HASS, preset, document, payload, snapshots
@@ -364,6 +408,8 @@ async def preview(document, preset):
 async def reset(request):
     CREATED_AUTOMATIONS.clear()
     """Fresh saved state, so each browser project starts alike."""
+    AUTOMATION_CONFIGS.clear()
+    AUTOMATION_CONFIGS.update(deepcopy(DEFAULT_AUTOMATION_CONFIGS))
     TEMPLATES.clear()
     AUTOMATION_LINKS.clear()
     AUTOMATION_LINKS["demo-writable"] = [
