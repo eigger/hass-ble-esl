@@ -232,3 +232,51 @@ test("the scrollbar gutter is reserved and the drop-downs keep a fixed width", a
     ]).toEqual(before);
   }
 });
+
+test("search box and drop-downs share one height and long translations fit", async ({
+  page,
+}) => {
+  for (const lang of [
+    "en",
+    "ko",
+    "de",
+    "es",
+    "fr",
+    "it",
+    "ja",
+    "nl",
+    "pl",
+    "pt-BR",
+    "ru",
+    "zh-Hans",
+    "zh-Hant",
+  ]) {
+    await page.goto(`/?manager&lang=${lang}`);
+    const heights = await page.evaluate(() => {
+      const root = window.manager.shadowRoot;
+      return ["#search", "#filter", "#sort"].map((selector) =>
+        Math.round(root.querySelector(selector).getBoundingClientRect().height),
+      );
+    });
+    expect(heights, lang).toEqual([40, 40, 40]);
+    const cut = await page.evaluate(() => {
+      const root = window.manager.shadowRoot;
+      return ["#filter", "#sort"].flatMap((selector) => {
+        const select = root.querySelector(selector);
+        const probe = document.createElement("span");
+        probe.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font:${getComputedStyle(select).font}`;
+        document.body.append(probe);
+        const limit = select.clientWidth - 40;
+        const wide = [...select.options]
+          .filter((option) => {
+            probe.textContent = option.textContent;
+            return probe.getBoundingClientRect().width > limit;
+          })
+          .map((option) => option.textContent);
+        probe.remove();
+        return wide;
+      });
+    });
+    expect(cut, lang).toEqual([]);
+  }
+});

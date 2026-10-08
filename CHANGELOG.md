@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- ESL Manager's search box and drop-downs share one height, and the sort, filter, read-only, low-battery and automation-design labels are translated in every language that had them in English.
+
 ## 1.2.0b4
 
 ### Changed
