@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 def is_picksmart_advertisement(data: BluetoothServiceInfoBleak) -> bool:
-    """PickSmart manufacturer data, or one of the PickSmart service UUIDs."""
-    if MANUFACTURER_ID in data.manufacturer_data:
+    """A valid PickSmart manufacturer record, or a known PickSmart service UUID."""
+    if parse_advertisement(data.manufacturer_data.get(MANUFACTURER_ID)) is not None:
         return True
     return any(
         isinstance(uuid, str) and uuid.lower() in SERVICE_UUIDS for uuid in data.service_uuids

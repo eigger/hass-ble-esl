@@ -47,6 +47,17 @@ def test_picksmart_parser_supported():
     assert parser.supported(info_other) is False
 
 
+def test_picksmart_rejects_shared_manufacturer_id():
+    """An E0FF device sharing the company ID is not a PickSmart tag."""
+    info = service_info(
+        "5C:17:AA:71:12:57",
+        manufacturer_data={MANUFACTURER_ID: bytes.fromhex("0d105c17aa711257")},
+        service_uuids=["0000e0ff-0000-1000-8000-00805f9b34fb"],
+    )
+    assert is_picksmart_advertisement(info) is False
+    assert PickSmartBluetoothDeviceData(PRESETS["0x0033"]).supported(info) is False
+
+
 def test_picksmart_parse_advertisement():
     """2.9" BWR: hardware 0x4033 (device id 0x0033), 3.0 V, firmware 0x8101."""
     advertisement = parse_advertisement(bytes([0x33, 0x1E, 0x81, 0x01, 0x40]))
