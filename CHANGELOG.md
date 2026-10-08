@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Manager cards offer direct automation design editing, labelled last-successful images with surrounding margins, read-only badges, battery-warning filters, and sorting by attention, battery, or name. Editor headers identify the tag and automation; normal notices and save confirmations use distinct status styles.
+- Preview parameters use a typed form with field validation and optional advanced JSON editing. Automation save buttons retain their text on narrow screens, imported designs start without pending edits, and less common element properties are grouped under Advanced settings.
+
 ### Fixed
 
 - Automation design imports and previews use separate preview parameters for action-local variables. Missing parameters block rendering instead of logging undefined-variable warnings or substituting empty values. Saving preserves the original Jinja expressions and excludes preview parameters.

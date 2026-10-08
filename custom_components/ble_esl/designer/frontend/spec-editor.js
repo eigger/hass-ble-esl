@@ -44,7 +44,7 @@ const placeholder = (field) =>
   field.default === undefined ? "" : ` placeholder="${esc(field.default)}"`;
 
 function control(field, value, path, colors, hass) {
-  const attrs = `data-spec="${esc(path)}" data-kind="${field.kind}" aria-label="${esc(path.replaceAll("_", " "))}${field.required ? t(hass, " (required)") : ""}"`;
+  const attrs = `data-spec="${esc(path)}" data-kind="${field.kind}" data-required="${!!field.required}" aria-label="${esc(path.replaceAll("_", " "))}${field.required ? t(hass, " (required)") : ""}"`;
   if (field.kind === "boolean") {
     const state = typeof value === "boolean" ? String(value) : "";
     return `<select ${attrs}>${[

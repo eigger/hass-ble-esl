@@ -217,6 +217,62 @@ export default {
     "미리보기 변수 입력을 취소했습니다.",
   "Import needs a preview parameter: {name}":
     "가져오기에 미리보기 변수가 필요합니다: {name}",
+
+  // Preview-parameter and manager controls.
+  "Sort ESLs": "ESL 정렬",
+  "Default order": "기본 순서",
+  "Needs attention first": "확인이 필요한 항목 먼저",
+  "Battery: lowest first": "배터리 잔량 낮은 순",
+  "Name (A–Z)": "이름순 (A–Z)",
+  "Low battery (20% or less)": "배터리 부족 (20% 이하)",
+  "Low battery": "배터리 부족",
+  "Read only": "읽기 전용",
+  "Last successful image": "마지막 전송 성공 이미지",
+  "Edit automation design": "자동화 디자인 편집",
+  "Automation design": "자동화 디자인",
+  "Local design": "로컬 디자인",
+  "Importing automation…": "자동화 불러오는 중…",
+  "Save to automation": "자동화에 저장",
+  True: "참",
+  False: "거짓",
+  "New parameter": "새 변수",
+  "Parameter name": "변수 이름",
+  Type: "유형",
+  String: "문자열",
+  Number: "숫자",
+  Boolean: "참/거짓",
+  "Object, array or null": "객체, 배열 또는 null",
+  "Object or array": "객체 또는 배열",
+  "Remove parameter {name}": "변수 {name} 삭제",
+  Remove: "삭제",
+  "Enter a preview value for {name}.":
+    "미리보기 변수 {name}의 값을 입력하세요.",
+  "No preview parameters yet. Add one for a variable used by a template.":
+    "미리보기 변수가 없습니다. 템플릿에서 사용하는 변수를 추가하세요.",
+  "Add parameter": "변수 추가",
+  "Advanced: edit all parameters as JSON": "고급: 모든 변수를 JSON으로 편집",
+  "Preview parameter object": "미리보기 변수 객체",
+  "These typed values are used only to preview and validate this design. They are not saved to the automation.":
+    "이 값은 디자인 미리보기와 검증에만 사용하며 자동화에 저장되지 않습니다.",
+  "Apply preview values": "미리보기 값 적용",
+  "Enter a parameter name without reserved prototype names.":
+    "예약된 프로토타입 이름이 아닌 변수 이름을 입력하세요.",
+  "Parameter names must be unique.": "변수 이름은 중복될 수 없습니다.",
+  "Enter a finite number.": "유한한 숫자를 입력하세요.",
+  "Enter valid JSON for the object or array value.":
+    "객체 또는 배열 값에 올바른 JSON을 입력하세요.",
+  "The JSON value must be an object, array or null.":
+    "JSON 값은 객체, 배열 또는 null이어야 합니다.",
+  "The JSON value must be an object or array.":
+    "JSON 값은 객체 또는 배열이어야 합니다.",
+  "Preview parameters must contain only finite JSON values.":
+    "미리보기 변수는 유한한 JSON 값만 포함할 수 있습니다.",
+  "Preview parameter is invalid.": "미리보기 변수가 올바르지 않습니다.",
+  "Common properties": "주요 속성",
+  "Advanced settings": "고급 설정",
+  "Use an empty string for {name}": "{name} 변수에 빈 문자열 사용",
+  "Enter a value for the missing parameter before applying.":
+    "적용하기 전에 누락된 변수의 값을 입력하세요.",
   "Preview parameters": "미리보기 변수",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
     "미리보기와 검증에만 사용할 변수를 JSON 객체로 편집하세요.",

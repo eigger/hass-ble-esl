@@ -51,7 +51,7 @@ export function localize(root, hass) {
 // Preserve modal hosts and their drafts when the surrounding markup changes language.
 export function rerenderWithDialogs(root, hass, render) {
   const selector =
-    "ble-esl-component-editor, ble-esl-dynamic-fields, ble-esl-import-dialog, ble-esl-yaml-dialog";
+    "ble-esl-component-editor, ble-esl-dynamic-fields, ble-esl-import-dialog, ble-esl-yaml-dialog, ble-esl-preview-parameters-dialog";
   const hosts = [...root.querySelectorAll(selector)];
   const opened = [];
   const inspect = (host) => {

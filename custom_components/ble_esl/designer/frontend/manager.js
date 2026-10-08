@@ -15,7 +15,7 @@ const valid = (state) =>
 const css = `
 :host{display:flex;flex-direction:column;height:var(--ble-esl-panel-height,100%);min-height:0;overflow:hidden;font:14px system-ui;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa)}
 *{box-sizing:border-box}[hidden]{display:none!important}button,input,select{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;padding:9px 12px}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #16838c;outline-offset:3px}button.primary{background:#166d75;color:white;border-color:#166d75}
-#dashboard,#editor{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.dashboard-content{flex:1;min-height:0;overflow:auto}#editor-slot{flex:1;min-height:0;overflow:hidden}header,.editor-nav{flex:none;height:var(--header-height,56px);min-height:56px;padding:0 24px}header{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}h1{font-size:20px;font-weight:500;margin:0;flex:1}h2{margin:0;font-size:18px;overflow-wrap:anywhere}.controls{display:flex;flex-wrap:wrap;gap:10px;padding:20px 24px 12px}.controls input{flex:1;min-width:150px}.summary{padding:0 24px 16px;color:var(--secondary-text-color,#637083)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;padding:0 24px 24px}.card{min-width:0;padding:18px;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dde3e8);border-radius:12px;display:flex;flex-direction:column;gap:12px}.top{display:flex;align-items:center;gap:8px}.top>h2{flex:1;min-width:0;height:24px;line-height:24px;overflow:hidden}.product{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;height:32px;line-height:16px}.dimensions{line-height:16px;white-space:nowrap}.alias{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alias{border:0;padding:0;text-align:left;background:transparent;font-size:18px;font-weight:600;overflow-wrap:anywhere}.muted{color:var(--secondary-text-color,#637083);font-size:12px;overflow-wrap:anywhere}.battery{flex:none;margin-left:auto;white-space:nowrap;font-size:12px}.battery button,.battery>span{display:flex;align-items:center;gap:6px;line-height:24px}.battery button{padding:0;border:0;border-radius:0;background:transparent}.battery svg{width:24px;height:16px;flex:none}.image{height:180px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--secondary-background-color,#eef1f4);overflow:hidden}.image img{max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated}.image button{display:contents}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{padding:4px 8px;border-radius:6px;font-size:12px;background:var(--secondary-background-color,#eef1f4);border:0}.bad{color:var(--error-color,#b3261e);background:#b3261e12}.good{color:var(--success-color,#28754a);background:#28754a12}.facts{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:8px;margin:0;font-size:13px}.facts dt{color:var(--secondary-text-color,#637083)}.facts dd{margin:0;text-align:right;overflow-wrap:anywhere}.facts button{padding:0;border:0;background:transparent;text-align:right;font:inherit}.actions{display:flex;gap:8px;margin-top:auto}.actions button{flex:1}.message{margin:12px 24px}.message.error{color:var(--error-color,#b3261e)}.editor-nav{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}.editor-nav span{flex:1}ble-esl-designer{height:100%;min-height:0}.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--secondary-text-color,#637083)}
+#dashboard,#editor{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.dashboard-content{flex:1;min-height:0;overflow:auto}#editor-slot{flex:1;min-height:0;overflow:hidden}header,.editor-nav{flex:none;height:var(--header-height,56px);min-height:56px;padding:0 24px}header{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}h1{font-size:20px;font-weight:500;margin:0;flex:1}h2{margin:0;font-size:18px;overflow-wrap:anywhere}.controls{display:flex;flex-wrap:wrap;gap:10px;padding:20px 24px 12px}.controls input{flex:1;min-width:150px}.summary{padding:0 24px 16px;color:var(--secondary-text-color,#637083)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;padding:0 24px 24px}.card{min-width:0;padding:18px;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dde3e8);border-radius:12px;display:flex;flex-direction:column;gap:12px}.top{display:flex;align-items:center;gap:8px}.top>h2{flex:1;min-width:0;height:24px;line-height:24px;overflow:hidden}.product{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;height:32px;line-height:16px}.dimensions{line-height:16px;white-space:nowrap}.alias{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alias{border:0;padding:0;text-align:left;background:transparent;font-size:18px;font-weight:600;overflow-wrap:anywhere}.muted{color:var(--secondary-text-color,#637083);font-size:12px;overflow-wrap:anywhere}.battery{flex:none;margin-left:auto;white-space:nowrap;font-size:12px}.battery button,.battery>span{display:flex;align-items:center;gap:6px;line-height:24px}.battery button{padding:0;border:0;border-radius:0;background:transparent}.battery svg{width:24px;height:16px;flex:none}.image{height:180px;padding:10px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--secondary-background-color,#eef1f4);overflow:hidden}.image img{max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated}.image button{display:contents}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{padding:4px 8px;border-radius:6px;font-size:12px;background:var(--secondary-background-color,#eef1f4);border:0}.bad{color:var(--error-color,#b3261e);background:#b3261e12}.good{color:var(--success-color,#28754a);background:#28754a12}.facts{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:8px;margin:0;font-size:13px}.facts dt{color:var(--secondary-text-color,#637083)}.facts dd{margin:0;text-align:right;overflow-wrap:anywhere}.facts button{padding:0;border:0;background:transparent;text-align:right;font:inherit}.actions{display:flex;gap:8px;margin-top:auto}.actions button{flex:1}.message{margin:12px 24px}.message.error{color:var(--error-color,#b3261e)}.message.success{color:var(--success-color,#28754a)}.message.info{color:var(--primary-text-color,#18232f)}.image-caption{min-height:15px;font-size:11px;color:var(--secondary-text-color,#637083);margin-top:-6px}.read-only{color:var(--secondary-text-color,#637083)}.low-battery{color:var(--warning-color,#986000);background:#98600012}.actions{flex-direction:column}.actions button:not(.primary){font-size:12px;padding:7px 10px}.editor-nav{height:auto;padding-top:8px;padding-bottom:8px}.editor-context{min-width:0;overflow-wrap:anywhere;line-height:1.4;font-size:13px}.editor-nav{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}.editor-nav span{flex:1}ble-esl-designer{height:100%;min-height:0}.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--secondary-text-color,#637083)}
 @media(max-width:650px){header,.editor-nav{padding:0 12px}.controls{padding:16px 12px 12px}.summary{padding:0 12px 16px}.grid{padding:0 12px 16px;grid-template-columns:minmax(0,1fr);gap:12px}.message{margin:12px}.card{padding:16px}}
 `;
 
@@ -29,8 +29,9 @@ class EslManager extends HTMLElement {
     this.automationVersions = new Map();
     this.query = "";
     this.filter = "all";
+    this.sort = "default";
     this.view = "dashboard";
-    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Manager")}</h1><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><p class="message" role="alert" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span>${t(this.hass, "Designer")}</span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
+    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Manager")}</h1><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><p class="message" role="status" hidden></p><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
     bindStatic(this.shadowRoot);
     this.automationDialog = document.createElement("ble-esl-automation-dialog");
     this.shadowRoot.append(this.automationDialog);
@@ -44,6 +45,9 @@ class EslManager extends HTMLElement {
       this.automationErrors.delete(event.detail.entry_id);
       this.renderCards();
     });
+    this.addEventListener("designer-context-changed", () =>
+      this.updateEditorContext(),
+    );
     this.addEventListener("automation-edit-request", (event) =>
       this.editAutomation(event.detail.entry_id, event.detail.entity_id),
     );
@@ -63,6 +67,12 @@ class EslManager extends HTMLElement {
         this.filter = event.target.value;
         this.renderCards();
       });
+    this.shadowRoot
+      .querySelector("#sort")
+      .addEventListener("change", (event) => {
+        this.sort = event.target.value;
+        this.renderCards();
+      });
   }
   set panel(value) {
     this._panel = value;
@@ -79,7 +89,7 @@ class EslManager extends HTMLElement {
     const previous = this._hass;
     this._hass = value;
     localize(this.shadowRoot, value);
-    if (this.messageKey) this.message(this.messageKey);
+    if (this.messageKey) this.message(this.messageKey, this.messageKind);
     if (this.editor) this.editor.hass = value;
     this.automationDialog.updateHass(value);
     const menu = this.shadowRoot.querySelector("ha-menu-button");
@@ -131,12 +141,16 @@ class EslManager extends HTMLElement {
   api(action, extra = {}) {
     return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
   }
-  message(error = "") {
+  message(message = "", kind = "error") {
     const node = this.shadowRoot.querySelector(".message");
-    this.messageKey = error;
-    node.textContent = t(this.hass, error);
-    node.hidden = !error;
-    node.classList.toggle("error", !!error);
+    this.messageKey = message;
+    this.messageKind = kind;
+    node.textContent = t(this.hass, message);
+    node.hidden = !message;
+    node.classList.toggle("error", !!message && kind === "error");
+    node.classList.toggle("success", !!message && kind === "success");
+    node.classList.toggle("info", !!message && kind === "info");
+    node.setAttribute("role", kind === "error" ? "alert" : "status");
   }
   async refresh() {
     this.started = true;
@@ -242,6 +256,72 @@ class EslManager extends HTMLElement {
       valid(state) && !!state.attributes.error && !state.attributes.skipped
     );
   }
+  batteryValue(tag) {
+    const state = this.state(tag, "battery");
+    return valid(state) &&
+      state.state.trim() !== "" &&
+      Number.isFinite(Number(state.state))
+      ? Number(state.state)
+      : Infinity;
+  }
+  lowBattery(tag) {
+    if (tag.entities?.battery_low) {
+      const state = this.state(tag, "battery_low");
+      return valid(state) && state.state === "on";
+    }
+    return false;
+  }
+  editableAutomations(tag) {
+    return (this.automationCache.get(tag.entry_id)?.linked || []).filter(
+      (item) =>
+        !item.missing &&
+        item.id &&
+        ["on", "off"].includes(this.hass.states[item.entity_id]?.state),
+    );
+  }
+  cardActions(tag) {
+    const entry = escapeHtml(tag.entry_id);
+    const linked =
+      !this.automationErrors.has(tag.entry_id) &&
+      this.editableAutomations(tag).length;
+    return linked
+      ? `<button class="primary" data-action="edit-automation" data-entry="${entry}">${t(this.hass, "Edit automation design")}</button><button data-action="edit" data-entry="${entry}">${t(this.hass, "Edit design")}</button>`
+      : `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit design")}</button>`;
+  }
+  updateEditorContext() {
+    const node = this.shadowRoot.querySelector(".editor-context");
+    const session = this.automationEditSession;
+    const entry =
+      session?.entry_id ||
+      (this.editor?.mode === "template"
+        ? this.editor.displaySession?.tag
+        : this.editor?.tag
+      )?.entry_id;
+    const tag = this.tags.find((item) => item.entry_id === entry);
+    if (!tag) {
+      node.textContent = t(this.hass, "Designer");
+      return;
+    }
+    const entity = this.automationEditSource?.entity_id || session?.entity_id;
+    const name =
+      entity &&
+      (this.hass.states[entity]?.attributes.friendly_name ||
+        this.automationEditSource?.name ||
+        entity);
+    const context = session
+      ? this.automationEditSource
+        ? t(this.hass, "Automation design")
+        : t(this.hass, "Importing automation…")
+      : t(
+          this.hass,
+          this.editor?.mode === "template"
+            ? "Sensor templates"
+            : "Local design",
+        );
+    node.textContent = [this.alias(tag), name, context]
+      .filter(Boolean)
+      .join(" › ");
+  }
   relative(value) {
     const date = new Date(value);
     if (!value || !Number.isFinite(date.getTime())) return "—";
@@ -305,9 +385,10 @@ class EslManager extends HTMLElement {
       valid(duration) && Number.isFinite(Number(duration.state))
         ? `${Number(duration.state).toFixed(1)} s`
         : "—";
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">${t(this.hass, "Edit design")}</button></div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
   }
   renderCards() {
+    this.updateEditorContext();
     const errors = this.tags.filter((tag) => this.hasError(tag)).length;
     const unsynced = this.tags.filter(
       (tag) => this.state(tag, "display_in_sync")?.state === "off",
@@ -323,8 +404,34 @@ class EslManager extends HTMLElement {
         `${this.alias(tag)} ${tag.title}`.toLocaleLowerCase().includes(query) &&
         (this.filter !== "error" || this.hasError(tag)) &&
         (this.filter !== "unsynced" ||
-          this.state(tag, "display_in_sync")?.state === "off"),
+          this.state(tag, "display_in_sync")?.state === "off") &&
+        (this.filter !== "low-battery" || this.lowBattery(tag)),
     );
+    if (this.sort !== "default") {
+      const attention = (tag) =>
+        this.hasError(tag)
+          ? 0
+          : this.state(tag, "display_in_sync")?.state === "off"
+            ? 1
+            : this.lowBattery(tag)
+              ? 2
+              : 3;
+      const compareName = (a, b) =>
+        this.alias(a).localeCompare(
+          this.alias(b),
+          this.hass?.locale?.language || navigator.language,
+          { numeric: true },
+        ) || a.entry_id.localeCompare(b.entry_id);
+      tags.sort((a, b) => {
+        const difference =
+          this.sort === "attention"
+            ? attention(a) - attention(b)
+            : this.sort === "battery"
+              ? this.batteryValue(a) - this.batteryValue(b)
+              : 0;
+        return (Number.isNaN(difference) ? 0 : difference) || compareName(a, b);
+      });
+    }
     const grid = this.shadowRoot.querySelector(".grid");
     const focused = this.shadowRoot.activeElement;
     const entry = focused?.closest("[data-entry]")?.dataset.entry;
@@ -421,6 +528,7 @@ class EslManager extends HTMLElement {
         );
     }
     this.shadowRoot.querySelector('[data-action="dashboard"]').focus();
+    this.updateEditorContext();
     return this.editor?.tag?.entry_id === tag.entry_id || !this.editor?.ready;
   }
   clearAutomationEdit(session = this.automationEditSession) {
@@ -428,8 +536,10 @@ class EslManager extends HTMLElement {
     this.automationEditSession = null;
     this.automationEditSource = null;
     this.automationSaveRun = (this.automationSaveRun || 0) + 1;
+    this.updateEditorContext();
     this.automationSaving = false;
     session.editor.restoreEditorSession(session.returnState, session.token);
+    this.updateEditorContext();
   }
   safeAutomationVariables(config, selectedPath) {
     const excluded = Symbol("not a literal JSON value");
@@ -556,10 +666,12 @@ class EslManager extends HTMLElement {
     const session = {
       token,
       entry_id: entryId,
+      entity_id: entityId,
       editor,
       returnState,
     };
     this.automationEditSession = session;
+    this.updateEditorContext();
     editor.beginAutomationSession(token);
     if (returnState) editor.setAutomationReturnState(returnState, token);
     const current = () =>
@@ -672,10 +784,7 @@ class EslManager extends HTMLElement {
             "This automation background is not supported by the selected ESL.",
           ),
         );
-      const previewVariables = this.safeAutomationVariables(
-        config,
-        selectedPath,
-      );
+      let previewVariables = this.safeAutomationVariables(config, selectedPath);
       const prompted = new Set();
       let imported;
       for (let attempt = 0; attempt < 64; attempt++) {
@@ -695,47 +804,16 @@ class EslManager extends HTMLElement {
             }),
           );
         prompted.add(missing);
-        const raw = window.prompt(
-          t(
-            this.hass,
-            "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
-            { name: missing },
-          ),
+        const values = await editor.requestPreviewVariables(
+          previewVariables,
+          missing,
         );
         if (!current()) return;
-        if (raw === null) {
+        if (values === null) {
           this.clearAutomationEdit(session);
           return;
         }
-        let value;
-        try {
-          value = JSON.parse(raw);
-        } catch {
-          throw new Error(
-            t(this.hass, "Preview parameter must be valid JSON."),
-          );
-        }
-        const safeValue = (candidate) => {
-          if (candidate === null || typeof candidate === "string") return true;
-          if (typeof candidate === "boolean") return true;
-          if (typeof candidate === "number") return Number.isFinite(candidate);
-          if (Array.isArray(candidate)) return candidate.every(safeValue);
-          if (candidate && typeof candidate === "object")
-            return Object.entries(candidate).every(
-              ([key, item]) =>
-                !["__proto__", "prototype", "constructor"].includes(key) &&
-                safeValue(item),
-            );
-          return false;
-        };
-        if (!safeValue(value))
-          throw new Error(
-            t(
-              this.hass,
-              "Preview parameter must contain finite JSON values without prototype keys.",
-            ),
-          );
-        previewVariables[missing] = value;
+        previewVariables = values;
       }
       if (imported?.missing_parameters?.length)
         throw new Error(
@@ -772,14 +850,17 @@ class EslManager extends HTMLElement {
         entry_id: entryId,
         entity_id: entityId,
         configId,
+        name: config.alias || entityId,
         device_id: source.device_id,
         entity_ids: source.entity_ids,
         background: editor.document.background,
         originalAction: structuredClone(selectedAction),
         selectedPath,
       };
+      this.updateEditorContext();
       this.message(
         "Automation payload imported. Edit the design, then save it to this automation.",
+        "info",
       );
     } catch (error) {
       if (!current()) return;
@@ -1020,7 +1101,7 @@ class EslManager extends HTMLElement {
         updated,
       );
       if (!current()) return;
-      this.message("Automation saved.");
+      this.message("Automation saved.", "success");
       if (
         JSON.stringify(session.editor.document) ===
         JSON.stringify(snapshot.document)
@@ -1056,6 +1137,17 @@ class EslManager extends HTMLElement {
         (tag) => tag.entry_id === button.dataset.entry,
       );
       if (tag) this.showAutomations(tag, button);
+    }
+    if (button.dataset.action === "edit-automation") {
+      const tag = this.tags.find(
+        (item) => item.entry_id === button.dataset.entry,
+      );
+      if (tag) {
+        const candidates = this.editableAutomations(tag);
+        if (!this.automationErrors.has(tag.entry_id) && candidates.length === 1)
+          await this.editAutomation(tag.entry_id, candidates[0].entity_id);
+        else this.showAutomations(tag, button);
+      }
     }
     if (button.dataset.action === "editor-automations") {
       const entry =

@@ -16,12 +16,23 @@ The image and **Last successful send** come from `last_updated_content`: the las
 
 Choose **Edit design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
+**Edit automation design** opens a single available linked automation directly,
+or offers a choice when several are available. **Edit design** still opens the
+ordinary local design. The editor header shows the tag and automation being
+edited, and **Save to automation** remains labelled on narrow screens.
+
+Filter **Low battery** to see tags whose own battery-warning sensor is active.
+Use the sort menu to put transmission errors, unsynchronized tags, then battery
+warnings first, or sort by battery percentage or name. **Read only** identifies
+tags that cannot transmit; their designs can still be edited. The image frame
+keeps a small margin around the complete last successful image.
+
 
 ## Create an automation from the current design
 
 In the Designer toolbar, choose **Create automation**, review the current design's action and name, then choose **Create automation** in the dialog. This creates a new Home Assistant automation with `ble_esl.write` targeted at the current ESL's registered device. Unsaved edits are included. Triggers and conditions are empty; use **Edit automation** to configure when it runs.
 
-The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit design** and use **Save automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
+The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit design** and use **Save to automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
 
 ## Existing automation associations
 
@@ -31,12 +42,16 @@ Automations that directly reference this ESL's device or entities are detected a
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
 
-Choose **Edit design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
+Choose **Edit design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save to automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
 
 Automation variables are preview parameters in this session. Safe literal values
-from the automation can supply defaults; missing values require JSON input, such
-as `"fonts/CookieRunBold.ttf"`, `true`, or `23`. **Preview parameters** lets you
-change those sample values after import. The designer does not run the preceding
+from the automation can supply defaults. Missing values open a form where you
+choose string, number, boolean, or JSON values. Enter strings such as
+`fonts/CookieRunBold.ttf` without quotes. **Preview parameters** lets you change
+those sample values after import. A missing variable needs an explicit value;
+using an empty string requires the empty-value checkbox.
+**Advanced: edit all parameters as JSON** is
+available for editing the whole map. The designer does not run the preceding
 automation actions or service calls. Parameters are used only to preview and
 validate the design; saving keeps the original `{{ ... }}` expressions. Cancelled
 input and rendering errors prevent saving. Dynamic coordinates cannot be turned
@@ -60,6 +75,9 @@ into fixed coordinates through preview parameters.
 | Edit a value | The **Element properties** panel lists every field imagespec has for the type except the position (the frame sets that), plus `dither`; required fields are marked `*`, defaults show as placeholders |
 | Reorder, duplicate, delete | Right click → **Send back** / **Bring front**; Ctrl+D or the menu to duplicate; Delete or Backspace, or the menu, to delete. The **Layers** list selects |
 | Undo, redo | Ctrl+Z, Ctrl+Shift+Z (or Ctrl+Y); ⌘ instead of Ctrl on a Mac. One step per edit |
+
+Common and required properties appear first. Expand **Advanced settings** for
+the remaining element options; values in the collapsed section are preserved.
 
 Where an element sits comes from its **frame** (X, Y, Width, Height), not from keys you type. A rectangle fills its frame, a circle is centred in it, a QR code, barcode or icon takes its size from it, a polygon's corners are percentages of it. That is why every element moves and resizes the same way, and why the exported payload has ordinary absolute coordinates. `text_fit` and `new_multiline` fit the frame, `rich_text` sits on the frame's middle line, and a line runs through the middle of the frame (vertical when the frame is taller than it is wide). Text, tables and the like are drawn from the frame's top left at their own size.
 
