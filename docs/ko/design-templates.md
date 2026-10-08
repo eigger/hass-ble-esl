@@ -30,6 +30,14 @@
 
 엔티티나 서비스 응답을 읽는 예제(날씨, 캘린더, 재실 등)는 아직 템플릿이 아닙니다. 템플릿은 고정된 payload를 담고 parameter는 단순한 값이기 때문입니다.
 
+## 나만의 템플릿
+
+템플릿 파일을 `<config>/ble_esl/templates/*.yaml`에 넣으면 다음에 갤러리를 열 때 *내 템플릿*으로 표시됩니다(재시작 불필요). 올바르지 않은 파일은 로그에 경고를 남기고 건너뛰며, 기본 제공 템플릿의 `id`는 재사용할 수 없습니다.
+
+디자인에서 만들려면 디자이너에서 디자인을 만든 뒤 **Templates**를 열고 **현재 디자인을 템플릿으로 저장**(Save current design as a template)에 이름을 입력해 **템플릿으로 저장**(Save as template)을 누르세요. 현재 화면 크기만 layout으로 가진 파일이 위 폴더에 만들어집니다. 저장하지 않은 편집 내용도 포함되고 요소의 템플릿(Jinja)은 그대로 유지됩니다. 같은 이름으로 다시 저장하거나, 이름이 기본 제공 템플릿이나 폴더에 이미 있는 파일(로드되지 않는 파일 포함)과 겹치면 덮어쓰지 않고 새 id(`이름_2`)가 붙습니다. `overwrite`와 함께 명시한 `template_id`만 해당 id의 파일을 덮어씁니다. 갤러리는 열 때마다 폴더를 다시 읽습니다. 이후 파일을 직접 고쳐 `parameters`(값을 `${name}`으로 교체), 다른 layout, `automation` 블록을 추가하세요.
+
+텍스트에 `${…}`가 들어 있는 디자인은 parameter로 읽히므로 이렇게 저장할 수 없습니다.
+
 ## 파일 형식
 
 ```yaml
@@ -109,4 +117,4 @@ automation:
 
 ## API
 
-디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `apply_design_template`(`template_id`, `parameters`, `existing`, `preview_variables`)이 있습니다. 후자는 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.
+디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `save_design_template`(`name`, 선택적 `template_id`, `overwrite`; 디자인을 사용자 폴더에 저장), `apply_design_template`(`template_id`, `parameters`, `existing`, `preview_variables`)이 있습니다. `apply_design_template`은 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.

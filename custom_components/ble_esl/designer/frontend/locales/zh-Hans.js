@@ -536,4 +536,9 @@ export default {
   "Replace and create automation": "替换并创建自动化",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "已包含模板的触发器。创建自动化后可在 Home Assistant 中修改。",
+  "Save current design as a template": "将当前设计保存为模板",
+  "Save as template": "保存为模板",
+  "My template": "我的模板",
+  "Saved template {name}.": "已保存模板 {name}。",
+  "Design template name": "设计模板名称",
 };

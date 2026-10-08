@@ -2,11 +2,14 @@
 
 import asyncio
 import base64
+import contextlib
 from functools import partial
 from io import BytesIO
 import json
 import math
+import os
 from pathlib import Path
+import tempfile
 import time
 
 from homeassistant.components import frontend, panel_custom, websocket_api
@@ -22,7 +25,14 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
-from .design_templates import build as build_template, describe as describe_template, load_templates
+from .design_templates import (
+    build as build_template,
+    check_name,
+    describe as describe_template,
+    load_all as load_design_templates,
+    pick_id,
+    template_text,
+)
 from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
@@ -91,6 +101,7 @@ class Designer:
         self.forecast_cache = {}
         self.locks = {}
         self.render_lock = asyncio.Lock()
+        self.template_lock = asyncio.Lock()
         self.panel_registered = False
 
     def entry(self, entry_id):
@@ -277,6 +288,73 @@ class Designer:
         if not entry.runtime_data.device_id:
             raise HomeAssistantError("This ESL has no registered device")
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
+
+    @property
+    def user_template_dir(self):
+        return Path(self.hass.config.path("ble_esl", "templates"))
+
+    async def _reload_design_templates(self):
+        self.design_templates = await self.hass.async_add_executor_job(
+            load_design_templates, self.user_template_dir
+        )
+
+    async def reload_design_templates(self):
+        # Under the lock, so a reload that began before a save cannot finish after it.
+        async with self.template_lock:
+            await self._reload_design_templates()
+
+    async def save_design_template(self, entry, document, name, template_id=None, overwrite=False):
+        """Keep the current design as a template in the user's template folder."""
+        name = check_name(name)
+        exported = await self.export(entry, document)
+        if exported["validation_errors"]:
+            raise HomeAssistantError(
+                "Fix the design first: " + "; ".join(exported["validation_errors"][:3])
+            )
+        preset = self.preset(entry)
+        background = validate(document, preset)["background"]
+
+        def write(template_id, file_name):
+            folder = self.user_template_dir
+            folder.mkdir(parents=True, exist_ok=True)
+            text = template_text(
+                template_id, name, preset.width, preset.height, background, exported["payload_data"]
+            )
+            # Written beside the target and moved into place: a gallery reload
+            # never reads half a file, and a symlink at the target is replaced.
+            with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=folder, suffix=".tmp", delete=False
+            ) as handle:
+                try:
+                    handle.write(text)
+                    handle.flush()
+                    # Like a hand-made file, not the private mode a temp file gets.
+                    os.chmod(handle.name, 0o644)
+                    os.replace(handle.name, folder / file_name)
+                except BaseException:
+                    with contextlib.suppress(OSError):
+                        os.unlink(handle.name)
+                    raise
+            return text
+
+        requested = template_id
+
+        def save():
+            folder = self.user_template_dir
+            template_id, file_name = pick_id(
+                name,
+                requested,
+                overwrite,
+                self.design_templates,
+                lambda candidate: (folder / candidate).exists(),
+            )
+            return template_id, write(template_id, file_name)
+
+        # One save at a time: the id is chosen and the file written under the lock.
+        async with self.template_lock:
+            template_id, text = await self.hass.async_add_executor_job(save)
+            await self._reload_design_templates()
+        return {"id": template_id, "yaml": text}
 
     def design_template_list(self, entry):
         """The ready-made designs, described for this tag's display."""
@@ -473,6 +551,7 @@ class Designer:
                 "templates",
                 "design_templates",
                 "apply_design_template",
+                "save_design_template",
                 "save_template",
                 "preview_template",
                 "automations",
@@ -495,6 +574,8 @@ class Designer:
         vol.Optional("entity_id"): str,
         vol.Optional("link_id"): str,
         vol.Optional("template_id"): str,
+        vol.Optional("name"): str,
+        vol.Optional("overwrite"): bool,
         vol.Optional("parameters"): dict,
         vol.Optional("automation_defaults"): vol.Schema(
             {
@@ -516,7 +597,16 @@ async def websocket_designer(hass, connection, msg):
         result = describe()
     elif action == "templates":
         result = designer.templates
+    elif action == "save_design_template":
+        result = await designer.save_design_template(
+            designer.entry(msg["entry_id"]),
+            msg["document"],
+            msg.get("name"),
+            msg.get("template_id"),
+            msg.get("overwrite", False),
+        )
     elif action == "design_templates":
+        await designer.reload_design_templates()
         result = designer.design_template_list(designer.entry(msg["entry_id"]))
     elif action == "apply_design_template":
         if "template_id" not in msg:
@@ -617,7 +707,7 @@ async def async_setup_designer(hass):
                 migrated = True
     if migrated:
         await designer.store.async_save(designer.documents)
-    designer.design_templates = await hass.async_add_executor_job(load_templates)
+    await designer.reload_design_templates()
     designer.templates = await designer.template_store.async_load() or {}
     await designer.automation_links.load()
     websocket_api.async_register_command(hass, websocket_designer)

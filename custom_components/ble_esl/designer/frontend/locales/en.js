@@ -547,4 +547,9 @@ export default {
   "Replace and create automation": "Replace and create automation",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "The template's triggers are included. Change them in Home Assistant after creating the automation.",
+  "Save current design as a template": "Save current design as a template",
+  "Save as template": "Save as template",
+  "My template": "My template",
+  "Saved template {name}.": "Saved template {name}.",
+  "Design template name": "Design template name",
 };

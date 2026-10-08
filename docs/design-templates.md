@@ -28,6 +28,14 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 
 Examples that read entities or service responses (weather, calendar, presence…) are not templates yet, because a template carries a fixed payload and its parameters are plain values.
 
+## Your own templates
+
+Put template files in `<config>/ble_esl/templates/*.yaml`; they are listed (marked *My template*) the next time the gallery opens, with no restart. A file that is invalid is skipped with a warning in the log, and a file cannot reuse the `id` of a bundled template.
+
+To make one from a design, build it in the Designer, open **Templates**, type a name under **Save current design as a template** and choose **Save as template**. The file is written to the folder above with the design's current display size as its only layout. Unsaved edits are included and templates in elements are kept as written. A second save under the same name (or a name that matches a bundled template or a file already in the folder, even one that does not load) gets a new id (`name_2`) instead of overwriting; only an explicit `template_id` with `overwrite` replaces a file, and only the one named after that id. The gallery re-reads the folder every time it opens. Edit the file afterwards to add `parameters` (replace values with `${name}`), more layouts or an `automation` block.
+
+A design whose text contains `${…}` cannot be saved this way, because that would read as a parameter.
+
 ## File format
 
 ```yaml
@@ -107,4 +115,4 @@ Run the test-suite: `tests/test_design_templates.py` loads every bundled templat
 
 ## API
 
-The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag) and `apply_design_template` (`template_id`, `parameters`, `existing`, `preview_variables`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.
+The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag), `save_design_template` (`name`, optional `template_id`, `overwrite`; saves a design to the user folder), and `apply_design_template` (`template_id`, `parameters`, `existing`, `preview_variables`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.

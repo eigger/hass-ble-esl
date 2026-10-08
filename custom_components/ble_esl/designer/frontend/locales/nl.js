@@ -554,4 +554,9 @@ export default {
   "Replace and create automation": "Vervangen en automatisering maken",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "De triggers van het sjabloon zijn opgenomen. Wijzig ze in Home Assistant nadat de automatisering is gemaakt.",
+  "Save current design as a template": "Huidig ontwerp opslaan als sjabloon",
+  "Save as template": "Opslaan als sjabloon",
+  "My template": "Mijn sjabloon",
+  "Saved template {name}.": "Sjabloon {name} opgeslagen.",
+  "Design template name": "Naam van het ontwerpsjabloon",
 };

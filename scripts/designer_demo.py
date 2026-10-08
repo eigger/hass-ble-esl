@@ -22,10 +22,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer import _preview_variable_map
 from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
+    check_name,
     describe as describe_template,
-    load_templates,
+    load_all,
+    parse_template,
+    pick_id,
+    template_text,
 )
-from custom_components.ble_esl.designer.export import automation_draft, export_yaml
+from custom_components.ble_esl.designer.export import automation_draft, export_yaml, plain
 from custom_components.ble_esl.designer.importer import (
     convert,
     different_pixels,
@@ -50,7 +54,7 @@ from custom_components.ble_esl.designer.specs import (
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 
 ROOT = Path(__file__).resolve().parents[1]
-DESIGN_TEMPLATES = load_templates()
+DESIGN_TEMPLATES = load_all()
 STATES = {
     "sensor.office_temperature": {
         "entity_id": "sensor.office_temperature",
@@ -370,6 +374,32 @@ async def handle(request):
         return web.json_response(
             {"elements": elements, "issues": issues, "different_pixels": different}
         )
+    if msg["action"] == "save_design_template":
+        try:
+            name = check_name(msg.get("name"))
+            template_id, _ = pick_id(
+                name,
+                msg.get("template_id"),
+                msg.get("overwrite", False),
+                DESIGN_TEMPLATES,
+                lambda candidate: False,
+            )
+            forecasts = await demo_forecasts()
+            payload = live_payload(HASS, document, TEMPLATES, forecasts)
+            if payload is None:
+                payload = compile_payload(HASS, document, TEMPLATES, forecasts)
+            text = template_text(
+                template_id,
+                name,
+                preset.width,
+                preset.height,
+                document["background"],
+                plain(payload),
+            )
+        except HomeAssistantError as err:
+            return web.Response(status=400, text=str(err))
+        DESIGN_TEMPLATES[template_id] = {**parse_template(text), "source": "user"}
+        return web.json_response({"id": template_id, "yaml": text})
     if msg["action"] == "save":
         tag["document"] = document
         return web.json_response(document)

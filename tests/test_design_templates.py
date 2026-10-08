@@ -1,5 +1,7 @@
 """Design templates: format, parameter substitution, layouts and the designer API."""
 
+from unittest.mock import patch
+
 from homeassistant.components.automation.config import async_validate_config_item
 from homeassistant.exceptions import HomeAssistantError
 import pytest
@@ -387,3 +389,181 @@ def test_wifi_text_does_not_overlap_the_qr_code():
 def test_message_text_and_line_count_are_applied():
     built = build(TEMPLATES["message"], 250, 128, "BWR", {"text": "Hi", "lines": 3})
     assert (built["payload"][0]["value"], built["payload"][0]["max_lines"]) == ("Hi", 3)
+
+
+def _text_document(value="Hello"):
+    return {
+        "version": 1,
+        "background": "white",
+        "elements": [
+            {
+                "id": "t",
+                "type": "imagespec",
+                "x": 5,
+                "y": 6,
+                "width": 120,
+                "height": 30,
+                "spec": {"type": "text_fit", "value": value, "color": "black"},
+            }
+        ],
+    }
+
+
+async def test_saved_design_becomes_a_user_template(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    saved = await designer.save_design_template(
+        wolink_entry, _text_document("{{ now().year }}"), "My Year"
+    )
+    assert saved["id"] == "my_year"
+    path = designer.user_template_dir / "my_year.yaml"
+    assert path.is_file()
+    template = designer.design_templates["my_year"]
+    assert template["source"] == "user"
+    preset = designer.preset(wolink_entry)
+    built = build(template, preset.width, preset.height, preset.colors)
+    assert built["scaled"] is False
+    assert built["payload"][0]["value"] == "{{ now().year }}"
+    # A second save under the same name never overwrites by accident.
+    again = await designer.save_design_template(wolink_entry, _text_document(), "My Year")
+    assert again["id"] == "my_year_2"
+    with pytest.raises(HomeAssistantError, match="already exists"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "My Year", template_id="my_year"
+        )
+    await designer.save_design_template(
+        wolink_entry, _text_document("v2"), "My Year", template_id="my_year", overwrite=True
+    )
+    assert (await designer.apply_design_template(wolink_entry, "my_year"))["elements"]
+
+
+async def test_saving_refuses_bad_names_ids_and_references(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    for name in ("", "   ", "x" * 81, "a\nb"):
+        with pytest.raises(HomeAssistantError, match="name"):
+            await designer.save_design_template(wolink_entry, _text_document(), name)
+    with pytest.raises(HomeAssistantError, match="bundled"):
+        await designer.save_design_template(wolink_entry, _text_document(), "Date", "date")
+    # Saved by name only, a bundled id is simply taken: the new one gets a suffix.
+    named = await designer.save_design_template(wolink_entry, _text_document(), "Date")
+    assert named["id"] == "date_2"
+    with pytest.raises(HomeAssistantError, match="cannot be saved"):
+        await designer.save_design_template(wolink_entry, _text_document("${x}"), "Ref")
+    with pytest.raises(HomeAssistantError, match="lowercase"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Path", template_id="../evil"
+        )
+    assert not list(designer.user_template_dir.glob("*evil*"))
+
+
+def test_user_templates_cannot_replace_bundled_ones(tmp_path, caplog):
+    from custom_components.ble_esl.designer.design_templates import load_all
+
+    (tmp_path / "date.yaml").write_text(MINIMAL.replace("id: sample", "id: date"))
+    (tmp_path / "mine.yaml").write_text(MINIMAL)
+    templates = load_all(tmp_path)
+    assert templates["date"]["source"] == "bundled"
+    assert templates["sample"]["source"] == "user"
+    assert "already bundled" in caplog.text
+
+
+def test_slug_makes_a_valid_id():
+    from custom_components.ble_esl.designer.design_templates import slug
+
+    assert slug("My Year!") == "my_year"
+    assert slug("날짜") == "design"
+    assert slug("3 days") == "design_3_days"
+    assert parse_template(MINIMAL.replace("id: sample", f"id: {slug('3 days')}"))
+
+
+async def test_saving_never_overwrites_files_that_did_not_load(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "draft.yaml").write_text("template: 1\nid: draft\n")  # invalid, still being edited
+    (folder / "draft_2.yaml").write_text("template: 1\n")
+    saved = await designer.save_design_template(wolink_entry, _text_document(), "Draft")
+    assert saved["id"] == "draft_3"
+    assert (folder / "draft.yaml").read_text() == "template: 1\nid: draft\n"
+    with pytest.raises(HomeAssistantError, match="already exists"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Draft", template_id="draft"
+        )
+
+
+async def test_id_defined_in_another_file_is_not_taken_over(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "aaa.yaml").write_text(MINIMAL)
+    await designer.reload_design_templates()
+    assert designer.design_templates["sample"]["file"] == "aaa.yaml"
+    with pytest.raises(HomeAssistantError, match=r"aaa\.yaml"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Sample", template_id="sample", overwrite=True
+        )
+    # By name the taken id just gets a suffix, so nothing is hidden by a duplicate.
+    assert (await designer.save_design_template(wolink_entry, _text_document(), "Sample"))[
+        "id"
+    ] == "sample_2"
+
+
+async def test_concurrent_saves_get_distinct_ids(hass, wolink_entry, tmp_path):
+    import asyncio
+
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    results = await asyncio.gather(
+        *(designer.save_design_template(wolink_entry, _text_document(), "Same") for _ in range(4))
+    )
+    assert sorted(item["id"] for item in results) == ["same", "same_2", "same_3", "same_4"]
+    assert not list(designer.user_template_dir.glob("*.tmp"))
+
+
+def test_long_names_keep_ids_valid():
+    from custom_components.ble_esl.designer.design_templates import ID_PATTERN, pick_id, slug
+
+    for name in ("9" * 50, "a" * 80, "날짜"):
+        base = slug(name)
+        assert ID_PATTERN.fullmatch(f"{base}_99"), name
+        picked, _ = pick_id(name, None, False, {}, lambda file_name: False)
+        assert ID_PATTERN.fullmatch(picked)
+
+
+def test_oversized_user_file_is_skipped_unread(tmp_path, caplog):
+    (tmp_path / "big.yaml").write_text("x" * (256 * 1024 + 1))
+    assert load_templates(tmp_path) == {}
+    assert "too large" in caplog.text
+
+
+async def test_explicit_id_never_replaces_a_file_holding_another_template(
+    hass, wolink_entry, tmp_path
+):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "other.yaml").write_text(MINIMAL)  # defines id "sample"
+    await designer.reload_design_templates()
+    for overwrite in (False, True):
+        with pytest.raises(HomeAssistantError, match="holds the template sample"):
+            await designer.save_design_template(
+                wolink_entry, _text_document(), "Other", "other", overwrite=overwrite
+            )
+    assert "sample" in (folder / "other.yaml").read_text()
+
+
+async def test_saved_file_is_readable_and_leaves_no_temporary_file(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    await designer.save_design_template(wolink_entry, _text_document(), "Perm")
+    assert (designer.user_template_dir / "perm.yaml").stat().st_mode & 0o777 == 0o644
+    with (
+        patch("custom_components.ble_esl.designer.os.replace", side_effect=OSError("disk full")),
+        pytest.raises(OSError, match="disk full"),
+    ):
+        await designer.save_design_template(wolink_entry, _text_document(), "Full")
+    assert not list(designer.user_template_dir.glob("*.tmp"))

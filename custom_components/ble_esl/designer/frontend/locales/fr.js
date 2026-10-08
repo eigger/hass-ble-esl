@@ -552,4 +552,10 @@ export default {
   "Replace and create automation": "Remplacer et créer l'automatisation",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "Les déclencheurs du modèle sont inclus. Modifiez-les dans Home Assistant après avoir créé l'automatisation.",
+  "Save current design as a template":
+    "Enregistrer le design actuel comme modèle",
+  "Save as template": "Enregistrer comme modèle",
+  "My template": "Mon modèle",
+  "Saved template {name}.": "Modèle {name} enregistré.",
+  "Design template name": "Nom du modèle de design",
 };

@@ -553,4 +553,9 @@ export default {
   "Replace and create automation": "置き換えてオートメーションを作成",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "テンプレートのトリガーが含まれています。オートメーションを作成した後、Home Assistant で変更できます。",
+  "Save current design as a template": "現在のデザインをテンプレートとして保存",
+  "Save as template": "テンプレートとして保存",
+  "My template": "マイテンプレート",
+  "Saved template {name}.": "テンプレート {name} を保存しました。",
+  "Design template name": "デザインテンプレート名",
 };
