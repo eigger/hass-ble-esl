@@ -559,12 +559,21 @@ test("card information aligns and battery stays at the right edge", async ({
         image: box(".image").top,
         dimensions: box(".dimensions").top,
         right: box(".battery").right - box(".top").right,
+        productRight: box(".product").right - box(".top").right,
+        aligned:
+          (box(".battery").top + box(".battery").bottom) / 2 ===
+          (box("h2").top + box("h2").bottom) / 2,
+        border: getComputedStyle(card.querySelector(".battery button"))
+          .borderTopWidth,
       };
     }),
   );
   expect(metrics[0].image).toBe(metrics[1].image);
   expect(metrics[0].dimensions).toBe(metrics[1].dimensions);
   expect(metrics.map((metric) => metric.right)).toEqual([0, 0]);
+  expect(metrics.map((metric) => metric.productRight)).toEqual([0, 0]);
+  expect(metrics.map((metric) => metric.aligned)).toEqual([true, true]);
+  expect(metrics.map((metric) => metric.border)).toEqual(["0px", "0px"]);
   await expect(page.locator(".battery svg")).toHaveCount(2);
 });
 
