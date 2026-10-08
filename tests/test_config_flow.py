@@ -119,6 +119,20 @@ async def test_bluetooth_discovery_picksmart_detects_model(
     assert result["data"] == {CONF_PROTOCOL: "picksmart", CONF_MODEL: "0x0033"}
 
 
+async def test_bluetooth_discovery_rejects_shared_picksmart_manufacturer_id(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """A shared company ID with an incompatible payload must not prompt setup."""
+    info = service_info(
+        "5C:17:AA:71:12:57",
+        manufacturer_data={PICKSMART_ID: bytes.fromhex("0d105c17aa711257")},
+        service_uuids=["0000e0ff-0000-1000-8000-00805f9b34fb"],
+    )
+    result = await start_bluetooth_flow(hass, info)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "not_supported"
+
+
 async def test_bluetooth_discovery_xte(hass: HomeAssistant, enable_bluetooth) -> None:
     result = await start_bluetooth_flow(hass, xte_service_info())
     assert result["step_id"] == "bluetooth_confirm"
