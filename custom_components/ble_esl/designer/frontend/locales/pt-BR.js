@@ -543,4 +543,16 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "Modelos",
+  "Design templates": "Modelos de design",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "Escolha um design pronto. Ele é adicionado como elementos comuns que você pode editar.",
+  "No design templates fit this display.":
+    "Nenhum modelo de design combina com esta tela.",
+  "Adjusted to this display": "Ajustado a esta tela",
+  Back: "Voltar",
+  Automation: "Automação",
+  "Replace and create automation": "Substituir e criar automação",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "Os gatilhos do modelo estão incluídos. Altere-os no Home Assistant depois de criar a automação.",
 };

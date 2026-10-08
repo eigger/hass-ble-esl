@@ -1700,3 +1700,64 @@ test("failed automation creation can retry the same ID without losing the name",
   expect(configs).toHaveLength(2);
   expect(configs[0].id).toBe(configs[1].id);
 });
+
+test("design template: gallery applies elements and prefills the automation", async ({
+  page,
+}) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await expect(gallery).toContainText("Date label");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await gallery.getByLabel("Update time").fill("18:30:15");
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery).toHaveCount(0);
+  await expect(page.locator(".el")).toHaveCount(2);
+
+  const configs = [];
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    configs.push(route.request().postDataJSON());
+    await route.fulfill({ json: { result: "ok" } });
+  });
+  await page
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(dialog).not.toContainText("No triggers are configured");
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation" }),
+  ).toBeVisible();
+  expect(configs[0].triggers).toEqual([{ trigger: "time", at: "18:30:15" }]);
+  expect(configs[0].actions[0].data.payload[0].value).toContain("now()");
+  expect(errors).toEqual([]);
+});
+
+test("design template: replace and create automation in one step", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await gallery
+    .getByRole("button", { name: "Replace and create automation" })
+    .click();
+  await expect(page.locator("ble-esl-yaml-dialog")).toContainText(
+    "The template's triggers are included",
+  );
+});
+
+test("design template: a missing font reports the error and keeps the display", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await gallery.getByLabel("Font").fill("Missing.ttf");
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery).toContainText("Font not found");
+  await expect(page.locator(".el")).toHaveCount(0);
+});

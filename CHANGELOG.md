@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Templates** in the Designer: pick a ready-made design, adjust its parameters and add it as editable elements, optionally creating the automation with the template's triggers (the Date label updates daily at 12:00 by default).
 - Design templates: YAML files in `designer/templates/` describe a ready-made design with editable parameters (font, colors, time), per-resolution layouts and an optional automation. The Designer API can list and apply them and prefill a new automation with the template's triggers. A Date label template is included. See [Design templates](docs/design-templates.md).
 
 ### Changed

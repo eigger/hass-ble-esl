@@ -541,4 +541,16 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "テンプレート",
+  "Design templates": "デザインテンプレート",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "できあがったデザインを選びます。編集できる通常の要素として追加されます。",
+  "No design templates fit this display.":
+    "この画面に合うデザインテンプレートはありません。",
+  "Adjusted to this display": "この画面に合わせて調整済み",
+  Back: "戻る",
+  Automation: "オートメーション",
+  "Replace and create automation": "置き換えてオートメーションを作成",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "テンプレートのトリガーが含まれています。オートメーションを作成した後、Home Assistant で変更できます。",
 };

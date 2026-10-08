@@ -542,4 +542,16 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "Sjablonen",
+  "Design templates": "Ontwerpsjablonen",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "Kies een kant-en-klaar ontwerp. Het wordt toegevoegd als gewone, bewerkbare elementen.",
+  "No design templates fit this display.":
+    "Geen ontwerpsjabloon past bij dit scherm.",
+  "Adjusted to this display": "Aangepast aan dit scherm",
+  Back: "Terug",
+  Automation: "Automatisering",
+  "Replace and create automation": "Vervangen en automatisering maken",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "De triggers van het sjabloon zijn opgenomen. Wijzig ze in Home Assistant nadat de automatisering is gemaakt.",
 };

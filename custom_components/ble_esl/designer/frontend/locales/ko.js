@@ -534,4 +534,16 @@ export default {
     "자동화 가져오기 요청이 더 이상 유효하지 않습니다.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "배경은 자동화 payload에 포함되지 않습니다. 저장하기 전에 가져온 배경으로 되돌리세요.",
+  Templates: "템플릿",
+  "Design templates": "디자인 템플릿",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "완성된 디자인을 선택하세요. 편집할 수 있는 일반 요소로 추가됩니다.",
+  "No design templates fit this display.":
+    "이 화면에 맞는 디자인 템플릿이 없습니다.",
+  "Adjusted to this display": "이 화면에 맞게 조정됨",
+  Back: "뒤로",
+  Automation: "자동화",
+  "Replace and create automation": "교체하고 자동화 만들기",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "템플릿의 실행 조건이 포함되어 있습니다. 자동화를 만든 뒤 Home Assistant에서 변경할 수 있습니다.",
 };
