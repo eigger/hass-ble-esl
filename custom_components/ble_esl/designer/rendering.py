@@ -10,7 +10,7 @@ from .layout import compile_payload, resolve_component
 from .specs import resolve_templates
 
 
-def snapshot_layers(hass, document, templates, forecasts):
+def snapshot_layers(hass, document, templates, forecasts, preview_variables=None):
     """Resolve HA state on the event loop, before CPU work enters the executor."""
     layers = []
     for element in document["elements"]:
@@ -23,10 +23,16 @@ def snapshot_layers(hass, document, templates, forecasts):
             # Rendered once here: the layer and the display share these values,
             # and the entities say which state changes redraw the preview.
             entities = set()
-            element["spec"] = resolve_templates(hass, element["spec"], entities)
+            element["spec"] = resolve_templates(hass, element["spec"], entities, preview_variables)
             element["_spec_resolved"] = True
             element["_template_entities"] = sorted(entities)
-        payload = compile_payload(hass, {"elements": [element]}, templates, forecasts)
+        payload = compile_payload(
+            hass,
+            {"elements": [element]},
+            templates,
+            forecasts,
+            preview_variables=preview_variables,
+        )
         layers.append((element, payload))
     return layers
 

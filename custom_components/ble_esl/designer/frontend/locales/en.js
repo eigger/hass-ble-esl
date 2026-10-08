@@ -205,6 +205,26 @@ export default {
     "Automation payload imported. Edit the design, then save it to this automation.",
   "The current design cannot be saved as a payload.":
     "The current design cannot be saved as a payload.",
+  "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
+    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+  "This preview parameter is still undefined: {name}":
+    "This preview parameter is still undefined: {name}",
+  "Preview parameter must be valid JSON.":
+    "Preview parameter must be valid JSON.",
+  "Preview parameter must contain finite JSON values without prototype keys.":
+    "Preview parameter must contain finite JSON values without prototype keys.",
+  "Too many preview parameters are missing.":
+    "Too many preview parameters are missing.",
+  "Preview parameter entry was cancelled.":
+    "Preview parameter entry was cancelled.",
+  "Import needs a preview parameter: {name}":
+    "Import needs a preview parameter: {name}",
+  "Preview parameters": "Preview parameters",
+  "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
+    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+  "Preview parameters must be a JSON object with finite values and no prototype keys.":
+    "Preview parameters must be a JSON object with finite values and no prototype keys.",
+  "Preview parameters are too large.": "Preview parameters are too large.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":

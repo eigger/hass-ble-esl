@@ -338,20 +338,36 @@ def templates_in(value):
     return []
 
 
-def resolve_templates(hass, value, entities):
+class MissingTemplateParameter(HomeAssistantError):
+    """A template needs a value supplied only for its designer preview."""
+
+    def __init__(self, name):
+        self.name = name
+        super().__init__(f"Preview parameter {name!r} is required")
+
+
+def resolve_templates(hass, value, entities, preview_variables=None):
     """The spec with each template rendered, as an automation would render it."""
     if isinstance(value, str) and _TEMPLATE.search(value):
         try:
-            info = Template(value, hass).async_render_to_info(parse_result=True)
+            info = Template(value, hass).async_render_to_info(
+                preview_variables, parse_result=True, strict=True
+            )
             result = info.result()
         except Exception as err:
+            missing = re.search(r"['\"]([^'\"]+)['\"] is undefined", str(err))
+            if missing:
+                raise MissingTemplateParameter(missing.group(1)) from err
             raise HomeAssistantError(f"Template error in {value!r}: {err}") from err
         entities.update(info.entities)
         return result
     if isinstance(value, dict):
-        return {key: resolve_templates(hass, item, entities) for key, item in value.items()}
+        return {
+            key: resolve_templates(hass, item, entities, preview_variables)
+            for key, item in value.items()
+        }
     if isinstance(value, list):
-        return [resolve_templates(hass, item, entities) for item in value]
+        return [resolve_templates(hass, item, entities, preview_variables) for item in value]
     return value
 
 

@@ -431,6 +431,103 @@ class EslManager extends HTMLElement {
     this.automationSaving = false;
     session.editor.restoreEditorSession(session.returnState, session.token);
   }
+  safeAutomationVariables(config, selectedPath) {
+    const excluded = Symbol("not a literal JSON value");
+    const safeValue = (value) => {
+      if (value === null || typeof value === "boolean") return value;
+      if (typeof value === "number")
+        return Number.isFinite(value) ? value : excluded;
+      if (typeof value === "string")
+        return /{{|{%|{#/.test(value) ? excluded : value;
+      if (Array.isArray(value)) {
+        const result = value.map(safeValue);
+        return result.some((item) => item === excluded) ? excluded : result;
+      }
+      if (value && typeof value === "object") {
+        const result = Object.create(null);
+        for (const [key, item] of Object.entries(value)) {
+          if (["__proto__", "prototype", "constructor"].includes(key))
+            return excluded;
+          const safe = safeValue(item);
+          if (safe === excluded) return excluded;
+          result[key] = safe;
+        }
+        return result;
+      }
+      return excluded;
+    };
+    const variables = Object.create(null);
+    const include = (candidate) => {
+      if (
+        !candidate ||
+        typeof candidate !== "object" ||
+        Array.isArray(candidate)
+      )
+        return;
+      for (const [key, value] of Object.entries(candidate)) {
+        if (["__proto__", "prototype", "constructor"].includes(key)) continue;
+        const safe = safeValue(value);
+        if (safe === excluded) delete variables[key];
+        else variables[key] = safe;
+      }
+    };
+    const invalidateNestedAssignments = (action) => {
+      if (!action || typeof action !== "object") return;
+      if (action.enabled === false) return;
+      if (typeof action.response_variable === "string")
+        delete variables[action.response_variable];
+      if (action.variables && typeof action.variables === "object")
+        for (const key of Object.keys(action.variables)) delete variables[key];
+      for (const [key, child] of Object.entries(action)) {
+        if (["target", "data", "service_data", "payload"].includes(key))
+          continue;
+        if (Array.isArray(child)) child.forEach(invalidateNestedAssignments);
+        else if (child && typeof child === "object")
+          invalidateNestedAssignments(child);
+      }
+    };
+    include(config.variables);
+    let node = config;
+    let uncertainScope = false;
+    for (const part of selectedPath) {
+      if (["choose", "if", "parallel", "default"].includes(part))
+        uncertainScope = true;
+      if (Array.isArray(node) && Number.isInteger(part)) {
+        for (const action of node.slice(0, part)) {
+          if (action?.enabled === false) continue;
+          if (uncertainScope) {
+            for (const key of Object.keys(action?.variables || {}))
+              delete variables[key];
+          } else {
+            include(action?.variables);
+          }
+          if (typeof action?.response_variable === "string")
+            delete variables[action.response_variable];
+          for (const [key, child] of Object.entries(action || {})) {
+            if (
+              [
+                "variables",
+                "response_variable",
+                "target",
+                "data",
+                "service_data",
+                "payload",
+              ].includes(key)
+            )
+              continue;
+            if (Array.isArray(child))
+              child.forEach(invalidateNestedAssignments);
+            else if (child && typeof child === "object")
+              invalidateNestedAssignments(child);
+          }
+        }
+        node = node[part];
+      } else {
+        node = node?.[part];
+      }
+    }
+    return variables;
+  }
   async editAutomation(entryId, entityId) {
     const tag = this.tags.find((item) => item.entry_id === entryId);
     if (!tag) return;
@@ -575,12 +672,75 @@ class EslManager extends HTMLElement {
             "This automation background is not supported by the selected ESL.",
           ),
         );
-      const imported = await editor.prepareAutomationPayload(
-        data.payload,
-        data.background,
-        entryId,
+      const previewVariables = this.safeAutomationVariables(
+        config,
+        selectedPath,
       );
-      if (!current()) return;
+      const prompted = new Set();
+      let imported;
+      for (let attempt = 0; attempt < 64; attempt++) {
+        imported = await editor.prepareAutomationPayload(
+          data.payload,
+          data.background,
+          entryId,
+          previewVariables,
+        );
+        if (!current()) return;
+        const missing = imported.missing_parameters?.[0];
+        if (!missing) break;
+        if (prompted.has(missing))
+          throw new Error(
+            t(this.hass, "This preview parameter is still undefined: {name}", {
+              name: missing,
+            }),
+          );
+        prompted.add(missing);
+        const raw = window.prompt(
+          t(
+            this.hass,
+            "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+            { name: missing },
+          ),
+        );
+        if (!current()) return;
+        if (raw === null) {
+          this.clearAutomationEdit(session);
+          return;
+        }
+        let value;
+        try {
+          value = JSON.parse(raw);
+        } catch {
+          throw new Error(
+            t(this.hass, "Preview parameter must be valid JSON."),
+          );
+        }
+        const safeValue = (candidate) => {
+          if (candidate === null || typeof candidate === "string") return true;
+          if (typeof candidate === "boolean") return true;
+          if (typeof candidate === "number") return Number.isFinite(candidate);
+          if (Array.isArray(candidate)) return candidate.every(safeValue);
+          if (candidate && typeof candidate === "object")
+            return Object.entries(candidate).every(
+              ([key, item]) =>
+                !["__proto__", "prototype", "constructor"].includes(key) &&
+                safeValue(item),
+            );
+          return false;
+        };
+        if (!safeValue(value))
+          throw new Error(
+            t(
+              this.hass,
+              "Preview parameter must contain finite JSON values without prototype keys.",
+            ),
+          );
+        previewVariables[missing] = value;
+      }
+      if (imported?.missing_parameters?.length)
+        throw new Error(
+          t(this.hass, "Too many preview parameters are missing."),
+        );
       if (
         imported.issues.length ||
         (data.payload.length && imported.different_pixels !== 0)
@@ -599,6 +759,7 @@ class EslManager extends HTMLElement {
           data.payload.length === 0,
           entryId,
           token,
+          previewVariables,
         )
       ) {
         if (!current()) return;
@@ -788,6 +949,8 @@ class EslManager extends HTMLElement {
       const exported = await session.editor.api("export", {
         entry_id: source.entry_id,
         document: snapshot.document,
+        preview_variables: snapshot.preview_variables || {},
+        automation_edit: true,
       });
       if (!current()) return;
       if (

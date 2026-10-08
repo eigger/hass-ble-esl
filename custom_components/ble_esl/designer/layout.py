@@ -11,7 +11,13 @@ from homeassistant.util import dt as dt_util
 import imagespec
 import voluptuous as vol
 
-from .specs import GEOMETRY, frozen_corners, resolve_templates, spec_payload, templates_in
+from .specs import (
+    GEOMETRY,
+    frozen_corners,
+    resolve_templates,
+    spec_payload,
+    templates_in,
+)
 
 COLOR = vol.In(("black", "white", "red", "yellow"))
 
@@ -609,7 +615,9 @@ def _set_dither(payload, start, dither):
             item.setdefault("dither", dither)
 
 
-def compile_payload(hass, document, templates=None, forecasts=None, keep_templates=False):
+def compile_payload(
+    hass, document, templates=None, forecasts=None, keep_templates=False, preview_variables=None
+):
     """Snapshot HA values on its event loop; render them later in the executor."""
     payload = []
     pending = None
@@ -617,6 +625,8 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
         if pending:
             _set_dither(payload, *pending)
             pending = None
+        # Preview-only automation parameters apply to raw imagespec templates;
+        # legacy component template context remains its normal sensor context.
         element, _bound_state = resolve_component(hass, element)
         if not element["visible"]:
             continue
@@ -652,18 +662,21 @@ def compile_payload(hass, document, templates=None, forecasts=None, keep_templat
                     for key, minimum in _SCALED_PIXELS.items():
                         if child.get(key) is not None:
                             child[key] = max(minimum, round(child[key] * min(sx, sy)))
-                payload.extend(compile_payload(hass, nested))
+                payload.extend(compile_payload(hass, nested, preview_variables=preview_variables))
                 continue
         if element["type"] == "imagespec":
             spec = (
                 element["spec"]
                 if keep_templates or element.get("_spec_resolved")
-                else resolve_templates(hass, element["spec"], set())
+                else resolve_templates(hass, element["spec"], set(), preview_variables)
             )
             if keep_templates and frozen_corners(element["spec"]):
                 # Corners are percentages of the frame: only the rendered text
                 # can be turned into them, so they are as of now.
-                spec = {**spec, "points": resolve_templates(hass, spec["points"], set())}
+                spec = {
+                    **spec,
+                    "points": resolve_templates(hass, spec["points"], set(), preview_variables),
+                }
             payload.append(spec_payload(spec, x, y, width, height))
             continue
         if element["type"] in ("progress_bar", "gauge"):

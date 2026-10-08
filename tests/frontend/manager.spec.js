@@ -44,6 +44,104 @@ test("dashboard shows registry entities, filters and opens entity details", asyn
   await expect(page.locator(".card")).toHaveCount(1);
 });
 
+test("automation preview seeds only safe sequential literal variables", async ({
+  page,
+}) => {
+  const values = await page.evaluate(() =>
+    window.manager.safeAutomationVariables(
+      {
+        variables: { root: "root literal", dynamic: "root fallback" },
+        actions: [
+          {
+            enabled: false,
+            variables: { disabled_value: "must not run" },
+          },
+          {
+            variables: {
+              root: "preceding literal",
+              dynamic: "{{ states('sensor.example') }}",
+            },
+          },
+          { action: "sensor.read", response_variable: "response_data" },
+          {
+            parallel: [
+              { sequence: [{ variables: { parallel_value: "uncertain" } }] },
+            ],
+          },
+          { action: "ble_esl.write" },
+        ],
+      },
+      ["actions", 4],
+    ),
+  );
+  expect(values).toMatchObject({ root: "preceding literal" });
+  expect(values).not.toHaveProperty("dynamic");
+  expect(values).not.toHaveProperty("disabled_value");
+  expect(values).not.toHaveProperty("response_data");
+  expect(values).not.toHaveProperty("parallel_value");
+});
+
+test("preview parameters remain outside the saved automation payload", async ({
+  page,
+  request,
+}) => {
+  await request.post("/api/config/automation/config/morning", {
+    data: {
+      id: "morning",
+      alias: "Morning",
+      variables: {},
+      triggers: [{ trigger: "time", at: "07:00:00" }],
+      conditions: [],
+      actions: [
+        {
+          action: "ble_esl.write",
+          target: { device_id: "demo-device-0" },
+          data: {
+            background: "white",
+            payload: [
+              {
+                type: "text_fit",
+                x: 8,
+                y: 8,
+                width: 220,
+                height: 28,
+                value: "{{ font_bold }}",
+                color: "black",
+              },
+            ],
+          },
+        },
+      ],
+      mode: "single",
+    },
+  });
+  await page.evaluate(() => {
+    window.prompt = () => '"first-preview.ttf"';
+    window.manager.editAutomation("demo-writable", "automation.morning");
+  });
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    window.prompt = () => JSON.stringify({ font_bold: "second-preview.ttf" });
+  });
+  await page.getByRole("button", { name: "Preview parameters" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.manager.editor._automationPreviewVariables.font_bold,
+      ),
+    )
+    .toBe("second-preview.ttf");
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
+  const saved = await page.evaluate(() =>
+    window.manager.hass.callApi("GET", "config/automation/config/morning"),
+  );
+  expect(saved.actions[0].data.payload[0].value).toBe("{{ font_bold }}");
+  expect(JSON.stringify(saved)).not.toContain("second-preview.ttf");
+});
+
 test("live entity values preserve successful image time and clear resolved errors", async ({
   page,
 }) => {

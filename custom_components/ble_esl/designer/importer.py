@@ -173,14 +173,14 @@ def convert(hass, element, state, items, preset):
     return elements, issues, [*original, *left_out], compile_payload(hass, {"elements": elements})
 
 
-def payloads(hass, imported, elements):
+def payloads(hass, imported, elements, preview_variables=None):
     """The pasted payload and the designer's, templates rendered.
 
     On the event loop: Home Assistant renders templates there.
     """
     return (
-        resolve_templates(hass, imported, set()),
-        compile_payload(hass, {"elements": elements}),
+        resolve_templates(hass, imported, set(), preview_variables),
+        compile_payload(hass, {"elements": elements}, preview_variables=preview_variables),
     )
 
 

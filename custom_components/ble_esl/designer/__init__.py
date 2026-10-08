@@ -5,6 +5,7 @@ import base64
 from functools import partial
 from io import BytesIO
 import json
+import math
 from pathlib import Path
 import time
 
@@ -33,11 +34,46 @@ from .layout import (
 )
 from .manager import AutomationLinks, tag_metadata
 from .rendering import render_document, snapshot_layers
-from .specs import describe, frozen_corners
+from .specs import MissingTemplateParameter, describe, frozen_corners
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
 MAX_STRUCTURED_PAYLOAD_BYTES = 5 * 1024 * 1024
+MAX_PREVIEW_VARIABLE_BYTES = 64 * 1024
+
+
+def _preview_variable_map(value):
+    """Accept bounded JSON values for preview only, never as document data."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
+        raise HomeAssistantError("Preview parameters must be a JSON object")
+
+    def safe(candidate):
+        if candidate is None or isinstance(candidate, str | bool | int):
+            return True
+        if isinstance(candidate, float):
+            return math.isfinite(candidate)
+        if isinstance(candidate, list):
+            return all(safe(item) for item in candidate)
+        if isinstance(candidate, dict):
+            return all(
+                isinstance(key, str)
+                and key not in ("__proto__", "prototype", "constructor")
+                and safe(item)
+                for key, item in candidate.items()
+            )
+        return False
+
+    try:
+        if not safe(value):
+            raise ValueError("not finite JSON or prototype key")
+        encoded = json.dumps(value, ensure_ascii=False, allow_nan=False).encode()
+    except (TypeError, ValueError, RecursionError) as err:
+        raise HomeAssistantError("Preview parameters must contain finite JSON values") from err
+    if len(encoded) > MAX_PREVIEW_VARIABLE_BYTES:
+        raise HomeAssistantError("Preview parameters are too large (64 KiB maximum)")
+    return value
 
 
 class Designer:
@@ -138,20 +174,23 @@ class Designer:
                 partial(render_document, self.hass, preset, document, payload, snapshots)
             )
 
-    async def draw(self, entry, document):
+    async def draw(self, entry, document, preview_variables=None):
         """Render without touching the tag's runtime data or preview entity."""
         preset = self.preset(entry)
         document = validate(document, preset)
         forecasts = await self.forecasts(document)
-        snapshots = snapshot_layers(self.hass, document, self.templates, forecasts)
+        preview_variables = _preview_variable_map(preview_variables)
+        snapshots = snapshot_layers(
+            self.hass, document, self.templates, forecasts, preview_variables
+        )
         # The elements' payloads in order are the document's payload: one
         # evaluation of every template serves the display and the layers.
         payload = [item for _, part in snapshots for item in part]
         image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
-    async def preview(self, entry, document):
-        _, image, payload, layers = await self.draw(entry, document)
+    async def preview(self, entry, document, preview_variables=None):
+        _, image, payload, layers = await self.draw(entry, document, preview_variables)
         buffer = BytesIO()
         image.save(buffer, "PNG")
         return {
@@ -160,12 +199,19 @@ class Designer:
             "layers": layers,
         }
 
-    async def export(self, entry, document):
+    async def export(self, entry, document, preview_variables=None, automation_edit=False):
         """The display as YAML for an automation: what the preview shows, as a payload."""
         preset = self.preset(entry)
         document = validate(document, preset)
+        preview_variables = _preview_variable_map(preview_variables)
         forecasts = await self.forecasts(document)
-        payload = compile_payload(self.hass, document, self.templates, forecasts)
+        payload = compile_payload(
+            self.hass,
+            document,
+            self.templates,
+            forecasts,
+            preview_variables=preview_variables,
+        )
         issues = []
         try:
             # imagespec.validate() misses what only rendering finds, e.g. an unknown icon.
@@ -177,12 +223,33 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
-        issues.extend(
-            f"{element['id']}: the polygon's corners are as of now in the live YAML"
+        dynamic_geometry = [
+            element
             for element in document["elements"]
             if element["type"] == "imagespec" and frozen_corners(element["spec"])
-        )
-        automation_payload = live_payload(self.hass, document, self.templates, forecasts)
+        ]
+        if automation_edit:
+            issues.extend(
+                f"blocking: {element['id']}: templated polygon corners cannot be safely saved"
+                for element in dynamic_geometry
+            )
+            # Never turn preview parameters into stored polygon coordinates.
+            automation_payload = (
+                None
+                if dynamic_geometry
+                else live_payload(self.hass, document, self.templates, forecasts)
+            )
+        else:
+            issues.extend(
+                f"{element['id']}: the polygon's corners are as of now in the live YAML"
+                for element in dynamic_geometry
+            )
+            automation_payload = live_payload(
+                self.hass,
+                document,
+                self.templates,
+                forecasts,
+            )
         result = export_yaml(
             payload,
             document["background"],
@@ -200,21 +267,23 @@ class Designer:
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
 
-    async def automation(self, entry, document):
+    async def automation(self, entry, document, preview_variables=None):
         """Prepare a new automation from the current, possibly unsaved design."""
-        result = await self.export(entry, document)
+        result = await self.export(entry, document, preview_variables)
         if not result["writable"]:
             raise HomeAssistantError("This ESL does not support writing")
         if not entry.runtime_data.device_id:
             raise HomeAssistantError("This ESL has no registered device")
         return {**result, "automation": automation_draft(result, entry.title)}
 
-    async def import_yaml(self, entry, text, existing=0):
+    async def import_yaml(self, entry, text, existing=0, preview_variables=None):
         """Elements for a pasted payload, and how faithfully they stand for it."""
         items, background = parse(text)
-        return await self.import_payload(entry, items, background, existing)
+        return await self.import_payload(entry, items, background, existing, preview_variables)
 
-    async def import_payload(self, entry, items, background=None, existing=0):
+    async def import_payload(
+        self, entry, items, background=None, existing=0, preview_variables=None
+    ):
         """Import a structured automation payload without YAML size/alias handling."""
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
             raise HomeAssistantError("The automation payload must be a list of objects")
@@ -223,11 +292,12 @@ class Designer:
                 "The automation payload is too large to import (5 MiB maximum)"
             )
         preset = self.preset(entry)
+        preview_variables = _preview_variable_map(preview_variables)
         elements, imported, issues = elements_from(items, preset, max(0, 100 - existing))
         different = None
         if elements:
             try:
-                original, rebuilt = payloads(self.hass, imported, elements)
+                original, rebuilt = payloads(self.hass, imported, elements, preview_variables)
                 async with self.render_lock:
                     different = await self.hass.async_add_executor_job(
                         partial(
@@ -241,6 +311,14 @@ class Designer:
                             else "white",
                         )
                     )
+            except MissingTemplateParameter as err:
+                return {
+                    "missing_parameters": [err.name],
+                    "elements": [],
+                    "issues": [],
+                    "different_pixels": None,
+                    "background": background,
+                }
             except HomeAssistantError as err:
                 issues.append(f"render: {err}")
         return {
@@ -357,6 +435,8 @@ class Designer:
         ),
         vol.Optional("entry_id"): str,
         vol.Optional("document"): dict,
+        vol.Optional("preview_variables"): dict,
+        vol.Optional("automation_edit"): bool,
         vol.Optional("text"): str,
         vol.Optional("payload"): [dict],
         vol.Optional("background"): str,
@@ -410,7 +490,10 @@ async def websocket_designer(hass, connection, msg):
         )
     elif action == "import_yaml":
         result = await designer.import_yaml(
-            designer.entry(msg["entry_id"]), msg["text"], msg.get("existing", 0)
+            designer.entry(msg["entry_id"]),
+            msg["text"],
+            msg.get("existing", 0),
+            msg.get("preview_variables"),
         )
     elif action == "import_payload":
         result = await designer.import_payload(
@@ -418,10 +501,24 @@ async def websocket_designer(hass, connection, msg):
             msg["payload"],
             msg.get("background"),
             msg.get("existing", 0),
+            msg.get("preview_variables"),
         )
     elif action == "convert":
         result = await designer.convert(
             designer.entry(msg["entry_id"]), msg["document"], msg["element_id"]
+        )
+    elif action == "export":
+        result = await designer.export(
+            designer.entry(msg["entry_id"]),
+            msg["document"],
+            msg.get("preview_variables"),
+            msg.get("automation_edit", False),
+        )
+    elif action in ("preview", "automation"):
+        result = await getattr(designer, action)(
+            designer.entry(msg["entry_id"]),
+            msg["document"],
+            msg.get("preview_variables"),
         )
     else:
         entry = designer.entry(msg["entry_id"])

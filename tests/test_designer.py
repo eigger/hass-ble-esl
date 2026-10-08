@@ -450,6 +450,41 @@ async def test_websocket_export(hass, wolink_entry, hass_ws_client):
     }
 
 
+async def test_websocket_preview_renders_with_preview_variables(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "preview",
+            "entry_id": wolink_entry.entry_id,
+            "document": {
+                "version": 1,
+                "background": "white",
+                "elements": [
+                    {
+                        "id": "templated",
+                        "type": "imagespec",
+                        "x": 8,
+                        "y": 8,
+                        "width": 180,
+                        "height": 30,
+                        "spec": {
+                            "type": "text_fit",
+                            "value": "{{ font_bold }}",
+                            "color": "black",
+                        },
+                    }
+                ],
+            },
+            "preview_variables": {"font_bold": "sample.ttf"},
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"]["payload"][0]["value"] == "sample.ttf"
+
+
 async def test_websocket_import_payload_accepts_typed_empty_payload(
     hass, wolink_entry, hass_ws_client
 ):

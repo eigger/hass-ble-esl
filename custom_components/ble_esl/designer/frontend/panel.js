@@ -161,6 +161,7 @@ export class BleEslDesigner extends HTMLElement {
     this.preview = null;
     this.layerPreviews = {};
     this.dirty = false;
+    this._automationPreviewVariables = null;
     this.busy = false;
     this.previewSequence = 0;
     this.pendingUploads = new Set();
@@ -258,6 +259,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   beginAutomationSession(token) {
     this._automationSessionToken = token;
+    this._automationPreviewVariables = null;
     this._automationReturnState = null;
     this._automationSessionPending = true;
     this._automationSaveMode = false;
@@ -269,12 +271,18 @@ export class BleEslDesigner extends HTMLElement {
     if (token === this._automationSessionToken)
       this._automationReturnState = state;
   }
-  prepareAutomationPayload(payload, background, entryId) {
+  prepareAutomationPayload(
+    payload,
+    background,
+    entryId,
+    previewVariables = {},
+  ) {
     return this.api("import_payload", {
       entry_id: entryId,
       payload,
       background,
       existing: 0,
+      preview_variables: previewVariables,
     });
   }
   applyAutomationPayload(
@@ -284,6 +292,7 @@ export class BleEslDesigner extends HTMLElement {
     allowEmpty,
     entryId,
     token,
+    previewVariables = {},
   ) {
     if (
       token !== this._automationSessionToken ||
@@ -305,6 +314,7 @@ export class BleEslDesigner extends HTMLElement {
     this.busy = false;
     this._automationSessionPending = false;
     this._automationSaveMode = true;
+    this._automationPreviewVariables = clone(previewVariables);
     this._automationBackground = this.document.background;
     this.preview = null;
     this.layerPreviews = {};
@@ -317,6 +327,7 @@ export class BleEslDesigner extends HTMLElement {
     this._automationSessionToken = null;
     this._automationSessionPending = false;
     this._automationSaveMode = false;
+    this._automationPreviewVariables = null;
     this._automationBackground = null;
     this._automationReturnState = null;
     this.busy = false;
@@ -973,7 +984,84 @@ export class BleEslDesigner extends HTMLElement {
     return this.api("preview", {
       entry_id: this.tag.entry_id,
       document: clone(this.document),
+      ...(this._automationSaveMode
+        ? { preview_variables: clone(this._automationPreviewVariables || {}) }
+        : {}),
     });
+  }
+  editAutomationPreviewVariables() {
+    if (!this._automationSaveMode || this._automationSessionPending) return;
+    const token = this._automationSessionToken;
+    const tag = this.tag;
+    const document = this.document;
+    const raw = window.prompt(
+      t(
+        this.hass,
+        "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+      ),
+      JSON.stringify(this._automationPreviewVariables || {}, null, 2),
+    );
+    if (raw === null) return;
+    if (
+      token !== this._automationSessionToken ||
+      tag !== this.tag ||
+      document !== this.document ||
+      !this._automationSaveMode
+    )
+      return;
+    let value;
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      this.report(
+        new Error(t(this.hass, "Preview parameter must be valid JSON.")),
+      );
+      return;
+    }
+    const safe = (candidate) => {
+      if (candidate === null || typeof candidate === "string") return true;
+      if (typeof candidate === "boolean") return true;
+      if (typeof candidate === "number") return Number.isFinite(candidate);
+      if (Array.isArray(candidate)) return candidate.every(safe);
+      if (candidate && typeof candidate === "object")
+        return Object.entries(candidate).every(
+          ([key, item]) =>
+            !["__proto__", "prototype", "constructor"].includes(key) &&
+            safe(item),
+        );
+      return false;
+    };
+    if (
+      !value ||
+      typeof value !== "object" ||
+      Array.isArray(value) ||
+      !safe(value)
+    ) {
+      this.report(
+        new Error(
+          t(
+            this.hass,
+            "Preview parameters must be a JSON object with finite values and no prototype keys.",
+          ),
+        ),
+      );
+      return;
+    }
+    if (new TextEncoder().encode(JSON.stringify(value)).length > 65536) {
+      this.report(new Error(t(this.hass, "Preview parameters are too large.")));
+      return;
+    }
+    this._automationPreviewVariables = value;
+    this.preview = null;
+    this.layerPreviews = {};
+    this.layerBounds = {};
+    this.layerOffsets = {};
+    this.layerRecords = [];
+    this.templateEntities = [];
+    this.previewSequence++;
+    clearTimeout(this.previewTimer);
+    this.render();
+    this.queuePreview();
   }
   tokenText(text) {
     if (this.mode !== "template") return text;
@@ -1114,7 +1202,7 @@ export class BleEslDesigner extends HTMLElement {
       element = this.element,
       sessionLocked =
         this._automationSessionPending || this._automationSaveMode;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""} ${sessionLocked ? "disabled" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing || sessionLocked ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy || this._automationSessionPending ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" || sessionLocked ? "hidden" : ""} ${this.mode === "template" || sessionLocked || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""} ${sessionLocked ? "disabled" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing || sessionLocked ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy || this._automationSessionPending ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><button data-action="preview-variables" ${this._automationSaveMode ? "" : "hidden"} aria-label="${t(this.hass, "Preview parameters")}" title="${t(this.hass, "Preview parameters")}">${t(this.hass, "Preview parameters")}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" || sessionLocked ? "hidden" : ""} ${this.mode === "template" || sessionLocked || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -1446,8 +1534,17 @@ export class BleEslDesigner extends HTMLElement {
       text,
       // A display holds a limited number of elements; the server keeps to it.
       existing: replace ? 0 : context.document.elements.length,
+      preview_variables: this._automationSaveMode
+        ? clone(this._automationPreviewVariables || {})
+        : {},
     });
     if (!this.isDocumentSessionCurrent(context)) return { stale: true };
+    if (result.missing_parameters?.length)
+      throw new Error(
+        t(this.hass, "Import needs a preview parameter: {name}", {
+          name: result.missing_parameters[0],
+        }),
+      );
     if (result.elements.length) {
       this.checkpoint();
       if (replace) {
@@ -2391,6 +2488,10 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     const action = button.dataset.action;
+    if (action === "preview-variables") {
+      this.editAutomationPreviewVariables();
+      return;
+    }
     if (action === "save" && this._automationSaveMode) {
       const sessionToken = this._automationSessionToken;
       const entryId = this.tag?.entry_id;
@@ -2412,6 +2513,7 @@ export class BleEslDesigner extends HTMLElement {
               entry_id: entryId,
               document: clone(this.document),
               background: this.document.background,
+              preview_variables: clone(this._automationPreviewVariables || {}),
             },
             bubbles: true,
             composed: true,
