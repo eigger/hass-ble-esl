@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
+
+The first stable release of the 1.2 series (betas 1.2.0b1 to 1.2.0b4 are listed below).
+
+### Added
+
+- **Design templates**: pick a ready-made design under **Browse templates** in the Designer, adjust its parameters and add it as ordinary, editable elements, optionally with the automation that keeps it up to date (see [Design templates](docs/design-templates.md)). Bundled: Date label, Wi-Fi QR code, Message, Color check and Weather now. Save your own, or add files to `<config>/ble_esl/templates/`.
+- Create a Home Assistant automation from the current ESL design, and edit an existing automation's `ble_esl.write` payload directly from ESL Manager.
+- ESL Manager dashboard improvements: direct automation design editing, battery-warning filters, sorting, read-only badges and a README screenshot.
 
 ### Fixed
 
