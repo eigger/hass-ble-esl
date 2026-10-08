@@ -560,4 +560,7 @@ export default {
   "My template": "Mi plantilla",
   "Saved template {name}.": "Plantilla {name} guardada.",
   "Design template name": "Nombre de la plantilla de diseño",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Empieza con un diseño listo, como una etiqueta de fecha, un código QR de Wi-Fi o el tiempo. Ajusta sus opciones, añádelo como elementos editables y, si quieres, crea la automatización que lo mantiene actualizado.",
+  "Browse templates": "Explorar plantillas",
 };

@@ -551,4 +551,7 @@ export default {
   "My template": "내 템플릿",
   "Saved template {name}.": "템플릿 {name}을(를) 저장했습니다.",
   "Design template name": "디자인 템플릿 이름",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "날짜 라벨, Wi-Fi QR 코드, 날씨 같은 완성된 디자인으로 시작하세요. 옵션을 조정해 편집 가능한 요소로 추가하고, 필요하면 최신 상태를 유지하는 자동화도 함께 만들 수 있습니다.",
+  "Browse templates": "템플릿 둘러보기",
 };

@@ -541,4 +541,7 @@ export default {
   "My template": "我的範本",
   "Saved template {name}.": "已儲存範本 {name}。",
   "Design template name": "設計範本名稱",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "從現成的設計開始，例如日期標籤、Wi-Fi QR 碼或天氣。調整選項，將其加入為可編輯元素，並可選擇建立讓它保持最新的自動化。",
+  "Browse templates": "瀏覽範本",
 };

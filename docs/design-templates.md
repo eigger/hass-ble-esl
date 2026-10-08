@@ -4,7 +4,7 @@
 
 ## Using a template
 
-In the Designer, choose **Templates** (under the component buttons). The gallery lists the designs with a thumbnail drawn by the real renderer for this tag (a default entity that does not exist is replaced by the first one of its domain), and shows whether a layout was *adjusted* to the tag's display size. Pick one, change its parameters if you like (every one has a default; the preview above the fields redraws as you type), then:
+In the Designer, choose **Browse templates** (the first block of the left panel). The gallery lists the designs with a thumbnail drawn by the real renderer for this tag (a default entity that does not exist is replaced by the first one of its domain), and shows whether a layout was *adjusted* to the tag's display size. Pick one, change its parameters if you like (every one has a default; the preview above the fields redraws as you type), then:
 
 - **Add to display** keeps what is on the canvas; **Replace display** starts again. The result is ordinary, editable elements.
 - **Replace and create automation** (templates with an `automation` block, writable tags) also opens **Create automation**, with the template's triggers, for example *every day at 12:00*, already filled in. Choose **Create automation** in that dialog to save it.
@@ -33,7 +33,7 @@ Examples that need a service response (forecasts, calendars) or build their elem
 
 Put template files in `<config>/ble_esl/templates/*.yaml`; they are listed (marked *My template*) the next time the gallery opens, with no restart. A file that is invalid is skipped with a warning in the log, and a file cannot reuse the `id` of a bundled template.
 
-To make one from a design, build it in the Designer, open **Templates**, type a name under **Save current design as a template** and choose **Save as template**. The file is written to the folder above with the design's current display size as its only layout. Unsaved edits are included and templates in elements are kept as written. A second save under the same name (or a name that matches a bundled template or a file already in the folder, even one that does not load) gets a new id (`name_2`) instead of overwriting; only an explicit `template_id` with `overwrite` replaces a file, and only the one named after that id. The gallery re-reads the folder every time it opens. Edit the file afterwards to add `parameters` (replace values with `${name}`), more layouts or an `automation` block.
+To make one from a design, build it in the Designer, open **Browse templates**, type a name under **Save current design as a template** and choose **Save as template**. The file is written to the folder above with the design's current display size as its only layout. Unsaved edits are included and templates in elements are kept as written. A second save under the same name (or a name that matches a bundled template or a file already in the folder, even one that does not load) gets a new id (`name_2`) instead of overwriting; only an explicit `template_id` with `overwrite` replaces a file, and only the one named after that id. The gallery re-reads the folder every time it opens. Edit the file afterwards to add `parameters` (replace values with `${name}`), more layouts or an `automation` block.
 
 A design whose text contains `${…}` cannot be saved this way, because that would read as a parameter.
 

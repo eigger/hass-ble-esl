@@ -558,4 +558,7 @@ export default {
   "My template": "Mój szablon",
   "Saved template {name}.": "Zapisano szablon {name}.",
   "Design template name": "Nazwa szablonu projektu",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Zacznij od gotowego projektu, takiego jak etykieta z datą, kod QR Wi-Fi lub pogoda. Dostosuj opcje, dodaj go jako edytowalne elementy i opcjonalnie utwórz automatyzację, która utrzymuje go w aktualności.",
+  "Browse templates": "Przeglądaj szablony",
 };

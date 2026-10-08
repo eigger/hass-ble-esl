@@ -559,4 +559,7 @@ export default {
   "My template": "Мой шаблон",
   "Saved template {name}.": "Шаблон {name} сохранён.",
   "Design template name": "Название шаблона дизайна",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Начните с готового дизайна: этикетка с датой, QR-код Wi-Fi, погода и другие. Настройте параметры, добавьте как редактируемые элементы и при желании создайте автоматизацию, которая поддерживает его актуальность.",
+  "Browse templates": "Обзор шаблонов",
 };

@@ -559,4 +559,7 @@ export default {
   "My template": "Mijn sjabloon",
   "Saved template {name}.": "Sjabloon {name} opgeslagen.",
   "Design template name": "Naam van het ontwerpsjabloon",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Begin met een kant-en-klaar ontwerp, zoals een datumlabel, wifi-QR-code of weer. Pas de opties aan, voeg het toe als bewerkbare elementen en maak desgewenst de automatisering die het actueel houdt.",
+  "Browse templates": "Sjablonen bekijken",
 };

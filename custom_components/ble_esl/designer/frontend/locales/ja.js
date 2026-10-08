@@ -558,4 +558,7 @@ export default {
   "My template": "マイテンプレート",
   "Saved template {name}.": "テンプレート {name} を保存しました。",
   "Design template name": "デザインテンプレート名",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "日付ラベル、Wi-Fi QRコード、天気などのできあがったデザインから始められます。オプションを調整して編集可能な要素として追加し、必要なら最新に保つオートメーションも作成できます。",
+  "Browse templates": "テンプレートを見る",
 };
