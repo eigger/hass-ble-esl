@@ -16,6 +16,7 @@ import sys
 from aiohttp import web
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -233,6 +234,10 @@ HASS = None
 async def setup_hass(app):
     global HASS
     HASS = HomeAssistant(str(ROOT))
+    # state_translated() needs the registry, even an empty one.
+    dr.async_setup(HASS)
+    await dr.async_load(HASS, load_empty=True)
+    await er.async_load(HASS, load_empty=True)
     for state in STATES.values():
         HASS.states.async_set(state["entity_id"], state["state"], state["attributes"])
 
@@ -305,6 +310,12 @@ async def handle(request):
             for name, value in built["parameters"].items()
             if template["parameters"][name]["type"] == "font"
         }
+        if absent := sorted(
+            value
+            for name, value in built["parameters"].items()
+            if template["parameters"][name]["type"] == "entity" and HASS.states.get(value) is None
+        ):
+            return web.Response(status=400, text=f"Entity not found: {', '.join(absent)}")
         if missing := [
             font
             for font in fonts

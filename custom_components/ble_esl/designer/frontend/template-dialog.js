@@ -44,7 +44,17 @@ const field = (hass, name, parameter, value) => {
           `<option value="${color}" ${color === value ? "selected" : ""}>${color}</option>`,
       )
       .join("")}</select>`;
-  else if (parameter.type === "number")
+  else if (parameter.type === "entity") {
+    // The entities of the wanted domain are offered; any id may still be typed.
+    const prefix = parameter.domain ? `${parameter.domain}.` : null;
+    const ids = prefix
+      ? Object.keys(hass?.states || {})
+          .filter((entity) => entity.startsWith(prefix))
+          .sort()
+          .slice(0, 500)
+      : [];
+    control = `<input id="${id}" data-param="${esc(name)}" type="text" list="${id}-list" autocomplete="off" spellcheck="false" value="${esc(value)}"><datalist id="${id}-list">${ids.map((entity) => `<option value="${esc(entity)}"></option>`).join("")}</datalist>`;
+  } else if (parameter.type === "number")
     control = `<input id="${id}" data-param="${esc(name)}" type="number" step="any" value="${esc(value)}" ${"min" in parameter ? `min="${parameter.min}"` : ""} ${"max" in parameter ? `max="${parameter.max}"` : ""}>`;
   else if (parameter.type === "time")
     control = `<input id="${id}" data-param="${esc(name)}" type="time" step="1" value="${esc(value)}">`;

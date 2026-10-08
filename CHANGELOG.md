@@ -4,6 +4,7 @@
 
 ### Added
 
+- `entity` template parameters (with an optional domain) and a **Weather now** design template for any `weather` entity.
 - Your own design templates: files in `<config>/ble_esl/templates/` appear in the template gallery, and **Save as template** keeps the current design there.
 - **Templates** in the Designer: pick a ready-made design, adjust its parameters and add it as editable elements, optionally creating the automation with the template's triggers (the Date label updates daily at 12:00 by default).
 - Design templates: YAML files in `designer/templates/` describe a ready-made design with editable parameters (font, colors, time), per-resolution layouts and an optional automation. The Designer API can list and apply them and prefill a new automation with the template's triggers. Date label, Wi-Fi QR code, Message and Color check templates are included. See [Design templates](docs/design-templates.md).

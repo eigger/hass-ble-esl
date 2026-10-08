@@ -22,6 +22,7 @@ _SIZE = vol.All(str, vol.Match(r"^[1-9][0-9]{1,4}x[1-9][0-9]{1,4}\Z"))
 _REFERENCE = re.compile(r"\$\{([^}]*)\}")
 _TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?\Z")
 _COLORS = {"black": "B", "white": "W", "red": "R", "yellow": "Y"}
+_ENTITY = re.compile(r"[a-z0-9_]+\.[a-z0-9_]+")
 _FONT = re.compile(r"^[\w .-]+\.(ttf|otf|ttc)\Z")
 _UNSAFE_TEXT = re.compile(r"[{}'\"\\\n\r]")
 # Numeric keys that are counts, angles, values or limits, not lengths in pixels:
@@ -78,12 +79,13 @@ _LOCALIZED = vol.Any(str, {str: str})
 _PARAMETER = vol.Schema(
     {
         vol.Required("type"): vol.In(
-            ("font", "color", "select", "string", "number", "time", "boolean")
+            ("font", "color", "select", "string", "number", "time", "boolean", "entity")
         ),
         vol.Required("default"): vol.Any(str, int, float, bool),
         vol.Optional("label"): _LOCALIZED,
         vol.Optional("group", default="design"): vol.In(("design", "automation")),
         vol.Optional("options"): [str],
+        vol.Optional("domain"): _SLUG,
         vol.Optional("forbidden"): str,
         vol.Optional("min_length"): vol.All(int, vol.Range(min=1, max=200)),
         vol.Optional("min"): vol.Any(int, float),
@@ -309,6 +311,12 @@ def coerce_value(name, parameter, value, colors):
             if not _TIME.match(value):
                 raise ValueError("a time such as 12:00 or 12:00:00")
             return value if value.count(":") == 2 else f"{value}:00"
+        if kind == "entity":
+            if not _ENTITY.fullmatch(value):
+                raise ValueError("an entity id such as weather.home")
+            if "domain" in parameter and not value.startswith(f"{parameter['domain']}."):
+                raise ValueError(f"a {parameter['domain']} entity")
+            return value
         if kind == "font":
             if not _FONT.match(value):
                 raise ValueError("a font file name such as NotoSansKR-Bold.ttf")

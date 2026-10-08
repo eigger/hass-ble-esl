@@ -48,11 +48,28 @@ def test_every_bundled_template_loads():
     assert len(TEMPLATES) == len(files)
 
 
+def seed_entities(hass, template):
+    """States for the entities a template's parameters default to."""
+    for parameter in template["parameters"].values():
+        if parameter["type"] == "entity":
+            hass.states.async_set(
+                parameter["default"],
+                "partlycloudy",
+                {
+                    "friendly_name": "Home",
+                    "temperature": 21.5,
+                    "temperature_unit": "°C",
+                    "humidity": 55,
+                },
+            )
+
+
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
 @pytest.mark.parametrize(("width", "height"), SIZES)
 @pytest.mark.parametrize("colors", ["BW", "BWR", "BWRY"])
 async def test_bundled_template_imports_and_draws_exactly(hass, template_id, width, height, colors):
     preset = DevicePreset("test", "test", width, height, colors)
+    seed_entities(hass, TEMPLATES[template_id])
     built = build(TEMPLATES[template_id], width, height, colors)
     elements, imported, issues = elements_from(built["payload"], preset)
     assert issues == []
@@ -69,6 +86,7 @@ async def test_bundled_template_imports_and_draws_exactly(hass, template_id, wid
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
 async def test_bundled_automation_is_a_valid_home_assistant_automation(hass, template_id):
     template = TEMPLATES[template_id]
+    seed_entities(hass, template)
     built = build(template, 250, 128, "BWR")
     if built["automation"] is None:
         pytest.skip("no automation")
@@ -567,3 +585,40 @@ async def test_saved_file_is_readable_and_leaves_no_temporary_file(hass, wolink_
     ):
         await designer.save_design_template(wolink_entry, _text_document(), "Full")
     assert not list(designer.user_template_dir.glob("*.tmp"))
+
+
+def test_entity_parameters_are_checked():
+    weather = TEMPLATES["weather_now"]
+    values = resolve_parameters(weather, {"weather": "weather.office"}, "BWR")
+    assert values["weather"] == "weather.office"
+    for bad in (
+        "sensor.office",
+        "weather",
+        "weather.",
+        "Weather.home",
+        "weather.a'b",
+        "weather.a b",
+    ):
+        with pytest.raises(HomeAssistantError, match="weather"):
+            resolve_parameters(weather, {"weather": bad}, "BWR")
+
+
+async def test_weather_template_follows_the_chosen_entity(hass, wolink_entry):
+    designer = hass.data[KEY]
+    seed_entities(hass, TEMPLATES["weather_now"])
+    hass.states.async_set(
+        "weather.office", "rainy", {"friendly_name": "Office", "temperature": 7, "humidity": 90}
+    )
+    result = await designer.apply_design_template(
+        wolink_entry, "weather_now", {"weather": "weather.office", "interval": "10"}
+    )
+    assert result["issues"] == [] and result["different_pixels"] == 0
+    assert result["template"]["automation"]["triggers"] == [
+        {"trigger": "time_pattern", "minutes": "/10"}
+    ]
+    values = [element["spec"].get("value") for element in result["elements"]]
+    assert any("weather.office" in str(value) for value in values)
+    with pytest.raises(HomeAssistantError, match=r"Entity not found: weather\.nowhere"):
+        await designer.apply_design_template(
+            wolink_entry, "weather_now", {"weather": "weather.nowhere"}
+        )

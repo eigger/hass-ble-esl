@@ -1,0 +1,173 @@
+template: 1
+id: weather_now
+name:
+  en: Weather now
+  ko: 현재 날씨
+description:
+  en: Condition icon, temperature and humidity of a weather entity, refreshed every few minutes.
+  ko: 날씨 엔티티의 상태 아이콘, 온도, 습도를 표시하고 몇 분마다 갱신합니다.
+background: white
+
+parameters:
+  weather:
+    type: entity
+    domain: weather
+    default: weather.home
+    label: { en: Weather entity, ko: 날씨 엔티티 }
+  date_format:
+    type: string
+    default: "%m/%d"
+    label: { en: Date format (strftime), ko: 날짜 형식 (strftime) }
+  font:
+    type: font
+    default: CookieRunBold.ttf
+    label: { en: Font, ko: 글꼴 }
+  interval:
+    type: select
+    group: automation
+    options: ["10", "15", "30"]
+    default: "30"
+    label: { en: Update every (minutes), ko: 갱신 주기 (분) }
+
+layouts:
+  "400x300":
+    - type: text
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      anchor: lt
+      x: 10
+      y: 10
+      size: 22
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'friendly_name') }}"
+      font: ${font}
+      anchor: rt
+      x: 390
+      y: 10
+      size: 22
+      color: black
+    - type: icon
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      anchor: lt
+      x: 20
+      y: 70
+      size: 130
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'temperature') }}"
+      font: ${font}
+      anchor: rt
+      x: 330
+      y: 60
+      size: 90
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'temperature_unit') }}"
+      font: ${font}
+      anchor: lt
+      x: 336
+      y: 70
+      size: 30
+      color: black
+    - type: text
+      value: "{{ state_translated('${weather}') }}"
+      font: ${font}
+      anchor: mt
+      x: 270
+      y: 170
+      size: 34
+      color: black
+    - type: icon
+      value: water-percent
+      anchor: lt
+      x: 150
+      y: 225
+      size: 40
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'humidity') }}%"
+      font: ${font}
+      anchor: lt
+      x: 195
+      y: 228
+      size: 36
+      color: black
+    - type: text
+      value: "{{ now().strftime('%H:%M') }}"
+      font: ${font}
+      anchor: lb
+      x: 10
+      y: 290
+      size: 20
+      color: black
+  "250x128":
+    - type: text
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      anchor: lt
+      x: 6
+      y: 4
+      size: 14
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'friendly_name') }}"
+      font: ${font}
+      anchor: rt
+      x: 244
+      y: 4
+      size: 14
+      color: black
+    - type: icon
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      anchor: lt
+      x: 8
+      y: 30
+      size: 70
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'temperature') }}"
+      font: ${font}
+      anchor: rt
+      x: 195
+      y: 26
+      size: 46
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'temperature_unit') }}"
+      font: ${font}
+      anchor: lt
+      x: 199
+      y: 30
+      size: 18
+      color: black
+    - type: text
+      value: "{{ state_translated('${weather}') }}"
+      font: ${font}
+      anchor: mt
+      x: 160
+      y: 82
+      size: 18
+      color: black
+    - type: text
+      value: "{{ state_attr('${weather}', 'humidity') }}%"
+      font: ${font}
+      anchor: rb
+      x: 244
+      y: 124
+      size: 18
+      color: black
+    - type: text
+      value: "{{ now().strftime('%H:%M') }}"
+      font: ${font}
+      anchor: lb
+      x: 6
+      y: 124
+      size: 14
+      color: black
+
+automation:
+  triggers:
+    - trigger: time_pattern
+      minutes: /${interval}
+  mode: single
