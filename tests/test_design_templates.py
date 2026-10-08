@@ -197,16 +197,16 @@ layouts:
     - {type: sparkline, x: 0, y: 0, width: 100, height: 40, values: [1, 2, 3], min: 0, max: 5}
     - {type: gauge, x: 50, y: 50, radius: 40, min_value: 0, max_value: 100, progress: 30}
     - {type: table, x: 0, y: 0, rows: [[42, 7]]}
-    - {type: qrcode, data: a, x: 0, y: 0, width: 50, height: 50, border: 2}
-    - {type: barcode, data: "1", x: 0, y: 0, width: 80, height: 30, module_width: 0.2}
+    - {type: qrcode, data: 12345, x: 0, y: 0, width: 50, height: 50, border: 2}
+    - {type: barcode, data: 8801234567890, dither: 1, x: 0, y: 0, width: 80, height: 30, module_width: 0.2}
     - {type: stack, direction: row, width: 100, height: 20, elements: [{type: text, value: a, grow: 2}]}
 """
     spark, gauge, table, qr, barcode, stack = build(parse_template(text), 125, 64, "BWR")["payload"]
     assert (spark["values"], spark["max"], spark["width"]) == ([1, 2, 3], 5, 50)
     assert (gauge["max_value"], gauge["progress"], gauge["radius"]) == (100, 30, 20)
     assert table["rows"] == [[42, 7]]
-    assert (qr["border"], qr["width"]) == (2, 25)
-    assert barcode["module_width"] == 0.2
+    assert (qr["border"], qr["width"], qr["data"]) == (2, 25, 12345)
+    assert (barcode["module_width"], barcode["data"], barcode["dither"]) == (0.2, 8801234567890, 1)
     # A group or stack without a position is centred with the rest.
     assert (stack["x"], stack["elements"][0]["grow"]) == (0, 2)
     wide = build(parse_template(text), 296, 128, "BWR")["payload"][-1]

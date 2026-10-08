@@ -60,6 +60,14 @@ _NOT_SCALED = frozenset(
         "text_distance",
         "values",
         "rows",
+        "data",
+        "dither",
+        "decimals",
+        "count",
+        "ticks",
+        "rating",
+        "stars",
+        "scale",
     }
 )
 
