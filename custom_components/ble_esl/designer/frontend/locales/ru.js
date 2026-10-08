@@ -1,5 +1,10 @@
 // UI copy only; keep interpolation placeholders and technical tokens unchanged.
 export default {
+  "Create automation": "Создать автоматизацию",
+  "Edit automation": "Изменить автоматизацию",
+  "No triggers are configured. Set them in Home Assistant after creating the automation.":
+    "Триггеры не настроены. Настройте их в Home Assistant после создания автоматизации.",
+
   "Sending failed{error}": "Ошибка отправки{error}",
   "component specs": "Характеристики компонента",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":

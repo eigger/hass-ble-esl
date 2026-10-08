@@ -314,3 +314,31 @@ for (const [code, save] of localizedControls) {
     );
   });
 }
+
+test("automation creation preserves its name and device across locale changes", async ({
+  page,
+}) => {
+  await page.goto("/?manager&lang=ko");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("button", { name: "자동화 만들기", exact: true })
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(dialog).toContainText("실행 조건은 비어 있습니다");
+  await dialog.getByLabel("이름", { exact: true }).fill("거실 화면 갱신");
+  await page.screenshot({ path: "artifacts/create-automation-ko.png" });
+  await setLanguage(page, "en");
+  await expect(
+    dialog.getByRole("heading", { name: "Create automation" }),
+  ).toBeVisible();
+  await expect(dialog.getByLabel("Name", { exact: true })).toHaveValue(
+    "거실 화면 갱신",
+  );
+  await expect(dialog.locator("textarea")).toHaveValue(/demo-device-0/);
+  await dialog.getByLabel("Name", { exact: true }).press("Enter");
+  await expect(
+    dialog.getByRole("button", { name: "Create automation", exact: true }),
+  ).toBeVisible();
+});

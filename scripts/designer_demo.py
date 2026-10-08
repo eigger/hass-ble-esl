@@ -6,7 +6,9 @@ Run from the repository root: .venv/bin/python scripts/designer_demo.py
 import asyncio
 import base64
 from datetime import timedelta
+from html import escape
 from io import BytesIO
+import json
 from pathlib import Path
 import sys
 
@@ -16,7 +18,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from custom_components.ble_esl.designer.export import export_yaml
+from custom_components.ble_esl.designer.export import automation_draft, export_yaml
 from custom_components.ble_esl.designer.importer import (
     convert,
     different_pixels,
@@ -166,6 +168,7 @@ def demo_automations(entry_id):
     }
 
 
+CREATED_AUTOMATIONS = {}
 HASS = None
 
 
@@ -252,11 +255,21 @@ async def handle(request):
         return web.json_response(document)
     if msg["action"] == "send":
         return web.json_response({"status": "demo_only"})
-    if msg["action"] == "export":
+    if msg["action"] in ("export", "automation"):
         forecasts = await demo_forecasts()
         payload = compile_payload(HASS, document, TEMPLATES, forecasts)
         live = live_payload(HASS, document, TEMPLATES, forecasts)
-        result = export_yaml(payload, document["background"], None, (), live)
+        result = export_yaml(
+            payload,
+            document["background"],
+            tag["device_id"] if msg["action"] == "automation" else None,
+            (),
+            live,
+        )
+        if msg["action"] == "automation":
+            if not tag["writable"]:
+                raise HomeAssistantError("This ESL does not support writing")
+            result["automation"] = automation_draft(result, tag["title"])
         return web.json_response({**result, "writable": tag["writable"]})
     return await preview(document, preset)
 
@@ -296,6 +309,7 @@ async def preview(document, preset):
 
 
 async def reset(request):
+    CREATED_AUTOMATIONS.clear()
     """Fresh saved state, so each browser project starts alike."""
     TEMPLATES.clear()
     AUTOMATION_LINKS.clear()
@@ -344,6 +358,28 @@ async def demo_image(request):
     return web.Response(body=buffer.getvalue(), content_type="image/png")
 
 
+async def create_automation(request):
+    config = await request.json()
+    CREATED_AUTOMATIONS[request.match_info["automation_id"]] = config
+    return web.json_response({"result": "ok"})
+
+
+async def automation_preview(request):
+    config = CREATED_AUTOMATIONS.get(request.match_info["automation_id"])
+    if config is None:
+        raise web.HTTPNotFound()
+    return web.Response(
+        text='<meta charset="utf-8"><title>Automation preview</title>'
+        "<h1>자동화 생성 데모</h1><p>Home Assistant에는 저장되지 않습니다.</p>"
+        '<a href="/?manager&lang=ko">ESL 매니저</a><pre>'
+        + escape(json.dumps(config, ensure_ascii=False, indent=2))
+        + "</pre>",
+        content_type="text/html",
+    )
+
+
+app.router.add_post("/api/config/automation/config/{automation_id}", create_automation)
+app.router.add_get("/config/automation/edit/{automation_id}", automation_preview)
 app.router.add_get("/demo-image", demo_image)
 app.router.add_get("/states", states)
 app.router.add_post("/api/designer", api)

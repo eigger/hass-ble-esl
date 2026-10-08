@@ -20,7 +20,7 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
-from .export import export_yaml
+from .export import automation_draft, export_yaml
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
     compile_payload,
@@ -190,6 +190,15 @@ class Designer:
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
 
+    async def automation(self, entry, document):
+        """Prepare a new automation from the current, possibly unsaved design."""
+        result = await self.export(entry, document)
+        if not result["writable"]:
+            raise HomeAssistantError("This ESL does not support writing")
+        if not entry.runtime_data.device_id:
+            raise HomeAssistantError("This ESL has no registered device")
+        return {**result, "automation": automation_draft(result, entry.title)}
+
     async def import_yaml(self, entry, text, existing=0):
         """Elements for a pasted payload, and how faithfully they stand for it."""
         preset = self.preset(entry)
@@ -312,6 +321,7 @@ class Designer:
                 "save",
                 "preview",
                 "export",
+                "automation",
                 "import_yaml",
                 "convert",
                 "send",
