@@ -174,17 +174,43 @@ layouts:
   "250x128":
     - {type: rectangle_pattern, x_start: 0, y_start: 0, x_end: 250, y_end: 128, x_size: 10,
        y_size: 10, x_repeat: 3, y_repeat: 2, x_offset: 4, y_offset: 4}
-    - {type: text, value: a, x: 0, y: 0, max_width: 200, max_lines: 2, size: 20, rotate: 90}
+    - {type: text, value: a, x: 0, y: 0, max_width: 200, max_lines: 2, size: 20, rotation: 90}
     - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 5, width: 1, outline: black}
 """
     template = parse_template(text)
     pattern, label, box = build(template, 500, 256, "BWR")["payload"]
     assert (pattern["x_size"], pattern["x_offset"]) == (20, 8)
     assert (pattern["x_repeat"], pattern["y_repeat"]) == (3, 2)
-    assert (label["max_width"], label["max_lines"], label["rotate"]) == (400, 2, 90)
+    assert (label["max_width"], label["max_lines"], label["rotation"]) == (400, 2, 90)
     small = build(template, 125, 64, "BWR")["payload"][2]
     assert small["width"] == 1  # a 1px outline never shrinks to nothing
     assert box["width"] == 2
+
+
+def test_scaling_leaves_data_and_module_counts_alone():
+    text = """
+template: 1
+id: data
+name: Data
+layouts:
+  "250x128":
+    - {type: sparkline, x: 0, y: 0, width: 100, height: 40, values: [1, 2, 3], min: 0, max: 5}
+    - {type: gauge, x: 50, y: 50, radius: 40, min_value: 0, max_value: 100, progress: 30}
+    - {type: table, x: 0, y: 0, rows: [[42, 7]]}
+    - {type: qrcode, data: a, x: 0, y: 0, width: 50, height: 50, border: 2}
+    - {type: barcode, data: "1", x: 0, y: 0, width: 80, height: 30, module_width: 0.2}
+    - {type: stack, direction: row, width: 100, height: 20, elements: [{type: text, value: a, grow: 2}]}
+"""
+    spark, gauge, table, qr, barcode, stack = build(parse_template(text), 125, 64, "BWR")["payload"]
+    assert (spark["values"], spark["max"], spark["width"]) == ([1, 2, 3], 5, 50)
+    assert (gauge["max_value"], gauge["progress"], gauge["radius"]) == (100, 30, 20)
+    assert table["rows"] == [[42, 7]]
+    assert (qr["border"], qr["width"]) == (2, 25)
+    assert barcode["module_width"] == 0.2
+    # A group or stack without a position is centred with the rest.
+    assert (stack["x"], stack["elements"][0]["grow"]) == (0, 2)
+    wide = build(parse_template(text), 296, 128, "BWR")["payload"][-1]
+    assert wide["x"] == 23
 
 
 def test_polygon_inside_a_group_is_not_scaled():

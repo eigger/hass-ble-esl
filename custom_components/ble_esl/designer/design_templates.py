@@ -47,13 +47,19 @@ _NOT_SCALED = frozenset(
         "opacity",
         "alpha",
         "threshold",
-        "dither",
-        "decimals",
-        "count",
-        "ticks",
-        "rating",
-        "stars",
-        "scale",
+        "low_threshold",
+        "min_value",
+        "max_value",
+        "low",
+        "high",
+        "tick_every",
+        "grow",
+        "border",
+        "module_width",
+        "module_height",
+        "text_distance",
+        "values",
+        "rows",
     }
 )
 
@@ -256,6 +262,8 @@ def _has_key(value, wanted):
 
 
 def _scale(value, factor, key=None):
+    if key in _NOT_SCALED:
+        return value
     if isinstance(value, dict):
         return {name: _scale(item, factor, name) for name, item in value.items()}
     if isinstance(value, list):
@@ -282,6 +290,10 @@ def _fit(items, source, width, height):
         )
     for item in _scale(items, factor):
         item = dict(item)
+        if item.get("type") in ("group", "stack", "row", "column"):
+            # Their origin defaults to 0: still part of the layout that is centred.
+            item.setdefault("x", 0)
+            item.setdefault("y", 0)
         shifts = [(key, shift_x) for key in _X_KEYS] + [(key, shift_y) for key in _Y_KEYS]
         for key, shift in shifts:
             if isinstance(item.get(key), int | float) and not isinstance(item[key], bool):

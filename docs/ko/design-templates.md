@@ -53,7 +53,7 @@ automation:                  # 선택
 
 `layouts`의 각 키는 `가로x세로`이고, 값은 `ble_esl.write`의 `payload:`에 넣는 요소 목록과 같습니다([actions](../actions.md) 참고). 절대 좌표를 쓰고 요소는 최대 100개입니다. Jinja는 그대로 보존되므로 `{{ now() }}`는 자동화가 실행될 때마다 계산됩니다.
 
-해당 크기의 layout이 없으면 가장 가까운 layout을 균등하게 확대/축소하고 가운데로 맞춥니다. 모든 숫자는 픽셀 길이로 보고 배율을 곱하며(외곽선 두께처럼 양수인 길이는 1 아래로 줄지 않음), 횟수·각도·한계값(`x_repeat`, `y_repeat`, `rotate`, `start_angle`, `end_angle`, `max_lines`, `min`, `max`, `value`, `progress`, `dither`, `decimals` 등)은 제외합니다. 결과에는 `scaled: true`가 표시됩니다. polygon `points`가 있는 layout은 group 안에 있어도 확대/축소할 수 없으므로 크기마다 전용 layout이 필요합니다. 중요한 크기는 전용 layout을 작성하세요. 숫자가 아니라 템플릿인 값은 확대/축소하지 않습니다.
+해당 크기의 layout이 없으면 가장 가까운 layout을 균등하게 확대/축소하고 가운데로 맞춥니다. 모든 숫자는 픽셀 길이로 보고 배율을 곱하며(외곽선 두께처럼 양수인 길이는 1 아래로 줄지 않음), 횟수·각도·데이터·한계값(`x_repeat`, `y_repeat`, `rotation`, `start_angle`, `end_angle`, `max_lines`, `min`, `max`, `min_value`, `max_value`, `progress`, `values`, `rows`, `grow`, `border`, 바코드의 mm 단위 키 `module_width` 등)은 제외합니다. 결과에는 `scaled: true`가 표시됩니다. polygon `points`가 있는 layout은 group 안에 있어도 확대/축소할 수 없으므로 크기마다 전용 layout이 필요합니다. 중요한 크기는 전용 layout을 작성하세요. 숫자가 아니라 템플릿인 값은 확대/축소하지 않습니다.
 
 ### parameters
 
