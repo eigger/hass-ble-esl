@@ -25,6 +25,7 @@ from custom_components.ble_esl.designer.importer import (
     payloads,
 )
 from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.renderer import render_image
 
 TEMPLATES = load_templates()
 SIZES = [(250, 128), (296, 128), (400, 300), (800, 480)]
@@ -722,7 +723,7 @@ async def test_preview_uses_an_existing_entity_when_the_default_is_missing(hass,
     with patch.object(designer.hass, "async_add_executor_job", spy):
         result = await designer.preview_design_template(wolink_entry, "weather_now")
     assert result["png"].startswith("data:image/png")
-    render = next(func for func in seen if getattr(func, "func", None))
+    render = next(func for func in seen if getattr(func, "func", None) is render_image)
     payload = render.args[2]
     assert any("Real" in str(item.get("value", "")) for item in payload)
 
@@ -738,3 +739,13 @@ async def test_websocket_preview_requires_a_template_id(hass, wolink_entry, hass
         }
     )
     assert (await client.receive_json())["error"]["message"] == "template_id is required"
+
+
+async def test_preview_refuses_what_apply_would_refuse(hass, wolink_entry):
+    designer = hass.data[KEY]
+    with pytest.raises(HomeAssistantError, match=r"Font not found: Missing\.ttf"):
+        await designer.preview_design_template(wolink_entry, "message", {"font": "Missing.ttf"})
+    with pytest.raises(HomeAssistantError, match=r"Entity not found: weather\.nowhere"):
+        await designer.preview_design_template(
+            wolink_entry, "weather_now", {"weather": "weather.nowhere"}
+        )

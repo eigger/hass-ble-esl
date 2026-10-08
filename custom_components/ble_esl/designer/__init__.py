@@ -364,6 +364,26 @@ class Designer:
             for template in self.design_templates.values()
         ]
 
+    async def ensure_template_inputs(self, template, values, entities=None):
+        """Raise when a font or an entity a template was given does not exist.
+
+        ``entities`` limits the entity check to those parameter names (all when None).
+        """
+        kinds = {name: parameter["type"] for name, parameter in template["parameters"].items()}
+        absent = sorted(
+            value
+            for name, value in values.items()
+            if kinds[name] == "entity"
+            and (entities is None or name in entities)
+            and self.hass.states.get(value) is None
+        )
+        if absent:
+            raise HomeAssistantError(f"Entity not found: {', '.join(absent)}")
+        fonts = {value for name, value in values.items() if kinds[name] == "font"}
+        missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
+        if missing:
+            raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
+
     async def preview_design_template(self, entry, template_id, parameters=None):
         """A design template drawn for this tag, as the real renderer shows it now.
 
@@ -384,6 +404,8 @@ class Designer:
                 if candidates:
                     given[name] = candidates[0]
         built = build_template(template, preset.width, preset.height, preset.colors, given)
+        # What was given must exist, as when applying; defaults are only drawn.
+        await self.ensure_template_inputs(template, built["parameters"], set(given))
         payload = resolve_templates(self.hass, built["payload"], set())
         async with self.render_lock:
             image = await self.hass.async_add_executor_job(
@@ -406,22 +428,7 @@ class Designer:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
         built = build_template(template, preset.width, preset.height, preset.colors, parameters)
-        fonts = {
-            value
-            for name, value in built["parameters"].items()
-            if template["parameters"][name]["type"] == "font"
-        }
-        absent = sorted(
-            value
-            for name, value in built["parameters"].items()
-            if template["parameters"][name]["type"] == "entity"
-            and self.hass.states.get(value) is None
-        )
-        if absent:
-            raise HomeAssistantError(f"Entity not found: {', '.join(absent)}")
-        missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
-        if missing:
-            raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
+        await self.ensure_template_inputs(template, built["parameters"])
         imported = await self.import_payload(
             entry, built["payload"], built["background"], existing, preview_variables
         )

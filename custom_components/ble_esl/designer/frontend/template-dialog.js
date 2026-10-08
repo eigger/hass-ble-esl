@@ -100,7 +100,8 @@ export class TemplateDialog extends HTMLElement {
   // One thumbnail at a time: each is a real render on the server.
   async loadThumbnails() {
     for (const template of this.templates || []) {
-      if (this.closed) return;
+      // The user's own preview comes first: it shares the server's render lock.
+      if (this.closed || this.chosen) return;
       if (this.previews[template.id]) continue;
       try {
         const result = await this.panel.api("preview_design_template", {
@@ -140,15 +141,26 @@ export class TemplateDialog extends HTMLElement {
           parameters: this.values(),
         })
       ).png;
-    } catch {
+    } catch (error) {
+      if (this.closed || token !== this.previewToken) return;
+      this.formPreview = null;
+      this.showFormPreview(null, error.message || String(error));
       return;
     }
     if (this.closed || token !== this.previewToken) return;
     this.formPreview = png;
+    this.showFormPreview(png, "");
+  }
+  showFormPreview(png, message) {
     const image = this.shadowRoot.querySelector("[data-form-preview]");
+    const note = this.shadowRoot.querySelector("[data-form-preview-note]");
     if (image) {
-      image.src = png;
-      image.hidden = false;
+      if (png) image.src = png;
+      image.hidden = !png;
+    }
+    if (note) {
+      note.textContent = message;
+      note.hidden = !message;
     }
   }
   close() {
@@ -200,7 +212,7 @@ export class TemplateDialog extends HTMLElement {
       const design = group("design"),
         automation = group("automation");
       return `<p class="muted">${esc(localized(hass, this.chosen.description))}</p>
-        <img class="preview" data-form-preview alt="" ${this.formPreview ? `src="${esc(this.formPreview)}"` : "hidden"}>
+        <img class="preview" data-form-preview alt="${esc(localized(hass, this.chosen.name))}" ${this.formPreview ? `src="${esc(this.formPreview)}"` : "hidden"}><p class="issues" data-form-preview-note hidden></p>
         ${this.chosen.scaled ? `<p class="muted">${t(hass, "Adjusted to this display")} (${esc(this.chosen.layout)})</p>` : ""}
         ${design ? `<div class="fields">${design}</div>` : ""}
         ${automation ? `<h3>${t(hass, "Automation")}</h3><div class="fields">${automation}</div>` : ""}`;
@@ -279,6 +291,7 @@ export class TemplateDialog extends HTMLElement {
       this.typed = null;
       this.formPreview = null;
       this.previewToken = (this.previewToken || 0) + 1;
+      this.loadThumbnails();
       this.note = "";
       this.issues = [];
       return this.render();

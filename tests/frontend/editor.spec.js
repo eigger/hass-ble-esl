@@ -1863,3 +1863,20 @@ test("design template: thumbnails load in the gallery and the form preview follo
     .poll(async () => await preview.getAttribute("src"))
     .not.toBe(before);
 });
+
+test("design template: an invalid parameter hides the stale preview and says why", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+  await gallery.getByLabel("Network name (SSID)").fill("bad;name");
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
+  await expect(preview).toBeHidden();
+  await gallery.getByLabel("Network name (SSID)").fill("good");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+});

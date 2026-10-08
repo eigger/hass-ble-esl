@@ -310,6 +310,15 @@ async def handle(request):
                     given[name] = found[0]
         try:
             built = build_template(template, preset.width, preset.height, preset.colors, given)
+            for name, value in built["parameters"].items():
+                kind = template["parameters"][name]["type"]
+                if kind == "entity" and name in given and HASS.states.get(value) is None:
+                    return web.Response(status=400, text=f"Entity not found: {value}")
+                if (
+                    kind == "font"
+                    and not (ROOT / "custom_components/ble_esl/fonts" / value).is_file()
+                ):
+                    return web.Response(status=400, text=f"Font not found: {value}")
             image = await asyncio.to_thread(
                 render_image,
                 HASS,
