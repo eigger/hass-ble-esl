@@ -88,3 +88,16 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
             {**service, "data": {"background": background, "payload": live}}
         )
     return result
+
+
+def automation_draft(exported, name):
+    """Prefill a new automation without triggers, using templates when available."""
+    action = yaml.safe_load(exported.get("live_service", exported["service"]))
+    return {
+        "alias": name,
+        "description": "",
+        "triggers": [],
+        "conditions": [],
+        "actions": [action],
+        "mode": "single",
+    }

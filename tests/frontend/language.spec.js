@@ -17,7 +17,9 @@ test("HA locale translates dashboard and automations while preserving authored n
   await expect(page.getByRole("heading", { name: "ESL 매니저" })).toBeVisible();
   const card = page.locator('[data-entry="demo-writable"]').first();
   await expect(card).toContainText("Living room");
-  await expect(card).toContainText("배터리 85%");
+  await expect(
+    card.getByRole("button", { name: "배터리 85%", exact: true }),
+  ).toBeVisible();
   await expect(card).toContainText("마지막 전송 성공");
   await expect(card).toContainText("자동화 3개");
   await expect(page.locator(".summary")).toContainText("ESL 2개");
@@ -44,7 +46,9 @@ test("HA locale translates dashboard and automations while preserving authored n
   await expect(
     page.getByRole("heading", { name: "ESL Manager" }),
   ).toBeVisible();
-  await expect(card).toContainText("Battery 85%");
+  await expect(
+    card.getByRole("button", { name: "Battery 85%", exact: true }),
+  ).toBeVisible();
 });
 
 test("locale switches retain designer history, nested modal drafts and templates", async ({
@@ -310,3 +314,31 @@ for (const [code, save] of localizedControls) {
     );
   });
 }
+
+test("automation creation preserves its name and device across locale changes", async ({
+  page,
+}) => {
+  await page.goto("/?manager&lang=ko");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("button", { name: "자동화 만들기", exact: true })
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(dialog).toContainText("실행 조건은 비어 있습니다");
+  await dialog.getByLabel("이름", { exact: true }).fill("거실 화면 갱신");
+  await page.screenshot({ path: "artifacts/create-automation-ko.png" });
+  await setLanguage(page, "en");
+  await expect(
+    dialog.getByRole("heading", { name: "Create automation" }),
+  ).toBeVisible();
+  await expect(dialog.getByLabel("Name", { exact: true })).toHaveValue(
+    "거실 화면 갱신",
+  );
+  await expect(dialog.locator("textarea")).toHaveValue(/demo-device-0/);
+  await dialog.getByLabel("Name", { exact: true }).press("Enter");
+  await expect(
+    dialog.getByRole("button", { name: "Create automation", exact: true }),
+  ).toBeVisible();
+});

@@ -1,4 +1,5 @@
 import { t } from "./i18n.js";
+import { createId } from "./model.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -24,12 +25,23 @@ export class YamlDialog extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
     this.shadowRoot.addEventListener("change", (event) => this.change(event));
+    this.shadowRoot.addEventListener("submit", (event) =>
+      event.preventDefault(),
+    );
+    this.shadowRoot.addEventListener("input", (event) => {
+      if (event.target.id === "automation-name") this.name = event.target.value;
+    });
   }
   open(result, onClose, hass) {
     this.hass = hass;
     this.result = result;
     this.onClose = onClose;
-    this.view = "payload";
+    this.view = result.automation ? "service" : "payload";
+    this.name = result.automation?.alias || "";
+    this.createdId = null;
+    this.creating = false;
+    this.creationError = "";
+    this.automationId = createId();
     // With templates in the design the automation should keep them.
     this.live = "live_payload" in result;
     this.render();
@@ -56,14 +68,17 @@ export class YamlDialog extends HTMLElement {
       form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:90vh;box-sizing:border-box}
       h2{margin:0;font-size:16px}
       .tabs,.actions{display:flex;gap:6px}.actions{justify-content:flex-end}
+      input{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}
+      a{color:var(--primary-color,#166d75);align-self:center}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
       button[aria-selected="true"],button.primary{background:#166d75;color:white;border-color:#166d75}
       textarea{flex:1;min-height:280px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical;padding:10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .check{display:flex;gap:6px;align-items:center;font-size:13px}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
-    </style><dialog aria-label="${t(this.hass, "Payload YAML")}"><form method="dialog">
-      <h2>${t(this.hass, "Payload YAML")}</h2>
+    </style><dialog aria-label="${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}"><form method="dialog">
+      <h2>${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}</h2>
+      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
       <div class="tabs" role="tablist">${shown
         .map(
           ([key, label]) =>
@@ -81,10 +96,11 @@ export class YamlDialog extends HTMLElement {
               "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
             )
       }</p>
-      ${"live_payload" in this.result ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
+      ${"live_payload" in this.result && !this.result.automation ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
       ${this.result.issues.length ? `<ul class="issues">${this.result.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
       <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
-      <div class="actions"><button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
+      <p role="status">${esc(this.creationError)}</p>
+      <div class="actions">${this.result.automation ? (this.createdId ? `<a href="/config/automation/edit/${encodeURIComponent(this.createdId)}">${t(this.hass, "Edit automation")}</a>` : `<button type="button" data-create class="primary" ${this.creating ? "disabled" : ""}>${t(this.hass, this.creating ? "Working…" : "Create automation")}</button>`) : ""}<button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
     </form></dialog>`;
     const dialog = this.shadowRoot.querySelector("dialog");
     dialog.addEventListener("cancel", (event) => {
@@ -108,6 +124,33 @@ export class YamlDialog extends HTMLElement {
       .composedPath()
       .find((node) => node.tagName === "BUTTON");
     if (!button) return;
+    if (button.hasAttribute("data-create")) {
+      if (this.creating || this.createdId || !this.name.trim()) {
+        this.shadowRoot.querySelector("#automation-name")?.focus();
+        return;
+      }
+      this.creating = true;
+      this.creationError = "";
+      this.render();
+      try {
+        await this.hass.callApi(
+          "POST",
+          `config/automation/config/${this.automationId}`,
+          {
+            ...this.result.automation,
+            id: this.automationId,
+            alias: this.name.trim(),
+          },
+        );
+        this.createdId = this.automationId;
+      } catch (error) {
+        this.creationError = error.message || String(error);
+      } finally {
+        this.creating = false;
+        if (this.isConnected) this.render();
+      }
+      return;
+    }
     if (button.dataset.view) {
       this.view = button.dataset.view;
       this.render();

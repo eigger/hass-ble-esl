@@ -148,6 +148,15 @@
         (state.attributes.unit_of_measurement
           ? " " + state.attributes.unit_of_measurement
           : ""),
+      callApi: async (method, path, data) => {
+        const response = await fetch(`/api/${path}`, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error(await response.text());
+        return response.json();
+      },
       callWS: async (msg) => {
         const response = await fetch("/api/designer", {
           method: "POST",

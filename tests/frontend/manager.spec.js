@@ -15,7 +15,9 @@ test("dashboard shows registry entities, filters and opens entity details", asyn
   const card = page.locator('[data-entry="demo-writable"]').first();
   await expect(card).toContainText("Living room");
   await expect(card).toContainText("250 × 122");
-  await expect(card).toContainText("Battery 85%");
+  await expect(
+    card.getByRole("button", { name: "Battery 85%", exact: true }),
+  ).toBeVisible();
   await expect(card).toContainText("In sync");
   await expect(card).toContainText("3.2 s");
   await expect(card.locator("img")).toBeVisible();
@@ -122,7 +124,12 @@ test("dashboard is responsive and handles missing states", async ({ page }) => {
   await page.evaluate(() => {
     window.manager.hass = { ...window.manager.hass, states: {} };
   });
-  await expect(page.locator(".card").first()).toContainText("Battery —");
+  await expect(
+    page
+      .locator(".card")
+      .first()
+      .getByRole("button", { name: "Battery —", exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".card").first()).toContainText("Sync unknown");
   await expect(page.locator(".card").first()).toContainText(
     "No successful image",
@@ -411,6 +418,14 @@ test("successful image timestamp changes reload the thumbnail at the same proxy 
 test("manager headers and embedded designer toolbar remain visible in real scrolling containers", async ({
   page,
 }) => {
+  // Mimic HA's auto-height custom-panel wrapper, not just a flex container
+  // that supplies a definite height to the manager in the demo.
+  await page.evaluate(() => {
+    document.body.style.cssText = "display:block;height:auto;overflow:visible";
+    const wrapper = document.createElement("div");
+    window.manager.before(wrapper);
+    wrapper.append(window.manager);
+  });
   // Exercise navigation while list requests are slow: click() returns before
   // the async dashboard refresh has finished replacing the cards.
   await page.route("**/api/designer", async (route) => {
@@ -422,6 +437,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
     [1440, 477],
     [900, 477],
     [390, 844],
+    [320, 640],
   ]) {
     await expect(
       page.getByRole("button", { name: "Refresh", exact: true }),
@@ -436,6 +452,10 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
       }));
       manager.renderCards();
     });
+    const dashboardHeight = await page
+      .locator("#dashboard header")
+      .evaluate((node) => node.getBoundingClientRect().height);
+    expect(dashboardHeight).toBe(56);
     const before = await page
       .locator("ble-esl-manager")
       .evaluate(
@@ -470,8 +490,8 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
       page.getByRole("button", { name: "Send to tag", exact: true }),
     ).toBeVisible();
     await page
-      .locator("ble-esl-designer")
-      .evaluate((host) => (host.scrollTop = 500));
+      .locator(".editor-content")
+      .evaluate((node) => (node.scrollTop = 500));
     await expect
       .poll(() =>
         page.locator("ble-esl-designer").evaluate((host) => {
@@ -485,16 +505,34 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
             .querySelector(".editor-nav")
             .getBoundingClientRect();
           return [
-            host.scrollTop > 0,
+            root.querySelector(".editor-content").scrollTop > 0,
+            host.scrollTop === 0,
+            nav.height === 56,
+            header.height === 56,
             Math.abs(header.top - nav.bottom) < 1,
             Math.abs(toolbar.top - header.bottom) < 1,
           ];
         }),
       )
-      .toEqual([true, true, true]);
+      .toEqual([true, true, true, true, true, true]);
     expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(
       0,
     );
+    await page
+      .getByRole("button", { name: "Sensor templates", exact: true })
+      .click();
+    await page
+      .locator(".editor-content")
+      .evaluate((node) => (node.scrollTop = 500));
+    expect(
+      await page.locator(".template-controls").evaluate((node) => {
+        const header = node.getRootNode().querySelector("header");
+        return (
+          node.getBoundingClientRect().top ===
+          header.getBoundingClientRect().bottom
+        );
+      }),
+    ).toBe(true);
     if (width === 1440)
       await page.screenshot({ path: "artifacts/manager-fixed-header.png" });
     await page.locator('[data-action="dashboard"]').click();
@@ -503,4 +541,89 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
     ).toBeEnabled();
     await expect(page.locator("#dashboard .card")).toHaveCount(2);
   }
+});
+
+test("card information aligns and battery stays at the right edge", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.manager.tags[0].title = 'Poshiji 37391810BD4D (PSJ-290 2.9" BWRY)';
+    window.manager.tags[1].title = "Short model";
+    window.manager.renderCards();
+  });
+  const metrics = await page.locator("#dashboard .card").evaluateAll((cards) =>
+    cards.map((card) => {
+      const box = (selector) =>
+        card.querySelector(selector).getBoundingClientRect();
+      return {
+        image: box(".image").top,
+        dimensions: box(".dimensions").top,
+        right: box(".battery").right - box(".top").right,
+        productRight: box(".product").right - box(".top").right,
+        aligned:
+          (box(".battery").top + box(".battery").bottom) / 2 ===
+          (box("h2").top + box("h2").bottom) / 2,
+        border: getComputedStyle(card.querySelector(".battery button"))
+          .borderTopWidth,
+      };
+    }),
+  );
+  expect(metrics[0].image).toBe(metrics[1].image);
+  expect(metrics[0].dimensions).toBe(metrics[1].dimensions);
+  expect(metrics.map((metric) => metric.right)).toEqual([0, 0]);
+  expect(metrics.map((metric) => metric.productRight)).toEqual([0, 0]);
+  expect(metrics.map((metric) => metric.aligned)).toEqual([true, true]);
+  expect(metrics.map((metric) => metric.border)).toEqual(["0px", "0px"]);
+  await expect(page.locator(".battery svg")).toHaveCount(2);
+});
+
+test("thumbnail survives rerenders and waits for the next bitmap to load", async ({
+  page,
+}) => {
+  const img = page.locator('[data-entry="demo-writable"] .image img');
+  await expect
+    .poll(() => img.evaluate((node) => node.naturalWidth))
+    .toBeGreaterThan(0);
+  await page.evaluate(() => {
+    window.originalThumbnail =
+      window.manager.shadowRoot.querySelector(".image img");
+    window.manager.renderCards();
+  });
+  expect(await img.evaluate((node) => node === window.originalThumbnail)).toBe(
+    true,
+  );
+  const before = await img.getAttribute("src");
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  let requested = false;
+  await page.route("**/*updated=*", async (route) => {
+    requested = true;
+    await gate;
+    await route.continue();
+  });
+  await page.evaluate(() => {
+    const manager = window.manager;
+    const image = manager.hass.states["image.demo_0_last_updated_content"];
+    manager.hass = {
+      ...manager.hass,
+      states: {
+        ...manager.hass.states,
+        [image.entity_id]: { ...image, state: "2026-10-08T02:00:00+00:00" },
+      },
+    };
+  });
+  await expect.poll(() => requested).toBe(true);
+  await expect(img).toHaveAttribute("src", before);
+  expect(
+    await img.evaluate(
+      (node) => node === window.originalThumbnail && node.naturalWidth > 0,
+    ),
+  ).toBe(true);
+  release();
+  await expect(img).not.toHaveAttribute("src", before);
+  expect(
+    await img.evaluate((node) => node.complete && node.naturalWidth > 0),
+  ).toBe(true);
 });

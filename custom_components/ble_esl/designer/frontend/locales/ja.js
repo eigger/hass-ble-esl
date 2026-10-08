@@ -1,5 +1,10 @@
 // UI copy only; keep interpolation placeholders and technical tokens unchanged.
 export default {
+  "Create automation": "オートメーションを作成",
+  "Edit automation": "オートメーションを編集",
+  "No triggers are configured. Set them in Home Assistant after creating the automation.":
+    "トリガーは未設定です。作成後に Home Assistant で設定してください。",
+
   "Sending failed{error}": "送信失敗{error}",
   "component specs": "コンポーネントの仕様",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":

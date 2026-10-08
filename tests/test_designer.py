@@ -5,6 +5,7 @@ from functools import partial
 from io import BytesIO
 from unittest.mock import patch
 
+from homeassistant.components.automation.config import async_validate_config_item
 from homeassistant.components.frontend import DATA_PANELS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -14,7 +15,7 @@ import voluptuous as vol
 import yaml
 
 from custom_components.ble_esl.designer import KEY
-from custom_components.ble_esl.designer.export import export_yaml
+from custom_components.ble_esl.designer.export import automation_draft, export_yaml
 from custom_components.ble_esl.designer.layout import compile_payload, validate, validate_template
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.renderer import render_image
@@ -1051,3 +1052,24 @@ async def test_loaded_legacy_designs_are_migrated_durably(hass, wolink_entry, ta
     assert "interval" not in migrated["unloaded_tag"]
     assert migrated["unloaded_tag"]["elements"] == legacy["elements"]
     assert tag_writer.write_prepared.await_count == 0
+
+
+async def test_automation_draft_uses_current_design_and_registered_device(hass, wolink_entry):
+    designer = hass.data[KEY]
+    result = await designer.automation(wolink_entry, document())
+    config = result["automation"]
+    assert config["triggers"] == []
+    assert config["conditions"] == []
+    assert config["actions"][0]["target"] == {"device_id": wolink_entry.runtime_data.device_id}
+    assert config["actions"][0]["data"]["payload"] == yaml.safe_load(result["payload"])
+    assert config["actions"][0]["action"] == "ble_esl.write"
+    assert config["alias"] == wolink_entry.title
+    assert "id" not in config
+    await async_validate_config_item(hass, "designer-test", {**config, "id": "designer-test"})
+
+
+def test_automation_draft_preserves_jinja_instead_of_exported_snapshot():
+    live = [{"type": "text", "value": "{{ states('sensor.room') }}", "x": 0, "y": 0}]
+    exported = export_yaml([{**live[0], "value": "21"}], "white", "current-device", live=live)
+    config = automation_draft(exported, "Room")
+    assert config["actions"][0]["data"]["payload"] == live

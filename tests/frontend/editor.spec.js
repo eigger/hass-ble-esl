@@ -1628,3 +1628,75 @@ test("the add-element hints show for a display and not for sensor templates", as
   await page.getByRole("button", { name: "Sensor templates" }).click();
   await expect(page.locator("#library .hint")).toHaveCount(1);
 });
+
+test("new automation uses the unsaved design and current ESL with no triggers", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const requests = [];
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    requests.push({
+      path: route.request().url(),
+      config: route.request().postDataJSON(),
+    });
+    await route.fulfill({ json: { result: "ok" } });
+  });
+  await page
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(dialog).toContainText("No triggers are configured");
+  await expect(dialog.locator("textarea")).toHaveValue(/demo-device-0/);
+  await dialog.getByLabel("Name", { exact: true }).fill("Room update");
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation" }),
+  ).toBeVisible();
+  expect(requests).toHaveLength(1);
+  const { path, config } = requests[0];
+  expect(path.endsWith(config.id)).toBe(true);
+  expect(config.alias).toBe("Room update");
+  expect(config.triggers).toEqual([]);
+  expect(config.conditions).toEqual([]);
+  expect(config.actions[0].action).toBe("ble_esl.write");
+  expect(config.actions[0].target).toEqual({ device_id: "demo-device-0" });
+  expect(config.actions[0].data.payload).toHaveLength(1);
+  expect(config.actions[0].data.payload[0].value).toBe("Your text");
+  await expect(page.locator(".el")).toHaveCount(1);
+});
+
+test("failed automation creation can retry the same ID without losing the name", async ({
+  page,
+}) => {
+  const configs = [];
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    configs.push(route.request().postDataJSON());
+    await route.fulfill(
+      configs.length === 1
+        ? { status: 500, body: "Cannot save" }
+        : { json: { result: "ok" } },
+    );
+  });
+  await page
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill("My ESL");
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(dialog.getByRole("status")).toContainText("Cannot save");
+  await expect(dialog.getByLabel("Name", { exact: true })).toHaveValue(
+    "My ESL",
+  );
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation" }),
+  ).toBeVisible();
+  expect(configs).toHaveLength(2);
+  expect(configs[0].id).toBe(configs[1].id);
+});

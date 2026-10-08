@@ -1,5 +1,10 @@
 // UI copy only; keep interpolation placeholders and technical tokens unchanged.
 export default {
+  "Create automation": "Créer une automatisation",
+  "Edit automation": "Modifier l’automatisation",
+  "No triggers are configured. Set them in Home Assistant after creating the automation.":
+    "Aucun déclencheur n’est configuré. Configurez-les dans Home Assistant après la création.",
+
   "Sending failed{error}": "Échec de l'envoi{error}",
   "component specs": "définitions des composants",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":

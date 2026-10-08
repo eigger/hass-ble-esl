@@ -13,10 +13,10 @@ export const escapeHtml = (value) =>
 const valid = (state) =>
   state && !["unknown", "unavailable"].includes(state.state);
 const css = `
-:host{display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden;font:14px system-ui;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa)}
+:host{display:flex;flex-direction:column;height:var(--ble-esl-panel-height,100%);min-height:0;overflow:hidden;font:14px system-ui;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa)}
 *{box-sizing:border-box}[hidden]{display:none!important}button,input,select{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;padding:9px 12px}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #16838c;outline-offset:3px}button.primary{background:#166d75;color:white;border-color:#166d75}
-#dashboard,#editor{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.dashboard-content{flex:1;min-height:0;overflow:auto}#editor-slot{flex:1;min-height:0;overflow:hidden}header,.editor-nav{flex:none}header{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}h1{font-size:20px;font-weight:500;margin:0;flex:1}h2{margin:0;font-size:18px;overflow-wrap:anywhere}.controls{display:flex;flex-wrap:wrap;gap:10px;padding:20px 24px 12px}.controls input{flex:1;min-width:150px}.summary{padding:0 24px 16px;color:var(--secondary-text-color,#637083)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;padding:0 24px 24px}.card{min-width:0;padding:18px;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dde3e8);border-radius:12px;display:flex;flex-direction:column;gap:12px}.top{display:flex;align-items:start;gap:8px}.top>div{flex:1;min-width:0}.alias{border:0;padding:0;text-align:left;background:transparent;font-size:18px;font-weight:600;overflow-wrap:anywhere}.muted{color:var(--secondary-text-color,#637083);font-size:12px;overflow-wrap:anywhere}.battery{white-space:nowrap;font-size:12px}.image{height:180px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--secondary-background-color,#eef1f4);overflow:hidden}.image img{max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated}.image button{display:contents}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{padding:4px 8px;border-radius:6px;font-size:12px;background:var(--secondary-background-color,#eef1f4);border:0}.bad{color:var(--error-color,#b3261e);background:#b3261e12}.good{color:var(--success-color,#28754a);background:#28754a12}.facts{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:8px;margin:0;font-size:13px}.facts dt{color:var(--secondary-text-color,#637083)}.facts dd{margin:0;text-align:right;overflow-wrap:anywhere}.facts button{padding:0;border:0;background:transparent;text-align:right;font:inherit}.actions{display:flex;gap:8px;margin-top:auto}.actions button{flex:1}.message{margin:12px 24px}.message.error{color:var(--error-color,#b3261e)}.editor-nav{display:flex;align-items:center;gap:12px;padding:10px 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}.editor-nav span{flex:1}ble-esl-designer{display:block;height:100%;min-height:0}.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--secondary-text-color,#637083)}
-@media(max-width:650px){header,.editor-nav{padding:12px}.controls{padding:16px 12px 12px}.summary{padding:0 12px 16px}.grid{padding:0 12px 16px;grid-template-columns:minmax(0,1fr);gap:12px}.message{margin:12px}.card{padding:16px}}
+#dashboard,#editor{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}.dashboard-content{flex:1;min-height:0;overflow:auto}#editor-slot{flex:1;min-height:0;overflow:hidden}header,.editor-nav{flex:none;height:var(--header-height,56px);min-height:56px;padding:0 24px}header{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}h1{font-size:20px;font-weight:500;margin:0;flex:1}h2{margin:0;font-size:18px;overflow-wrap:anywhere}.controls{display:flex;flex-wrap:wrap;gap:10px;padding:20px 24px 12px}.controls input{flex:1;min-width:150px}.summary{padding:0 24px 16px;color:var(--secondary-text-color,#637083)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;padding:0 24px 24px}.card{min-width:0;padding:18px;background:var(--card-background-color,white);border:1px solid var(--divider-color,#dde3e8);border-radius:12px;display:flex;flex-direction:column;gap:12px}.top{display:flex;align-items:center;gap:8px}.top>h2{flex:1;min-width:0;height:24px;line-height:24px;overflow:hidden}.product{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;height:32px;line-height:16px}.dimensions{line-height:16px;white-space:nowrap}.alias{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alias{border:0;padding:0;text-align:left;background:transparent;font-size:18px;font-weight:600;overflow-wrap:anywhere}.muted{color:var(--secondary-text-color,#637083);font-size:12px;overflow-wrap:anywhere}.battery{flex:none;margin-left:auto;white-space:nowrap;font-size:12px}.battery button,.battery>span{display:flex;align-items:center;gap:6px;line-height:24px}.battery button{padding:0;border:0;border-radius:0;background:transparent}.battery svg{width:24px;height:16px;flex:none}.image{height:180px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--secondary-background-color,#eef1f4);overflow:hidden}.image img{max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated}.image button{display:contents}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{padding:4px 8px;border-radius:6px;font-size:12px;background:var(--secondary-background-color,#eef1f4);border:0}.bad{color:var(--error-color,#b3261e);background:#b3261e12}.good{color:var(--success-color,#28754a);background:#28754a12}.facts{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:8px;margin:0;font-size:13px}.facts dt{color:var(--secondary-text-color,#637083)}.facts dd{margin:0;text-align:right;overflow-wrap:anywhere}.facts button{padding:0;border:0;background:transparent;text-align:right;font:inherit}.actions{display:flex;gap:8px;margin-top:auto}.actions button{flex:1}.message{margin:12px 24px}.message.error{color:var(--error-color,#b3261e)}.editor-nav{display:flex;align-items:center;gap:12px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#ddd)}.editor-nav span{flex:1}ble-esl-designer{height:100%;min-height:0}.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--secondary-text-color,#637083)}
+@media(max-width:650px){header,.editor-nav{padding:0 12px}.controls{padding:16px 12px 12px}.summary{padding:0 12px 16px}.grid{padding:0 12px 16px;grid-template-columns:minmax(0,1fr);gap:12px}.message{margin:12px}.card{padding:16px}}
 `;
 
 class EslManager extends HTMLElement {
@@ -99,6 +99,19 @@ class EslManager extends HTMLElement {
     return this._hass;
   }
   connectedCallback() {
+    // HA's custom-panel wrapper may have an automatic height. Bound our own
+    // panel to the available viewport so that only the content can overflow.
+    this.resizePanel = () => {
+      const height = Math.max(
+        0,
+        window.innerHeight - this.getBoundingClientRect().top,
+      );
+      this.style.setProperty("--ble-esl-panel-height", `${height}px`);
+    };
+    this.panelObserver = new ResizeObserver(this.resizePanel);
+    this.panelObserver.observe(this);
+    window.addEventListener("resize", this.resizePanel);
+    this.resizePanel();
     if (this.hass && !this.started) this.refresh();
     this.clockTimer = setInterval(() => {
       if (this.view === "dashboard") this.renderCards();
@@ -106,6 +119,8 @@ class EslManager extends HTMLElement {
   }
   disconnectedCallback() {
     clearInterval(this.clockTimer);
+    this.panelObserver?.disconnect();
+    window.removeEventListener("resize", this.resizePanel);
   }
   api(action, extra = {}) {
     return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
@@ -241,6 +256,22 @@ class EslManager extends HTMLElement {
       ? `<button data-entity="${escapeHtml(id)}" ${extra}>${escapeHtml(label)}</button>`
       : escapeHtml(label);
   }
+  batteryHtml(tag, battery) {
+    const known = valid(battery) && Number.isFinite(Number(battery.state));
+    const value = known
+      ? `${battery.state}${battery.attributes.unit_of_measurement || "%"}`
+      : "—";
+    const label = known
+      ? t(this.hass, "Battery {value}", { value })
+      : t(this.hass, "Battery —");
+    const fill = known
+      ? (Math.max(0, Math.min(100, Number(battery.state))) / 100) * 16
+      : 0;
+    const content = `<svg viewBox="0 0 26 16" aria-hidden="true"><rect x="1" y="1" width="21" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M24 5v6" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="3.5" width="${fill}" height="9" rx=".5" fill="currentColor"/></svg><span>${escapeHtml(value)}</span>`;
+    return tag.entities?.battery
+      ? `<button data-entity="${escapeHtml(tag.entities.battery)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</button>`
+      : `<span role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</span>`;
+  }
   card(tag) {
     const e = escapeHtml;
     const alias = this.alias(tag);
@@ -268,7 +299,7 @@ class EslManager extends HTMLElement {
       valid(duration) && Number.isFinite(Number(duration.state))
         ? `${Number(duration.state).toFixed(1)} s`
         : "—";
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="top"><div><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="muted">${e(tag.title)}</div><div class="muted">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="battery">${this.entityButton(tag, "battery", valid(battery) ? t(this.hass, "Battery {value}", { value: `${battery.state}${battery.attributes.unit_of_measurement || "%"}` }) : t(this.hass, "Battery —"))}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">${t(this.hass, "Edit design")}</button></div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="badges">${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions"><button class="primary" data-action="edit" data-entry="${e(tag.entry_id)}">${t(this.hass, "Edit design")}</button></div></article>`;
   }
   renderCards() {
     const errors = this.tags.filter((tag) => this.hasError(tag)).length;
@@ -293,9 +324,52 @@ class EslManager extends HTMLElement {
     const entry = focused?.closest("[data-entry]")?.dataset.entry;
     const entity = focused?.dataset.entity;
     const action = focused?.dataset.action;
-    grid.innerHTML =
-      tags.map((tag) => this.card(tag)).join("") ||
-      `<div class="empty">${this.tags.length ? t(this.hass, "No ESLs match your search or filter.") : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
+    const existing = new Map(
+      [...grid.querySelectorAll(".card")].map((card) => [
+        card.dataset.entry,
+        card,
+      ]),
+    );
+    const cards = tags.map((tag) => {
+      const template = document.createElement("template");
+      template.innerHTML = this.card(tag);
+      const next = document.adoptNode(template.content.firstElementChild);
+      const current = existing.get(tag.entry_id);
+      if (!current) return next;
+      const image = current.querySelector(".image");
+      const replacement = next.querySelector(".image");
+      const oldImg = image.querySelector("img");
+      const newImg = replacement.querySelector("img");
+      image.dataset.requestedSrc = newImg?.getAttribute("src") || "";
+      if (oldImg && newImg) {
+        replacement.replaceWith(image);
+        if (oldImg.getAttribute("src") === newImg.getAttribute("src")) {
+          oldImg.alt = newImg.alt;
+          image
+            .querySelector("button")
+            .setAttribute(
+              "aria-label",
+              replacement.querySelector("button").getAttribute("aria-label"),
+            );
+        } else {
+          // Keep the last successful bitmap visible until the next one is
+          // decoded. Ignore an obsolete response after another state update.
+          const src = newImg.getAttribute("src");
+          newImg
+            .decode()
+            .then(() => {
+              if (image.isConnected && image.dataset.requestedSrc === src)
+                image.replaceChildren(...replacement.childNodes);
+            })
+            .catch(() => {});
+        }
+      }
+      current.replaceChildren(...next.childNodes);
+      return current;
+    });
+    if (cards.length) grid.replaceChildren(...cards);
+    else
+      grid.innerHTML = `<div class="empty">${this.tags.length ? t(this.hass, "No ESLs match your search or filter.") : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
     if (entry && (entity || action))
       grid
         .querySelector(
