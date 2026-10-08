@@ -84,6 +84,7 @@ export class TemplateDialog extends HTMLElement {
     if (this.context) this.context.cancelled = true;
     this.remove();
     this.onClose?.();
+    if (this.thenCreate) this.panel.createAutomationFromTemplate();
   }
   updateHass() {
     if (!this.closed) this.render();
@@ -198,6 +199,9 @@ export class TemplateDialog extends HTMLElement {
     }
     const mode = button.dataset.mode;
     if (!mode || this.pending) return;
+    // The browser says what is wrong with a half-typed or out-of-range number.
+    for (const input of this.shadowRoot.querySelectorAll("input"))
+      if (!input.reportValidity()) return;
     this.pending = true;
     for (const other of this.shadowRoot.querySelectorAll(".actions button"))
       other.disabled = true;
@@ -217,6 +221,8 @@ export class TemplateDialog extends HTMLElement {
         return;
       }
       this.done = placed > 0;
+      // Close still goes on to Create automation, as it would have without issues.
+      this.thenCreate = placed > 0 && mode === "create";
       this.note = placed
         ? {
             key: "{count} placed, {skipped} skipped.",

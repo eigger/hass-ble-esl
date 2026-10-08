@@ -1761,3 +1761,24 @@ test("design template: a missing font reports the error and keeps the display", 
   await expect(gallery).toContainText("Font not found");
   await expect(page.locator(".el")).toHaveCount(0);
 });
+
+test("design template triggers are dropped once the template's elements are gone", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await page.getByRole("button", { name: "Undo", exact: false }).click();
+  await page.getByRole("button", { name: "Redo", exact: false }).click();
+  await page.evaluate(() => {
+    window.panel.document.elements = [];
+    window.panel.render();
+  });
+  await page
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(page.locator("ble-esl-yaml-dialog")).toContainText(
+    "No triggers are configured",
+  );
+});

@@ -9,7 +9,7 @@ In the Designer, choose **Templates** (under the component buttons). The gallery
 - **Add to display** keeps what is on the canvas; **Replace display** starts again. The result is ordinary, editable elements.
 - **Replace and create automation** (templates with an `automation` block, writable tags) also opens **Create automation**, with the template's triggers, for example *every day at 12:00*, already filled in. Choose **Create automation** in that dialog to save it.
 
-After choosing **Add to display** you can still use the toolbar's **Create automation**: it uses the triggers of the template you applied last, until you open another tag.
+After choosing **Add to display** you can still use the toolbar's **Create automation**: it uses the triggers of the template you applied last, as long as that design's elements are still on the canvas (undo, replace, import or deleting them drops the triggers).
 
 A design template is a YAML file that describes a ready-made ESL design: the imagespec elements, the few values a user may change (font, colors, time…), and optionally the automation that keeps it up to date. Applying one in the Designer produces ordinary, fully editable elements; nothing in the saved result refers back to the template.
 

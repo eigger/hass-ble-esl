@@ -445,6 +445,8 @@ export class BleEslDesigner extends HTMLElement {
       }
       for (const dialog of document.querySelectorAll("ble-esl-import-dialog"))
         if (dialog.panel === this) dialog.updateHass(value);
+      for (const dialog of document.querySelectorAll("ble-esl-template-dialog"))
+        if (dialog.panel === this) dialog.updateHass(value);
     }
     this.renderEntityPreview();
     this.shadowRoot
@@ -1583,7 +1585,13 @@ export class BleEslDesigner extends HTMLElement {
       this.document.elements.push(...result.elements);
       this.selected = result.elements.at(-1).id;
       this.templateAutomation = result.template.automation
-        ? { entryId: context.entryId, defaults: result.template.automation }
+        ? {
+            entryId: context.entryId,
+            defaults: result.template.automation,
+            // The triggers belong to this design: once its elements are gone
+            // (undo, replace, import, delete) they are no longer offered.
+            elementIds: result.elements.map((element) => element.id),
+          }
         : null;
       this.edited();
     }
@@ -2761,7 +2769,10 @@ export class BleEslDesigner extends HTMLElement {
             entry_id: this.tag.entry_id,
             document: this.document,
             ...(action === "create-automation" &&
-            this.templateAutomation?.entryId === this.tag.entry_id
+            this.templateAutomation?.entryId === this.tag.entry_id &&
+            this.templateAutomation.elementIds.every((id) =>
+              this.document.elements.some((element) => element.id === id),
+            )
               ? { automation_defaults: this.templateAutomation.defaults }
               : {}),
           },
