@@ -1793,6 +1793,9 @@ test("design template: the current design can be saved and applied again", async
   await gallery.getByRole("button", { name: "Save as template" }).click();
   await expect(gallery).toContainText("Saved template office_temperature");
   await expect(gallery).toContainText("My template");
+  await expect(
+    gallery.locator('img[data-preview="office_temperature"]'),
+  ).toHaveAttribute("src", /^data:image\/png/);
   await expect(gallery.getByLabel("Design template name")).toHaveValue("");
   await gallery.getByRole("button", { name: /Office temperature/ }).click();
   await gallery.getByRole("button", { name: "Replace display" }).click();
@@ -1879,4 +1882,22 @@ test("design template: an invalid parameter hides the stale preview and says why
   await expect(preview).toBeHidden();
   await gallery.getByLabel("Network name (SSID)").fill("good");
   await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+});
+
+test("design template: the preview error stays visible after a re-render", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
+  await gallery.getByLabel("Network name (SSID)").fill("bad;name");
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
+  await page.evaluate(() => {
+    window.panel.hass = { ...window.panel.hass, locale: { language: "ko" } };
+  });
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
 });

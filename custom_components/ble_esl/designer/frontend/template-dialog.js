@@ -99,9 +99,11 @@ export class TemplateDialog extends HTMLElement {
   }
   // One thumbnail at a time: each is a real render on the server.
   async loadThumbnails() {
+    // A newer run (after Back or a save) replaces this one.
+    const run = (this.thumbnailRun = (this.thumbnailRun || 0) + 1);
     for (const template of this.templates || []) {
       // The user's own preview comes first: it shares the server's render lock.
-      if (this.closed || this.chosen) return;
+      if (this.closed || this.chosen || run !== this.thumbnailRun) return;
       if (this.previews[template.id]) continue;
       try {
         const result = await this.panel.api("preview_design_template", {
@@ -112,6 +114,7 @@ export class TemplateDialog extends HTMLElement {
       } catch {
         continue;
       }
+      if (run !== this.thumbnailRun) return;
       const image = [
         ...this.shadowRoot.querySelectorAll("[data-preview]"),
       ].find((node) => node.dataset.preview === template.id);
@@ -144,6 +147,7 @@ export class TemplateDialog extends HTMLElement {
     } catch (error) {
       if (this.closed || token !== this.previewToken) return;
       this.formPreview = null;
+      this.formPreviewNote = "";
       this.showFormPreview(null, error.message || String(error));
       return;
     }
@@ -152,6 +156,7 @@ export class TemplateDialog extends HTMLElement {
     this.showFormPreview(png, "");
   }
   showFormPreview(png, message) {
+    this.formPreviewNote = message;
     const image = this.shadowRoot.querySelector("[data-form-preview]");
     const note = this.shadowRoot.querySelector("[data-form-preview-note]");
     if (image) {
@@ -212,7 +217,7 @@ export class TemplateDialog extends HTMLElement {
       const design = group("design"),
         automation = group("automation");
       return `<p class="muted">${esc(localized(hass, this.chosen.description))}</p>
-        <img class="preview" data-form-preview alt="${esc(localized(hass, this.chosen.name))}" ${this.formPreview ? `src="${esc(this.formPreview)}"` : "hidden"}><p class="issues" data-form-preview-note hidden></p>
+        <img class="preview" data-form-preview alt="${esc(localized(hass, this.chosen.name))}" ${this.formPreview ? `src="${esc(this.formPreview)}"` : "hidden"}><p class="issues" data-form-preview-note ${this.formPreviewNote ? "" : "hidden"}>${esc(this.formPreviewNote || "")}</p>
         ${this.chosen.scaled ? `<p class="muted">${t(hass, "Adjusted to this display")} (${esc(this.chosen.layout)})</p>` : ""}
         ${design ? `<div class="fields">${design}</div>` : ""}
         ${automation ? `<h3>${t(hass, "Automation")}</h3><div class="fields">${automation}</div>` : ""}`;
@@ -290,6 +295,7 @@ export class TemplateDialog extends HTMLElement {
       this.chosen = null;
       this.typed = null;
       this.formPreview = null;
+      this.formPreviewNote = "";
       this.previewToken = (this.previewToken || 0) + 1;
       this.loadThumbnails();
       this.note = "";
@@ -323,6 +329,8 @@ export class TemplateDialog extends HTMLElement {
         this.pending = false;
       }
       if (!this.closed) this.render();
+      // The saved template needs its thumbnail.
+      this.loadThumbnails();
       return;
     }
     if (button.dataset.template) {
@@ -331,6 +339,7 @@ export class TemplateDialog extends HTMLElement {
       );
       this.typed = null;
       this.formPreview = null;
+      this.formPreviewNote = "";
       this.render();
       this.schedulePreview(true);
       return;
