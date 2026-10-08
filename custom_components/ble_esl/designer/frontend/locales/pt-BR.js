@@ -482,7 +482,7 @@ export default {
   // Preview-parameter and manager controls.
   "Sort ESLs": "Ordenar ESLs",
   "Default order": "Ordem padrão",
-  "Needs attention first": "Precisam de atenção primeiro",
+  "Needs attention first": "Atenção primeiro",
   "Battery: lowest first": "Bateria: menor primeiro",
   "Name (A–Z)": "Nome (A–Z)",
   "Low battery (20% or less)": "Bateria fraca (20% ou menos)",

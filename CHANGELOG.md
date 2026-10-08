@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- ESL Manager's search box and filter/sort drop-downs share one height; the drop-downs are wide enough for their longest option in all 13 languages.
+- ESL Manager's search box and filter/sort drop-downs share one height; the drop-downs are wide enough for their longest option in all 13 languages, with room to spare for wider fonts.
 - On a phone the editor bar (Dashboard, context, Connected automations) wraps instead of squeezing the context text into a one-character-wide column.
 - The Manager's sort and filter labels, the "Last successful image" caption, the automation-design buttons and headings, and the messages for importing from and saving to an automation are translated in the 11 languages that still showed them in English; "design" is used consistently in French, Italian and Brazilian Portuguese. The preview-parameter dialog strings are still partly English.
 

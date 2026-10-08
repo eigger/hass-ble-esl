@@ -273,7 +273,8 @@ test("search box and drop-downs share one height and long translations fit", asy
         const wide = [...select.options]
           .filter((option) => {
             probe.textContent = option.textContent;
-            return probe.getBoundingClientRect().width > limit;
+            // 20% spare: CI fonts are wider than a developer machine's.
+            return probe.getBoundingClientRect().width * 1.2 > limit;
           })
           .map((option) => option.textContent);
         probe.remove();

@@ -480,7 +480,7 @@ export default {
   // Preview-parameter and manager controls.
   "Sort ESLs": "Sortuj ESL",
   "Default order": "Kolejność domyślna",
-  "Needs attention first": "Najpierw wymagające uwagi",
+  "Needs attention first": "Najpierw do sprawdzenia",
   "Battery: lowest first": "Bateria: najniższa najpierw",
   "Name (A–Z)": "Nazwa (A–Z)",
   "Low battery (20% or less)": "Niski poziom baterii (20% lub mniej)",

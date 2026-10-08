@@ -480,7 +480,7 @@ export default {
   "Sort ESLs": "Trier les ESL",
   "Default order": "Ordre par défaut",
   "Needs attention first": "À traiter en premier",
-  "Battery: lowest first": "Batterie : la plus faible d'abord",
+  "Battery: lowest first": "Batterie faible d'abord",
   "Name (A–Z)": "Nom (A–Z)",
   "Low battery (20% or less)": "Batterie faible (20 % ou moins)",
   "Low battery": "Batterie faible",
