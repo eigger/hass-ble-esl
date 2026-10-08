@@ -1799,3 +1799,47 @@ test("design template: the current design can be saved and applied again", async
   await expect(gallery).toHaveCount(0);
   await expect(page.locator(".el").first()).toBeVisible();
 });
+
+test("design template: an entity parameter offers matching entities and checks the choice", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Weather now/ }).click();
+  const input = gallery.getByLabel("Weather entity");
+  await expect(input).toHaveValue("weather.home");
+  await expect(gallery.locator("datalist option")).toHaveCount(1);
+  await input.fill("weather.nowhere");
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery).toContainText("Entity not found: weather.nowhere");
+  await expect(page.locator(".el")).toHaveCount(0);
+  await input.fill("weather.home");
+  await gallery.getByLabel("Update every (minutes)").selectOption("10");
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery).toHaveCount(0);
+  await expect(page.locator(".el").first()).toBeVisible();
+});
+
+test("design template: an entity default that does not exist gives way to one that does", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const states = { ...window.panel.hass.states };
+    delete states["weather.home"];
+    states["weather.forecast_home"] = {
+      entity_id: "weather.forecast_home",
+      state: "sunny",
+      attributes: { friendly_name: "Forecast" },
+    };
+    window.panel.hass = { ...window.panel.hass, states };
+  });
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Weather now/ }).click();
+  await expect(gallery.getByLabel("Weather entity")).toHaveValue(
+    "weather.forecast_home",
+  );
+  await gallery.getByLabel("Weather entity").fill("weather.mine");
+  await gallery.getByLabel("Font").fill("CookieRunBold.ttf");
+  await expect(gallery.getByLabel("Weather entity")).toHaveValue("weather.mine");
+});

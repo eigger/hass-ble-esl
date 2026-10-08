@@ -19,7 +19,7 @@ const localized = (hass, value) => {
     ""
   );
 };
-const field = (hass, name, parameter, value) => {
+const field = (hass, name, parameter, value, untouched = false) => {
   const label = esc(localized(hass, parameter.label) || name);
   const id = `p-${name}`;
   let control;
@@ -44,7 +44,20 @@ const field = (hass, name, parameter, value) => {
           `<option value="${color}" ${color === value ? "selected" : ""}>${color}</option>`,
       )
       .join("")}</select>`;
-  else if (parameter.type === "number")
+  else if (parameter.type === "entity") {
+    // The entities of the wanted domain are offered; any id may still be typed.
+    const prefix = parameter.domain ? `${parameter.domain}.` : null;
+    const ids = prefix
+      ? Object.keys(hass?.states || {})
+          .filter((entity) => entity.startsWith(prefix))
+          .sort()
+          .slice(0, 500)
+      : [];
+    // Untouched, a default that is not on this system gives way to one that is.
+    const shown =
+      untouched && ids.length && !hass.states[value] ? ids[0] : value;
+    control = `<input id="${id}" data-param="${esc(name)}" type="text" list="${id}-list" autocomplete="off" spellcheck="false" value="${esc(shown)}"><datalist id="${id}-list">${ids.map((entity) => `<option value="${esc(entity)}"></option>`).join("")}</datalist>`;
+  } else if (parameter.type === "number")
     control = `<input id="${id}" data-param="${esc(name)}" type="number" step="any" value="${esc(value)}" ${"min" in parameter ? `min="${parameter.min}"` : ""} ${"max" in parameter ? `max="${parameter.max}"` : ""}>`;
   else if (parameter.type === "time")
     control = `<input id="${id}" data-param="${esc(name)}" type="time" step="1" value="${esc(value)}">`;
@@ -114,7 +127,13 @@ export class TemplateDialog extends HTMLElement {
         entries
           .filter(([, parameter]) => parameter.group === name)
           .map(([key, parameter]) =>
-            field(hass, key, parameter, this.typed?.[key] ?? parameter.default),
+            field(
+              hass,
+              key,
+              parameter,
+              this.typed?.[key] ?? parameter.default,
+              this.typed?.[key] === undefined,
+            ),
           )
           .join("");
       const design = group("design"),

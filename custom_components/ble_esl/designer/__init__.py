@@ -378,6 +378,14 @@ class Designer:
             for name, value in built["parameters"].items()
             if template["parameters"][name]["type"] == "font"
         }
+        absent = sorted(
+            value
+            for name, value in built["parameters"].items()
+            if template["parameters"][name]["type"] == "entity"
+            and self.hass.states.get(value) is None
+        )
+        if absent:
+            raise HomeAssistantError(f"Entity not found: {', '.join(absent)}")
         missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
         if missing:
             raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
