@@ -17,20 +17,25 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 MAX_TEMPLATE_BYTES = 256 * 1024
 FORMAT_VERSION = 1
 
-_SLUG = vol.All(str, vol.Match(r"^[a-z][a-z0-9_]{0,39}$"))
-_SIZE = vol.All(str, vol.Match(r"^[1-9][0-9]{1,4}x[1-9][0-9]{1,4}$"))
+_SLUG = vol.All(str, vol.Match(r"^[a-z][a-z0-9_]{0,39}\Z"))
+_SIZE = vol.All(str, vol.Match(r"^[1-9][0-9]{1,4}x[1-9][0-9]{1,4}\Z"))
 _REFERENCE = re.compile(r"\$\{([^}]*)\}")
-_TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$")
+_TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?\Z")
 _COLORS = {"black": "B", "white": "W", "red": "R", "yellow": "Y"}
-_FONT = re.compile(r"^[\w .-]+\.(ttf|otf|ttc)$")
-_UNSAFE_TEXT = re.compile(r"[{}'\\\n\r]")
+_FONT = re.compile(r"^[\w .-]+\.(ttf|otf|ttc)\Z")
+_UNSAFE_TEXT = re.compile(r"[{}'\"\\\n\r]")
 # Numeric keys of an imagespec element that follow the size of the display.
 _SCALED = frozenset(
     {
         "x",
         "y",
+        "x_start",
+        "y_start",
+        "start_y",
         "x_end",
         "y_end",
+        "xsize",
+        "ysize",
         "width",
         "height",
         "size",
@@ -41,6 +46,9 @@ _SCALED = frozenset(
         "padding",
     }
 )
+
+_X_KEYS = ("x", "x_start", "x_end")
+_Y_KEYS = ("y", "y_start", "y_end", "start_y")
 
 _LOCALIZED = vol.Any(str, {str: str})
 _PARAMETER = vol.Schema(
@@ -248,7 +256,12 @@ def _fit(items, source, width, height):
     fitted = []
     for item in _scale(items, factor):
         item = dict(item)
-        for key, shift in (("x", shift_x), ("x_end", shift_x), ("y", shift_y), ("y_end", shift_y)):
+        if "points" in item:
+            raise HomeAssistantError(
+                "This template has no layout for the display and its polygon cannot be scaled"
+            )
+        shifts = [(key, shift_x) for key in _X_KEYS] + [(key, shift_y) for key in _Y_KEYS]
+        for key, shift in shifts:
             if isinstance(item.get(key), int | float) and not isinstance(item[key], bool):
                 item[key] += shift
         fitted.append(item)

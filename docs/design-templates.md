@@ -49,7 +49,7 @@ automation:                  # optional
 
 Each key under `layouts` is `WIDTHxHEIGHT` and holds the same list of elements you would put under `payload:` in `ble_esl.write` (see [actions](actions.md)): absolute coordinates, at most 100 elements. Jinja is allowed and is kept as written, so `{{ now() }}` is evaluated each time the automation runs.
 
-For a display whose size has no layout, the nearest layout is used. It is scaled evenly (`x`, `y`, `width`, `height`, `size`, `radius`, `outline_width` and a few spacing keys) and centred. The gallery marks such a result as *adjusted*; write a dedicated layout for any size you care about. Values that are templates (not numbers) are not scaled.
+For a display whose size has no layout, the nearest layout is used. It is scaled evenly (every position and size key such as `x`, `y`, `x_start`, `x_end`, `start_y`, `width`, `xsize`, `size`, `radius`, `outline_width`, and spacing keys) and centred. A layout with a polygon `points` string cannot be scaled and needs its own layout for each size. The gallery marks such a result as *adjusted*; write a dedicated layout for any size you care about. Values that are templates (not numbers) are not scaled.
 
 ### Parameters
 
@@ -87,4 +87,4 @@ Run the test-suite: `tests/test_design_templates.py` loads every bundled templat
 
 ## API
 
-The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag) and `apply_design_template` (`template_id`, `parameters`, `existing`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.
+The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag) and `apply_design_template` (`template_id`, `parameters`, `existing`, `preview_variables`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.

@@ -88,7 +88,7 @@ def test_parameters_are_checked():
     assert resolve_parameters(template, {"label": "Hi"}, "BWR")["label"] == "Hi"
     with pytest.raises(HomeAssistantError, match="Unknown"):
         resolve_parameters(template, {"nope": 1}, "BWR")
-    for bad in ("{{ x }}", "it's", "a\\b", "a\nb"):
+    for bad in ("{{ x }}", "it's", 'a"b', "a\\b", "a\nb"):
         with pytest.raises(HomeAssistantError, match="label"):
             resolve_parameters(template, {"label": bad}, "BWR")
     with pytest.raises(HomeAssistantError, match="ink"):
@@ -121,17 +121,59 @@ def test_value_coercion():
         (("${label}", "${missing}"), "undeclared"),
         (("template: 1", "template: 2"), "template"),
         (("type: string", "type: nope"), "type"),
-        (("&a", "&a"), None),
     ],
 )
 def test_invalid_templates_are_rejected(change, message):
     text = MINIMAL.replace(*change)
-    if message is None:
-        with pytest.raises((ValueError, vol.Invalid)):
-            parse_template("x: &a 1\ny: *a\n")
-        return
     with pytest.raises(vol.Invalid, match=message):
         parse_template(text)
+
+
+def test_yaml_aliases_are_refused(tmp_path):
+    (tmp_path / "a.yaml").write_text(MINIMAL.replace("size: 20,", "size: &s 20,", 1) + "x: *s\n")
+    with pytest.raises(ValueError, match="aliases"):
+        parse_template((tmp_path / "a.yaml").read_text())
+    assert load_templates(tmp_path) == {}
+
+
+def test_trailing_newline_is_not_accepted():
+    with pytest.raises(vol.Invalid):
+        coerce_value("t", {"type": "time", "default": "12:00"}, "12:00\n", None)
+    with pytest.raises(vol.Invalid):
+        coerce_value("f", {"type": "font", "default": "a.ttf"}, "a.ttf\n", None)
+
+
+def test_scaling_moves_every_geometry_key():
+    text = """
+template: 1
+id: boxes
+name: Boxes
+layouts:
+  "250x128":
+    - {type: rectangle, x_start: 10, y_start: 10, x_end: 240, y_end: 118, fill: red}
+    - {type: line, x_start: 0, y_start: 64, x_end: 250, y_end: 64}
+    - {type: multiline, x: 5, start_y: 20, value: "a", delimiter: ",", offset_y: 10}
+    - {type: dlimg, url: x, x: 0, y: 0, xsize: 50, ysize: 20}
+"""
+    items = build(parse_template(text), 500, 256, "BWR")["payload"]
+    assert items[0] == {**items[0], "x_start": 20, "y_start": 20, "x_end": 480, "y_end": 236}
+    assert (items[1]["x_start"], items[1]["x_end"]) == (0, 500)
+    assert items[2]["start_y"] == 40
+    assert (items[3]["xsize"], items[3]["ysize"]) == (100, 40)
+    # Centred: a wider display shifts the whole layout, not just the end corner.
+    wide = build(parse_template(text), 296, 128, "BWR")["payload"][0]
+    assert (wide["x_start"], wide["x_end"]) == (33, 263)
+
+
+def test_polygon_layouts_are_not_scaled():
+    text = MINIMAL.replace(
+        "- {type: text,",
+        "- {type: polygon, points: '0,0 10,0 5,10', fill: red} # \n    - {type: text,",
+    )
+    template = parse_template(text)
+    assert build(template, 250, 128, "BWR")["payload"][0]["type"] == "polygon"
+    with pytest.raises(HomeAssistantError, match="polygon"):
+        build(template, 400, 300, "BWR")
 
 
 def test_design_parameter_cannot_belong_to_the_automation():
@@ -201,6 +243,16 @@ async def test_websocket_lists_and_applies_a_template(hass, wolink_entry, hass_w
     assert draft["triggers"] == [{"trigger": "time", "at": "18:30:00"}]
     assert draft["actions"][0]["action"] == "ble_esl.write"
     assert "{{ now()" in yaml.dump(draft["actions"])
+
+    await client.send_json(
+        {
+            "id": 4,
+            "type": "ble_esl/designer",
+            "action": "apply_design_template",
+            "entry_id": wolink_entry.entry_id,
+        }
+    )
+    assert (await client.receive_json())["error"]["message"] == "template_id is required"
 
 
 async def test_applying_rejects_unknown_template_and_missing_font(hass, wolink_entry):

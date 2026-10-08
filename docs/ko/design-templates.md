@@ -51,7 +51,7 @@ automation:                  # 선택
 
 `layouts`의 각 키는 `가로x세로`이고, 값은 `ble_esl.write`의 `payload:`에 넣는 요소 목록과 같습니다([actions](../actions.md) 참고). 절대 좌표를 쓰고 요소는 최대 100개입니다. Jinja는 그대로 보존되므로 `{{ now() }}`는 자동화가 실행될 때마다 계산됩니다.
 
-해당 크기의 layout이 없으면 가장 가까운 layout을 균등하게 확대/축소(`x`, `y`, `width`, `height`, `size`, `radius`, `outline_width` 및 일부 간격 키)하고 가운데로 맞춥니다. 갤러리에서는 *조정됨*으로 표시됩니다. 중요한 크기는 전용 layout을 작성하세요. 숫자가 아니라 템플릿인 값은 확대/축소하지 않습니다.
+해당 크기의 layout이 없으면 가장 가까운 layout을 균등하게 확대/축소(`x`, `y`, `x_start`, `x_end`, `start_y`, `width`, `xsize`, `size`, `radius`, `outline_width` 등 모든 위치/크기 키와 간격 키)하고 가운데로 맞춥니다. polygon `points`가 있는 layout은 확대/축소할 수 없으므로 크기마다 전용 layout이 필요합니다. 갤러리에서는 *조정됨*으로 표시됩니다. 중요한 크기는 전용 layout을 작성하세요. 숫자가 아니라 템플릿인 값은 확대/축소하지 않습니다.
 
 ### parameters
 
@@ -89,4 +89,4 @@ automation:
 
 ## API
 
-디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `apply_design_template`(`template_id`, `parameters`, `existing`)이 있습니다. 후자는 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.
+디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `apply_design_template`(`template_id`, `parameters`, `existing`, `preview_variables`)이 있습니다. 후자는 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.

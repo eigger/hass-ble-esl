@@ -42,7 +42,7 @@ layouts:
       size: 45
       color: black
     - type: text
-      value: "{{ '${weekdays}'.split(',')[now().weekday()] }}"
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
       font: ${font}
       anchor: mb
       x: 125
@@ -59,7 +59,7 @@ layouts:
       size: 64
       color: black
     - type: text
-      value: "{{ '${weekdays}'.split(',')[now().weekday()] }}"
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
       font: ${font}
       anchor: mb
       x: 200
@@ -68,7 +68,6 @@ layouts:
       color: "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
 
 automation:
-  alias: 날짜 라벨
   triggers:
     - trigger: time
       at: ${time}

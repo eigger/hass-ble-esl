@@ -519,6 +519,8 @@ async def websocket_designer(hass, connection, msg):
     elif action == "design_templates":
         result = designer.design_template_list(designer.entry(msg["entry_id"]))
     elif action == "apply_design_template":
+        if "template_id" not in msg:
+            raise HomeAssistantError("template_id is required")
         result = await designer.apply_design_template(
             designer.entry(msg["entry_id"]),
             msg["template_id"],
