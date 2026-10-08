@@ -16,12 +16,16 @@ export class ImportDialog extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
   }
-  open(panel, onClose) {
+  open(panel, onClose, context) {
     this.panel = panel;
     this.onClose = onClose;
+    this.context = context;
     this.render();
   }
   close() {
+    if (this.closed) return;
+    this.closed = true;
+    if (this.context) this.context.cancelled = true;
     this.remove();
     this.onClose?.();
   }
@@ -75,7 +79,12 @@ export class ImportDialog extends HTMLElement {
       other.disabled = true;
     const text = this.shadowRoot.querySelector("textarea").value;
     try {
-      const result = await this.panel.importYaml(text, mode === "replace");
+      const result = await this.panel.importYaml(
+        text,
+        mode === "replace",
+        this.context,
+      );
+      if (result.stale) return this.close();
       const placed = result.elements.length;
       if (placed && !result.issues.length) return this.close();
       // What was placed is in the display already: only closing is left.
@@ -90,7 +99,9 @@ export class ImportDialog extends HTMLElement {
         placed > 0,
       );
     } catch (error) {
-      this.render(error.message || String(error));
+      if (this.panel.isDocumentSessionCurrent(this.context))
+        this.render(error.message || String(error));
+      else this.close();
     } finally {
       this.pending = false;
     }

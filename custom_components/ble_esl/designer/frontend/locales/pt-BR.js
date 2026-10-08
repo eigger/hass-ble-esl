@@ -422,4 +422,49 @@ export default {
   Label: "Etiqueta",
   templates: "modelos",
   devices: "dispositivos",
+  "Import design": "Import design",
+  "Save automation": "Save automation",
+  "Switch to Display mode before saving this automation.":
+    "Switch to Display mode before saving this automation.",
+  "Automation configuration ID is missing.":
+    "Automation configuration ID is missing.",
+  "Automation configuration could not be loaded.":
+    "Automation configuration could not be loaded.",
+  "No ble_esl.write action targeting this ESL was found.":
+    "No ble_esl.write action targeting this ESL was found.",
+  "Choose the write action to import:": "Choose the write action to import:",
+  "The matching write action changed. Reopen the automation and try again.":
+    "The matching write action changed. Reopen the automation and try again.",
+  "This write action has no editable payload list.":
+    "This write action has no editable payload list.",
+  "This automation background is not supported by the selected ESL.":
+    "This automation background is not supported by the selected ESL.",
+  "This payload cannot be represented exactly in the designer. Nothing was imported.":
+    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+  "Replace the current design with this automation payload?":
+    "Replace the current design with this automation payload?",
+  "Automation payload imported. Edit the design, then save it to this automation.":
+    "Automation payload imported. Edit the design, then save it to this automation.",
+  "The current design cannot be saved as a payload.":
+    "The current design cannot be saved as a payload.",
+  "This automation changed since it was imported. Reopen it before saving.":
+    "This automation changed since it was imported. Reopen it before saving.",
+  "The selected write action changed since import. Reopen the automation before saving.":
+    "The selected write action changed since import. Reopen the automation before saving.",
+  "The latest automation configuration is malformed.":
+    "The latest automation configuration is malformed.",
+  "The selected write action is no longer available.":
+    "The selected write action is no longer available.",
+  "Automation saved.": "Automation saved.",
+  "Automation configuration identity is missing.":
+    "Automation configuration identity is missing.",
+  "Automation configuration could not be loaded safely.":
+    "Automation configuration could not be loaded safely.",
+  "The designer could not be loaded.": "The designer could not be loaded.",
+  "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
+    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+  "The automation import is no longer current.":
+    "The automation import is no longer current.",
+  "Background is not part of the automation payload. Restore the imported background before saving.":
+    "Background is not part of the automation payload. Restore the imported background before saving.",
 };

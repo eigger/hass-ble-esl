@@ -202,7 +202,8 @@ async def test_preview_export_and_tag_agree_for_imagespec_elements(hass, wolink_
     assert [item["type"] for item in payload] == ["pie", "qrcode", "rectangle"]
     # Rendered as an automation renders a template: "21.5" arrives as a number.
     assert payload[1]["data"] == 21.5
-    assert exported["issues"] == []
+    assert exported["validation_errors"] == []
+    assert any("template syntax" in warning for warning in exported["warnings"])
     expected = await hass.async_add_executor_job(
         partial(render_image, hass, manager.preset(wolink_entry), payload, background="white")
     )

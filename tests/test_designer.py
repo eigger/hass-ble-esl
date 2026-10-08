@@ -392,6 +392,8 @@ async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
     result = await manager.export(wolink_entry, document())
     assert yaml.safe_load(result["payload"]) == payload
     assert result["issues"] == []
+    assert result["validation_errors"] == []
+    assert result["warnings"] == []
     service = yaml.safe_load(result["service"])
     assert service["action"] == "ble_esl.write"
     assert service["data"] == {"background": "white", "payload": payload}
@@ -419,6 +421,9 @@ async def test_export_flags_what_an_automation_or_the_renderer_would_trip_on(has
     result = await hass.data[KEY].export(wolink_entry, doc)
     assert any(issue.startswith("render:") and "icon" in issue for issue in result["issues"])
     assert any("payload[1].value: contains template syntax" in i for i in result["issues"])
+    assert result["payload_data"] is None
+    assert result["validation_errors"]
+    assert any("contains template syntax" in warning for warning in result["warnings"])
 
 
 async def test_websocket_export(hass, wolink_entry, hass_ws_client):
@@ -434,13 +439,63 @@ async def test_websocket_export(hass, wolink_entry, hass_ws_client):
     )
     result = await client.receive_json()
     assert result["success"]
-    assert set(result["result"]) == {"payload", "service", "issues", "writable"}
+    assert set(result["result"]) == {
+        "payload",
+        "service",
+        "issues",
+        "payload_data",
+        "validation_errors",
+        "warnings",
+        "writable",
+    }
+
+
+async def test_websocket_import_payload_accepts_typed_empty_payload(
+    hass, wolink_entry, hass_ws_client
+):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "import_payload",
+            "entry_id": wolink_entry.entry_id,
+            "payload": [],
+            "background": "white",
+        }
+    )
+    result = await client.receive_json()
+    assert result["success"]
+    assert result["result"] == {
+        "elements": [],
+        "issues": [],
+        "different_pixels": None,
+        "background": "white",
+    }
 
 
 def test_export_reports_what_imagespec_rejects():
     result = export_yaml([{"type": "text", "x": 1}], "white", None)
     assert result["issues"] == ["[0].value: missing required key for 'text'"]
+    assert result["validation_errors"] == result["issues"]
+    assert result["warnings"] == []
     assert yaml.safe_load(result["service"])["target"] == {"device_id": "<your device>"}
+
+
+def test_export_blocks_non_finite_values_in_rendered_and_live_payloads():
+    rendered = [{"type": "text_fit", "x": float("nan"), "value": "today"}]
+    live = [
+        {
+            "type": "text_fit",
+            "x": 0,
+            "value": "{{ states('sensor.room') }}",
+            "width": float("inf"),
+        }
+    ]
+    result = export_yaml(rendered, "white", None, live=live)
+    assert "payload[0].x: number must be finite" in result["validation_errors"]
+    assert "payload[0].width: number must be finite" in result["validation_errors"]
+    assert any("contains template syntax" in warning for warning in result["warnings"])
 
 
 async def test_font_awesome_icons_render(hass):
@@ -1066,6 +1121,35 @@ async def test_automation_draft_uses_current_design_and_registered_device(hass, 
     assert config["alias"] == wolink_entry.title
     assert "id" not in config
     await async_validate_config_item(hass, "designer-test", {**config, "id": "designer-test"})
+
+
+async def test_export_payload_data_keeps_live_jinja_for_automation_save(hass, wolink_entry):
+    hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
+    result = await hass.data[KEY].export(
+        wolink_entry,
+        {
+            "version": 1,
+            "background": "white",
+            "elements": [
+                {
+                    "id": "templated",
+                    "type": "imagespec",
+                    "x": 8,
+                    "y": 8,
+                    "width": 180,
+                    "height": 30,
+                    "spec": {
+                        "type": "text_fit",
+                        "value": "{{ states('sensor.room_temperature') }}",
+                        "color": "black",
+                    },
+                }
+            ],
+        },
+    )
+    assert result["payload_data"][0]["value"] == "{{ states('sensor.room_temperature') }}"
+    assert result["validation_errors"] == []
+    assert any("contains template syntax" in warning for warning in result["warnings"])
 
 
 def test_automation_draft_preserves_jinja_instead_of_exported_snapshot():

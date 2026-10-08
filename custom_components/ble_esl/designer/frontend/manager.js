@@ -44,6 +44,12 @@ class EslManager extends HTMLElement {
       this.automationErrors.delete(event.detail.entry_id);
       this.renderCards();
     });
+    this.addEventListener("automation-edit-request", (event) =>
+      this.editAutomation(event.detail.entry_id, event.detail.entity_id),
+    );
+    this.addEventListener("automation-save-request", (event) =>
+      this.saveAutomation(event.detail),
+    );
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
     this.shadowRoot
       .querySelector("#search")
@@ -378,11 +384,18 @@ class EslManager extends HTMLElement {
         ?.focus();
   }
   openEditor(tag) {
+    if (
+      this.automationEditSession &&
+      this.automationEditSession.entry_id !== tag.entry_id
+    ) {
+      this.automationEditRun = (this.automationEditRun || 0) + 1;
+      this.clearAutomationEdit(this.automationEditSession);
+    }
     if (this.editor?.busy || this.editor?.refreshing) {
       this.message(
         "Finish the current editor operation before switching ESLs.",
       );
-      return;
+      return false;
     }
     this.message();
     this.view = "editor";
@@ -408,6 +421,457 @@ class EslManager extends HTMLElement {
         );
     }
     this.shadowRoot.querySelector('[data-action="dashboard"]').focus();
+    return this.editor?.tag?.entry_id === tag.entry_id || !this.editor?.ready;
+  }
+  clearAutomationEdit(session = this.automationEditSession) {
+    if (!session || this.automationEditSession !== session) return;
+    this.automationEditSession = null;
+    this.automationEditSource = null;
+    this.automationSaveRun = (this.automationSaveRun || 0) + 1;
+    this.automationSaving = false;
+    session.editor.restoreEditorSession(session.returnState, session.token);
+  }
+  async editAutomation(entryId, entityId) {
+    const tag = this.tags.find((item) => item.entry_id === entryId);
+    if (!tag) return;
+    if (
+      this.editor?.dirty &&
+      !window.confirm(
+        t(
+          this.hass,
+          "Replace the current design with this automation payload?",
+        ),
+      )
+    )
+      return;
+    const run = (this.automationEditRun = (this.automationEditRun || 0) + 1);
+    if (this.automationEditSession)
+      this.clearAutomationEdit(this.automationEditSession);
+    const previousState = this.editor?.ready
+      ? this.editor.captureEditorSession()
+      : null;
+    if (!this.openEditor(tag)) return;
+    const editor = this.editor;
+    let returnState =
+      previousState || (editor.ready ? editor.captureEditorSession() : null);
+    const token = (this.automationSessionSequence || 0) + 1;
+    this.automationSessionSequence = token;
+    const session = {
+      token,
+      entry_id: entryId,
+      editor,
+      returnState,
+    };
+    this.automationEditSession = session;
+    editor.beginAutomationSession(token);
+    if (returnState) editor.setAutomationReturnState(returnState, token);
+    const current = () =>
+      run === this.automationEditRun &&
+      this.automationEditSession === session &&
+      this.editor === editor &&
+      this.view === "editor" &&
+      editor.tag?.entry_id === entryId;
+    this.message();
+    try {
+      if (!editor.ready) await editor.readyPromise;
+      if (!current()) return;
+      if (!returnState) {
+        returnState = editor.captureEditorSession();
+        session.returnState = returnState;
+        editor.setAutomationReturnState(returnState, token);
+      }
+      if (!editor.ready)
+        throw new Error(t(this.hass, "The designer could not be loaded."));
+      const source = await this.api("automation_edit_source", {
+        entry_id: entryId,
+        entity_id: entityId,
+      });
+      if (!current()) return;
+      const configId = source.config_id;
+      if (!configId || source.entity_id !== entityId)
+        throw new Error(
+          t(this.hass, "Automation configuration identity is missing."),
+        );
+      const config = await this.hass.callApi(
+        "GET",
+        `config/automation/config/${encodeURIComponent(configId)}`,
+      );
+      if (!current()) return;
+      if (
+        !config ||
+        Array.isArray(config) ||
+        typeof config !== "object" ||
+        config.id !== configId
+      )
+        throw new Error(
+          t(this.hass, "Automation configuration could not be loaded safely."),
+        );
+      const { matches, unsupported } = this.findWriteActions(config, source);
+      if (unsupported.length && !matches.length)
+        throw new Error(
+          t(
+            this.hass,
+            "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+          ),
+        );
+      if (!matches.length)
+        throw new Error(
+          t(this.hass, "No ble_esl.write action targeting this ESL was found."),
+        );
+      let selectedIndex = 0;
+      if (matches.length > 1) {
+        const options = matches
+          .map((item, index) => `${index + 1}. ${item.label}`)
+          .join("\n");
+        const choice = window.prompt(
+          `${t(this.hass, "Choose the write action to import:")}\n${options}`,
+          "1",
+        );
+        if (!current()) return;
+        if (choice === null) {
+          this.clearAutomationEdit(session);
+          return;
+        }
+        selectedIndex = Number(choice) - 1;
+        if (
+          !Number.isInteger(selectedIndex) ||
+          selectedIndex < 0 ||
+          selectedIndex >= matches.length
+        ) {
+          this.clearAutomationEdit(session);
+          return;
+        }
+      }
+      const selectedPath = matches[selectedIndex].path;
+      const selectedAction = this.actionAt(config, selectedPath);
+      if (
+        !selectedAction ||
+        (selectedAction.action || selectedAction.service) !== "ble_esl.write"
+      )
+        throw new Error(
+          t(
+            this.hass,
+            "The matching write action changed. Reopen the automation and try again.",
+          ),
+        );
+      const data = selectedAction.data || selectedAction.service_data;
+      if (!data || !Array.isArray(data.payload))
+        throw new Error(
+          t(this.hass, "This write action has no editable payload list."),
+        );
+      if (
+        data.background !== undefined &&
+        data.background !== null &&
+        ![
+          "black",
+          "white",
+          ...(editor.tag.colors.includes("R") ? ["red"] : []),
+          ...(editor.tag.colors.includes("Y") ? ["yellow"] : []),
+        ].includes(data.background)
+      )
+        throw new Error(
+          t(
+            this.hass,
+            "This automation background is not supported by the selected ESL.",
+          ),
+        );
+      const imported = await editor.prepareAutomationPayload(
+        data.payload,
+        data.background,
+        entryId,
+      );
+      if (!current()) return;
+      if (
+        imported.issues.length ||
+        (data.payload.length && imported.different_pixels !== 0)
+      )
+        throw new Error(
+          t(
+            this.hass,
+            "This payload cannot be represented exactly in the designer. Nothing was imported.",
+          ),
+        );
+      if (
+        !editor.applyAutomationPayload(
+          imported,
+          data.payload,
+          data.background,
+          data.payload.length === 0,
+          entryId,
+          token,
+        )
+      ) {
+        if (!current()) return;
+        throw new Error(
+          t(this.hass, "The automation import is no longer current."),
+        );
+      }
+      this.automationEditSource = {
+        session_token: token,
+        entry_id: entryId,
+        entity_id: entityId,
+        configId,
+        device_id: source.device_id,
+        entity_ids: source.entity_ids,
+        background: editor.document.background,
+        originalAction: structuredClone(selectedAction),
+        selectedPath,
+      };
+      this.message(
+        "Automation payload imported. Edit the design, then save it to this automation.",
+      );
+    } catch (error) {
+      if (!current()) return;
+      this.clearAutomationEdit(session);
+      this.message(error.message || String(error));
+    }
+  }
+  configSignature(value) {
+    if (Array.isArray(value))
+      return `[${value.map((item) => this.configSignature(item)).join(",")}]`;
+    if (value && typeof value === "object")
+      return `{${Object.keys(value)
+        .sort()
+        .map(
+          (key) => `${JSON.stringify(key)}:${this.configSignature(value[key])}`,
+        )
+        .join(",")}}`;
+    return JSON.stringify(value);
+  }
+  findWriteActions(config, source) {
+    const deviceIds = new Set(source.device_id ? [source.device_id] : []);
+    const entityIds = new Set(source.entity_ids || []);
+    const valuesFor = (value) =>
+      (Array.isArray(value) ? value : [value]).filter(
+        (item) => typeof item === "string" && item.length > 0,
+      );
+    const targetMatch = (action) => {
+      const rawTarget = action.target;
+      const target =
+        rawTarget && typeof rawTarget === "object" && !Array.isArray(rawTarget)
+          ? rawTarget
+          : {};
+      const legacyData = [
+        action.data,
+        action.service_data,
+        action.service_data_template,
+      ].filter(
+        (value) => value && typeof value === "object" && !Array.isArray(value),
+      );
+      const effectiveTarget = Object.assign({}, ...legacyData, target);
+      // HA applies the legacy service entity_id after preparing target.
+      if (action.entity_id !== undefined)
+        effectiveTarget.entity_id = action.entity_id;
+      const refs = [
+        ...valuesFor(effectiveTarget.device_id).filter((id) =>
+          deviceIds.has(id),
+        ),
+        ...valuesFor(effectiveTarget.entity_id).filter((id) =>
+          entityIds.has(id),
+        ),
+      ];
+      const unsupported =
+        (rawTarget !== undefined &&
+          rawTarget !== null &&
+          (typeof rawTarget !== "object" || Array.isArray(rawTarget))) ||
+        ["area_id", "floor_id", "label_id"].some(
+          (key) => valuesFor(effectiveTarget[key]).length,
+        );
+      const templatedTarget = Object.entries(effectiveTarget).some(
+        ([key, value]) =>
+          [
+            "device_id",
+            "entity_id",
+            "area_id",
+            "floor_id",
+            "label_id",
+          ].includes(key) &&
+          valuesFor(value).some(
+            (item) =>
+              item.includes("{{") || item.includes("{%") || item.includes("{#"),
+          ),
+      );
+      return {
+        matches: refs.length > 0,
+        unsupported: unsupported || templatedTarget,
+      };
+    };
+    const matches = [];
+    const unsupported = [];
+    const visit = (value, path = []) => {
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => visit(item, [...path, index]));
+        return;
+      }
+      if (!value || typeof value !== "object") return;
+      const service = value.action || value.service;
+      if (service === "ble_esl.write") {
+        const target = targetMatch(value);
+        if (target.unsupported)
+          unsupported.push({
+            path,
+            label: String(value.alias || "ble_esl.write"),
+          });
+        else if (target.matches)
+          matches.push({
+            path,
+            label: String(
+              value.alias || `ble_esl.write (${matches.length + 1})`,
+            ),
+          });
+      }
+      for (const [key, child] of Object.entries(value)) {
+        if (
+          [
+            "target",
+            "data",
+            "service_data",
+            "service_data_template",
+            "payload",
+          ].includes(key)
+        )
+          continue;
+        visit(child, [...path, key]);
+      }
+    };
+    const actions = Array.isArray(config.actions)
+      ? config.actions
+      : Array.isArray(config.action)
+        ? config.action
+        : null;
+    if (!actions)
+      return { matches, unsupported: [{ label: "malformed actions" }] };
+    visit(actions, [Array.isArray(config.actions) ? "actions" : "action"]);
+    return { matches, unsupported };
+  }
+  actionAt(config, path) {
+    if (!Array.isArray(path)) return null;
+    return path.reduce((value, key) => value?.[key], config);
+  }
+  async saveAutomation(snapshot) {
+    const source = this.automationEditSource;
+    const session = this.automationEditSession;
+    if (
+      !source ||
+      !session ||
+      this.automationSaving ||
+      this.view !== "editor" ||
+      this.editor !== session.editor ||
+      session.token !== source.session_token ||
+      snapshot?.session_token !== session.token ||
+      snapshot?.entry_id !== source.entry_id ||
+      session.editor.tag?.entry_id !== source.entry_id
+    )
+      return;
+    this.automationSaving = true;
+    const run = (this.automationSaveRun = (this.automationSaveRun || 0) + 1);
+    const current = () =>
+      run === this.automationSaveRun &&
+      this.automationEditSession === session &&
+      this.automationEditSource === source &&
+      this.view === "editor" &&
+      this.editor === session.editor &&
+      session.token === source.session_token &&
+      session.editor.tag?.entry_id === source.entry_id;
+    try {
+      if (session.editor.mode !== "display")
+        throw new Error(
+          t(this.hass, "Switch to Display mode before saving this automation."),
+        );
+      if (snapshot.document?.background !== source.background)
+        throw new Error(
+          t(
+            this.hass,
+            "Background is not part of the automation payload. Restore the imported background before saving.",
+          ),
+        );
+      const exported = await session.editor.api("export", {
+        entry_id: source.entry_id,
+        document: snapshot.document,
+      });
+      if (!current()) return;
+      if (
+        exported.writable !== true ||
+        !Array.isArray(exported.validation_errors) ||
+        exported.validation_errors.length > 0 ||
+        !Array.isArray(exported.payload_data)
+      )
+        throw new Error(
+          t(this.hass, "The current design cannot be saved as a payload."),
+        );
+      const latest = await this.hass.callApi(
+        "GET",
+        `config/automation/config/${encodeURIComponent(source.configId)}`,
+      );
+      if (!current()) return;
+      if (
+        !latest ||
+        Array.isArray(latest) ||
+        typeof latest !== "object" ||
+        latest.id !== source.configId ||
+        !(Array.isArray(latest.actions) || Array.isArray(latest.action))
+      )
+        throw new Error(
+          t(this.hass, "The latest automation configuration is malformed."),
+        );
+      const expected = this.configSignature(source.originalAction);
+      const { matches, unsupported } = this.findWriteActions(latest, source);
+      if (unsupported.length && !matches.length)
+        throw new Error(
+          t(
+            this.hass,
+            "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+          ),
+        );
+      const unchanged = matches.filter(
+        (candidate) =>
+          this.configSignature(this.actionAt(latest, candidate.path)) ===
+          expected,
+      );
+      // A duplicate of the imported action makes path-based selection unsafe,
+      // even if the old path still points at an unchanged copy.
+      const selected = unchanged.length === 1 ? unchanged[0] : null;
+      if (!selected)
+        throw new Error(
+          t(
+            this.hass,
+            "The selected write action changed since import. Reopen the automation before saving.",
+          ),
+        );
+      const updated = structuredClone(latest);
+      const action = this.actionAt(updated, selected.path);
+      const data = action?.data || action?.service_data;
+      if (
+        !action ||
+        (action.action || action.service) !== "ble_esl.write" ||
+        !data ||
+        !Array.isArray(data.payload)
+      )
+        throw new Error(
+          t(this.hass, "The selected write action is no longer available."),
+        );
+      data.payload = exported.payload_data;
+      await this.hass.callApi(
+        "POST",
+        `config/automation/config/${encodeURIComponent(source.configId)}`,
+        updated,
+      );
+      if (!current()) return;
+      this.message("Automation saved.");
+      if (
+        JSON.stringify(session.editor.document) ===
+        JSON.stringify(snapshot.document)
+      ) {
+        session.editor.dirty = false;
+        session.editor.render();
+      }
+      source.originalAction = structuredClone(action);
+      source.selectedPath = selected.path;
+    } catch (error) {
+      if (current()) this.message(error.message || String(error));
+    } finally {
+      if (run === this.automationSaveRun) this.automationSaving = false;
+    }
   }
   async click(event) {
     const entity = event.target.closest("[data-entity]");
@@ -447,6 +911,9 @@ class EslManager extends HTMLElement {
     if (button.dataset.action === "dashboard") {
       // Keep the editor mounted so drafts, undo and unsaved-change protection survive.
       this.view = "dashboard";
+      this.automationEditRun = (this.automationEditRun || 0) + 1;
+      this.automationSaveRun = (this.automationSaveRun || 0) + 1;
+      this.clearAutomationEdit();
       this.shadowRoot.querySelector("#dashboard").hidden = false;
       this.shadowRoot.querySelector("#editor").hidden = true;
       await this.refresh();

@@ -179,6 +179,39 @@ export default {
   "Image upload failed": "이미지 업로드 실패",
   "Import JSON": "JSON 가져오기",
   "Import YAML": "YAML 가져오기",
+  "Import design": "디자인 가져오기",
+  "Save automation": "자동화 저장",
+  "Switch to Display mode before saving this automation.":
+    "이 자동화를 저장하려면 디스플레이 모드로 전환하세요.",
+  "Automation configuration ID is missing.": "자동화 구성 ID가 없습니다.",
+  "Automation configuration could not be loaded.":
+    "자동화 구성을 불러오지 못했습니다.",
+  "No ble_esl.write action targeting this ESL was found.":
+    "이 ESL을 대상으로 하는 ble_esl.write 동작을 찾지 못했습니다.",
+  "Choose the write action to import:": "가져올 쓰기 동작을 선택하세요:",
+  "The matching write action changed. Reopen the automation and try again.":
+    "일치하는 쓰기 동작이 변경되었습니다. 자동화를 다시 열어 주세요.",
+  "This write action has no editable payload list.":
+    "이 쓰기 동작에는 편집할 페이로드 목록이 없습니다.",
+  "This automation background is not supported by the selected ESL.":
+    "선택한 ESL이 자동화의 배경색을 지원하지 않습니다.",
+  "This payload cannot be represented exactly in the designer. Nothing was imported.":
+    "이 페이로드는 디자이너에서 그대로 표현할 수 없습니다. 아무것도 가져오지 않았습니다.",
+  "Replace the current design with this automation payload?":
+    "현재 디자인을 이 자동화 페이로드로 바꿀까요?",
+  "Automation payload imported. Edit the design, then save it to this automation.":
+    "자동화 페이로드를 가져왔습니다. 디자인을 편집한 뒤 이 자동화에 저장하세요.",
+  "The current design cannot be saved as a payload.":
+    "현재 디자인을 페이로드로 저장할 수 없습니다.",
+  "This automation changed since it was imported. Reopen it before saving.":
+    "가져온 뒤 자동화가 변경되었습니다. 저장하기 전에 다시 여세요.",
+  "The selected write action changed since import. Reopen the automation before saving.":
+    "가져온 뒤 선택한 쓰기 동작이 변경되었습니다. 저장하기 전에 자동화를 다시 여세요.",
+  "The latest automation configuration is malformed.":
+    "최신 자동화 구성이 올바르지 않습니다.",
+  "The selected write action is no longer available.":
+    "선택한 쓰기 동작을 더 이상 사용할 수 없습니다.",
+  "Automation saved.": "자동화를 저장했습니다.",
   "In 2 days": "모레",
   "In 3 days": "3일 후",
   "In sync": "동기화됨",
@@ -414,4 +447,15 @@ export default {
   Label: "표시 이름",
   templates: "템플릿",
   devices: "기기",
+  "Automation configuration identity is missing.":
+    "자동화 설정의 식별 정보가 없습니다.",
+  "Automation configuration could not be loaded safely.":
+    "자동화 설정을 안전하게 불러오지 못했습니다.",
+  "The designer could not be loaded.": "디자이너를 불러오지 못했습니다.",
+  "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
+    "이 자동화는 ESL 하나를 안전하게 식별할 수 없는 구역·층·레이블 또는 템플릿 대상을 사용합니다.",
+  "The automation import is no longer current.":
+    "자동화 가져오기 요청이 더 이상 유효하지 않습니다.",
+  "Background is not part of the automation payload. Restore the imported background before saving.":
+    "배경은 자동화 payload에 포함되지 않습니다. 저장하기 전에 가져온 배경으로 되돌리세요.",
 };

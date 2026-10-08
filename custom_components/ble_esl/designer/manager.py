@@ -182,6 +182,30 @@ class AutomationLinks:
         linked.sort(key=lambda item: (item["name"].casefold(), item["entity_id"]))
         return {"linked": linked, "available": available}
 
+    def edit_source(self, entry, entity_id):
+        """Return the loaded automation and matching action locations for this ESL."""
+        state = self.hass.states.get(entity_id)
+        if state is None or not entity_id.startswith("automation."):
+            raise HomeAssistantError("Automation is not available")
+        component = self.hass.data.get("automation")
+        automation = component.get_entity(entity_id) if component else None
+        config = getattr(automation, "raw_config", None)
+        if not isinstance(config, dict):
+            raise HomeAssistantError("This automation has no editable configuration")
+        metadata = tag_metadata(self.hass, entry)
+        entity_ids = {
+            registered.entity_id
+            for registered in er.async_entries_for_config_entry(
+                er.async_get(self.hass), entry.entry_id
+            )
+        }
+        return {
+            "entity_id": entity_id,
+            "config_id": state.attributes.get("id"),
+            "device_id": metadata["device_id"],
+            "entity_ids": sorted(entity_ids),
+        }
+
     async def update(self, entry, entity_id, *, remove=False, link_id=None):
         if not entity_id.startswith("automation."):
             raise HomeAssistantError("Select an automation entity")

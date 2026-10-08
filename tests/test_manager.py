@@ -101,6 +101,38 @@ async def test_automation_link_rejects_invalid_entities(hass, wolink_entry):
         await links.update(wolink_entry, "automation.missing")
 
 
+async def test_automation_edit_source_returns_registered_targets(hass, wolink_entry):
+    from types import SimpleNamespace
+
+    from custom_components.ble_esl.const import DOMAIN
+    from custom_components.ble_esl.designer.manager import AutomationLinks
+
+    registry = er.async_get(hass)
+    write_lock = registry.async_get_or_create(
+        "switch",
+        DOMAIN,
+        "ble_esl_write_lock_extra",
+        config_entry=wolink_entry,
+    )
+    hass.states.async_set("automation.edit_me", "off", {"id": "stored-id"})
+    hass.data["automation"] = SimpleNamespace(
+        get_entity=lambda entity_id: SimpleNamespace(raw_config={"actions": []})
+    )
+    source = AutomationLinks(hass).edit_source(wolink_entry, "automation.edit_me")
+    metadata = tag_metadata(hass, wolink_entry)
+    registered_ids = sorted(
+        entity.entity_id
+        for entity in er.async_entries_for_config_entry(registry, wolink_entry.entry_id)
+    )
+    assert source == {
+        "entity_id": "automation.edit_me",
+        "config_id": "stored-id",
+        "device_id": metadata["device_id"],
+        "entity_ids": registered_ids,
+    }
+    assert write_lock.entity_id in source["entity_ids"]
+
+
 async def test_detection_with_real_ha_automation(hass, wolink_entry):
     from homeassistant.setup import async_setup_component
 
