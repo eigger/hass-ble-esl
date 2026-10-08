@@ -219,6 +219,62 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+
+  // Preview-parameter and manager controls.
+  "Sort ESLs": "Sort ESLs",
+  "Default order": "Default order",
+  "Needs attention first": "Needs attention first",
+  "Battery: lowest first": "Battery: lowest first",
+  "Name (A–Z)": "Name (A–Z)",
+  "Low battery (20% or less)": "Low battery (20% or less)",
+  "Low battery": "Low battery",
+  "Read only": "Read only",
+  "Last successful image": "Last successful image",
+  "Edit automation design": "Edit automation design",
+  "Automation design": "Automation design",
+  "Local design": "Local design",
+  "Importing automation…": "Importing automation…",
+  "Save to automation": "Save to automation",
+  True: "True",
+  False: "False",
+  "New parameter": "New parameter",
+  "Parameter name": "Parameter name",
+  Type: "Type",
+  String: "String",
+  Number: "Number",
+  Boolean: "Boolean",
+  "Object, array or null": "Object, array or null",
+  "Object or array": "Object or array",
+  "Remove parameter {name}": "Remove parameter {name}",
+  Remove: "Remove",
+  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "No preview parameters yet. Add one for a variable used by a template.":
+    "No preview parameters yet. Add one for a variable used by a template.",
+  "Add parameter": "Add parameter",
+  "Advanced: edit all parameters as JSON":
+    "Advanced: edit all parameters as JSON",
+  "Preview parameter object": "Preview parameter object",
+  "These typed values are used only to preview and validate this design. They are not saved to the automation.":
+    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
+  "Apply preview values": "Apply preview values",
+  "Enter a parameter name without reserved prototype names.":
+    "Enter a parameter name without reserved prototype names.",
+  "Parameter names must be unique.": "Parameter names must be unique.",
+  "Enter a finite number.": "Enter a finite number.",
+  "Enter valid JSON for the object or array value.":
+    "Enter valid JSON for the object or array value.",
+  "The JSON value must be an object, array or null.":
+    "The JSON value must be an object, array or null.",
+  "The JSON value must be an object or array.":
+    "The JSON value must be an object or array.",
+  "Preview parameters must contain only finite JSON values.":
+    "Preview parameters must contain only finite JSON values.",
+  "Preview parameter is invalid.": "Preview parameter is invalid.",
+  "Common properties": "Common properties",
+  "Advanced settings": "Advanced settings",
+  "Use an empty string for {name}": "Use an empty string for {name}",
+  "Enter a value for the missing parameter before applying.":
+    "Enter a value for the missing parameter before applying.",
   "Preview parameters": "Preview parameters",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
     "Edit preview parameters as a JSON object. These values are used only for preview and validation.",

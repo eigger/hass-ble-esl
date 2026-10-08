@@ -116,16 +116,26 @@ test("preview parameters remain outside the saved automation payload", async ({
     },
   });
   await page.evaluate(() => {
-    window.prompt = () => '"first-preview.ttf"';
     window.manager.editAutomation("demo-writable", "automation.morning");
   });
+  const parameters = page.getByRole("dialog", { name: "Preview parameters" });
+  await expect(parameters).toBeVisible();
+  await parameters
+    .getByLabel("font_bold", { exact: true })
+    .fill("first-preview.ttf");
+  await parameters
+    .getByRole("button", { name: "Apply preview values" })
+    .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  await page.evaluate(() => {
-    window.prompt = () => JSON.stringify({ font_bold: "second-preview.ttf" });
-  });
   await page.getByRole("button", { name: "Preview parameters" }).click();
+  await parameters
+    .getByLabel("font_bold", { exact: true })
+    .fill("second-preview.ttf");
+  await parameters
+    .getByRole("button", { name: "Apply preview values" })
+    .click();
   await expect
     .poll(() =>
       page.evaluate(
@@ -133,7 +143,7 @@ test("preview parameters remain outside the saved automation payload", async ({
       ),
     )
     .toBe("second-preview.ttf");
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.locator(".message")).toContainText("Automation saved.");
   const saved = await page.evaluate(() =>
     window.manager.hass.callApi("GET", "config/automation/config/morning"),
@@ -233,10 +243,10 @@ test("automation editing restores the ordinary design, draft and undo history", 
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Save automation" }).click();
-  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await page.getByRole("button", { name: "Save to automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
   expect(
     await page.evaluate(() => {
       const event = new Event("beforeunload", { cancelable: true });
@@ -260,7 +270,7 @@ test("automation editing restores the ordinary design, draft and undo history", 
   expect(restored).toEqual(savedState);
   await expect(page.locator(".el")).toHaveCount(1);
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
 });
 
@@ -302,7 +312,7 @@ test("imports and repeatedly saves only the selected automation payload", async 
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await expect(page.getByLabel("Tag", { exact: true })).toBeDisabled();
   await expect(
@@ -313,8 +323,8 @@ test("imports and repeatedly saves only the selected automation payload", async 
   ).toHaveCount(0);
   await expect(page.locator(".el")).toHaveCount(1);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
-  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await page.getByRole("button", { name: "Save to automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
   await expect.poll(() => posts.length).toBe(1);
   expect(posts[0].alias).toBe("Schedule changed elsewhere");
   expect(posts[0].description).toBe("Updated after import");
@@ -334,7 +344,7 @@ test("imports and repeatedly saves only the selected automation payload", async 
   expect(posts[0].actions[1].data.background).toBe("white");
   expect(posts[0].actions[1].data.payload).toHaveLength(2);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect.poll(() => posts.length).toBe(2);
   expect(posts[1].actions[0]).toEqual(posts[0].actions[0]);
   expect(posts[1].actions[1].data.payload).toHaveLength(3);
@@ -475,11 +485,11 @@ test("edits a unique direct match while preserving unrelated unresolved targets"
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
-  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await page.getByRole("button", { name: "Save to automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
   expect(savedConfig.actions.at(-1)).toEqual({
     action: "ble_esl.write",
     target: { area_id: "unrelated_area" },
@@ -513,10 +523,10 @@ test("refuses to save when the automation changed after import", async ({
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "selected write action changed since import",
   );
@@ -544,7 +554,7 @@ test("keeps the current design when an automation payload has unsupported elemen
     "cannot be represented exactly",
   );
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
   await expect(page.locator(".el")).toHaveCount(0);
 });
@@ -572,7 +582,7 @@ test("does not import an unsupported automation background", async ({
     "background is not supported",
   );
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
   expect(posts).toBe(0);
 });
@@ -594,14 +604,14 @@ test("does not report a background-only edit as saved to an automation", async (
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await page.evaluate(() => {
     const editor = window.manager.editor;
     editor.document.background = "black";
     editor.edited(false);
   });
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Background is not part of the automation payload",
   );
@@ -639,7 +649,7 @@ test("does not import a delayed automation response after leaving its ESL", asyn
   );
   await expect(page.locator(".el")).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
 });
 
@@ -688,7 +698,7 @@ test("does not apply a delayed import after returning to the same ESL normally",
     await page.evaluate(() => JSON.stringify(window.manager.editor.document)),
   ).toBe(before);
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
 });
 
@@ -937,7 +947,7 @@ test("a newer same-ESL import wins over an older delayed import", async ({
     pending.prepare(...pending.args).then(pending.resolve, pending.reject);
   });
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await page.evaluate(() => {
     const pending = window.pendingImports[0];
@@ -949,7 +959,7 @@ test("a newer same-ESL import wins over an older delayed import", async ({
     )
     .toBe("automation.temperature");
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
 });
 
@@ -1005,7 +1015,7 @@ test("leaving automation edit before cold boot unlocks the editor", async ({
     savedDocument,
   );
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
 });
 
@@ -1035,14 +1045,14 @@ test("keeps edits made while an automation save is in flight dirty", async ({
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await requestStarted;
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   release();
-  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await expect(page.locator(".message")).toContainText("Automation saved.");
   await expect(page.locator("#dirty-badge")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
 });
 
@@ -1063,7 +1073,7 @@ test("does not save a newer same-ESL import after an older save waited on upload
     .first()
     .click();
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await page.evaluate(() => {
     window.releaseUploadWait = null;
@@ -1071,13 +1081,13 @@ test("does not save a newer same-ESL import after an older save waited on upload
       new Promise((resolve) => (window.releaseUploadWait = resolve)),
     );
   });
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.evaluate(() => {
     window.manager.editAutomation("demo-writable", "automation.temperature");
   });
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
   await expect
     .poll(() =>
@@ -1088,7 +1098,7 @@ test("does not save a newer same-ESL import after an older save waited on upload
   await page.waitForTimeout(100);
   expect(posts).toBe(0);
   await expect(
-    page.getByRole("button", { name: "Save automation" }),
+    page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
 });
 
@@ -1122,8 +1132,8 @@ test("rebases to a uniquely matched write action after its path shifts", async (
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  await page.getByRole("button", { name: "Save automation" }).click();
-  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await page.getByRole("button", { name: "Save to automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
   expect(savedConfig.actions[0].action).toBe("persistent_notification.create");
   expect(savedConfig.actions[1].data.message).toBe("Added elsewhere");
   expect(savedConfig.actions[2].action).toBe("ble_esl.write");
@@ -1165,7 +1175,7 @@ for (const [caseName, mutate] of [
       .first()
       .click();
     await expect(page.locator(".el")).toHaveCount(1);
-    await page.getByRole("button", { name: "Save automation" }).click();
+    await page.getByRole("button", { name: "Save to automation" }).click();
     await expect(page.getByRole("alert")).toContainText(
       "selected write action changed since import",
     );
@@ -1197,7 +1207,7 @@ test("does not POST when export reports a blocking validation error", async ({
       writable: true,
     });
   });
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "cannot be saved as a payload",
   );
@@ -1230,7 +1240,7 @@ test("does not POST a malformed latest automation configuration", async ({
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "latest automation configuration is malformed",
   );
@@ -1262,7 +1272,7 @@ test("blocks saving when an unchanged selected action becomes ambiguous", async 
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
-  await page.getByRole("button", { name: "Save automation" }).click();
+  await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "selected write action changed since import",
   );
@@ -1668,7 +1678,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
           return [
             root.querySelector(".editor-content").scrollTop > 0,
             host.scrollTop === 0,
-            nav.height === 56,
+            nav.height >= 56 && nav.bottom < innerHeight,
             header.height === 56,
             Math.abs(header.top - nav.bottom) < 1,
             Math.abs(toolbar.top - header.bottom) < 1,

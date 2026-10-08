@@ -16,6 +16,7 @@ ENTITY_KEYS = {
     "last_failure_time": "sensor",
     "failure_count": "sensor",
     "battery": "sensor",
+    "battery_low": "binary_sensor",
 }
 
 
@@ -31,16 +32,15 @@ def tag_metadata(hass, entry):
         for key, domain in ENTITY_KEYS.items():
             if entity.domain == domain and entity.unique_id == f"ble_esl_{identifier}_{key}":
                 entities[key] = entity.entity_id
-        # PassiveBluetoothProcessorEntity uses address-battery[-device].
-        if (
-            entity.domain == "sensor"
-            and (
-                entity.unique_id == f"{entry.runtime_data.address}-battery"
-                or entity.unique_id.startswith(f"{entry.runtime_data.address}-battery-")
-            )
-            and entities["battery"] is None
+        # PassiveBluetoothProcessorEntity uses address-battery[-device] for
+        # both battery percentage and the protocol's battery-low warning.
+        if entity.domain in ("sensor", "binary_sensor") and (
+            entity.unique_id == f"{entry.runtime_data.address}-battery"
+            or entity.unique_id.startswith(f"{entry.runtime_data.address}-battery-")
         ):
-            entities["battery"] = entity.entity_id
+            key = "battery" if entity.domain == "sensor" else "battery_low"
+            if entities[key] is None:
+                entities[key] = entity.entity_id
     devices = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
     device = next(
         (

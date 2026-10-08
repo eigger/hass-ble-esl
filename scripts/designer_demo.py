@@ -112,6 +112,7 @@ for index, tag in enumerate(TAGS):
         for key, domain in {
             "alias": "text",
             "battery": "sensor",
+            "battery_low": "binary_sensor",
             "last_updated_content": "image",
             "display_in_sync": "binary_sensor",
             "write_duration": "sensor",
@@ -126,6 +127,7 @@ for index, tag in enumerate(TAGS):
 
     demo_state("alias", ["Living room", "Desk display"][index])
     demo_state("battery", ["85", "42"][index], {"unit_of_measurement": "%"})
+    demo_state("battery_low", "off")
     demo_state(
         "last_updated_content", dt_util.utcnow().isoformat(), {"entity_picture": "/demo-image"}
     )

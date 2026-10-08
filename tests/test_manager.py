@@ -31,6 +31,36 @@ async def test_registry_metadata_renamed_entities(hass, wolink_entry):
     )
 
 
+async def test_registry_metadata_includes_renamed_low_battery_sensor(hass, wolink_entry):
+    registry = er.async_get(hass)
+    identifier = wolink_entry.runtime_data.identifier
+    sensor = registry.async_get_or_create(
+        "binary_sensor",
+        "ble_esl",
+        f"ble_esl_{identifier}_battery_low",
+        config_entry=wolink_entry,
+    )
+    registry.async_update_entity(sensor.entity_id, new_entity_id="binary_sensor.custom_battery_low")
+    assert (
+        tag_metadata(hass, wolink_entry)["entities"]["battery_low"]
+        == "binary_sensor.custom_battery_low"
+    )
+
+
+async def test_registry_metadata_resolves_passive_low_battery_warning(hass, wolink_entry):
+    registry = er.async_get(hass)
+    entity_id = tag_metadata(hass, wolink_entry)["entities"]["battery_low"]
+    assert entity_id
+    registered = registry.async_get(entity_id)
+    assert registered.unique_id.startswith(f"{wolink_entry.runtime_data.address}-battery")
+    assert hass.states.get(entity_id).attributes["device_class"] == "battery"
+    registry.async_update_entity(entity_id, new_entity_id="binary_sensor.renamed_passive_low")
+    assert (
+        tag_metadata(hass, wolink_entry)["entities"]["battery_low"]
+        == "binary_sensor.renamed_passive_low"
+    )
+
+
 async def test_automation_associations_persist_without_changing_configs(hass, wolink_entry):
     from types import SimpleNamespace
 
