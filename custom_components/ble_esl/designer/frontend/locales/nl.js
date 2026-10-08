@@ -424,7 +424,7 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Schakel over naar de weergavemodus voordat je deze automatisering opslaat.",
+    "Schakel over naar de schermmodus voordat je deze automatisering opslaat.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
@@ -440,7 +440,7 @@ export default {
   "This automation background is not supported by the selected ESL.":
     "De achtergrond van deze automatisering wordt niet ondersteund door de geselecteerde ESL.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "Deze payload kan niet exact worden weergegeven in de designer. Er is niets geïmporteerd.",
+    "Deze payload kan niet exact worden weergegeven in de ontwerper. Er is niets geïmporteerd.",
   "Replace the current design with this automation payload?":
     "Het huidige ontwerp vervangen door de payload van deze automatisering?",
   "Automation payload imported. Edit the design, then save it to this automation.":
@@ -460,7 +460,7 @@ export default {
     "De identiteit van de automatiseringsconfiguratie ontbreekt.",
   "Automation configuration could not be loaded safely.":
     "De automatiseringsconfiguratie kon niet veilig worden geladen.",
-  "The designer could not be loaded.": "De designer kon niet worden geladen.",
+  "The designer could not be loaded.": "De ontwerper kon niet worden geladen.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
     "Deze automatisering gebruikt doelen op basis van gebied, verdieping, label of sjabloon die niet veilig aan één ESL te koppelen zijn.",
   "The automation import is no longer current.":
@@ -481,7 +481,7 @@ export default {
   // Preview-parameter and manager controls.
   "Sort ESLs": "ESLs sorteren",
   "Default order": "Standaardvolgorde",
-  "Needs attention first": "Aandacht nodig eerst",
+  "Needs attention first": "Eerst aandacht nodig",
   "Battery: lowest first": "Batterij: laagste eerst",
   "Name (A–Z)": "Naam (A–Z)",
   "Low battery (20% or less)": "Batterij bijna leeg (20% of minder)",

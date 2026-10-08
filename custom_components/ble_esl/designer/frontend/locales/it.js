@@ -425,7 +425,7 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Passa alla modalità Display prima di salvare questa automazione.",
+    "Passa alla modalità Visualizza prima di salvare questa automazione.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":

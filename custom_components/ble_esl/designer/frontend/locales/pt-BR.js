@@ -463,7 +463,7 @@ export default {
     "Não foi possível carregar a configuração da automação com segurança.",
   "The designer could not be loaded.": "Não foi possível carregar o designer.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "Esta automação usa destinos de área, andar, etiqueta ou template que não podem ser associados com segurança a um único ESL.",
+    "Esta automação usa destinos de área, andar, etiqueta ou modelo que não podem ser associados com segurança a um único ESL.",
   "The automation import is no longer current.":
     "A importação da automação não está mais atualizada.",
   "Background is not part of the automation payload. Restore the imported background before saving.":

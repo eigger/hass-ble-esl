@@ -423,7 +423,7 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "このオートメーションを保存する前に表示モードに切り替えてください。",
+    "このオートメーションを保存する前にディスプレイモードに切り替えてください。",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":

@@ -475,7 +475,7 @@ export default {
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Слишком много параметров предпросмотра отсутствует.",
+    "Отсутствует слишком много параметров предпросмотра.",
 
   // Preview-parameter and manager controls.
   "Sort ESLs": "Сортировка ESL",

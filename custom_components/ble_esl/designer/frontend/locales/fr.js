@@ -438,7 +438,7 @@ export default {
   "This automation background is not supported by the selected ESL.":
     "L'arrière-plan de cette automatisation n'est pas pris en charge par l'ESL sélectionné.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "Ce payload ne peut pas être représenté exactement dans le designer. Rien n'a été importé.",
+    "Ce payload ne peut pas être représenté exactement dans le concepteur. Rien n'a été importé.",
   "Replace the current design with this automation payload?":
     "Remplacer le design actuel par le payload de cette automatisation ?",
   "Automation payload imported. Edit the design, then save it to this automation.":
@@ -458,7 +458,7 @@ export default {
     "L'identité de la configuration de l'automatisation est manquante.",
   "Automation configuration could not be loaded safely.":
     "La configuration de l'automatisation n'a pas pu être chargée en toute sécurité.",
-  "The designer could not be loaded.": "Le designer n'a pas pu être chargé.",
+  "The designer could not be loaded.": "Le concepteur n'a pas pu être chargé.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
     "Cette automatisation utilise des cibles de zone, d'étage, de label ou de modèle qui ne peuvent pas être associées sans risque à un seul ESL.",
   "The automation import is no longer current.":
