@@ -1,5 +1,7 @@
 """Design templates: format, parameter substitution, layouts and the designer API."""
 
+from unittest.mock import patch
+
 from homeassistant.components.automation.config import async_validate_config_item
 from homeassistant.exceptions import HomeAssistantError
 import pytest
@@ -535,3 +537,33 @@ def test_oversized_user_file_is_skipped_unread(tmp_path, caplog):
     (tmp_path / "big.yaml").write_text("x" * (256 * 1024 + 1))
     assert load_templates(tmp_path) == {}
     assert "too large" in caplog.text
+
+
+async def test_explicit_id_never_replaces_a_file_holding_another_template(
+    hass, wolink_entry, tmp_path
+):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "other.yaml").write_text(MINIMAL)  # defines id "sample"
+    await designer.reload_design_templates()
+    for overwrite in (False, True):
+        with pytest.raises(HomeAssistantError, match="holds the template sample"):
+            await designer.save_design_template(
+                wolink_entry, _text_document(), "Other", "other", overwrite=overwrite
+            )
+    assert "sample" in (folder / "other.yaml").read_text()
+
+
+async def test_saved_file_is_readable_and_leaves_no_temporary_file(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    await designer.save_design_template(wolink_entry, _text_document(), "Perm")
+    assert (designer.user_template_dir / "perm.yaml").stat().st_mode & 0o777 == 0o644
+    with (
+        patch("custom_components.ble_esl.designer.os.replace", side_effect=OSError("disk full")),
+        pytest.raises(OSError, match="disk full"),
+    ):
+        await designer.save_design_template(wolink_entry, _text_document(), "Full")
+    assert not list(designer.user_template_dir.glob("*.tmp"))

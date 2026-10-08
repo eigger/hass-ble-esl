@@ -221,6 +221,13 @@ def pick_id(name, template_id, overwrite, templates, exists):
         loaded = templates.get(template_id)
         if loaded and loaded.get("file") not in (None, file_name):
             raise HomeAssistantError(f"Template {template_id} is defined in {loaded['file']}")
+        # That file may hold a different template: never replace it by its file name.
+        holder = next(
+            (key for key, value in templates.items() if value.get("file") == file_name),
+            None,
+        )
+        if holder not in (None, template_id):
+            raise HomeAssistantError(f"{file_name} holds the template {holder}")
         if (loaded or exists(file_name)) and not overwrite:
             raise HomeAssistantError(f"Template {template_id} already exists")
         return template_id, file_name

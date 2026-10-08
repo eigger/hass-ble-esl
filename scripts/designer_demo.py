@@ -24,7 +24,7 @@ from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
     check_name,
     describe as describe_template,
-    load_templates,
+    load_all,
     parse_template,
     pick_id,
     template_text,
@@ -54,7 +54,7 @@ from custom_components.ble_esl.designer.specs import (
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 
 ROOT = Path(__file__).resolve().parents[1]
-DESIGN_TEMPLATES = load_templates()
+DESIGN_TEMPLATES = load_all()
 STATES = {
     "sensor.office_temperature": {
         "entity_id": "sensor.office_temperature",

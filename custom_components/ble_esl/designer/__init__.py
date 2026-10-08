@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import contextlib
 from functools import partial
 from io import BytesIO
 import json
@@ -292,10 +293,15 @@ class Designer:
     def user_template_dir(self):
         return Path(self.hass.config.path("ble_esl", "templates"))
 
-    async def reload_design_templates(self):
+    async def _reload_design_templates(self):
         self.design_templates = await self.hass.async_add_executor_job(
             load_design_templates, self.user_template_dir
         )
+
+    async def reload_design_templates(self):
+        # Under the lock, so a reload that began before a save cannot finish after it.
+        async with self.template_lock:
+            await self._reload_design_templates()
 
     async def save_design_template(self, entry, document, name, template_id=None, overwrite=False):
         """Keep the current design as a template in the user's template folder."""
@@ -319,8 +325,16 @@ class Designer:
             with tempfile.NamedTemporaryFile(
                 "w", encoding="utf-8", dir=folder, suffix=".tmp", delete=False
             ) as handle:
-                handle.write(text)
-            os.replace(handle.name, folder / file_name)
+                try:
+                    handle.write(text)
+                    handle.flush()
+                    # Like a hand-made file, not the private mode a temp file gets.
+                    os.chmod(handle.name, 0o644)
+                    os.replace(handle.name, folder / file_name)
+                except BaseException:
+                    with contextlib.suppress(OSError):
+                        os.unlink(handle.name)
+                    raise
             return text
 
         requested = template_id
@@ -339,7 +353,7 @@ class Designer:
         # One save at a time: the id is chosen and the file written under the lock.
         async with self.template_lock:
             template_id, text = await self.hass.async_add_executor_job(save)
-            await self.reload_design_templates()
+            await self._reload_design_templates()
         return {"id": template_id, "yaml": text}
 
     def design_template_list(self, entry):
