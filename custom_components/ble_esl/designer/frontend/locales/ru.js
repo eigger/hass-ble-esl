@@ -542,4 +542,16 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "Шаблоны",
+  "Design templates": "Шаблоны дизайна",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "Выберите готовый дизайн. Он добавится как обычные редактируемые элементы.",
+  "No design templates fit this display.":
+    "Нет шаблонов дизайна для этого дисплея.",
+  "Adjusted to this display": "Адаптировано под этот дисплей",
+  Back: "Назад",
+  Automation: "Автоматизация",
+  "Replace and create automation": "Заменить и создать автоматизацию",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "Триггеры шаблона включены. Измените их в Home Assistant после создания автоматизации.",
 };

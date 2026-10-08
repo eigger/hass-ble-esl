@@ -2,6 +2,7 @@ import { t, language, rerenderWithDialogs } from "./i18n.js";
 import "./component-editor.js";
 import "./yaml-dialog.js";
 import "./import-dialog.js";
+import "./template-dialog.js";
 import "./preview-parameters-dialog.js";
 import {
   applySpecInput,
@@ -444,6 +445,8 @@ export class BleEslDesigner extends HTMLElement {
       }
       for (const dialog of document.querySelectorAll("ble-esl-import-dialog"))
         if (dialog.panel === this) dialog.updateHass(value);
+      for (const dialog of document.querySelectorAll("ble-esl-template-dialog"))
+        if (dialog.panel === this) dialog.updateHass(value);
     }
     this.renderEntityPreview();
     this.shadowRoot
@@ -639,6 +642,8 @@ export class BleEslDesigner extends HTMLElement {
       return false;
     if (this.tag && this.dirty)
       this.drafts.set(this.tag.entry_id, clone(this.document));
+    if (this.templateAutomation?.entryId !== tag.entry_id)
+      this.templateAutomation = null;
     this.tag = tag;
     this.automationImportRun = (this.automationImportRun || 0) + 1;
     this.document = clone(
@@ -1208,7 +1213,7 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="fit" aria-label="${t(this.hass, "Fit preview")}">${t(this.hass, "Fit")}</button><button data-action="create-automation" ${this.mode === "template" || sessionLocked || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Template parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "The four icon buttons add a text, shape, icon or image in one click.")} <b>${t(this.hass, "＋ Add component")}</b> ${t(this.hass, "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Template parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "The four icon buttons add a text, shape, icon or image in one click.")} <b>${t(this.hass, "＋ Add component")}</b> ${t(this.hass, "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="design-templates" ${this.mode === "template" || sessionLocked || !this.tag ? "hidden" : ""}>${t(this.hass, "Templates")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
@@ -1558,6 +1563,42 @@ export class BleEslDesigner extends HTMLElement {
       this.edited();
     }
     return result;
+  }
+  // A ready-made design, added like an imported payload. The automation it
+  // suggests (its triggers) is kept for Create automation.
+  async applyDesignTemplate(id, parameters, replace, context) {
+    if (!this.isDocumentSessionCurrent(context)) return { stale: true };
+    const result = await this.api("apply_design_template", {
+      entry_id: context.entryId,
+      template_id: id,
+      parameters,
+      existing: replace ? 0 : context.document.elements.length,
+    });
+    if (!this.isDocumentSessionCurrent(context)) return { stale: true };
+    if (result.elements.length) {
+      this.checkpoint();
+      if (replace) {
+        this.document.elements = [];
+        if (palette(this.tag.colors).includes(result.background))
+          this.document.background = result.background;
+      }
+      this.document.elements.push(...result.elements);
+      this.selected = result.elements.at(-1).id;
+      this.templateAutomation = result.template.automation
+        ? {
+            entryId: context.entryId,
+            defaults: result.template.automation,
+            // The triggers belong to this design: once its elements are gone
+            // (undo, replace, import, delete) they are no longer offered.
+            elementIds: result.elements.map((element) => element.id),
+          }
+        : null;
+      this.edited();
+    }
+    return result;
+  }
+  createAutomationFromTemplate() {
+    this.shadowRoot.querySelector('[data-action="create-automation"]')?.click();
   }
   // Undo steps only for edits that took: half-typed input changes nothing.
   pushUndo(snapshot) {
@@ -2389,6 +2430,19 @@ export class BleEslDesigner extends HTMLElement {
       );
       return;
     }
+    if (button.dataset.action === "design-templates") {
+      const dialog = document.createElement("ble-esl-template-dialog");
+      document.body.append(dialog);
+      dialog.open(
+        this,
+        () =>
+          this.shadowRoot
+            .querySelector('[data-action="design-templates"]')
+            ?.focus(),
+        this.documentSessionContext(),
+      );
+      return;
+    }
     if (button.dataset.action === "add-spec") {
       const type = this.shadowRoot.querySelector("#add-spec")?.value;
       if (type) this.addSpec(type);
@@ -2714,6 +2768,13 @@ export class BleEslDesigner extends HTMLElement {
           {
             entry_id: this.tag.entry_id,
             document: this.document,
+            ...(action === "create-automation" &&
+            this.templateAutomation?.entryId === this.tag.entry_id &&
+            this.templateAutomation.elementIds.every((id) =>
+              this.document.elements.some((element) => element.id === id),
+            )
+              ? { automation_defaults: this.templateAutomation.defaults }
+              : {}),
           },
         );
         if (this.yamlExport.automation) {

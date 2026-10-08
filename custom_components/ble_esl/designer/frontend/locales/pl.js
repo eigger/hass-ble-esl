@@ -541,4 +541,16 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "Szablony",
+  "Design templates": "Szablony projektów",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "Wybierz gotowy projekt. Zostanie dodany jako zwykłe, edytowalne elementy.",
+  "No design templates fit this display.":
+    "Żaden szablon projektu nie pasuje do tego wyświetlacza.",
+  "Adjusted to this display": "Dopasowano do tego wyświetlacza",
+  Back: "Wstecz",
+  Automation: "Automatyzacja",
+  "Replace and create automation": "Zastąp i utwórz automatyzację",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "Wyzwalacze szablonu są uwzględnione. Zmień je w Home Assistant po utworzeniu automatyzacji.",
 };

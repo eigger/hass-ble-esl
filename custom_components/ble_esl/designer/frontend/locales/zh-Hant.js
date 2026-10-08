@@ -525,4 +525,15 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
+  Templates: "範本",
+  "Design templates": "設計範本",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "選擇現成的設計，它會以可編輯的一般元素加入。",
+  "No design templates fit this display.": "沒有適合此顯示器的設計範本。",
+  "Adjusted to this display": "已配合此顯示器調整",
+  Back: "返回",
+  Automation: "自動化",
+  "Replace and create automation": "取代並建立自動化",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "已包含範本的觸發條件。建立自動化後可在 Home Assistant 中修改。",
 };

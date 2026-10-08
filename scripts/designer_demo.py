@@ -20,6 +20,11 @@ from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer import _preview_variable_map
+from custom_components.ble_esl.designer.design_templates import (
+    build as build_template,
+    describe as describe_template,
+    load_templates,
+)
 from custom_components.ble_esl.designer.export import automation_draft, export_yaml
 from custom_components.ble_esl.designer.importer import (
     convert,
@@ -45,6 +50,7 @@ from custom_components.ble_esl.designer.specs import (
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 
 ROOT = Path(__file__).resolve().parents[1]
+DESIGN_TEMPLATES = load_templates()
 STATES = {
     "sensor.office_temperature": {
         "entity_id": "sensor.office_temperature",
@@ -272,6 +278,44 @@ async def handle(request):
         )
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
+    if msg["action"] == "design_templates":
+        return web.json_response(
+            [
+                describe_template(template, preset.width, preset.height)
+                for template in DESIGN_TEMPLATES.values()
+            ]
+        )
+    template_info = None
+    if msg["action"] == "apply_design_template":
+        template = DESIGN_TEMPLATES.get(msg["template_id"])
+        if template is None:
+            return web.Response(status=400, text="There is no such design template")
+        try:
+            built = build_template(
+                template, preset.width, preset.height, preset.colors, msg.get("parameters")
+            )
+        except HomeAssistantError as err:
+            return web.Response(status=400, text=str(err))
+        fonts = {
+            value
+            for name, value in built["parameters"].items()
+            if template["parameters"][name]["type"] == "font"
+        }
+        if missing := [
+            font
+            for font in fonts
+            if not (ROOT / "custom_components/ble_esl/fonts" / font).is_file()
+        ]:
+            return web.Response(status=400, text=f"Font not found: {', '.join(missing)}")
+        template_info = {
+            "id": template["id"],
+            "layout": built["layout"],
+            "scaled": built["scaled"],
+            "parameters": built["parameters"],
+            "automation": built["automation"],
+        }
+        msg = {**msg, "action": "import_payload", "payload": built["payload"]}
+        msg["background"] = built["background"]
     if msg["action"] in ("import_yaml", "import_payload"):
         if msg["action"] == "import_payload":
             items, background = msg["payload"], msg.get("background")
@@ -307,6 +351,7 @@ async def handle(request):
                 "issues": issues,
                 "different_pixels": different,
                 "background": background,
+                **({"template": template_info} if template_info else {}),
             }
         )
     document = validate(msg["document"], preset)
@@ -359,7 +404,9 @@ async def handle(request):
         if msg["action"] == "automation":
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")
-            result["automation"] = automation_draft(result, tag["title"])
+            result["automation"] = automation_draft(
+                result, tag["title"], msg.get("automation_defaults")
+            )
         return web.json_response(
             {
                 **result,

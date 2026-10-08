@@ -535,4 +535,16 @@ export default {
     "The automation import is no longer current.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Background is not part of the automation payload. Restore the imported background before saving.",
+  Templates: "Templates",
+  "Design templates": "Design templates",
+  "Choose a ready-made design. It is added as ordinary elements you can edit.":
+    "Choose a ready-made design. It is added as ordinary elements you can edit.",
+  "No design templates fit this display.":
+    "No design templates fit this display.",
+  "Adjusted to this display": "Adjusted to this display",
+  Back: "Back",
+  Automation: "Automation",
+  "Replace and create automation": "Replace and create automation",
+  "The template's triggers are included. Change them in Home Assistant after creating the automation.":
+    "The template's triggers are included. Change them in Home Assistant after creating the automation.",
 };

@@ -78,7 +78,7 @@ export class YamlDialog extends HTMLElement {
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
     </style><dialog aria-label="${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}"><form method="dialog">
       <h2>${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}</h2>
-      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
+      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? "The template's triggers are included. Change them in Home Assistant after creating the automation." : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
       <div class="tabs" role="tablist">${shown
         .map(
           ([key, label]) =>

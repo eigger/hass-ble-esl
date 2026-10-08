@@ -2,7 +2,14 @@
 
 **English** | **[한국어](ko/design-templates.md)**
 
-> The Designer user interface for picking a template is added in a follow-up; this page documents the file format and the API it uses.
+## Using a template
+
+In the Designer, choose **Templates** (under the component buttons). The gallery lists the designs and shows whether a layout was *adjusted* to the tag's display size. Pick one, change its parameters if you like (every one has a default), then:
+
+- **Add to display** keeps what is on the canvas; **Replace display** starts again. The result is ordinary, editable elements.
+- **Replace and create automation** (templates with an `automation` block, writable tags) also opens **Create automation**, with the template's triggers, for example *every day at 12:00*, already filled in. Choose **Create automation** in that dialog to save it.
+
+After choosing **Add to display** you can still use the toolbar's **Create automation**: it uses the triggers of the template you applied last, as long as that design's elements are still on the canvas (undo, replace, import or deleting them drops the triggers).
 
 A design template is a YAML file that describes a ready-made ESL design: the imagespec elements, the few values a user may change (font, colors, time…), and optionally the automation that keeps it up to date. Applying one in the Designer produces ordinary, fully editable elements; nothing in the saved result refers back to the template.
 
@@ -71,7 +78,7 @@ Every parameter needs a `default`, so a template can be applied without asking a
 
 ### Automation
 
-`automation` provides the defaults (alias, if given; otherwise the tag title is used) for a new automation: its alias, `triggers` (at least one), `conditions`, `mode` and `description`. The `ble_esl.write` action is added from the current design as usual, so it is not part of the template. Home Assistant validates the automation when it is saved.
+`automation` provides the defaults for a new automation (the alias if given, otherwise the tag title): its alias, `triggers` (at least one), `conditions`, `mode` and `description`. The `ble_esl.write` action is added from the current design as usual, so it is not part of the template. Home Assistant validates the automation when it is saved.
 
 A daily update at noon:
 
