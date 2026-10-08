@@ -262,26 +262,29 @@ test("search box and drop-downs share one height and long translations fit", asy
       );
     });
     expect(heights, lang).toEqual([40, 40, 40]);
-    const cut = await page.evaluate(() => {
-      const root = window.manager.shadowRoot;
-      return ["#filter", "#sort"].flatMap((selector) => {
-        const select = root.querySelector(selector);
-        const probe = document.createElement("span");
-        probe.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font:${getComputedStyle(select).font}`;
-        document.body.append(probe);
-        const limit = select.clientWidth - 40;
-        const wide = [...select.options]
-          .filter((option) => {
-            probe.textContent = option.textContent;
-            // 20% spare: CI fonts are wider than a developer machine's.
-            return probe.getBoundingClientRect().width * 1.2 > limit;
-          })
-          .map((option) => option.textContent);
-        probe.remove();
-        return wide;
-      });
-    });
-    expect(cut, lang).toEqual([]);
+    // A select is as wide as its longest option whatever is selected, so
+    // nothing is cut off and nothing moves when the choice changes.
+    const before = await page.evaluate(() =>
+      ["#filter", "#sort"].map((selector) => {
+        const select = window.manager.shadowRoot.querySelector(selector);
+        const box = select.getBoundingClientRect();
+        return [selector, Math.round(box.x), Math.round(box.width)];
+      }),
+    );
+    for (const selector of ["#filter", "#sort"]) {
+      const count = await page.locator(`${selector} option`).count();
+      for (let index = 0; index < count; index += 1) {
+        await page.locator(selector).selectOption({ index });
+        const after = await page.evaluate(() =>
+          ["#filter", "#sort"].map((name) => {
+            const select = window.manager.shadowRoot.querySelector(name);
+            const box = select.getBoundingClientRect();
+            return [name, Math.round(box.x), Math.round(box.width)];
+          }),
+        );
+        expect(after, `${lang} ${selector} ${index}`).toEqual(before);
+      }
+    }
   }
 });
 
