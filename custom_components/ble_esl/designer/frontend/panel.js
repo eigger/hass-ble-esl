@@ -142,6 +142,7 @@ export class BleEslDesigner extends HTMLElement {
       steps: LOADING_STEPS.map(([key, label]) => ({ key, label, done: false })),
     };
     this.ready = false;
+    this.readyPromise = new Promise((resolve) => (this.resolveReady = resolve));
     this.refreshing = false;
     this.document = emptyDocument();
     this.selected = null;
@@ -202,6 +203,187 @@ export class BleEslDesigner extends HTMLElement {
   set panel(value) {
     this._panelInfo = value;
     if (this.started) this.render();
+  }
+  captureEditorSession() {
+    this.gestureFinish?.(false);
+    this.finishTextEdit();
+    const copyMap = (items) =>
+      new Map([...items].map(([key, value]) => [key, clone(value)]));
+    return {
+      tag: this.tag ? clone(this.tag) : null,
+      document: clone(this.document),
+      selected: this.selected,
+      dirty: this.dirty,
+      undoStack: clone(this.undoStack),
+      redoStack: clone(this.redoStack),
+      drafts: copyMap(this.drafts),
+      mode: this.mode,
+      displaySession: this.displaySession ? clone(this.displaySession) : null,
+      templateKey: this.templateKey,
+      templateDrafts: copyMap(this.templateDrafts),
+      templateName: this.templateName,
+      templateSensorType: this.templateSensorType,
+      sampleEntity: this.sampleEntity,
+      zoom: this.zoom,
+      zoomMode: this.zoomMode,
+      libraryOpen: this.libraryOpen,
+      inspectorOpen: this.inspectorOpen,
+      search: this.search,
+    };
+  }
+  documentSessionContext() {
+    return {
+      tag: this.tag,
+      entryId: this.tag?.entry_id,
+      document: this.document,
+      token: this._automationSessionToken,
+      mode: this.mode,
+      cancelled: false,
+    };
+  }
+  isDocumentSessionCurrent(context) {
+    return (
+      this.isDocumentSessionOwner(context) && this.document === context.document
+    );
+  }
+  isDocumentSessionOwner(context) {
+    return (
+      context &&
+      !context.cancelled &&
+      this.tag === context.tag &&
+      this.tag?.entry_id === context.entryId &&
+      this._automationSessionToken === context.token &&
+      this.mode === context.mode
+    );
+  }
+  beginAutomationSession(token) {
+    this._automationSessionToken = token;
+    this._automationReturnState = null;
+    this._automationSessionPending = true;
+    this._automationSaveMode = false;
+    this.busy = true;
+    this.gestureFinish?.(false);
+    if (this.started) this.render();
+  }
+  setAutomationReturnState(state, token) {
+    if (token === this._automationSessionToken)
+      this._automationReturnState = state;
+  }
+  prepareAutomationPayload(payload, background, entryId) {
+    return this.api("import_payload", {
+      entry_id: entryId,
+      payload,
+      background,
+      existing: 0,
+    });
+  }
+  applyAutomationPayload(
+    result,
+    payload,
+    background,
+    allowEmpty,
+    entryId,
+    token,
+  ) {
+    if (
+      token !== this._automationSessionToken ||
+      !this._automationSessionPending ||
+      this.tag?.entry_id !== entryId
+    )
+      return false;
+    if (result.issues.length || (!allowEmpty && result.different_pixels !== 0))
+      return false;
+    this.document = clone(this.document);
+    this.document.elements = result.elements;
+    this.document.background = palette(this.tag.colors).includes(background)
+      ? background
+      : "white";
+    this.selected = result.elements.at(-1)?.id || null;
+    this.undoStack = [];
+    this.redoStack = [];
+    this.dirty = true;
+    this.busy = false;
+    this._automationSessionPending = false;
+    this._automationSaveMode = true;
+    this._automationBackground = this.document.background;
+    this.preview = null;
+    this.layerPreviews = {};
+    this.render();
+    this.queuePreview();
+    return true;
+  }
+  restoreEditorSession(state, token) {
+    if (token !== this._automationSessionToken) return false;
+    this._automationSessionToken = null;
+    this._automationSessionPending = false;
+    this._automationSaveMode = false;
+    this._automationBackground = null;
+    this._automationReturnState = null;
+    this.busy = false;
+    this.converting = false;
+    this.convertRun = (this.convertRun || 0) + 1;
+    clearTimeout(this.previewTimer);
+    this.previewSequence++;
+    this.gestureCancel?.();
+    this.editingTextId = null;
+    this.typingProperty = null;
+    if (!state) {
+      this.dirty = false;
+      this.undoStack = [];
+      this.redoStack = [];
+      if (this.ready && this.tag) {
+        this.drafts.delete(this.tag.entry_id);
+        this.load(
+          this.tags.find((item) => item.entry_id === this.tag.entry_id) ||
+            this.tag,
+        );
+      }
+      return true;
+    }
+    const tag = state.tag?.entry_id
+      ? this.tags.find((item) => item.entry_id === state.tag.entry_id) ||
+        state.tag
+      : state.tag;
+    this.tag = tag;
+    this.document = clone(state.document);
+    this.selected = state.selected;
+    this.dirty = state.dirty;
+    this.undoStack = clone(state.undoStack);
+    this.redoStack = clone(state.redoStack);
+    this.drafts = new Map(
+      [...state.drafts].map(([key, value]) => [key, clone(value)]),
+    );
+    this.mode = state.mode;
+    this.displaySession = state.displaySession
+      ? clone(state.displaySession)
+      : null;
+    if (this.displaySession?.tag?.entry_id)
+      this.displaySession.tag =
+        this.tags.find(
+          (item) => item.entry_id === this.displaySession.tag.entry_id,
+        ) || this.displaySession.tag;
+    this.templateKey = state.templateKey;
+    this.templateDrafts = new Map(
+      [...state.templateDrafts].map(([key, value]) => [key, clone(value)]),
+    );
+    this.templateName = state.templateName;
+    this.templateSensorType = state.templateSensorType;
+    this.sampleEntity = state.sampleEntity;
+    this.zoom = state.zoom;
+    this.zoomMode = state.zoomMode;
+    this.libraryOpen = state.libraryOpen;
+    this.inspectorOpen = state.inspectorOpen;
+    this.search = state.search;
+    this.preview = null;
+    this.layerPreviews = {};
+    this.error = false;
+    this.errorSource = null;
+    this.status = "Ready";
+    if (this.started) {
+      this.render();
+      this.queuePreview();
+    }
+    return true;
   }
   set hass(value) {
     const previous = this._hass;
@@ -276,6 +458,7 @@ export class BleEslDesigner extends HTMLElement {
   connectedCallback() {
     this.beforeUnload = (event) => {
       // Work set aside by switching between Display and Sensor templates counts.
+      const saved = this._automationReturnState;
       if (
         this.dirty ||
         this.drafts.size ||
@@ -284,7 +467,11 @@ export class BleEslDesigner extends HTMLElement {
           ([key, draft]) =>
             draft.dirty &&
             !(this.mode === "template" && key === this.templateKey),
-        )
+        ) ||
+        saved?.dirty ||
+        saved?.drafts?.size ||
+        (saved?.mode === "template" && saved?.displaySession?.dirty) ||
+        [...(saved?.templateDrafts || [])].some(([, draft]) => draft.dirty)
       )
         event.preventDefault();
     };
@@ -358,6 +545,7 @@ export class BleEslDesigner extends HTMLElement {
       this.mode = "display";
       // Reveal the editor before load(): it renders.
       this.ready = true;
+      this.resolveReady();
       this.loading = null;
       this.refreshing = false;
       // Stay on the tag being edited: load() files an unsaved design under
@@ -365,8 +553,13 @@ export class BleEslDesigner extends HTMLElement {
       const tag =
         this.tags.find((item) => item.entry_id === this.tag?.entry_id) ||
         this.tags[0];
-      if (tag) this.load(tag);
-      else {
+      if (tag) {
+        this._automationBootLoadAllowed = Boolean(
+          this._automationSessionPending,
+        );
+        this.load(tag);
+        this._automationBootLoadAllowed = false;
+      } else {
         this.tag = undefined;
         this.status =
           "Add a BLE ESL device in Settings → Devices & services first.";
@@ -375,6 +568,7 @@ export class BleEslDesigner extends HTMLElement {
     } catch (error) {
       if (this.loading) {
         this.loading.error = error.message || String(error);
+        this.resolveReady();
         this.render();
       } else {
         this.refreshing = false;
@@ -399,7 +593,9 @@ export class BleEslDesigner extends HTMLElement {
     return `<p>${esc(t(this.hass, "Loading {step}… ({done}/{count})", { step: t(this.hass, waiting?.label || "designer"), done, count: steps.length }))}</p><progress aria-label="${t(this.hass, "Loading designer")}" max="${steps.length}" value="${done}"></progress>`;
   }
   headerHtml() {
-    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${this._panelInfo?.config?.version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing ? "disabled" : ""}>${t(this.hass, "Sensor templates")}</button></nav></header>`;
+    const sessionLocked =
+      this._automationSessionPending || this._automationSaveMode;
+    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${this._panelInfo?.config?.version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(this._panelInfo.config.version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Sensor templates")}</button></nav></header>`;
   }
   renderLoading() {
     this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
@@ -415,9 +611,15 @@ export class BleEslDesigner extends HTMLElement {
     return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
   }
   load(tag) {
+    if (
+      this._automationSaveMode ||
+      (this._automationSessionPending && !this._automationBootLoadAllowed)
+    )
+      return false;
     if (this.tag && this.dirty)
       this.drafts.set(this.tag.entry_id, clone(this.document));
     this.tag = tag;
+    this.automationImportRun = (this.automationImportRun || 0) + 1;
     this.document = clone(
       this.drafts.get(tag.entry_id) || tag.document || emptyDocument(),
     );
@@ -453,8 +655,13 @@ export class BleEslDesigner extends HTMLElement {
     const save = this.shadowRoot.querySelector('[data-action="save"]');
     if (save) {
       save.innerHTML = toolIcon("save") + "·";
-      save.setAttribute("aria-label", t(this.hass, "Save (unsaved changes)"));
-      save.title = t(this.hass, "Save (unsaved changes) (⌘/Ctrl S)");
+      const label = this._automationSaveMode
+        ? t(this.hass, "Save automation")
+        : t(this.hass, "Save (unsaved changes)");
+      save.setAttribute("aria-label", label);
+      save.title = this._automationSaveMode
+        ? label
+        : t(this.hass, "Save (unsaved changes) (⌘/Ctrl S)");
     }
     const badge = this.shadowRoot.querySelector("#dirty-badge");
     if (badge) badge.hidden = false;
@@ -617,8 +824,15 @@ export class BleEslDesigner extends HTMLElement {
     return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">${t(this.hass, "State icon")}</button></div>`;
   }
   switchMode(mode) {
-    // boot() resets the mode and the tag when it ends.
-    if (mode === this.mode || this.refreshing) return;
+    // Automation edits are isolated display sessions; don't let the user
+    // switch into template mode and later restore an imported draft as normal.
+    if (
+      mode === this.mode ||
+      this.refreshing ||
+      this._automationSessionPending ||
+      this._automationSaveMode
+    )
+      return;
     if (mode === "template") {
       this.displaySession = {
         tag: this.tag,
@@ -897,8 +1111,10 @@ export class BleEslDesigner extends HTMLElement {
       },
     );
     const tag = this.tag,
-      element = this.element;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" ? "hidden" : ""} ${this.mode === "template" || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
+      element = this.element,
+      sessionLocked =
+        this._automationSessionPending || this._automationSaveMode;
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""} ${sessionLocked ? "disabled" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing || sessionLocked ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy || this._automationSessionPending ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" || sessionLocked ? "hidden" : ""} ${this.mode === "template" || sessionLocked || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -920,7 +1136,7 @@ export class BleEslDesigner extends HTMLElement {
       )
       .join(
         "",
-      )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="fit" aria-label="${t(this.hass, "Fit preview")}">${t(this.hass, "Fit")}</button><button data-action="create-automation" ${this.mode === "template" || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
+      )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="fit" aria-label="${t(this.hass, "Fit preview")}">${t(this.hass, "Fit")}</button><button data-action="create-automation" ${this.mode === "template" || sessionLocked || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
       tag
         ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Template parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "The four icon buttons add a text, shape, icon or image in one click.")} <b>${t(this.hass, "＋ Add component")}</b> ${t(this.hass, "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
             ...this.document.elements,
@@ -933,6 +1149,11 @@ export class BleEslDesigner extends HTMLElement {
             .join("")}</div></section></aside></div>`
         : ""
     }</div>`;
+    const saveButton = this.shadowRoot.querySelector('[data-action="save"]');
+    if (this._automationSaveMode && saveButton) {
+      saveButton.setAttribute("aria-label", t(this.hass, "Save automation"));
+      saveButton.title = t(this.hass, "Save automation");
+    }
     this.renderEntities();
     this.bindEntityPickers();
     this.shadowRoot
@@ -1151,29 +1372,36 @@ export class BleEslDesigner extends HTMLElement {
   }
   // The selected element as imagespec elements, in its place, saying how
   // exactly they draw what it did.
-  async convertSelected() {
+  async convertSelected(context = this.documentSessionContext()) {
     const element = this.element;
     // One at a time: the element has to be where the request left it.
     if (!element || this.converting) return;
     this.converting = true;
+    const run = (this.convertRun = (this.convertRun || 0) + 1);
     try {
-      await this.convertElement(element);
+      await this.convertElement(element, context);
     } finally {
-      this.converting = false;
+      if (run === this.convertRun) this.converting = false;
     }
   }
-  async convertElement(element) {
+  async convertElement(element, context = this.documentSessionContext()) {
+    if (!this.isDocumentSessionCurrent(context)) return;
+    const originalElement = JSON.stringify(element);
     this.status = "Converting…";
     this.renderStatus();
     const result = await this.api("convert", {
-      entry_id: this.tag.entry_id,
-      document: this.document,
+      entry_id: context.entryId,
+      document: context.document,
       element_id: element.id,
     });
+    if (!this.isDocumentSessionCurrent(context)) return;
     const index = this.document.elements.findIndex(
       (el) => el.id === element.id,
     );
-    if (index < 0) {
+    if (
+      index < 0 ||
+      JSON.stringify(this.document.elements[index]) !== originalElement
+    ) {
       // Deleted or undone while the server worked: nothing to replace.
       this.status = "The element changed; nothing was converted";
       this.renderStatus();
@@ -1211,13 +1439,15 @@ export class BleEslDesigner extends HTMLElement {
     this.edited();
   }
   // A pasted payload as elements, added to the display or replacing it.
-  async importYaml(text, replace) {
+  async importYaml(text, replace, context = this.documentSessionContext()) {
+    if (!this.isDocumentSessionCurrent(context)) return { stale: true };
     const result = await this.api("import_yaml", {
-      entry_id: this.tag.entry_id,
+      entry_id: context.entryId,
       text,
       // A display holds a limited number of elements; the server keeps to it.
-      existing: replace ? 0 : this.document.elements.length,
+      existing: replace ? 0 : context.document.elements.length,
     });
+    if (!this.isDocumentSessionCurrent(context)) return { stale: true };
     if (result.elements.length) {
       this.checkpoint();
       if (replace) {
@@ -1349,7 +1579,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   properties(element) {
     if (!element)
-      return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
+      return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" && !this._automationSaveMode ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
     const field = (key, label, type = "text", wide = false) =>
       `<label class="${wide ? "wide" : ""}">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
     const group = (title, body) =>
@@ -1975,10 +2205,11 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.action === "convert") {
+      const context = this.documentSessionContext();
       try {
-        await this.convertSelected();
+        await this.convertSelected(context);
       } catch (error) {
-        this.report(error);
+        if (this.isDocumentSessionCurrent(context)) this.report(error);
       }
       return;
     }
@@ -1986,8 +2217,11 @@ export class BleEslDesigner extends HTMLElement {
       // Outside the panel: a change to the display rebuilds the panel's tree.
       const dialog = document.createElement("ble-esl-import-dialog");
       document.body.append(dialog);
-      dialog.open(this, () =>
-        this.shadowRoot.querySelector('[data-action="import-yaml"]')?.focus(),
+      dialog.open(
+        this,
+        () =>
+          this.shadowRoot.querySelector('[data-action="import-yaml"]')?.focus(),
+        this.documentSessionContext(),
       );
       return;
     }
@@ -2157,6 +2391,37 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     const action = button.dataset.action;
+    if (action === "save" && this._automationSaveMode) {
+      const sessionToken = this._automationSessionToken;
+      const entryId = this.tag?.entry_id;
+      try {
+        this.gestureFinish?.(false);
+        if (this.pendingUploads.size)
+          await Promise.all([...this.pendingUploads]);
+        if (
+          sessionToken !== this._automationSessionToken ||
+          !this._automationSaveMode ||
+          this.mode !== "display" ||
+          this.tag?.entry_id !== entryId
+        )
+          return;
+        this.dispatchEvent(
+          new CustomEvent("automation-save-request", {
+            detail: {
+              session_token: sessionToken,
+              entry_id: entryId,
+              document: clone(this.document),
+              background: this.document.background,
+            },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      } catch (error) {
+        if (sessionToken === this._automationSessionToken) this.report(error);
+      }
+      return;
+    }
     if (action === "dismiss-status") {
       this.error = false;
       this.errorSource = null;
@@ -2571,6 +2836,10 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (id === "tag") {
+      if (this._automationSessionPending || this._automationSaveMode) {
+        this.render();
+        return;
+      }
       this.gestureFinish?.(false);
       this.load(this.tags.find((tag) => tag.entry_id === input.value));
       return;
@@ -2587,7 +2856,8 @@ export class BleEslDesigner extends HTMLElement {
       const id = this.element.id,
         sequence = (this.uploadSequence = (this.uploadSequence || 0) + 1),
         ownerTag = this.tag,
-        ownerDocument = this.document;
+        ownerDocument = this.document,
+        ownerSession = this._automationSessionToken;
       const reader = new FileReader();
       const upload = new Promise((resolve, reject) => {
         reader.onload = async () => {
@@ -2657,10 +2927,16 @@ export class BleEslDesigner extends HTMLElement {
       this.status = "Loading image…";
       this.render();
       upload
-        .catch((error) => this.report(error))
+        .catch((error) => {
+          if (
+            ownerSession === this._automationSessionToken &&
+            ownerDocument === this.document
+          )
+            this.report(error);
+        })
         .finally(() => {
           this.pendingUploads.delete(upload);
-          this.busy = false;
+          if (ownerSession === this._automationSessionToken) this.busy = false;
           this.render();
         });
       return;
@@ -2668,26 +2944,29 @@ export class BleEslDesigner extends HTMLElement {
     if (id === "file") {
       const file = input.files?.[0];
       if (!file) return;
-      const targetTag = this.tag;
+      const context = this.documentSessionContext();
       this.busy = true;
       this.status = "Checking display…";
       this.render();
       try {
         const imported = JSON.parse(await file.text());
+        if (!this.isDocumentSessionCurrent(context)) return;
         await this.api("preview", {
-          entry_id: targetTag.entry_id,
+          entry_id: context.entryId,
           document: imported,
         });
-        if (this.tag !== targetTag) return;
+        if (!this.isDocumentSessionCurrent(context)) return;
         this.checkpoint();
         this.document = this.normalizeImportedDocument(imported);
         this.selected = null;
         this.edited();
       } catch (error) {
-        this.report(error);
+        if (this.isDocumentSessionCurrent(context)) this.report(error);
       } finally {
-        this.busy = false;
-        this.render();
+        if (this.isDocumentSessionOwner(context)) {
+          this.busy = false;
+          this.render();
+        }
       }
       return;
     }

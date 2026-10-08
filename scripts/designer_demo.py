@@ -148,6 +148,45 @@ AUTOMATIONS = [
 AUTOMATION_LINKS = {
     "demo-writable": ["automation.morning", "automation.temperature", "automation.night"]
 }
+AUTOMATION_CONFIGS = {
+    item["id"]: {
+        "id": item["id"],
+        "alias": item["name"],
+        "triggers": [{"trigger": "time", "at": "07:00:00"}],
+        "conditions": [
+            {
+                "condition": "state",
+                "entity_id": "binary_sensor.window",
+                "state": "off",
+            }
+        ],
+        "actions": [
+            {
+                "action": "persistent_notification.create",
+                "data": {"title": "Schedule", "message": "Keep this action"},
+            },
+            {
+                "action": "ble_esl.write",
+                "target": {"device_id": "demo-device-0"},
+                "data": {
+                    "background": "white",
+                    "payload": [
+                        {
+                            "type": "text_fit",
+                            "x": 8,
+                            "y": 8,
+                            "width": 220,
+                            "height": 28,
+                            "value": item["name"],
+                            "color": "black",
+                        }
+                    ],
+                },
+            },
+        ],
+    }
+    for item in AUTOMATIONS
+}
 for automation in AUTOMATIONS:
     STATES[automation["entity_id"]] = {
         "entity_id": automation["entity_id"],
@@ -211,14 +250,28 @@ async def handle(request):
         elif msg["action"] == "unlink_automation" and msg["entity_id"] in links:
             links.remove(msg["entity_id"])
         return web.json_response(demo_automations(msg["entry_id"]))
+    if msg["action"] == "automation_edit_source":
+        tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
+        automation = next(item for item in AUTOMATIONS if item["entity_id"] == msg["entity_id"])
+        return web.json_response(
+            {
+                "entity_id": msg["entity_id"],
+                "config_id": automation["id"],
+                "device_id": tag["device_id"],
+                "entity_ids": list(tag["entities"].values()),
+            }
+        )
     tag = next(tag for tag in TAGS if tag["entry_id"] == msg["entry_id"])
     preset = DevicePreset("demo", tag["title"], tag["width"], tag["height"], tag["colors"])
-    if msg["action"] == "import_yaml":
-        try:
-            items, background = parse_payload(msg["text"])
-        except HomeAssistantError as err:
-            # Home Assistant carries the message to the panel; so does the demo.
-            return web.Response(status=400, text=str(err))
+    if msg["action"] in ("import_yaml", "import_payload"):
+        if msg["action"] == "import_payload":
+            items, background = msg["payload"], msg.get("background")
+        else:
+            try:
+                items, background = parse_payload(msg["text"])
+            except HomeAssistantError as err:
+                # Home Assistant carries the message to the panel; so does the demo.
+                return web.Response(status=400, text=str(err))
         elements, imported, issues = elements_from(
             items, preset, max(0, 100 - msg.get("existing", 0))
         )
@@ -270,7 +323,7 @@ async def handle(request):
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")
             result["automation"] = automation_draft(result, tag["title"])
-        return web.json_response({**result, "writable": tag["writable"]})
+        return web.json_response({**result, "payload_data": payload, "writable": tag["writable"]})
     return await preview(document, preset)
 
 
@@ -361,7 +414,15 @@ async def demo_image(request):
 async def create_automation(request):
     config = await request.json()
     CREATED_AUTOMATIONS[request.match_info["automation_id"]] = config
+    AUTOMATION_CONFIGS[request.match_info["automation_id"]] = config
     return web.json_response({"result": "ok"})
+
+
+async def get_automation(request):
+    config = AUTOMATION_CONFIGS.get(request.match_info["automation_id"])
+    if config is None:
+        raise web.HTTPNotFound()
+    return web.json_response(config)
 
 
 async def automation_preview(request):
@@ -379,6 +440,7 @@ async def automation_preview(request):
 
 
 app.router.add_post("/api/config/automation/config/{automation_id}", create_automation)
+app.router.add_get("/api/config/automation/config/{automation_id}", get_automation)
 app.router.add_get("/config/automation/edit/{automation_id}", automation_preview)
 app.router.add_get("/demo-image", demo_image)
 app.router.add_get("/states", states)

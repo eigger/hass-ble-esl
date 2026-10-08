@@ -4,6 +4,7 @@ import asyncio
 import base64
 from functools import partial
 from io import BytesIO
+import json
 from pathlib import Path
 import time
 
@@ -20,7 +21,7 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
-from .export import automation_draft, export_yaml
+from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
     compile_payload,
@@ -36,6 +37,7 @@ from .specs import describe, frozen_corners
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
+MAX_STRUCTURED_PAYLOAD_BYTES = 5 * 1024 * 1024
 
 
 class Designer:
@@ -180,12 +182,20 @@ class Designer:
             for element in document["elements"]
             if element["type"] == "imagespec" and frozen_corners(element["spec"])
         )
+        automation_payload = live_payload(self.hass, document, self.templates, forecasts)
         result = export_yaml(
             payload,
             document["background"],
             entry.runtime_data.device_id,
             issues,
-            live_payload(self.hass, document, self.templates, forecasts),
+            automation_payload,
+        )
+        # The designer needs the typed value when applying an edit to an existing
+        # action; the YAML strings remain the public export representation.
+        result["payload_data"] = (
+            plain(payload if automation_payload is None else automation_payload)
+            if not result["validation_errors"]
+            else None
         )
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
@@ -201,8 +211,18 @@ class Designer:
 
     async def import_yaml(self, entry, text, existing=0):
         """Elements for a pasted payload, and how faithfully they stand for it."""
-        preset = self.preset(entry)
         items, background = parse(text)
+        return await self.import_payload(entry, items, background, existing)
+
+    async def import_payload(self, entry, items, background=None, existing=0):
+        """Import a structured automation payload without YAML size/alias handling."""
+        if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
+            raise HomeAssistantError("The automation payload must be a list of objects")
+        if len(json.dumps(items, ensure_ascii=False).encode()) > MAX_STRUCTURED_PAYLOAD_BYTES:
+            raise HomeAssistantError(
+                "The automation payload is too large to import (5 MiB maximum)"
+            )
+        preset = self.preset(entry)
         elements, imported, issues = elements_from(items, preset, max(0, 100 - existing))
         different = None
         if elements:
@@ -323,12 +343,14 @@ class Designer:
                 "export",
                 "automation",
                 "import_yaml",
+                "import_payload",
                 "convert",
                 "send",
                 "templates",
                 "save_template",
                 "preview_template",
                 "automations",
+                "automation_edit_source",
                 "link_automation",
                 "unlink_automation",
             )
@@ -336,6 +358,8 @@ class Designer:
         vol.Optional("entry_id"): str,
         vol.Optional("document"): dict,
         vol.Optional("text"): str,
+        vol.Optional("payload"): [dict],
+        vol.Optional("background"): str,
         vol.Optional("existing"): vol.All(int, vol.Range(min=0, max=1000)),
         vol.Optional("element_id"): str,
         vol.Optional("template"): dict,
@@ -373,6 +397,10 @@ async def websocket_designer(hass, connection, msg):
         ]
     elif action == "automations":
         result = designer.automation_links.describe(designer.entry(msg["entry_id"]))
+    elif action == "automation_edit_source":
+        result = designer.automation_links.edit_source(
+            designer.entry(msg["entry_id"]), msg["entity_id"]
+        )
     elif action in ("link_automation", "unlink_automation"):
         result = await designer.automation_links.update(
             designer.entry(msg["entry_id"]),
@@ -383,6 +411,13 @@ async def websocket_designer(hass, connection, msg):
     elif action == "import_yaml":
         result = await designer.import_yaml(
             designer.entry(msg["entry_id"]), msg["text"], msg.get("existing", 0)
+        )
+    elif action == "import_payload":
+        result = await designer.import_payload(
+            designer.entry(msg["entry_id"]),
+            msg["payload"],
+            msg.get("background"),
+            msg.get("existing", 0),
         )
     elif action == "convert":
         result = await designer.convert(

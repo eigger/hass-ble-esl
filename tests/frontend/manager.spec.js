@@ -108,6 +108,1069 @@ test("dashboard navigation preserves unsaved design and undo history", async ({
   expect(errors).toEqual([]);
 });
 
+test("automation editing restores the ordinary design, draft and undo history", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const savedState = await page.evaluate(() => {
+    const editor = window.manager.editor;
+    return {
+      document: structuredClone(editor.document),
+      undo: structuredClone(editor.undoStack),
+      selected: editor.selected,
+      dirty: editor.dirty,
+    };
+  });
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  expect(
+    await page.evaluate(() => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    }),
+  ).toBe(true);
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  const restored = await page.evaluate(() => {
+    const editor = window.manager.editor;
+    return {
+      document: editor.document,
+      undo: editor.undoStack,
+      selected: editor.selected,
+      dirty: editor.dirty,
+    };
+  });
+  expect(restored).toEqual(savedState);
+  await expect(page.locator(".el")).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+});
+
+test("imports and repeatedly saves only the selected automation payload", async ({
+  page,
+}) => {
+  const posts = [];
+  let savedConfig;
+  let reads = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      savedConfig = route.request().postDataJSON();
+      posts.push(savedConfig);
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    if (savedConfig) {
+      if (++reads === 2) {
+        savedConfig.alias = "Schedule changed elsewhere";
+        savedConfig.description = "Updated after import";
+        savedConfig.triggers[0].at = "08:00:00";
+        savedConfig.conditions[0].state = "on";
+        savedConfig.actions[0].data.message = "Updated elsewhere";
+      }
+      await route.fulfill({ json: savedConfig });
+      return;
+    }
+    const response = await route.fetch();
+    savedConfig = await response.json();
+    reads++;
+    await route.fulfill({ response, json: savedConfig });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Tag", { exact: true })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Sensor templates", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Send to tag", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await expect.poll(() => posts.length).toBe(1);
+  expect(posts[0].alias).toBe("Schedule changed elsewhere");
+  expect(posts[0].description).toBe("Updated after import");
+  expect(posts[0].triggers).toEqual([{ trigger: "time", at: "08:00:00" }]);
+  expect(posts[0].conditions).toEqual([
+    {
+      condition: "state",
+      entity_id: "binary_sensor.window",
+      state: "on",
+    },
+  ]);
+  expect(posts[0].actions[0]).toEqual({
+    action: "persistent_notification.create",
+    data: { title: "Schedule", message: "Updated elsewhere" },
+  });
+  expect(posts[0].actions[1].target).toEqual({ device_id: "demo-device-0" });
+  expect(posts[0].actions[1].data.background).toBe("white");
+  expect(posts[0].actions[1].data.payload).toHaveLength(2);
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect.poll(() => posts.length).toBe(2);
+  expect(posts[1].actions[0]).toEqual(posts[0].actions[0]);
+  expect(posts[1].actions[1].data.payload).toHaveLength(3);
+});
+
+test("finds matching write actions inside nested saved automation sequences", async ({
+  page,
+}) => {
+  const paths = await page.evaluate(() =>
+    window.manager.findWriteActions(
+      {
+        actions: [
+          {
+            action: "ble_esl.write",
+            alias: "Direct",
+            target: { device_id: ["tag-device"] },
+            data: { payload: [] },
+          },
+          {
+            choose: [
+              {
+                sequence: [
+                  {
+                    action: "ble_esl.write",
+                    alias: "Nested",
+                    target: { entity_id: ["text.tag_alias"] },
+                    data: { payload: [] },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            action: "ble_esl.write",
+            target: { device_id: "other-device" },
+            data: { payload: [{ entity_id: "text.tag_alias" }] },
+          },
+          {
+            service: "ble_esl.write",
+            entity_id: "text.tag_alias",
+            data: { payload: [] },
+          },
+          {
+            action: "ble_esl.write",
+            data: { device_id: "tag-device", payload: [] },
+          },
+          {
+            action: "ble_esl.write",
+            target: { device_id: "other-device" },
+            data: { device_id: "tag-device", payload: [] },
+          },
+          {
+            action: "ble_esl.write",
+            target: { entity_id: "text.other" },
+            entity_id: "text.tag_alias",
+            data: { payload: [] },
+          },
+        ],
+      },
+      { device_id: "tag-device", entity_ids: ["text.tag_alias"] },
+    ),
+  );
+  expect(paths.matches.map((item) => item.label)).toEqual([
+    "Direct",
+    "Nested",
+    "ble_esl.write (3)",
+    "ble_esl.write (4)",
+    "ble_esl.write (5)",
+  ]);
+  expect(paths.matches.map((item) => item.path)).toEqual([
+    ["actions", 0],
+    ["actions", 1, "choose", 0, "sequence", 0],
+    ["actions", 3],
+    ["actions", 4],
+    ["actions", 6],
+  ]);
+  expect(paths.unsupported).toEqual([]);
+});
+
+test("does not infer target identity from payload and reports unsupported target scopes", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() =>
+    window.manager.findWriteActions(
+      {
+        actions: [
+          {
+            action: "ble_esl.write",
+            target: { device_id: "other-device" },
+            data: { payload: [{ device_id: "tag-device" }] },
+          },
+          {
+            action: "ble_esl.write",
+            target: { area_id: "office" },
+            data: { payload: [] },
+          },
+          {
+            action: "ble_esl.write",
+            target: {
+              device_id: ["tag-device", "{{ states('sensor.target') }}"],
+            },
+            data: { payload: [] },
+          },
+        ],
+      },
+      { device_id: "tag-device", entity_ids: ["text.tag_alias"] },
+    ),
+  );
+  expect(result.matches).toEqual([]);
+  expect(result.unsupported).toHaveLength(2);
+});
+
+test("edits a unique direct match while preserving unrelated unresolved targets", async ({
+  page,
+}) => {
+  let savedConfig;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      savedConfig = route.request().postDataJSON();
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    const response = await route.fetch();
+    const config = await response.json();
+    config.actions.push({
+      action: "ble_esl.write",
+      target: { area_id: "unrelated_area" },
+      data: { payload: [{ type: "text", value: "Untouched" }] },
+    });
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  expect(savedConfig.actions.at(-1)).toEqual({
+    action: "ble_esl.write",
+    target: { area_id: "unrelated_area" },
+    data: { payload: [{ type: "text", value: "Untouched" }] },
+  });
+});
+
+test("refuses to save when the automation changed after import", async ({
+  page,
+}) => {
+  let reads = 0;
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      posts++;
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    const response = await route.fetch();
+    const config = await response.json();
+    if (++reads === 2)
+      config.actions[1].data.payload[0].value = "Changed elsewhere";
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "selected write action changed since import",
+  );
+  expect(posts).toBe(0);
+});
+
+test("keeps the current design when an automation payload has unsupported elements", async ({
+  page,
+}) => {
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    const response = await route.fetch();
+    const config = await response.json();
+    config.actions[1].data.payload = [{ type: "future_unsupported_kind" }];
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("alert")).toContainText(
+    "cannot be represented exactly",
+  );
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".el")).toHaveCount(0);
+});
+
+test("does not import an unsupported automation background", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") posts++;
+    const response = await route.fetch();
+    const config = await response.json();
+    config.actions[1].data.background = "purple";
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("alert")).toContainText(
+    "background is not supported",
+  );
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+  expect(posts).toBe(0);
+});
+
+test("does not report a background-only edit as saved to an automation", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") posts++;
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.document.background = "black";
+    editor.edited(false);
+  });
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Background is not part of the automation payload",
+  );
+  expect(posts).toBe(0);
+});
+
+test("does not import a delayed automation response after leaving its ESL", async ({
+  page,
+}) => {
+  let started;
+  const requestStarted = new Promise((resolve) => (started = resolve));
+  let release;
+  const delayed = new Promise((resolve) => (release = resolve));
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    started();
+    await delayed;
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await requestStarted;
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="edit"][data-entry="demo-discovery"]')
+    .click();
+  release();
+  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+    "demo-discovery",
+  );
+  await expect(page.locator(".el")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+});
+
+test("does not apply a delayed import after returning to the same ESL normally", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    const prepare = editor.prepareAutomationPayload.bind(editor);
+    window.pendingImports = [];
+    editor.prepareAutomationPayload = (...args) =>
+      new Promise((resolve, reject) =>
+        window.pendingImports.push({ args, resolve, reject, prepare }),
+      );
+    window.manager.editAutomation("demo-writable", "automation.morning");
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.pendingImports.length))
+    .toBe(1);
+  await page.keyboard.press("Escape");
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  const before = await page.evaluate(() =>
+    JSON.stringify(window.manager.editor.document),
+  );
+  await page.evaluate(() => {
+    const pending = window.pendingImports[0];
+    pending.prepare(...pending.args).then(pending.resolve, pending.reject);
+  });
+  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+    "demo-writable",
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.manager.editor._automationSaveMode))
+    .toBe(false);
+  expect(
+    await page.evaluate(() => JSON.stringify(window.manager.editor.document)),
+  ).toBe(before);
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+});
+
+test("ignores a delayed YAML import after restoring the prior editor session", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const ordinary = await page.evaluate(() =>
+    structuredClone(window.manager.editor.document),
+  );
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await page.getByRole("button", { name: "Import YAML", exact: true }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog.getByLabel("YAML to import").fill("- type: text\n  value: Late");
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    const api = editor.api.bind(editor);
+    editor.api = (action, args) =>
+      action === "import_yaml"
+        ? new Promise((resolve) => (window.resolveYamlImport = resolve))
+        : api(action, args);
+  });
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.resolveYamlImport)))
+    .toBe(true);
+  await page.evaluate(() =>
+    window.manager.shadowRoot
+      .querySelector('[data-action="dashboard"]')
+      .click(),
+  );
+  const restored = await page.evaluate(() =>
+    structuredClone(window.manager.editor.document),
+  );
+  await page.evaluate(() =>
+    window.resolveYamlImport({
+      elements: [
+        {
+          id: "late-import",
+          type: "text",
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 24,
+          text: "Late",
+        },
+      ],
+      issues: [],
+      background: "white",
+    }),
+  );
+  await expect(page.locator("ble-esl-import-dialog")).toHaveCount(0);
+  expect(restored).toEqual(ordinary);
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
+    ordinary,
+  );
+});
+
+test("cancelled YAML import does not mutate the design when its response arrives", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Import YAML", exact: true }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog.getByLabel("YAML to import").fill("- type: text\n  value: Late");
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    const api = editor.api.bind(editor);
+    editor.api = (action, args) =>
+      action === "import_yaml"
+        ? new Promise((resolve) => (window.resolveYamlImport = resolve))
+        : api(action, args);
+  });
+  const original = await page.evaluate(() =>
+    structuredClone(window.manager.editor.document),
+  );
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect
+    .poll(() => page.evaluate(() => Boolean(window.resolveYamlImport)))
+    .toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("ble-esl-import-dialog")).toHaveCount(0);
+  await page.evaluate(() =>
+    window.resolveYamlImport({
+      elements: [
+        {
+          id: "cancelled-import",
+          type: "text",
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 24,
+          text: "Late",
+        },
+      ],
+      issues: [],
+      background: "white",
+    }),
+  );
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
+    original,
+  );
+});
+
+test("ignores a delayed component conversion after restoring another session", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const ordinary = await page.evaluate(() =>
+    structuredClone(window.manager.editor.document),
+  );
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    const api = editor.api.bind(editor);
+    window.pendingConversions = [];
+    editor.api = (action, args) =>
+      action === "convert"
+        ? new Promise((resolve) => window.pendingConversions.push(resolve))
+        : api(action, args);
+    editor.convertSelected();
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.pendingConversions.length))
+    .toBe(1);
+  await page.evaluate(() =>
+    window.manager.shadowRoot
+      .querySelector('[data-action="dashboard"]')
+      .click(),
+  );
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
+    ordinary,
+  );
+  await page.evaluate(() => {
+    window.manager.editor.convertSelected();
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.pendingConversions.length))
+    .toBe(2);
+  await page.evaluate(() =>
+    window.pendingConversions[0]({
+      elements: [
+        {
+          id: "late-conversion",
+          type: "text",
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 24,
+          text: "Late",
+        },
+      ],
+      issues: [],
+      different_pixels: 0,
+    }),
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.manager.editor.converting))
+    .toBe(true);
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
+    ordinary,
+  );
+  await page.evaluate(() =>
+    window.pendingConversions[1]({
+      elements: [
+        {
+          id: "current-conversion",
+          type: "text",
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 24,
+          text: "Current",
+        },
+      ],
+      issues: [],
+      different_pixels: 0,
+    }),
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.manager.editor.converting))
+    .toBe(false);
+});
+
+test("a newer same-ESL import wins over an older delayed import", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    const prepare = editor.prepareAutomationPayload.bind(editor);
+    window.pendingImports = [];
+    editor.prepareAutomationPayload = (...args) =>
+      new Promise((resolve, reject) =>
+        window.pendingImports.push({ args, resolve, reject, prepare }),
+      );
+    window.manager.editAutomation("demo-writable", "automation.morning");
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.pendingImports.length))
+    .toBe(1);
+  await page.evaluate(() => {
+    window.manager.editAutomation("demo-writable", "automation.temperature");
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.pendingImports.length))
+    .toBe(2);
+  await page.evaluate(() => {
+    const pending = window.pendingImports[1];
+    pending.prepare(...pending.args).then(pending.resolve, pending.reject);
+  });
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    const pending = window.pendingImports[0];
+    pending.prepare(...pending.args).then(pending.resolve, pending.reject);
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.manager.automationEditSource?.entity_id),
+    )
+    .toBe("automation.temperature");
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+});
+
+test("leaving automation edit before cold boot unlocks the editor", async ({
+  page,
+}) => {
+  const savedDocument = {
+    version: 1,
+    background: "white",
+    elements: [
+      {
+        id: "saved-before-boot",
+        type: "text",
+        x: 8,
+        y: 8,
+        width: 90,
+        height: 32,
+        text: "Saved before boot",
+        font_size: 18,
+        color: "black",
+      },
+    ],
+  };
+  await page.evaluate((document) => {
+    window.manager.tags.find(
+      (tag) => tag.entry_id === "demo-writable",
+    ).document = document;
+  }, savedDocument);
+  await page.route("**/frontend/icons.json", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.evaluate((document) => {
+    const editor = window.manager.editor;
+    const load = editor.load.bind(editor);
+    editor.load = (tag) => {
+      if (tag.entry_id === "demo-writable") tag.document = document;
+      return load(tag);
+    };
+    window.manager.editAutomation("demo-writable", "automation.morning");
+  }, savedDocument);
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+    "demo-writable",
+  );
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
+    savedDocument,
+  );
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toHaveCount(0);
+});
+
+test("keeps edits made while an automation save is in flight dirty", async ({
+  page,
+}) => {
+  let started;
+  const requestStarted = new Promise((resolve) => (started = resolve));
+  let release;
+  const delayed = new Promise((resolve) => (release = resolve));
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      started();
+      await delayed;
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await requestStarted;
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  release();
+  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+});
+
+test("does not save a newer same-ESL import after an older save waited on uploads", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") posts++;
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    window.releaseUploadWait = null;
+    window.manager.editor.pendingUploads.add(
+      new Promise((resolve) => (window.releaseUploadWait = resolve)),
+    );
+  });
+  await page.getByRole("button", { name: "Save automation" }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.evaluate(() => {
+    window.manager.editAutomation("demo-writable", "automation.temperature");
+  });
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.manager.automationEditSource?.entity_id),
+    )
+    .toBe("automation.temperature");
+  await page.evaluate(() => window.releaseUploadWait());
+  await page.waitForTimeout(100);
+  expect(posts).toBe(0);
+  await expect(
+    page.getByRole("button", { name: "Save automation" }),
+  ).toBeVisible();
+});
+
+test("rebases to a uniquely matched write action after its path shifts", async ({
+  page,
+}) => {
+  let reads = 0;
+  let savedConfig;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      savedConfig = route.request().postDataJSON();
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    const response = await route.fetch();
+    const config = await response.json();
+    if (++reads === 2)
+      config.actions.splice(1, 0, {
+        action: "persistent_notification.create",
+        data: { message: "Added elsewhere" },
+      });
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText("Automation saved.");
+  expect(savedConfig.actions[0].action).toBe("persistent_notification.create");
+  expect(savedConfig.actions[1].data.message).toBe("Added elsewhere");
+  expect(savedConfig.actions[2].action).toBe("ble_esl.write");
+  expect(savedConfig.actions[2].data.payload).toHaveLength(2);
+  expect(savedConfig.actions[2].data.payload[0].value).toBe(
+    "Morning information",
+  );
+});
+
+for (const [caseName, mutate] of [
+  ["deleted", (config) => config.actions.splice(1, 1)],
+  [
+    "retargeted",
+    (config) => (config.actions[1].target.device_id = "other-device"),
+  ],
+]) {
+  test(`does not POST when the selected write action is ${caseName}`, async ({
+    page,
+  }) => {
+    let reads = 0;
+    let posts = 0;
+    await page.route("**/api/config/automation/config/*", async (route) => {
+      if (route.request().method() === "POST") {
+        posts++;
+        await route.fulfill({ json: { result: "ok" } });
+        return;
+      }
+      const response = await route.fetch();
+      const config = await response.json();
+      if (++reads === 2) mutate(config);
+      await route.fulfill({ response, json: config });
+    });
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    const dialog = page.getByRole("dialog", { name: "Connected automations" });
+    await dialog
+      .getByRole("button", { name: "Edit design", exact: true })
+      .first()
+      .click();
+    await expect(page.locator(".el")).toHaveCount(1);
+    await page.getByRole("button", { name: "Save automation" }).click();
+    await expect(page.getByRole("alert")).toContainText(
+      "selected write action changed since import",
+    );
+    expect(posts).toBe(0);
+  });
+}
+
+test("does not POST when export reports a blocking validation error", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") posts++;
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.evaluate(() => {
+    window.manager.editor.api = async () => ({
+      validation_errors: ["payload[0].width: invalid numeric value"],
+      payload_data: [{ type: "text" }],
+      writable: true,
+    });
+  });
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "cannot be saved as a payload",
+  );
+  expect(posts).toBe(0);
+});
+
+test("does not POST a malformed latest automation configuration", async ({
+  page,
+}) => {
+  let reads = 0;
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      posts++;
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    if (++reads === 2) {
+      await route.fulfill({ json: { id: "esl_schedule", actions: {} } });
+      return;
+    }
+    await route.continue();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "latest automation configuration is malformed",
+  );
+  expect(posts).toBe(0);
+});
+
+test("blocks saving when an unchanged selected action becomes ambiguous", async ({
+  page,
+}) => {
+  let reads = 0;
+  let posts = 0;
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() === "POST") {
+      posts++;
+      await route.fulfill({ json: { result: "ok" } });
+      return;
+    }
+    const response = await route.fetch();
+    const config = await response.json();
+    if (++reads === 2) config.actions.push(structuredClone(config.actions[1]));
+    await route.fulfill({ response, json: config });
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
+    .getByRole("button", { name: "Edit design", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await page.getByRole("button", { name: "Save automation" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "selected write action changed since import",
+  );
+  expect(posts).toBe(0);
+});
+
 test("dashboard is responsive and handles missing states", async ({ page }) => {
   await page.screenshot({
     path: "artifacts/manager-desktop.png",

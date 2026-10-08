@@ -21,15 +21,17 @@ Choose **Edit design** to open the Designer and **Dashboard** to return without 
 
 In the Designer toolbar, choose **Create automation**, review the current design's action and name, then choose **Create automation** in the dialog. This creates a new Home Assistant automation with `ble_esl.write` targeted at the current ESL's registered device. Unsaved edits are included. Triggers and conditions are empty; use **Edit automation** to configure when it runs.
 
-The automation contains a copy of the exported action. Later designer edits do not change that copy. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
+The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit design** and use **Save automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
 
 ## Existing automation associations
 
 Open **Automations** on a card or **Connected automations** above the Designer. Cards show **Link automation** for zero associations, the name and state for one, or the count and active count for several. The list opens beside the card on desktop and as a bottom sheet on mobile. Each available automation name links to its HA editor.
 
-Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Payload YAML** to supply the design to an automation.
+Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
+
+Choose **Edit design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
 
 - [Making a design](#making-a-design)
 - [Payload YAML: using the design in an automation](#payload-yaml)
