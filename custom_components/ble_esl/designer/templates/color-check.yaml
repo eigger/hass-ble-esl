@@ -15,6 +15,15 @@ parameters:
     label: { en: Font, ko: 글꼴 }
 
 layouts:
+  "250x128":
+    - {type: rectangle, x_start: 6, y_start: 24, x_end: 61, y_end: 104, fill: black, outline: black}
+    - {type: text, value: BLACK, x: 33, y: 56, size: 11, color: white, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 66, y_start: 24, x_end: 121, y_end: 104, fill: white, outline: black}
+    - {type: text, value: WHITE, x: 93, y: 56, size: 11, color: black, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 126, y_start: 24, x_end: 181, y_end: 104, fill: red, outline: black}
+    - {type: text, value: RED, x: 153, y: 56, size: 11, color: white, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 186, y_start: 24, x_end: 241, y_end: 104, fill: yellow, outline: black}
+    - {type: text, value: YELLOW, x: 213, y: 56, size: 11, color: black, anchor: mt, font: "${font}"}
   "400x300":
     - {type: rectangle, x_start: 10, y_start: 65, x_end: 99, y_end: 205, fill: black, outline: black}
     - {type: text, value: BLACK, x: 54, y: 115, size: 16, color: white, anchor: mt, font: "${font}"}

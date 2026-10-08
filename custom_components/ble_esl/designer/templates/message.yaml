@@ -4,8 +4,8 @@ name:
   en: Message
   ko: 메시지
 description:
-  en: One large, centred line of text that fits the display.
-  ko: 화면에 맞춰 가운데 정렬되는 큰 글자 한 줄입니다.
+  en: Large centred text that shrinks to fit the display (one line by default).
+  ko: 화면에 맞춰 줄어드는 가운데 정렬 큰 글자입니다(기본 한 줄).
 background: white
 
 parameters:
@@ -19,7 +19,7 @@ parameters:
     label: { en: Text color, ko: 글자 색상 }
   lines:
     type: number
-    default: 2
+    default: 1
     min: 1
     max: 6
     label: { en: Maximum lines, ko: 최대 줄 수 }
@@ -38,7 +38,7 @@ layouts:
       width: 234
       height: 112
       color: ${color}
-      size: 200
+      size: 112
       min_size: 8
       fit: shrink
       max_lines: ${lines}

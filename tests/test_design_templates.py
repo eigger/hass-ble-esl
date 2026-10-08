@@ -340,8 +340,48 @@ def test_forbidden_characters_are_refused():
         with pytest.raises(HomeAssistantError, match="ssid"):
             resolve_parameters(wifi, {"ssid": bad}, "BWR")
     assert resolve_parameters(wifi, {"ssid": "Home Net"}, "BWR")["ssid"] == "Home Net"
+    for bad in ("a;b", "a:b", "a,b"):
+        with pytest.raises(HomeAssistantError, match="password"):
+            resolve_parameters(wifi, {"password": bad}, "BWR")
+    with pytest.raises(HomeAssistantError, match="at least 1"):
+        resolve_parameters(wifi, {"ssid": ""}, "BWR")
     built = build(wifi, 250, 128, "BWR", {"ssid": "Home", "password": "pw", "security": "WEP"})
-    assert built["payload"][2]["data"] == "WIFI:T:WEP;S:Home;P:pw;;"
+    assert built["payload"][2]["data"] == "WIFI:T:WEP;S:Home;P:pw;H:false;;"
+    hidden = build(wifi, 250, 128, "BWR", {"security": "SAE", "hidden": "true"})
+    assert hidden["payload"][2]["data"] == "WIFI:T:SAE;S:ssid;P:password;H:true;;"
+
+
+def _frame(item):
+    left = item.get("x", item.get("x_start", 0))
+    top = item.get("y", item.get("y_start", 0))
+    right = item.get("x_end", left + item.get("width", 0))
+    bottom = item.get("y_end", top + item.get("height", 0))
+    return left, top, right, bottom
+
+
+@pytest.mark.parametrize("template_id", sorted(TEMPLATES))
+def test_boxes_stay_on_the_display_in_every_exact_layout(template_id):
+    template = TEMPLATES[template_id]
+    for size in template["layouts"]:
+        width, height = (int(part) for part in size.split("x"))
+        built = build(template, width, height, "BWRY")
+        assert built["scaled"] is False
+        for item in built["payload"]:
+            if item["type"] in ("text_fit", "qrcode", "rectangle"):
+                left, top, right, bottom = _frame(item)
+                assert 0 <= left < right <= width, (size, item)
+                assert 0 <= top < bottom <= height, (size, item)
+
+
+def test_wifi_text_does_not_overlap_the_qr_code():
+    for size in TEMPLATES["wifi"]["layouts"]:
+        width, height = (int(part) for part in size.split("x"))
+        items = build(TEMPLATES["wifi"], width, height, "BWR")["payload"]
+        qr = next(_frame(item) for item in items if item["type"] == "qrcode")
+        for item in items:
+            if item["type"] == "text_fit":
+                left, _, right, _ = _frame(item)
+                assert left >= qr[2] or right <= qr[0], size
 
 
 def test_message_text_and_line_count_are_applied():

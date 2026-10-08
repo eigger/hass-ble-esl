@@ -12,25 +12,31 @@ parameters:
   ssid:
     type: string
     default: ssid
+    min_length: 1
     forbidden: ";:,"
     label: { en: Network name (SSID), ko: 네트워크 이름 (SSID) }
   password:
     type: string
     default: password
     forbidden: ";:,"
-    label: { en: Password, ko: 비밀번호 }
+    label: { en: Password (ignored for nopass), ko: 비밀번호 (nopass이면 무시됨) }
   security:
     type: select
-    options: [WPA, WEP, nopass]
+    options: [WPA, SAE, WEP, nopass]
     default: WPA
-    label: { en: Security, ko: 보안 방식 }
+    label: { en: "Security (SAE is WPA3)", ko: "보안 방식 (SAE는 WPA3)" }
+  hidden:
+    type: select
+    options: ["false", "true"]
+    default: "false"
+    label: { en: Hidden network, ko: 숨겨진 네트워크 }
   title:
     type: string
     default: WIFI
     label: { en: Title, ko: 제목 }
   hint:
     type: string
-    default: 카메라로 스캔하세요
+    default: Scan to join
     label: { en: Hint, ko: 안내 문구 }
   font:
     type: font
@@ -39,52 +45,74 @@ parameters:
 
 layouts:
   "250x128":
-    - type: text
+    - type: text_fit
       value: ${title}
       font: ${font}
-      anchor: mt
-      x: 180
-      y: 20
+      x: 118
+      y: 14
+      width: 127
+      height: 44
       size: 30
+      fit: shrink
+      align: center
+      valign: middle
       color: black
-    - type: text
+    - type: text_fit
       value: ${hint}
       font: ${font}
-      anchor: mt
-      x: 180
+      x: 118
       y: 64
+      width: 127
+      height: 44
       size: 15
+      max_lines: 2
+      fit: shrink
+      align: center
+      valign: middle
       color: black
     - type: qrcode
-      data: WIFI:T:${security};S:${ssid};P:${password};;
+      data: WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;
       x: 5
       y: 10
       width: 108
       height: 108
+      boxsize: 1
+      eclevel: m
       border: 1
       color: black
   "400x300":
-    - type: text
+    - type: text_fit
       value: ${title}
       font: ${font}
-      anchor: mt
-      x: 290
-      y: 60
+      x: 210
+      y: 40
+      width: 182
+      height: 80
       size: 56
+      fit: shrink
+      align: center
+      valign: middle
       color: black
-    - type: text
+    - type: text_fit
       value: ${hint}
       font: ${font}
-      anchor: mt
-      x: 290
+      x: 210
       y: 140
+      width: 182
+      height: 80
       size: 24
+      max_lines: 2
+      fit: shrink
+      align: center
+      valign: middle
       color: black
     - type: qrcode
-      data: WIFI:T:${security};S:${ssid};P:${password};;
+      data: WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;
       x: 10
       y: 40
       width: 190
       height: 190
+      boxsize: 1
+      eclevel: m
       border: 1
       color: black
