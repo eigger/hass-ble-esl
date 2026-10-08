@@ -17,7 +17,9 @@ test("HA locale translates dashboard and automations while preserving authored n
   await expect(page.getByRole("heading", { name: "ESL 매니저" })).toBeVisible();
   const card = page.locator('[data-entry="demo-writable"]').first();
   await expect(card).toContainText("Living room");
-  await expect(card).toContainText("배터리 85%");
+  await expect(
+    card.getByRole("button", { name: "배터리 85%", exact: true }),
+  ).toBeVisible();
   await expect(card).toContainText("마지막 전송 성공");
   await expect(card).toContainText("자동화 3개");
   await expect(page.locator(".summary")).toContainText("ESL 2개");
@@ -44,7 +46,9 @@ test("HA locale translates dashboard and automations while preserving authored n
   await expect(
     page.getByRole("heading", { name: "ESL Manager" }),
   ).toBeVisible();
-  await expect(card).toContainText("Battery 85%");
+  await expect(
+    card.getByRole("button", { name: "Battery 85%", exact: true }),
+  ).toBeVisible();
 });
 
 test("locale switches retain designer history, nested modal drafts and templates", async ({
