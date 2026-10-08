@@ -12,6 +12,7 @@ The first stable release of the 1.2 series (betas 1.2.0b1 to 1.2.0b4 are listed 
 
 ### Fixed
 
+- Drop-downs in the Designer toolbar and left panel and in ESL Manager now match the buttons' height in Safari and other WebKit browsers (including the Home Assistant macOS app), which ignored the height of native drop-downs; they draw their own arrow.
 - ESL Manager's search box and filter/sort drop-downs share one height; the drop-downs are as wide as their longest option (at least 12rem), so nothing is cut off and nothing moves when the selection changes.
 - On a phone the editor bar (Dashboard, context, Connected automations) wraps instead of squeezing the context text into a one-character-wide column.
 - The Manager's sort and filter labels, the "Last successful image" caption, the automation-design buttons and headings, and the messages for importing from and saving to an automation are translated in the 11 languages that still showed them in English; "design" is used consistently in French, Italian and Brazilian Portuguese. The preview-parameter dialog strings are still partly English.
