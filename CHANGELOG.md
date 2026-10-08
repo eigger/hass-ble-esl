@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Drop-downs in the Designer toolbar and left panel and in ESL Manager now match the buttons' height in Safari and other WebKit browsers (including the Home Assistant macOS app), which ignored the height of native drop-downs; they draw their own arrow.
+
 ## 1.2.0
 
 The first stable release of the 1.2 series (betas 1.2.0b1 to 1.2.0b4 are listed below).
