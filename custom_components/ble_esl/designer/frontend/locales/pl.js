@@ -554,8 +554,8 @@ export default {
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "Wyzwalacze szablonu są uwzględnione. Zmień je w Home Assistant po utworzeniu automatyzacji.",
   "Save current design as a template": "Zapisz bieżący projekt jako szablon",
-  "Template name": "Nazwa szablonu",
   "Save as template": "Zapisz jako szablon",
   "My template": "Mój szablon",
   "Saved template {name}.": "Zapisano szablon {name}.",
+  "Design template name": "Nazwa szablonu projektu",
 };

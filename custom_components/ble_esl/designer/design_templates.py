@@ -157,6 +157,9 @@ def load_templates(directory=TEMPLATE_DIR):
     templates = {}
     for path in sorted(Path(directory).glob("*.yaml")):
         try:
+            # A user folder is untrusted: look at the size before reading.
+            if path.stat().st_size > MAX_TEMPLATE_BYTES:
+                raise ValueError("template is too large")
             template = parse_template(path.read_text(encoding="utf-8"))
         except (OSError, ValueError, vol.Invalid) as err:
             _LOGGER.warning("Ignoring design template %s: %s", path.name, err)
@@ -164,7 +167,7 @@ def load_templates(directory=TEMPLATE_DIR):
         if template["id"] in templates:
             _LOGGER.warning("Ignoring design template %s: duplicate id", path.name)
             continue
-        templates[template["id"]] = template
+        templates[template["id"]] = {**template, "file": path.name}
     return templates
 
 
@@ -180,11 +183,58 @@ def load_all(user_dir=None):
     return templates
 
 
+ID_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,39}")
+
+
 def slug(name):
-    """A template id from a name: ASCII letters and digits only; ``design`` if none."""
-    text = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
-    text = text[:40].strip("_")
+    """A template id from a name: ASCII letters and digits only, at most 37 characters.
+
+    Names without any become ``design``; the room left is for ``_2`` style suffixes.
+    """
+    text = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:30].strip("_")
     return text if text and text[0].isalpha() else f"design_{text}".strip("_")
+
+
+def check_name(name):
+    """A template name, trimmed; ``HomeAssistantError`` when it cannot be used."""
+    name = (name or "").strip()
+    if not name or len(name) > 80 or any(ord(char) < 32 for char in name):
+        raise HomeAssistantError("Give the template a name of up to 80 characters")
+    return name
+
+
+def pick_id(name, template_id, overwrite, templates, exists):
+    """The id and file name for a design saved by the user.
+
+    ``templates`` are the loaded ones (bundled and user); ``exists(file_name)``
+    says whether a file is already in the user folder, so a file that is there
+    but did not load is never overwritten by accident. Without an explicit
+    ``template_id`` a taken id gets a ``_2``, ``_3``… suffix.
+    """
+    bundled = {key for key, value in templates.items() if value.get("source") == "bundled"}
+    if template_id:
+        if not ID_PATTERN.fullmatch(template_id):
+            raise HomeAssistantError("A template id is lowercase letters, digits and underscores")
+        if template_id in bundled:
+            raise HomeAssistantError(f"{template_id} is the id of a bundled template")
+        file_name = f"{template_id}.yaml"
+        loaded = templates.get(template_id)
+        if loaded and loaded.get("file") not in (None, file_name):
+            raise HomeAssistantError(f"Template {template_id} is defined in {loaded['file']}")
+        if (loaded or exists(file_name)) and not overwrite:
+            raise HomeAssistantError(f"Template {template_id} already exists")
+        return template_id, file_name
+    base = slug(name)
+    candidate = base
+    for number in range(2, 100):
+        if (
+            candidate not in bundled
+            and candidate not in templates
+            and not exists(f"{candidate}.yaml")
+        ):
+            return candidate, f"{candidate}.yaml"
+        candidate = f"{base}_{number}"
+    raise HomeAssistantError("Too many templates share that name")
 
 
 def template_text(template_id, name, width, height, background, payload):

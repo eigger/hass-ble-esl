@@ -556,8 +556,8 @@ export default {
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "Die Auslöser der Vorlage sind enthalten. Ändern Sie sie nach dem Erstellen in Home Assistant.",
   "Save current design as a template": "Aktuelles Design als Vorlage speichern",
-  "Template name": "Name der Vorlage",
   "Save as template": "Als Vorlage speichern",
   "My template": "Meine Vorlage",
   "Saved template {name}.": "Vorlage {name} gespeichert.",
+  "Design template name": "Name der Design-Vorlage",
 };

@@ -443,6 +443,9 @@ async def test_saving_refuses_bad_names_ids_and_references(hass, wolink_entry, t
             await designer.save_design_template(wolink_entry, _text_document(), name)
     with pytest.raises(HomeAssistantError, match="bundled"):
         await designer.save_design_template(wolink_entry, _text_document(), "Date", "date")
+    # Saved by name only, a bundled id is simply taken: the new one gets a suffix.
+    named = await designer.save_design_template(wolink_entry, _text_document(), "Date")
+    assert named["id"] == "date_2"
     with pytest.raises(HomeAssistantError, match="cannot be saved"):
         await designer.save_design_template(wolink_entry, _text_document("${x}"), "Ref")
     with pytest.raises(HomeAssistantError, match="lowercase"):
@@ -470,3 +473,65 @@ def test_slug_makes_a_valid_id():
     assert slug("날짜") == "design"
     assert slug("3 days") == "design_3_days"
     assert parse_template(MINIMAL.replace("id: sample", f"id: {slug('3 days')}"))
+
+
+async def test_saving_never_overwrites_files_that_did_not_load(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "draft.yaml").write_text("template: 1\nid: draft\n")  # invalid, still being edited
+    (folder / "draft_2.yaml").write_text("template: 1\n")
+    saved = await designer.save_design_template(wolink_entry, _text_document(), "Draft")
+    assert saved["id"] == "draft_3"
+    assert (folder / "draft.yaml").read_text() == "template: 1\nid: draft\n"
+    with pytest.raises(HomeAssistantError, match="already exists"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Draft", template_id="draft"
+        )
+
+
+async def test_id_defined_in_another_file_is_not_taken_over(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    folder = designer.user_template_dir
+    folder.mkdir(parents=True)
+    (folder / "aaa.yaml").write_text(MINIMAL)
+    await designer.reload_design_templates()
+    assert designer.design_templates["sample"]["file"] == "aaa.yaml"
+    with pytest.raises(HomeAssistantError, match=r"aaa\.yaml"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Sample", template_id="sample", overwrite=True
+        )
+    # By name the taken id just gets a suffix, so nothing is hidden by a duplicate.
+    assert (await designer.save_design_template(wolink_entry, _text_document(), "Sample"))[
+        "id"
+    ] == "sample_2"
+
+
+async def test_concurrent_saves_get_distinct_ids(hass, wolink_entry, tmp_path):
+    import asyncio
+
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    results = await asyncio.gather(
+        *(designer.save_design_template(wolink_entry, _text_document(), "Same") for _ in range(4))
+    )
+    assert sorted(item["id"] for item in results) == ["same", "same_2", "same_3", "same_4"]
+    assert not list(designer.user_template_dir.glob("*.tmp"))
+
+
+def test_long_names_keep_ids_valid():
+    from custom_components.ble_esl.designer.design_templates import ID_PATTERN, pick_id, slug
+
+    for name in ("9" * 50, "a" * 80, "날짜"):
+        base = slug(name)
+        assert ID_PATTERN.fullmatch(f"{base}_99"), name
+        picked, _ = pick_id(name, None, False, {}, lambda file_name: False)
+        assert ID_PATTERN.fullmatch(picked)
+
+
+def test_oversized_user_file_is_skipped_unread(tmp_path, caplog):
+    (tmp_path / "big.yaml").write_text("x" * (256 * 1024 + 1))
+    assert load_templates(tmp_path) == {}
+    assert "too large" in caplog.text

@@ -547,8 +547,8 @@ export default {
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "템플릿의 실행 조건이 포함되어 있습니다. 자동화를 만든 뒤 Home Assistant에서 변경할 수 있습니다.",
   "Save current design as a template": "현재 디자인을 템플릿으로 저장",
-  "Template name": "템플릿 이름",
   "Save as template": "템플릿으로 저장",
   "My template": "내 템플릿",
   "Saved template {name}.": "템플릿 {name}을(를) 저장했습니다.",
+  "Design template name": "디자인 템플릿 이름",
 };

@@ -22,10 +22,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer import _preview_variable_map
 from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
+    check_name,
     describe as describe_template,
     load_templates,
     parse_template,
-    slug,
+    pick_id,
     template_text,
 )
 from custom_components.ble_esl.designer.export import automation_draft, export_yaml, plain
@@ -374,26 +375,31 @@ async def handle(request):
             {"elements": elements, "issues": issues, "different_pixels": different}
         )
     if msg["action"] == "save_design_template":
-        name = (msg.get("name") or "").strip()
-        if not name or len(name) > 80:
-            return web.Response(status=400, text="Give the template a name of up to 80 characters")
-        base, number = slug(name), 2
-        taken = set(DESIGN_TEMPLATES)
-        unique = base
-        while unique in taken:
-            unique, number = f"{base}_{number}", number + 1
-        forecasts = await demo_forecasts()
-        payload = live_payload(HASS, document, TEMPLATES, forecasts)
-        if payload is None:
-            payload = compile_payload(HASS, document, TEMPLATES, forecasts)
         try:
+            name = check_name(msg.get("name"))
+            template_id, _ = pick_id(
+                name,
+                msg.get("template_id"),
+                msg.get("overwrite", False),
+                DESIGN_TEMPLATES,
+                lambda candidate: False,
+            )
+            forecasts = await demo_forecasts()
+            payload = live_payload(HASS, document, TEMPLATES, forecasts)
+            if payload is None:
+                payload = compile_payload(HASS, document, TEMPLATES, forecasts)
             text = template_text(
-                unique, name, preset.width, preset.height, document["background"], plain(payload)
+                template_id,
+                name,
+                preset.width,
+                preset.height,
+                document["background"],
+                plain(payload),
             )
         except HomeAssistantError as err:
             return web.Response(status=400, text=str(err))
-        DESIGN_TEMPLATES[unique] = {**parse_template(text), "source": "user"}
-        return web.json_response({"id": unique, "yaml": text})
+        DESIGN_TEMPLATES[template_id] = {**parse_template(text), "source": "user"}
+        return web.json_response({"id": template_id, "yaml": text})
     if msg["action"] == "save":
         tag["document"] = document
         return web.json_response(document)

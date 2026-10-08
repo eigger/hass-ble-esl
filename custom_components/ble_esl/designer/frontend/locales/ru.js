@@ -555,8 +555,8 @@ export default {
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "Триггеры шаблона включены. Измените их в Home Assistant после создания автоматизации.",
   "Save current design as a template": "Сохранить текущий дизайн как шаблон",
-  "Template name": "Название шаблона",
   "Save as template": "Сохранить как шаблон",
   "My template": "Мой шаблон",
   "Saved template {name}.": "Шаблон {name} сохранён.",
+  "Design template name": "Название шаблона дизайна",
 };

@@ -556,8 +556,8 @@ export default {
     "Se incluyen los disparadores de la plantilla. Cámbialos en Home Assistant después de crear la automatización.",
   "Save current design as a template":
     "Guardar el diseño actual como plantilla",
-  "Template name": "Nombre de la plantilla",
   "Save as template": "Guardar como plantilla",
   "My template": "Mi plantilla",
   "Saved template {name}.": "Plantilla {name} guardada.",
+  "Design template name": "Nombre de la plantilla de diseño",
 };

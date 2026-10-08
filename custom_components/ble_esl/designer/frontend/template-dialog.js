@@ -126,7 +126,7 @@ export class TemplateDialog extends HTMLElement {
     }
     if (!this.templates) return "";
     const save = this.panel.document.elements.length
-      ? `<h3>${t(hass, "Save current design as a template")}</h3><div class="save"><input type="text" data-save-name maxlength="80" aria-label="${t(hass, "Template name")}" placeholder="${t(hass, "Template name")}" value="${esc(this.saveName || "")}"><button type="button" data-save>${t(hass, "Save as template")}</button></div>`
+      ? `<h3>${t(hass, "Save current design as a template")}</h3><div class="save"><input type="text" data-save-name maxlength="80" aria-label="${t(hass, "Design template name")}" placeholder="${t(hass, "Design template name")}" value="${esc(this.saveName || "")}"><button type="button" data-save>${t(hass, "Save as template")}</button></div>`
       : "";
     if (!this.templates.length)
       return `<p class="muted">${t(hass, "No design templates fit this display.")}</p>${save}`;
@@ -212,6 +212,8 @@ export class TemplateDialog extends HTMLElement {
         this.templates = await this.panel.api("design_templates", {
           entry_id: this.context.entryId,
         });
+        const input = this.shadowRoot.querySelector("[data-save-name]");
+        if (input) input.value = "";
         this.saveName = "";
         this.note = {
           key: "Saved template {name}.",

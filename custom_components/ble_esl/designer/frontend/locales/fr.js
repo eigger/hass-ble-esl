@@ -554,8 +554,8 @@ export default {
     "Les déclencheurs du modèle sont inclus. Modifiez-les dans Home Assistant après avoir créé l'automatisation.",
   "Save current design as a template":
     "Enregistrer le design actuel comme modèle",
-  "Template name": "Nom du modèle",
   "Save as template": "Enregistrer comme modèle",
   "My template": "Mon modèle",
   "Saved template {name}.": "Modèle {name} enregistré.",
+  "Design template name": "Nom du modèle de design",
 };

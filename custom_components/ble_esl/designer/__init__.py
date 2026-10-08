@@ -6,8 +6,9 @@ from functools import partial
 from io import BytesIO
 import json
 import math
+import os
 from pathlib import Path
-import re
+import tempfile
 import time
 
 from homeassistant.components import frontend, panel_custom, websocket_api
@@ -25,9 +26,10 @@ from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .design_templates import (
     build as build_template,
+    check_name,
     describe as describe_template,
     load_all as load_design_templates,
-    slug as template_slug,
+    pick_id,
     template_text,
 )
 from .export import automation_draft, export_yaml, plain
@@ -98,6 +100,7 @@ class Designer:
         self.forecast_cache = {}
         self.locks = {}
         self.render_lock = asyncio.Lock()
+        self.template_lock = asyncio.Lock()
         self.panel_registered = False
 
     def entry(self, entry_id):
@@ -296,50 +299,48 @@ class Designer:
 
     async def save_design_template(self, entry, document, name, template_id=None, overwrite=False):
         """Keep the current design as a template in the user's template folder."""
-        name = (name or "").strip()
-        if not name or len(name) > 80 or any(ord(char) < 32 for char in name):
-            raise HomeAssistantError("Give the template a name of up to 80 characters")
+        name = check_name(name)
         exported = await self.export(entry, document)
         if exported["validation_errors"]:
             raise HomeAssistantError(
                 "Fix the design first: " + "; ".join(exported["validation_errors"][:3])
             )
         preset = self.preset(entry)
-        base = template_id or template_slug(name)
-        if not re.fullmatch(r"[a-z][a-z0-9_]{0,39}", base):
-            raise HomeAssistantError("A template id is lowercase letters, digits and underscores")
-        bundled = {
-            key for key, value in self.design_templates.items() if value["source"] == "bundled"
-        }
-        if base in bundled:
-            raise HomeAssistantError(f"{base} is the id of a bundled template")
-        path = self.user_template_dir / f"{base}.yaml"
-        exists = await self.hass.async_add_executor_job(path.exists)
-        if exists and not overwrite:
-            if template_id:
-                raise HomeAssistantError(f"Template {base} already exists")
-            taken = set(self.design_templates)
-            number = 2
-            while f"{base}_{number}" in taken:
-                number += 1
-            base = f"{base}_{number}"
-            path = self.user_template_dir / f"{base}.yaml"
-        text = template_text(
-            base,
-            name,
-            preset.width,
-            preset.height,
-            validate(document, preset)["background"],
-            exported["payload_data"],
-        )
+        background = validate(document, preset)["background"]
 
-        def write():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(text, encoding="utf-8")
+        def write(template_id, file_name):
+            folder = self.user_template_dir
+            folder.mkdir(parents=True, exist_ok=True)
+            text = template_text(
+                template_id, name, preset.width, preset.height, background, exported["payload_data"]
+            )
+            # Written beside the target and moved into place: a gallery reload
+            # never reads half a file, and a symlink at the target is replaced.
+            with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", dir=folder, suffix=".tmp", delete=False
+            ) as handle:
+                handle.write(text)
+            os.replace(handle.name, folder / file_name)
+            return text
 
-        await self.hass.async_add_executor_job(write)
-        await self.reload_design_templates()
-        return {"id": base, "yaml": text}
+        requested = template_id
+
+        def save():
+            folder = self.user_template_dir
+            template_id, file_name = pick_id(
+                name,
+                requested,
+                overwrite,
+                self.design_templates,
+                lambda candidate: (folder / candidate).exists(),
+            )
+            return template_id, write(template_id, file_name)
+
+        # One save at a time: the id is chosen and the file written under the lock.
+        async with self.template_lock:
+            template_id, text = await self.hass.async_add_executor_job(save)
+            await self.reload_design_templates()
+        return {"id": template_id, "yaml": text}
 
     def design_template_list(self, entry):
         """The ready-made designs, described for this tag's display."""
