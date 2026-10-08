@@ -407,82 +407,78 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "保存此自动化前，请先切换到显示模式。",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "未找到针对此 ESL 的 ble_esl.write 操作。",
+  "Choose the write action to import:": "选择要导入的写入操作：",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "匹配的写入操作已更改。请重新打开自动化后再试。",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "此写入操作没有可编辑的 payload 列表。",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "所选 ESL 不支持此自动化的背景。",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "此 payload 无法在设计器中准确呈现，未导入任何内容。",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "用此自动化的 payload 替换当前设计吗？",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "已导入自动化的 payload。请编辑设计，然后保存到此自动化。",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "当前设计无法保存为 payload。",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "所选写入操作在导入后已更改。保存前请重新打开自动化。",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
-  "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
-  "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "最新的自动化配置格式不正确。",
+  "The selected write action is no longer available.": "所选写入操作已不可用。",
+  "Automation saved.": "自动化已保存。",
+  "Automation configuration identity is missing.": "缺少自动化配置标识。",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "无法安全加载自动化配置。",
+  "The designer could not be loaded.": "无法加载设计器。",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
-  "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "此自动化使用了区域、楼层、标签或模板目标，无法安全地对应到单个 ESL。",
+  "The automation import is no longer current.": "自动化导入已不是最新的。",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "背景不属于自动化的 payload。保存前请恢复已导入的背景。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "此预览参数仍未定义：{name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
-  "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+  "Too many preview parameters are missing.": "缺少的预览参数过多。",
 
   // Preview-parameter and manager controls.
-  "Sort ESLs": "Sort ESLs",
-  "Default order": "Default order",
-  "Needs attention first": "Needs attention first",
-  "Battery: lowest first": "Battery: lowest first",
-  "Name (A–Z)": "Name (A–Z)",
-  "Low battery (20% or less)": "Low battery (20% or less)",
-  "Low battery": "Low battery",
-  "Read only": "Read only",
-  "Last successful image": "Last successful image",
-  "Edit automation design": "Edit automation design",
-  "Automation design": "Automation design",
-  "Local design": "Local design",
-  "Importing automation…": "Importing automation…",
-  "Save to automation": "Save to automation",
+  "Sort ESLs": "排序 ESL",
+  "Default order": "默认顺序",
+  "Needs attention first": "需关注的优先",
+  "Battery: lowest first": "电量：从低到高",
+  "Name (A–Z)": "名称 (A–Z)",
+  "Low battery (20% or less)": "电量低（20% 或以下）",
+  "Low battery": "电量低",
+  "Read only": "只读",
+  "Last successful image": "最近一次发送成功的图像",
+  "Edit automation design": "编辑自动化设计",
+  "Automation design": "自动化设计",
+  "Local design": "本地设计",
+  "Importing automation…": "正在导入自动化…",
+  "Save to automation": "保存到自动化",
   True: "True",
   False: "False",
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "字符串",
+  Number: "数字",
+  Boolean: "布尔值",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

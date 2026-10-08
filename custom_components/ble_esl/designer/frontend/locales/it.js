@@ -147,7 +147,7 @@ export default {
   "ESL Manager": "Gestore ESL",
   "Edit alias": "Modifica alias",
   "Edit component": "Modifica componente",
-  "Edit design": "Modifica disegno",
+  "Edit design": "Modifica design",
   "Edit display text": "Modifica il testo visualizzato",
   "Edit sensor": "Modifica sensore",
   "Editing preview": "Anteprima di modifica",
@@ -425,82 +425,83 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "Passa alla modalità Visualizza prima di salvare questa automazione.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "Nessuna azione ble_esl.write rivolta a questo ESL è stata trovata.",
+  "Choose the write action to import:":
+    "Scegli l'azione di scrittura da importare:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "L'azione di scrittura corrispondente è cambiata. Riapri l'automazione e riprova.",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "Questa azione di scrittura non ha un elenco di payload modificabile.",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "Lo sfondo di questa automazione non è supportato dall'ESL selezionato.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "Questo payload non può essere rappresentato esattamente nel designer. Non è stato importato nulla.",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "Sostituire il design attuale con il payload di questa automazione?",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "Payload dell'automazione importato. Modifica il design, poi salvalo in questa automazione.",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "Il design attuale non può essere salvato come payload.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "L'azione di scrittura selezionata è cambiata dopo l'importazione. Riapri l'automazione prima di salvare.",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "L'ultima configurazione dell'automazione non è valida.",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "L'azione di scrittura selezionata non è più disponibile.",
+  "Automation saved.": "Automazione salvata.",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "Manca l'identità della configurazione dell'automazione.",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "Non è stato possibile caricare in sicurezza la configurazione dell'automazione.",
+  "The designer could not be loaded.": "Impossibile caricare il designer.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "Questa automazione usa destinazioni di area, piano, etichetta o template che non possono essere associate in sicurezza a un solo ESL.",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "L'importazione dell'automazione non è più aggiornata.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "Lo sfondo non fa parte del payload dell'automazione. Ripristina lo sfondo importato prima di salvare.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "Questo parametro di anteprima è ancora indefinito: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "Mancano troppi parametri di anteprima.",
 
   // Preview-parameter and manager controls.
-  "Sort ESLs": "Sort ESLs",
-  "Default order": "Default order",
-  "Needs attention first": "Needs attention first",
-  "Battery: lowest first": "Battery: lowest first",
-  "Name (A–Z)": "Name (A–Z)",
-  "Low battery (20% or less)": "Low battery (20% or less)",
-  "Low battery": "Low battery",
-  "Read only": "Read only",
-  "Last successful image": "Last successful image",
-  "Edit automation design": "Edit automation design",
-  "Automation design": "Automation design",
-  "Local design": "Local design",
-  "Importing automation…": "Importing automation…",
-  "Save to automation": "Save to automation",
+  "Sort ESLs": "Ordina ESL",
+  "Default order": "Ordine predefinito",
+  "Needs attention first": "Prima quelli da controllare",
+  "Battery: lowest first": "Batteria: più scarica prima",
+  "Name (A–Z)": "Nome (A–Z)",
+  "Low battery (20% or less)": "Batteria scarica (20% o meno)",
+  "Low battery": "Batteria scarica",
+  "Read only": "Sola lettura",
+  "Last successful image": "Ultima immagine inviata con successo",
+  "Edit automation design": "Modifica design dell'automazione",
+  "Automation design": "Design dell'automazione",
+  "Local design": "Design locale",
+  "Importing automation…": "Importazione automazione…",
+  "Save to automation": "Salva nell'automazione",
   True: "True",
   False: "False",
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "Stringa",
+  Number: "Numero",
+  Boolean: "Booleano",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

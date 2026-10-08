@@ -424,82 +424,82 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "Перед сохранением этой автоматизации переключитесь в режим дисплея.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "Действие ble_esl.write для этого ESL не найдено.",
+  "Choose the write action to import:": "Выберите действие записи для импорта:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "Подходящее действие записи изменилось. Снова откройте автоматизацию и повторите попытку.",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "У этого действия записи нет редактируемого списка payload.",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "Фон этой автоматизации не поддерживается выбранным ESL.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "Этот payload нельзя точно представить в дизайнере. Ничего не импортировано.",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "Заменить текущий дизайн payload этой автоматизации?",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "Payload автоматизации импортирован. Измените дизайн, затем сохраните его в этой автоматизации.",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "Текущий дизайн нельзя сохранить как payload.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "Выбранное действие записи изменилось после импорта. Снова откройте автоматизацию перед сохранением.",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "Последняя конфигурация автоматизации повреждена.",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "Выбранное действие записи больше недоступно.",
+  "Automation saved.": "Автоматизация сохранена.",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "Отсутствует идентификатор конфигурации автоматизации.",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "Не удалось безопасно загрузить конфигурацию автоматизации.",
+  "The designer could not be loaded.": "Не удалось загрузить дизайнер.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "Эта автоматизация использует цели по области, этажу, метке или шаблону, которые нельзя безопасно сопоставить с одним ESL.",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "Импорт автоматизации больше не актуален.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "Фон не входит в payload автоматизации. Верните импортированный фон перед сохранением.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "Этот параметр предпросмотра всё ещё не определён: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "Отсутствует слишком много параметров предпросмотра.",
 
   // Preview-parameter and manager controls.
-  "Sort ESLs": "Sort ESLs",
-  "Default order": "Default order",
-  "Needs attention first": "Needs attention first",
-  "Battery: lowest first": "Battery: lowest first",
-  "Name (A–Z)": "Name (A–Z)",
-  "Low battery (20% or less)": "Low battery (20% or less)",
-  "Low battery": "Low battery",
-  "Read only": "Read only",
-  "Last successful image": "Last successful image",
-  "Edit automation design": "Edit automation design",
-  "Automation design": "Automation design",
-  "Local design": "Local design",
-  "Importing automation…": "Importing automation…",
-  "Save to automation": "Save to automation",
+  "Sort ESLs": "Сортировка ESL",
+  "Default order": "Порядок по умолчанию",
+  "Needs attention first": "Сначала проблемные",
+  "Battery: lowest first": "Заряд: по возрастанию",
+  "Name (A–Z)": "Название (А–Я)",
+  "Low battery (20% or less)": "Низкий заряд (20% или меньше)",
+  "Low battery": "Низкий заряд",
+  "Read only": "Только чтение",
+  "Last successful image": "Последнее успешно отправленное изображение",
+  "Edit automation design": "Изменить дизайн автоматизации",
+  "Automation design": "Дизайн автоматизации",
+  "Local design": "Локальный дизайн",
+  "Importing automation…": "Импорт автоматизации…",
+  "Save to automation": "Сохранить в автоматизацию",
   True: "True",
   False: "False",
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "Строка",
+  Number: "Число",
+  Boolean: "Логическое",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

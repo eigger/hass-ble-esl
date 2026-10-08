@@ -232,3 +232,84 @@ test("the scrollbar gutter is reserved and the drop-downs keep a fixed width", a
     ]).toEqual(before);
   }
 });
+
+test("search box and drop-downs share one height and long translations fit", async ({
+  page,
+}) => {
+  for (const lang of [
+    "en",
+    "ko",
+    "de",
+    "es",
+    "fr",
+    "it",
+    "ja",
+    "nl",
+    "pl",
+    "pt-BR",
+    "ru",
+    "zh-Hans",
+    "zh-Hant",
+  ]) {
+    await page.goto(`/?manager&lang=${lang}`);
+    await page.waitForFunction(() =>
+      window.manager?.shadowRoot?.querySelector("#sort"),
+    );
+    const heights = await page.evaluate(() => {
+      const root = window.manager.shadowRoot;
+      return ["#search", "#filter", "#sort"].map((selector) =>
+        Math.round(root.querySelector(selector).getBoundingClientRect().height),
+      );
+    });
+    expect(heights, lang).toEqual([40, 40, 40]);
+    // A select is as wide as its longest option whatever is selected, so
+    // nothing is cut off and nothing moves when the choice changes.
+    const before = await page.evaluate(() =>
+      ["#filter", "#sort"].map((selector) => {
+        const select = window.manager.shadowRoot.querySelector(selector);
+        const box = select.getBoundingClientRect();
+        return [selector, Math.round(box.x), Math.round(box.width)];
+      }),
+    );
+    for (const selector of ["#filter", "#sort"]) {
+      const count = await page.locator(`${selector} option`).count();
+      for (let index = 0; index < count; index += 1) {
+        await page.locator(selector).selectOption({ index });
+        const after = await page.evaluate(() =>
+          ["#filter", "#sort"].map((name) => {
+            const select = window.manager.shadowRoot.querySelector(name);
+            const box = select.getBoundingClientRect();
+            return [name, Math.round(box.x), Math.round(box.width)];
+          }),
+        );
+        expect(after, `${lang} ${selector} ${index}`).toEqual(before);
+      }
+    }
+  }
+});
+
+test("the editor bar stays compact on a phone in long translations", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 400, height: 800 });
+  for (const lang of ["en", "es", "ru", "de", "pl", "nl"]) {
+    await page.goto(`/?manager&lang=${lang}`);
+    await page.waitForFunction(() =>
+      window.manager?.shadowRoot?.querySelector("[data-action=edit]"),
+    );
+    await page
+      .locator('[data-entry="demo-writable"] [data-action="edit"]')
+      .click();
+    await page.waitForFunction(() =>
+      window.manager.shadowRoot.querySelector(".editor-nav"),
+    );
+    const height = await page.evaluate(() =>
+      Math.round(
+        window.manager.shadowRoot
+          .querySelector(".editor-nav")
+          .getBoundingClientRect().height,
+      ),
+    );
+    expect(height, lang).toBeLessThan(150);
+  }
+});
