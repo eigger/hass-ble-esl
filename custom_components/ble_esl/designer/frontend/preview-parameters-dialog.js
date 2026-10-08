@@ -94,13 +94,9 @@ export class PreviewParametersDialog extends HTMLElement {
       row.querySelector("[data-value]").value = state.value;
     }
     if (snapshot.advancedOpen) {
-      this._suppressAdvancedToggle = true;
       this.shadowRoot.querySelector("details.advanced").open = true;
       this.shadowRoot.querySelector("[data-all-json]").value =
         snapshot.advancedText;
-      setTimeout(() => {
-        this._suppressAdvancedToggle = false;
-      }, 0);
     }
     if (this.shadowRoot.querySelector("[data-allow-empty]"))
       this.shadowRoot.querySelector("[data-allow-empty]").checked =
@@ -156,34 +152,38 @@ export class PreviewParametersDialog extends HTMLElement {
       event.preventDefault();
       this.close(null);
     });
-    this.shadowRoot
-      .querySelector("details.advanced")
-      ?.addEventListener("toggle", (event) => {
-        if (!event.isTrusted || this._suppressAdvancedToggle) return;
-        if (event.target.open) {
-          const parsed = this.readRows();
-          if (parsed.ok) {
-            this.shadowRoot.querySelector("[data-all-json]").value =
-              JSON.stringify(parsed.value, null, 2);
-          } else event.target.open = false;
-        } else {
-          try {
-            const parsed = JSON.parse(
-              this.shadowRoot.querySelector("[data-all-json]").value,
-            );
-            if (!this.validMap(parsed)) {
-              event.target.open = true;
-              this.showError("unsafe");
-              return;
-            }
-            this.values = parsed;
-            this.render();
-          } catch {
-            event.target.open = true;
-            this.showError("invalid-json");
-          }
+    const advanced = this.shadowRoot.querySelector("details.advanced");
+    advanced?.querySelector("summary")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (!advanced.open) {
+        const parsed = this.readRows();
+        if (!parsed.ok) {
+          this.showError(parsed.reason);
+          return;
         }
-      });
+        this.shadowRoot.querySelector("[data-all-json]").value = JSON.stringify(
+          parsed.value,
+          null,
+          2,
+        );
+        advanced.open = true;
+        return;
+      }
+      try {
+        const parsed = JSON.parse(
+          this.shadowRoot.querySelector("[data-all-json]").value,
+        );
+        if (!this.validMap(parsed)) {
+          this.showError("unsafe");
+          return;
+        }
+        this.values = parsed;
+        this.render();
+        this.shadowRoot.querySelector("details.advanced summary")?.focus();
+      } catch {
+        this.showError("invalid-json");
+      }
+    });
     dialog.showModal();
     const initial = this.shadowRoot.querySelector("[data-name]");
     initial?.focus();

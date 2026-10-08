@@ -133,11 +133,26 @@ test("language changes preserve an open advanced draft and its focus", async ({
   await modal.evaluate((element) =>
     element.updateHass({ locale: { language: "ko" } }),
   );
+  await page.waitForTimeout(20);
   const translatedJson = modal.getByLabel("미리보기 변수 객체");
   await expect(translatedJson).toHaveValue('{"unfinished":');
   await expect(modal.locator("h2")).toHaveText("미리보기 변수");
   await expect(modal.locator("details.advanced")).toHaveAttribute("open", "");
   await expect(translatedJson).toBeFocused();
+  await modal.evaluate((element) =>
+    element.updateHass({ locale: { language: "en" } }),
+  );
+  await page.waitForTimeout(20);
+  const englishJson = modal.getByLabel("Preview parameter object");
+  await expect(englishJson).toHaveValue('{"unfinished":');
+  await expect(modal.locator("details.advanced")).toHaveAttribute("open", "");
+  await modal.evaluate((element) =>
+    element.updateHass({ locale: { language: "ko" } }),
+  );
+  await page.waitForTimeout(20);
+  await expect(modal.getByLabel("미리보기 변수 객체")).toHaveValue(
+    '{"unfinished":',
+  );
   await modal.getByRole("button", { name: "취소" }).click();
   await expect
     .poll(() => page.evaluate(() => window.parameterRequest))
