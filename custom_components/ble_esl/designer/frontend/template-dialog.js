@@ -81,10 +81,13 @@ export class TemplateDialog extends HTMLElement {
   close() {
     if (this.closed) return;
     this.closed = true;
+    // Only while the design it was applied to is still the one being edited.
+    const create =
+      this.thenCreate && this.panel.isDocumentSessionOwner(this.context);
     if (this.context) this.context.cancelled = true;
     this.remove();
     this.onClose?.();
-    if (this.thenCreate) this.panel.createAutomationFromTemplate();
+    if (create) this.panel.createAutomationFromTemplate();
   }
   updateHass() {
     if (!this.closed) this.render();
