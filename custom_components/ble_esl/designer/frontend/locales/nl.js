@@ -165,7 +165,7 @@ export default {
   "Exporting payload…": "Belading exporteren…",
   "Fallback icon (blank = HA)": "Terugvalpictogram (leeg = HA)",
   "Field template": "Veldsjabloon",
-  "Filter ESLs": "ESL's filteren",
+  "Filter ESLs": "ESLs filteren",
   "Finish the current editor operation before switching ESLs.":
     "Beëindig de huidige editorbewerking voordat u overschakelt naar ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
@@ -424,61 +424,62 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "Schakel over naar de weergavemodus voordat je deze automatisering opslaat.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "Geen ble_esl.write-actie voor deze ESL gevonden.",
+  "Choose the write action to import:":
+    "Kies de schrijfactie om te importeren:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "De bijbehorende schrijfactie is gewijzigd. Open de automatisering opnieuw en probeer het nog eens.",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "Deze schrijfactie heeft geen bewerkbare payloadlijst.",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "De achtergrond van deze automatisering wordt niet ondersteund door de geselecteerde ESL.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "Deze payload kan niet exact worden weergegeven in de designer. Er is niets geïmporteerd.",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "Het huidige ontwerp vervangen door de payload van deze automatisering?",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "Payload van de automatisering geïmporteerd. Bewerk het ontwerp en sla het daarna op in deze automatisering.",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "Het huidige ontwerp kan niet als payload worden opgeslagen.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "De geselecteerde schrijfactie is gewijzigd sinds het importeren. Open de automatisering opnieuw voordat je opslaat.",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "De nieuwste automatiseringsconfiguratie is onjuist opgebouwd.",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "De geselecteerde schrijfactie is niet meer beschikbaar.",
+  "Automation saved.": "Automatisering opgeslagen.",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "De identiteit van de automatiseringsconfiguratie ontbreekt.",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "De automatiseringsconfiguratie kon niet veilig worden geladen.",
+  "The designer could not be loaded.": "De designer kon niet worden geladen.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "Deze automatisering gebruikt doelen op basis van gebied, verdieping, label of sjabloon die niet veilig aan één ESL te koppelen zijn.",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "De import van de automatisering is niet meer actueel.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "De achtergrond maakt geen deel uit van de payload van de automatisering. Herstel de geïmporteerde achtergrond voordat je opslaat.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "Deze voorbeeldparameter is nog niet gedefinieerd: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "Er ontbreken te veel voorbeeldparameters.",
 
   // Preview-parameter and manager controls.
-  "Sort ESLs": "ESL's sorteren",
+  "Sort ESLs": "ESLs sorteren",
   "Default order": "Standaardvolgorde",
   "Needs attention first": "Aandacht nodig eerst",
   "Battery: lowest first": "Batterij: laagste eerst",
@@ -497,8 +498,8 @@ export default {
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
+  String: "Tekenreeks",
+  Number: "Getal",
   Boolean: "Boolean",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",

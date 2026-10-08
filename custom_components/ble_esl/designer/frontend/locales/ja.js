@@ -12,7 +12,7 @@ export default {
   "{count} automations · {active} active":
     "{count} 自動化 · {active} アクティブ",
   "Battery {value}": "バッテリー {value}",
-  "Last successful image for {alias}": "{alias} の最後に成功したイメージ",
+  "Last successful image for {alias}": "{alias} の最後に送信に成功した画像",
   "Skipped: {reason}": "スキップされました: {reason}",
   "Text / value": "テキスト/値",
   "Conditional icon": "条件付きアイコン",
@@ -423,58 +423,59 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "このオートメーションを保存する前に表示モードに切り替えてください。",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "このESLを対象とする ble_esl.write アクションが見つかりませんでした。",
+  "Choose the write action to import:":
+    "インポートする書き込みアクションを選んでください:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "一致する書き込みアクションが変更されました。オートメーションを開き直してもう一度お試しください。",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "この書き込みアクションには編集可能なペイロードのリストがありません。",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "このオートメーションの背景は、選択したESLでサポートされていません。",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "このペイロードはデザイナーで正確に表現できません。何もインポートされませんでした。",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "現在のデザインをこのオートメーションのペイロードで置き換えますか？",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "オートメーションのペイロードをインポートしました。デザインを編集してから、このオートメーションに保存してください。",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "現在のデザインはペイロードとして保存できません。",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "選択した書き込みアクションはインポート後に変更されました。保存する前にオートメーションを開き直してください。",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "最新のオートメーション設定の形式が正しくありません。",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "選択した書き込みアクションは利用できなくなりました。",
+  "Automation saved.": "オートメーションを保存しました。",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "オートメーション設定の識別情報がありません。",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "オートメーション設定を安全に読み込めませんでした。",
+  "The designer could not be loaded.": "デザイナーを読み込めませんでした。",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "このオートメーションはエリア、フロア、ラベル、またはテンプレートの対象を使用しており、1つのESLに安全に対応付けられません。",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "オートメーションのインポートは最新ではありません。",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "背景はオートメーションのペイロードに含まれません。保存する前にインポートした背景に戻してください。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "このプレビューパラメーターはまだ未定義です: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "不足しているプレビューパラメーターが多すぎます。",
 
   // Preview-parameter and manager controls.
   "Sort ESLs": "ESLを並べ替え",
@@ -496,9 +497,9 @@ export default {
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "文字列",
+  Number: "数値",
+  Boolean: "ブール値",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

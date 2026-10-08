@@ -407,58 +407,55 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "儲存此自動化前，請先切換到顯示模式。",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "找不到針對此 ESL 的 ble_esl.write 動作。",
+  "Choose the write action to import:": "選擇要匯入的寫入動作：",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "相符的寫入動作已變更。請重新開啟自動化後再試一次。",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "此寫入動作沒有可編輯的 payload 清單。",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "所選 ESL 不支援此自動化的背景。",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "此 payload 無法在設計器中準確呈現，未匯入任何內容。",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "要用此自動化的 payload 取代目前的設計嗎？",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "已匯入自動化的 payload。請編輯設計，然後儲存到此自動化。",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "目前的設計無法儲存為 payload。",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "所選寫入動作在匯入後已變更。儲存前請重新開啟自動化。",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "最新的自動化設定格式不正確。",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
-  "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "所選寫入動作已無法使用。",
+  "Automation saved.": "自動化已儲存。",
+  "Automation configuration identity is missing.": "缺少自動化設定識別。",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "無法安全載入自動化設定。",
+  "The designer could not be loaded.": "無法載入設計器。",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
-  "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "此自動化使用了區域、樓層、標籤或範本目標，無法安全地對應到單一 ESL。",
+  "The automation import is no longer current.": "自動化匯入已不是最新的。",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "背景不屬於自動化的 payload。儲存前請還原已匯入的背景。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "此預覽參數仍未定義：{name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
-  "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+  "Too many preview parameters are missing.": "缺少的預覽參數過多。",
 
   // Preview-parameter and manager controls.
   "Sort ESLs": "排序 ESL",
@@ -480,9 +477,9 @@ export default {
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "字串",
+  Number: "數字",
+  Boolean: "布林值",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

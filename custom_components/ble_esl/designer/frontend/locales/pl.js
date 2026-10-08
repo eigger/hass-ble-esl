@@ -423,58 +423,59 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "Przed zapisaniem tej automatyzacji przełącz na tryb wyświetlacza.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "Nie znaleziono akcji ble_esl.write skierowanej do tego ESL.",
+  "Choose the write action to import:":
+    "Wybierz akcję zapisu do zaimportowania:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "Pasująca akcja zapisu uległa zmianie. Otwórz automatyzację ponownie i spróbuj jeszcze raz.",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "Ta akcja zapisu nie ma edytowalnej listy payload.",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "Tło tej automatyzacji nie jest obsługiwane przez wybrany ESL.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "Tego payload nie można dokładnie przedstawić w projektancie. Nic nie zaimportowano.",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "Zastąpić bieżący projekt payload tej automatyzacji?",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "Zaimportowano payload automatyzacji. Edytuj projekt, a następnie zapisz go w tej automatyzacji.",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "Bieżącego projektu nie można zapisać jako payload.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "Wybrana akcja zapisu zmieniła się od czasu importu. Otwórz automatyzację ponownie przed zapisaniem.",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "Najnowsza konfiguracja automatyzacji jest nieprawidłowa.",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "Wybrana akcja zapisu nie jest już dostępna.",
+  "Automation saved.": "Zapisano automatyzację.",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "Brakuje identyfikatora konfiguracji automatyzacji.",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "Nie udało się bezpiecznie wczytać konfiguracji automatyzacji.",
+  "The designer could not be loaded.": "Nie udało się wczytać projektanta.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "Ta automatyzacja używa celów opartych na obszarze, piętrze, etykiecie lub szablonie, których nie można bezpiecznie dopasować do jednego ESL.",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "Import automatyzacji nie jest już aktualny.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "Tło nie jest częścią payload automatyzacji. Przywróć zaimportowane tło przed zapisaniem.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "Ten parametr podglądu jest nadal niezdefiniowany: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "Brakuje zbyt wielu parametrów podglądu.",
 
   // Preview-parameter and manager controls.
   "Sort ESLs": "Sortuj ESL",
@@ -496,9 +497,9 @@ export default {
   "New parameter": "New parameter",
   "Parameter name": "Parameter name",
   Type: "Type",
-  String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  String: "Ciąg znaków",
+  Number: "Liczba",
+  Boolean: "Wartość logiczna",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",

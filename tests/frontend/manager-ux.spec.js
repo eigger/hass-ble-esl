@@ -252,6 +252,9 @@ test("search box and drop-downs share one height and long translations fit", asy
     "zh-Hant",
   ]) {
     await page.goto(`/?manager&lang=${lang}`);
+    await page.waitForFunction(() =>
+      window.manager?.shadowRoot?.querySelector("#sort"),
+    );
     const heights = await page.evaluate(() => {
       const root = window.manager.shadowRoot;
       return ["#search", "#filter", "#sort"].map((selector) =>
@@ -278,5 +281,31 @@ test("search box and drop-downs share one height and long translations fit", asy
       });
     });
     expect(cut, lang).toEqual([]);
+  }
+});
+
+test("the editor bar stays compact on a phone in long translations", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 400, height: 800 });
+  for (const lang of ["en", "es", "ru", "de", "pl", "nl"]) {
+    await page.goto(`/?manager&lang=${lang}`);
+    await page.waitForFunction(() =>
+      window.manager?.shadowRoot?.querySelector("[data-action=edit]"),
+    );
+    await page
+      .locator('[data-entry="demo-writable"] [data-action="edit"]')
+      .click();
+    await page.waitForFunction(() =>
+      window.manager.shadowRoot.querySelector(".editor-nav"),
+    );
+    const height = await page.evaluate(() =>
+      Math.round(
+        window.manager.shadowRoot
+          .querySelector(".editor-nav")
+          .getBoundingClientRect().height,
+      ),
+    );
+    expect(height, lang).toBeLessThan(150);
   }
 });

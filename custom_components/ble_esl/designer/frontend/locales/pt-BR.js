@@ -147,7 +147,7 @@ export default {
   "ESL Manager": "Gerenciador ESL",
   "Edit alias": "Editar alias",
   "Edit component": "Editar componente",
-  "Edit design": "Editar desenho",
+  "Edit design": "Editar design",
   "Edit display text": "Editar texto de exibição",
   "Edit sensor": "Editar sensor",
   "Editing preview": "Visualização da edição",
@@ -425,58 +425,59 @@ export default {
   "Import design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
-    "Switch to Display mode before saving this automation.",
+    "Mude para o modo de exibição antes de salvar esta automação.",
   "Automation configuration ID is missing.":
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
   "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
-  "Choose the write action to import:": "Choose the write action to import:",
+    "Nenhuma ação ble_esl.write direcionada a este ESL foi encontrada.",
+  "Choose the write action to import:":
+    "Escolha a ação de gravação a importar:",
   "The matching write action changed. Reopen the automation and try again.":
-    "The matching write action changed. Reopen the automation and try again.",
+    "A ação de gravação correspondente mudou. Reabra a automação e tente novamente.",
   "This write action has no editable payload list.":
-    "This write action has no editable payload list.",
+    "Esta ação de gravação não tem uma lista de payload editável.",
   "This automation background is not supported by the selected ESL.":
-    "This automation background is not supported by the selected ESL.",
+    "O plano de fundo desta automação não é compatível com o ESL selecionado.",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
-    "This payload cannot be represented exactly in the designer. Nothing was imported.",
+    "Este payload não pode ser representado exatamente no designer. Nada foi importado.",
   "Replace the current design with this automation payload?":
-    "Replace the current design with this automation payload?",
+    "Substituir o design atual pelo payload desta automação?",
   "Automation payload imported. Edit the design, then save it to this automation.":
-    "Automation payload imported. Edit the design, then save it to this automation.",
+    "Payload da automação importado. Edite o design e depois salve-o nesta automação.",
   "The current design cannot be saved as a payload.":
-    "The current design cannot be saved as a payload.",
+    "O design atual não pode ser salvo como payload.",
   "This automation changed since it was imported. Reopen it before saving.":
     "This automation changed since it was imported. Reopen it before saving.",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "The selected write action changed since import. Reopen the automation before saving.",
+    "A ação de gravação selecionada mudou desde a importação. Reabra a automação antes de salvar.",
   "The latest automation configuration is malformed.":
-    "The latest automation configuration is malformed.",
+    "A configuração mais recente da automação está malformada.",
   "The selected write action is no longer available.":
-    "The selected write action is no longer available.",
-  "Automation saved.": "Automation saved.",
+    "A ação de gravação selecionada não está mais disponível.",
+  "Automation saved.": "Automação salva.",
   "Automation configuration identity is missing.":
-    "Automation configuration identity is missing.",
+    "A identidade da configuração da automação está ausente.",
   "Automation configuration could not be loaded safely.":
-    "Automation configuration could not be loaded safely.",
-  "The designer could not be loaded.": "The designer could not be loaded.",
+    "Não foi possível carregar a configuração da automação com segurança.",
+  "The designer could not be loaded.": "Não foi possível carregar o designer.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+    "Esta automação usa destinos de área, andar, etiqueta ou template que não podem ser associados com segurança a um único ESL.",
   "The automation import is no longer current.":
-    "The automation import is no longer current.",
+    "A importação da automação não está mais atualizada.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
+    "O plano de fundo não faz parte do payload da automação. Restaure o plano de fundo importado antes de salvar.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
   "This preview parameter is still undefined: {name}":
-    "This preview parameter is still undefined: {name}",
+    "Este parâmetro de pré-visualização ainda está indefinido: {name}",
   "Preview parameter must be valid JSON.":
     "Preview parameter must be valid JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
     "Preview parameter must contain finite JSON values without prototype keys.",
   "Too many preview parameters are missing.":
-    "Too many preview parameters are missing.",
+    "Faltam parâmetros de pré-visualização demais.",
 
   // Preview-parameter and manager controls.
   "Sort ESLs": "Ordenar ESLs",
@@ -499,8 +500,8 @@ export default {
   "Parameter name": "Parameter name",
   Type: "Type",
   String: "String",
-  Number: "Number",
-  Boolean: "Boolean",
+  Number: "Número",
+  Boolean: "Booleano",
   "Object, array or null": "Object, array or null",
   "Object or array": "Object or array",
   "Remove parameter {name}": "Remove parameter {name}",
