@@ -25,7 +25,7 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 | `wifi` | Wi-Fi QR code (WPA, WPA3/SAE, WEP, open; hidden networks) with a title and hint | 250×128, 400×300 | none |
 | `message` | Large centred text that shrinks to fit (one line by default) | 250×128 (scaled) | none |
 | `color_check` | Black, white, red and yellow swatches | 250×128, 400×300 | none |
-| `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity | 250×128, 400×300 | Every 10, 15 or 30 minutes |
+| `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | 250×128, 400×300 | Every 10, 15 or 30 minutes |
 
 Examples that need a service response (forecasts, calendars) or build their elements with a loop (presence) are not templates: a template carries a fixed payload. A single entity can be a parameter, as `weather_now` does.
 
@@ -93,7 +93,7 @@ For a display whose size has no layout, the nearest layout is used. It is scaled
 | `number` | number | Optional `min` / `max` |
 | `time` | `HH:MM` or `HH:MM:SS` | Stored as `HH:MM:SS` |
 | `boolean` | true / false | |
-| `entity` | entity id such as `weather.home` | Optional `domain: weather` limits the choice (the gallery offers matching entities); applying fails if the entity does not exist |
+| `entity` | entity id such as `weather.home` | Optional `domain: weather` limits the choice (the gallery offers matching entities); the gallery offers matching entities only when `domain` is set, and if the default does not exist on this system it prefills the first matching one. Applying fails if the entity does not exist, so set the integration up first |
 
 Every parameter needs a `default`, so a template can be applied without asking anything. `label` is optional text or a language map. `group: automation` marks a parameter that only the automation uses; the design may not reference it.
 

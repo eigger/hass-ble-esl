@@ -40,7 +40,7 @@ layouts:
       size: 22
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'friendly_name') }}"
+      value: "{{ state_attr('${weather}', 'friendly_name') or '' }}"
       font: ${font}
       anchor: rt
       x: 390
@@ -48,35 +48,35 @@ layouts:
       size: 22
       color: black
     - type: icon
-      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
       anchor: lt
-      x: 20
+      x: 15
       y: 70
-      size: 130
+      size: 110
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'temperature') }}"
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
       font: ${font}
       anchor: rt
-      x: 330
-      y: 60
-      size: 90
+      x: 335
+      y: 62
+      size: 72
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'temperature_unit') }}"
+      value: "{{ state_attr('${weather}', 'temperature_unit') or '' }}"
       font: ${font}
       anchor: lt
-      x: 336
-      y: 70
-      size: 30
+      x: 341
+      y: 66
+      size: 28
       color: black
     - type: text
       value: "{{ state_translated('${weather}') }}"
       font: ${font}
       anchor: mt
-      x: 270
+      x: 250
       y: 170
-      size: 34
+      size: 30
       color: black
     - type: icon
       value: water-percent
@@ -86,7 +86,7 @@ layouts:
       size: 40
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'humidity') }}%"
+      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number else '' }}"
       font: ${font}
       anchor: lt
       x: 195
@@ -111,7 +111,7 @@ layouts:
       size: 14
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'friendly_name') }}"
+      value: "{{ state_attr('${weather}', 'friendly_name') or '' }}"
       font: ${font}
       anchor: rt
       x: 244
@@ -119,14 +119,14 @@ layouts:
       size: 14
       color: black
     - type: icon
-      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
       anchor: lt
       x: 8
       y: 30
       size: 70
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'temperature') }}"
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
       font: ${font}
       anchor: rt
       x: 195
@@ -134,7 +134,7 @@ layouts:
       size: 46
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'temperature_unit') }}"
+      value: "{{ state_attr('${weather}', 'temperature_unit') or '' }}"
       font: ${font}
       anchor: lt
       x: 199
@@ -150,7 +150,7 @@ layouts:
       size: 18
       color: black
     - type: text
-      value: "{{ state_attr('${weather}', 'humidity') }}%"
+      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number else '' }}"
       font: ${font}
       anchor: rb
       x: 244

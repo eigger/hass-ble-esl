@@ -622,3 +622,62 @@ async def test_weather_template_follows_the_chosen_entity(hass, wolink_entry):
         await designer.apply_design_template(
             wolink_entry, "weather_now", {"weather": "weather.nowhere"}
         )
+
+
+WEATHER_CONDITIONS = [
+    "clear-night",
+    "cloudy",
+    "exceptional",
+    "fog",
+    "hail",
+    "lightning",
+    "lightning-rainy",
+    "partlycloudy",
+    "pouring",
+    "rainy",
+    "snowy",
+    "snowy-rainy",
+    "sunny",
+    "windy",
+    "windy-variant",
+    "unknown",
+    "unavailable",
+]
+
+
+@pytest.mark.parametrize(("width", "height"), [(250, 128), (400, 300)])
+async def test_weather_template_draws_every_condition(hass, width, height):
+    weather = TEMPLATES["weather_now"]
+    preset = DevicePreset("test", "test", width, height, "BWR")
+    built = build(weather, width, height, "BWR")
+    for condition in WEATHER_CONDITIONS:
+        hass.states.async_set(
+            "weather.home", condition, {"friendly_name": "Home", "temperature": 3, "humidity": 4}
+        )
+        elements, imported, issues = elements_from(built["payload"], preset)
+        assert issues == [], condition
+        original, rebuilt = payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, condition
+
+
+@pytest.mark.parametrize(
+    ("attributes", "temperature", "humidity"),
+    [
+        ({}, "--", ""),
+        ({"temperature": 21.5, "humidity": 55}, "21.5", "55%"),
+        ({"temperature": 103.0}, "103", ""),
+        ({"temperature": -12.34, "humidity": 0}, "-12.3", "0%"),
+        ({"temperature": "warm"}, "--", ""),
+    ],
+)
+async def test_weather_values_are_formatted_and_never_say_none(
+    hass, attributes, temperature, humidity
+):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+
+    hass.states.async_set("weather.home", "sunny", attributes)
+    payload = build(TEMPLATES["weather_now"], 400, 300, "BWR")["payload"]
+    # Home Assistant turns a result that is only a number back into one.
+    shown = [str(item["value"]) for item in resolve_templates(hass, payload, set())]
+    assert temperature in shown and humidity in shown
+    assert not any("None" in str(value) for value in shown)
