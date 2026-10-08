@@ -1921,3 +1921,29 @@ test("design template: the preview error stays visible after a re-render", async
     "ssid",
   );
 });
+
+test("toolbar and left-panel controls are at least 38px and never overflow, in long translations", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 900 });
+  for (const lang of ["en", "ru", "de", "ja"]) {
+    await page.goto(`/?lang=${lang}`);
+    await page.waitForFunction(() => window.panel?.tag);
+    const bad = await page.evaluate(() => {
+      const root = window.panel.shadowRoot;
+      return [
+        ...root.querySelectorAll(
+          ".toolbar select,.toolbar button,#library select,#library button",
+        ),
+      ]
+        .filter((node) => node.offsetParent)
+        .map((node) => ({
+          control: node.id || node.dataset.action || node.textContent.trim(),
+          height: Math.round(node.getBoundingClientRect().height),
+          overflow: node.scrollHeight > node.clientHeight + 1,
+        }))
+        .filter((item) => item.height < 38 || item.overflow);
+    });
+    expect(bad, lang).toEqual([]);
+  }
+});
