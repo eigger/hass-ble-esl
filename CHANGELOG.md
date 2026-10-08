@@ -4,6 +4,7 @@
 
 ### Added
 
+- Template gallery thumbnails and a live preview of the chosen template while its parameters are edited, drawn by the real renderer for the tag.
 - `entity` template parameters (with an optional domain) and a **Weather now** design template for any `weather` entity.
 - Your own design templates: files in `<config>/ble_esl/templates/` appear in the template gallery, and **Save as template** keeps the current design there.
 - **Templates** in the Designer: pick a ready-made design, adjust its parameters and add it as editable elements, optionally creating the automation with the template's triggers (the Date label updates daily at 12:00 by default).

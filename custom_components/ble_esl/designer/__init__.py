@@ -45,7 +45,7 @@ from .layout import (
 )
 from .manager import AutomationLinks, tag_metadata
 from .rendering import render_document, snapshot_layers
-from .specs import MissingTemplateParameter, describe, frozen_corners
+from .specs import MissingTemplateParameter, describe, frozen_corners, resolve_templates
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
@@ -364,6 +364,61 @@ class Designer:
             for template in self.design_templates.values()
         ]
 
+    async def ensure_template_inputs(self, template, values, entities=None):
+        """Raise when a font or an entity a template was given does not exist.
+
+        ``entities`` limits the entity check to those parameter names (all when None).
+        """
+        kinds = {name: parameter["type"] for name, parameter in template["parameters"].items()}
+        absent = sorted(
+            value
+            for name, value in values.items()
+            if kinds[name] == "entity"
+            and (entities is None or name in entities)
+            and self.hass.states.get(value) is None
+        )
+        if absent:
+            raise HomeAssistantError(f"Entity not found: {', '.join(absent)}")
+        fonts = {value for name, value in values.items() if kinds[name] == "font"}
+        missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
+        if missing:
+            raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
+
+    async def preview_design_template(self, entry, template_id, parameters=None):
+        """A design template drawn for this tag, as the real renderer shows it now.
+
+        Values not given use their defaults; a default entity that does not
+        exist is replaced by the first one of its domain, so a gallery of
+        thumbnails works on any system. Nothing is imported or saved.
+        """
+        template = self.design_templates.get(template_id)
+        if template is None:
+            raise HomeAssistantError(f"There is no design template {template_id}")
+        preset = self.preset(entry)
+        given = dict(parameters or {})
+        for name, parameter in template["parameters"].items():
+            if parameter["type"] != "entity" or name in given:
+                continue
+            if self.hass.states.get(parameter["default"]) is None and "domain" in parameter:
+                candidates = sorted(self.hass.states.async_entity_ids(parameter["domain"]))
+                if candidates:
+                    given[name] = candidates[0]
+        built = build_template(template, preset.width, preset.height, preset.colors, given)
+        # What was given must exist, as when applying; defaults are only drawn.
+        await self.ensure_template_inputs(template, built["parameters"], set(given))
+        payload = resolve_templates(self.hass, built["payload"], set())
+        async with self.render_lock:
+            image = await self.hass.async_add_executor_job(
+                partial(render_image, self.hass, preset, payload, background=built["background"])
+            )
+        buffer = BytesIO()
+        image.save(buffer, "PNG")
+        return {
+            "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "layout": built["layout"],
+            "scaled": built["scaled"],
+        }
+
     async def apply_design_template(
         self, entry, template_id, parameters=None, existing=0, preview_variables=None
     ):
@@ -373,22 +428,7 @@ class Designer:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
         built = build_template(template, preset.width, preset.height, preset.colors, parameters)
-        fonts = {
-            value
-            for name, value in built["parameters"].items()
-            if template["parameters"][name]["type"] == "font"
-        }
-        absent = sorted(
-            value
-            for name, value in built["parameters"].items()
-            if template["parameters"][name]["type"] == "entity"
-            and self.hass.states.get(value) is None
-        )
-        if absent:
-            raise HomeAssistantError(f"Entity not found: {', '.join(absent)}")
-        missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
-        if missing:
-            raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
+        await self.ensure_template_inputs(template, built["parameters"])
         imported = await self.import_payload(
             entry, built["payload"], built["background"], existing, preview_variables
         )
@@ -559,6 +599,7 @@ class Designer:
                 "templates",
                 "design_templates",
                 "apply_design_template",
+                "preview_design_template",
                 "save_design_template",
                 "save_template",
                 "preview_template",
@@ -605,6 +646,12 @@ async def websocket_designer(hass, connection, msg):
         result = describe()
     elif action == "templates":
         result = designer.templates
+    elif action == "preview_design_template":
+        if "template_id" not in msg:
+            raise HomeAssistantError("template_id is required")
+        result = await designer.preview_design_template(
+            designer.entry(msg["entry_id"]), msg["template_id"], msg.get("parameters")
+        )
     elif action == "save_design_template":
         result = await designer.save_design_template(
             designer.entry(msg["entry_id"]),

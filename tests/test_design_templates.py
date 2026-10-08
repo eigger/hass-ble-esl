@@ -25,6 +25,7 @@ from custom_components.ble_esl.designer.importer import (
     payloads,
 )
 from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.renderer import render_image
 
 TEMPLATES = load_templates()
 SIZES = [(250, 128), (296, 128), (400, 300), (800, 480)]
@@ -684,3 +685,67 @@ async def test_weather_values_are_formatted_and_never_say_none(
     shown = [str(item["value"]) for item in resolve_templates(hass, payload, set())]
     assert temperature in shown and humidity in shown
     assert not any("None" in str(value) for value in shown)
+
+
+async def test_preview_draws_a_template_at_the_tags_size(hass, wolink_entry):
+    import base64
+    from io import BytesIO
+
+    from PIL import Image
+
+    designer = hass.data[KEY]
+    preset = designer.preset(wolink_entry)
+    result = await designer.preview_design_template(wolink_entry, "message", {"text": "Hi"})
+    assert result["png"].startswith("data:image/png;base64,")
+    image = Image.open(BytesIO(base64.b64decode(result["png"].split(",", 1)[1])))
+    assert image.size == (preset.width, preset.height)
+    assert image.convert("L").getextrema() == (0, 255)  # something was drawn
+    with pytest.raises(HomeAssistantError, match="no design template"):
+        await designer.preview_design_template(wolink_entry, "nope")
+    with pytest.raises(HomeAssistantError, match="ssid"):
+        await designer.preview_design_template(wolink_entry, "wifi", {"ssid": "a;b"})
+
+
+async def test_preview_uses_an_existing_entity_when_the_default_is_missing(hass, wolink_entry):
+    designer = hass.data[KEY]
+    hass.states.async_set(
+        "weather.forecast_home",
+        "rainy",
+        {"friendly_name": "Real", "temperature": 7, "humidity": 80},
+    )
+    seen = []
+    original = designer.hass.async_add_executor_job
+
+    async def spy(func, *args):
+        seen.append(func)
+        return await original(func, *args)
+
+    with patch.object(designer.hass, "async_add_executor_job", spy):
+        result = await designer.preview_design_template(wolink_entry, "weather_now")
+    assert result["png"].startswith("data:image/png")
+    render = next(func for func in seen if getattr(func, "func", None) is render_image)
+    payload = render.args[2]
+    assert any("Real" in str(item.get("value", "")) for item in payload)
+
+
+async def test_websocket_preview_requires_a_template_id(hass, wolink_entry, hass_ws_client):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "preview_design_template",
+            "entry_id": wolink_entry.entry_id,
+        }
+    )
+    assert (await client.receive_json())["error"]["message"] == "template_id is required"
+
+
+async def test_preview_refuses_what_apply_would_refuse(hass, wolink_entry):
+    designer = hass.data[KEY]
+    with pytest.raises(HomeAssistantError, match=r"Font not found: Missing\.ttf"):
+        await designer.preview_design_template(wolink_entry, "message", {"font": "Missing.ttf"})
+    with pytest.raises(HomeAssistantError, match=r"Entity not found: weather\.nowhere"):
+        await designer.preview_design_template(
+            wolink_entry, "weather_now", {"weather": "weather.nowhere"}
+        )

@@ -1793,6 +1793,9 @@ test("design template: the current design can be saved and applied again", async
   await gallery.getByRole("button", { name: "Save as template" }).click();
   await expect(gallery).toContainText("Saved template office_temperature");
   await expect(gallery).toContainText("My template");
+  await expect(
+    gallery.locator('img[data-preview="office_temperature"]'),
+  ).toHaveAttribute("src", /^data:image\/png/);
   await expect(gallery.getByLabel("Design template name")).toHaveValue("");
   await gallery.getByRole("button", { name: /Office temperature/ }).click();
   await gallery.getByRole("button", { name: "Replace display" }).click();
@@ -1841,5 +1844,60 @@ test("design template: an entity default that does not exist gives way to one th
   );
   await gallery.getByLabel("Weather entity").fill("weather.mine");
   await gallery.getByLabel("Font").fill("CookieRunBold.ttf");
-  await expect(gallery.getByLabel("Weather entity")).toHaveValue("weather.mine");
+  await expect(gallery.getByLabel("Weather entity")).toHaveValue(
+    "weather.mine",
+  );
+});
+
+test("design template: thumbnails load in the gallery and the form preview follows the parameters", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const thumbs = gallery.locator("img[data-preview]");
+  await expect(thumbs.first()).toHaveAttribute("src", /^data:image\/png/);
+  expect(await thumbs.count()).toBeGreaterThan(3);
+  await gallery.getByRole("button", { name: /Message/ }).click();
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+  const before = await preview.getAttribute("src");
+  await gallery.getByLabel("Text", { exact: true }).fill("A different message");
+  await expect
+    .poll(async () => await preview.getAttribute("src"))
+    .not.toBe(before);
+});
+
+test("design template: an invalid parameter hides the stale preview and says why", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+  await gallery.getByLabel("Network name (SSID)").fill("bad;name");
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
+  await expect(preview).toBeHidden();
+  await gallery.getByLabel("Network name (SSID)").fill("good");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+});
+
+test("design template: the preview error stays visible after a re-render", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
+  await gallery.getByLabel("Network name (SSID)").fill("bad;name");
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
+  await page.evaluate(() => {
+    window.panel.hass = { ...window.panel.hass, locale: { language: "ko" } };
+  });
+  await expect(gallery.locator("[data-form-preview-note]")).toContainText(
+    "ssid",
+  );
 });
