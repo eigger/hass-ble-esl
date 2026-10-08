@@ -165,6 +165,39 @@ layouts:
     assert (wide["x_start"], wide["x_end"]) == (33, 263)
 
 
+def test_scaling_covers_other_lengths_and_keeps_counts():
+    text = """
+template: 1
+id: more
+name: More
+layouts:
+  "250x128":
+    - {type: rectangle_pattern, x_start: 0, y_start: 0, x_end: 250, y_end: 128, x_size: 10,
+       y_size: 10, x_repeat: 3, y_repeat: 2, x_offset: 4, y_offset: 4}
+    - {type: text, value: a, x: 0, y: 0, max_width: 200, max_lines: 2, size: 20, rotate: 90}
+    - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 5, width: 1, outline: black}
+"""
+    template = parse_template(text)
+    pattern, label, box = build(template, 500, 256, "BWR")["payload"]
+    assert (pattern["x_size"], pattern["x_offset"]) == (20, 8)
+    assert (pattern["x_repeat"], pattern["y_repeat"]) == (3, 2)
+    assert (label["max_width"], label["max_lines"], label["rotate"]) == (400, 2, 90)
+    small = build(template, 125, 64, "BWR")["payload"][2]
+    assert small["width"] == 1  # a 1px outline never shrinks to nothing
+    assert box["width"] == 2
+
+
+def test_polygon_inside_a_group_is_not_scaled():
+    text = MINIMAL.replace(
+        "- {type: text,",
+        "- {type: group, x: 0, y: 0, width: 50, height: 50, elements: "
+        "[{type: polygon, points: '0,0 10,0 5,10', fill: red}]}\n    - {type: text,",
+    )
+    template = parse_template(text)
+    with pytest.raises(HomeAssistantError, match="polygon"):
+        build(template, 400, 300, "BWR")
+
+
 def test_polygon_layouts_are_not_scaled():
     text = MINIMAL.replace(
         "- {type: text,",
@@ -241,6 +274,8 @@ async def test_websocket_lists_and_applies_a_template(hass, wolink_entry, hass_w
     )
     draft = (await client.receive_json())["result"]["automation"]
     assert draft["triggers"] == [{"trigger": "time", "at": "18:30:00"}]
+    # The date template names no alias: the new automation takes the tag's title.
+    assert draft["alias"] == wolink_entry.title
     assert draft["actions"][0]["action"] == "ble_esl.write"
     assert "{{ now()" in yaml.dump(draft["actions"])
 
@@ -261,3 +296,11 @@ async def test_applying_rejects_unknown_template_and_missing_font(hass, wolink_e
         await designer.apply_design_template(wolink_entry, "nope")
     with pytest.raises(HomeAssistantError, match="Font not found"):
         await designer.apply_design_template(wolink_entry, "date", {"font": "Missing.ttf"})
+
+
+async def test_short_weekday_list_renders_instead_of_failing(hass, wolink_entry):
+    result = await hass.data[KEY].apply_design_template(
+        wolink_entry, "date", {"weekdays": "Mon,Tue"}
+    )
+    assert result["issues"] == []
+    assert result["different_pixels"] == 0

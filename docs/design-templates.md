@@ -2,6 +2,8 @@
 
 **English** | **[한국어](ko/design-templates.md)**
 
+> The Designer user interface for picking a template is added in a follow-up; this page documents the file format and the API it uses.
+
 A design template is a YAML file that describes a ready-made ESL design: the imagespec elements, the few values a user may change (font, colors, time…), and optionally the automation that keeps it up to date. Applying one in the Designer produces ordinary, fully editable elements; nothing in the saved result refers back to the template.
 
 Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../custom_components/ble_esl/designer/templates). Every `*.yaml` file in that folder is loaded when Home Assistant starts. A file that is invalid is skipped and the reason is logged as a warning (`Ignoring design template …`).
@@ -49,7 +51,7 @@ automation:                  # optional
 
 Each key under `layouts` is `WIDTHxHEIGHT` and holds the same list of elements you would put under `payload:` in `ble_esl.write` (see [actions](actions.md)): absolute coordinates, at most 100 elements. Jinja is allowed and is kept as written, so `{{ now() }}` is evaluated each time the automation runs.
 
-For a display whose size has no layout, the nearest layout is used. It is scaled evenly (every position and size key such as `x`, `y`, `x_start`, `x_end`, `start_y`, `width`, `xsize`, `size`, `radius`, `outline_width`, and spacing keys) and centred. A layout with a polygon `points` string cannot be scaled and needs its own layout for each size. The gallery marks such a result as *adjusted*; write a dedicated layout for any size you care about. Values that are templates (not numbers) are not scaled.
+For a display whose size has no layout, the nearest layout is used. It is scaled evenly and centred: every number is a length in pixels and is multiplied (a positive length such as an outline width never drops below 1), except counts, angles and limits (`x_repeat`, `y_repeat`, `rotate`, `start_angle`, `end_angle`, `max_lines`, `min`, `max`, `value`, `progress`, `dither`, `decimals`…). The result reports `scaled: true`. A layout containing a polygon `points` string, even nested in a group, cannot be scaled and needs its own layout for each size. Write a dedicated layout for any size you care about. Values that are templates (not numbers) are not scaled.
 
 ### Parameters
 
@@ -69,7 +71,7 @@ Every parameter needs a `default`, so a template can be applied without asking a
 
 ### Automation
 
-`automation` gives the Create automation dialog its alias, `triggers` (at least one), `conditions`, `mode` and `description`. The `ble_esl.write` action is added from the current design as usual, so it is not part of the template. Home Assistant validates the automation when it is saved.
+`automation` provides the defaults (alias, if given; otherwise the tag title is used) for a new automation: its alias, `triggers` (at least one), `conditions`, `mode` and `description`. The `ble_esl.write` action is added from the current design as usual, so it is not part of the template. Home Assistant validates the automation when it is saved.
 
 A daily update at noon:
 

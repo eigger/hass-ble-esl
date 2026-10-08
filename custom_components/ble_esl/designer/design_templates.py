@@ -24,26 +24,36 @@ _TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?\Z")
 _COLORS = {"black": "B", "white": "W", "red": "R", "yellow": "Y"}
 _FONT = re.compile(r"^[\w .-]+\.(ttf|otf|ttc)\Z")
 _UNSAFE_TEXT = re.compile(r"[{}'\"\\\n\r]")
-# Numeric keys of an imagespec element that follow the size of the display.
-_SCALED = frozenset(
+# Numeric keys that are counts, angles, values or limits, not lengths in pixels:
+# every other number in a layout follows the size of the display.
+_NOT_SCALED = frozenset(
     {
-        "x",
-        "y",
-        "x_start",
-        "y_start",
-        "start_y",
-        "x_end",
-        "y_end",
-        "xsize",
-        "ysize",
-        "width",
-        "height",
-        "size",
-        "radius",
-        "outline_width",
-        "line_spacing",
-        "spacing",
-        "padding",
+        "x_repeat",
+        "y_repeat",
+        "rotate",
+        "rotation",
+        "start_angle",
+        "end_angle",
+        "min",
+        "max",
+        "value",
+        "progress",
+        "max_lines",
+        "level",
+        "dpi",
+        "timeout",
+        "duration",
+        "quiet_zone",
+        "opacity",
+        "alpha",
+        "threshold",
+        "dither",
+        "decimals",
+        "count",
+        "ticks",
+        "rating",
+        "stars",
+        "scale",
     }
 )
 
@@ -237,13 +247,25 @@ def choose_layout(template, width, height):
     return min(template["layouts"], key=lambda size: _distance(size, width, height)), False
 
 
+def _has_key(value, wanted):
+    if isinstance(value, dict):
+        return wanted in value or any(_has_key(item, wanted) for item in value.values())
+    if isinstance(value, list):
+        return any(_has_key(item, wanted) for item in value)
+    return False
+
+
 def _scale(value, factor, key=None):
     if isinstance(value, dict):
         return {name: _scale(item, factor, name) for name, item in value.items()}
     if isinstance(value, list):
         return [_scale(item, factor, key) for item in value]
-    if key in _SCALED and isinstance(value, int | float) and not isinstance(value, bool):
-        return round(value * factor)
+    if key not in _NOT_SCALED and isinstance(value, int | float) and not isinstance(value, bool):
+        scaled = round(value * factor)
+        # A stroke, outline or radius of 1 must not vanish when shrinking.
+        if value > 0 and key not in _X_KEYS and key not in _Y_KEYS:
+            return max(1, scaled)
+        return scaled
     return value
 
 
@@ -254,12 +276,12 @@ def _fit(items, source, width, height):
     shift_x = round((width - source_width * factor) / 2)
     shift_y = round((height - source_height * factor) / 2)
     fitted = []
+    if any(_has_key(item, "points") for item in items):
+        raise HomeAssistantError(
+            "This template has no layout for the display and its polygon cannot be scaled"
+        )
     for item in _scale(items, factor):
         item = dict(item)
-        if "points" in item:
-            raise HomeAssistantError(
-                "This template has no layout for the display and its polygon cannot be scaled"
-            )
         shifts = [(key, shift_x) for key in _X_KEYS] + [(key, shift_y) for key in _Y_KEYS]
         for key, shift in shifts:
             if isinstance(item.get(key), int | float) and not isinstance(item[key], bool):
