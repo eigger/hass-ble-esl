@@ -1,14 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.2.0b3
 
 ### Added
 
-- Template gallery thumbnails and a live preview of the chosen template while its parameters are edited, drawn by the real renderer for the tag.
-- `entity` template parameters (with an optional domain) and a **Weather now** design template for any `weather` entity.
-- Your own design templates: files in `<config>/ble_esl/templates/` appear in the template gallery, and **Save as template** keeps the current design there.
-- **Templates** in the Designer: pick a ready-made design, adjust its parameters and add it as editable elements, optionally creating the automation with the template's triggers (the Date label updates daily at 12:00 by default).
-- Design templates: YAML files in `designer/templates/` describe a ready-made design with editable parameters (font, colors, time), per-resolution layouts and an optional automation. The Designer API can list and apply them and prefill a new automation with the template's triggers. Date label, Wi-Fi QR code, Message and Color check templates are included. See [Design templates](docs/design-templates.md).
+- **Design templates.** Pick a ready-made design under **Templates** in the Designer, adjust its parameters (font, colors, entity, time…) and add it as ordinary, editable elements. The gallery shows a thumbnail of each template and the chosen one redraws as you edit its parameters, both drawn by the real renderer for the tag. See [Design templates](docs/design-templates.md), which also explains how to write one.
+- Templates can come with an automation: **Replace and create automation** opens Create automation with the template's triggers already filled in (the Date label updates daily at 12:00).
+- Bundled templates: Date label, Wi-Fi QR code, Message, Color check and Weather now (any `weather` entity).
+- Your own templates: files in `<config>/ble_esl/templates/` appear in the gallery, and **Save as template** keeps the current design there. Template parameters can be text, numbers, colors, fonts, times, choices or entities.
 
 ### Changed
 
