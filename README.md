@@ -89,6 +89,10 @@ A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements 
 
 ## Visual editor
 
+![ESL Manager dashboard](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/manager/dashboard.png)
+
+**ESL Manager** is the dashboard of every tag: its alias, battery, last successfully sent image, whether the display is in sync, the latest transmission result and duration, and its automations — with search, filters and sorting. From a card you open the designer or the automation that draws the tag.
+
 Open **ESL Manager** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send saves the design first and sends only when requested. The designer does not automatically transmit on sensor changes; schedule updates with Home Assistant automations using the exported action.
 
 **[Designer guide →](docs/designer.md)**
