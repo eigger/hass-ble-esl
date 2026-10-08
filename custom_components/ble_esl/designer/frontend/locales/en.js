@@ -552,4 +552,7 @@ export default {
   "My template": "My template",
   "Saved template {name}.": "Saved template {name}.",
   "Design template name": "Design template name",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.",
+  "Browse templates": "Browse templates",
 };

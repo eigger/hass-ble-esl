@@ -205,3 +205,30 @@ test("message severity survives language changes", async ({ page }) => {
     "자동화를 저장했습니다.",
   );
 });
+
+test("the scrollbar gutter is reserved and the drop-downs keep a fixed width", async ({
+  page,
+}) => {
+  // Headless Chromium hides scrollbars, so the cause is checked, not the shift.
+  await page.goto("/?manager");
+  const filter = page.locator("#filter");
+  await expect(filter).toBeVisible();
+  const gutter = await page.evaluate(
+    () =>
+      getComputedStyle(
+        window.manager.shadowRoot.querySelector(".dashboard-content"),
+      ).scrollbarGutter,
+  );
+  expect(gutter).toBe("stable");
+  const before = [
+    await filter.boundingBox(),
+    await page.locator("#sort").boundingBox(),
+  ];
+  for (const value of ["error", "unsynced", "low-battery", "all"]) {
+    await filter.selectOption(value);
+    expect([
+      await filter.boundingBox(),
+      await page.locator("#sort").boundingBox(),
+    ]).toEqual(before);
+  }
+});

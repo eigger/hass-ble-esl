@@ -1706,7 +1706,9 @@ test("design template: gallery applies elements and prefills the automation", as
 }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await expect(gallery).toContainText("Date label");
   await gallery.getByRole("button", { name: /Date label/ }).click();
@@ -1739,7 +1741,9 @@ test("design template: gallery applies elements and prefills the automation", as
 test("design template: replace and create automation in one step", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
   await gallery
@@ -1753,7 +1757,9 @@ test("design template: replace and create automation in one step", async ({
 test("design template: a missing font reports the error and keeps the display", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
   await gallery.getByLabel("Font").fill("Missing.ttf");
@@ -1765,7 +1771,9 @@ test("design template: a missing font reports the error and keeps the display", 
 test("design template triggers are dropped once the template's elements are gone", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
   await gallery.getByRole("button", { name: "Add to display" }).click();
@@ -1787,7 +1795,9 @@ test("design template: the current design can be saved and applied again", async
   page,
 }) => {
   await pickSensor(page, "sensor.office_temperature");
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByLabel("Design template name").fill("Office temperature");
   await gallery.getByRole("button", { name: "Save as template" }).click();
@@ -1806,7 +1816,9 @@ test("design template: the current design can be saved and applied again", async
 test("design template: an entity parameter offers matching entities and checks the choice", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Weather now/ }).click();
   const input = gallery.getByLabel("Weather entity");
@@ -1836,7 +1848,9 @@ test("design template: an entity default that does not exist gives way to one th
     };
     window.panel.hass = { ...window.panel.hass, states };
   });
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Weather now/ }).click();
   await expect(gallery.getByLabel("Weather entity")).toHaveValue(
@@ -1852,7 +1866,9 @@ test("design template: an entity default that does not exist gives way to one th
 test("design template: thumbnails load in the gallery and the form preview follows the parameters", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   const thumbs = gallery.locator("img[data-preview]");
   await expect(thumbs.first()).toHaveAttribute("src", /^data:image\/png/);
@@ -1870,7 +1886,9 @@ test("design template: thumbnails load in the gallery and the form preview follo
 test("design template: an invalid parameter hides the stale preview and says why", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
   const preview = gallery.locator("img[data-form-preview]");
@@ -1887,7 +1905,9 @@ test("design template: an invalid parameter hides the stale preview and says why
 test("design template: the preview error stays visible after a re-render", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Browse templates", exact: true })
+    .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
   await gallery.getByLabel("Network name (SSID)").fill("bad;name");
@@ -1900,4 +1920,30 @@ test("design template: the preview error stays visible after a re-render", async
   await expect(gallery.locator("[data-form-preview-note]")).toContainText(
     "ssid",
   );
+});
+
+test("toolbar and left-panel controls are at least 38px and never overflow, in long translations", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 900, height: 900 });
+  for (const lang of ["en", "ru", "de", "ja"]) {
+    await page.goto(`/?lang=${lang}`);
+    await page.waitForFunction(() => window.panel?.tag);
+    const bad = await page.evaluate(() => {
+      const root = window.panel.shadowRoot;
+      return [
+        ...root.querySelectorAll(
+          ".toolbar select,.toolbar button,#library select,#library button",
+        ),
+      ]
+        .filter((node) => node.offsetParent)
+        .map((node) => ({
+          control: node.id || node.dataset.action || node.textContent.trim(),
+          height: Math.round(node.getBoundingClientRect().height),
+          overflow: node.scrollHeight > node.clientHeight + 1,
+        }))
+        .filter((item) => item.height < 38 || item.overflow);
+    });
+    expect(bad, lang).toEqual([]);
+  }
 });

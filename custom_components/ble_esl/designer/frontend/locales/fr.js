@@ -558,4 +558,7 @@ export default {
   "My template": "Mon modèle",
   "Saved template {name}.": "Modèle {name} enregistré.",
   "Design template name": "Nom du modèle de design",
+  "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
+    "Partez d'un design prêt à l'emploi, comme une étiquette de date, un QR code Wi-Fi ou la météo. Ajustez ses options, ajoutez-le sous forme d'éléments modifiables et créez si besoin l'automatisation qui le tient à jour.",
+  "Browse templates": "Parcourir les modèles",
 };
