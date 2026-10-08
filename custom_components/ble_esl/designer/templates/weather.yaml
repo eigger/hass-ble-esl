@@ -55,7 +55,7 @@ layouts:
       size: 110
       color: black
     - type: text
-      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
       font: ${font}
       anchor: rt
       x: 335
@@ -86,7 +86,7 @@ layouts:
       size: 40
       color: black
     - type: text
-      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number else '' }}"
+      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number and h is not boolean and h == h and h | abs < 100000 else '' }}"
       font: ${font}
       anchor: lt
       x: 195
@@ -126,7 +126,7 @@ layouts:
       size: 70
       color: black
     - type: text
-      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}"
       font: ${font}
       anchor: rt
       x: 195
@@ -150,7 +150,7 @@ layouts:
       size: 18
       color: black
     - type: text
-      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number else '' }}"
+      value: "{% set h = state_attr('${weather}', 'humidity') %}{{ h ~ '%' if h is number and h is not boolean and h == h and h | abs < 100000 else '' }}"
       font: ${font}
       anchor: rb
       x: 244

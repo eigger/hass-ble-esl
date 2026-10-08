@@ -668,6 +668,9 @@ async def test_weather_template_draws_every_condition(hass, width, height):
         ({"temperature": 103.0}, "103", ""),
         ({"temperature": -12.34, "humidity": 0}, "-12.3", "0%"),
         ({"temperature": "warm"}, "--", ""),
+        ({"temperature": float("nan"), "humidity": float("nan")}, "--", ""),
+        ({"temperature": float("inf"), "humidity": float("-inf")}, "--", ""),
+        ({"temperature": True, "humidity": True}, "--", ""),
     ],
 )
 async def test_weather_values_are_formatted_and_never_say_none(
