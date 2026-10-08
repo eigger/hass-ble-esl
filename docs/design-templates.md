@@ -17,6 +17,17 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 
 > The [`examples/`](../examples) folder is documentation and is not installed with the integration, so a template must be placed in the folder above.
 
+## Bundled templates
+
+| Template | What it makes | Layouts | Automation |
+|---|---|---|---|
+| `date` | Month/day with the weekday below (weekend color) | 250×128, 400×300 | Daily at 12:00 |
+| `wifi` | Wi-Fi QR code with a title and hint | 250×128, 400×300 | none |
+| `message` | One large line of text that shrinks to fit | 250×128 (scaled) | none |
+| `color_check` | Black, white, red and yellow swatches | 400×300 | none |
+
+Examples that read entities or service responses (weather, calendar, presence…) are not templates yet, because a template carries a fixed payload and its parameters are plain values.
+
 ## File format
 
 ```yaml
@@ -69,7 +80,7 @@ For a display whose size has no layout, the nearest layout is used. It is scaled
 | `font` | file name | Must exist in the integration's `fonts/` folder or `www/fonts` |
 | `color` | `black`, `white`, `red`, `yellow` | A color the tag cannot show becomes `black` |
 | `select` | one of `options` | `options: [a, b]` is required |
-| `string` | text | No braces, quotes, backslashes or line breaks, because it may be placed inside a Jinja string |
+| `string` | text | No braces, quotes, backslashes or line breaks, because it may be placed inside a Jinja string. Optional `forbidden: ";:,"` lists further characters to refuse |
 | `number` | number | Optional `min` / `max` |
 | `time` | `HH:MM` or `HH:MM:SS` | Stored as `HH:MM:SS` |
 | `boolean` | true / false | |

@@ -84,6 +84,7 @@ _PARAMETER = vol.Schema(
         vol.Optional("label"): _LOCALIZED,
         vol.Optional("group", default="design"): vol.In(("design", "automation")),
         vol.Optional("options"): [str],
+        vol.Optional("forbidden"): str,
         vol.Optional("min"): vol.Any(int, float),
         vol.Optional("max"): vol.Any(int, float),
     },
@@ -208,6 +209,8 @@ def coerce_value(name, parameter, value, colors):
             return value
         if len(value) > 200 or _UNSAFE_TEXT.search(value):
             raise ValueError("text without braces, quotes, backslashes or line breaks")
+        if any(char in value for char in parameter.get("forbidden", "")):
+            raise ValueError(f"text without any of {parameter['forbidden']}")
         return value
     except ValueError as err:
         raise vol.Invalid(f"parameter {name}: {err}") from err

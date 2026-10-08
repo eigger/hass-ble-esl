@@ -1,0 +1,26 @@
+template: 1
+id: color_check
+name:
+  en: Color check
+  ko: 색상 점검
+description:
+  en: Four colour swatches to check what a tag can display (black, white, red, yellow).
+  ko: 태그가 표시할 수 있는 색(검정, 흰색, 빨강, 노랑)을 확인하는 견본입니다.
+background: white
+
+parameters:
+  font:
+    type: font
+    default: NotoSansKR-Bold.ttf
+    label: { en: Font, ko: 글꼴 }
+
+layouts:
+  "400x300":
+    - {type: rectangle, x_start: 10, y_start: 65, x_end: 99, y_end: 205, fill: black, outline: black}
+    - {type: text, value: BLACK, x: 54, y: 115, size: 16, color: white, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 107, y_start: 65, x_end: 196, y_end: 205, fill: white, outline: black}
+    - {type: text, value: WHITE, x: 151, y: 115, size: 16, color: black, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 204, y_start: 65, x_end: 293, y_end: 205, fill: red, outline: black}
+    - {type: text, value: RED, x: 248, y: 115, size: 16, color: white, anchor: mt, font: "${font}"}
+    - {type: rectangle, x_start: 301, y_start: 65, x_end: 390, y_end: 205, fill: yellow, outline: black}
+    - {type: text, value: YELLOW, x: 345, y: 115, size: 16, color: black, anchor: mt, font: "${font}"}

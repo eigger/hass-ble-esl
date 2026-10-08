@@ -1,0 +1,46 @@
+template: 1
+id: message
+name:
+  en: Message
+  ko: 메시지
+description:
+  en: One large, centred line of text that fits the display.
+  ko: 화면에 맞춰 가운데 정렬되는 큰 글자 한 줄입니다.
+background: white
+
+parameters:
+  text:
+    type: string
+    default: Hello
+    label: { en: Text, ko: 문구 }
+  color:
+    type: color
+    default: black
+    label: { en: Text color, ko: 글자 색상 }
+  lines:
+    type: number
+    default: 2
+    min: 1
+    max: 6
+    label: { en: Maximum lines, ko: 최대 줄 수 }
+  font:
+    type: font
+    default: GmarketSansTTFBold.ttf
+    label: { en: Font, ko: 글꼴 }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: ${text}
+      font: ${font}
+      x: 8
+      y: 8
+      width: 234
+      height: 112
+      color: ${color}
+      size: 200
+      min_size: 8
+      fit: shrink
+      max_lines: ${lines}
+      align: center
+      valign: middle

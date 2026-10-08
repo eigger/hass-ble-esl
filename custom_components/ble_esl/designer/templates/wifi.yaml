@@ -1,0 +1,90 @@
+template: 1
+id: wifi
+name:
+  en: Wi-Fi QR code
+  ko: Wi-Fi QR 코드
+description:
+  en: "A QR code that joins a Wi-Fi network when scanned. The SSID and password cannot contain ; : or ,"
+  ko: "스캔하면 Wi-Fi에 연결되는 QR 코드입니다. SSID와 비밀번호에는 ; : , 를 쓸 수 없습니다."
+background: white
+
+parameters:
+  ssid:
+    type: string
+    default: ssid
+    forbidden: ";:,"
+    label: { en: Network name (SSID), ko: 네트워크 이름 (SSID) }
+  password:
+    type: string
+    default: password
+    forbidden: ";:,"
+    label: { en: Password, ko: 비밀번호 }
+  security:
+    type: select
+    options: [WPA, WEP, nopass]
+    default: WPA
+    label: { en: Security, ko: 보안 방식 }
+  title:
+    type: string
+    default: WIFI
+    label: { en: Title, ko: 제목 }
+  hint:
+    type: string
+    default: 카메라로 스캔하세요
+    label: { en: Hint, ko: 안내 문구 }
+  font:
+    type: font
+    default: GmarketSansTTFBold.ttf
+    label: { en: Font, ko: 글꼴 }
+
+layouts:
+  "250x128":
+    - type: text
+      value: ${title}
+      font: ${font}
+      anchor: mt
+      x: 180
+      y: 20
+      size: 30
+      color: black
+    - type: text
+      value: ${hint}
+      font: ${font}
+      anchor: mt
+      x: 180
+      y: 64
+      size: 15
+      color: black
+    - type: qrcode
+      data: WIFI:T:${security};S:${ssid};P:${password};;
+      x: 5
+      y: 10
+      width: 108
+      height: 108
+      border: 1
+      color: black
+  "400x300":
+    - type: text
+      value: ${title}
+      font: ${font}
+      anchor: mt
+      x: 290
+      y: 60
+      size: 56
+      color: black
+    - type: text
+      value: ${hint}
+      font: ${font}
+      anchor: mt
+      x: 290
+      y: 140
+      size: 24
+      color: black
+    - type: qrcode
+      data: WIFI:T:${security};S:${ssid};P:${password};;
+      x: 10
+      y: 40
+      width: 190
+      height: 190
+      border: 1
+      color: black

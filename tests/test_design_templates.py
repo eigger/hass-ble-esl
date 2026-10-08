@@ -58,8 +58,10 @@ async def test_bundled_template_imports_and_draws_exactly(hass, template_id, wid
     original, rebuilt = payloads(hass, imported, elements)
     assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
     for item in original:
-        for key in ("x", "y"):
-            assert 0 <= item[key] <= (width if key == "x" else height)
+        for key in ("x", "x_start", "x_end"):
+            assert 0 <= item.get(key, 0) <= width
+        for key in ("y", "y_start", "y_end"):
+            assert 0 <= item.get(key, 0) <= height
 
 
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
@@ -330,3 +332,18 @@ async def test_short_weekday_list_renders_instead_of_failing(hass, wolink_entry)
     )
     assert result["issues"] == []
     assert result["different_pixels"] == 0
+
+
+def test_forbidden_characters_are_refused():
+    wifi = TEMPLATES["wifi"]
+    for bad in ("a;b", "a:b", "a,b"):
+        with pytest.raises(HomeAssistantError, match="ssid"):
+            resolve_parameters(wifi, {"ssid": bad}, "BWR")
+    assert resolve_parameters(wifi, {"ssid": "Home Net"}, "BWR")["ssid"] == "Home Net"
+    built = build(wifi, 250, 128, "BWR", {"ssid": "Home", "password": "pw", "security": "WEP"})
+    assert built["payload"][2]["data"] == "WIFI:T:WEP;S:Home;P:pw;;"
+
+
+def test_message_text_and_line_count_are_applied():
+    built = build(TEMPLATES["message"], 250, 128, "BWR", {"text": "Hi", "lines": 3})
+    assert (built["payload"][0]["value"], built["payload"][0]["max_lines"]) == ("Hi", 3)
