@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.0b2
+
+### Added
+
+- Create a Home Assistant automation from the current ESL design, including unsaved edits. Configure its triggers and conditions in Home Assistant after creation.
+- Open an existing automation's `ble_esl.write` payload directly from ESL Manager, edit the design, and save to the same automation without copying YAML. Saving rereads the latest configuration and changes only the uniquely matched action's payload, preserving triggers, conditions, other actions, and other service data. Saving does not send over Bluetooth.
+
+### Fixed
+
+- Automation editing uses an isolated session and restores the ordinary design, drafts, and undo history on exit. Delayed imports, conversions, image uploads, and cancelled YAML imports cannot modify another session.
+- Invalid payloads, non-finite numbers, changed or ambiguous actions, unsupported targets, and background changes block automation saves. Action matching follows Home Assistant's target precedence and does not infer targets from payload content.
+- Corrected Designer panel layout and updated the English and Korean guides for direct automation editing.
+
+### Known limitation
+
+- Home Assistant's configuration API has no conditional write: an external change between the latest configuration read and save cannot be protected atomically.
+
 ## 1.2.0b1
 
 ### Added
