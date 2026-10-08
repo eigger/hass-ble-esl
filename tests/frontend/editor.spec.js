@@ -1841,5 +1841,25 @@ test("design template: an entity default that does not exist gives way to one th
   );
   await gallery.getByLabel("Weather entity").fill("weather.mine");
   await gallery.getByLabel("Font").fill("CookieRunBold.ttf");
-  await expect(gallery.getByLabel("Weather entity")).toHaveValue("weather.mine");
+  await expect(gallery.getByLabel("Weather entity")).toHaveValue(
+    "weather.mine",
+  );
+});
+
+test("design template: thumbnails load in the gallery and the form preview follows the parameters", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const thumbs = gallery.locator("img[data-preview]");
+  await expect(thumbs.first()).toHaveAttribute("src", /^data:image\/png/);
+  expect(await thumbs.count()).toBeGreaterThan(3);
+  await gallery.getByRole("button", { name: /Message/ }).click();
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toHaveAttribute("src", /^data:image\/png/);
+  const before = await preview.getAttribute("src");
+  await gallery.getByLabel("Text", { exact: true }).fill("A different message");
+  await expect
+    .poll(async () => await preview.getAttribute("src"))
+    .not.toBe(before);
 });

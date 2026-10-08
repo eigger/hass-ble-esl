@@ -51,8 +51,10 @@ from custom_components.ble_esl.designer.specs import (
     MissingTemplateParameter,
     describe,
     frozen_corners,
+    resolve_templates,
 )
 from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.renderer import render_image
 
 ROOT = Path(__file__).resolve().parents[1]
 DESIGN_TEMPLATES = load_all()
@@ -293,6 +295,38 @@ async def handle(request):
                 describe_template(template, preset.width, preset.height)
                 for template in DESIGN_TEMPLATES.values()
             ]
+        )
+    if msg["action"] == "preview_design_template":
+        template = DESIGN_TEMPLATES.get(msg["template_id"])
+        if template is None:
+            return web.Response(status=400, text="There is no such design template")
+        given = dict(msg.get("parameters") or {})
+        for name, parameter in template["parameters"].items():
+            if parameter["type"] != "entity" or name in given:
+                continue
+            if HASS.states.get(parameter["default"]) is None and "domain" in parameter:
+                found = sorted(HASS.states.async_entity_ids(parameter["domain"]))
+                if found:
+                    given[name] = found[0]
+        try:
+            built = build_template(template, preset.width, preset.height, preset.colors, given)
+            image = await asyncio.to_thread(
+                render_image,
+                HASS,
+                preset,
+                resolve_templates(HASS, built["payload"], set()),
+                background=built["background"],
+            )
+        except HomeAssistantError as err:
+            return web.Response(status=400, text=str(err))
+        buffer = BytesIO()
+        image.save(buffer, "PNG")
+        return web.json_response(
+            {
+                "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+                "layout": built["layout"],
+                "scaled": built["scaled"],
+            }
         )
     template_info = None
     if msg["action"] == "apply_design_template":

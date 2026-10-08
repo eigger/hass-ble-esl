@@ -6,7 +6,7 @@
 
 ## 템플릿 사용하기
 
-디자이너에서 컴포넌트 버튼 아래의 **Templates**(템플릿)를 누릅니다. 갤러리에 디자인 목록이 나오고, 태그 화면 크기에 맞게 layout이 *조정됨*인지 표시됩니다. 템플릿을 고르고 필요하면 parameter를 바꾼 뒤(모두 기본값이 있음):
+디자이너에서 컴포넌트 버튼 아래의 **Templates**(템플릿)를 누릅니다. 갤러리에 디자인 목록이 실제 렌더러로 그린 이 태그용 미리보기와 함께 나오고(없는 기본 엔티티는 같은 도메인의 첫 엔티티로 대체), 태그 화면 크기에 맞게 layout이 *조정됨*인지 표시됩니다. 템플릿을 고르고 필요하면 parameter를 바꾼 뒤(모두 기본값이 있고, 입력하면 필드 위의 미리보기가 다시 그려짐):
 
 - **Add to display**는 캔버스를 유지하고, **Replace display**는 새로 시작합니다. 결과는 편집 가능한 일반 요소입니다.
 - **Replace and create automation**(`automation` 블록이 있는 템플릿, 쓰기 가능한 태그)은 **Create automation**도 엽니다. 템플릿의 실행 조건(예: *매일 12:00*)이 미리 채워져 있으며, 그 대화상자에서 **Create automation**을 누르면 저장됩니다.
@@ -119,4 +119,4 @@ automation:
 
 ## API
 
-디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `save_design_template`(`name`, 선택적 `template_id`, `overwrite`; 디자인을 사용자 폴더에 저장), `apply_design_template`(`template_id`, `parameters`, `existing`, `preview_variables`)이 있습니다. `apply_design_template`은 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.
+디자이너 websocket 명령 `ble_esl/designer`에 `design_templates`(태그별 목록)와 `save_design_template`(`name`, 선택적 `template_id`, `overwrite`; 디자인을 사용자 폴더에 저장), `preview_design_template`(`template_id`, `parameters`; 태그용 PNG를 그리기만 하고 가져오지 않음), `apply_design_template`(`template_id`, `parameters`, `existing`, `preview_variables`)이 있습니다. `apply_design_template`은 가져오기 결과에 선택된 layout, 최종 parameter 값, 자동화 기본값이 든 `template` 블록을 더해 돌려줍니다. 이 기본값을 `automation` 액션의 `automation_defaults`로 넘기면 새 자동화가 미리 채워집니다.

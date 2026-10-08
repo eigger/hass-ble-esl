@@ -4,7 +4,7 @@
 
 ## Using a template
 
-In the Designer, choose **Templates** (under the component buttons). The gallery lists the designs and shows whether a layout was *adjusted* to the tag's display size. Pick one, change its parameters if you like (every one has a default), then:
+In the Designer, choose **Templates** (under the component buttons). The gallery lists the designs with a thumbnail drawn by the real renderer for this tag (a default entity that does not exist is replaced by the first one of its domain), and shows whether a layout was *adjusted* to the tag's display size. Pick one, change its parameters if you like (every one has a default; the preview above the fields redraws as you type), then:
 
 - **Add to display** keeps what is on the canvas; **Replace display** starts again. The result is ordinary, editable elements.
 - **Replace and create automation** (templates with an `automation` block, writable tags) also opens **Create automation**, with the template's triggers, for example *every day at 12:00*, already filled in. Choose **Create automation** in that dialog to save it.
@@ -117,4 +117,4 @@ Run the test-suite: `tests/test_design_templates.py` loads every bundled templat
 
 ## API
 
-The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag), `save_design_template` (`name`, optional `template_id`, `overwrite`; saves a design to the user folder), and `apply_design_template` (`template_id`, `parameters`, `existing`, `preview_variables`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.
+The Designer's websocket command `ble_esl/designer` offers `design_templates` (the list for a tag), `save_design_template` (`name`, optional `template_id`, `overwrite`; saves a design to the user folder), `preview_design_template` (`template_id`, `parameters`; a PNG drawn for the tag, nothing imported), and `apply_design_template` (`template_id`, `parameters`, `existing`, `preview_variables`), which returns the same result as an import plus a `template` block with the chosen layout, the final parameter values and the automation defaults. Pass those defaults as `automation_defaults` to the `automation` action to prefill the new automation.
