@@ -1,0 +1,74 @@
+template: 1
+id: date
+name:
+  en: Date label
+  ko: 날짜 라벨
+description:
+  en: Month/day on top and the weekday below, refreshed by a daily automation.
+  ko: 위에 월/일, 아래에 요일을 표시하고 하루에 한 번 갱신합니다.
+background: white
+
+parameters:
+  font:
+    type: font
+    default: GmarketSansTTFBold.ttf
+    label: { en: Font, ko: 글꼴 }
+  date_format:
+    type: string
+    default: "%m월 %d일"
+    label: { en: Date format (strftime), ko: 날짜 형식 (strftime) }
+  weekdays:
+    type: string
+    default: 월요일,화요일,수요일,목요일,금요일,토요일,일요일
+    label: { en: "Weekday names, Monday first", ko: "요일 이름 (월요일부터, 쉼표로 구분)" }
+  weekend_color:
+    type: color
+    default: red
+    label: { en: Weekend color, ko: 주말 색상 }
+  time:
+    type: time
+    group: automation
+    default: "12:00:00"
+    label: { en: Update time, ko: 갱신 시각 }
+
+layouts:
+  "250x128":
+    - type: text
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      anchor: mt
+      x: 125
+      y: 10
+      size: 45
+      color: black
+    - type: text
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
+      font: ${font}
+      anchor: mb
+      x: 125
+      y: 108
+      size: 45
+      color: "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
+  "400x300":
+    - type: text
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      anchor: mt
+      x: 200
+      y: 40
+      size: 64
+      color: black
+    - type: text
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
+      font: ${font}
+      anchor: mb
+      x: 200
+      y: 260
+      size: 64
+      color: "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
+
+automation:
+  triggers:
+    - trigger: time
+      at: ${time}
+  mode: single

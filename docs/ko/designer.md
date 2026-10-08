@@ -83,6 +83,8 @@ ESL Manager는 카드형 대시보드로 시작합니다. 각 카드에는 기�
 
 > `plot`은 recorder를 읽으므로 그 엔티티를 기록하는 recorder가 필요합니다. imagespec 요소가 요청한 색을 태그가 표시할 수 없으면 가장 가까운 색으로 그려지고, 기존 컴포넌트는 태그의 색만 고를 수 있습니다.
 
+완성된 디자인과 작성 방법: [디자인 템플릿](design-templates.md).
+
 ## Payload YAML
 
 **Payload YAML**은 디자인을 imagespec YAML로 보여 줍니다. `payload:` 아래에 붙여 넣을 payload도, 스크립트나 자동화용 완성된 액션(**Automation action** 탭, 이 태그의 `device_id` 포함, 쓸 수 있는 태그에서만)도 있습니다.

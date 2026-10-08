@@ -128,14 +128,19 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
     return result
 
 
-def automation_draft(exported, name):
-    """Prefill a new automation without triggers, using templates when available."""
+def automation_draft(exported, name, defaults=None):
+    """Prefill a new automation, using templates when available.
+
+    ``defaults`` is what a design template brings: its alias, triggers,
+    conditions, mode and description. Without it the triggers stay empty.
+    """
     action = yaml.safe_load(exported.get("live_service", exported["service"]))
+    defaults = defaults or {}
     return {
-        "alias": name,
-        "description": "",
-        "triggers": [],
-        "conditions": [],
+        "alias": defaults.get("alias") or name,
+        "description": defaults.get("description", ""),
+        "triggers": defaults.get("triggers", []),
+        "conditions": defaults.get("conditions", []),
         "actions": [action],
-        "mode": "single",
+        "mode": defaults.get("mode", "single"),
     }

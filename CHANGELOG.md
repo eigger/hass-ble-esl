@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Design templates: YAML files in `designer/templates/` describe a ready-made design with editable parameters (font, colors, time), per-resolution layouts and an optional automation. The Designer API can list and apply them and prefill a new automation with the template's triggers. A Date label template is included. See [Design templates](docs/design-templates.md).
+
 ### Changed
 
 - Manager cards offer direct automation design editing, labelled last-successful images with surrounding margins, read-only badges, battery-warning filters, and sorting by attention, battery, or name. Editor headers identify the tag and automation; normal notices and save confirmations use distinct status styles.

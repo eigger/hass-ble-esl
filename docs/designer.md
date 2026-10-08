@@ -85,6 +85,8 @@ Any value can be a [Jinja template](https://www.home-assistant.io/docs/configura
 
 > `plot` reads the recorder, so it needs one that records the entity. A colour an imagespec element asks for that the tag cannot show is drawn as the nearest one it can; the older components only offer the tag's colours.
 
+Ready-made designs and how to write one: [Design templates](design-templates.md).
+
 ## Payload YAML
 
 **Payload YAML** shows the design as imagespec YAML, either the payload to paste under `payload:`, or a complete action (**Automation action** tab, with this tag's `device_id`; only for tags that can be written) for a script or automation.

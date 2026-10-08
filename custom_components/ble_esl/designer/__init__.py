@@ -22,6 +22,7 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
+from .design_templates import build as build_template, describe as describe_template, load_templates
 from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
@@ -86,6 +87,7 @@ class Designer:
         self.documents = {}
         self.template_store = Store(hass, 1, f"{DOMAIN}.sensor_templates")
         self.templates = {}
+        self.design_templates = {}
         self.forecast_cache = {}
         self.locks = {}
         self.render_lock = asyncio.Lock()
@@ -267,14 +269,58 @@ class Designer:
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         return result
 
-    async def automation(self, entry, document, preview_variables=None):
+    async def automation(self, entry, document, preview_variables=None, defaults=None):
         """Prepare a new automation from the current, possibly unsaved design."""
         result = await self.export(entry, document, preview_variables)
         if not result["writable"]:
             raise HomeAssistantError("This ESL does not support writing")
         if not entry.runtime_data.device_id:
             raise HomeAssistantError("This ESL has no registered device")
-        return {**result, "automation": automation_draft(result, entry.title)}
+        return {**result, "automation": automation_draft(result, entry.title, defaults)}
+
+    def design_template_list(self, entry):
+        """The ready-made designs, described for this tag's display."""
+        preset = self.preset(entry)
+        return [
+            describe_template(template, preset.width, preset.height)
+            for template in self.design_templates.values()
+        ]
+
+    async def apply_design_template(
+        self, entry, template_id, parameters=None, existing=0, preview_variables=None
+    ):
+        """A design template's elements for this tag, imported like a pasted payload."""
+        template = self.design_templates.get(template_id)
+        if template is None:
+            raise HomeAssistantError(f"There is no design template {template_id}")
+        preset = self.preset(entry)
+        built = build_template(template, preset.width, preset.height, preset.colors, parameters)
+        fonts = {
+            value
+            for name, value in built["parameters"].items()
+            if template["parameters"][name]["type"] == "font"
+        }
+        missing = await self.hass.async_add_executor_job(self.missing_fonts, fonts)
+        if missing:
+            raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
+        imported = await self.import_payload(
+            entry, built["payload"], built["background"], existing, preview_variables
+        )
+        return {
+            **imported,
+            "template": {
+                "id": template_id,
+                "layout": built["layout"],
+                "scaled": built["scaled"],
+                "parameters": built["parameters"],
+                "automation": built["automation"],
+            },
+        }
+
+    def missing_fonts(self, fonts):
+        """Font files neither bundled with the integration nor in ``www/fonts``."""
+        folders = (Path(__file__).parent.parent / "fonts", Path(self.hass.config.path("www/fonts")))
+        return {font for font in fonts if not any((folder / font).is_file() for folder in folders)}
 
     async def import_yaml(self, entry, text, existing=0, preview_variables=None):
         """Elements for a pasted payload, and how faithfully they stand for it."""
@@ -425,6 +471,8 @@ class Designer:
                 "convert",
                 "send",
                 "templates",
+                "design_templates",
+                "apply_design_template",
                 "save_template",
                 "preview_template",
                 "automations",
@@ -446,6 +494,17 @@ class Designer:
         vol.Optional("key"): str,
         vol.Optional("entity_id"): str,
         vol.Optional("link_id"): str,
+        vol.Optional("template_id"): str,
+        vol.Optional("parameters"): dict,
+        vol.Optional("automation_defaults"): vol.Schema(
+            {
+                vol.Optional("alias"): str,
+                vol.Optional("description"): str,
+                vol.Optional("triggers"): [dict],
+                vol.Optional("conditions"): [dict],
+                vol.Optional("mode"): vol.In(("single", "restart", "queued", "parallel")),
+            }
+        ),
     }
 )
 @websocket_api.require_admin
@@ -457,6 +516,18 @@ async def websocket_designer(hass, connection, msg):
         result = describe()
     elif action == "templates":
         result = designer.templates
+    elif action == "design_templates":
+        result = designer.design_template_list(designer.entry(msg["entry_id"]))
+    elif action == "apply_design_template":
+        if "template_id" not in msg:
+            raise HomeAssistantError("template_id is required")
+        result = await designer.apply_design_template(
+            designer.entry(msg["entry_id"]),
+            msg["template_id"],
+            msg.get("parameters"),
+            msg.get("existing", 0),
+            msg.get("preview_variables"),
+        )
     elif action == "save_template":
         result = await designer.save_template(msg["key"], msg["template"])
     elif action == "preview_template":
@@ -514,8 +585,15 @@ async def websocket_designer(hass, connection, msg):
             msg.get("preview_variables"),
             msg.get("automation_edit", False),
         )
-    elif action in ("preview", "automation"):
-        result = await getattr(designer, action)(
+    elif action == "automation":
+        result = await designer.automation(
+            designer.entry(msg["entry_id"]),
+            msg["document"],
+            msg.get("preview_variables"),
+            msg.get("automation_defaults"),
+        )
+    elif action == "preview":
+        result = await designer.preview(
             designer.entry(msg["entry_id"]),
             msg["document"],
             msg.get("preview_variables"),
@@ -539,6 +617,7 @@ async def async_setup_designer(hass):
                 migrated = True
     if migrated:
         await designer.store.async_save(designer.documents)
+    designer.design_templates = await hass.async_add_executor_job(load_templates)
     designer.templates = await designer.template_store.async_load() or {}
     await designer.automation_links.load()
     websocket_api.async_register_command(hass, websocket_designer)
