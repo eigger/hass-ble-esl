@@ -58,8 +58,10 @@ async def test_bundled_template_imports_and_draws_exactly(hass, template_id, wid
     original, rebuilt = payloads(hass, imported, elements)
     assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
     for item in original:
-        for key in ("x", "y"):
-            assert 0 <= item[key] <= (width if key == "x" else height)
+        for key in ("x", "x_start", "x_end"):
+            assert 0 <= item.get(key, 0) <= width
+        for key in ("y", "y_start", "y_end"):
+            assert 0 <= item.get(key, 0) <= height
 
 
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
@@ -330,3 +332,58 @@ async def test_short_weekday_list_renders_instead_of_failing(hass, wolink_entry)
     )
     assert result["issues"] == []
     assert result["different_pixels"] == 0
+
+
+def test_forbidden_characters_are_refused():
+    wifi = TEMPLATES["wifi"]
+    for bad in ("a;b", "a:b", "a,b"):
+        with pytest.raises(HomeAssistantError, match="ssid"):
+            resolve_parameters(wifi, {"ssid": bad}, "BWR")
+    assert resolve_parameters(wifi, {"ssid": "Home Net"}, "BWR")["ssid"] == "Home Net"
+    for bad in ("a;b", "a:b", "a,b"):
+        with pytest.raises(HomeAssistantError, match="password"):
+            resolve_parameters(wifi, {"password": bad}, "BWR")
+    with pytest.raises(HomeAssistantError, match="at least 1"):
+        resolve_parameters(wifi, {"ssid": ""}, "BWR")
+    built = build(wifi, 250, 128, "BWR", {"ssid": "Home", "password": "pw", "security": "WEP"})
+    assert built["payload"][2]["data"] == "WIFI:T:WEP;S:Home;P:pw;H:false;;"
+    hidden = build(wifi, 250, 128, "BWR", {"security": "SAE", "hidden": "true"})
+    assert hidden["payload"][2]["data"] == "WIFI:T:SAE;S:ssid;P:password;H:true;;"
+
+
+def _frame(item):
+    left = item.get("x", item.get("x_start", 0))
+    top = item.get("y", item.get("y_start", 0))
+    right = item.get("x_end", left + item.get("width", 0))
+    bottom = item.get("y_end", top + item.get("height", 0))
+    return left, top, right, bottom
+
+
+@pytest.mark.parametrize("template_id", sorted(TEMPLATES))
+def test_boxes_stay_on_the_display_in_every_exact_layout(template_id):
+    template = TEMPLATES[template_id]
+    for size in template["layouts"]:
+        width, height = (int(part) for part in size.split("x"))
+        built = build(template, width, height, "BWRY")
+        assert built["scaled"] is False
+        for item in built["payload"]:
+            if item["type"] in ("text_fit", "qrcode", "rectangle"):
+                left, top, right, bottom = _frame(item)
+                assert 0 <= left < right <= width, (size, item)
+                assert 0 <= top < bottom <= height, (size, item)
+
+
+def test_wifi_text_does_not_overlap_the_qr_code():
+    for size in TEMPLATES["wifi"]["layouts"]:
+        width, height = (int(part) for part in size.split("x"))
+        items = build(TEMPLATES["wifi"], width, height, "BWR")["payload"]
+        qr = next(_frame(item) for item in items if item["type"] == "qrcode")
+        for item in items:
+            if item["type"] == "text_fit":
+                left, _, right, _ = _frame(item)
+                assert left >= qr[2] or right <= qr[0], size
+
+
+def test_message_text_and_line_count_are_applied():
+    built = build(TEMPLATES["message"], 250, 128, "BWR", {"text": "Hi", "lines": 3})
+    assert (built["payload"][0]["value"], built["payload"][0]["max_lines"]) == ("Hi", 3)
