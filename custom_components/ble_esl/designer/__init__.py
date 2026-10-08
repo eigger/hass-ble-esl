@@ -7,6 +7,7 @@ from io import BytesIO
 import json
 import math
 from pathlib import Path
+import re
 import time
 
 from homeassistant.components import frontend, panel_custom, websocket_api
@@ -22,7 +23,13 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
-from .design_templates import build as build_template, describe as describe_template, load_templates
+from .design_templates import (
+    build as build_template,
+    describe as describe_template,
+    load_all as load_design_templates,
+    slug as template_slug,
+    template_text,
+)
 from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
@@ -278,6 +285,62 @@ class Designer:
             raise HomeAssistantError("This ESL has no registered device")
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
 
+    @property
+    def user_template_dir(self):
+        return Path(self.hass.config.path("ble_esl", "templates"))
+
+    async def reload_design_templates(self):
+        self.design_templates = await self.hass.async_add_executor_job(
+            load_design_templates, self.user_template_dir
+        )
+
+    async def save_design_template(self, entry, document, name, template_id=None, overwrite=False):
+        """Keep the current design as a template in the user's template folder."""
+        name = (name or "").strip()
+        if not name or len(name) > 80 or any(ord(char) < 32 for char in name):
+            raise HomeAssistantError("Give the template a name of up to 80 characters")
+        exported = await self.export(entry, document)
+        if exported["validation_errors"]:
+            raise HomeAssistantError(
+                "Fix the design first: " + "; ".join(exported["validation_errors"][:3])
+            )
+        preset = self.preset(entry)
+        base = template_id or template_slug(name)
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,39}", base):
+            raise HomeAssistantError("A template id is lowercase letters, digits and underscores")
+        bundled = {
+            key for key, value in self.design_templates.items() if value["source"] == "bundled"
+        }
+        if base in bundled:
+            raise HomeAssistantError(f"{base} is the id of a bundled template")
+        path = self.user_template_dir / f"{base}.yaml"
+        exists = await self.hass.async_add_executor_job(path.exists)
+        if exists and not overwrite:
+            if template_id:
+                raise HomeAssistantError(f"Template {base} already exists")
+            taken = set(self.design_templates)
+            number = 2
+            while f"{base}_{number}" in taken:
+                number += 1
+            base = f"{base}_{number}"
+            path = self.user_template_dir / f"{base}.yaml"
+        text = template_text(
+            base,
+            name,
+            preset.width,
+            preset.height,
+            validate(document, preset)["background"],
+            exported["payload_data"],
+        )
+
+        def write():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+
+        await self.hass.async_add_executor_job(write)
+        await self.reload_design_templates()
+        return {"id": base, "yaml": text}
+
     def design_template_list(self, entry):
         """The ready-made designs, described for this tag's display."""
         preset = self.preset(entry)
@@ -473,6 +536,7 @@ class Designer:
                 "templates",
                 "design_templates",
                 "apply_design_template",
+                "save_design_template",
                 "save_template",
                 "preview_template",
                 "automations",
@@ -495,6 +559,8 @@ class Designer:
         vol.Optional("entity_id"): str,
         vol.Optional("link_id"): str,
         vol.Optional("template_id"): str,
+        vol.Optional("name"): str,
+        vol.Optional("overwrite"): bool,
         vol.Optional("parameters"): dict,
         vol.Optional("automation_defaults"): vol.Schema(
             {
@@ -516,7 +582,16 @@ async def websocket_designer(hass, connection, msg):
         result = describe()
     elif action == "templates":
         result = designer.templates
+    elif action == "save_design_template":
+        result = await designer.save_design_template(
+            designer.entry(msg["entry_id"]),
+            msg["document"],
+            msg.get("name"),
+            msg.get("template_id"),
+            msg.get("overwrite", False),
+        )
     elif action == "design_templates":
+        await designer.reload_design_templates()
         result = designer.design_template_list(designer.entry(msg["entry_id"]))
     elif action == "apply_design_template":
         if "template_id" not in msg:
@@ -617,7 +692,7 @@ async def async_setup_designer(hass):
                 migrated = True
     if migrated:
         await designer.store.async_save(designer.documents)
-    designer.design_templates = await hass.async_add_executor_job(load_templates)
+    await designer.reload_design_templates()
     designer.templates = await designer.template_store.async_load() or {}
     await designer.automation_links.load()
     websocket_api.async_register_command(hass, websocket_designer)

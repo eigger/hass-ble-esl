@@ -387,3 +387,86 @@ def test_wifi_text_does_not_overlap_the_qr_code():
 def test_message_text_and_line_count_are_applied():
     built = build(TEMPLATES["message"], 250, 128, "BWR", {"text": "Hi", "lines": 3})
     assert (built["payload"][0]["value"], built["payload"][0]["max_lines"]) == ("Hi", 3)
+
+
+def _text_document(value="Hello"):
+    return {
+        "version": 1,
+        "background": "white",
+        "elements": [
+            {
+                "id": "t",
+                "type": "imagespec",
+                "x": 5,
+                "y": 6,
+                "width": 120,
+                "height": 30,
+                "spec": {"type": "text_fit", "value": value, "color": "black"},
+            }
+        ],
+    }
+
+
+async def test_saved_design_becomes_a_user_template(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    saved = await designer.save_design_template(
+        wolink_entry, _text_document("{{ now().year }}"), "My Year"
+    )
+    assert saved["id"] == "my_year"
+    path = designer.user_template_dir / "my_year.yaml"
+    assert path.is_file()
+    template = designer.design_templates["my_year"]
+    assert template["source"] == "user"
+    preset = designer.preset(wolink_entry)
+    built = build(template, preset.width, preset.height, preset.colors)
+    assert built["scaled"] is False
+    assert built["payload"][0]["value"] == "{{ now().year }}"
+    # A second save under the same name never overwrites by accident.
+    again = await designer.save_design_template(wolink_entry, _text_document(), "My Year")
+    assert again["id"] == "my_year_2"
+    with pytest.raises(HomeAssistantError, match="already exists"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "My Year", template_id="my_year"
+        )
+    await designer.save_design_template(
+        wolink_entry, _text_document("v2"), "My Year", template_id="my_year", overwrite=True
+    )
+    assert (await designer.apply_design_template(wolink_entry, "my_year"))["elements"]
+
+
+async def test_saving_refuses_bad_names_ids_and_references(hass, wolink_entry, tmp_path):
+    hass.config.config_dir = str(tmp_path)
+    designer = hass.data[KEY]
+    for name in ("", "   ", "x" * 81, "a\nb"):
+        with pytest.raises(HomeAssistantError, match="name"):
+            await designer.save_design_template(wolink_entry, _text_document(), name)
+    with pytest.raises(HomeAssistantError, match="bundled"):
+        await designer.save_design_template(wolink_entry, _text_document(), "Date", "date")
+    with pytest.raises(HomeAssistantError, match="cannot be saved"):
+        await designer.save_design_template(wolink_entry, _text_document("${x}"), "Ref")
+    with pytest.raises(HomeAssistantError, match="lowercase"):
+        await designer.save_design_template(
+            wolink_entry, _text_document(), "Path", template_id="../evil"
+        )
+    assert not list(designer.user_template_dir.glob("*evil*"))
+
+
+def test_user_templates_cannot_replace_bundled_ones(tmp_path, caplog):
+    from custom_components.ble_esl.designer.design_templates import load_all
+
+    (tmp_path / "date.yaml").write_text(MINIMAL.replace("id: sample", "id: date"))
+    (tmp_path / "mine.yaml").write_text(MINIMAL)
+    templates = load_all(tmp_path)
+    assert templates["date"]["source"] == "bundled"
+    assert templates["sample"]["source"] == "user"
+    assert "already bundled" in caplog.text
+
+
+def test_slug_makes_a_valid_id():
+    from custom_components.ble_esl.designer.design_templates import slug
+
+    assert slug("My Year!") == "my_year"
+    assert slug("날짜") == "design"
+    assert slug("3 days") == "design_3_days"
+    assert parse_template(MINIMAL.replace("id: sample", f"id: {slug('3 days')}"))

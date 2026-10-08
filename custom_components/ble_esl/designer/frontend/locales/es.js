@@ -554,4 +554,10 @@ export default {
   "Replace and create automation": "Reemplazar y crear automatización",
   "The template's triggers are included. Change them in Home Assistant after creating the automation.":
     "Se incluyen los disparadores de la plantilla. Cámbialos en Home Assistant después de crear la automatización.",
+  "Save current design as a template":
+    "Guardar el diseño actual como plantilla",
+  "Template name": "Nombre de la plantilla",
+  "Save as template": "Guardar como plantilla",
+  "My template": "Mi plantilla",
+  "Saved template {name}.": "Plantilla {name} guardada.",
 };

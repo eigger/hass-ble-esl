@@ -168,6 +168,54 @@ def load_templates(directory=TEMPLATE_DIR):
     return templates
 
 
+def load_all(user_dir=None):
+    """Bundled templates, then the user's own; a user file cannot replace a bundled id."""
+    templates = {key: {**value, "source": "bundled"} for key, value in load_templates().items()}
+    if user_dir is not None and Path(user_dir).is_dir():
+        for key, value in load_templates(user_dir).items():
+            if key in templates:
+                _LOGGER.warning("Ignoring user design template %s: id is already bundled", key)
+                continue
+            templates[key] = {**value, "source": "user"}
+    return templates
+
+
+def slug(name):
+    """A template id from a name: ASCII letters and digits only; ``design`` if none."""
+    text = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    text = text[:40].strip("_")
+    return text if text and text[0].isalpha() else f"design_{text}".strip("_")
+
+
+def template_text(template_id, name, width, height, background, payload):
+    """YAML of a template whose only layout is a finished design.
+
+    Raises ``HomeAssistantError`` when the result would not load again, e.g. a
+    text that contains a ``${...}`` reference.
+    """
+    document = {
+        "template": FORMAT_VERSION,
+        "id": template_id,
+        "name": name,
+        "background": background,
+        "layouts": {f"{width}x{height}": payload},
+    }
+    text = yaml.dump(document, Dumper=_Dumper, sort_keys=False, allow_unicode=True, width=10**6)
+    try:
+        parse_template(text)
+    except (ValueError, vol.Invalid) as err:
+        raise HomeAssistantError(f"This design cannot be saved as a template: {err}") from err
+    return text
+
+
+class _Dumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super().increase_indent(flow, False)
+
+
 def coerce_value(name, parameter, value, colors):
     """A parameter value in its final form, or ``vol.Invalid``.
 
@@ -353,6 +401,7 @@ def describe(template, width, height):
         "layout": size,
         "scaled": not exact,
         "layouts": sorted(template["layouts"]),
+        "source": template.get("source", "bundled"),
         "parameters": template["parameters"],
         "automation": template.get("automation") is not None,
     }

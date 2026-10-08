@@ -125,18 +125,23 @@ export class TemplateDialog extends HTMLElement {
         ${automation ? `<h3>${t(hass, "Automation")}</h3><div class="fields">${automation}</div>` : ""}`;
     }
     if (!this.templates) return "";
+    const save = this.panel.document.elements.length
+      ? `<h3>${t(hass, "Save current design as a template")}</h3><div class="save"><input type="text" data-save-name maxlength="80" aria-label="${t(hass, "Template name")}" placeholder="${t(hass, "Template name")}" value="${esc(this.saveName || "")}"><button type="button" data-save>${t(hass, "Save as template")}</button></div>`
+      : "";
     if (!this.templates.length)
-      return `<p class="muted">${t(hass, "No design templates fit this display.")}</p>`;
+      return `<p class="muted">${t(hass, "No design templates fit this display.")}</p>${save}`;
     return `<p class="muted">${t(hass, "Choose a ready-made design. It is added as ordinary elements you can edit.")}</p><div class="list">${this.templates
       .map(
         (template) =>
-          `<button type="button" class="card" data-template="${esc(template.id)}"><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
+          `<button type="button" class="card" data-template="${esc(template.id)}"><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${template.source === "user" ? `${t(hass, "My template")} · ` : ""}${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
       )
-      .join("")}</div>`;
+      .join("")}</div>${save}`;
   }
   render() {
     if (this.chosen && this.shadowRoot.querySelector("[data-param]"))
       this.typed = this.values();
+    const nameInput = this.shadowRoot.querySelector("[data-save-name]");
+    if (nameInput) this.saveName = nameInput.value;
     const hass = this.panel.hass;
     const done = this.done;
     this.shadowRoot.innerHTML = `<style>
@@ -153,6 +158,7 @@ export class TemplateDialog extends HTMLElement {
       label{display:grid;gap:4px;font-size:13px}
       input[type=text],input[type=number],input[type=time],select{font:inherit;padding:6px 8px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       input[type=checkbox]{justify-self:start}
+      .save{display:flex;gap:6px} .save input{flex:1}
       .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .note{margin:0;font-size:13px}
@@ -192,6 +198,33 @@ export class TemplateDialog extends HTMLElement {
       this.note = "";
       this.issues = [];
       return this.render();
+    }
+    if ("save" in button.dataset) {
+      if (this.pending) return;
+      this.pending = true;
+      const name = this.shadowRoot.querySelector("[data-save-name]").value;
+      try {
+        const saved = await this.panel.api("save_design_template", {
+          entry_id: this.context.entryId,
+          document: this.panel.document,
+          name,
+        });
+        this.templates = await this.panel.api("design_templates", {
+          entry_id: this.context.entryId,
+        });
+        this.saveName = "";
+        this.note = {
+          key: "Saved template {name}.",
+          values: { name: saved.id },
+        };
+        this.issues = [];
+      } catch (error) {
+        this.note = error.message || String(error);
+      } finally {
+        this.pending = false;
+      }
+      if (!this.closed) this.render();
+      return;
     }
     if (button.dataset.template) {
       this.chosen = this.templates.find(

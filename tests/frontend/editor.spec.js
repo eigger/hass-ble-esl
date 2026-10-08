@@ -1782,3 +1782,19 @@ test("design template triggers are dropped once the template's elements are gone
     "No triggers are configured",
   );
 });
+
+test("design template: the current design can be saved and applied again", async ({
+  page,
+}) => {
+  await pickSensor(page, "sensor.office_temperature");
+  await page.getByRole("button", { name: "Templates", exact: true }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByLabel("Template name").fill("Office temperature");
+  await gallery.getByRole("button", { name: "Save as template" }).click();
+  await expect(gallery).toContainText("Saved template office_temperature");
+  await expect(gallery).toContainText("My template");
+  await gallery.getByRole("button", { name: /Office temperature/ }).click();
+  await gallery.getByRole("button", { name: "Replace display" }).click();
+  await expect(gallery).toHaveCount(0);
+  await expect(page.locator(".el").first()).toBeVisible();
+});

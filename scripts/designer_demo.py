@@ -24,8 +24,11 @@ from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
     describe as describe_template,
     load_templates,
+    parse_template,
+    slug,
+    template_text,
 )
-from custom_components.ble_esl.designer.export import automation_draft, export_yaml
+from custom_components.ble_esl.designer.export import automation_draft, export_yaml, plain
 from custom_components.ble_esl.designer.importer import (
     convert,
     different_pixels,
@@ -370,6 +373,27 @@ async def handle(request):
         return web.json_response(
             {"elements": elements, "issues": issues, "different_pixels": different}
         )
+    if msg["action"] == "save_design_template":
+        name = (msg.get("name") or "").strip()
+        if not name or len(name) > 80:
+            return web.Response(status=400, text="Give the template a name of up to 80 characters")
+        base, number = slug(name), 2
+        taken = set(DESIGN_TEMPLATES)
+        unique = base
+        while unique in taken:
+            unique, number = f"{base}_{number}", number + 1
+        forecasts = await demo_forecasts()
+        payload = live_payload(HASS, document, TEMPLATES, forecasts)
+        if payload is None:
+            payload = compile_payload(HASS, document, TEMPLATES, forecasts)
+        try:
+            text = template_text(
+                unique, name, preset.width, preset.height, document["background"], plain(payload)
+            )
+        except HomeAssistantError as err:
+            return web.Response(status=400, text=str(err))
+        DESIGN_TEMPLATES[unique] = {**parse_template(text), "source": "user"}
+        return web.json_response({"id": unique, "yaml": text})
     if msg["action"] == "save":
         tag["document"] = document
         return web.json_response(document)
