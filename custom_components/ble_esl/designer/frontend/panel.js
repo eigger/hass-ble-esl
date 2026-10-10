@@ -2352,14 +2352,7 @@ export class BleEslDesigner extends HTMLElement {
     // follow the ink and jump back when the frame is resized.
     // An image is its frame as well: "contain" leaves margins around the
     // picture, and a box on the ink would not match what x/y/size move.
-    // Imagespec elements are also sized and moved by their frame: their handles
-    // must not follow the rendered ink and jump away from the frame corners.
-    if (
-      element.type === "text" ||
-      element.type === "image" ||
-      element.type === "imagespec"
-    )
-      return undefined;
+    if (element.type === "text" || element.type === "image") return undefined;
     if (!record || record.shape !== this.shape(element)) return undefined;
     const dw = element.width - record.size[0],
       dh = element.height - record.size[1],
