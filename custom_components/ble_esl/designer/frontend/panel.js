@@ -2365,6 +2365,52 @@ export class BleEslDesigner extends HTMLElement {
       Math.max(bounds[1] + 1, bounds[3] + dh),
     ];
   }
+  // Clamp a moved element so what it draws, not just its frame, stays on the
+  // label. With an anchor other than "lt" ("mm", "rm", ...) the ink sits at an
+  // offset from the frame and can otherwise leave the label on one side while
+  // not reaching the edge on the other.
+  // `bound`: the element was on the label before, so one hanging off it stays put.
+  // `visible` is the drawn area relative to the frame, measured before the move.
+  clampMoved(element, bound, visible) {
+    if (bound && visible) {
+      const fit = (pos, lo, hi, limit) => Math.min(Math.max(pos, -lo), limit - hi);
+      element.x = fit(element.x, visible[0], visible[2], this.tag.width);
+      element.y = fit(element.y, visible[1], visible[3], this.tag.height);
+      return clampBox(element, this.tag, false);
+    }
+    return clampBox(element, this.tag, bound);
+  }
+  // Whether a move keeps the element on the label. Its frame may hang off the
+  // label after an earlier clamped move while what it draws is still on it:
+  // that one is bound as well, or its next move would not be clamped at all.
+  moveBound(element, visible) {
+    if (onLabel(element, this.tag)) return true;
+    return (
+      !!visible &&
+      element.x + visible[0] >= 0 &&
+      element.y + visible[1] >= 0 &&
+      element.x + visible[2] <= this.tag.width &&
+      element.y + visible[3] <= this.tag.height
+    );
+  }
+  // After a resize: trim the frame so the grown content stays on the label.
+  clampResized(element) {
+    for (const [pos, size, lo, hi, limit] of [
+      ["x", "width", 0, 2, this.tag.width],
+      ["y", "height", 1, 3, this.tag.height],
+    ]) {
+      let visible = this.visibleBounds(element);
+      if (!visible) return;
+      const low = -(element[pos] + visible[lo]);
+      if (low > 0) {
+        element[pos] += low;
+        element[size] = Math.max(1, element[size] - low);
+        visible = this.visibleBounds(element);
+      }
+      const over = element[pos] + visible[hi] - limit;
+      if (over > 0) element[size] = Math.max(1, element[size] - over);
+    }
+  }
   // A new element lands beside the ones already there, not exactly on them.
   stagger(element) {
     const taken = (x, y) =>
@@ -2978,6 +3024,10 @@ export class BleEslDesigner extends HTMLElement {
         this.checkpoint();
         this.typingProperty = input;
         this.typedOnLabel = onLabel(this.element, this.tag);
+        this.typedMoveBound = this.moveBound(
+          this.element,
+          this.visibleBounds(this.element),
+        );
       }
       this.updateProperty(input);
       this.edited(false);
@@ -3235,7 +3285,14 @@ export class BleEslDesigner extends HTMLElement {
       if (["text", "textarea", "number"].includes(input.type)) {
         if (["x", "y", "width", "height"].includes(input.dataset.property)) {
           // Judged before the edit: an off-label imported frame stays put.
-          clampBox(this.element, this.tag, this.typedOnLabel ?? true);
+          const onFrame = this.typedOnLabel ?? true;
+          if (["x", "y"].includes(input.dataset.property))
+            this.clampMoved(
+              this.element,
+              this.typedMoveBound ?? true,
+              this.visibleBounds(this.element),
+            );
+          else clampBox(this.element, this.tag, onFrame);
           this.edited();
         } else if (input.type === "number") {
           // Show the value the element kept: it may have been clamped to the
@@ -3401,12 +3458,13 @@ export class BleEslDesigner extends HTMLElement {
     if (inCanvas && this.element && directions[event.key]) {
       event.preventDefault();
       const before = clone(this.element),
+        visible = this.visibleBounds(before),
         snapshot = clone(this.document),
         step = event.shiftKey ? 10 : 1,
         [x, y] = directions[event.key];
       this.element.x += x * step;
       this.element.y += y * step;
-      clampBox(this.element, this.tag, onLabel(before, this.tag));
+      this.clampMoved(this.element, this.moveBound(before, visible), visible);
       if (this.element.x === before.x && this.element.y === before.y) return;
       this.pushUndo(snapshot);
       this.edited();
@@ -3444,7 +3502,8 @@ export class BleEslDesigner extends HTMLElement {
       snapshot = clone(this.document),
       // An element that hangs off the label (an imported frame) is not pulled
       // back by the first move.
-      bound = onLabel(start, this.tag);
+      bound = onLabel(start, this.tag),
+      startVisible = this.visibleBounds(start);
     let moved = false,
       pendingMove = null,
       gestureFrame = 0;
@@ -3497,8 +3556,14 @@ export class BleEslDesigner extends HTMLElement {
       } else {
         element.x = start.x + dx;
         element.y = start.y + dy;
+        this.clampMoved(element, this.moveBound(start, startVisible), startVisible);
+        this.snapGuides = this.alignmentGuides(element, resize);
+        this.drawStage();
+        return;
       }
       clampBox(element, this.tag, bound);
+      if (resize && (bound || this.moveBound(start, startVisible)))
+        this.clampResized(element);
       this.snapGuides = this.alignmentGuides(element, resize);
       this.drawStage();
     };

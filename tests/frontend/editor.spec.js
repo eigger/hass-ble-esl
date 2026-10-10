@@ -1282,6 +1282,102 @@ test("an imagespec element positions its selection box and hit area over its ren
   expect(boxBounds.y).toBeCloseTo(stage.y + textBounds[1] * zoom, 0);
 });
 
+async function importAnchoredText(page, anchor) {
+  await page.getByRole("button", { name: "Import YAML" }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog
+    .getByLabel("YAML to import")
+    .fill(`[{type: text, value: 'Saturday', x: 60, y: 60, anchor: ${anchor}}]`);
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect(page.locator("ble-esl-import-dialog dialog")).toHaveCount(0);
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.waitForFunction(
+    () => window.panel.layerBounds?.[window.panel.element?.id],
+  );
+}
+
+// What the element draws, in label coordinates, and the label's size.
+const drawnArea = (page) =>
+  page.evaluate(() => {
+    const panel = window.panel,
+      visible = panel.visibleBounds(panel.element);
+    return {
+      left: panel.element.x + visible[0],
+      top: panel.element.y + visible[1],
+      right: panel.element.x + visible[2],
+      bottom: panel.element.y + visible[3],
+      width: panel.tag.width,
+      height: panel.tag.height,
+    };
+  });
+
+for (const anchor of ["lt", "mm", "rb"]) {
+  test(`a ${anchor}-anchored element's drawn content reaches every label edge and never leaves it`, async ({
+    page,
+  }) => {
+    await importAnchoredText(page, anchor);
+    const stage = await page.locator(".stage").boundingBox();
+    const zoom = await page.evaluate(() => window.panel.zoom);
+    const drag = async (dx, dy) => {
+      const area = await drawnArea(page);
+      const x = stage.x + ((area.left + area.right) / 2) * zoom,
+        y = stage.y + ((area.top + area.bottom) / 2) * zoom;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx * zoom, y + dy * zoom, { steps: 4 });
+      await page.mouse.up();
+      await page.waitForFunction(() =>
+        window.panel.visibleBounds(window.panel.element),
+      );
+    };
+    // Far enough in every direction, twice: the second drag starts from a
+    // frame that may already hang off the label and must still be clamped.
+    for (const [dx, dy] of [
+      [-2000, 0],
+      [-2000, 0],
+      [0, -2000],
+      [0, -2000],
+      [2000, 0],
+      [2000, 0],
+      [0, 2000],
+      [0, 2000],
+    ]) {
+      await drag(dx, dy);
+      const area = await drawnArea(page);
+      expect(area.left).toBeGreaterThanOrEqual(0);
+      expect(area.top).toBeGreaterThanOrEqual(0);
+      expect(area.right).toBeLessThanOrEqual(area.width);
+      expect(area.bottom).toBeLessThanOrEqual(area.height);
+      // The content touches the edge it was pushed against.
+      if (dx < 0) expect(area.left).toBe(0);
+      if (dy < 0) expect(area.top).toBe(0);
+      if (dx > 0) expect(area.right).toBe(area.width);
+      if (dy > 0) expect(area.bottom).toBe(area.height);
+    }
+  });
+}
+
+test("arrow keys and typed x/y keep an anchored element's drawn content on the label", async ({
+  page,
+}) => {
+  await importAnchoredText(page, "mm");
+  await page.locator(".el.selected").focus();
+  for (let index = 0; index < 20; index++)
+    await page.keyboard.press("Shift+ArrowLeft");
+  expect((await drawnArea(page)).left).toBe(0);
+  for (let index = 0; index < 20; index++)
+    await page.keyboard.press("Shift+ArrowUp");
+  expect((await drawnArea(page)).top).toBe(0);
+  await page.getByLabel("X", { exact: true }).fill("5000");
+  await page.getByLabel("X", { exact: true }).blur();
+  let area = await drawnArea(page);
+  expect(area.right).toBe(area.width);
+  await page.getByLabel("Y", { exact: true }).fill("-5000");
+  await page.getByLabel("Y", { exact: true }).blur();
+  area = await drawnArea(page);
+  expect(area.top).toBe(0);
+});
+
 test("saving an imagespec element preserves layer records and rendered preview without placeholder", async ({
   page,
 }) => {
