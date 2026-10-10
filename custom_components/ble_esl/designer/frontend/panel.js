@@ -2380,6 +2380,19 @@ export class BleEslDesigner extends HTMLElement {
     }
     return clampBox(element, this.tag, bound);
   }
+  // Whether a move keeps the element on the label. Its frame may hang off the
+  // label after an earlier clamped move while what it draws is still on it:
+  // that one is bound as well, or its next move would not be clamped at all.
+  moveBound(element, visible) {
+    if (onLabel(element, this.tag)) return true;
+    return (
+      !!visible &&
+      element.x + visible[0] >= 0 &&
+      element.y + visible[1] >= 0 &&
+      element.x + visible[2] <= this.tag.width &&
+      element.y + visible[3] <= this.tag.height
+    );
+  }
   // After a resize: trim the frame so the grown content stays on the label.
   clampResized(element) {
     for (const [pos, size, lo, hi, limit] of [
@@ -3011,6 +3024,10 @@ export class BleEslDesigner extends HTMLElement {
         this.checkpoint();
         this.typingProperty = input;
         this.typedOnLabel = onLabel(this.element, this.tag);
+        this.typedMoveBound = this.moveBound(
+          this.element,
+          this.visibleBounds(this.element),
+        );
       }
       this.updateProperty(input);
       this.edited(false);
@@ -3272,7 +3289,7 @@ export class BleEslDesigner extends HTMLElement {
           if (["x", "y"].includes(input.dataset.property))
             this.clampMoved(
               this.element,
-              onFrame,
+              this.typedMoveBound ?? true,
               this.visibleBounds(this.element),
             );
           else clampBox(this.element, this.tag, onFrame);
@@ -3447,7 +3464,7 @@ export class BleEslDesigner extends HTMLElement {
         [x, y] = directions[event.key];
       this.element.x += x * step;
       this.element.y += y * step;
-      this.clampMoved(this.element, onLabel(before, this.tag), visible);
+      this.clampMoved(this.element, this.moveBound(before, visible), visible);
       if (this.element.x === before.x && this.element.y === before.y) return;
       this.pushUndo(snapshot);
       this.edited();
@@ -3539,13 +3556,14 @@ export class BleEslDesigner extends HTMLElement {
       } else {
         element.x = start.x + dx;
         element.y = start.y + dy;
-        this.clampMoved(element, bound, startVisible);
+        this.clampMoved(element, this.moveBound(start, startVisible), startVisible);
         this.snapGuides = this.alignmentGuides(element, resize);
         this.drawStage();
         return;
       }
       clampBox(element, this.tag, bound);
-      if (resize && bound) this.clampResized(element);
+      if (resize && (bound || this.moveBound(start, startVisible)))
+        this.clampResized(element);
       this.snapGuides = this.alignmentGuides(element, resize);
       this.drawStage();
     };
