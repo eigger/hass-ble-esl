@@ -2365,6 +2365,21 @@ export class BleEslDesigner extends HTMLElement {
       Math.max(bounds[1] + 1, bounds[3] + dh),
     ];
   }
+  // Clamp a moved element so what it draws, not just its frame, stays on the
+  // label. With an anchor other than "lt" ("mm", "rm", ...) the ink sits at an
+  // offset from the frame and can otherwise leave the label on one side while
+  // not reaching the edge on the other. `visible` is measured before the move;
+  // `before` is the element as it was, so one hanging off the label stays put.
+  clampMoved(element, before, visible) {
+    const bound = onLabel(before, this.tag);
+    if (bound && visible) {
+      const fit = (pos, lo, hi, limit) => Math.min(Math.max(pos, -lo), limit - hi);
+      element.x = fit(element.x, visible[0], visible[2], this.tag.width);
+      element.y = fit(element.y, visible[1], visible[3], this.tag.height);
+      return clampBox(element, this.tag, false);
+    }
+    return clampBox(element, this.tag, bound);
+  }
   // A new element lands beside the ones already there, not exactly on them.
   stagger(element) {
     const taken = (x, y) =>
@@ -3401,12 +3416,13 @@ export class BleEslDesigner extends HTMLElement {
     if (inCanvas && this.element && directions[event.key]) {
       event.preventDefault();
       const before = clone(this.element),
+        visible = this.visibleBounds(before),
         snapshot = clone(this.document),
         step = event.shiftKey ? 10 : 1,
         [x, y] = directions[event.key];
       this.element.x += x * step;
       this.element.y += y * step;
-      clampBox(this.element, this.tag, onLabel(before, this.tag));
+      this.clampMoved(this.element, before, visible);
       if (this.element.x === before.x && this.element.y === before.y) return;
       this.pushUndo(snapshot);
       this.edited();
@@ -3498,18 +3514,10 @@ export class BleEslDesigner extends HTMLElement {
       } else {
         element.x = start.x + dx;
         element.y = start.y + dy;
-        // The frame may be larger than what is drawn (a sensor tile): let the
-        // visible content, not the empty frame, reach the label's edge.
-        if (bound && startVisible) {
-          const fit = (pos, lo, hi, limit) =>
-            Math.min(Math.max(pos, -lo), limit - hi);
-          element.x = fit(element.x, startVisible[0], startVisible[2], this.tag.width);
-          element.y = fit(element.y, startVisible[1], startVisible[3], this.tag.height);
-          clampBox(element, this.tag, false);
-          this.snapGuides = this.alignmentGuides(element, resize);
-          this.drawStage();
-          return;
-        }
+        this.clampMoved(element, start, startVisible);
+        this.snapGuides = this.alignmentGuides(element, resize);
+        this.drawStage();
+        return;
       }
       clampBox(element, this.tag, bound);
       this.snapGuides = this.alignmentGuides(element, resize);
