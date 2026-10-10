@@ -1224,6 +1224,50 @@ test("a click on an element keeps the exact preview and a drag swaps in the laye
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
+test("an imagespec element keeps frame bounds for selection and hit area after rendering", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("circle");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.locator("img.exact")).toBeVisible();
+  const [elementWidth, elementHeight] = await page.evaluate(() => [
+    window.panel.element.width,
+    window.panel.element.height,
+  ]);
+  const selectionBox = page.locator(".selection-box");
+  const hitArea = page.locator(".el.selected .hit-area");
+  await expect(selectionBox).toHaveCSS("width", `${elementWidth}px`);
+  await expect(selectionBox).toHaveCSS("height", `${elementHeight}px`);
+  await expect(hitArea).toHaveCSS("width", `${elementWidth}px`);
+  await expect(hitArea).toHaveCSS("height", `${elementHeight}px`);
+
+  // Clicking inside the element frame (near top-left corner outside circle ink)
+  // retains selection and does not deselect to stage.
+  const elBox = await page.locator(".el.selected").boundingBox();
+  await page.mouse.click(elBox.x + 3, elBox.y + 3);
+  await expect(page.locator(".el.selected")).toBeVisible();
+  expect(await page.evaluate(() => window.panel.selected)).not.toBeNull();
+
+  // Resizing via the SE handle grows the element frame and selection box consistently.
+  const seHandle = page.locator('.selection-box .handle[data-corner="se"]');
+  const handleBox = await seHandle.boundingBox();
+  await page.mouse.move(
+    handleBox.x + handleBox.width / 2,
+    handleBox.y + handleBox.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(handleBox.x + 20, handleBox.y + 20);
+  await page.mouse.up();
+  const [newWidth, newHeight] = await page.evaluate(() => [
+    window.panel.element.width,
+    window.panel.element.height,
+  ]);
+  expect(newWidth).toBeGreaterThan(elementWidth);
+  expect(newHeight).toBeGreaterThan(elementHeight);
+  await expect(selectionBox).toHaveCSS("width", `${newWidth}px`);
+  await expect(selectionBox).toHaveCSS("height", `${newHeight}px`);
+});
+
 test("choosing in the element list adds nothing until Add is pressed", async ({
   page,
 }) => {
