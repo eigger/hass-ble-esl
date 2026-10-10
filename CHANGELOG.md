@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.1b1
+## 1.2.1
 
 ### Fixed
 
