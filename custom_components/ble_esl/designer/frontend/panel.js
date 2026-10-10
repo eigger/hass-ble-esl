@@ -3444,7 +3444,8 @@ export class BleEslDesigner extends HTMLElement {
       snapshot = clone(this.document),
       // An element that hangs off the label (an imported frame) is not pulled
       // back by the first move.
-      bound = onLabel(start, this.tag);
+      bound = onLabel(start, this.tag),
+      startVisible = this.visibleBounds(start);
     let moved = false,
       pendingMove = null,
       gestureFrame = 0;
@@ -3497,6 +3498,18 @@ export class BleEslDesigner extends HTMLElement {
       } else {
         element.x = start.x + dx;
         element.y = start.y + dy;
+        // The frame may be larger than what is drawn (a sensor tile): let the
+        // visible content, not the empty frame, reach the label's edge.
+        if (bound && startVisible) {
+          const fit = (pos, lo, hi, limit) =>
+            Math.min(Math.max(pos, -lo), limit - hi);
+          element.x = fit(element.x, startVisible[0], startVisible[2], this.tag.width);
+          element.y = fit(element.y, startVisible[1], startVisible[3], this.tag.height);
+          clampBox(element, this.tag, false);
+          this.snapGuides = this.alignmentGuides(element, resize);
+          this.drawStage();
+          return;
+        }
       }
       clampBox(element, this.tag, bound);
       this.snapGuides = this.alignmentGuides(element, resize);
