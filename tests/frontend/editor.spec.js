@@ -1224,48 +1224,62 @@ test("a click on an element keeps the exact preview and a drag swaps in the laye
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
-test("an imagespec element keeps frame bounds for selection and hit area after rendering", async ({
+test("an imagespec element positions its selection box and hit area over its rendered content", async ({
   page,
 }) => {
   await page.getByLabel("Add element").selectOption("circle");
   await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.locator("img.exact")).toBeVisible();
-  const [elementWidth, elementHeight] = await page.evaluate(() => [
-    window.panel.element.width,
-    window.panel.element.height,
-  ]);
+  const bounds = await page.evaluate(
+    () => window.panel.layerBounds[window.panel.element.id],
+  );
+  expect(bounds).toBeTruthy();
+  const expectedWidth = bounds[2] - bounds[0];
+  const expectedHeight = bounds[3] - bounds[1];
   const selectionBox = page.locator(".selection-box");
   const hitArea = page.locator(".el.selected .hit-area");
-  await expect(selectionBox).toHaveCSS("width", `${elementWidth}px`);
-  await expect(selectionBox).toHaveCSS("height", `${elementHeight}px`);
-  await expect(hitArea).toHaveCSS("width", `${elementWidth}px`);
-  await expect(hitArea).toHaveCSS("height", `${elementHeight}px`);
+  await expect(selectionBox).toHaveCSS("width", `${expectedWidth}px`);
+  await expect(selectionBox).toHaveCSS("height", `${expectedHeight}px`);
+  await expect(hitArea).toHaveCSS("width", `${expectedWidth}px`);
+  await expect(hitArea).toHaveCSS("height", `${expectedHeight}px`);
 
-  // Clicking inside the element frame (near top-left corner outside circle ink)
-  // retains selection and does not deselect to stage.
-  const elBox = await page.locator(".el.selected").boundingBox();
-  await page.mouse.click(elBox.x + 3, elBox.y + 3);
+  // An imported anchored text element aligns selection box with rendered ink
+  await page.evaluate(() => {
+    window.panel.document.elements = [];
+    window.panel.selected = null;
+    window.panel.edited();
+  });
+  await page.getByRole("button", { name: "Import YAML" }).click();
+  const dialog = page.locator("ble-esl-import-dialog dialog");
+  await dialog
+    .getByLabel("YAML to import")
+    .fill("[{type: text, value: '토요일', x: 125, y: 108, anchor: mb}]");
+  await dialog.getByRole("button", { name: "Add to display" }).click();
+  await expect(page.locator("ble-esl-import-dialog dialog")).toHaveCount(0);
+  await expect(page.locator("img.exact")).toBeVisible();
+
+  // Clicking on the rendered element selects it and selection box wraps the text
+  const textBounds = await page.evaluate(() => {
+    const el = window.panel.document.elements[0];
+    const b = window.panel.layerBounds[el.id];
+    return [el.x + b[0], el.y + b[1], el.x + b[2], el.y + b[3]];
+  });
+  // text is centered at 125, above y=108: bounds top is < 108, left < 125, right > 125
+  expect(textBounds[0]).toBeLessThan(125);
+  expect(textBounds[2]).toBeGreaterThan(125);
+  expect(textBounds[1]).toBeLessThan(108);
+
+  const stage = await page.locator(".stage").boundingBox();
+  const zoom = await page.evaluate(() => window.panel.zoom);
+  const clickX = stage.x + ((textBounds[0] + textBounds[2]) / 2) * zoom;
+  const clickY = stage.y + ((textBounds[1] + textBounds[3]) / 2) * zoom;
+  await page.mouse.click(clickX, clickY);
+
   await expect(page.locator(".el.selected")).toBeVisible();
-  expect(await page.evaluate(() => window.panel.selected)).not.toBeNull();
-
-  // Resizing via the SE handle grows the element frame and selection box consistently.
-  const seHandle = page.locator('.selection-box .handle[data-corner="se"]');
-  const handleBox = await seHandle.boundingBox();
-  await page.mouse.move(
-    handleBox.x + handleBox.width / 2,
-    handleBox.y + handleBox.height / 2,
-  );
-  await page.mouse.down();
-  await page.mouse.move(handleBox.x + 20, handleBox.y + 20);
-  await page.mouse.up();
-  const [newWidth, newHeight] = await page.evaluate(() => [
-    window.panel.element.width,
-    window.panel.element.height,
-  ]);
-  expect(newWidth).toBeGreaterThan(elementWidth);
-  expect(newHeight).toBeGreaterThan(elementHeight);
-  await expect(selectionBox).toHaveCSS("width", `${newWidth}px`);
-  await expect(selectionBox).toHaveCSS("height", `${newHeight}px`);
+  const box = page.locator(".selection-box");
+  const boxBounds = await box.boundingBox();
+  expect(boxBounds.x).toBeCloseTo(stage.x + textBounds[0] * zoom, 0);
+  expect(boxBounds.y).toBeCloseTo(stage.y + textBounds[1] * zoom, 0);
 });
 
 test("saving an imagespec element preserves layer records and rendered preview without placeholder", async ({
