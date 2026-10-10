@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- **Designer: imagespec selection and hit area**: `imagespec` elements (shapes, diagrams, plots, circles) now preserve their full frame bounds for selection overlays, hit detection, and resize handles rather than clamping tightly to drawn ink bounds. Clicking transparent areas within an element's frame preserves selection, and resize handles scale predictably from frame corners (#161, #162).
+- **Designer: imagespec selection and hit area**: `imagespec` elements (shapes, diagrams, plots, circles, and anchored automation elements) now align their selection box and clickable hit area over their rendered content bounds, fixing selection displacement on anchored text and server-rendered elements (#161, #164).
 - **Designer: imagespec preview on save**: Preserved `layerRecords` for `imagespec` elements in `adoptDocument` so saving or sending does not revert rendered elements to the "Preview updating…" placeholder (#162).
 - **Designer: spec input validation**: Passed Home Assistant context to `applySpecInput` when changing select dropdown options in the properties panel (#162).
 
