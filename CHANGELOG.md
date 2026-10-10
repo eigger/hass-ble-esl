@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2b1
+
+### Fixed
+
+- **Designer: sensor & anchored element boundary clamp**: Element movement (drag and arrow keys) and direct coordinate inputs now clamp against actual rendered content bounds rather than bounding frames, allowing sensors and anchored elements (`mm`, `rb`, etc.) to naturally reach label edges (#166).
+- **Designer: multi-move & resize containment**: Maintained active label boundary containment across consecutive drags and element resize operations even when frames partially extend beyond label edges (#166).
+
 ## 1.2.1
 
 ### Fixed
