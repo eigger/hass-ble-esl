@@ -1268,6 +1268,30 @@ test("an imagespec element keeps frame bounds for selection and hit area after r
   await expect(selectionBox).toHaveCSS("height", `${newHeight}px`);
 });
 
+test("saving an imagespec element preserves layer records and rendered preview without placeholder", async ({
+  page,
+}) => {
+  await page.getByLabel("Add element").selectOption("circle");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.locator("img.exact")).toBeVisible();
+  await page.waitForFunction(
+    () => Object.keys(window.panel.layerRecords || {}).length > 0,
+  );
+
+  // Saving the document preserves the rendered imagespec layer and records without showing placeholder.
+  await page.getByRole("button", { name: /^Save/ }).click();
+  await expect(page.locator(".status")).toHaveText(/Display saved/);
+  expect(
+    await page.evaluate(
+      () => Object.keys(window.panel.layerRecords || {}).length,
+    ),
+  ).toBe(1);
+  await expect(
+    page.locator('.el.selected [role="status"][aria-label="Preview updating"]'),
+  ).toHaveCount(0);
+  await expect(page.locator(".el.selected.rendered")).toBeVisible();
+});
+
 test("choosing in the element list adds nothing until Add is pressed", async ({
   page,
 }) => {

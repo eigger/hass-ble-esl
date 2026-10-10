@@ -2321,7 +2321,7 @@ export class BleEslDesigner extends HTMLElement {
   adoptDocument(saved) {
     const current = this.document.elements
       .filter((el) =>
-        el.type === "image"
+        el.type === "image" || el.type === "imagespec"
           ? !!this.layerRecords?.[el.id]
           : this.visibleBounds(el) !== undefined,
       )
