@@ -416,13 +416,13 @@ export default {
   "tile styles": "стили плиток",
   devices: "устройства",
   "Edit selected automation design": "Изменить дизайн выбранной автоматизации",
-  "Save automation": "Save automation",
+  "Save automation": "Сохранить автоматизацию",
   "Switch to Display mode before saving this automation.":
     "Перед сохранением этой автоматизации переключитесь в режим дисплея.",
   "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
+    "Отсутствует ID конфигурации автоматизации.",
   "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+    "Не удалось загрузить конфигурацию автоматизации.",
   "No ble_esl.write action targeting this ESL was found.":
     "Действие ble_esl.write для этого ESL не найдено.",
   "Choose the write action to import:": "Выберите действие записи для импорта:",
@@ -441,7 +441,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "Текущий дизайн нельзя сохранить как payload.",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "Эта автоматизация изменилась после импорта. Откройте её заново перед сохранением.",
   "The selected write action changed since import. Reopen the automation before saving.":
     "Выбранное действие записи изменилось после импорта. Снова откройте автоматизацию перед сохранением.",
   "The latest automation configuration is malformed.":
@@ -461,13 +461,13 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Фон не входит в payload автоматизации. Верните импортированный фон перед сохранением.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "Введите значение JSON для предпросмотра {name}. Используйте строку в кавычках, число, true/false, массив или объект. Эти значения не сохраняются.",
   "This preview parameter is still undefined: {name}":
     "Этот параметр предпросмотра всё ещё не определён: {name}",
   "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+    "Параметр предпросмотра должен быть корректным JSON.",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "Параметр предпросмотра должен содержать конечные значения JSON без ключей прототипа.",
   "Too many preview parameters are missing.":
     "Отсутствует слишком много параметров предпросмотра.",
 
@@ -486,56 +486,59 @@ export default {
   "Tag design": "Дизайн тега",
   "Importing automation…": "Импорт автоматизации…",
   "Save to automation": "Сохранить в автоматизацию",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
-  Type: "Type",
+  True: "Истина",
+  False: "Ложь",
+  "New parameter": "Новый параметр",
+  "Parameter name": "Имя параметра",
+  Type: "Тип",
   String: "Строка",
   Number: "Число",
   Boolean: "Логическое",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "Объект, массив или null",
+  "Object or array": "Объект или массив",
+  "Remove parameter {name}": "Удалить параметр {name}",
+  Remove: "Удалить",
+  "Enter a preview value for {name}.":
+    "Введите значение предпросмотра для {name}.",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
+    "Параметров предпросмотра пока нет. Добавьте параметр для переменной, используемой в шаблоне.",
+  "Add parameter": "Добавить параметр",
   "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "Дополнительно: изменить все параметры как JSON",
+  "Preview parameter object": "Объект параметров предпросмотра",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "Эти введённые значения используются только для предпросмотра и проверки этого дизайна. В автоматизации они не сохраняются.",
+  "Apply preview values": "Применить значения предпросмотра",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "Введите имя параметра без зарезервированных имён прототипа.",
+  "Parameter names must be unique.":
+    "Имена параметров должны быть уникальными.",
+  "Enter a finite number.": "Введите конечное число.",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "Введите корректный JSON для значения-объекта или массива.",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
+    "Значение JSON должно быть объектом, массивом или null.",
   "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "Значение JSON должно быть объектом или массивом.",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "Параметры предпросмотра могут содержать только конечные значения JSON.",
+  "Preview parameter is invalid.": "Параметр предпросмотра недопустим.",
+  "Common properties": "Общие свойства",
+  "Advanced settings": "Дополнительные настройки",
+  "Use an empty string for {name}": "Использовать пустую строку для {name}",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "Перед применением введите значение для отсутствующего параметра.",
+  "Preview parameters": "Параметры предпросмотра",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "Измените параметры предпросмотра как объект JSON. Эти значения используются только для предпросмотра и проверки.",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
+    "Параметры предпросмотра должны быть объектом JSON с конечными значениями и без ключей прототипа.",
+  "Preview parameters are too large.":
+    "Параметры предпросмотра слишком велики.",
   "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
+    "Ввод параметра предпросмотра отменён.",
   "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "Для импорта нужен параметр предпросмотра: {name}",
   "Design gallery": "Галерея дизайнов",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Выберите готовый дизайн. Он добавится как обычные редактируемые элементы.",

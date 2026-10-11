@@ -337,7 +337,7 @@ export default {
   Delete: "Elimina",
   Designer: "Designer",
   Direction: "Direzione",
-  Display: "Visualizza",
+  Display: "Display",
   Dither: "Dithering",
   Duplicate: "Duplicato",
   Entities: "Entità",
@@ -418,13 +418,13 @@ export default {
   devices: "dispositivi",
   "Edit selected automation design":
     "Modifica design dell'automazione selezionata",
-  "Save automation": "Save automation",
+  "Save automation": "Salva automazione",
   "Switch to Display mode before saving this automation.":
     "Passa alla modalità Visualizza prima di salvare questa automazione.",
   "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
+    "ID della configurazione dell'automazione mancante.",
   "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+    "Impossibile caricare la configurazione dell'automazione.",
   "No ble_esl.write action targeting this ESL was found.":
     "Nessuna azione ble_esl.write rivolta a questo ESL è stata trovata.",
   "Choose the write action to import:":
@@ -444,7 +444,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "Il design attuale non può essere salvato come payload.",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "Questa automazione è cambiata dopo l'importazione. Riaprila prima di salvare.",
   "The selected write action changed since import. Reopen the automation before saving.":
     "L'azione di scrittura selezionata è cambiata dopo l'importazione. Riapri l'automazione prima di salvare.",
   "The latest automation configuration is malformed.":
@@ -464,13 +464,13 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Lo sfondo non fa parte del payload dell'automazione. Ripristina lo sfondo importato prima di salvare.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "Inserisci un valore JSON di anteprima per {name}. Usa una stringa tra virgolette, un numero, true/false, un array o un oggetto. Questi valori non vengono salvati.",
   "This preview parameter is still undefined: {name}":
     "Questo parametro di anteprima è ancora indefinito: {name}",
   "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+    "Il parametro di anteprima deve essere JSON valido.",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "Il parametro di anteprima deve contenere valori JSON finiti senza chiavi di prototipo.",
   "Too many preview parameters are missing.":
     "Mancano troppi parametri di anteprima.",
 
@@ -489,56 +489,59 @@ export default {
   "Tag design": "Design dell'etichetta",
   "Importing automation…": "Importazione automazione…",
   "Save to automation": "Salva nell'automazione",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
-  Type: "Type",
+  True: "Vero",
+  False: "Falso",
+  "New parameter": "Nuovo parametro",
+  "Parameter name": "Nome del parametro",
+  Type: "Tipo",
   String: "Stringa",
   Number: "Numero",
   Boolean: "Booleano",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "Oggetto, array o null",
+  "Object or array": "Oggetto o array",
+  "Remove parameter {name}": "Rimuovi il parametro {name}",
+  Remove: "Rimuovi",
+  "Enter a preview value for {name}.":
+    "Inserisci un valore di anteprima per {name}.",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
+    "Nessun parametro di anteprima. Aggiungine uno per una variabile usata in un modello.",
+  "Add parameter": "Aggiungi parametro",
   "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "Avanzate: modifica tutti i parametri come JSON",
+  "Preview parameter object": "Oggetto dei parametri di anteprima",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "Questi valori inseriti servono solo per l'anteprima e la convalida di questo design. Non vengono salvati nell'automazione.",
+  "Apply preview values": "Applica i valori di anteprima",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "Inserisci un nome di parametro senza nomi di prototipo riservati.",
+  "Parameter names must be unique.":
+    "I nomi dei parametri devono essere univoci.",
+  "Enter a finite number.": "Inserisci un numero finito.",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "Inserisci un JSON valido per il valore oggetto o array.",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
+    "Il valore JSON deve essere un oggetto, un array o null.",
   "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "Il valore JSON deve essere un oggetto o un array.",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "I parametri di anteprima possono contenere solo valori JSON finiti.",
+  "Preview parameter is invalid.": "Il parametro di anteprima non è valido.",
+  "Common properties": "Proprietà comuni",
+  "Advanced settings": "Impostazioni avanzate",
+  "Use an empty string for {name}": "Usa una stringa vuota per {name}",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "Inserisci un valore per il parametro mancante prima di applicare.",
+  "Preview parameters": "Parametri di anteprima",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "Modifica i parametri di anteprima come oggetto JSON. Questi valori sono usati solo per l'anteprima e la convalida.",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
+    "I parametri di anteprima devono essere un oggetto JSON con valori finiti e senza chiavi di prototipo.",
+  "Preview parameters are too large.":
+    "I parametri di anteprima sono troppo grandi.",
   "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
+    "L'inserimento del parametro di anteprima è stato annullato.",
   "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "L'importazione richiede un parametro di anteprima: {name}",
   "Design gallery": "Galleria di design",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Scegli un design già pronto. Viene aggiunto come normali elementi modificabili.",

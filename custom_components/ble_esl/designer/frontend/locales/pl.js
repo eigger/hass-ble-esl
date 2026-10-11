@@ -415,13 +415,13 @@ export default {
   "tile styles": "style kafelków",
   devices: "urządzeń",
   "Edit selected automation design": "Edytuj projekt wybranej automatyzacji",
-  "Save automation": "Save automation",
+  "Save automation": "Zapisz automatyzację",
   "Switch to Display mode before saving this automation.":
     "Przed zapisaniem tej automatyzacji przełącz na tryb wyświetlacza.",
   "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
+    "Brak identyfikatora konfiguracji automatyzacji.",
   "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+    "Nie udało się wczytać konfiguracji automatyzacji.",
   "No ble_esl.write action targeting this ESL was found.":
     "Nie znaleziono akcji ble_esl.write skierowanej do tego ESL.",
   "Choose the write action to import:":
@@ -441,7 +441,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "Bieżącego projektu nie można zapisać jako payload.",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "Ta automatyzacja zmieniła się od czasu importu. Otwórz ją ponownie przed zapisaniem.",
   "The selected write action changed since import. Reopen the automation before saving.":
     "Wybrana akcja zapisu zmieniła się od czasu importu. Otwórz automatyzację ponownie przed zapisaniem.",
   "The latest automation configuration is malformed.":
@@ -461,13 +461,13 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Tło nie jest częścią payload automatyzacji. Przywróć zaimportowane tło przed zapisaniem.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "Wprowadź wartość JSON podglądu dla {name}. Użyj ciągu znaków w cudzysłowie, liczby, true/false, tablicy lub obiektu. Te wartości nie są zapisywane.",
   "This preview parameter is still undefined: {name}":
     "Ten parametr podglądu jest nadal niezdefiniowany: {name}",
   "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+    "Parametr podglądu musi być prawidłowym JSON-em.",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "Parametr podglądu musi zawierać skończone wartości JSON bez kluczy prototypu.",
   "Too many preview parameters are missing.":
     "Brakuje zbyt wielu parametrów podglądu.",
 
@@ -486,56 +486,56 @@ export default {
   "Tag design": "Projekt znacznika",
   "Importing automation…": "Importowanie automatyzacji…",
   "Save to automation": "Zapisz w automatyzacji",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
-  Type: "Type",
+  True: "Prawda",
+  False: "Fałsz",
+  "New parameter": "Nowy parametr",
+  "Parameter name": "Nazwa parametru",
+  Type: "Typ",
   String: "Ciąg znaków",
   Number: "Liczba",
   Boolean: "Wartość logiczna",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "Obiekt, tablica lub null",
+  "Object or array": "Obiekt lub tablica",
+  "Remove parameter {name}": "Usuń parametr {name}",
+  Remove: "Usuń",
+  "Enter a preview value for {name}.": "Wprowadź wartość podglądu dla {name}.",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
+    "Brak parametrów podglądu. Dodaj parametr dla zmiennej używanej w szablonie.",
+  "Add parameter": "Dodaj parametr",
   "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "Zaawansowane: edytuj wszystkie parametry jako JSON",
+  "Preview parameter object": "Obiekt parametrów podglądu",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "Te wpisane wartości służą tylko do podglądu i sprawdzenia tego projektu. Nie są zapisywane w automatyzacji.",
+  "Apply preview values": "Zastosuj wartości podglądu",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "Wprowadź nazwę parametru bez zarezerwowanych nazw prototypu.",
+  "Parameter names must be unique.": "Nazwy parametrów muszą być unikalne.",
+  "Enter a finite number.": "Wprowadź skończoną liczbę.",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "Wprowadź prawidłowy JSON dla wartości obiektu lub tablicy.",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
+    "Wartość JSON musi być obiektem, tablicą lub null.",
   "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "Wartość JSON musi być obiektem lub tablicą.",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "Parametry podglądu mogą zawierać tylko skończone wartości JSON.",
+  "Preview parameter is invalid.": "Parametr podglądu jest nieprawidłowy.",
+  "Common properties": "Właściwości wspólne",
+  "Advanced settings": "Ustawienia zaawansowane",
+  "Use an empty string for {name}": "Użyj pustego ciągu dla {name}",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "Przed zastosowaniem wprowadź wartość brakującego parametru.",
+  "Preview parameters": "Parametry podglądu",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "Edytuj parametry podglądu jako obiekt JSON. Te wartości są używane tylko do podglądu i sprawdzania.",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
+    "Parametry podglądu muszą być obiektem JSON ze skończonymi wartościami i bez kluczy prototypu.",
+  "Preview parameters are too large.": "Parametry podglądu są zbyt duże.",
   "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
+    "Anulowano wprowadzanie parametru podglądu.",
   "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "Import wymaga parametru podglądu: {name}",
   "Design gallery": "Galeria projektów",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Wybierz gotowy projekt. Zostanie dodany jako zwykłe, edytowalne elementy.",

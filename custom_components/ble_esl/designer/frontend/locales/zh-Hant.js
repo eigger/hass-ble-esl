@@ -399,13 +399,11 @@ export default {
   "tile styles": "磁貼樣式",
   devices: "裝置",
   "Edit selected automation design": "編輯所選自動化設計",
-  "Save automation": "Save automation",
+  "Save automation": "儲存自動化",
   "Switch to Display mode before saving this automation.":
     "儲存此自動化前，請先切換到顯示模式。",
-  "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
-  "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+  "Automation configuration ID is missing.": "缺少自動化設定 ID。",
+  "Automation configuration could not be loaded.": "無法載入自動化設定。",
   "No ble_esl.write action targeting this ESL was found.":
     "找不到針對此 ESL 的 ble_esl.write 動作。",
   "Choose the write action to import:": "選擇要匯入的寫入動作：",
@@ -424,7 +422,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "目前的設計無法儲存為 payload。",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "此自動化在匯入後已變更。儲存前請重新開啟。",
   "The selected write action changed since import. Reopen the automation before saving.":
     "所選寫入動作在匯入後已變更。儲存前請重新開啟自動化。",
   "The latest automation configuration is malformed.":
@@ -442,13 +440,12 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "背景不屬於自動化的 payload。儲存前請還原已匯入的背景。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "請輸入 {name} 的 JSON 預覽值。可使用帶引號的字串、數字、true/false、陣列或物件。這些值不會被儲存。",
   "This preview parameter is still undefined: {name}":
     "此預覽參數仍未定義：{name}",
-  "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+  "Preview parameter must be valid JSON.": "預覽參數必須是有效的 JSON。",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "預覽參數必須包含有限的 JSON 值，且不含原型鍵。",
   "Too many preview parameters are missing.": "缺少的預覽參數過多。",
 
   // Preview-parameter and manager controls.
@@ -466,56 +463,52 @@ export default {
   "Tag design": "標籤設計",
   "Importing automation…": "正在匯入自動化…",
   "Save to automation": "儲存到自動化",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
-  Type: "Type",
+  True: "真",
+  False: "假",
+  "New parameter": "新參數",
+  "Parameter name": "參數名稱",
+  Type: "類型",
   String: "字串",
   Number: "數字",
   Boolean: "布林值",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "物件、陣列或 null",
+  "Object or array": "物件或陣列",
+  "Remove parameter {name}": "移除參數 {name}",
+  Remove: "移除",
+  "Enter a preview value for {name}.": "請輸入 {name} 的預覽值。",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
-  "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "尚無預覽參數。請為範本中使用的變數新增一個。",
+  "Add parameter": "新增參數",
+  "Advanced: edit all parameters as JSON": "進階：以 JSON 編輯所有參數",
+  "Preview parameter object": "預覽參數物件",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "這些輸入的值僅用於預覽和驗證此設計，不會儲存到自動化中。",
+  "Apply preview values": "套用預覽值",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "請輸入不含保留原型名稱的參數名稱。",
+  "Parameter names must be unique.": "參數名稱必須唯一。",
+  "Enter a finite number.": "請輸入有限的數字。",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "請為物件或陣列值輸入有效的 JSON。",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
-  "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "JSON 值必須是物件、陣列或 null。",
+  "The JSON value must be an object or array.": "JSON 值必須是物件或陣列。",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "預覽參數只能包含有限的 JSON 值。",
+  "Preview parameter is invalid.": "預覽參數無效。",
+  "Common properties": "通用屬性",
+  "Advanced settings": "進階設定",
+  "Use an empty string for {name}": "為 {name} 使用空字串",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "套用前，請為缺少的參數輸入一個值。",
+  "Preview parameters": "預覽參數",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "以 JSON 物件編輯預覽參數。這些值僅用於預覽和驗證。",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
-  "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
-  "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "預覽參數必須是 JSON 物件，其值有限且不含原型鍵。",
+  "Preview parameters are too large.": "預覽參數過大。",
+  "Preview parameter entry was cancelled.": "已取消預覽參數的輸入。",
+  "Import needs a preview parameter: {name}": "匯入需要一個預覽參數：{name}",
   "Design gallery": "設計庫",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "選擇現成的設計，它會以可編輯的一般元素加入。",
