@@ -1,4 +1,4 @@
-import { t, language, bindStatic, localize } from "./i18n.js";
+import { t, language, bindStatic, localize, errorText } from "./i18n.js";
 import "./panel.js";
 import "./automation-dialog.js";
 
@@ -196,7 +196,7 @@ class EslManager extends HTMLElement {
       this.renderCards();
       await this.loadAutomations();
     } catch (error) {
-      this.message(error.message || String(error));
+      this.message(errorText(this.hass, "Could not load ESL data", error));
     } finally {
       button.disabled = false;
     }
@@ -315,8 +315,8 @@ class EslManager extends HTMLElement {
       !this.automationErrors.has(tag.entry_id) &&
       this.editableAutomations(tag).length;
     return linked
-      ? `<button class="primary" data-action="edit-automation" data-entry="${entry}">${t(this.hass, "Edit automation design")}</button><button data-action="edit" data-entry="${entry}">${t(this.hass, "Edit design")}</button>`
-      : `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit design")}</button>`;
+      ? `<button class="primary" data-action="edit-automation" data-entry="${entry}">${t(this.hass, "Edit automation design")}</button><button data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`
+      : `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`;
   }
   updateEditorContext() {
     const node = this.shadowRoot.querySelector(".editor-context");
@@ -345,8 +345,8 @@ class EslManager extends HTMLElement {
       : t(
           this.hass,
           this.editor?.mode === "template"
-            ? "Sensor templates"
-            : "Local design",
+            ? "Sensor tile styles"
+            : "Tag design",
         );
     node.textContent = [this.alias(tag), name, context]
       .filter(Boolean)
@@ -895,7 +895,9 @@ class EslManager extends HTMLElement {
     } catch (error) {
       if (!current()) return;
       this.clearAutomationEdit(session);
-      this.message(error.message || String(error));
+      this.message(
+        errorText(this.hass, "Could not open the automation design", error),
+      );
     }
   }
   configSignature(value) {
@@ -1142,7 +1144,10 @@ class EslManager extends HTMLElement {
       source.originalAction = structuredClone(action);
       source.selectedPath = selected.path;
     } catch (error) {
-      if (current()) this.message(error.message || String(error));
+      if (current())
+        this.message(
+          errorText(this.hass, "Could not save to the automation", error),
+        );
     } finally {
       if (run === this.automationSaveRun) this.automationSaving = false;
     }

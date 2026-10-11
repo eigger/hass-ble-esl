@@ -28,7 +28,6 @@ export default {
     "Nicht gesendet: Ein neuerer Schreibvorgang hat diesen ersetzt",
   "Sending failed": "Senden fehlgeschlagen",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
-  "sensor templates": "Sensorvorlagen",
   "element types": "Elementtypen",
   "tags and displays": "Tags und Anzeigen",
   "default (shrink ellipsis)": "Standard (Auslassungspunkte verkleinern)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Nach Sensortyp",
   "Center horizontally": "Horizontal zentrieren",
   "Checking display…": "Anzeige wird überprüft…",
-  "Choose a sample sensor above to preview this template.":
-    "Wählen Sie oben einen Beispielsensor aus, um eine Vorschau dieser Vorlage anzuzeigen.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Wählen Sie oben einen Beispielsensor aus, um eine Vorschau dieses Kachelstils anzuzeigen.",
   "Choose an automation…": "Wählen Sie eine Automatisierung…",
   "Choose an entity for the sensor tile.":
     "Wählen Sie eine Entität für die Sensorkachel.",
@@ -147,7 +146,7 @@ export default {
   "ESL Manager": "ESL Manager",
   "Edit alias": "Alias bearbeiten",
   "Edit component": "Komponente bearbeiten",
-  "Edit design": "Design bearbeiten",
+  "Edit tag design": "Tag-Design bearbeiten",
   "Edit display text": "Anzeigetext bearbeiten",
   "Edit sensor": "Sensor bearbeiten",
   "Editing preview": "Bearbeitungsvorschau",
@@ -170,13 +169,12 @@ export default {
     "Beenden Sie den aktuellen Editorvorgang, bevor Sie ESLs wechseln.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "Die erste passende Regel wird angewendet. Der Bereich schließt die untere Grenze ein und die obere Grenze aus. Eine leere Grenze bedeutet keine Begrenzung.",
-  "Fit preview": "Vorschau einpassen",
   "Font file": "Schriftartdatei",
   "From ≥": "Von ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "HA Jinja-Vorlagen. Variablen: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() und weitere HA-Vorlagenfunktionen sind verfügbar.",
   "HA state icon": "HA Statussymbol",
-  "HA tile": "HA Kachel",
+  "HA tile": "HA-Kachel",
   "Hidden: click to show": "Ausgeblendet: Zum Anzeigen klicken",
   "Icon (blank = HA)": "Symbol (leer = HA)",
   "Icon name": "Symbolname",
@@ -261,8 +259,8 @@ export default {
   "Send backward": "Eine Ebene nach hinten",
   "Send to tag": "An Tag senden",
   "Sending display…": "Anzeige wird gesendet…",
-  "Sensor template": "Sensorvorlage",
-  "Sensor templates": "Sensorvorlagen",
+  "Sensor tile style": "Sensor-Kachelstil",
+  "Sensor tile styles": "Sensor-Kachelstile",
   "Sensor tile (value, unit and name)": "Sensorkachel (Wert, Einheit und Name)",
   "Show for state": "Für Bundesstaat anzeigen",
   "Show percentage": "Prozentsatz anzeigen",
@@ -273,16 +271,14 @@ export default {
   "Static / template tokens": "Statische/Vorlagen-Tokens",
   "Static content": "Statischer Inhalt",
   "Sync unknown": "Synchronisierung unbekannt",
-  "Template height": "Vorlagenhöhe",
-  "Template name": "Vorlagenname",
-  "Template parts": "Vorlagenteile",
-  "Template saved": "Vorlage gespeichert",
-  "Template width": "Vorlagenbreite",
+  "Style height": "Stilhöhe",
+  "Style name": "Stilname",
+  "Tile style parts": "Kachelstil-Teile",
+  "Style saved": "Stil gespeichert",
+  "Style width": "Stilbreite",
   "Text alignment": "Textausrichtung",
   "The element changed; nothing was converted":
     "Das Element hat sich geändert; es wurde nichts umgebaut",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "Die vier Symbolschaltflächen fügen mit einem Klick einen Text, eine Form, ein Symbol oder ein Bild hinzu.",
   "This element needs a renderer preview to show its current appearance":
     "Dieses Element benötigt eine Renderer-Vorschau, um sein aktuelles Erscheinungsbild anzuzeigen",
   "Transmission duration": "Übertragungsdauer",
@@ -304,12 +300,10 @@ export default {
   "YAML to import": "YAML zum Importieren",
   "Zoom in": "Vergrößern",
   "Zoom out": "Verkleinern",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "öffnet zunächst den Komponenteneditor mit weiteren Auswahlmöglichkeiten: einem Wert von einem Sensor, einem Fortschrittsbalken, einem Messgerät und einem bedingten Symbol.",
   "ƒ Dynamic fields…": "ƒ Dynamische Felder…",
   "← Dashboard": "← Dashboard",
   "＋ Add component": "＋ Komponente hinzufügen",
-  "＋ Create template…": "＋ Vorlage erstellen…",
+  "＋ Create tile style…": "＋ Kachelstil erstellen…",
   "＋ Insert template…": "＋ Vorlage einfügen…",
   "＋ Range": "＋ Bereich",
   "＋ State": "＋ Staat",
@@ -374,7 +368,7 @@ export default {
   Style: "Stil",
   Tag: "Tag",
   Temperature: "Temperatur",
-  Template: "Vorlage",
+  "Tile style": "Kachelstil",
   Text: "Text",
   Tomorrow: "Morgen",
   Unavailable: "Nicht verfügbar",
@@ -420,9 +414,10 @@ export default {
   properties: "Eigenschaften",
   Color: "Farbe",
   Label: "Etikett",
-  templates: "-Vorlagen",
+  "tile styles": "Kachelstile",
   devices: "Geräte",
-  "Import design": "Import design",
+  "Edit selected automation design":
+    "Ausgewähltes Automatisierungs-Design bearbeiten",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Wechseln Sie vor dem Speichern dieser Automatisierung in den Anzeigemodus.",
@@ -492,7 +487,7 @@ export default {
   "Last successful image": "Letztes erfolgreiches Bild",
   "Edit automation design": "Automatisierungs-Design bearbeiten",
   "Automation design": "Automatisierungs-Design",
-  "Local design": "Lokales Design",
+  "Tag design": "Tag-Design",
   "Importing automation…": "Automatisierung wird importiert…",
   "Save to automation": "In Automatisierung speichern",
   True: "True",
@@ -545,8 +540,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Vorlagen",
-  "Design templates": "Design-Vorlagen",
+  "Design gallery": "Designgalerie",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Wählen Sie ein fertiges Design. Es wird als normale, bearbeitbare Elemente hinzugefügt.",
   "No design templates fit this display.":
@@ -564,5 +558,27 @@ export default {
   "Design template name": "Name der Design-Vorlage",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Starten Sie mit einem fertigen Design, etwa Datumsetikett, WLAN-QR-Code oder Wetter. Passen Sie die Optionen an, fügen Sie es als bearbeitbare Elemente hinzu und erstellen Sie optional die Automatisierung, die es aktuell hält.",
-  "Browse templates": "Vorlagen durchsuchen",
+  "Browse design gallery": "Designgalerie öffnen",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Kachelstile legen fest, wie ein Sensor als Kachel erscheint. Bauen Sie einen Stil aus den Teilen Name, Zustand und Einheit; jeder Sensor dieses Typs verwendet ihn.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Mit den Symbolschaltflächen fügen Sie Text, eine Form, ein Symbol oder ein Bild hinzu. „Komponente hinzufügen“ bietet Sensoren, Balken, Anzeigen und mehr.",
+  "{type} output": "{type}-Ausgabe",
+  W: "B",
+  H: "H",
+  "{type} style": "{type}-Stil",
+  "{name} style": "{name}-Stil",
+  "Choose icon for {state}": "Icon für {state} wählen",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "ESL-Daten konnten nicht geladen werden",
+  "Could not open the automation design":
+    "Das Automatisierungs-Design konnte nicht geöffnet werden",
+  "Could not load automations":
+    "Automatisierungen konnten nicht geladen werden",
+  "The automation could not be updated":
+    "Die Automatisierung konnte nicht aktualisiert werden",
+  "Preview failed": "Vorschau fehlgeschlagen",
+  "Something went wrong": "Etwas ist schiefgelaufen",
+  "Could not save to the automation":
+    "Speichern in der Automatisierung fehlgeschlagen",
 };

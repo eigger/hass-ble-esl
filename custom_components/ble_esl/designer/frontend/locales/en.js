@@ -27,7 +27,6 @@ export default {
     "Not sent: a newer write replaced this one",
   "Sending failed": "Sending failed",
   "Loading {step}… ({done}/{count})": "Loading {step}… ({done}/{count})",
-  "sensor templates": "sensor templates",
   "element types": "element types",
   "tags and displays": "tags and displays",
   "default (shrink ellipsis)": "default (shrink ellipsis)",
@@ -94,8 +93,8 @@ export default {
   "By sensor type": "By sensor type",
   "Center horizontally": "Center horizontally",
   "Checking display…": "Checking display…",
-  "Choose a sample sensor above to preview this template.":
-    "Choose a sample sensor above to preview this template.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Choose a sample sensor above to preview this tile style.",
   "Choose an automation…": "Choose an automation…",
   "Choose an entity for the sensor tile.":
     "Choose an entity for the sensor tile.",
@@ -142,7 +141,7 @@ export default {
   "ESL Manager": "ESL Manager",
   "Edit alias": "Edit alias",
   "Edit component": "Edit component",
-  "Edit design": "Edit design",
+  "Edit tag design": "Edit tag design",
   "Edit display text": "Edit display text",
   "Edit sensor": "Edit sensor",
   "Editing preview": "Editing preview",
@@ -165,7 +164,6 @@ export default {
     "Finish the current editor operation before switching ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.",
-  "Fit preview": "Fit preview",
   "Font file": "Font file",
   "From ≥": "From ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
@@ -180,7 +178,7 @@ export default {
   "Image upload failed": "Image upload failed",
   "Import JSON": "Import JSON",
   "Import YAML": "Import YAML",
-  "Import design": "Import design",
+  "Edit selected automation design": "Edit selected automation design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Switch to Display mode before saving this automation.",
@@ -232,7 +230,7 @@ export default {
   "Last successful image": "Last successful image",
   "Edit automation design": "Edit automation design",
   "Automation design": "Automation design",
-  "Local design": "Local design",
+  "Tag design": "Tag design",
   "Importing automation…": "Importing automation…",
   "Save to automation": "Save to automation",
   True: "True",
@@ -363,8 +361,8 @@ export default {
   "Send backward": "Send backward",
   "Send to tag": "Send to tag",
   "Sending display…": "Sending display…",
-  "Sensor template": "Sensor template",
-  "Sensor templates": "Sensor templates",
+  "Sensor tile style": "Sensor tile style",
+  "Sensor tile styles": "Sensor tile styles",
   "Sensor tile (value, unit and name)": "Sensor tile (value, unit and name)",
   "Show for state": "Show for state",
   "Show percentage": "Show percentage",
@@ -375,16 +373,14 @@ export default {
   "Static / template tokens": "Static / template tokens",
   "Static content": "Static content",
   "Sync unknown": "Sync unknown",
-  "Template height": "Template height",
-  "Template name": "Template name",
-  "Template parts": "Template parts",
-  "Template saved": "Template saved",
-  "Template width": "Template width",
+  "Style height": "Style height",
+  "Style name": "Style name",
+  "Tile style parts": "Tile style parts",
+  "Style saved": "Style saved",
+  "Style width": "Style width",
   "Text alignment": "Text alignment",
   "The element changed; nothing was converted":
     "The element changed; nothing was converted",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "The four icon buttons add a text, shape, icon or image in one click.",
   "This element needs a renderer preview to show its current appearance":
     "This element needs a renderer preview to show its current appearance",
   "Transmission duration": "Transmission duration",
@@ -406,12 +402,10 @@ export default {
   "YAML to import": "YAML to import",
   "Zoom in": "Zoom in",
   "Zoom out": "Zoom out",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.",
   "ƒ Dynamic fields…": "ƒ Dynamic fields…",
   "← Dashboard": "← Dashboard",
   "＋ Add component": "＋ Add component",
-  "＋ Create template…": "＋ Create template…",
+  "＋ Create tile style…": "＋ Create tile style…",
   "＋ Insert template…": "＋ Insert template…",
   "＋ Range": "＋ Range",
   "＋ State": "＋ State",
@@ -476,7 +470,7 @@ export default {
   Style: "Style",
   Tag: "Tag",
   Temperature: "Temperature",
-  Template: "Template",
+  "Tile style": "Tile style",
   Text: "Text",
   Tomorrow: "Tomorrow",
   Unavailable: "Unavailable",
@@ -522,7 +516,7 @@ export default {
   properties: "properties",
   Color: "Color",
   Label: "Label",
-  templates: "templates",
+  "tile styles": "tile styles",
   devices: "devices",
   "Automation configuration identity is missing.":
     "Automation configuration identity is missing.",
@@ -535,8 +529,7 @@ export default {
     "The automation import is no longer current.",
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "Background is not part of the automation payload. Restore the imported background before saving.",
-  Templates: "Templates",
-  "Design templates": "Design templates",
+  "Design gallery": "Design gallery",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Choose a ready-made design. It is added as ordinary elements you can edit.",
   "No design templates fit this display.":
@@ -554,5 +547,24 @@ export default {
   "Design template name": "Design template name",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.",
-  "Browse templates": "Browse templates",
+  "Browse design gallery": "Browse design gallery",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.",
+  "{type} output": "{type} output",
+  W: "W",
+  H: "H",
+  "{type} style": "{type} style",
+  "{name} style": "{name} style",
+  "Choose icon for {state}": "Choose icon for {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Could not load ESL data",
+  "Could not open the automation design":
+    "Could not open the automation design",
+  "Could not load automations": "Could not load automations",
+  "The automation could not be updated": "The automation could not be updated",
+  "Preview failed": "Preview failed",
+  "Something went wrong": "Something went wrong",
+  "Could not save to the automation": "Could not save to the automation",
 };

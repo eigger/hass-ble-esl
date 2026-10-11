@@ -29,7 +29,6 @@ export default {
   "Sending failed": "Invio non riuscito",
   "Loading {step}… ({done}/{count})":
     "Caricamento in corso {step}… ({done}/{count})",
-  "sensor templates": "modelli di sensori",
   "element types": "tipi di elemento",
   "tags and displays": "tag e display",
   "default (shrink ellipsis)": "predefinito (riduci i puntini di sospensione)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Per tipo di sensore",
   "Center horizontally": "Centrare orizzontalmente",
   "Checking display…": "Controllo del display…",
-  "Choose a sample sensor above to preview this template.":
-    "Scegli un sensore campione qui sopra per visualizzare l'anteprima di questo modello.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Scegli un sensore campione qui sopra per visualizzare l'anteprima di questo stile tessera.",
   "Choose an automation…": "Scegli un'automazione…",
   "Choose an entity for the sensor tile.":
     "Scegli un'entità per il riquadro sensore.",
@@ -147,7 +146,7 @@ export default {
   "ESL Manager": "Gestore ESL",
   "Edit alias": "Modifica alias",
   "Edit component": "Modifica componente",
-  "Edit design": "Modifica design",
+  "Edit tag design": "Modifica design dell'etichetta",
   "Edit display text": "Modifica il testo visualizzato",
   "Edit sensor": "Modifica sensore",
   "Editing preview": "Anteprima di modifica",
@@ -170,13 +169,12 @@ export default {
     "Termina l'operazione corrente dell'editor prima di cambiare ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "Viene applicata la prima regola corrispondente. L’intervallo include il limite inferiore ed esclude quello superiore. Un limite vuoto indica nessun limite.",
-  "Fit preview": "Adatta anteprima",
   "Font file": "File di caratteri",
   "From ≥": "Da ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Template Jinja di HA. Variabili: value, entity, entity_id, attributes. Sono disponibili states(), is_state(), state_attr(), now() e le altre funzioni di template di HA.",
   "HA state icon": "HA icona di stato",
-  "HA tile": "HA piastrella",
+  "HA tile": "Tessera HA",
   "Hidden: click to show": "Nascosto: fare clic per mostrare",
   "Icon (blank = HA)": "Icona (vuoto = HA)",
   "Icon name": "Nome dell'icona",
@@ -238,7 +236,7 @@ export default {
   "Rain / snow": "Pioggia/neve",
   "Rain chance": "Possibilità di pioggia",
   "Redo (⌘/Ctrl Shift Z)": "Ripeti (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Aggiorna i tag",
+  "Refresh tags": "Aggiorna le etichette",
   "Refreshing tags…": "Aggiornamento dei tag…",
   "Remove manual link": "Rimuovi collegamento manuale",
   "Replace display": "Sostituisci il contenuto del display",
@@ -258,12 +256,12 @@ export default {
   "Select an element": "Seleziona un elemento",
   "Send back": "Porta in fondo",
   "Send backward": "Porta indietro",
-  "Send to tag": "Invia a tag",
+  "Send to tag": "Invia all'etichetta",
   "Sending display…": "Invio visualizzazione...",
-  "Sensor template": "Modello del sensore",
-  "Sensor templates": "Modelli di sensori",
+  "Sensor tile style": "Stile tessera sensore",
+  "Sensor tile styles": "Stili tessera sensore",
   "Sensor tile (value, unit and name)":
-    "Riquadro sensore (valore, unità e nome)",
+    "Tessera sensore (valore, unità e nome)",
   "Show for state": "Mostra per stato",
   "Show percentage": "Mostra percentuale",
   "Show value": "Mostra valore",
@@ -273,16 +271,14 @@ export default {
   "Static / template tokens": "Token statici/modello",
   "Static content": "Contenuto statico",
   "Sync unknown": "Sincronizzazione sconosciuta",
-  "Template height": "Altezza dima",
-  "Template name": "Nome del modello",
-  "Template parts": "Parti del modello",
-  "Template saved": "Modello salvato",
-  "Template width": "Larghezza modello",
+  "Style height": "Altezza stile",
+  "Style name": "Nome stile",
+  "Tile style parts": "Parti dello stile tessera",
+  "Style saved": "Stile salvato",
+  "Style width": "Larghezza stile",
   "Text alignment": "Allineamento del testo",
   "The element changed; nothing was converted":
     "L'elemento è cambiato; nulla è stato convertito",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "I quattro pulsanti icona aggiungono un testo, una forma, un'icona o un'immagine con un clic.",
   "This element needs a renderer preview to show its current appearance":
     "Questo elemento necessita di un'anteprima del renderer per mostrare il suo aspetto corrente",
   "Transmission duration": "Durata della trasmissione",
@@ -304,12 +300,10 @@ export default {
   "YAML to import": "YAML da importare",
   "Zoom in": "Ingrandisci",
   "Zoom out": "Rimpicciolisci",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "apre prima l'editor dei componenti, con più scelte: un valore da un sensore, barra di avanzamento, indicatore, icona condizionale.",
   "ƒ Dynamic fields…": "ƒ Campi dinamici…",
   "← Dashboard": "← Cruscotto",
   "＋ Add component": "＋ Aggiungi componente",
-  "＋ Create template…": "＋ Crea modello…",
+  "＋ Create tile style…": "＋ Crea stile tessera…",
   "＋ Insert template…": "＋ Inserisci modello…",
   "＋ Range": "＋ Gamma",
   "＋ State": "＋ Stato",
@@ -374,7 +368,7 @@ export default {
   Style: "Stile",
   Tag: "Etichetta",
   Temperature: "Temperatura",
-  Template: "Template",
+  "Tile style": "Stile tessera",
   Text: "Testo",
   Tomorrow: "Domani",
   Unavailable: "Non disponibile",
@@ -420,9 +414,10 @@ export default {
   properties: "proprietà",
   Color: "Colore",
   Label: "Etichetta",
-  templates: "modelli",
+  "tile styles": "stili tessera",
   devices: "dispositivi",
-  "Import design": "Import design",
+  "Edit selected automation design":
+    "Modifica design dell'automazione selezionata",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Passa alla modalità Visualizza prima di salvare questa automazione.",
@@ -491,7 +486,7 @@ export default {
   "Last successful image": "Ultima immagine inviata con successo",
   "Edit automation design": "Modifica design dell'automazione",
   "Automation design": "Design dell'automazione",
-  "Local design": "Design locale",
+  "Tag design": "Design dell'etichetta",
   "Importing automation…": "Importazione automazione…",
   "Save to automation": "Salva nell'automazione",
   True: "True",
@@ -544,8 +539,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Modelli",
-  "Design templates": "Modelli di design",
+  "Design gallery": "Galleria di design",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Scegli un design già pronto. Viene aggiunto come normali elementi modificabili.",
   "No design templates fit this display.":
@@ -563,5 +557,24 @@ export default {
   "Design template name": "Nome del modello di design",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Parti da un design già pronto, come un'etichetta con la data, un QR code Wi-Fi o il meteo. Regola le opzioni, aggiungilo come elementi modificabili e, se vuoi, crea l'automazione che lo mantiene aggiornato.",
-  "Browse templates": "Sfoglia i modelli",
+  "Browse design gallery": "Apri galleria di design",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Gli stili tessera definiscono come appare un sensore come tessera. Creane uno con le parti Nome, Stato e Unità e tutti i sensori di quel tipo lo useranno.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Usa i pulsanti icona per aggiungere testo, una forma, un'icona o un'immagine. Aggiungi componente offre sensori, barre, indicatori e altro.",
+  "{type} output": "Uscita {type}",
+  W: "L",
+  H: "A",
+  "{type} style": "Stile {type}",
+  "{name} style": "Stile di {name}",
+  "Choose icon for {state}": "Scegli icona per {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Impossibile caricare i dati ESL",
+  "Could not open the automation design":
+    "Impossibile aprire il design dell'automazione",
+  "Could not load automations": "Impossibile caricare le automazioni",
+  "The automation could not be updated": "Impossibile aggiornare l'automazione",
+  "Preview failed": "Anteprima non riuscita",
+  "Something went wrong": "Qualcosa è andato storto",
+  "Could not save to the automation": "Impossibile salvare nell'automazione",
 };

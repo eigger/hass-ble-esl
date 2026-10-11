@@ -86,10 +86,10 @@ test("one linked automation opens directly and names its save destination", asyn
   await page.getByRole("button", { name: "← Dashboard", exact: true }).click();
   await page
     .locator('.card[data-entry="demo-writable"]')
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit tag design", exact: true })
     .click();
   await expect(page.locator(".editor-context")).toHaveText(
-    "Living room › Local design",
+    "Living room › Tag design",
   );
   await expect(
     page.getByRole("button", { name: "Save to automation", exact: true }),
@@ -103,20 +103,20 @@ test("editor context follows template mode and the selected tag", async ({
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
   await expect(page.locator(".editor-context")).toHaveText(
-    "Living room › Local design",
+    "Living room › Tag design",
   );
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   await expect(page.locator(".editor-context")).toHaveText(
-    "Living room › Sensor templates",
+    "Living room › Sensor tile styles",
   );
   await page.getByRole("button", { name: "Display", exact: true }).click();
   await page
     .getByRole("combobox", { name: "Tag", exact: true })
     .selectOption("demo-discovery");
   await expect(page.locator(".editor-context")).toHaveText(
-    "Desk display › Local design",
+    "Desk display › Tag design",
   );
 });
 
@@ -130,7 +130,7 @@ test("multiple automations open a choice and stale cache errors never pick one",
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await expect(dialog).toBeVisible();
   await expect(
-    dialog.getByRole("button", { name: "Edit design", exact: true }),
+    dialog.getByRole("button", { name: "Edit automation design", exact: true }),
   ).toHaveCount(3);
   await dialog.getByRole("button", { name: "Close automations" }).click();
   await page.evaluate(() => {
@@ -139,7 +139,7 @@ test("multiple automations open a choice and stale cache errors never pick one",
   });
   await expect(card.locator('[data-action="edit-automation"]')).toHaveCount(0);
   await expect(
-    card.getByRole("button", { name: "Edit design", exact: true }),
+    card.getByRole("button", { name: "Edit tag design", exact: true }),
   ).toBeVisible();
 });
 

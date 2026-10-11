@@ -28,7 +28,6 @@ export default {
     "Не отправлено: новая запись заменила эту.",
   "Sending failed": "Отправка не удалась",
   "Loading {step}… ({done}/{count})": "Загрузка {step}… ({done}/{count})",
-  "sensor templates": "шаблоны датчиков",
   "element types": "Типы элементов",
   "tags and displays": "Теги и дисплеи",
   "default (shrink ellipsis)": "по умолчанию (сократить многоточие)",
@@ -96,8 +95,8 @@ export default {
   "By sensor type": "По типу датчика",
   "Center horizontally": "Центрировать по горизонтали",
   "Checking display…": "Проверка дисплея…",
-  "Choose a sample sensor above to preview this template.":
-    "Выберите образец датчика выше, чтобы просмотреть этот шаблон.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Выберите образец датчика выше, чтобы просмотреть этот стиль плитки.",
   "Choose an automation…": "Выберите автоматизацию…",
   "Choose an entity for the sensor tile.":
     "Выберите объект для сенсорного элемента.",
@@ -146,7 +145,7 @@ export default {
   "ESL Manager": "Менеджер ESL",
   "Edit alias": "Редактировать псевдоним",
   "Edit component": "Редактировать компонент",
-  "Edit design": "Редактировать дизайн",
+  "Edit tag design": "Изменить дизайн тега",
   "Edit display text": "Редактирование отображаемого текста",
   "Edit sensor": "Редактировать датчик",
   "Editing preview": "Предварительный просмотр редактирования",
@@ -169,13 +168,12 @@ export default {
     "Завершите текущую операцию редактора перед переключением ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "Применяется первое подходящее правило. Диапазон включает нижнюю границу и не включает верхнюю. Пустая граница означает отсутствие ограничения.",
-  "Fit preview": "Вписать предпросмотр",
   "Font file": "Файл шрифта",
   "From ≥": "От ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Шаблоны Jinja HA. Переменные: value, entity, entity_id, attributes. Доступны states(), is_state(), state_attr(), now() и другие функции шаблонов HA.",
   "HA state icon": "HA Значок состояния",
-  "HA tile": "HA плитка",
+  "HA tile": "Плитка HA",
   "Hidden: click to show": "Скрыто: нажмите, чтобы показать",
   "Icon (blank = HA)": "Значок (пустой = HA)",
   "Icon name": "Название значка",
@@ -259,8 +257,8 @@ export default {
   "Send backward": "На слой назад",
   "Send to tag": "Отправить на тег",
   "Sending display…": "Отправка дисплея…",
-  "Sensor template": "Шаблон датчика",
-  "Sensor templates": "Шаблоны датчиков",
+  "Sensor tile style": "Стиль плитки датчика",
+  "Sensor tile styles": "Стили плиток датчиков",
   "Sensor tile (value, unit and name)":
     "Плитка датчика (значение, единица измерения и название)",
   "Show for state": "Показать состояние",
@@ -272,16 +270,14 @@ export default {
   "Static / template tokens": "Статические/шаблонные токены",
   "Static content": "Статический контент",
   "Sync unknown": "Синхронизация неизвестна",
-  "Template height": "Высота шаблона",
-  "Template name": "Имя шаблона",
-  "Template parts": "Части шаблона",
-  "Template saved": "Шаблон сохранен.",
-  "Template width": "Ширина шаблона",
+  "Style height": "Высота стиля",
+  "Style name": "Название стиля",
+  "Tile style parts": "Элементы стиля плитки",
+  "Style saved": "Стиль сохранён",
+  "Style width": "Ширина стиля",
   "Text alignment": "Выравнивание текста",
   "The element changed; nothing was converted":
     "Элемент изменился; ничего не было конвертировано",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "Четыре кнопки со значками добавляют текст, фигуру, значок или изображение одним щелчком мыши.",
   "This element needs a renderer preview to show its current appearance":
     "Для этого элемента требуется предварительный просмотр средства рендеринга, чтобы показать его текущий внешний вид.",
   "Transmission duration": "Продолжительность передачи",
@@ -303,12 +299,10 @@ export default {
   "YAML to import": "YAML для импорта",
   "Zoom in": "Увеличение масштаба",
   "Zoom out": "Уменьшить масштаб",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "Сначала открывается редактор компонентов с большим количеством вариантов выбора: значение от датчика, индикатор выполнения, датчик, условный значок.",
   "ƒ Dynamic fields…": "ƒ Динамические поля…",
   "← Dashboard": "← Панель мониторинга",
   "＋ Add component": "＋ Добавить компонент",
-  "＋ Create template…": "＋ Создать шаблон…",
+  "＋ Create tile style…": "＋ Создать стиль плитки…",
   "＋ Insert template…": "＋ Вставить шаблон…",
   "＋ Range": "+ Диапазон",
   "＋ State": "＋ Состояние",
@@ -373,7 +367,7 @@ export default {
   Style: "Стиль",
   Tag: "Тег",
   Temperature: "Температура",
-  Template: "Шаблон",
+  "Tile style": "Стиль плитки",
   Text: "Текст",
   Tomorrow: "Завтра",
   Unavailable: "Недоступно",
@@ -419,9 +413,9 @@ export default {
   properties: "свойства",
   Color: "Цвет",
   Label: "Этикетка",
-  templates: "шаблоны",
+  "tile styles": "стили плиток",
   devices: "устройства",
-  "Import design": "Import design",
+  "Edit selected automation design": "Изменить дизайн выбранной автоматизации",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Перед сохранением этой автоматизации переключитесь в режим дисплея.",
@@ -489,7 +483,7 @@ export default {
   "Last successful image": "Последнее успешно отправленное изображение",
   "Edit automation design": "Изменить дизайн автоматизации",
   "Automation design": "Дизайн автоматизации",
-  "Local design": "Локальный дизайн",
+  "Tag design": "Дизайн тега",
   "Importing automation…": "Импорт автоматизации…",
   "Save to automation": "Сохранить в автоматизацию",
   True: "True",
@@ -542,8 +536,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Шаблоны",
-  "Design templates": "Шаблоны дизайна",
+  "Design gallery": "Галерея дизайнов",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Выберите готовый дизайн. Он добавится как обычные редактируемые элементы.",
   "No design templates fit this display.":
@@ -561,5 +554,24 @@ export default {
   "Design template name": "Название шаблона дизайна",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Начните с готового дизайна: этикетка с датой, QR-код Wi-Fi, погода и другие. Настройте параметры, добавьте как редактируемые элементы и при желании создайте автоматизацию, которая поддерживает его актуальность.",
-  "Browse templates": "Обзор шаблонов",
+  "Browse design gallery": "Открыть галерею дизайнов",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Стили плиток определяют, как датчик выглядит в виде плитки. Соберите стиль из частей «Имя», «Состояние» и «Единица», и его будут использовать все датчики этого типа.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Кнопки со значками добавляют текст, фигуру, значок или изображение. «Добавить компонент» предлагает датчики, шкалы, индикаторы и другое.",
+  "{type} output": "Вывод {type}",
+  W: "Ш",
+  H: "В",
+  "{type} style": "Стиль {type}",
+  "{name} style": "Стиль {name}",
+  "Choose icon for {state}": "Выбрать значок для {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Не удалось загрузить данные ESL",
+  "Could not open the automation design":
+    "Не удалось открыть дизайн автоматизации",
+  "Could not load automations": "Не удалось загрузить автоматизации",
+  "The automation could not be updated": "Не удалось обновить автоматизацию",
+  "Preview failed": "Не удалось построить предпросмотр",
+  "Something went wrong": "Что-то пошло не так",
+  "Could not save to the automation": "Не удалось сохранить в автоматизацию",
 };

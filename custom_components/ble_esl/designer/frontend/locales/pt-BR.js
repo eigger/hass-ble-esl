@@ -29,7 +29,6 @@ export default {
     "Não enviado: uma gravação mais recente substituiu esta",
   "Sending failed": "Falha no envio",
   "Loading {step}… ({done}/{count})": "Carregando {step}… ({done}/{count})",
-  "sensor templates": "modelos de sensores",
   "element types": "tipos de elementos",
   "tags and displays": "etiquetas e telas",
   "default (shrink ellipsis)": "padrão (reduzir reticências)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Por tipo de sensor",
   "Center horizontally": "Centralizar horizontalmente",
   "Checking display…": "Verificando exibição…",
-  "Choose a sample sensor above to preview this template.":
-    "Escolha um sensor de amostra acima para visualizar este modelo.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Escolha um sensor de amostra acima para visualizar este estilo de bloco.",
   "Choose an automation…": "Escolha uma automação…",
   "Choose an entity for the sensor tile.":
     "Escolha uma entidade para o bloco do sensor.",
@@ -147,7 +146,7 @@ export default {
   "ESL Manager": "Gerenciador ESL",
   "Edit alias": "Editar alias",
   "Edit component": "Editar componente",
-  "Edit design": "Editar design",
+  "Edit tag design": "Editar design da etiqueta",
   "Edit display text": "Editar texto de exibição",
   "Edit sensor": "Editar sensor",
   "Editing preview": "Visualização da edição",
@@ -170,13 +169,12 @@ export default {
     "Conclua a operação atual do editor antes de alternar ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "A primeira regra correspondente é aplicada. O intervalo inclui o limite inferior e exclui o superior. Um limite vazio significa que não há limite.",
-  "Fit preview": "Ajustar prévia",
   "Font file": "Arquivo de fonte",
   "From ≥": "De ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Modelos Jinja do HA. Variáveis: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() e outras funções de modelo do HA estão disponíveis.",
   "HA state icon": "HA ícone de estado",
-  "HA tile": "HA",
+  "HA tile": "Bloco do HA",
   "Hidden: click to show": "Oculto: clique para mostrar",
   "Icon (blank = HA)": "(em branco = HA)",
   "Icon name": "Nome do ícone",
@@ -260,8 +258,8 @@ export default {
   "Send backward": "Enviar para trás",
   "Send to tag": "Enviar para etiqueta",
   "Sending display…": "Enviando exibição…",
-  "Sensor template": "Modelo de sensor",
-  "Sensor templates": "Modelos de sensores",
+  "Sensor tile style": "Estilo de bloco do sensor",
+  "Sensor tile styles": "Estilos de bloco do sensor",
   "Sensor tile (value, unit and name)":
     "Bloco do sensor (valor, unidade e nome)",
   "Show for state": "Mostrar para estado",
@@ -273,16 +271,14 @@ export default {
   "Static / template tokens": "Tokens estáticos/de modelo",
   "Static content": "Conteúdo estático",
   "Sync unknown": "Sincronização desconhecida",
-  "Template height": "Altura do modelo",
-  "Template name": "Nome do modelo",
-  "Template parts": "Partes do modelo",
-  "Template saved": "Modelo salvo",
-  "Template width": "Largura do modelo",
+  "Style height": "Altura do estilo",
+  "Style name": "Nome do estilo",
+  "Tile style parts": "Partes do estilo de bloco",
+  "Style saved": "Estilo salvo",
+  "Style width": "Largura do estilo",
   "Text alignment": "Alinhamento de texto",
   "The element changed; nothing was converted":
     "O elemento foi alterado; nada foi convertido",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "Os quatro botões de ícone adicionam texto, forma, ícone ou imagem com um clique.",
   "This element needs a renderer preview to show its current appearance":
     "Este elemento precisa de uma visualização do renderizador para mostrar sua aparência atual",
   "Transmission duration": "Duração da transmissão",
@@ -304,12 +300,10 @@ export default {
   "YAML to import": "YAML para importar",
   "Zoom in": "Ampliar",
   "Zoom out": "Diminuir zoom",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "abre primeiro o editor de componentes, com mais opções: um valor de um sensor, barra de progresso, medidor, ícone condicional.",
   "ƒ Dynamic fields…": "ƒ Campos dinâmicos…",
   "← Dashboard": "← Painel",
   "＋ Add component": "＋ Adicionar componente",
-  "＋ Create template…": "＋ Criar modelo…",
+  "＋ Create tile style…": "＋ Criar estilo de bloco…",
   "＋ Insert template…": "＋ Inserir modelo…",
   "＋ Range": "＋ Faixa",
   "＋ State": "＋ Estado",
@@ -374,7 +368,7 @@ export default {
   Style: "Estilo",
   Tag: "Etiqueta",
   Temperature: "Temperatura",
-  Template: "Modelo",
+  "Tile style": "Estilo de bloco",
   Text: "Texto",
   Tomorrow: "Amanhã",
   Unavailable: "Indisponível",
@@ -420,9 +414,9 @@ export default {
   properties: "propriedades",
   Color: "Cor",
   Label: "Etiqueta",
-  templates: "modelos",
+  "tile styles": "estilos de bloco",
   devices: "dispositivos",
-  "Import design": "Import design",
+  "Edit selected automation design": "Editar design da automação selecionada",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Mude para o modo de exibição antes de salvar esta automação.",
@@ -491,7 +485,7 @@ export default {
   "Last successful image": "Última imagem enviada com sucesso",
   "Edit automation design": "Editar design da automação",
   "Automation design": "Design da automação",
-  "Local design": "Design local",
+  "Tag design": "Design da etiqueta",
   "Importing automation…": "Importando automação…",
   "Save to automation": "Salvar na automação",
   True: "True",
@@ -544,8 +538,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Modelos",
-  "Design templates": "Modelos de design",
+  "Design gallery": "Galeria de designs",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Escolha um design pronto. Ele é adicionado como elementos comuns que você pode editar.",
   "No design templates fit this display.":
@@ -563,5 +556,25 @@ export default {
   "Design template name": "Nome do modelo de design",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Comece com um design pronto, como etiqueta de data, QR code de Wi-Fi ou clima. Ajuste as opções, adicione como elementos editáveis e, se quiser, crie a automação que o mantém atualizado.",
-  "Browse templates": "Explorar modelos",
+  "Browse design gallery": "Abrir galeria de designs",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Estilos de bloco definem como um sensor aparece como bloco. Crie um com as partes Nome, Estado e Unidade e todos os sensores desse tipo o usarão.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Use os botões de ícone para adicionar texto, uma forma, um ícone ou uma imagem. Adicionar componente oferece sensores, barras, medidores e mais.",
+  "{type} output": "Saída {type}",
+  W: "L",
+  H: "A",
+  "{type} style": "Estilo {type}",
+  "{name} style": "Estilo de {name}",
+  "Choose icon for {state}": "Escolher ícone para {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Não foi possível carregar os dados do ESL",
+  "Could not open the automation design":
+    "Não foi possível abrir o design da automação",
+  "Could not load automations": "Não foi possível carregar as automações",
+  "The automation could not be updated":
+    "Não foi possível atualizar a automação",
+  "Preview failed": "Falha na pré-visualização",
+  "Something went wrong": "Algo deu errado",
+  "Could not save to the automation": "Não foi possível salvar na automação",
 };

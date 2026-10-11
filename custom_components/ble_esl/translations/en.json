@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "This device is not supported.",
-      "no_devices_found": "No unconfigured devices found.",
+      "no_devices_found": "No unconfigured devices found. Wake the tag (press its button or replace the battery) and make sure it is within Bluetooth range of Home Assistant or a Bluetooth proxy, then try again.",
       "already_in_progress": "Configuration flow is already in progress.",
       "already_configured": "Device is already configured."
     }

@@ -262,8 +262,8 @@ export class TemplateDialog extends HTMLElement {
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .note{margin:0;font-size:13px}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
-    </style><dialog aria-label="${t(hass, "Design templates")}"><form method="dialog">
-      <h2>${t(hass, "Design templates")}</h2>
+    </style><dialog aria-label="${t(hass, "Design gallery")}"><form method="dialog">
+      <h2>${t(hass, "Design gallery")}</h2>
       ${this.body()}
       ${this.note ? `<p class="note" role="status">${esc(t(hass, this.note))}</p>` : ""}
       ${this.issues.length ? `<ul class="issues">${this.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}

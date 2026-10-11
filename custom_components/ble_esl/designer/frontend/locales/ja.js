@@ -27,7 +27,6 @@ export default {
     "未送信: これは新しい書き込みに置き換えられました",
   "Sending failed": "送信に失敗しました",
   "Loading {step}… ({done}/{count})": "{step} をロード中… ({done}/{count})",
-  "sensor templates": "センサー テンプレート",
   "element types": "要素タイプ",
   "tags and displays": "タグと表示内容",
   "default (shrink ellipsis)": "デフォルト (省略記号を縮小)",
@@ -97,8 +96,8 @@ export default {
   "By sensor type": "センサーの種類別",
   "Center horizontally": "水平方向の中央揃え",
   "Checking display…": "表示を確認しています…",
-  "Choose a sample sensor above to preview this template.":
-    "このテンプレートをプレビューするには、上のサンプル センサーを選択してください。",
+  "Choose a sample sensor above to preview this tile style.":
+    "このタイルスタイルをプレビューするには、上のサンプル センサーを選択してください。",
   "Choose an automation…": "自動化を選択してください…",
   "Choose an entity for the sensor tile.":
     "センサー タイルのエンティティを選択します。",
@@ -146,7 +145,7 @@ export default {
   "ESL Manager": "ESL マネージャー",
   "Edit alias": "エイリアスの編集",
   "Edit component": "コンポーネントの編集",
-  "Edit design": "デザインの編集",
+  "Edit tag design": "タグのデザインを編集",
   "Edit display text": "表示テキストの編集",
   "Edit sensor": "センサーの編集",
   "Editing preview": "プレビューの編集",
@@ -169,7 +168,6 @@ export default {
     "ESL を切り替える前に、現在のエディターの操作を終了してください。",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "最初に一致したルールを適用します。範囲は下限を含み、上限を含みません。境界を空欄にすると制限しません。",
-  "Fit preview": "プレビューを表示領域に合わせる",
   "Font file": "フォント ファイル",
   "From ≥": "≧から",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
@@ -259,8 +257,8 @@ export default {
   "Send backward": "背面へ移動",
   "Send to tag": "タグに送信",
   "Sending display…": "ディスプレイを送信中…",
-  "Sensor template": "センサー テンプレート",
-  "Sensor templates": "センサー テンプレート",
+  "Sensor tile style": "センサータイルスタイル",
+  "Sensor tile styles": "センサータイルスタイル",
   "Sensor tile (value, unit and name)": "センサー タイル (値、単位、名前)",
   "Show for state": "状態を表示",
   "Show percentage": "パーセンテージを表示",
@@ -271,16 +269,14 @@ export default {
   "Static / template tokens": "静的/テンプレートトークン",
   "Static content": "静的コンテンツ",
   "Sync unknown": "同期が不明です",
-  "Template height": "テンプレートの高さ",
-  "Template name": "テンプレート名",
-  "Template parts": "テンプレートパーツ",
-  "Template saved": "テンプレートが保存されました",
-  "Template width": "テンプレートの幅",
+  "Style height": "スタイルの高さ",
+  "Style name": "スタイル名",
+  "Tile style parts": "タイルスタイルのパーツ",
+  "Style saved": "スタイルを保存しました",
+  "Style width": "スタイルの幅",
   "Text alignment": "テキストの配置",
   "The element changed; nothing was converted":
     "要素が変更されました。何も変換されませんでした",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "4 つのアイコン ボタンを使用すると、ワンクリックでテキスト、図形、アイコン、または画像を追加できます。",
   "This element needs a renderer preview to show its current appearance":
     "この要素には、現在の外観を表示するレンダラ プレビューが必要です",
   "Transmission duration": "送信期間",
@@ -302,12 +298,10 @@ export default {
   "YAML to import": "YAML をインポートします",
   "Zoom in": "ズームイン",
   "Zoom out": "ズームアウト",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "は、最初にコンポーネント エディターを開き、センサーの値、プログレス バー、ゲージ、条件アイコンなどの選択肢が増えます。",
   "ƒ Dynamic fields…": "ƒ 動的フィールド…",
   "← Dashboard": "← ダッシュボード",
   "＋ Add component": "＋ コンポーネントを追加",
-  "＋ Create template…": "＋ テンプレートを作成…",
+  "＋ Create tile style…": "＋ タイルスタイルを作成…",
   "＋ Insert template…": "＋ テンプレートを挿入…",
   "＋ Range": "＋ 範囲",
   "＋ State": "＋ 状態",
@@ -372,7 +366,7 @@ export default {
   Style: "スタイル",
   Tag: "タグ",
   Temperature: "温度",
-  Template: "テンプレート",
+  "Tile style": "タイルスタイル",
   Text: "テキスト",
   Tomorrow: "明日",
   Unavailable: "利用できません",
@@ -418,9 +412,9 @@ export default {
   properties: "プロパティ",
   Color: "色",
   Label: "ラベル",
-  templates: "テンプレート",
+  "tile styles": "タイルスタイル",
   devices: "デバイス",
-  "Import design": "Import design",
+  "Edit selected automation design": "選択したオートメーションのデザインを編集",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "このオートメーションを保存する前にディスプレイモードに切り替えてください。",
@@ -489,7 +483,7 @@ export default {
   "Last successful image": "最後に送信に成功した画像",
   "Edit automation design": "オートメーションのデザインを編集",
   "Automation design": "オートメーションのデザイン",
-  "Local design": "ローカルデザイン",
+  "Tag design": "タグのデザイン",
   "Importing automation…": "オートメーションをインポート中…",
   "Save to automation": "オートメーションに保存",
   True: "True",
@@ -542,8 +536,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "テンプレート",
-  "Design templates": "デザインテンプレート",
+  "Design gallery": "デザインギャラリー",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "できあがったデザインを選びます。編集できる通常の要素として追加されます。",
   "No design templates fit this display.":
@@ -561,5 +554,25 @@ export default {
   "Design template name": "デザインテンプレート名",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "日付ラベル、Wi-Fi QRコード、天気などのできあがったデザインから始められます。オプションを調整して編集可能な要素として追加し、必要なら最新に保つオートメーションも作成できます。",
-  "Browse templates": "テンプレートを見る",
+  "Browse design gallery": "デザインギャラリーを開く",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "タイルスタイルは、センサーをタイルとしてどう表示するかを決めます。名前・状態・ユニットのパーツで作ると、同じ種類のすべてのセンサーに使われます。",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "アイコンボタンでテキスト、図形、アイコン、画像を追加できます。「コンポーネントを追加」ではセンサー、バー、ゲージなども選べます。",
+  "{type} output": "{type} 出力",
+  W: "幅",
+  H: "高さ",
+  "{type} style": "{type} スタイル",
+  "{name} style": "{name} スタイル",
+  "Choose icon for {state}": "{state} のアイコンを選択",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "ESL データを読み込めませんでした",
+  "Could not open the automation design":
+    "オートメーションのデザインを開けませんでした",
+  "Could not load automations": "オートメーションを読み込めませんでした",
+  "The automation could not be updated":
+    "オートメーションを更新できませんでした",
+  "Preview failed": "プレビューに失敗しました",
+  "Something went wrong": "問題が発生しました",
+  "Could not save to the automation": "オートメーションに保存できませんでした",
 };

@@ -27,7 +27,6 @@ export default {
     "Non envoyé : une écriture plus récente a remplacé celle-ci",
   "Sending failed": "Échec de l'envoi",
   "Loading {step}… ({done}/{count})": "Chargement {step}… ({done}/{count})",
-  "sensor templates": "modèles de capteurs",
   "element types": "types d'éléments",
   "tags and displays": "étiquettes et écrans",
   "default (shrink ellipsis)": "par défaut (réduire les points de suspension)",
@@ -96,8 +95,8 @@ export default {
   "By sensor type": "Par type de capteur",
   "Center horizontally": "Centrer horizontalement",
   "Checking display…": "Vérification de l'affichage…",
-  "Choose a sample sensor above to preview this template.":
-    "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce modèle.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce style de tuile.",
   "Choose an automation…": "Choisissez un automatisme…",
   "Choose an entity for the sensor tile.":
     "Choisissez une entité pour la vignette du capteur.",
@@ -145,7 +144,7 @@ export default {
   "ESL Manager": "Gestionnaire ESL",
   "Edit alias": "Modifier l'alias",
   "Edit component": "Modifier le composant",
-  "Edit design": "Modifier le design",
+  "Edit tag design": "Modifier le design de l'étiquette",
   "Edit display text": "Modifier le texte affiché",
   "Edit sensor": "Modifier le capteur",
   "Editing preview": "Aperçu de la modification",
@@ -155,7 +154,7 @@ export default {
     "Les modèles d'éléments restent tels qu'écrits : Home Assistant les restitue à chaque exécution de l'automatisation. Les composants du capteur et les modèles de champ sont disponibles dès maintenant.",
   "Entity name": "Nom de l'entité",
   "Every element type the tag can draw, set field by field: choose one, then press":
-    "Chaque type d'élément que la balise peut dessiner, définissez champ par champ : choisissez-en un, puis appuyez sur",
+    "Chaque type d'élément que l'étiquette peut dessiner, définissez champ par champ : choisissez-en un, puis appuyez sur",
   "Exact rendered display": "Affichage rendu exact",
   "Exact rendered preview": "Aperçu exact du rendu",
   "Existing automation": "Automatisation existante",
@@ -168,13 +167,12 @@ export default {
     "Terminez l'opération d'édition en cours avant de changer de ESL.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "La première règle correspondante s’applique. L’intervalle inclut la borne inférieure et exclut la borne supérieure. Une borne vide signifie aucune limite.",
-  "Fit preview": "Ajuster l’aperçu",
   "Font file": "Fichier de police",
   "From ≥": "À partir de ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Modèles Jinja de HA. Variables : value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() et les autres fonctions de modèle de HA sont disponibles.",
   "HA state icon": "HA icône d'état",
-  "HA tile": "HA tuile",
+  "HA tile": "Tuile HA",
   "Hidden: click to show": "Masqué : cliquez pour afficher",
   "Icon (blank = HA)": "(vide = HA)",
   "Icon name": "Nom de l'icône",
@@ -236,8 +234,8 @@ export default {
   "Rain / snow": "Pluie / neige",
   "Rain chance": "Risque de pluie",
   "Redo (⌘/Ctrl Shift Z)": "Rétablir (⌘/Ctrl Maj Z)",
-  "Refresh tags": "Actualiser les balises",
-  "Refreshing tags…": "Actualisation des balises…",
+  "Refresh tags": "Actualiser les étiquettes",
+  "Refreshing tags…": "Actualisation des étiquettes…",
   "Remove manual link": "Supprimer le lien manuel",
   "Replace display": "Remplacer le contenu de l’écran",
   "Resolved value": "Valeur résolue",
@@ -256,10 +254,10 @@ export default {
   "Select an element": "Sélectionnez un élément",
   "Send back": "Mettre à l’arrière-plan",
   "Send backward": "Reculer d’un plan",
-  "Send to tag": "Envoyer au tag",
+  "Send to tag": "Envoyer à l'étiquette",
   "Sending display…": "Envoi de l'affichage…",
-  "Sensor template": "Modèle de capteur",
-  "Sensor templates": "Modèles de capteurs",
+  "Sensor tile style": "Style de tuile de capteur",
+  "Sensor tile styles": "Styles de tuile de capteur",
   "Sensor tile (value, unit and name)": "Tuile capteur (valeur, unité et nom)",
   "Show for state": "Afficher l'état",
   "Show percentage": "Afficher le pourcentage",
@@ -270,16 +268,14 @@ export default {
   "Static / template tokens": "Jetons statiques/modèles",
   "Static content": "Contenu statique",
   "Sync unknown": "Synchronisation inconnue",
-  "Template height": "Hauteur du gabarit",
-  "Template name": "Nom du modèle",
-  "Template parts": "Pièces du modèle",
-  "Template saved": "Modèle enregistré",
-  "Template width": "Largeur du modèle",
+  "Style height": "Hauteur du style",
+  "Style name": "Nom du style",
+  "Tile style parts": "Éléments du style de tuile",
+  "Style saved": "Style enregistré",
+  "Style width": "Largeur du style",
   "Text alignment": "Alignement du texte",
   "The element changed; nothing was converted":
     "L'élément a changé ; rien n'a été converti",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "Les quatre boutons icônes ajoutent un texte, une forme, une icône ou une image en un clic.",
   "This element needs a renderer preview to show its current appearance":
     "Cet élément nécessite un aperçu du moteur de rendu pour afficher son apparence actuelle",
   "Transmission duration": "Durée de transmission",
@@ -291,7 +287,7 @@ export default {
   "Upload image": "Télécharger l'image",
   "Use static value": "Utiliser une valeur statique",
   "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des balises dans Home Assistant.",
+    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des étiquettes dans Home Assistant.",
   "Vertical align": "Alignement vertical",
   "Visible state": "État visible",
   "Weather time": "Heure météo",
@@ -301,12 +297,10 @@ export default {
   "YAML to import": "YAML à importer",
   "Zoom in": "Zoom avant",
   "Zoom out": "Zoom arrière",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "ouvre d'abord l'éditeur de composants, avec plus de choix : une valeur provenant d'un capteur, une barre de progression, une jauge, une icône conditionnelle.",
   "ƒ Dynamic fields…": "ƒ Champs dynamiques…",
   "← Dashboard": "← Tableau de bord",
   "＋ Add component": "＋ Ajouter un composant",
-  "＋ Create template…": "＋ Créer un modèle…",
+  "＋ Create tile style…": "＋ Créer un style de tuile…",
   "＋ Insert template…": "＋ Insérer un modèle…",
   "＋ Range": "＋ Plage",
   "＋ State": "＋ État",
@@ -371,7 +365,7 @@ export default {
   Style: "Style",
   Tag: "Étiquette",
   Temperature: "Température",
-  Template: "Modèle",
+  "Tile style": "Style de tuile",
   Text: "Texte",
   Tomorrow: "Demain",
   Unavailable: "Indisponible",
@@ -417,9 +411,10 @@ export default {
   properties: "propriétés",
   Color: "Couleur",
   Label: "Étiquette",
-  templates: "Appareils",
+  "tile styles": "styles de tuile",
   devices: "appareils",
-  "Import design": "Import design",
+  "Edit selected automation design":
+    "Modifier le design de l'automatisation sélectionnée",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Passez en mode Affichage avant d'enregistrer cette automatisation.",
@@ -488,7 +483,7 @@ export default {
   "Last successful image": "Dernière image envoyée avec succès",
   "Edit automation design": "Modifier le design de l'automatisation",
   "Automation design": "Design de l'automatisation",
-  "Local design": "Design local",
+  "Tag design": "Design de l'étiquette",
   "Importing automation…": "Importation de l'automatisation…",
   "Save to automation": "Enregistrer dans l'automatisation",
   True: "True",
@@ -541,8 +536,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Modèles",
-  "Design templates": "Modèles de design",
+  "Design gallery": "Galerie de designs",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Choisissez un design prêt à l'emploi. Il est ajouté sous forme d'éléments ordinaires modifiables.",
   "No design templates fit this display.":
@@ -561,5 +555,26 @@ export default {
   "Design template name": "Nom du modèle de design",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Partez d'un design prêt à l'emploi, comme une étiquette de date, un QR code Wi-Fi ou la météo. Ajustez ses options, ajoutez-le sous forme d'éléments modifiables et créez si besoin l'automatisation qui le tient à jour.",
-  "Browse templates": "Parcourir les modèles",
+  "Browse design gallery": "Ouvrir la galerie de designs",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Les styles de tuile définissent l'apparence d'un capteur sous forme de tuile. Créez-en un avec les éléments Nom, État et Unité : tous les capteurs de ce type l'utiliseront.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Utilisez les boutons d'icône pour ajouter du texte, une forme, une icône ou une image. Ajouter un composant propose des capteurs, barres, jauges et plus.",
+  "{type} output": "Sortie {type}",
+  W: "L",
+  H: "H",
+  "{type} style": "Style {type}",
+  "{name} style": "Style de {name}",
+  "Choose icon for {state}": "Choisir l'icône pour {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Impossible de charger les données ESL",
+  "Could not open the automation design":
+    "Impossible d'ouvrir le design de l'automatisation",
+  "Could not load automations": "Impossible de charger les automatisations",
+  "The automation could not be updated":
+    "Impossible de mettre à jour l'automatisation",
+  "Preview failed": "Échec de l'aperçu",
+  "Something went wrong": "Une erreur s'est produite",
+  "Could not save to the automation":
+    "Impossible d'enregistrer dans l'automatisation",
 };
