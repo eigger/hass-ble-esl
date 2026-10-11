@@ -147,7 +147,7 @@ export default {
   "ESL Manager": "ESL-beheerder",
   "Edit alias": "Alias bewerken",
   "Edit component": "Component bewerken",
-  "Edit design": "Ontwerp bewerken",
+  "Edit tag design": "Ontwerp bewerken",
   "Edit display text": "Weergavetekst bewerken",
   "Edit sensor": "Sensor bewerken",
   "Editing preview": "Voorbeeld van bewerken",
@@ -170,7 +170,6 @@ export default {
     "Beëindig de huidige editorbewerking voordat u overschakelt naar ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "De eerste overeenkomende regel wordt toegepast. Het bereik omvat de ondergrens en sluit de bovengrens uit. Een lege grens betekent geen limiet.",
-  "Fit preview": "Voorbeeld passend maken",
   "Font file": "Lettertypebestand",
   "From ≥": "Vanaf ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
@@ -260,8 +259,8 @@ export default {
   "Send backward": "Een laag naar achteren",
   "Send to tag": "Verzenden naar tag",
   "Sending display…": "Weergave verzenden…",
-  "Sensor template": "Sensorsjabloon",
-  "Sensor templates": "Sensorsjablonen",
+  "Sensor tile style": "Sensorsjabloon",
+  "Sensor tile styles": "Sensorsjablonen",
   "Sensor tile (value, unit and name)": "Sensortegel (waarde, eenheid en naam)",
   "Show for state": "Toon voor staat",
   "Show percentage": "Percentage weergeven",
@@ -272,16 +271,14 @@ export default {
   "Static / template tokens": "Statische / sjabloontokens",
   "Static content": "Statische inhoud",
   "Sync unknown": "Synchronisatie onbekend",
-  "Template height": "Sjabloonhoogte",
-  "Template name": "Sjabloonnaam",
-  "Template parts": "Sjabloononderdelen",
-  "Template saved": "Sjabloon opgeslagen",
-  "Template width": "Sjabloonbreedte",
+  "Style height": "Sjabloonhoogte",
+  "Style name": "Sjabloonnaam",
+  "Tile style parts": "Sjabloononderdelen",
+  "Style saved": "Sjabloon opgeslagen",
+  "Style width": "Sjabloonbreedte",
   "Text alignment": "Tekstuitlijning",
   "The element changed; nothing was converted":
     "Het element is gewijzigd; er werd niets omgezet",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "De vier pictogramknoppen voegen met één klik een tekst, vorm, pictogram of afbeelding toe.",
   "This element needs a renderer preview to show its current appearance":
     "Dit element heeft een voorbeeld van de renderer nodig om zijn huidige uiterlijk te laten zien",
   "Transmission duration": "Verzendingsduur",
@@ -303,12 +300,10 @@ export default {
   "YAML to import": "YAML om te importeren",
   "Zoom in": "Inzoomen",
   "Zoom out": "Uitzoomen",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "opent eerst de componenteditor, met meer keuzes: een waarde van een sensor, voortgangsbalk, meter, voorwaardelijk pictogram.",
   "ƒ Dynamic fields…": "ƒ Dynamische velden…",
   "← Dashboard": "← Dashboard",
   "＋ Add component": "＋ Component toevoegen",
-  "＋ Create template…": "＋ Sjabloon maken…",
+  "＋ Create tile style…": "＋ Sjabloon maken…",
   "＋ Insert template…": "＋ Sjabloon invoegen…",
   "＋ Range": "＋ Bereik",
   "＋ State": "＋ Staat",
@@ -373,7 +368,7 @@ export default {
   Style: "Stijl",
   Tag: "Label",
   Temperature: "Temperatuur",
-  Template: "Sjabloon",
+  "Tile style": "Sjabloon",
   Text: "Tekst",
   Tomorrow: "Morgen",
   Unavailable: "Niet beschikbaar",
@@ -421,7 +416,7 @@ export default {
   Label: "Etiket",
   templates: "sjablonen",
   devices: "apparaten",
-  "Import design": "Import design",
+  "Edit selected automation design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Schakel over naar de schermmodus voordat je deze automatisering opslaat.",
@@ -490,7 +485,7 @@ export default {
   "Last successful image": "Laatst succesvol verzonden afbeelding",
   "Edit automation design": "Automatiseringsontwerp bewerken",
   "Automation design": "Automatiseringsontwerp",
-  "Local design": "Lokaal ontwerp",
+  "Tag design": "Lokaal ontwerp",
   "Importing automation…": "Automatisering importeren…",
   "Save to automation": "Opslaan in automatisering",
   True: "True",
@@ -543,8 +538,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Sjablonen",
-  "Design templates": "Ontwerpsjablonen",
+  "Design gallery": "Ontwerpsjablonen",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Kies een kant-en-klaar ontwerp. Het wordt toegevoegd als gewone, bewerkbare elementen.",
   "No design templates fit this display.":
@@ -562,5 +556,24 @@ export default {
   "Design template name": "Naam van het ontwerpsjabloon",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Begin met een kant-en-klaar ontwerp, zoals een datumlabel, wifi-QR-code of weer. Pas de opties aan, voeg het toe als bewerkbare elementen en maak desgewenst de automatisering die het actueel houdt.",
-  "Browse templates": "Sjablonen bekijken",
+  "Browse design gallery": "Sjablonen bekijken",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.",
+  "{type} output": "{type} output",
+  W: "W",
+  H: "H",
+  "{type} style": "{type} style",
+  "{name} style": "{name} style",
+  "Choose icon for {state}": "Choose icon for {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Could not load ESL data",
+  "Could not open the automation design":
+    "Could not open the automation design",
+  "Could not load automations": "Could not load automations",
+  "The automation could not be updated": "The automation could not be updated",
+  "Preview failed": "Preview failed",
+  "Something went wrong": "Something went wrong",
+  "Could not save to the automation": "Could not save to the automation",
 };

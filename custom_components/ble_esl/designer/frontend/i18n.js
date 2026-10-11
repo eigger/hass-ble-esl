@@ -26,6 +26,13 @@ export function t(hass, key, values = {}) {
       : match,
   );
 }
+// A translated context line in front of the server's own detail, which stays untranslated.
+export function errorText(hass, context, error) {
+  return t(hass, "{context}: {detail}", {
+    context: t(hass, context),
+    detail: error?.message || String(error),
+  });
+}
 // These bindings are captured only from constructor markup, before user data is inserted.
 const bindings = new WeakMap();
 export function bindStatic(root) {

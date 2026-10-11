@@ -146,7 +146,7 @@ export default {
   "ESL Manager": "Менеджер ESL",
   "Edit alias": "Редактировать псевдоним",
   "Edit component": "Редактировать компонент",
-  "Edit design": "Редактировать дизайн",
+  "Edit tag design": "Редактировать дизайн",
   "Edit display text": "Редактирование отображаемого текста",
   "Edit sensor": "Редактировать датчик",
   "Editing preview": "Предварительный просмотр редактирования",
@@ -169,7 +169,6 @@ export default {
     "Завершите текущую операцию редактора перед переключением ESLs.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "Применяется первое подходящее правило. Диапазон включает нижнюю границу и не включает верхнюю. Пустая граница означает отсутствие ограничения.",
-  "Fit preview": "Вписать предпросмотр",
   "Font file": "Файл шрифта",
   "From ≥": "От ≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
@@ -259,8 +258,8 @@ export default {
   "Send backward": "На слой назад",
   "Send to tag": "Отправить на тег",
   "Sending display…": "Отправка дисплея…",
-  "Sensor template": "Шаблон датчика",
-  "Sensor templates": "Шаблоны датчиков",
+  "Sensor tile style": "Шаблон датчика",
+  "Sensor tile styles": "Шаблоны датчиков",
   "Sensor tile (value, unit and name)":
     "Плитка датчика (значение, единица измерения и название)",
   "Show for state": "Показать состояние",
@@ -272,16 +271,14 @@ export default {
   "Static / template tokens": "Статические/шаблонные токены",
   "Static content": "Статический контент",
   "Sync unknown": "Синхронизация неизвестна",
-  "Template height": "Высота шаблона",
-  "Template name": "Имя шаблона",
-  "Template parts": "Части шаблона",
-  "Template saved": "Шаблон сохранен.",
-  "Template width": "Ширина шаблона",
+  "Style height": "Высота шаблона",
+  "Style name": "Имя шаблона",
+  "Tile style parts": "Части шаблона",
+  "Style saved": "Шаблон сохранен.",
+  "Style width": "Ширина шаблона",
   "Text alignment": "Выравнивание текста",
   "The element changed; nothing was converted":
     "Элемент изменился; ничего не было конвертировано",
-  "The four icon buttons add a text, shape, icon or image in one click.":
-    "Четыре кнопки со значками добавляют текст, фигуру, значок или изображение одним щелчком мыши.",
   "This element needs a renderer preview to show its current appearance":
     "Для этого элемента требуется предварительный просмотр средства рендеринга, чтобы показать его текущий внешний вид.",
   "Transmission duration": "Продолжительность передачи",
@@ -303,12 +300,10 @@ export default {
   "YAML to import": "YAML для импорта",
   "Zoom in": "Увеличение масштаба",
   "Zoom out": "Уменьшить масштаб",
-  "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.":
-    "Сначала открывается редактор компонентов с большим количеством вариантов выбора: значение от датчика, индикатор выполнения, датчик, условный значок.",
   "ƒ Dynamic fields…": "ƒ Динамические поля…",
   "← Dashboard": "← Панель мониторинга",
   "＋ Add component": "＋ Добавить компонент",
-  "＋ Create template…": "＋ Создать шаблон…",
+  "＋ Create tile style…": "＋ Создать шаблон…",
   "＋ Insert template…": "＋ Вставить шаблон…",
   "＋ Range": "+ Диапазон",
   "＋ State": "＋ Состояние",
@@ -373,7 +368,7 @@ export default {
   Style: "Стиль",
   Tag: "Тег",
   Temperature: "Температура",
-  Template: "Шаблон",
+  "Tile style": "Шаблон",
   Text: "Текст",
   Tomorrow: "Завтра",
   Unavailable: "Недоступно",
@@ -421,7 +416,7 @@ export default {
   Label: "Этикетка",
   templates: "шаблоны",
   devices: "устройства",
-  "Import design": "Import design",
+  "Edit selected automation design": "Import design",
   "Save automation": "Save automation",
   "Switch to Display mode before saving this automation.":
     "Перед сохранением этой автоматизации переключитесь в режим дисплея.",
@@ -489,7 +484,7 @@ export default {
   "Last successful image": "Последнее успешно отправленное изображение",
   "Edit automation design": "Изменить дизайн автоматизации",
   "Automation design": "Дизайн автоматизации",
-  "Local design": "Локальный дизайн",
+  "Tag design": "Локальный дизайн",
   "Importing automation…": "Импорт автоматизации…",
   "Save to automation": "Сохранить в автоматизацию",
   True: "True",
@@ -542,8 +537,7 @@ export default {
     "Preview parameter entry was cancelled.",
   "Import needs a preview parameter: {name}":
     "Import needs a preview parameter: {name}",
-  Templates: "Шаблоны",
-  "Design templates": "Шаблоны дизайна",
+  "Design gallery": "Шаблоны дизайна",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Выберите готовый дизайн. Он добавится как обычные редактируемые элементы.",
   "No design templates fit this display.":
@@ -561,5 +555,24 @@ export default {
   "Design template name": "Название шаблона дизайна",
   "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.":
     "Начните с готового дизайна: этикетка с датой, QR-код Wi-Fi, погода и другие. Настройте параметры, добавьте как редактируемые элементы и при желании создайте автоматизацию, которая поддерживает его актуальность.",
-  "Browse templates": "Обзор шаблонов",
+  "Browse design gallery": "Обзор шаблонов",
+  "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
+    "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.",
+  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
+    "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.",
+  "{type} output": "{type} output",
+  W: "W",
+  H: "H",
+  "{type} style": "{type} style",
+  "{name} style": "{name} style",
+  "Choose icon for {state}": "Choose icon for {state}",
+  "{context}: {detail}": "{context}: {detail}",
+  "Could not load ESL data": "Could not load ESL data",
+  "Could not open the automation design":
+    "Could not open the automation design",
+  "Could not load automations": "Could not load automations",
+  "The automation could not be updated": "The automation could not be updated",
+  "Preview failed": "Preview failed",
+  "Something went wrong": "Something went wrong",
+  "Could not save to the automation": "Could not save to the automation",
 };

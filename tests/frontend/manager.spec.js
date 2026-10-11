@@ -239,7 +239,7 @@ test("automation editing restores the ordinary design, draft and undo history", 
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -308,7 +308,7 @@ test("imports and repeatedly saves only the selected automation payload", async 
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -316,7 +316,7 @@ test("imports and repeatedly saves only the selected automation payload", async 
   ).toBeVisible();
   await expect(page.getByLabel("Tag", { exact: true })).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Sensor templates", exact: true }),
+    page.getByRole("button", { name: "Sensor tile styles", exact: true }),
   ).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Send to tag", exact: true }),
@@ -481,7 +481,7 @@ test("edits a unique direct match while preserving unrelated unresolved targets"
     .click();
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -519,7 +519,7 @@ test("refuses to save when the automation changed after import", async ({
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -547,7 +547,7 @@ test("keeps the current design when an automation payload has unsupported elemen
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.getByRole("alert")).toContainText(
@@ -575,7 +575,7 @@ test("does not import an unsupported automation background", async ({
     .click();
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.getByRole("alert")).toContainText(
@@ -600,7 +600,7 @@ test("does not report a background-only edit as saved to an automation", async (
     .click();
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -635,7 +635,7 @@ test("does not import a delayed automation response after leaving its ESL", asyn
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await requestStarted;
@@ -719,7 +719,7 @@ test("ignores a delayed YAML import after restoring the prior editor session", a
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await page.getByRole("button", { name: "Import YAML", exact: true }).click();
@@ -834,7 +834,7 @@ test("ignores a delayed component conversion after restoring another session", a
   page.once("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1040,7 +1040,7 @@ test("keeps edits made while an automation save is in flight dirty", async ({
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1069,7 +1069,7 @@ test("does not save a newer same-ESL import after an older save waited on upload
     .click();
   await page
     .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(
@@ -1127,7 +1127,7 @@ test("rebases to a uniquely matched write action after its path shifts", async (
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1171,7 +1171,7 @@ for (const [caseName, mutate] of [
       .click();
     const dialog = page.getByRole("dialog", { name: "Connected automations" });
     await dialog
-      .getByRole("button", { name: "Edit design", exact: true })
+      .getByRole("button", { name: "Edit automation design", exact: true })
       .first()
       .click();
     await expect(page.locator(".el")).toHaveCount(1);
@@ -1196,7 +1196,7 @@ test("does not POST when export reports a blocking validation error", async ({
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1236,7 +1236,7 @@ test("does not POST a malformed latest automation configuration", async ({
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1268,7 +1268,7 @@ test("blocks saving when an unchanged selected action becomes ambiguous", async 
     .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await dialog
-    .getByRole("button", { name: "Edit design", exact: true })
+    .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
   await expect(page.locator(".el")).toHaveCount(1);
@@ -1314,9 +1314,9 @@ test("card navigation leaves template mode and retains template drafts", async (
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
-  await page.getByLabel("Template name").fill("My template draft");
+  await page.getByLabel("Style name").fill("My template draft");
   await page.locator('[data-action="dashboard"]').click();
   await page
     .locator('[data-action="edit"][data-entry="demo-discovery"]')
@@ -1331,11 +1331,9 @@ test("card navigation leaves template mode and retains template drafts", async (
     page.getByRole("button", { name: "Send to tag", exact: true }),
   ).toBeDisabled();
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
-  await expect(page.getByLabel("Template name")).toHaveValue(
-    "My template draft",
-  );
+  await expect(page.getByLabel("Style name")).toHaveValue("My template draft");
 });
 
 test("choosing another card during editor boot honors latest selection", async ({
@@ -1398,7 +1396,7 @@ test("multiple automations show count, state, editor links and manual associatio
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
   await expect(card).toContainText("3 automations · 2 active");
-  await card.getByRole("button", { name: "Edit design" }).click();
+  await card.getByRole("button", { name: "Edit tag design" }).click();
   await page
     .getByRole("button", { name: "Connected automations", exact: true })
     .click();
@@ -1690,7 +1688,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
       0,
     );
     await page
-      .getByRole("button", { name: "Sensor templates", exact: true })
+      .getByRole("button", { name: "Sensor tile styles", exact: true })
       .click();
     await page
       .locator(".editor-content")
@@ -1843,4 +1841,3 @@ test("manager header fits narrow mobile widths without clipping controls", async
   expect(bounds.height).toBeLessThanOrEqual(57);
   expect(bounds.childrenFit).toBe(true);
 });
-

@@ -135,7 +135,7 @@ test("preview fits its window by default and can zoom in and out", async ({
     before.width,
   );
   await page.getByRole("button", { name: "Zoom out", exact: true }).click();
-  await page.getByRole("button", { name: "Fit preview", exact: true }).click();
+  await page.locator("#zoom").selectOption("fit");
   expect(
     Math.abs((await page.locator(".stage").boundingBox()).width - before.width),
   ).toBeLessThan(2);
@@ -270,9 +270,9 @@ test("sensor type template designer saves, previews and preserves the display dr
   await page.locator('[data-add="text"]').click();
   await page.locator('[data-property="text"]').fill("Keep my draft");
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
-  await expect(page.getByLabel("Template", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Tile style", { exact: true })).toHaveValue(
     "output:numeric",
   );
   await expect(page.locator(".el")).toHaveCount(3);
@@ -280,7 +280,7 @@ test("sensor type template designer saves, previews and preserves the display dr
   await page.locator('[data-token="unit"]').click();
   await page.locator('[data-property="text"]').fill("{{state}} {{unit}}");
   await page.getByRole("button", { name: "Save", exact: false }).click();
-  await expect(page.getByRole("status")).toContainText("Template saved");
+  await expect(page.getByRole("status")).toContainText("Style saved");
   await page.getByRole("button", { name: "Display", exact: true }).click();
   await expect(page.locator(".el")).toHaveCount(1);
   await expect(page.locator('[data-property="text"]')).toHaveValue(
@@ -289,10 +289,10 @@ test("sensor type template designer saves, previews and preserves the display dr
   await pickSensor(page, "sensor.office_temperature");
   await expect(page.locator("img.exact")).toBeVisible();
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   await page
-    .getByLabel("Template", { exact: true })
+    .getByLabel("Tile style", { exact: true })
     .selectOption("output:binary");
   await expect(page.locator(".el")).toHaveCount(2);
   await page.locator(".layer").last().click();
@@ -313,7 +313,7 @@ test("sensor type template designer saves, previews and preserves the display dr
     "mdi:window-open",
   );
   await page.getByRole("button", { name: "Save", exact: false }).click();
-  await expect(page.getByRole("status")).toContainText("Template saved");
+  await expect(page.getByRole("status")).toContainText("Style saved");
   await page.screenshot({
     path: "artifacts/template-designer.png",
     fullPage: true,
@@ -409,15 +409,13 @@ test("create template starts with the selected sensor and applies the saved styl
   await pickSensor(page, "sensor.office_temperature");
   const id = await page.evaluate(() => window.panel.selected);
   await page
-    .getByLabel("Sensor template", { exact: true })
+    .getByLabel("Sensor tile style", { exact: true })
     .selectOption("__new__");
-  await expect(page.getByLabel("Template name", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Style name", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.panel.sampleEntity)).toBe(
     "sensor.office_temperature",
   );
-  await page
-    .getByLabel("Template name", { exact: true })
-    .fill("My temperature");
+  await page.getByLabel("Style name", { exact: true }).fill("My temperature");
   await page.getByRole("button", { name: /^Save/ }).click();
   await page.getByRole("button", { name: "Display", exact: true }).click();
   expect(
@@ -428,7 +426,7 @@ test("create template starts with the selected sensor and applies the saved styl
   ).toContain(":custom:");
   await expect(
     page
-      .getByLabel("Sensor template", { exact: true })
+      .getByLabel("Sensor tile style", { exact: true })
       .locator("option:checked"),
   ).toHaveText("My temperature");
 });
@@ -454,7 +452,7 @@ test("template mode has no send or preview button and offers every sensor", asyn
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Send to tag", exact: true }),
@@ -583,7 +581,7 @@ test("images can be uploaded, resized and used as state-specific template parts"
   await page.getByLabel("Image fit", { exact: true }).selectOption("fill");
   await expect(page.locator("img.exact")).toBeVisible();
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   await page.getByRole("button", { name: "Add image", exact: true }).click();
   await page.getByLabel("Visible state", { exact: true }).fill("on");
@@ -814,7 +812,7 @@ test("inspector and template sample use native HA entity pickers", async ({
   );
   await expect(page.locator('[data-property="decimals"]')).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Sensor templates", exact: true })
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   const sample = page.locator("ha-entity-picker#template-sample");
   await expect(sample).toHaveCount(1);
@@ -1803,7 +1801,7 @@ test("the add-element hints show for a display and not for sensor templates", as
   page,
 }) => {
   await expect(page.locator("#library .hint")).toHaveCount(2);
-  await page.getByRole("button", { name: "Sensor templates" }).click();
+  await page.getByRole("button", { name: "Sensor tile styles" }).click();
   await expect(page.locator("#library .hint")).toHaveCount(1);
 });
 
@@ -1885,7 +1883,7 @@ test("design template: gallery applies elements and prefills the automation", as
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await expect(gallery).toContainText("Date label");
@@ -1920,7 +1918,7 @@ test("design template: replace and create automation in one step", async ({
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
@@ -1936,7 +1934,7 @@ test("design template: a missing font reports the error and keeps the display", 
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
@@ -1950,7 +1948,7 @@ test("design template triggers are dropped once the template's elements are gone
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Date label/ }).click();
@@ -1974,7 +1972,7 @@ test("design template: the current design can be saved and applied again", async
 }) => {
   await pickSensor(page, "sensor.office_temperature");
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByLabel("Design template name").fill("Office temperature");
@@ -1995,7 +1993,7 @@ test("design template: an entity parameter offers matching entities and checks t
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Weather now/ }).click();
@@ -2027,7 +2025,7 @@ test("design template: an entity default that does not exist gives way to one th
     window.panel.hass = { ...window.panel.hass, states };
   });
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Weather now/ }).click();
@@ -2045,7 +2043,7 @@ test("design template: thumbnails load in the gallery and the form preview follo
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   const thumbs = gallery.locator("img[data-preview]");
@@ -2065,7 +2063,7 @@ test("design template: an invalid parameter hides the stale preview and says why
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();
@@ -2084,7 +2082,7 @@ test("design template: the preview error stays visible after a re-render", async
   page,
 }) => {
   await page
-    .getByRole("button", { name: "Browse templates", exact: true })
+    .getByRole("button", { name: "Browse design gallery", exact: true })
     .click();
   const gallery = page.locator("ble-esl-template-dialog");
   await gallery.getByRole("button", { name: /Wi-Fi QR/ }).click();

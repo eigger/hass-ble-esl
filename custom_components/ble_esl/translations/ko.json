@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "지원하지 않는 기기입니다.",
-      "no_devices_found": "설정되지 않은 기기를 찾을 수 없습니다.",
+      "no_devices_found": "설정되지 않은 기기를 찾을 수 없습니다. ESL을 깨운 뒤(버튼을 누르거나 배터리를 교체) Home Assistant 또는 블루투스 프록시의 블루투스 범위 안에 있는지 확인하고 다시 시도하세요.",
       "already_in_progress": "이미 설정이 진행 중입니다.",
       "already_configured": "이미 설정된 기기입니다."
     }

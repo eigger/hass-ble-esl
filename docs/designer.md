@@ -6,7 +6,7 @@ ESL Manager and the Designer follow your Home Assistant profile language. All 13
 
 The designer is a visual way to make the **payload** of a [`ble_esl.write`](actions.md) action. What it shows, what it sends to the tag and the YAML it gives you are the same payload, drawn by the same [imagespec](https://github.com/eigger/imagespec) renderer, so a design you finish here is one you can paste into an automation and get the same picture.
 
-Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit design** on a tag card: the canvas has its size and colours.
+Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit tag design** on a tag card: the canvas has its size and colours.
 
 ## ESL dashboard
 
@@ -14,10 +14,10 @@ ESL Manager opens a card dashboard showing each tag's alias from its existing te
 
 The image and **Last successful send** come from `last_updated_content`: the last successfully transmitted image and its timestamp. A failed transmission preserves these values while updating the latest error and duration. Synchronization comes from `display_in_sync`, comparing the successful image with the preview image. Missing/unavailable values show `—` or an unknown state.
 
-Choose **Edit design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
+Choose **Edit tag design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
 **Edit automation design** opens a single available linked automation directly,
-or offers a choice when several are available. **Edit design** still opens the
+or offers a choice when several are available. **Edit tag design** still opens the
 ordinary local design. The editor header shows the tag and automation being
 edited, and **Save to automation** remains labelled on narrow screens.
 
@@ -32,17 +32,17 @@ keeps a small margin around the complete last successful image.
 
 In the Designer toolbar, choose **Create automation**, review the current design's action and name, then choose **Create automation** in the dialog. This creates a new Home Assistant automation with `ble_esl.write` targeted at the current ESL's registered device. Unsaved edits are included. Triggers and conditions are empty; use **Edit automation** to configure when it runs.
 
-The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit design** and use **Save to automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
+The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit automation design** and use **Save to automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
 
 ## Existing automation associations
 
 Open **Automations** on a card or **Connected automations** above the Designer. Cards show **Link automation** for zero associations, the name and state for one, or the count and active count for several. The list opens beside the card on desktop and as a bottom sheet on mobile. Each available automation name links to its HA editor.
 
-Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
+Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit tag design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
 
-Choose **Edit design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save to automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
+Choose **Edit automation design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save to automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
 
 Automation variables are preview parameters in this session. Safe literal values
 from the automation can supply defaults. Missing values open a form where you
@@ -61,7 +61,7 @@ into fixed coordinates through preview parameters.
 - [Payload YAML: using the design in an automation](#payload-yaml)
 - [Import YAML: editing an existing payload](#import-yaml)
 - [Convert to elements](#convert-to-elements)
-- [Sensor templates and the older components](#sensor-templates-and-the-older-components)
+- [Sensor tile styles and the older components](#sensor-tile-styles-and-the-older-components)
 - [Limits](#limits)
 
 ## Making a design
@@ -134,9 +134,9 @@ These stay as text, as they were drawn: a weather or binary sensor, a sensor tha
 
 The status line says whether the result is drawn exactly as before (`0` pixels differ) or by how much it is not.
 
-## Sensor templates and the older components
+## Sensor tile styles and the older components
 
-**Sensor templates** (the second tab) are reusable layouts for a kind of sensor: design one with `{{name}}`, `{{state}}`, `{{unit}}` and `{{icon}}` placeholders and every sensor component of that kind uses it, scaled to its frame. They belong to the older components and cannot hold imagespec elements; convert a sensor to take it out of the template system.
+**Sensor tile styles** (the second tab) are reusable layouts for a kind of sensor: design one with `{{name}}`, `{{state}}`, `{{unit}}` and `{{icon}}` placeholders and every sensor component of that kind uses it, scaled to its frame. They belong to the older components and cannot hold imagespec elements; convert a sensor to take it out of the template system.
 
 **Configure** opens the older component's own editor (entity, data field, icon rules, field templates).
 

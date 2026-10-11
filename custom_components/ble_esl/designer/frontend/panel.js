@@ -1,4 +1,4 @@
-import { t, language, rerenderWithDialogs } from "./i18n.js";
+import { t, language, rerenderWithDialogs, errorText } from "./i18n.js";
 import "./component-editor.js";
 import "./yaml-dialog.js";
 import "./import-dialog.js";
@@ -623,7 +623,7 @@ export class BleEslDesigner extends HTMLElement {
     const version =
       this._panelInfo?.config?.version ||
       import.meta.url.match(/\/ble_esl_designer\/([^/]+)\//)?.[1];
-    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Sensor templates")}</button></nav></header>`;
+    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Sensor tile styles")}</button></nav></header>`;
   }
   renderLoading() {
     this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
@@ -686,7 +686,7 @@ export class BleEslDesigner extends HTMLElement {
     if (save) {
       save.innerHTML = this._automationSaveMode
         ? t(this.hass, "Save to automation")
-        : toolIcon("save") + "·";
+        : `${toolIcon("save")}<span>${t(this.hass, "Save")} ·</span>`;
       const label = this._automationSaveMode
         ? t(this.hass, "Save to automation")
         : t(this.hass, "Save (unsaved changes)");
@@ -713,8 +713,21 @@ export class BleEslDesigner extends HTMLElement {
     }
     this.queuePreview();
   }
+  // The user's alias for a tag (as the dashboard shows it), else the product title.
+  tagName(tag) {
+    const state = this.hass?.states?.[tag.entities?.alias];
+    return state &&
+      !["unknown", "unavailable"].includes(state.state) &&
+      state.state.trim()
+      ? state.state
+      : tag.title;
+  }
   report(error, source = "operation") {
-    this.status = error.message || String(error);
+    this.status = errorText(
+      this.hass,
+      source === "preview" ? "Preview failed" : "Something went wrong",
+      error,
+    );
     this.error = true;
     this.errorSource = source;
     this.renderStatus();
@@ -842,18 +855,18 @@ export class BleEslDesigner extends HTMLElement {
   }
   templateControls() {
     if (this.mode !== "template") return "";
-    return `<div class="template-controls"><div style="min-width:240px;max-width:360px"><ha-entity-picker id="template-sample"></ha-entity-picker><span class="muted">${this.outputType(this.sampleState())} output</span></div><label>${t(this.hass, "Name")} <input id="template-name" aria-label="${t(this.hass, "Template name")}" value="${esc(this.templateName)}"></label><label>${t(this.hass, "Template")} <select id="template-type" aria-label="${t(this.hass, "Template")}">${this.templateTypes()
+    return `<div class="template-controls"><p class="muted template-note" style="flex:1 1 100%;margin:0">${t(this.hass, "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.")}</p><div style="min-width:240px;max-width:360px"><ha-entity-picker id="template-sample"></ha-entity-picker><span class="muted">${t(this.hass, "{type} output", { type: this.outputType(this.sampleState()) })}</span></div><label>${t(this.hass, "Name")} <input id="template-name" aria-label="${t(this.hass, "Style name")}" value="${esc(this.templateName)}"></label><label>${t(this.hass, "Tile style")} <select id="template-type" aria-label="${t(this.hass, "Tile style")}">${this.templateTypes()
       .map(
         (key) =>
-          `<option value="${esc(key)}" ${key === this.templateKey ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? key.split(":")[1] + " template" : key.replace(":", " · ")))}</option>`,
+          `<option value="${esc(key)}" ${key === this.templateKey ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? t(this.hass, "{type} style", { type: key.split(":")[1] }) : key.replace(":", " · ")))}</option>`,
       )
       .join(
         "",
-      )}</select></label><label>W <input id="template-width" aria-label="${t(this.hass, "Template width")}" type="number" min="16" max="1000" value="${this.tag?.width}"></label><label>H <input id="template-height" aria-label="${t(this.hass, "Template height")}" type="number" min="16" max="1000" value="${this.tag?.height}"></label></div>`;
+      )}</select></label><label>${t(this.hass, "W")} <input id="template-width" aria-label="${t(this.hass, "Style width")}" type="number" min="16" max="1000" value="${this.tag?.width}"></label><label>${t(this.hass, "H")} <input id="template-height" aria-label="${t(this.hass, "Style height")}" type="number" min="16" max="1000" value="${this.tag?.height}"></label></div>`;
   }
   templateParts() {
     if (this.mode !== "template") return "";
-    return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${name[0].toUpperCase() + name.slice(1)}</button>`).join("")}<button data-action="add-state-icon">${t(this.hass, "State icon")}</button></div>`;
+    return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${t(this.hass, name[0].toUpperCase() + name.slice(1))}</button>`).join("")}<button data-action="add-state-icon">${t(this.hass, "State icon")}</button></div>`;
   }
   switchMode(mode) {
     // Automation edits are isolated display sessions; don't let the user
@@ -924,7 +937,7 @@ export class BleEslDesigner extends HTMLElement {
     this.templateName =
       template.name ||
       (key.startsWith("output:")
-        ? key.split(":")[1] + " template"
+        ? t(this.hass, "{type} style", { type: key.split(":")[1] })
         : key.replace(":", " · "));
     this.templateSensorType =
       template.sensor_type || key.split(":").slice(0, 2).join(":");
@@ -979,7 +992,7 @@ export class BleEslDesigner extends HTMLElement {
     this.templateDrafts.set(key, {
       width: source?.width || 140,
       height: source?.height || 60,
-      name: this.entityName(state) + " style",
+      name: t(this.hass, "{name} style", { name: this.entityName(state) }),
       sensor_type: type,
       document: initial,
       dirty: true,
@@ -1193,7 +1206,7 @@ export class BleEslDesigner extends HTMLElement {
       element = this.element,
       sessionLocked =
         this._automationSessionPending || this._automationSaveMode;
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} .toolbar .automation-save{width:auto;min-width:max-content;height:auto;min-height:38px;padding:7px 12px;white-space:nowrap} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""} ${sessionLocked ? "disabled" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(item.title)} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing || sessionLocked ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy || this._automationSessionPending ? "disabled" : ""} class="icon-button" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}${this.dirty ? "·" : ""}</button><button data-action="preview-variables" ${this._automationSaveMode ? "" : "hidden"} aria-label="${t(this.hass, "Preview parameters")}" title="${t(this.hass, "Preview parameters")}">${t(this.hass, "Preview parameters")}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" || sessionLocked ? "hidden" : ""} ${this.mode === "template" || sessionLocked || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}</button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} .toolbar button.labeled{width:auto;min-width:max-content;gap:6px;padding:7px 12px;white-space:nowrap}.toolbar button.labeled svg{flex:none}.toolbar .automation-save{width:auto;min-width:max-content;height:auto;min-height:38px;padding:7px 12px;white-space:nowrap} [hidden]{display:none!important} header{position:sticky;top:0;z-index:30} .toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px} @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .tips{margin:8px 0 0} .tips summary{cursor:pointer;font-size:12px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .empty-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--secondary-text-color,#637083);pointer-events:none} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}<div class="toolbar"><select id="tag" aria-label="${t(this.hass, "Tag")}" ${this.mode === "template" ? "hidden" : ""} ${sessionLocked ? "disabled" : ""}>${this.tags.map((item) => `<option value="${esc(item.entry_id)}" ${item === tag ? "selected" : ""}>${esc(this.tagName(item))} · ${item.width}×${item.height}</option>`).join("")}</select><button data-action="reload" ${this.mode === "template" ? "hidden" : ""} ${this.refreshing || sessionLocked ? "disabled" : ""} class="icon-button ${this.refreshing ? "spinning" : ""}" aria-label="${t(this.hass, "Refresh tags")}" title="${t(this.hass, "Refresh tags")}">${toolIcon("reload")}</button><button data-action="save" ${!tag || this.busy || this._automationSessionPending ? "disabled" : ""} class="icon-button labeled" aria-label="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")}" title="${this.dirty ? t(this.hass, "Save (unsaved changes)") : t(this.hass, "Save")} (⌘/Ctrl S)">${toolIcon("save")}<span>${t(this.hass, "Save")}${this.dirty ? " ·" : ""}</span></button><button data-action="preview-variables" ${this._automationSaveMode ? "" : "hidden"} aria-label="${t(this.hass, "Preview parameters")}" title="${t(this.hass, "Preview parameters")}">${t(this.hass, "Preview parameters")}</button><span id="dirty-badge" class="dirty-badge" ${this.dirty ? "" : "hidden"}>${t(this.hass, "Unsaved changes")}</span><button class="primary icon-button labeled" aria-label="${t(this.hass, "Send to tag")}" title="${t(this.hass, "Send to tag")}" data-action="send" ${this.mode === "template" || sessionLocked ? "hidden" : ""} ${this.mode === "template" || sessionLocked || !tag?.writable || this.busy ? "disabled" : ""}>${toolIcon("send")}<span>${t(this.hass, "Send to tag")}</span></button><button data-action="undo" ${!this.undoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Undo")}" title="${t(this.hass, "Undo (⌘/Ctrl Z)")}">${toolIcon("undo")}</button><button data-action="redo" ${!this.redoStack.length ? "disabled" : ""} class="icon-button" aria-label="${t(this.hass, "Redo")}" title="${t(this.hass, "Redo (⌘/Ctrl Shift Z)")}">${toolIcon("redo")}</button><button data-action="zoom-out" aria-label="${t(this.hass, "Zoom out")}">−</button><label><select id="zoom" aria-label="${t(this.hass, "Preview zoom")}"><option value="fit" ${this.zoomMode === "fit" ? "selected" : ""}>${t(this.hass, "Fit")}</option>${[
       ...new Set([
         0.25,
         0.5,
@@ -1215,9 +1228,9 @@ export class BleEslDesigner extends HTMLElement {
       )
       .join(
         "",
-      )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="fit" aria-label="${t(this.hass, "Fit preview")}">${t(this.hass, "Fit")}</button><button data-action="create-automation" ${this.mode === "template" || sessionLocked || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
+      )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="create-automation" ${this.mode === "template" || sessionLocked || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="template-start" ${this.mode === "template" || sessionLocked || !this.tag ? "hidden" : ""}><h2>${t(this.hass, "Templates")}</h2><p class="template-hint">${t(this.hass, "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.")}</p><button class="primary wide" data-action="design-templates">${t(this.hass, "Browse templates")}</button></div><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Template parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "The four icon buttons add a text, shape, icon or image in one click.")} <b>${t(this.hass, "＋ Add component")}</b> ${t(this.hass, "opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="template-start" ${this.mode === "template" || sessionLocked || !this.tag ? "hidden" : ""}><h2>${t(this.hass, "Design gallery")}</h2><p class="template-hint">${t(this.hass, "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.")}</p><button class="primary wide" data-action="design-templates">${t(this.hass, "Browse design gallery")}</button></div><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Tile style parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this template.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div><div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
             ...this.document.elements,
           ]
             .reverse()
@@ -1388,7 +1401,7 @@ export class BleEslDesigner extends HTMLElement {
       .map((state) => {
         const name = element.state_icons?.[state] || "{{icon}}";
         const stateObj = sample && { ...sample, state };
-        return `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="min-width:48px">${esc(state)}</span><span>→</span><button class="icon-choice" data-action="pick-icon" data-icon-state="${esc(state)}" aria-label="Choose icon for ${esc(state)}">${this.iconGlyph(name === "{{icon}}" ? this.defaultIcon(stateObj) : name)}<span>${name === "{{icon}}" ? t(this.hass, "HA state icon") : esc(name.replace("mdi:", ""))}</span></button></div>`;
+        return `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="min-width:48px">${esc(state)}</span><span>→</span><button class="icon-choice" data-action="pick-icon" data-icon-state="${esc(state)}" aria-label="${esc(t(this.hass, "Choose icon for {state}", { state }))}">${this.iconGlyph(name === "{{icon}}" ? this.defaultIcon(stateObj) : name)}<span>${name === "{{icon}}" ? t(this.hass, "HA state icon") : esc(name.replace("mdi:", ""))}</span></button></div>`;
       })
       .join(
         "",
@@ -1834,7 +1847,7 @@ export class BleEslDesigner extends HTMLElement {
               `<option value="${key}" ${(element.weather_field || "condition") === key ? "selected" : ""}>${label}</option>`,
           )
           .join("")}</select></label>`;
-      html += `<label class="wide">${t(this.hass, "Template")}<select data-property="template" aria-label="${t(this.hass, "Sensor template")}"><option value="auto">${t(this.hass, "By sensor type")}</option><option value="default" ${element.template === "default" ? "selected" : ""}>${t(this.hass, "HA tile")}</option>${Object.keys(
+      html += `<label class="wide">${t(this.hass, "Tile style")}<select data-property="template" aria-label="${t(this.hass, "Sensor tile style")}"><option value="auto">${t(this.hass, "By sensor type")}</option><option value="default" ${element.template === "default" ? "selected" : ""}>${t(this.hass, "HA tile")}</option>${Object.keys(
         this.templates,
       )
         .filter(
@@ -1844,11 +1857,11 @@ export class BleEslDesigner extends HTMLElement {
         )
         .map(
           (key) =>
-            `<option value="${esc(key)}" ${element.template === key ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? key.split(":")[1] + " template" : key.replace(":", " · ")))}</option>`,
+            `<option value="${esc(key)}" ${element.template === key ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? t(this.hass, "{type} style", { type: key.split(":")[1] }) : key.replace(":", " · ")))}</option>`,
         )
         .join(
           "",
-        )}<option value="__new__">${t(this.hass, "＋ Create template…")}</option></select></label>`;
+        )}<option value="__new__">${t(this.hass, "＋ Create tile style…")}</option></select></label>`;
       picker = `<ha-entity-picker class="wide" data-property="entity_id"></ha-entity-picker>`;
       html += `<label class="wide check"><input type="checkbox" data-property="show_label" ${element.show_label ? "checked" : ""}>${t(this.hass, "Show label")}</label>`;
       if (element.show_label)
@@ -2376,7 +2389,8 @@ export class BleEslDesigner extends HTMLElement {
   // `visible` is the drawn area relative to the frame, measured before the move.
   clampMoved(element, bound, visible) {
     if (bound && visible) {
-      const fit = (pos, lo, hi, limit) => Math.min(Math.max(pos, -lo), limit - hi);
+      const fit = (pos, lo, hi, limit) =>
+        Math.min(Math.max(pos, -lo), limit - hi);
       element.x = fit(element.x, visible[0], visible[2], this.tag.width);
       element.y = fit(element.y, visible[1], visible[3], this.tag.height);
       return clampBox(element, this.tag, false);
@@ -2763,7 +2777,7 @@ export class BleEslDesigner extends HTMLElement {
             this.createdForElement = null;
           }
           this.status =
-            this.mode === "template" ? "Template saved" : "Display saved";
+            this.mode === "template" ? "Style saved" : "Display saved";
         }
         if (action === "preview") {
           this.preview = result.png;
@@ -3559,7 +3573,11 @@ export class BleEslDesigner extends HTMLElement {
       } else {
         element.x = start.x + dx;
         element.y = start.y + dy;
-        this.clampMoved(element, this.moveBound(start, startVisible), startVisible);
+        this.clampMoved(
+          element,
+          this.moveBound(start, startVisible),
+          startVisible,
+        );
         this.snapGuides = this.alignmentGuides(element, resize);
         this.drawStage();
         return;

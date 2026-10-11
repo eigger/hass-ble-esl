@@ -98,7 +98,7 @@ data:
 
 **[디자이너 가이드 →](docs/ko/designer.md)**
 
-연결된 자동화 목록에서 **Edit design**으로 기존 `ble_esl.write` payload를 별도 편집 세션에서 열고, **Save automation**으로 저장할 수 있습니다. 최신 자동화 설정을 다시 읽어 선택한 액션의 `data.payload`만 바꿉니다. 선택 액션이 변경·중복되었거나 디자인이 유효하지 않으면 저장을 막으며, 저장은 Bluetooth 전송을 하지 않습니다. 세션을 나가면 원래 디자인과 실행 취소 기록을 복원합니다.
+연결된 자동화 목록에서 **Edit automation design**으로 기존 `ble_esl.write` payload를 별도 편집 세션에서 열고, **Save automation**으로 저장할 수 있습니다. 최신 자동화 설정을 다시 읽어 선택한 액션의 `data.payload`만 바꿉니다. 선택 액션이 변경·중복되었거나 디자인이 유효하지 않으면 저장을 막으며, 저장은 Bluetooth 전송을 하지 않습니다. 세션을 나가면 원래 디자인과 실행 취소 기록을 복원합니다.
 
 ## 액션
 
