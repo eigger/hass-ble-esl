@@ -577,4 +577,10 @@ export default {
   "Something went wrong": "Une erreur s'est produite",
   "Could not save to the automation":
     "Impossible d'enregistrer dans l'automatisation",
+  "Discard the unsaved changes to this automation design?":
+    "Abandonner les modifications non enregistrées de ce design de l'automatisation ?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Remplacer le design actuel par le fichier importé ? Vous pouvez annuler cette action.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "Dissocier {name} de cet ESL ? L'automatisation elle-même n'est pas modifiée.",
 };

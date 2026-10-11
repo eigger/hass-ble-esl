@@ -567,4 +567,10 @@ export default {
   "Preview failed": "Preview failed",
   "Something went wrong": "Something went wrong",
   "Could not save to the automation": "Could not save to the automation",
+  "Discard the unsaved changes to this automation design?":
+    "Discard the unsaved changes to this automation design?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Replace the current design with the imported file? You can undo this.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "Unlink {name} from this ESL? The automation itself is not changed.",
 };

@@ -574,4 +574,10 @@ export default {
   "Preview failed": "Не удалось построить предпросмотр",
   "Something went wrong": "Что-то пошло не так",
   "Could not save to the automation": "Не удалось сохранить в автоматизацию",
+  "Discard the unsaved changes to this automation design?":
+    "Отменить несохранённые изменения этого дизайна автоматизации?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Заменить текущий дизайн импортированным файлом? Это можно отменить.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "Отвязать {name} от этого ESL? Сама автоматизация не изменится.",
 };

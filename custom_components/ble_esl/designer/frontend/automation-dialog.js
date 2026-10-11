@@ -240,6 +240,16 @@ class AutomationDialog extends HTMLElement {
       extra = { entity_id };
     } else {
       const item = this.data.linked[Number(button.dataset.index)];
+      if (
+        !window.confirm(
+          t(
+            this.hass,
+            "Unlink {name} from this ESL? The automation itself is not changed.",
+            { name: item.name },
+          ),
+        )
+      )
+        return;
       action = "unlink_automation";
       extra = { entity_id: item.entity_id, link_id: item.link_id };
     }

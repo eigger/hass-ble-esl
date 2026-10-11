@@ -851,6 +851,7 @@ test("ignores a delayed component conversion after restoring another session", a
   await expect
     .poll(() => page.evaluate(() => window.pendingConversions.length))
     .toBe(1);
+  page.once("dialog", (dialog) => dialog.accept());
   await page.evaluate(() =>
     window.manager.shadowRoot
       .querySelector('[data-action="dashboard"]')
@@ -1389,6 +1390,7 @@ test("multiple automations show count, state, editor links and manual associatio
     entity_id: "automation.weekly",
   });
   await expect(dialog.locator(".row")).toHaveCount(4);
+  page.once("dialog", (dialog) => dialog.accept());
   await dialog
     .getByRole("button", { name: "Unlink Weekly summary", exact: true })
     .click();

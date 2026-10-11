@@ -126,6 +126,20 @@ const managedStyle = `
 @media(max-width:650px){:host([managed]) header{flex-wrap:nowrap}:host([managed]) header h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}:host([managed]) .tabs{flex:none}}
 `;
 
+// HA tears the panel down on in-app navigation, which beforeunload never sees,
+// so unsaved designs are parked here for the rest of the browser session.
+const DRAFT_KEY = "ble_esl_designer_drafts";
+const readStoredDrafts = () => {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "{}");
+    return stored && typeof stored === "object" ? stored : {};
+  } catch {
+    return {};
+  }
+};
+export const hasStoredDraft = (entryId) =>
+  Object.hasOwn(readStoredDrafts(), entryId);
+
 const LOADING_STEPS = [
   ["fonts", "fonts"],
   ["icons", "icons"],
@@ -504,7 +518,70 @@ export class BleEslDesigner extends HTMLElement {
     this.render();
     if (this.hass && !this.started) this.boot();
   }
+  // Unsaved ordinary designs, including the one being edited right now.
+  draftDocuments() {
+    const saved = this._automationReturnState;
+    const source = this._automationSessionToken
+      ? {
+          drafts: saved?.drafts,
+          tag: saved?.tag,
+          document: saved?.document,
+          dirty: saved?.dirty,
+          mode: saved?.mode,
+        }
+      : {
+          drafts: this.drafts,
+          tag: this.tag,
+          document: this.document,
+          dirty: this.dirty,
+          mode: this.mode,
+        };
+    const drafts = new Map(source.drafts || []);
+    if (source.mode === "display" && source.tag && source.dirty)
+      drafts.set(source.tag.entry_id, source.document);
+    return drafts;
+  }
+  hasDraft(entryId) {
+    return this.draftDocuments().has(entryId);
+  }
+  persistDrafts() {
+    const stored = {};
+    for (const [entryId, document] of this.draftDocuments()) {
+      const tag = this.tags.find((item) => item.entry_id === entryId);
+      if (tag)
+        stored[entryId] = { width: tag.width, height: tag.height, document };
+    }
+    try {
+      if (Object.keys(stored).length)
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(stored));
+      else sessionStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // Storage may be full or blocked; the draft is then simply not kept.
+    }
+  }
+  // Only drafts for a tag of the same size come back; the rest are dropped.
+  restoreStoredDrafts() {
+    const stored = readStoredDrafts();
+    try {
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // Nothing to clean up.
+    }
+    for (const [entryId, draft] of Object.entries(stored)) {
+      const tag = this.tags.find((item) => item.entry_id === entryId);
+      if (
+        tag &&
+        draft?.document &&
+        tag.width === draft.width &&
+        tag.height === draft.height &&
+        !this.drafts.has(entryId)
+      )
+        this.drafts.set(entryId, draft.document);
+    }
+  }
   disconnectedCallback() {
+    // An instance that never loaded must not wipe drafts it never restored.
+    if (this.ready) this.persistDrafts();
     window.removeEventListener("beforeunload", this.beforeUnload);
     clearTimeout(this.previewTimer);
     this.previewSequence++;
@@ -567,6 +644,7 @@ export class BleEslDesigner extends HTMLElement {
       this.templates = templates;
       this.specs = specs;
       this.tags = tags;
+      this.restoreStoredDrafts();
       this.mode = "display";
       // Reveal the editor before load(): it renders.
       this.ready = true;
@@ -3254,6 +3332,18 @@ export class BleEslDesigner extends HTMLElement {
           document: imported,
         });
         if (!this.isDocumentSessionCurrent(context)) return;
+        if (
+          this.dirty &&
+          !window.confirm(
+            t(
+              this.hass,
+              "Replace the current design with the imported file? You can undo this.",
+            ),
+          )
+        ) {
+          this.status = "Ready";
+          return;
+        }
         this.checkpoint();
         this.document = this.normalizeImportedDocument(imported);
         this.selected = null;
