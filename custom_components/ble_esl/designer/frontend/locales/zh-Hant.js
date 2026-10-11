@@ -76,7 +76,7 @@ export default {
   "All states": "所有狀態",
   "Another HA entity": "另一個HA實體",
   "Another state": "另一種狀態",
-  "Apply templates": "應用程式模板",
+  "Apply templates": "套用模板",
   "Arc thickness": "電弧厚度",
   "Automations unavailable · Retry": "自動化不可用·重試",
   "BLE ESL integration version": "BLEESL整合版本",
