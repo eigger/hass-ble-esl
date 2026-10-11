@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.3b1
+
+### Added
+
+- Designer element action bar for duplicating, deleting, reordering and centering selected elements; improved touch controls and phone layout.
+- ESL Manager and Designer show the integration version, and the Manager adapts better to narrow screens.
+
+### Changed
+
+- Updated Designer labels and toolbar wording, added an action picker dialog, and made save/send feedback stay visible while working.
+- Unsaved designs now have clearer discard prompts and can be restored after navigating away from the panel.
+
+### Fixed
+
+- Translated the remaining Designer text and the device discovery troubleshooting hint across supported locales.
+- Deleting an ESL config entry now removes its saved automation associations.
+
 ## 1.2.2
 
 ### Fixed
