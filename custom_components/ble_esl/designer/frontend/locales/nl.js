@@ -417,13 +417,13 @@ export default {
   devices: "apparaten",
   "Edit selected automation design":
     "Geselecteerd automatiseringsontwerp bewerken",
-  "Save automation": "Save automation",
+  "Save automation": "Automatisering opslaan",
   "Switch to Display mode before saving this automation.":
     "Schakel over naar de schermmodus voordat je deze automatisering opslaat.",
   "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
+    "Het ID van de automatiseringsconfiguratie ontbreekt.",
   "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+    "De automatiseringsconfiguratie kon niet worden geladen.",
   "No ble_esl.write action targeting this ESL was found.":
     "Geen ble_esl.write-actie voor deze ESL gevonden.",
   "Choose the write action to import:":
@@ -443,7 +443,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "Het huidige ontwerp kan niet als payload worden opgeslagen.",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "Deze automatisering is gewijzigd sinds de import. Open haar opnieuw voordat u opslaat.",
   "The selected write action changed since import. Reopen the automation before saving.":
     "De geselecteerde schrijfactie is gewijzigd sinds het importeren. Open de automatisering opnieuw voordat je opslaat.",
   "The latest automation configuration is malformed.":
@@ -463,13 +463,13 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "De achtergrond maakt geen deel uit van de payload van de automatisering. Herstel de geïmporteerde achtergrond voordat je opslaat.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "Voer een JSON-voorbeeldwaarde in voor {name}. Gebruik een tekenreeks tussen aanhalingstekens, een getal, true/false, een array of een object. Deze waarden worden niet opgeslagen.",
   "This preview parameter is still undefined: {name}":
     "Deze voorbeeldparameter is nog niet gedefinieerd: {name}",
   "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+    "De voorbeeldparameter moet geldige JSON zijn.",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "De voorbeeldparameter moet eindige JSON-waarden bevatten zonder prototypesleutels.",
   "Too many preview parameters are missing.":
     "Er ontbreken te veel voorbeeldparameters.",
 
@@ -488,56 +488,57 @@ export default {
   "Tag design": "Labelontwerp",
   "Importing automation…": "Automatisering importeren…",
   "Save to automation": "Opslaan in automatisering",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
+  True: "Waar",
+  False: "Onwaar",
+  "New parameter": "Nieuwe parameter",
+  "Parameter name": "Parameternaam",
   Type: "Type",
   String: "Tekenreeks",
   Number: "Getal",
   Boolean: "Boolean",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "Object, array of null",
+  "Object or array": "Object of array",
+  "Remove parameter {name}": "Parameter {name} verwijderen",
+  Remove: "Verwijderen",
+  "Enter a preview value for {name}.":
+    "Voer een voorbeeldwaarde in voor {name}.",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
+    "Nog geen voorbeeldparameters. Voeg er een toe voor een variabele die in een sjabloon wordt gebruikt.",
+  "Add parameter": "Parameter toevoegen",
   "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "Geavanceerd: alle parameters als JSON bewerken",
+  "Preview parameter object": "Object met voorbeeldparameters",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "Deze ingevoerde waarden worden alleen gebruikt om dit ontwerp te bekijken en te valideren. Ze worden niet in de automatisering opgeslagen.",
+  "Apply preview values": "Voorbeeldwaarden toepassen",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "Voer een parameternaam in zonder gereserveerde prototypenamen.",
+  "Parameter names must be unique.": "Parameternamen moeten uniek zijn.",
+  "Enter a finite number.": "Voer een eindig getal in.",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "Voer geldige JSON in voor de object- of arraywaarde.",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
+    "De JSON-waarde moet een object, array of null zijn.",
   "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "De JSON-waarde moet een object of array zijn.",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "Voorbeeldparameters mogen alleen eindige JSON-waarden bevatten.",
+  "Preview parameter is invalid.": "De voorbeeldparameter is ongeldig.",
+  "Common properties": "Algemene eigenschappen",
+  "Advanced settings": "Geavanceerde instellingen",
+  "Use an empty string for {name}": "Een lege tekenreeks gebruiken voor {name}",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "Voer een waarde in voor de ontbrekende parameter voordat u toepast.",
+  "Preview parameters": "Voorbeeldparameters",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "Bewerk de voorbeeldparameters als JSON-object. Deze waarden worden alleen gebruikt voor het voorbeeld en de validatie.",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
+    "De voorbeeldparameters moeten een JSON-object zijn met eindige waarden en zonder prototypesleutels.",
+  "Preview parameters are too large.": "De voorbeeldparameters zijn te groot.",
   "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
+    "Het invoeren van de voorbeeldparameter is geannuleerd.",
   "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "Voor de import is een voorbeeldparameter nodig: {name}",
   "Design gallery": "Ontwerpgalerij",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Kies een kant-en-klaar ontwerp. Het wordt toegevoegd als gewone, bewerkbare elementen.",

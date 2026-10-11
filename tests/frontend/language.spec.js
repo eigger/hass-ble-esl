@@ -342,3 +342,48 @@ test("automation creation preserves its name and device across locale changes", 
     dialog.getByRole("button", { name: "Create automation", exact: true }),
   ).toBeVisible();
 });
+
+// A key whose value is still its English text is a missing translation, unless
+// it is a brand, a technical term or a word the language shares with English.
+test("non-English locales leave no untranslated copy beyond shared words", async () => {
+  const { messages } =
+    await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+  const shared = new Set([
+    "ESL Designer",
+    "ESL Manager",
+    "Name (A–Z)",
+    "← Dashboard",
+    "Active",
+    "Inactive",
+    "Boolean",
+    "Color",
+    "Designer",
+    "designer",
+    "Direction",
+    "Display",
+    "Image",
+    "Maximum",
+    "Minimum",
+    "Name",
+    "Sensor",
+    "String",
+    "Style",
+    "Text",
+    "Type",
+    "Visible",
+    "ellipse",
+    "rectangle",
+    "transparent",
+    "triangle",
+  ]);
+  for (const [code, catalog] of Object.entries(messages)) {
+    if (code === "en") continue;
+    const untranslated = Object.keys(catalog).filter(
+      (key) =>
+        catalog[key] === messages.en[key] &&
+        /[A-Za-z]{4,}/.test(key.replace(/\{\w+\}/g, "")) &&
+        !shared.has(key),
+    );
+    expect(untranslated, code).toEqual([]);
+  }
+});

@@ -415,13 +415,13 @@ export default {
   "tile styles": "タイルスタイル",
   devices: "デバイス",
   "Edit selected automation design": "選択したオートメーションのデザインを編集",
-  "Save automation": "Save automation",
+  "Save automation": "オートメーションを保存",
   "Switch to Display mode before saving this automation.":
     "このオートメーションを保存する前にディスプレイモードに切り替えてください。",
   "Automation configuration ID is missing.":
-    "Automation configuration ID is missing.",
+    "オートメーション設定の ID がありません。",
   "Automation configuration could not be loaded.":
-    "Automation configuration could not be loaded.",
+    "オートメーション設定を読み込めませんでした。",
   "No ble_esl.write action targeting this ESL was found.":
     "このESLを対象とする ble_esl.write アクションが見つかりませんでした。",
   "Choose the write action to import:":
@@ -441,7 +441,7 @@ export default {
   "The current design cannot be saved as a payload.":
     "現在のデザインはペイロードとして保存できません。",
   "This automation changed since it was imported. Reopen it before saving.":
-    "This automation changed since it was imported. Reopen it before saving.",
+    "このオートメーションはインポート後に変更されました。保存する前に開き直してください。",
   "The selected write action changed since import. Reopen the automation before saving.":
     "選択した書き込みアクションはインポート後に変更されました。保存する前にオートメーションを開き直してください。",
   "The latest automation configuration is malformed.":
@@ -461,13 +461,13 @@ export default {
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "背景はオートメーションのペイロードに含まれません。保存する前にインポートした背景に戻してください。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
-    "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.",
+    "{name} のプレビュー用 JSON 値を入力してください。引用符付きの文字列、数値、true/false、配列、またはオブジェクトを使用できます。これらの値は保存されません。",
   "This preview parameter is still undefined: {name}":
     "このプレビューパラメーターはまだ未定義です: {name}",
   "Preview parameter must be valid JSON.":
-    "Preview parameter must be valid JSON.",
+    "プレビューパラメーターは有効な JSON である必要があります。",
   "Preview parameter must contain finite JSON values without prototype keys.":
-    "Preview parameter must contain finite JSON values without prototype keys.",
+    "プレビューパラメーターには、プロトタイプキーを含まない有限の JSON 値のみを指定できます。",
   "Too many preview parameters are missing.":
     "不足しているプレビューパラメーターが多すぎます。",
 
@@ -486,56 +486,58 @@ export default {
   "Tag design": "タグのデザイン",
   "Importing automation…": "オートメーションをインポート中…",
   "Save to automation": "オートメーションに保存",
-  True: "True",
-  False: "False",
-  "New parameter": "New parameter",
-  "Parameter name": "Parameter name",
-  Type: "Type",
+  True: "真",
+  False: "偽",
+  "New parameter": "新しいパラメーター",
+  "Parameter name": "パラメーター名",
+  Type: "種類",
   String: "文字列",
   Number: "数値",
   Boolean: "ブール値",
-  "Object, array or null": "Object, array or null",
-  "Object or array": "Object or array",
-  "Remove parameter {name}": "Remove parameter {name}",
-  Remove: "Remove",
-  "Enter a preview value for {name}.": "Enter a preview value for {name}.",
+  "Object, array or null": "オブジェクト、配列、または null",
+  "Object or array": "オブジェクトまたは配列",
+  "Remove parameter {name}": "パラメーター {name} を削除",
+  Remove: "削除",
+  "Enter a preview value for {name}.":
+    "{name} のプレビュー値を入力してください。",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "No preview parameters yet. Add one for a variable used by a template.",
-  "Add parameter": "Add parameter",
+    "プレビューパラメーターはまだありません。テンプレートで使用する変数用に追加してください。",
+  "Add parameter": "パラメーターを追加",
   "Advanced: edit all parameters as JSON":
-    "Advanced: edit all parameters as JSON",
-  "Preview parameter object": "Preview parameter object",
+    "詳細: すべてのパラメーターを JSON で編集",
+  "Preview parameter object": "プレビューパラメーターのオブジェクト",
   "These typed values are used only to preview and validate this design. They are not saved to the automation.":
-    "These typed values are used only to preview and validate this design. They are not saved to the automation.",
-  "Apply preview values": "Apply preview values",
+    "入力した値は、このデザインのプレビューと検証にのみ使用されます。オートメーションには保存されません。",
+  "Apply preview values": "プレビュー値を適用",
   "Enter a parameter name without reserved prototype names.":
-    "Enter a parameter name without reserved prototype names.",
-  "Parameter names must be unique.": "Parameter names must be unique.",
-  "Enter a finite number.": "Enter a finite number.",
+    "予約済みのプロトタイプ名を含まないパラメーター名を入力してください。",
+  "Parameter names must be unique.":
+    "パラメーター名は一意である必要があります。",
+  "Enter a finite number.": "有限の数値を入力してください。",
   "Enter valid JSON for the object or array value.":
-    "Enter valid JSON for the object or array value.",
+    "オブジェクトまたは配列の値として有効な JSON を入力してください。",
   "The JSON value must be an object, array or null.":
-    "The JSON value must be an object, array or null.",
+    "JSON 値はオブジェクト、配列、または null である必要があります。",
   "The JSON value must be an object or array.":
-    "The JSON value must be an object or array.",
+    "JSON 値はオブジェクトまたは配列である必要があります。",
   "Preview parameters must contain only finite JSON values.":
-    "Preview parameters must contain only finite JSON values.",
-  "Preview parameter is invalid.": "Preview parameter is invalid.",
-  "Common properties": "Common properties",
-  "Advanced settings": "Advanced settings",
-  "Use an empty string for {name}": "Use an empty string for {name}",
+    "プレビューパラメーターには有限の JSON 値のみを含められます。",
+  "Preview parameter is invalid.": "プレビューパラメーターが無効です。",
+  "Common properties": "共通のプロパティ",
+  "Advanced settings": "詳細設定",
+  "Use an empty string for {name}": "{name} に空の文字列を使用",
   "Enter a value for the missing parameter before applying.":
-    "Enter a value for the missing parameter before applying.",
-  "Preview parameters": "Preview parameters",
+    "適用する前に、不足しているパラメーターの値を入力してください。",
+  "Preview parameters": "プレビューパラメーター",
   "Edit preview parameters as a JSON object. These values are used only for preview and validation.":
-    "Edit preview parameters as a JSON object. These values are used only for preview and validation.",
+    "プレビューパラメーターを JSON オブジェクトとして編集します。これらの値はプレビューと検証にのみ使用されます。",
   "Preview parameters must be a JSON object with finite values and no prototype keys.":
-    "Preview parameters must be a JSON object with finite values and no prototype keys.",
-  "Preview parameters are too large.": "Preview parameters are too large.",
+    "プレビューパラメーターは、有限の値のみを持ち、プロトタイプキーを含まない JSON オブジェクトである必要があります。",
+  "Preview parameters are too large.": "プレビューパラメーターが大きすぎます。",
   "Preview parameter entry was cancelled.":
-    "Preview parameter entry was cancelled.",
+    "プレビューパラメーターの入力がキャンセルされました。",
   "Import needs a preview parameter: {name}":
-    "Import needs a preview parameter: {name}",
+    "インポートにはプレビューパラメーターが必要です: {name}",
   "Design gallery": "デザインギャラリー",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "できあがったデザインを選びます。編集できる通常の要素として追加されます。",
