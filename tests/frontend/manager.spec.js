@@ -1679,7 +1679,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
             root.querySelector(".editor-content").scrollTop > 0,
             host.scrollTop === 0,
             nav.height >= 56 && nav.bottom < innerHeight,
-            header.height === 56,
+            header.height === (innerWidth > 650 ? 56 : 48),
             Math.abs(header.top - nav.bottom) < 1,
             Math.abs(toolbar.top - header.bottom) < 1,
           ];

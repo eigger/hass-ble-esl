@@ -210,13 +210,14 @@ test("unrelated HA state updates do not prevent a rendered preview", async ({
   await page.evaluate(() => clearInterval(window.previewNoise));
 });
 
-test("element actions are in the context menu; trash, Backspace and Delete work", async ({
+test("element actions are in the context menu and inspector bar; trash, Backspace and Delete work", async ({
   page,
 }) => {
   await page.locator('[data-add="text"]').click();
+  // The inspector's action bar mirrors the menu for touch users.
   await expect(
-    page.locator('.inspector [data-action="duplicate"]'),
-  ).toHaveCount(0);
+    page.locator('.inspector .element-actions [data-action="duplicate"]'),
+  ).toHaveCount(1);
   await expect(page.locator("[data-preset]")).toHaveCount(0);
   await page.locator(".el.selected").click({ button: "right" });
   await expect(page.getByRole("menu")).toBeVisible();
@@ -2211,4 +2212,67 @@ test("the Send button explains why it is off and shows progress while sending", 
   await expect(send).toHaveClass(/spinning/);
   await expect(send).toHaveAttribute("title", "Sending display…");
   await page.evaluate(() => window.releaseSend?.());
+});
+
+test("selected elements get an action bar that matches the right-click menu", async ({
+  page,
+}) => {
+  await expect(page.locator(".element-actions")).toHaveCount(0);
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const bar = page.getByRole("toolbar", { name: "Element actions" });
+  await expect(bar).toBeVisible();
+  const count = () =>
+    page.evaluate(() => window.panel.document.elements.length);
+  expect(await count()).toBe(1);
+  await bar.getByRole("button", { name: "Duplicate" }).click();
+  expect(await count()).toBe(2);
+  await bar.getByRole("button", { name: "Center horizontally" }).click();
+  const centred = await page.evaluate(() => {
+    const el = window.panel.element;
+    return Math.abs(el.x + el.width / 2 - window.panel.tag.width / 2) <= 1;
+  });
+  expect(centred).toBe(true);
+  await bar.getByRole("button", { name: "Send back" }).click();
+  await bar.getByRole("button", { name: "Bring front" }).click();
+  for (const button of await bar.getByRole("button").all()) {
+    const box = await button.boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(38);
+    expect(box.height).toBeGreaterThanOrEqual(38);
+  }
+  await bar.getByRole("button", { name: "Delete" }).click();
+  expect(await count()).toBe(1);
+});
+
+test("on a phone the canvas comes first and nothing scrolls sideways", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const top = (selector) =>
+    page.locator(selector).evaluate((node) => node.getBoundingClientRect().top);
+  const layout = async () => ({
+    canvas: await top(".preview-card"),
+    inspector: await top("#inspector"),
+    library: await top("#library"),
+    overflow: await page.evaluate(
+      () =>
+        document.scrollingElement.scrollWidth -
+        document.documentElement.clientWidth,
+    ),
+  });
+  await page.setViewportSize({ width: 375, height: 800 });
+  const phone = await layout();
+  expect(phone.canvas).toBeLessThan(phone.inspector);
+  expect(phone.inspector).toBeLessThan(phone.library);
+  expect(phone.overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "artifacts/designer-phone.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const desktop = await layout();
+  expect(desktop.library).toBeLessThan(desktop.inspector + 1);
+  expect(desktop.overflow).toBeLessThanOrEqual(0);
+  const box = await page.locator("#library").boundingBox();
+  const canvas = await page.locator(".preview-card").boundingBox();
+  expect(box.x).toBeLessThan(canvas.x);
 });
