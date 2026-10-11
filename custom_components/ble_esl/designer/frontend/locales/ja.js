@@ -575,4 +575,10 @@ export default {
   "Preview failed": "プレビューに失敗しました",
   "Something went wrong": "問題が発生しました",
   "Could not save to the automation": "オートメーションに保存できませんでした",
+  "Discard the unsaved changes to this automation design?":
+    "このオートメーションのデザインの未保存の変更を破棄しますか？",
+  "Replace the current design with the imported file? You can undo this.":
+    "現在のデザインをインポートしたファイルで置き換えますか？元に戻すことができます。",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
 };

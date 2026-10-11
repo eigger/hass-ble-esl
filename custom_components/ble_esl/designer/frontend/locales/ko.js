@@ -565,4 +565,10 @@ export default {
   "Preview failed": "미리보기에 실패했습니다",
   "Something went wrong": "문제가 발생했습니다",
   "Could not save to the automation": "자동화에 저장하지 못했습니다",
+  "Discard the unsaved changes to this automation design?":
+    "이 자동화 디자인의 저장하지 않은 변경 사항을 버리시겠습니까?",
+  "Replace the current design with the imported file? You can undo this.":
+    "현재 디자인을 가져온 파일로 바꾸시겠습니까? 실행 취소할 수 있습니다.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
 };

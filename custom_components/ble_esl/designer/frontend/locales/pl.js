@@ -575,4 +575,10 @@ export default {
   "Preview failed": "Podgląd nie powiódł się",
   "Something went wrong": "Coś poszło nie tak",
   "Could not save to the automation": "Nie udało się zapisać w automatyzacji",
+  "Discard the unsaved changes to this automation design?":
+    "Odrzucić niezapisane zmiany w tym projekcie automatyzacji?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Zastąpić bieżący projekt zaimportowanym plikiem? Można to cofnąć.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "Odłączyć {name} od tego ESL? Sama automatyzacja nie zostanie zmieniona.",
 };

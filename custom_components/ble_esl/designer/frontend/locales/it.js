@@ -577,4 +577,10 @@ export default {
   "Preview failed": "Anteprima non riuscita",
   "Something went wrong": "Qualcosa è andato storto",
   "Could not save to the automation": "Impossibile salvare nell'automazione",
+  "Discard the unsaved changes to this automation design?":
+    "Scartare le modifiche non salvate di questo design dell'automazione?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Sostituire il design attuale con il file importato? Puoi annullare l'operazione.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "Scollegare {name} da questo ESL? L'automazione stessa non viene modificata.",
 };

@@ -577,4 +577,10 @@ export default {
   "Preview failed": "Voorbeeld mislukt",
   "Something went wrong": "Er is iets misgegaan",
   "Could not save to the automation": "Opslaan in de automatisering mislukt",
+  "Discard the unsaved changes to this automation design?":
+    "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp negeren?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Het huidige ontwerp vervangen door het geïmporteerde bestand? U kunt dit ongedaan maken.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
 };

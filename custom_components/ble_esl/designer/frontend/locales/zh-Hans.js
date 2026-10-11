@@ -551,4 +551,10 @@ export default {
   "Preview failed": "预览失败",
   "Something went wrong": "出了点问题",
   "Could not save to the automation": "无法保存到自动化",
+  "Discard the unsaved changes to this automation design?":
+    "要放弃对此自动化设计的未保存更改吗？",
+  "Replace the current design with the imported file? You can undo this.":
+    "要用导入的文件替换当前设计吗？此操作可以撤销。",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "要将 {name} 与此 ESL 取消关联吗？自动化本身不会更改。",
 };

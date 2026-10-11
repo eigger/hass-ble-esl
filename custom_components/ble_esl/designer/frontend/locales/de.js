@@ -581,4 +581,10 @@ export default {
   "Something went wrong": "Etwas ist schiefgelaufen",
   "Could not save to the automation":
     "Speichern in der Automatisierung fehlgeschlagen",
+  "Discard the unsaved changes to this automation design?":
+    "Die nicht gespeicherten Änderungen an diesem Automatisierungs-Design verwerfen?",
+  "Replace the current design with the imported file? You can undo this.":
+    "Das aktuelle Design durch die importierte Datei ersetzen? Sie können dies rückgängig machen.",
+  "Unlink {name} from this ESL? The automation itself is not changed.":
+    "{name} von diesem ESL trennen? Die Automatisierung selbst wird nicht geändert.",
 };

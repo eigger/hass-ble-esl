@@ -313,3 +313,169 @@ test("the editor bar stays compact on a phone in long translations", async ({
     expect(height, lang).toBeLessThan(150);
   }
 });
+
+test("leaving an automation design with unsaved changes asks first", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  // Nothing changed yet: leaving asks nothing.
+  const seen = [];
+  const spy = (dialog) => {
+    seen.push(dialog.message());
+    dialog.dismiss();
+  };
+  page.on("dialog", spy);
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(page.locator("#dashboard")).toBeVisible();
+  page.off("dialog", spy);
+  expect(seen).toEqual([]);
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const messages = [];
+  page.once("dialog", (dialog) => {
+    messages.push(dialog.message());
+    dialog.dismiss();
+  });
+  await page.locator('[data-action="dashboard"]').click();
+  expect(messages).toEqual([
+    "Discard the unsaved changes to this automation design?",
+  ]);
+  await expect(page.locator("#editor")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(page.locator("#dashboard")).toBeVisible();
+});
+
+test("importing JSON over unsaved work and unlinking an automation ask first", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  const clean = JSON.stringify(
+    await page.evaluate(() => window.manager.editor.document),
+  );
+  const file = {
+    name: "design.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(clean),
+  };
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const before = await page.evaluate(
+    () => window.manager.editor.document.elements.length,
+  );
+  const messages = [];
+  page.once("dialog", (dialog) => {
+    messages.push(dialog.message());
+    dialog.dismiss();
+  });
+  await page.locator("#file").setInputFiles(file);
+  await expect.poll(() => messages.length).toBe(1);
+  expect(messages[0]).toContain("Replace the current design");
+  await expect
+    .poll(() => page.evaluate(() => window.manager.editor.busy))
+    .toBe(false);
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(before);
+  await page.locator('[data-action="dashboard"]').click();
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  const unlink = dialog.getByRole("button", { name: /^Unlink / }).first();
+  await expect(unlink).toBeVisible();
+  const count = await dialog.getByRole("button", { name: /^Unlink / }).count();
+  page.once("dialog", (confirm) => {
+    messages.push(confirm.message());
+    confirm.dismiss();
+  });
+  await unlink.click();
+  await expect.poll(() => messages.length).toBe(2);
+  expect(messages[1]).toContain("Unlink");
+  await expect(dialog.getByRole("button", { name: /^Unlink / })).toHaveCount(
+    count,
+  );
+});
+
+test("cards flag unsaved drafts and keep them across a panel reload", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const elements = await page.evaluate(
+    () => window.manager.editor.document.elements.length,
+  );
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await expect(
+    page.locator('.card[data-entry="demo-discovery"] .badge.draft'),
+  ).toHaveCount(0);
+  // Navigating inside HA removes the panel without beforeunload.
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(page.locator(".card")).toHaveCount(2);
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(elements);
+});
+
+test("a tag design left unsaved while in Sensor tile styles is still flagged and restored", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const elements = await page.evaluate(
+    () => window.manager.editor.document.elements.length,
+  );
+  await page
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
+    .click();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(elements);
+});
