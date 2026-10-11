@@ -596,3 +596,36 @@ test("picking one of several write actions imports it; cancelling backs out", as
   ).toHaveCount(0);
   await expect(page.locator("#editor")).toBeVisible();
 });
+
+test("in the manager on a phone the designer drops its duplicate header", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.waitForFunction(() => window.manager.editor.ready);
+  const designer = page.locator("ble-esl-designer");
+  await expect(designer.locator("header h1")).toBeHidden();
+  await expect(designer.locator("header ha-menu-button")).toBeHidden();
+  const display = designer.getByRole("button", { name: "Display" });
+  const tiles = designer.getByRole("button", {
+    name: "Sensor tile styles",
+    exact: true,
+  });
+  await expect(display).toBeVisible();
+  await expect(tiles).toBeVisible();
+  expect((await tiles.boundingBox()).height).toBeGreaterThanOrEqual(40);
+  expect(
+    await page.evaluate(
+      () =>
+        document.scrollingElement.scrollWidth -
+        document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "artifacts/manager-editor-phone.png" });
+  await tiles.click();
+  await expect(designer.locator(".template-controls")).toBeVisible();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(designer.locator("header h1")).toBeVisible();
+});
