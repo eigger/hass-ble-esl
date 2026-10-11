@@ -7,11 +7,22 @@ const esc = (value) =>
         char
       ],
   );
+const open = new Set();
+const deepActive = () => {
+  let node = document.activeElement;
+  while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
+  return node;
+};
+// Dismiss every open picker as cancelled, e.g. when the panel goes away.
+export function closeChoiceDialogs() {
+  for (const close of [...open]) close();
+}
 // Pick one of several items from a radio list. Resolves with the chosen index,
 // or null when cancelled, so no typed value can be out of range.
 export function chooseOne(hass, title, labels) {
   return new Promise((resolve) => {
     const host = document.createElement("div");
+    const opener = deepActive();
     host.attachShadow({ mode: "open" }).innerHTML = `<style>
       dialog{width:min(560px,94vw);max-height:90vh;padding:0;border:1px solid var(--divider-color,#cbd3de);border-radius:10px;background:var(--card-background-color,white);color:var(--primary-text-color,#18232f);font:14px system-ui}
       dialog::backdrop{background:#0006}
@@ -34,9 +45,15 @@ export function chooseOne(hass, title, labels) {
     const dialog = host.shadowRoot.querySelector("dialog");
     const finish = (value) => {
       if (!host.isConnected) return;
+      open.delete(cancel);
+      dialog.close();
       host.remove();
+      // Back to what opened the picker, if it is still there.
+      if (opener?.isConnected) opener.focus();
       resolve(value);
     };
+    const cancel = () => finish(null);
+    open.add(cancel);
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
       finish(null);

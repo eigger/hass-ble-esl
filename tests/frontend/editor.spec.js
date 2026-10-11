@@ -2124,32 +2124,59 @@ test("toolbar and left-panel controls are at least 38px and never overflow, in l
   }
 });
 
-test("save and send results float in view and clear themselves; errors stay", async ({
+test("save and send results float in view without moving the page, and clear themselves; errors stay", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  // Scroll the editor away from the status line.
   await page.evaluate(() => {
     document.body.style.minHeight = "3000px";
     window.scrollTo(0, 1500);
   });
+  const workspaceTop = () =>
+    page
+      .locator(".workspace")
+      .evaluate((node) => node.getBoundingClientRect().top + scrollY);
+  const before = await workspaceTop();
   await page.locator('[data-action="save"]').click();
-  const status = page.locator(".status");
-  await expect(status).toContainText("Display saved");
-  await expect(status).toHaveClass(/toast/);
+  const toast = page.locator(".toast");
+  await expect(toast).toContainText("Display saved");
   const inView = () =>
-    status.evaluate((node) => {
+    toast.evaluate((node) => {
       const box = node.getBoundingClientRect();
       return box.top >= 0 && box.bottom <= innerHeight;
     });
   expect(await inView()).toBe(true);
-  await expect(status).not.toHaveClass(/toast/, { timeout: 10000 });
+  expect(Math.abs((await workspaceTop()) - before)).toBeLessThan(0.5);
+  await expect(toast).toHaveCount(0, { timeout: 10000 });
+  expect(Math.abs((await workspaceTop()) - before)).toBeLessThan(0.5);
   await page.evaluate(() => window.panel.report(new Error("Broken")));
-  await expect(status).toHaveClass(/toast/);
-  await expect(status).toHaveAttribute("role", "alert");
+  await expect(toast).toContainText("Broken");
+  await expect(toast.getByRole("alert")).toContainText("Broken");
+  expect(Math.abs((await workspaceTop()) - before)).toBeLessThan(0.5);
   expect(await inView()).toBe(true);
+  // The close button is not part of the live region.
+  await expect(toast.getByRole("alert").getByRole("button")).toHaveCount(0);
   await page.waitForTimeout(7000);
-  await expect(status).toContainText("Broken");
+  await expect(toast).toContainText("Broken");
+  await page.getByRole("button", { name: "Dismiss message" }).click();
+  await expect(toast).toHaveCount(0);
+});
+
+test("preview errors stay inline and toasts use the full width on a phone", async ({
+  page,
+}) => {
+  await page.evaluate(() =>
+    window.panel.report(new Error("Preview broke"), "preview"),
+  );
+  await expect(page.locator(".status")).toContainText("Preview broke");
+  await expect(page.locator(".toast")).toHaveCount(0);
+  await page.setViewportSize({ width: 375, height: 800 });
+  const long = "A long failure message ".repeat(8);
+  await page.evaluate((text) => window.panel.report(new Error(text)), long);
+  const box = await page.locator(".toast").boundingBox();
+  expect(box.x).toBeGreaterThanOrEqual(11);
+  expect(box.x + box.width).toBeLessThanOrEqual(364);
+  expect(box.width).toBeGreaterThan(375 * 0.6);
 });
 
 test("the Send button explains why it is off and shows progress while sending", async ({
@@ -2180,9 +2207,7 @@ test("the Send button explains why it is off and shows progress while sending", 
     window.panel.render();
   });
   await send.click();
-  await expect(page.locator(".status.toast.busy")).toContainText(
-    "Sending display",
-  );
+  await expect(page.locator(".toast.busy")).toContainText("Sending display");
   await expect(send).toHaveClass(/spinning/);
   await expect(send).toHaveAttribute("title", "Sending display…");
   await page.evaluate(() => window.releaseSend?.());
