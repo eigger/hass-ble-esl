@@ -348,41 +348,46 @@ test("automation creation preserves its name and device across locale changes", 
 test("non-English locales leave no untranslated copy beyond shared words", async () => {
   const { messages } =
     await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
-  const shared = new Set([
-    "ESL Designer",
-    "ESL Manager",
-    "Name (A–Z)",
-    "← Dashboard",
-    "Active",
-    "Inactive",
-    "Boolean",
-    "Color",
-    "Designer",
-    "designer",
-    "Direction",
-    "Display",
-    "Image",
-    "Maximum",
-    "Minimum",
-    "Name",
-    "Sensor",
-    "String",
-    "Style",
-    "Text",
-    "Type",
-    "Visible",
-    "ellipse",
-    "rectangle",
-    "transparent",
-    "triangle",
-  ]);
+  const shared = {
+    de: [
+      "ESL Designer",
+      "ESL Manager",
+      "Name (A–Z)",
+      "← Dashboard",
+      "Boolean",
+      "Designer",
+      "Name",
+      "Sensor",
+      "Text",
+      "transparent",
+    ],
+    es: ["Color", "Sensor", "Visible"],
+    fr: [
+      "Active",
+      "Direction",
+      "Image",
+      "Inactive",
+      "Maximum",
+      "Minimum",
+      "Style",
+      "Type",
+      "Visible",
+      "ellipse",
+      "rectangle",
+      "transparent",
+      "triangle",
+    ],
+    it: ["Designer", "Display", "designer"],
+    nl: ["← Dashboard", "Boolean", "Sensor", "Type"],
+    "pt-BR": ["Designer", "Sensor", "String", "designer"],
+  };
   for (const [code, catalog] of Object.entries(messages)) {
     if (code === "en") continue;
     const untranslated = Object.keys(catalog).filter(
       (key) =>
         catalog[key] === messages.en[key] &&
         /[A-Za-z]{4,}/.test(key.replace(/\{\w+\}/g, "")) &&
-        !shared.has(key),
+        !(shared[code] || []).includes(key),
     );
     expect(untranslated, code).toEqual([]);
   }

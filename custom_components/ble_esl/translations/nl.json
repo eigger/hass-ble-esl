@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "Dit apparaat wordt niet ondersteund.",
-      "no_devices_found": "Geen niet-geconfigureerde apparaten gevonden.",
+      "no_devices_found": "Geen niet-geconfigureerde apparaten gevonden. Maak het label wakker (druk op de knop of vervang de batterij) en zorg dat het binnen Bluetooth-bereik van Home Assistant of een Bluetooth-proxy ligt. Probeer het daarna opnieuw.",
       "already_in_progress": "De configuratie is al bezig.",
       "already_configured": "Apparaat is al geconfigureerd."
     }

@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "このデバイスはサポートされていません。",
-      "no_devices_found": "未設定のデバイスが見つかりません。",
+      "no_devices_found": "未設定のデバイスが見つかりません。タグを起動し（ボタンを押すか電池を交換）、Home Assistant または Bluetooth プロキシの Bluetooth 範囲内にあることを確認してから、もう一度お試しください。",
       "already_in_progress": "設定はすでに進行中です。",
       "already_configured": "デバイスはすでに設定されています。"
     }
