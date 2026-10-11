@@ -1798,3 +1798,49 @@ test("thumbnail survives rerenders and waits for the next bitmap to load", async
     await img.evaluate((node) => node.complete && node.naturalWidth > 0),
   ).toBe(true);
 });
+
+test("manager header displays integration version tag when panel config or version is available", async ({
+  page,
+}) => {
+  const versionTag = page.locator("#dashboard header #panel-version");
+  await page.evaluate(() => {
+    window.manager.panel = { config: { version: "1.2.2" } };
+  });
+  await expect(versionTag).toBeVisible();
+  await expect(versionTag).toHaveText("v1.2.2");
+  await expect(versionTag).toHaveAttribute("title", /1\.2\.2/);
+
+  await page.evaluate(() => {
+    window.manager.panel = { config: {} };
+  });
+  await expect(versionTag).toBeHidden();
+});
+
+test("manager header fits narrow mobile widths without clipping controls", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.evaluate(() => {
+    window.manager.panel = { config: { version: "1.2.2" } };
+  });
+
+  const header = page.locator("#dashboard > header");
+  await expect(header.locator("button[data-action=refresh]")).toBeVisible();
+  await expect(header.locator(".version-tag")).toBeHidden();
+  const bounds = await header.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const children = [...element.children].map((child) =>
+      child.getBoundingClientRect(),
+    );
+    return {
+      right: rect.right,
+      height: rect.height,
+      childrenFit: children.every(
+        (child) => child.left >= rect.left && child.right <= rect.right,
+      ),
+    };
+  });
+  expect(bounds.height).toBeLessThanOrEqual(57);
+  expect(bounds.childrenFit).toBe(true);
+});
+
