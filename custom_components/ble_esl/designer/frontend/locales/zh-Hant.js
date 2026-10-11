@@ -76,7 +76,7 @@ export default {
   "All states": "所有狀態",
   "Another HA entity": "另一個HA實體",
   "Another state": "另一種狀態",
-  "Apply templates": "應用程式模板",
+  "Apply templates": "套用模板",
   "Arc thickness": "電弧厚度",
   "Automations unavailable · Retry": "自動化不可用·重試",
   "BLE ESL integration version": "BLEESL整合版本",
@@ -161,7 +161,7 @@ export default {
   "Font file": "字型文件",
   "From ≥": "從≥",
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
-    "HA Jinja 範本。變數：value, entity, entity_id, attributes。可使用 states(), is_state(), state_attr(), now() 等 HA 範本函式。",
+    "HA Jinja 模板。變數：value, entity, entity_id, attributes。可使用 states(), is_state(), state_attr(), now() 等 HA 模板函式。",
   "HA state icon": "HA狀態圖標",
   "HA tile": "HA 磁貼",
   "Hidden: click to show": "隱藏：點選顯示",
@@ -435,7 +435,7 @@ export default {
     "無法安全載入自動化設定。",
   "The designer could not be loaded.": "無法載入設計器。",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "此自動化使用了區域、樓層、標籤或範本目標，無法安全地對應到單一 ESL。",
+    "此自動化使用了區域、樓層、標籤或模板目標，無法安全地對應到單一 ESL。",
   "The automation import is no longer current.": "自動化匯入已不是最新的。",
   "Background is not part of the automation payload. Restore the imported background before saving.":
     "背景不屬於自動化的 payload。儲存前請還原已匯入的背景。",
@@ -477,7 +477,7 @@ export default {
   Remove: "移除",
   "Enter a preview value for {name}.": "請輸入 {name} 的預覽值。",
   "No preview parameters yet. Add one for a variable used by a template.":
-    "尚無預覽參數。請為範本中使用的變數新增一個。",
+    "尚無預覽參數。請為模板中使用的變數新增一個。",
   "Add parameter": "新增參數",
   "Advanced: edit all parameters as JSON": "進階：以 JSON 編輯所有參數",
   "Preview parameter object": "預覽參數物件",

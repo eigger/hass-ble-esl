@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "Cet appareil n'est pas pris en charge.",
-      "no_devices_found": "Aucun appareil non configuré trouvé.",
+      "no_devices_found": "Aucun appareil non configuré trouvé. Réveillez l'étiquette (appuyez sur son bouton ou changez la pile) et vérifiez qu'elle est à portée Bluetooth de Home Assistant ou d'un proxy Bluetooth, puis réessayez.",
       "already_in_progress": "La configuration est déjà en cours.",
       "already_configured": "L'appareil est déjà configuré."
     }

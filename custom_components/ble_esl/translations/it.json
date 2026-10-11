@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "Questo dispositivo non è supportato.",
-      "no_devices_found": "Nessun dispositivo non configurato trovato.",
+      "no_devices_found": "Nessun dispositivo non configurato trovato. Attiva l'etichetta (premi il suo pulsante o sostituisci la batteria) e verifica che sia nel raggio Bluetooth di Home Assistant o di un proxy Bluetooth, quindi riprova.",
       "already_in_progress": "La configurazione è già in corso.",
       "already_configured": "Il dispositivo è già configurato."
     }

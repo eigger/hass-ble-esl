@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "不支持此设备。",
-      "no_devices_found": "未找到未配置的设备。",
+      "no_devices_found": "未找到未配置的设备。请唤醒标签（按下其按钮或更换电池），并确认它位于 Home Assistant 或蓝牙代理的蓝牙范围内，然后重试。",
       "already_in_progress": "配置流程已在进行中。",
       "already_configured": "设备已配置。"
     }

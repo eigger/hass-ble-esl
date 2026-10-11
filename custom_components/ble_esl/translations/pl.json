@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "To urządzenie nie jest obsługiwane.",
-      "no_devices_found": "Nie znaleziono nieskonfigurowanych urządzeń.",
+      "no_devices_found": "Nie znaleziono nieskonfigurowanych urządzeń. Wybudź znacznik (naciśnij jego przycisk lub wymień baterię) i upewnij się, że znajduje się w zasięgu Bluetooth Home Assistanta lub serwera proxy Bluetooth, a następnie spróbuj ponownie.",
       "already_in_progress": "Konfiguracja jest już w toku.",
       "already_configured": "Urządzenie jest już skonfigurowane."
     }
