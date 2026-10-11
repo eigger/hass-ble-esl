@@ -119,7 +119,7 @@
     },
     "abort": {
       "not_supported": "Dieses Gerät wird nicht unterstützt.",
-      "no_devices_found": "Keine unkonfigurierten Geräte gefunden. Wecken Sie das Tag auf (Taste drücken oder Batterie wechseln) und stellen Sie sicher, dass es sich in Bluetooth-Reichweite von Home Assistant oder eines Bluetooth-Proxys befindet. Versuchen Sie es dann erneut.",
+      "no_devices_found": "Keine unkonfigurierten Geräte gefunden. Wecken Sie das Tag auf (Taste drücken oder Batterie wechseln) und stellen Sie sicher, dass es sich in Bluetooth-Reichweite von Home Assistant oder einem Bluetooth-Proxy befindet. Versuchen Sie es dann erneut.",
       "already_in_progress": "Der Konfigurationsablauf wird bereits ausgeführt.",
       "already_configured": "Gerät ist bereits konfiguriert."
     }
