@@ -580,4 +580,5 @@ export default {
     "Заменить текущий дизайн импортированным файлом? Это можно отменить.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Отвязать {name} от этого ESL? Сама автоматизация не изменится.",
+  Continue: "Продолжить",
 };

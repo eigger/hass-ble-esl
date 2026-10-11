@@ -581,4 +581,5 @@ export default {
     "Zastąpić bieżący projekt zaimportowanym plikiem? Można to cofnąć.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Odłączyć {name} od tego ESL? Sama automatyzacja nie zostanie zmieniona.",
+  Continue: "Dalej",
 };

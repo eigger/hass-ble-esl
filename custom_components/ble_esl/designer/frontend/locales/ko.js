@@ -571,4 +571,5 @@ export default {
     "현재 디자인을 가져온 파일로 바꾸시겠습니까? 실행 취소할 수 있습니다.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
+  Continue: "계속",
 };

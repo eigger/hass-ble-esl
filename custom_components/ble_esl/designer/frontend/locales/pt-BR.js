@@ -583,4 +583,5 @@ export default {
     "Substituir o design atual pelo arquivo importado? Você pode desfazer.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Desvincular {name} deste ESL? A automação em si não é alterada.",
+  Continue: "Continuar",
 };

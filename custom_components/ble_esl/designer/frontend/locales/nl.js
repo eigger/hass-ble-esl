@@ -583,4 +583,5 @@ export default {
     "Het huidige ontwerp vervangen door het geïmporteerde bestand? U kunt dit ongedaan maken.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
+  Continue: "Doorgaan",
 };

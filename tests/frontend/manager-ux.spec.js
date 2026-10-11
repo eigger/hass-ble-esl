@@ -479,3 +479,120 @@ test("a tag design left unsaved while in Sensor tile styles is still flagged and
     await page.evaluate(() => window.manager.editor.document.elements.length),
   ).toBe(elements);
 });
+
+test("manager messages float in view, can be dismissed, and confirmations clear", async ({
+  page,
+}) => {
+  const message = page.locator(".message");
+  await page.evaluate(() => window.manager.message("Something broke"));
+  await expect(message).toBeVisible();
+  await expect(message).toHaveAttribute("role", "alert");
+  await expect(message.getByRole("button")).toHaveCount(0);
+  const box = await page.locator(".message-wrap").boundingBox();
+  const viewport = page.viewportSize();
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+  await page.getByRole("button", { name: "Dismiss message" }).click();
+  await expect(message).toBeHidden();
+  await page.evaluate(() => window.manager.message("Saved.", "success"));
+  await expect(message).toHaveAttribute("role", "status");
+  await expect(message).toBeHidden({ timeout: 10000 });
+});
+
+test("choosing between several write actions uses an accessible radio list", async ({
+  page,
+}) => {
+  const ask = () =>
+    page.evaluate(async () => {
+      const { chooseOne } = await import("/frontend/choice-dialog.js");
+      window.choice = chooseOne(
+        window.manager.hass,
+        "Choose the write action to import:",
+        ["Action one", "Action two"],
+      );
+    });
+  await ask();
+  const dialog = page.getByRole("dialog", {
+    name: "Choose the write action to import:",
+  });
+  await expect(dialog.getByRole("radio")).toHaveCount(2);
+  await expect(dialog.getByRole("radio", { name: "Action one" })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: "Action one" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  expect(await page.evaluate(() => window.choice)).toBe(1);
+  await expect(dialog).toHaveCount(0);
+  await ask();
+  await page.keyboard.press("Escape");
+  expect(await page.evaluate(() => window.choice)).toBeNull();
+  await ask();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  expect(await page.evaluate(() => window.choice)).toBeNull();
+});
+
+test("manager and designer toasts stack without overlapping on a phone", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.locator("ble-esl-designer .status")).toBeAttached();
+  await page.waitForFunction(() => window.manager.editor.ready);
+  const long = "A long failure message that wraps. ".repeat(6);
+  await page.evaluate((text) => {
+    window.manager.message(text);
+    window.manager.editor.report(new Error(text));
+  }, long);
+  const manager = await page.locator(".message-wrap").boundingBox();
+  const designer = await page.locator(".toast").boundingBox();
+  expect(manager.height).toBeGreaterThan(60);
+  expect(manager.x).toBeGreaterThanOrEqual(11);
+  expect(manager.x + manager.width).toBeLessThanOrEqual(364);
+  expect(designer.y + designer.height).toBeLessThanOrEqual(manager.y);
+  expect(designer.y).toBeGreaterThanOrEqual(0);
+});
+
+test("picking one of several write actions imports it; cancelling backs out", async ({
+  page,
+}) => {
+  await page.route("**/api/config/automation/config/*", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const response = await route.fetch();
+    const config = await response.json();
+    const write = config.actions.find(
+      (action) => (action.action || action.service) === "ble_esl.write",
+    );
+    config.actions.push(structuredClone(write));
+    await route.fulfill({ response, json: config });
+  });
+  const openDesign = async () => {
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    await page
+      .getByRole("dialog", { name: "Connected automations" })
+      .getByRole("button", { name: "Edit automation design", exact: true })
+      .first()
+      .click();
+  };
+  await openDesign();
+  const picker = page.getByRole("dialog", {
+    name: "Choose the write action to import:",
+  });
+  await expect(picker.getByRole("radio")).toHaveCount(2);
+  await page.keyboard.press("ArrowDown");
+  await picker.getByRole("button", { name: "Continue" }).click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  await page.locator('[data-action="dashboard"]').click();
+  await openDesign();
+  await expect(picker).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(picker).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toHaveCount(0);
+  await expect(page.locator("#editor")).toBeVisible();
+});
