@@ -104,6 +104,23 @@ async def test_automation_associations_persist_without_changing_configs(hass, wo
     assert result["linked"][0]["source"] == "detected"
 
 
+async def test_remove_entry_clears_persisted_automation_associations(hass, wolink_entry):
+    from custom_components.ble_esl.designer.manager import AutomationLinks
+
+    links = AutomationLinks(hass)
+    links.links[wolink_entry.entry_id] = [{"entity_id": "automation.old", "config_id": "old"}]
+    links.links["other-entry"] = [{"entity_id": "automation.keep", "config_id": "keep"}]
+    await links.store.async_save(links.links)
+
+    await links.remove_entry(wolink_entry.entry_id)
+
+    restored = AutomationLinks(hass)
+    await restored.load()
+    assert restored.links == {
+        "other-entry": [{"entity_id": "automation.keep", "config_id": "keep"}]
+    }
+
+
 async def test_automation_entity_targets_and_templates(hass, wolink_entry):
     from custom_components.ble_esl.designer.manager import references_tag
 

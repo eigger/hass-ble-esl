@@ -198,11 +198,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> None:
-    """Delete the entry's stored images along with the entry."""
+    """Delete data stored for the entry."""
     await ImageStore(hass, entry.entry_id).async_remove()
     designer = hass.data[DESIGNER_KEY]
     designer.documents.pop(entry.entry_id, None)
     await designer.store.async_save(designer.documents)
+    await designer.automation_links.remove_entry(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bool:

@@ -118,6 +118,14 @@ class AutomationLinks:
             for entry_id, items in loaded.items()
         }
 
+    async def remove_entry(self, entry_id):
+        """Forget associations when their ESL config entry is removed."""
+        async with self.lock:
+            if entry_id not in self.links:
+                return
+            self.links.pop(entry_id)
+            await self.store.async_save(self.links)
+
     def describe(self, entry):
         registry = er.async_get(self.hass)
         entity_ids = {
