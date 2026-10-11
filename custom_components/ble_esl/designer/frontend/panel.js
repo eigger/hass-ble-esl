@@ -520,25 +520,21 @@ export class BleEslDesigner extends HTMLElement {
   }
   // Unsaved ordinary designs, including the one being edited right now.
   draftDocuments() {
-    const saved = this._automationReturnState;
     const source = this._automationSessionToken
-      ? {
-          drafts: saved?.drafts,
-          tag: saved?.tag,
-          document: saved?.document,
-          dirty: saved?.dirty,
-          mode: saved?.mode,
-        }
-      : {
-          drafts: this.drafts,
-          tag: this.tag,
-          document: this.document,
-          dirty: this.dirty,
-          mode: this.mode,
-        };
-    const drafts = new Map(source.drafts || []);
-    if (source.mode === "display" && source.tag && source.dirty)
-      drafts.set(source.tag.entry_id, source.document);
+      ? this._automationReturnState
+      : this;
+    const drafts = new Map(source?.drafts || []);
+    // In Sensor tile styles the tag design is parked in displaySession.
+    const current =
+      source?.mode === "template"
+        ? source.displaySession
+        : {
+            tag: source?.tag,
+            document: source?.document,
+            dirty: source?.dirty,
+          };
+    if (current?.tag && current.dirty)
+      drafts.set(current.tag.entry_id, current.document);
     return drafts;
   }
   hasDraft(entryId) {

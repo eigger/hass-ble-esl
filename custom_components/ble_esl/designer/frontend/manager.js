@@ -282,7 +282,7 @@ class EslManager extends HTMLElement {
   }
   // An unsaved tag design in the editor, or one kept from before the panel was left.
   hasDraft(tag) {
-    return this.editor
+    return this.editor?.ready
       ? this.editor.hasDraft(tag.entry_id)
       : hasStoredDraft(tag.entry_id);
   }

@@ -581,7 +581,7 @@ export default {
   "Discard the unsaved changes to this automation design?":
     "¿Descartar los cambios sin guardar de este diseño de la automatización?",
   "Replace the current design with the imported file? You can undo this.":
-    "¿Reemplazar el diseño actual por el archivo importado? Puede deshacerlo.",
+    "¿Reemplazar el diseño actual por el archivo importado? Puedes deshacerlo.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "¿Desvincular {name} de este ESL? La automatización en sí no se modifica.",
 };

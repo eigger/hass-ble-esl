@@ -328,7 +328,28 @@ test("leaving an automation design with unsaved changes asks first", async ({
   await expect(
     page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  // Nothing changed yet: no question.
+  // Nothing changed yet: leaving asks nothing.
+  const seen = [];
+  const spy = (dialog) => {
+    seen.push(dialog.message());
+    dialog.dismiss();
+  };
+  page.on("dialog", spy);
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(page.locator("#dashboard")).toBeVisible();
+  page.off("dialog", spy);
+  expect(seen).toEqual([]);
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   const messages = [];
   page.once("dialog", (dialog) => {
@@ -421,6 +442,34 @@ test("cards flag unsaved drafts and keep them across a panel reload", async ({
   await page.evaluate(() => window.manager.remove());
   await page.reload();
   await expect(page.locator(".card")).toHaveCount(2);
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(elements);
+});
+
+test("a tag design left unsaved while in Sensor tile styles is still flagged and restored", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const elements = await page.evaluate(
+    () => window.manager.editor.document.elements.length,
+  );
+  await page
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
+    .click();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
   await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
