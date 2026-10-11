@@ -362,7 +362,7 @@ export default {
   "Send to tag": "ESL에 전송",
   "Sending display…": "화면 전송 중…",
   "Sensor tile style": "센서 타일 스타일",
-  "Sensor tile styles": "센서 표시 스타일",
+  "Sensor tile styles": "센서 타일 스타일",
   "Sensor tile (value, unit and name)": "센서 타일 (값, 단위, 이름)",
   "Show for state": "표시할 상태",
   "Show percentage": "백분율 표시",
@@ -551,7 +551,7 @@ export default {
   "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
     "센서가 타일로 표시되는 방식을 정하는 스타일입니다. 이름, 상태, 단위 요소로 만들면 같은 종류의 모든 센서에 적용됩니다.",
   "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
-    "아이콘 버튼으로 텍스트, 도형, 아이콘, 이미지를 추가하세요. 구성 요소 추가에서는 센서, 막대, 게이지 등을 고를 수 있습니다.",
+    "아이콘 버튼으로 텍스트, 도형, 아이콘, 이미지를 추가하세요. 컴포넌트 추가에서는 센서, 막대, 게이지 등을 고를 수 있습니다.",
   "{type} output": "{type} 출력",
   W: "너비",
   H: "높이",

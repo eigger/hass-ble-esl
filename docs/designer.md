@@ -38,7 +38,7 @@ The automation contains a copy of the exported action. Ordinary designer saves d
 
 Open **Automations** on a card or **Connected automations** above the Designer. Cards show **Link automation** for zero associations, the name and state for one, or the count and active count for several. The list opens beside the card on desktop and as a bottom sheet on mobile. Each available automation name links to its HA editor.
 
-Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit tag design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
+Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit automation design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
 
