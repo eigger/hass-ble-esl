@@ -573,4 +573,5 @@ export default {
     "Replace the current design with the imported file? You can undo this.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Unlink {name} from this ESL? The automation itself is not changed.",
+  Continue: "Continue",
 };

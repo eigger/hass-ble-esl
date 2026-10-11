@@ -557,4 +557,5 @@ export default {
     "要用导入的文件替换当前设计吗？此操作可以撤销。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要将 {name} 与此 ESL 取消关联吗？自动化本身不会更改。",
+  Continue: "继续",
 };

@@ -558,4 +558,5 @@ export default {
     "要用匯入的檔案取代目前的設計嗎？此操作可以復原。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要將 {name} 與此 ESL 取消關聯嗎？自動化本身不會變更。",
+  Continue: "繼續",
 };

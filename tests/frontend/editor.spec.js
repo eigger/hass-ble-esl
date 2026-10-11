@@ -2123,3 +2123,67 @@ test("toolbar and left-panel controls are at least 38px and never overflow, in l
     expect(bad, lang).toEqual([]);
   }
 });
+
+test("save and send results float in view and clear themselves; errors stay", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  // Scroll the editor away from the status line.
+  await page.evaluate(() => {
+    document.body.style.minHeight = "3000px";
+    window.scrollTo(0, 1500);
+  });
+  await page.locator('[data-action="save"]').click();
+  const status = page.locator(".status");
+  await expect(status).toContainText("Display saved");
+  await expect(status).toHaveClass(/toast/);
+  const inView = () =>
+    status.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      return box.top >= 0 && box.bottom <= innerHeight;
+    });
+  expect(await inView()).toBe(true);
+  await expect(status).not.toHaveClass(/toast/, { timeout: 10000 });
+  await page.evaluate(() => window.panel.report(new Error("Broken")));
+  await expect(status).toHaveClass(/toast/);
+  await expect(status).toHaveAttribute("role", "alert");
+  expect(await inView()).toBe(true);
+  await page.waitForTimeout(7000);
+  await expect(status).toContainText("Broken");
+});
+
+test("the Send button explains why it is off and shows progress while sending", async ({
+  page,
+}) => {
+  const send = page.getByRole("button", { name: "Send to tag", exact: true });
+  await expect(send).toHaveAttribute("title", "Send to tag");
+  await page.evaluate(() => {
+    window.panel.tag = { ...window.panel.tag, writable: false };
+    window.panel.render();
+  });
+  await expect(send).toBeDisabled();
+  await expect(send).toHaveAttribute(
+    "title",
+    "Discovery only: preview is available; sending is not supported yet.",
+  );
+  await page.evaluate(() => {
+    window.panel.tag = { ...window.panel.tag, writable: true };
+    let release;
+    const api = window.panel.api.bind(window.panel);
+    window.panel.api = (action, args) =>
+      action === "send"
+        ? new Promise((resolve) => {
+            release = () => resolve(api(action, args));
+            window.releaseSend = release;
+          })
+        : api(action, args);
+    window.panel.render();
+  });
+  await send.click();
+  await expect(page.locator(".status.toast.busy")).toContainText(
+    "Sending display",
+  );
+  await expect(send).toHaveClass(/spinning/);
+  await expect(send).toHaveAttribute("title", "Sending display…");
+  await page.evaluate(() => window.releaseSend?.());
+});

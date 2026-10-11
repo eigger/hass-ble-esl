@@ -479,3 +479,52 @@ test("a tag design left unsaved while in Sensor tile styles is still flagged and
     await page.evaluate(() => window.manager.editor.document.elements.length),
   ).toBe(elements);
 });
+
+test("manager messages float in view, can be dismissed, and confirmations clear", async ({
+  page,
+}) => {
+  const message = page.locator(".message");
+  await page.evaluate(() => window.manager.message("Something broke"));
+  await expect(message).toBeVisible();
+  await expect(message).toHaveAttribute("role", "alert");
+  const box = await message.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+  await message.getByRole("button", { name: "Dismiss message" }).click();
+  await expect(message).toBeHidden();
+  await page.evaluate(() => window.manager.message("Saved.", "success"));
+  await expect(message).toHaveAttribute("role", "status");
+  await expect(message).toBeHidden({ timeout: 10000 });
+});
+
+test("choosing between several write actions uses an accessible radio list", async ({
+  page,
+}) => {
+  const ask = () =>
+    page.evaluate(async () => {
+      const { chooseOne } = await import("/frontend/choice-dialog.js");
+      window.choice = chooseOne(
+        window.manager.hass,
+        "Choose the write action to import:",
+        ["Action one", "Action two"],
+      );
+    });
+  await ask();
+  const dialog = page.getByRole("dialog", {
+    name: "Choose the write action to import:",
+  });
+  await expect(dialog.getByRole("radio")).toHaveCount(2);
+  await expect(dialog.getByRole("radio", { name: "Action one" })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: "Action one" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  expect(await page.evaluate(() => window.choice)).toBe(1);
+  await expect(dialog).toHaveCount(0);
+  await ask();
+  await page.keyboard.press("Escape");
+  expect(await page.evaluate(() => window.choice)).toBeNull();
+  await ask();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  expect(await page.evaluate(() => window.choice)).toBeNull();
+});
