@@ -2261,6 +2261,16 @@ test("on a phone the canvas comes first and nothing scrolls sideways", async ({
   });
   await page.setViewportSize({ width: 375, height: 800 });
   const phone = await layout();
+  // Every toolbar control and layer button is a comfortable touch target.
+  for (const button of await page
+    .locator(
+      ".toolbar button:visible, .layer-row .layer, .layer-row .icon-button",
+    )
+    .all()) {
+    const box = await button.boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(39.5);
+    expect(box.height).toBeGreaterThanOrEqual(39.5);
+  }
   expect(phone.canvas).toBeLessThan(phone.inspector);
   expect(phone.inspector).toBeLessThan(phone.library);
   expect(phone.overflow).toBeLessThanOrEqual(0);
