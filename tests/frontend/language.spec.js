@@ -269,7 +269,7 @@ const localizedControls = [
   ["pt-BR", "Salvar"],
   ["ru", "Сохранить"],
   ["zh-Hans", "保存"],
-  ["zh-Hant", "保存"],
+  ["zh-Hant", "儲存"],
 ];
 for (const [code, save] of localizedControls) {
   test(`dashboard, automation dialog and designer use ${code} UI copy`, async ({

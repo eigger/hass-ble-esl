@@ -29,7 +29,6 @@ export default {
     "Não enviado: uma gravação mais recente substituiu esta",
   "Sending failed": "Falha no envio",
   "Loading {step}… ({done}/{count})": "Carregando {step}… ({done}/{count})",
-  "sensor templates": "modelos de sensores",
   "element types": "tipos de elementos",
   "tags and displays": "etiquetas e telas",
   "default (shrink ellipsis)": "padrão (reduzir reticências)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Por tipo de sensor",
   "Center horizontally": "Centralizar horizontalmente",
   "Checking display…": "Verificando exibição…",
-  "Choose a sample sensor above to preview this template.":
-    "Escolha um sensor de amostra acima para visualizar este modelo.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Escolha um sensor de amostra acima para visualizar este estilo de bloco.",
   "Choose an automation…": "Escolha uma automação…",
   "Choose an entity for the sensor tile.":
     "Escolha uma entidade para o bloco do sensor.",
@@ -175,7 +174,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Modelos Jinja do HA. Variáveis: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() e outras funções de modelo do HA estão disponíveis.",
   "HA state icon": "HA ícone de estado",
-  "HA tile": "HA",
+  "HA tile": "Bloco do HA",
   "Hidden: click to show": "Oculto: clique para mostrar",
   "Icon (blank = HA)": "(em branco = HA)",
   "Icon name": "Nome do ícone",
@@ -415,7 +414,7 @@ export default {
   properties: "propriedades",
   Color: "Cor",
   Label: "Etiqueta",
-  templates: "modelos",
+  "tile styles": "estilos de bloco",
   devices: "dispositivos",
   "Edit selected automation design": "Editar design da automação selecionada",
   "Save automation": "Save automation",

@@ -28,7 +28,6 @@ export default {
     "No enviado: una escritura más reciente reemplazó a esta",
   "Sending failed": "Error al enviar",
   "Loading {step}… ({done}/{count})": "Cargando {step}… ({done}/{count})",
-  "sensor templates": "plantillas de sensores",
   "element types": "tipos de elementos",
   "tags and displays": "etiquetas y visualizaciones",
   "default (shrink ellipsis)": "predeterminado (reducir puntos suspensivos)",
@@ -97,8 +96,8 @@ export default {
   "By sensor type": "Por tipo de sensor",
   "Center horizontally": "Centrar horizontalmente",
   "Checking display…": "Comprobando la pantalla…",
-  "Choose a sample sensor above to preview this template.":
-    "Elija un sensor de muestra arriba para obtener una vista previa de esta plantilla.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Elija un sensor de muestra arriba para obtener una vista previa de este estilo de mosaico.",
   "Choose an automation…": "Elija una automatización…",
   "Choose an entity for the sensor tile.":
     "Elija una entidad para el mosaico del sensor.",
@@ -174,7 +173,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Plantillas Jinja de HA. Variables: value, entity, entity_id, attributes. Puedes usar states(), is_state(), state_attr(), now() y otras funciones de plantilla de HA.",
   "HA state icon": "HA icono de estado",
-  "HA tile": "HA mosaico",
+  "HA tile": "Mosaico de HA",
   "Hidden: click to show": "Oculto: haga clic para mostrar",
   "Icon (blank = HA)": "Icono (en blanco = HA)",
   "Icon name": "Nombre del icono",
@@ -414,7 +413,7 @@ export default {
   properties: "propiedades",
   Color: "Color",
   Label: "Etiqueta",
-  templates: "plantillas",
+  "tile styles": "estilos de mosaico",
   devices: "dispositivos",
   "Edit selected automation design":
     "Editar diseño de la automatización seleccionada",

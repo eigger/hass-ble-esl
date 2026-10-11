@@ -29,7 +29,6 @@ export default {
   "Sending failed": "Invio non riuscito",
   "Loading {step}… ({done}/{count})":
     "Caricamento in corso {step}… ({done}/{count})",
-  "sensor templates": "modelli di sensori",
   "element types": "tipi di elemento",
   "tags and displays": "tag e display",
   "default (shrink ellipsis)": "predefinito (riduci i puntini di sospensione)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Per tipo di sensore",
   "Center horizontally": "Centrare orizzontalmente",
   "Checking display…": "Controllo del display…",
-  "Choose a sample sensor above to preview this template.":
-    "Scegli un sensore campione qui sopra per visualizzare l'anteprima di questo modello.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Scegli un sensore campione qui sopra per visualizzare l'anteprima di questo stile tessera.",
   "Choose an automation…": "Scegli un'automazione…",
   "Choose an entity for the sensor tile.":
     "Scegli un'entità per il riquadro sensore.",
@@ -175,7 +174,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Template Jinja di HA. Variabili: value, entity, entity_id, attributes. Sono disponibili states(), is_state(), state_attr(), now() e le altre funzioni di template di HA.",
   "HA state icon": "HA icona di stato",
-  "HA tile": "HA piastrella",
+  "HA tile": "Tessera HA",
   "Hidden: click to show": "Nascosto: fare clic per mostrare",
   "Icon (blank = HA)": "Icona (vuoto = HA)",
   "Icon name": "Nome dell'icona",
@@ -237,7 +236,7 @@ export default {
   "Rain / snow": "Pioggia/neve",
   "Rain chance": "Possibilità di pioggia",
   "Redo (⌘/Ctrl Shift Z)": "Ripeti (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Aggiorna i tag",
+  "Refresh tags": "Aggiorna le etichette",
   "Refreshing tags…": "Aggiornamento dei tag…",
   "Remove manual link": "Rimuovi collegamento manuale",
   "Replace display": "Sostituisci il contenuto del display",
@@ -257,12 +256,12 @@ export default {
   "Select an element": "Seleziona un elemento",
   "Send back": "Porta in fondo",
   "Send backward": "Porta indietro",
-  "Send to tag": "Invia a tag",
+  "Send to tag": "Invia all'etichetta",
   "Sending display…": "Invio visualizzazione...",
   "Sensor tile style": "Stile tessera sensore",
   "Sensor tile styles": "Stili tessera sensore",
   "Sensor tile (value, unit and name)":
-    "Riquadro sensore (valore, unità e nome)",
+    "Tessera sensore (valore, unità e nome)",
   "Show for state": "Mostra per stato",
   "Show percentage": "Mostra percentuale",
   "Show value": "Mostra valore",
@@ -415,7 +414,7 @@ export default {
   properties: "proprietà",
   Color: "Colore",
   Label: "Etichetta",
-  templates: "modelli",
+  "tile styles": "stili tessera",
   devices: "dispositivi",
   "Edit selected automation design":
     "Modifica design dell'automazione selezionata",

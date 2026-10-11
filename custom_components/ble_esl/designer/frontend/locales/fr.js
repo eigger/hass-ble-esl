@@ -27,7 +27,6 @@ export default {
     "Non envoyé : une écriture plus récente a remplacé celle-ci",
   "Sending failed": "Échec de l'envoi",
   "Loading {step}… ({done}/{count})": "Chargement {step}… ({done}/{count})",
-  "sensor templates": "modèles de capteurs",
   "element types": "types d'éléments",
   "tags and displays": "étiquettes et écrans",
   "default (shrink ellipsis)": "par défaut (réduire les points de suspension)",
@@ -96,8 +95,8 @@ export default {
   "By sensor type": "Par type de capteur",
   "Center horizontally": "Centrer horizontalement",
   "Checking display…": "Vérification de l'affichage…",
-  "Choose a sample sensor above to preview this template.":
-    "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce modèle.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce style de tuile.",
   "Choose an automation…": "Choisissez un automatisme…",
   "Choose an entity for the sensor tile.":
     "Choisissez une entité pour la vignette du capteur.",
@@ -155,7 +154,7 @@ export default {
     "Les modèles d'éléments restent tels qu'écrits : Home Assistant les restitue à chaque exécution de l'automatisation. Les composants du capteur et les modèles de champ sont disponibles dès maintenant.",
   "Entity name": "Nom de l'entité",
   "Every element type the tag can draw, set field by field: choose one, then press":
-    "Chaque type d'élément que la balise peut dessiner, définissez champ par champ : choisissez-en un, puis appuyez sur",
+    "Chaque type d'élément que l'étiquette peut dessiner, définissez champ par champ : choisissez-en un, puis appuyez sur",
   "Exact rendered display": "Affichage rendu exact",
   "Exact rendered preview": "Aperçu exact du rendu",
   "Existing automation": "Automatisation existante",
@@ -173,7 +172,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Modèles Jinja de HA. Variables : value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() et les autres fonctions de modèle de HA sont disponibles.",
   "HA state icon": "HA icône d'état",
-  "HA tile": "HA tuile",
+  "HA tile": "Tuile HA",
   "Hidden: click to show": "Masqué : cliquez pour afficher",
   "Icon (blank = HA)": "(vide = HA)",
   "Icon name": "Nom de l'icône",
@@ -235,8 +234,8 @@ export default {
   "Rain / snow": "Pluie / neige",
   "Rain chance": "Risque de pluie",
   "Redo (⌘/Ctrl Shift Z)": "Rétablir (⌘/Ctrl Maj Z)",
-  "Refresh tags": "Actualiser les balises",
-  "Refreshing tags…": "Actualisation des balises…",
+  "Refresh tags": "Actualiser les étiquettes",
+  "Refreshing tags…": "Actualisation des étiquettes…",
   "Remove manual link": "Supprimer le lien manuel",
   "Replace display": "Remplacer le contenu de l’écran",
   "Resolved value": "Valeur résolue",
@@ -255,7 +254,7 @@ export default {
   "Select an element": "Sélectionnez un élément",
   "Send back": "Mettre à l’arrière-plan",
   "Send backward": "Reculer d’un plan",
-  "Send to tag": "Envoyer au tag",
+  "Send to tag": "Envoyer à l'étiquette",
   "Sending display…": "Envoi de l'affichage…",
   "Sensor tile style": "Style de tuile de capteur",
   "Sensor tile styles": "Styles de tuile de capteur",
@@ -288,7 +287,7 @@ export default {
   "Upload image": "Télécharger l'image",
   "Use static value": "Utiliser une valeur statique",
   "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des balises dans Home Assistant.",
+    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des étiquettes dans Home Assistant.",
   "Vertical align": "Alignement vertical",
   "Visible state": "État visible",
   "Weather time": "Heure météo",
@@ -412,7 +411,7 @@ export default {
   properties: "propriétés",
   Color: "Couleur",
   Label: "Étiquette",
-  templates: "Appareils",
+  "tile styles": "styles de tuile",
   devices: "appareils",
   "Edit selected automation design":
     "Modifier le design de l'automatisation sélectionnée",

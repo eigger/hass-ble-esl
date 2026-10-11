@@ -25,7 +25,6 @@ export default {
     "전송하지 않음: 새로운 전송으로 대체됨",
   "Sending failed": "전송 실패",
   "Loading {step}… ({done}/{count})": "{step} 불러오는 중… ({done}/{count})",
-  "sensor templates": "센서 템플릿",
   "element types": "요소 유형",
   "tags and displays": "ESL 및 화면",
   "default (shrink ellipsis)": "기본값 (축소 및 말줄임)",
@@ -93,7 +92,7 @@ export default {
   "By sensor type": "센서 유형별",
   "Center horizontally": "가로 가운데 정렬",
   "Checking display…": "화면 확인 중…",
-  "Choose a sample sensor above to preview this template.":
+  "Choose a sample sensor above to preview this tile style.":
     "위에서 미리보기에 사용할 센서를 선택하세요.",
   "Choose an automation…": "자동화를 선택하세요…",
   "Choose an entity for the sensor tile.":
@@ -516,7 +515,7 @@ export default {
   properties: "속성",
   Color: "색상",
   Label: "표시 이름",
-  templates: "템플릿",
+  "tile styles": "타일 스타일",
   devices: "기기",
   "Automation configuration identity is missing.":
     "자동화 설정의 식별 정보가 없습니다.",

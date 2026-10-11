@@ -29,7 +29,6 @@ export default {
     "Niet verzonden: een nieuwere schrijfwijze heeft deze vervangen",
   "Sending failed": "Verzenden mislukt",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
-  "sensor templates": "sensorsjablonen",
   "element types": "elementtypen",
   "tags and displays": "tags en displays",
   "default (shrink ellipsis)": "standaard (verkleind weglatingsteken)",
@@ -99,8 +98,8 @@ export default {
   "By sensor type": "Per sensortype",
   "Center horizontally": "Horizontaal centreren",
   "Checking display…": "Display controleren…",
-  "Choose a sample sensor above to preview this template.":
-    "Kies hierboven een voorbeeldsensor om een voorbeeld van dit sjabloon te bekijken.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Kies hierboven een voorbeeldsensor om een voorbeeld van deze tegelstijl te bekijken.",
   "Choose an automation…": "Kies een automatisering…",
   "Choose an entity for the sensor tile.":
     "Kies een entiteit voor de sensortegel.",
@@ -175,7 +174,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "HA Jinja-sjablonen. Variabelen: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() en andere HA-sjabloonfuncties zijn beschikbaar.",
   "HA state icon": "HA statuspictogram",
-  "HA tile": "HA tegel",
+  "HA tile": "HA-tegel",
   "Hidden: click to show": "Verborgen: klik om weer te geven",
   "Icon (blank = HA)": "Icoon (leeg = HA)",
   "Icon name": "Pictogramnaam",
@@ -237,7 +236,7 @@ export default {
   "Rain / snow": "Regen/sneeuw",
   "Rain chance": "Regenkans",
   "Redo (⌘/Ctrl Shift Z)": "Opnieuw (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Tags vernieuwen",
+  "Refresh tags": "Labels vernieuwen",
   "Refreshing tags…": "Tags vernieuwen…",
   "Remove manual link": "Handmatige link verwijderen",
   "Replace display": "Scherminhoud vervangen",
@@ -257,7 +256,7 @@ export default {
   "Select an element": "Selecteer een element",
   "Send back": "Helemaal naar achteren",
   "Send backward": "Een laag naar achteren",
-  "Send to tag": "Verzenden naar tag",
+  "Send to tag": "Naar label verzenden",
   "Sending display…": "Weergave verzenden…",
   "Sensor tile style": "Sensortegelstijl",
   "Sensor tile styles": "Sensortegelstijlen",
@@ -414,7 +413,7 @@ export default {
   properties: "eigenschappen",
   Color: "Kleur",
   Label: "Etiket",
-  templates: "sjablonen",
+  "tile styles": "tegelstijlen",
   devices: "apparaten",
   "Edit selected automation design":
     "Geselecteerd automatiseringsontwerp bewerken",

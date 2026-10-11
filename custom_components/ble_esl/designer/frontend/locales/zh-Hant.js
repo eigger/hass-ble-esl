@@ -24,7 +24,6 @@ export default {
   "Not sent: a newer write replaced this one": "未發送：較新的寫入取代了此寫入",
   "Sending failed": "發送失敗",
   "Loading {step}… ({done}/{count})": "正在載入{step}…({done}/{count})",
-  "sensor templates": "感測器模板",
   "element types": "元素類型",
   "tags and displays": "標籤和顯示",
   "default (shrink ellipsis)": "預設（縮小省略號）",
@@ -89,8 +88,8 @@ export default {
   "By sensor type": "依感測器類型",
   "Center horizontally": "水平居中",
   "Checking display…": "檢查顯示…",
-  "Choose a sample sensor above to preview this template.":
-    "選擇上面的範例感測器來預覽該範本。",
+  "Choose a sample sensor above to preview this tile style.":
+    "選擇上面的範例感測器來預覽該磁貼樣式。",
   "Choose an automation…": "選擇自動化…",
   "Choose an entity for the sensor tile.": "選擇感測器區塊的實體。",
   "Choose an existing automation.": "選擇現有的自動化。",
@@ -164,7 +163,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "HA Jinja 範本。變數：value, entity, entity_id, attributes。可使用 states(), is_state(), state_attr(), now() 等 HA 範本函式。",
   "HA state icon": "HA狀態圖標",
-  "HA tile": "HA瓦片",
+  "HA tile": "HA 磁貼",
   "Hidden: click to show": "隱藏：點選顯示",
   "Icon (blank = HA)": "圖示（空白 = HA）",
   "Icon name": "圖示名稱",
@@ -246,7 +245,7 @@ export default {
   "Sending display…": "發送顯示…",
   "Sensor tile style": "感測器磁貼樣式",
   "Sensor tile styles": "感測器磁貼樣式",
-  "Sensor tile (value, unit and name)": "感測器區塊（值、單位和名稱）",
+  "Sensor tile (value, unit and name)": "感測器磁貼（值、單位和名稱）",
   "Show for state": "顯示狀態",
   "Show percentage": "顯示百分比",
   "Show value": "顯示價值",
@@ -270,7 +269,7 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "將其轉換成普通的imagespec元素以逐個字段地編輯；感測器的值成為模板",
   "Undo (⌘/Ctrl Z)": "撤銷 (⌘/Ctrl Z)",
-  "Unsaved changes": "未保存的改變",
+  "Unsaved changes": "未儲存的變更",
   "Upload image": "上傳影像",
   "Use static value": "使用靜態值",
   "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
@@ -343,7 +342,7 @@ export default {
   Redo: "重做",
   Refresh: "刷新",
   Retry: "重試",
-  Save: "保存",
+  Save: "儲存",
   Sensor: "感測器",
   Shape: "形狀",
   Show: "顯示",
@@ -397,7 +396,7 @@ export default {
   properties: "性質",
   Color: "顏色",
   Label: "標籤",
-  templates: "模板",
+  "tile styles": "磁貼樣式",
   devices: "裝置",
   "Edit selected automation design": "編輯所選自動化設計",
   "Save automation": "Save automation",

@@ -28,7 +28,6 @@ export default {
     "Не отправлено: новая запись заменила эту.",
   "Sending failed": "Отправка не удалась",
   "Loading {step}… ({done}/{count})": "Загрузка {step}… ({done}/{count})",
-  "sensor templates": "шаблоны датчиков",
   "element types": "Типы элементов",
   "tags and displays": "Теги и дисплеи",
   "default (shrink ellipsis)": "по умолчанию (сократить многоточие)",
@@ -96,8 +95,8 @@ export default {
   "By sensor type": "По типу датчика",
   "Center horizontally": "Центрировать по горизонтали",
   "Checking display…": "Проверка дисплея…",
-  "Choose a sample sensor above to preview this template.":
-    "Выберите образец датчика выше, чтобы просмотреть этот шаблон.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Выберите образец датчика выше, чтобы просмотреть этот стиль плитки.",
   "Choose an automation…": "Выберите автоматизацию…",
   "Choose an entity for the sensor tile.":
     "Выберите объект для сенсорного элемента.",
@@ -174,7 +173,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "Шаблоны Jinja HA. Переменные: value, entity, entity_id, attributes. Доступны states(), is_state(), state_attr(), now() и другие функции шаблонов HA.",
   "HA state icon": "HA Значок состояния",
-  "HA tile": "HA плитка",
+  "HA tile": "Плитка HA",
   "Hidden: click to show": "Скрыто: нажмите, чтобы показать",
   "Icon (blank = HA)": "Значок (пустой = HA)",
   "Icon name": "Название значка",
@@ -414,7 +413,7 @@ export default {
   properties: "свойства",
   Color: "Цвет",
   Label: "Этикетка",
-  templates: "шаблоны",
+  "tile styles": "стили плиток",
   devices: "устройства",
   "Edit selected automation design": "Изменить дизайн выбранной автоматизации",
   "Save automation": "Save automation",

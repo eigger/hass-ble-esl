@@ -27,7 +27,6 @@ export default {
     "未送信: これは新しい書き込みに置き換えられました",
   "Sending failed": "送信に失敗しました",
   "Loading {step}… ({done}/{count})": "{step} をロード中… ({done}/{count})",
-  "sensor templates": "センサー テンプレート",
   "element types": "要素タイプ",
   "tags and displays": "タグと表示内容",
   "default (shrink ellipsis)": "デフォルト (省略記号を縮小)",
@@ -97,8 +96,8 @@ export default {
   "By sensor type": "センサーの種類別",
   "Center horizontally": "水平方向の中央揃え",
   "Checking display…": "表示を確認しています…",
-  "Choose a sample sensor above to preview this template.":
-    "このテンプレートをプレビューするには、上のサンプル センサーを選択してください。",
+  "Choose a sample sensor above to preview this tile style.":
+    "このタイルスタイルをプレビューするには、上のサンプル センサーを選択してください。",
   "Choose an automation…": "自動化を選択してください…",
   "Choose an entity for the sensor tile.":
     "センサー タイルのエンティティを選択します。",
@@ -413,7 +412,7 @@ export default {
   properties: "プロパティ",
   Color: "色",
   Label: "ラベル",
-  templates: "テンプレート",
+  "tile styles": "タイルスタイル",
   devices: "デバイス",
   "Edit selected automation design": "選択したオートメーションのデザインを編集",
   "Save automation": "Save automation",

@@ -28,7 +28,6 @@ export default {
     "Nicht gesendet: Ein neuerer Schreibvorgang hat diesen ersetzt",
   "Sending failed": "Senden fehlgeschlagen",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
-  "sensor templates": "Sensorvorlagen",
   "element types": "Elementtypen",
   "tags and displays": "Tags und Anzeigen",
   "default (shrink ellipsis)": "Standard (Auslassungspunkte verkleinern)",
@@ -98,8 +97,8 @@ export default {
   "By sensor type": "Nach Sensortyp",
   "Center horizontally": "Horizontal zentrieren",
   "Checking display…": "Anzeige wird überprüft…",
-  "Choose a sample sensor above to preview this template.":
-    "Wählen Sie oben einen Beispielsensor aus, um eine Vorschau dieser Vorlage anzuzeigen.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Wählen Sie oben einen Beispielsensor aus, um eine Vorschau dieses Kachelstils anzuzeigen.",
   "Choose an automation…": "Wählen Sie eine Automatisierung…",
   "Choose an entity for the sensor tile.":
     "Wählen Sie eine Entität für die Sensorkachel.",
@@ -175,7 +174,7 @@ export default {
   "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
     "HA Jinja-Vorlagen. Variablen: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() und weitere HA-Vorlagenfunktionen sind verfügbar.",
   "HA state icon": "HA Statussymbol",
-  "HA tile": "HA Kachel",
+  "HA tile": "HA-Kachel",
   "Hidden: click to show": "Ausgeblendet: Zum Anzeigen klicken",
   "Icon (blank = HA)": "Symbol (leer = HA)",
   "Icon name": "Symbolname",
@@ -415,7 +414,7 @@ export default {
   properties: "Eigenschaften",
   Color: "Farbe",
   Label: "Etikett",
-  templates: "-Vorlagen",
+  "tile styles": "Kachelstile",
   devices: "Geräte",
   "Edit selected automation design":
     "Ausgewähltes Automatisierungs-Design bearbeiten",

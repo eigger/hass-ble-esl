@@ -27,7 +27,6 @@ export default {
     "Not sent: a newer write replaced this one",
   "Sending failed": "Sending failed",
   "Loading {step}… ({done}/{count})": "Loading {step}… ({done}/{count})",
-  "sensor templates": "sensor templates",
   "element types": "element types",
   "tags and displays": "tags and displays",
   "default (shrink ellipsis)": "default (shrink ellipsis)",
@@ -94,8 +93,8 @@ export default {
   "By sensor type": "By sensor type",
   "Center horizontally": "Center horizontally",
   "Checking display…": "Checking display…",
-  "Choose a sample sensor above to preview this template.":
-    "Choose a sample sensor above to preview this template.",
+  "Choose a sample sensor above to preview this tile style.":
+    "Choose a sample sensor above to preview this tile style.",
   "Choose an automation…": "Choose an automation…",
   "Choose an entity for the sensor tile.":
     "Choose an entity for the sensor tile.",
@@ -517,7 +516,7 @@ export default {
   properties: "properties",
   Color: "Color",
   Label: "Label",
-  templates: "templates",
+  "tile styles": "tile styles",
   devices: "devices",
   "Automation configuration identity is missing.":
     "Automation configuration identity is missing.",
