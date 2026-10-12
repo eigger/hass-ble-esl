@@ -22,6 +22,7 @@ responsibilities include:
 | `editor/canvas/view.js`                                                                                           | Builds accessible canvas layer, exact-preview, alignment-guide, and selection-overlay markup from explicit view values. The panel prepares layer content and renderer metadata, attaches the result, restores focus, updates HA icons, and retains preview/state ownership.                                                |
 | `editor/canvas/sensor-content.js`                                                                                 | Renders sensor tile and template child markup from explicit display values. The panel resolves HA state, templates, weather values, numbers, and icons; this module does not query HA or own editor state.                                                                                                                 |
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
+| `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, and selected-entity preview markup. Home Assistant state, formatted names/values, localization, icon setup, and add actions remain in the panel.                                                                                                                  |
 | `editor/canvas/interactions.js`                                                                                   | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows.                                             |
 | `editor/inspector/layers.js`                                                                                      | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel.                                                                                              |
 | `editor/inspector/spec-sections.js`                                                                               | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits.                                                     |
@@ -223,6 +224,13 @@ document factory into `editor/sensor-templates.js`. The panel retains
 compatibility methods and supplies the document factories. Home Assistant
 entity discovery, translation, editing state, and template persistence remain
 in the panel.
+
+The entity-library extraction moves the supported-domain predicate, search
+matching, and selected-entity preview markup into `editor/entity-library.js`.
+The panel supplies Home Assistant states, formatted names and values,
+translation, and HTML escaping, and continues to configure the state icon,
+picker events, and sensor-add action. This keeps entity-library rules
+independent of the panel and Home Assistant runtime.
 
 The interaction extraction moves keyboard commands, pointer gestures, and
 inline text editing into `editor/canvas/interactions.js`. The panel retains its

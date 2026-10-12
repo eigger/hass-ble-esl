@@ -1,0 +1,31 @@
+// Pure entity-library rules and markup. Home Assistant state and localization
+// stay at the editor boundary and enter through explicit values.
+const ENTITY_DOMAINS =
+  /^(sensor|binary_sensor|weather|input_number|number|input_boolean|input_select|select|counter)\./;
+
+export function listSupportedEntities(states) {
+  return Object.values(states || {}).filter((state) =>
+    ENTITY_DOMAINS.test(state.entity_id),
+  );
+}
+
+export function filterEntities(entities, query, entityName) {
+  const normalizedQuery = String(query || "").toLowerCase();
+  return entities.filter((state) =>
+    (state.entity_id + " " + entityName(state))
+      .toLowerCase()
+      .includes(normalizedQuery),
+  );
+}
+
+export function renderEntityPreview({
+  state,
+  name,
+  value,
+  addLabel,
+  escapeHtml,
+}) {
+  if (!state) return "";
+  const entityId = escapeHtml(state.entity_id);
+  return `<div class="entity-state" data-entity="${entityId}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${escapeHtml(name)}</div><div class="state-value">${escapeHtml(value)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="${escapeHtml(addLabel)}" title="${escapeHtml(addLabel)}">+</button></div>`;
+}

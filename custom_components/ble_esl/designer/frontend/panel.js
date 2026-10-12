@@ -24,6 +24,11 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import {
+  filterEntities,
+  listSupportedEntities,
+  renderEntityPreview as renderEntityPreviewMarkup,
+} from "./editor/entity-library.js";
+import {
   createDefaultSensorTemplate,
   outputType as getSensorOutputType,
   sensorType as getSensorType,
@@ -957,11 +962,7 @@ export class BleEslDesigner extends HTMLElement {
     );
   }
   entities() {
-    return Object.values(this.hass?.states || {}).filter((state) =>
-      /^(sensor|binary_sensor|weather|input_number|number|input_boolean|input_select|select|counter)\./.test(
-        state.entity_id,
-      ),
-    );
+    return listSupportedEntities(this.hass?.states);
   }
   entityName(state) {
     return (
@@ -2006,9 +2007,13 @@ export class BleEslDesigner extends HTMLElement {
     const node = this.shadowRoot.querySelector(".entity-preview");
     const state = this.hass?.states[this.libraryEntity];
     if (!node) return;
-    node.innerHTML = state
-      ? `<div class="entity-state" data-entity="${esc(state.entity_id)}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${esc(this.entityName(state))}</div><div class="state-value">${esc(this.hass.formatEntityState?.(state) || state.state)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="${t(this.hass, "Add selected sensor")}" title="${t(this.hass, "Add selected sensor")}">+</button></div>`
-      : "";
+    node.innerHTML = renderEntityPreviewMarkup({
+      state,
+      name: state ? this.entityName(state) : "",
+      value: state ? this.hass.formatEntityState?.(state) || state.state : "",
+      addLabel: t(this.hass, "Add selected sensor"),
+      escapeHtml: esc,
+    });
     const icon = node.querySelector("ha-state-icon");
     if (icon) {
       icon.hass = this.hass;
@@ -2016,10 +2021,8 @@ export class BleEslDesigner extends HTMLElement {
     }
   }
   filteredEntities() {
-    return this.entities().filter((state) =>
-      (state.entity_id + " " + this.entityName(state))
-        .toLowerCase()
-        .includes(this.search.toLowerCase()),
+    return filterEntities(this.entities(), this.search, (state) =>
+      this.entityName(state),
     );
   }
   sensorContent(element, state, label) {
