@@ -24,7 +24,7 @@ import {
   renderElementActionMenu,
 } from "./editor/element-actions.js";
 import { PreviewController } from "./editor/preview.js";
-import { renderStatusView } from "./editor/status-view.js";
+import { renderStatusView, sendButtonHint } from "./editor/status-view.js";
 import { renderHeader } from "./editor/header-view.js";
 import {
   markDocumentDirty,
@@ -874,13 +874,12 @@ export class BleEslDesigner extends HTMLElement {
   }
   // Why the Send button is off, or what it is doing; plain "Send to tag" otherwise.
   sendHint(tag) {
-    if (tag && !tag.writable)
-      return t(
-        this.hass,
-        "Discovery only: preview is available; sending is not supported yet.",
-      );
-    if (this.busy && this.status) return t(this.hass, this.status);
-    return t(this.hass, "Send to tag");
+    return sendButtonHint({
+      tag,
+      busy: this.busy,
+      status: this.status,
+      translate: (message) => t(this.hass, message),
+    });
   }
   renderStatus() {
     renderStatusView({
