@@ -32,7 +32,8 @@ test("HA locale translates dashboard and automations while preserving authored n
   await expect(
     page.getByRole("heading", { name: "연결된 자동화" }),
   ).toBeVisible();
-  await expect(page.getByLabel("기존 자동화")).toBeVisible();
+  const dialog = page.locator("ble-esl-automation-dialog");
+  await expect(dialog.locator(".row")).toHaveCount(3);
   await expect(page.locator(".row").first()).toContainText("활성");
   await expect(page.locator(".row").nth(2)).toContainText("비활성");
   const names = await page.locator(".row .name").allTextContents();
@@ -41,6 +42,7 @@ test("HA locale translates dashboard and automations while preserving authored n
     page.getByRole("heading", { name: "Connected automations" }),
   ).toBeVisible();
   await expect(page.locator(".row .name")).toHaveText(names);
+  await expect(dialog.locator(".row").first()).toContainText("Active");
   await page.getByLabel("Close automations").click();
   await setLanguage(page, "sv");
   await expect(
@@ -143,23 +145,17 @@ test("YAML and import text survive locale switches without translating payload v
   await expect(importer.locator("textarea")).toHaveValue(input);
 });
 
-test("automation validation and designer statuses follow locale switches", async ({
+test("connected automation and designer statuses follow locale switches", async ({
   page,
 }) => {
   await page.goto("/?manager&lang=ko");
   await page
-    .locator('[data-entry="demo-discovery"] [data-action="automations"]')
+    .locator('[data-entry="demo-writable"] [data-action="automations"]')
     .click();
   const modal = page.locator("ble-esl-automation-dialog");
-  await expect(modal.locator('[data-action="link"]')).toBeEnabled();
-  await modal.locator('[data-action="link"]').click();
-  await expect(modal.locator(".result")).toHaveText(
-    "기존 자동화를 선택하세요.",
-  );
+  await expect(modal.locator(".row .state").first()).toContainText("활성");
   await setLanguage(page, "en");
-  await expect(modal.locator(".result")).toHaveText(
-    "Choose an existing automation.",
-  );
+  await expect(modal.locator(".row .state").first()).toContainText("Active");
   await modal.locator(".close").click();
   await page
     .locator('[data-entry="demo-writable"] [data-action="edit"]')

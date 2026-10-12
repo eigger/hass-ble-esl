@@ -1681,10 +1681,13 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
       .evaluate((node) => (node.scrollTop = 500));
     expect(
       await page.locator(".template-controls").evaluate((node) => {
-        const header = node.getRootNode().querySelector("header");
+        const nav = node
+          .getRootNode()
+          .querySelector('slot[name="managed-navigation"]')
+          .assignedElements()[0];
         return (
           node.getBoundingClientRect().top ===
-          header.getBoundingClientRect().bottom
+          nav.getBoundingClientRect().bottom
         );
       }),
     ).toBe(true);
