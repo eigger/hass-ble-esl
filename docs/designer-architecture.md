@@ -463,3 +463,10 @@ The entity-picker upgrade extraction moves replacement of legacy picker nodes
 and attribute copying into `editor/entity-pickers.js`. The panel supplies its
 shadow root and custom-element factory, then retains picker configuration,
 entity lookup, and rerender callbacks.
+
+The toolbar presentation extraction moves the state-driven editor toolbar
+markup and its sticky-header, sticky-toolbar, and labeled-action style rules
+into `editor/toolbar-view.js`. The panel supplies the current tag and editor
+state, translated text, icons, and tag/send helpers. It retains state
+derivation, event handling, automation-save label adjustment, and all toolbar
+workflows.
