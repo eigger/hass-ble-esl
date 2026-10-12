@@ -11,3 +11,7 @@ pytest
 ```
 
 CI tests against the Home Assistant release the test package pins (currently 2026.9); the declared minimum in `hacs.json` (2025.12) is supported but not exercised by the suite. `ruff check` and `ruff format --check` (version pinned in `requirements_lint.txt`) must pass; adding a protocol is described in [esl_ble/README.md](../custom_components/ble_esl/esl_ble/README.md).
+
+The designer frontend's current ownership boundaries, host contracts, UX
+invariants, and incremental migration constraints are recorded in the
+[designer architecture baseline](designer-architecture.md).
