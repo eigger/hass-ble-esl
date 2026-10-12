@@ -1,5 +1,14 @@
 // Present editor status in the inline live region and, when appropriate, as
 // a floating notice. The panel retains status state and notice timing.
+export function sendButtonHint({ tag, busy, status, translate }) {
+  if (tag && !tag.writable)
+    return translate(
+      "Discovery only: preview is available; sending is not supported yet.",
+    );
+  if (busy && status) return translate(status);
+  return translate("Send to tag");
+}
+
 export function appendStatusDismiss(panel, node) {
   const dismiss = document.createElement("button");
   dismiss.dataset.action = "dismiss-status";

@@ -1,4 +1,30 @@
 import { test, expect } from "@playwright/test";
+import { sendButtonHint } from "../../custom_components/ble_esl/designer/frontend/editor/status-view.js";
+
+test("send button hint reflects tag capability and busy status", () => {
+  const translate = (message) => `translated: ${message}`;
+  expect(
+    sendButtonHint({
+      tag: { writable: false },
+      busy: true,
+      status: "Sending…",
+      translate,
+    }),
+  ).toBe(
+    "translated: Discovery only: preview is available; sending is not supported yet.",
+  );
+  expect(
+    sendButtonHint({
+      tag: { writable: true },
+      busy: true,
+      status: "Sending…",
+      translate,
+    }),
+  ).toBe("translated: Sending…");
+  expect(
+    sendButtonHint({ tag: null, busy: false, status: "Ready", translate }),
+  ).toBe("translated: Send to tag");
+});
 
 test("status view keeps routine, preview error, and operation toast semantics", async ({
   page,

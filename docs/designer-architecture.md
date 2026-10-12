@@ -324,7 +324,9 @@ The status-view extraction moves inline status and floating notice presentation
 into `editor/status-view.js`. The panel supplies the current status snapshot,
 translation and timeout callbacks; it retains status state and notice timing
 ownership. Routine status text, preview errors, dismiss controls, and temporary
-save/send notices preserve their existing accessibility behavior.
+save/send notices preserve their existing accessibility behavior. The status
+module also resolves the send-button hint from explicit tag capability and
+busy-status values; the panel remains the state owner.
 
 The loading-view extraction moves initial loading-step definitions and
 progress/error markup into `editor/loading-view.js`. The panel retains boot
