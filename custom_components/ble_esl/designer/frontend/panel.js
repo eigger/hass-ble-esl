@@ -71,6 +71,7 @@ import {
   renderLayerRows,
 } from "./editor/inspector/layers.js";
 import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
+import { renderSpecPalette } from "./editor/inspector/spec-palette.js";
 import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
 import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
 import { renderWeatherControls } from "./editor/inspector/weather-controls.js";
@@ -1452,25 +1453,12 @@ export class BleEslDesigner extends HTMLElement {
   }
   // Every imagespec element, by category, to add beside the quick buttons.
   specPalette() {
-    if (!this.specs || this.mode === "template") return "";
-    const groups = {};
-    for (const type of this.specs.types)
-      (groups[type.category] ||= []).push(type.type);
-    return `<p class="hint wide">${t(this.hass, "Every element type the tag can draw, set field by field: choose one, then press")} <b>${t(this.hass, "Add")}</b>.</p><label class="wide">${t(this.hass, "All elements")}<select id="add-spec" aria-label="${t(this.hass, "Add element")}"><option value="">${t(this.hass, "Add element…")}</option>${Object.entries(
-      groups,
-    )
-      .map(
-        ([category, types]) =>
-          `<optgroup label="${esc(category)}">${types
-            .map(
-              (type) =>
-                `<option value="${esc(type)}">${esc(type.replaceAll("_", " "))}</option>`,
-            )
-            .join("")}</optgroup>`,
-      )
-      .join(
-        "",
-      )}</select></label><button class="wide" data-action="add-spec">${t(this.hass, "Add")}</button>`;
+    return renderSpecPalette({
+      specs: this.specs,
+      mode: this.mode,
+      translate: (message) => t(this.hass, message),
+      escapeHtml: esc,
+    });
   }
   addSpec(type) {
     const definition = this.specs.types.find((item) => item.type === type);

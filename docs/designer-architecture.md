@@ -373,3 +373,8 @@ Home Assistant states, templates, entities, and classification callbacks;
 lookup, localization, inspector rendering, and document edits remain at the
 panel boundary. The legacy inspector continues to receive the same
 `sensorOptions` shape.
+
+The imagespec palette extraction moves grouped renderer-type selector markup
+into `editor/inspector/spec-palette.js`. The panel supplies renderer metadata,
+mode, translation, and escaping; imagespec element construction, default
+sensor selection for plots, document history, and focus remain panel-owned.
