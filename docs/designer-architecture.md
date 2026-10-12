@@ -24,6 +24,7 @@ responsibilities include:
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
 | `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, and selected-entity preview markup. Home Assistant state, formatted names/values, localization, icon setup, and add actions remain in the panel.                                                                                                                  |
 | `editor/draft-store.js`                                                                                           | Owns the session-storage key, serialization, safe reads/writes, and same-size draft restoration. The panel selects which documents are dirty drafts; the manager imports `hasStoredDraft()` directly and imports the panel explicitly for custom-element registration.                                                     |
+| `editor/icon-picker.js`                                                                                           | Renders accessible icon glyph and chooser-button markup from the supplied icon catalog. The panel owns catalog loading, search-field events, and picker state.                                                                                                                                                             |
 | `editor/canvas/interactions.js`                                                                                   | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows.                                             |
 | `editor/inspector/layers.js`                                                                                      | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel.                                                                                              |
 | `editor/inspector/spec-sections.js`                                                                               | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits.                                                     |
@@ -38,7 +39,7 @@ responsibilities include:
 | `i18n.js`, `locales/`                                                                                             | Home Assistant language selection, translations, and localized rerender support.                                                                                                                                                                                                                                           |
 | `manager.js`                                                                                                      | Dashboard, device discovery/status presentation, filtering/sorting, editor entry/exit, automation association and editing. It embeds `ble-esl-designer` and owns automation configuration matching and saving.                                                                                                             |
 
-`panel.js` is 3,912 lines and `manager.js` is 1,256 lines at this phase.
+`panel.js` is 3,201 lines and `manager.js` is 1,257 lines at this phase.
 Line count is context, not a success metric: boundaries should follow ownership
 and change flow, not arbitrary file-size targets.
 
@@ -282,3 +283,9 @@ same-dimension restore rule, one-shot removal after restore, and quiet handling
 of blocked/full storage. The panel still decides which active or parked
 documents count as dirty drafts, while the manager reads the stored-draft flag
 directly rather than coupling that query to the panel module.
+
+The icon-picker extraction moves icon glyph and chooser-button markup into
+`editor/icon-picker.js`. The panel retains icon-catalog loading, search events,
+and selected-icon actions; the module receives the catalog and escaping helper
+explicitly and preserves the existing case-insensitive filtering, 120-item
+limit, and accessible button attributes.
