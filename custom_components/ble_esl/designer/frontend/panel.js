@@ -31,7 +31,10 @@ import {
   syncDocumentHistoryControls,
 } from "./editor/document-indicators.js";
 import { renderTagOptions } from "./editor/tag-selector.js";
-import { renderPanelToggle } from "./editor/workspace-controls.js";
+import {
+  renderPanelToggle,
+  workspaceStickyOffsets,
+} from "./editor/workspace-controls.js";
 import {
   createLoadingSteps,
   renderLoadingContent,
@@ -1383,10 +1386,13 @@ export class BleEslDesigner extends HTMLElement {
     const fixed =
       !this.hasAttribute("managed") &&
       getComputedStyle(header).position === "sticky";
-    this.style.setProperty("--bar-top", `${header.offsetHeight}px`);
-    this.style.scrollPaddingTop = fixed
-      ? `${header.offsetHeight + toolbar.offsetHeight}px`
-      : "";
+    const offsets = workspaceStickyOffsets({
+      headerHeight: header.offsetHeight,
+      toolbarHeight: toolbar.offsetHeight,
+      fixed,
+    });
+    this.style.setProperty("--bar-top", offsets.barTop);
+    this.style.scrollPaddingTop = offsets.scrollPaddingTop;
   }
   fitPreview() {
     if (this.zoomMode !== "fit" || !this.tag) return;
