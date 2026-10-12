@@ -23,6 +23,7 @@ import {
 } from "./model.js";
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
+import { renderStatusView } from "./editor/status-view.js";
 import {
   renderIconChoices as renderIconChoicesMarkup,
   renderIconGlyph,
@@ -881,59 +882,25 @@ export class BleEslDesigner extends HTMLElement {
     if (this.busy && this.status) return t(this.hass, this.status);
     return t(this.hass, "Send to tag");
   }
-  appendDismiss(node) {
-    const dismiss = document.createElement("button");
-    dismiss.dataset.action = "dismiss-status";
-    dismiss.setAttribute("aria-label", t(this.hass, "Dismiss message"));
-    dismiss.textContent = "×";
-    node.append(dismiss);
-  }
   renderStatus() {
-    const node = this.shadowRoot.querySelector(".status");
-    if (!node) return;
-    const text = t(this.hass, this.status);
-    node.textContent = text;
-    node.classList.toggle("error", !!this.error);
-    node.setAttribute("role", this.error ? "alert" : "status");
-    // Errors (except preview ones, which stay inline) and results of Save/Send
-    // float in view wherever the editor is scrolled. The line in the page keeps
-    // its height so nothing shifts; routine status text stays in the page.
-    const notice = this.notice !== null && this.notice === this.status;
-    const toast =
-      Boolean(this.status) &&
-      ((this.error && this.errorSource !== "preview") || notice);
-    node.classList.toggle("toasting", toast);
-    if (toast) node.setAttribute("aria-hidden", "true");
-    else node.removeAttribute("aria-hidden");
-    let host = this.shadowRoot.querySelector(".toast");
-    if (!toast) host?.remove();
-    else {
-      if (!host) {
-        host = document.createElement("div");
-        host.className = "toast";
-        host.append(document.createElement("span"));
-        this.shadowRoot.append(host);
-      }
-      host.classList.toggle("error", !!this.error);
-      host.classList.toggle("busy", !!this.busy);
-      const message = host.firstElementChild;
-      message.textContent = text;
-      message.setAttribute("role", this.error ? "alert" : "status");
-      host.querySelector("button")?.remove();
-      // The close button sits outside the live region so it is not read out.
-      if (!this.busy) this.appendDismiss(host);
-    }
-    clearTimeout(this.noticeTimer);
-    if (toast && !this.error && !this.busy) {
-      const shown = this.status;
-      this.noticeTimer = setTimeout(() => {
-        if (this.status !== shown) return;
+    renderStatusView({
+      root: this.shadowRoot,
+      getState: () => ({
+        status: this.status,
+        error: this.error,
+        errorSource: this.errorSource,
+        notice: this.notice,
+        busy: this.busy,
+      }),
+      noticeTimer: this.noticeTimer,
+      translate: (key) => t(this.hass, key),
+      setNoticeTimer: (timer) => (this.noticeTimer = timer),
+      onNoticeTimeout: () => {
         this.notice = null;
         this.status = "Ready";
         this.renderStatus();
-      }, 6000);
-    }
-    if (!toast && this.error && this.status) this.appendDismiss(node);
+      },
+    });
   }
   get element() {
     return this.document.elements.find(

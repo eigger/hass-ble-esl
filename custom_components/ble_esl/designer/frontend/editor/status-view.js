@@ -1,0 +1,61 @@
+// Present editor status in the inline live region and, when appropriate, as
+// a floating notice. The panel retains status state and notice timing.
+export function appendStatusDismiss(panel, node) {
+  const dismiss = document.createElement("button");
+  dismiss.dataset.action = "dismiss-status";
+  dismiss.setAttribute("aria-label", panel.translate("Dismiss message"));
+  dismiss.textContent = "×";
+  node.append(dismiss);
+}
+
+export function renderStatusView(panel) {
+  const state = panel.getState();
+  const node = panel.root.querySelector(".status");
+  if (!node) return;
+  const text = panel.translate(state.status);
+  node.textContent = text;
+  node.classList.toggle("error", !!state.error);
+  node.setAttribute("role", state.error ? "alert" : "status");
+
+  // Keep the inline region in the document flow while the floating notice is
+  // visible, so status changes do not move the editor layout.
+  const notice = state.notice !== null && state.notice === state.status;
+  const toast =
+    Boolean(state.status) &&
+    ((state.error && state.errorSource !== "preview") || notice);
+  node.classList.toggle("toasting", toast);
+  if (toast) node.setAttribute("aria-hidden", "true");
+  else node.removeAttribute("aria-hidden");
+
+  let host = panel.root.querySelector(".toast");
+  if (!toast) host?.remove();
+  else {
+    if (!host) {
+      host = document.createElement("div");
+      host.className = "toast";
+      host.append(document.createElement("span"));
+      panel.root.append(host);
+    }
+    host.classList.toggle("error", !!state.error);
+    host.classList.toggle("busy", !!state.busy);
+    const message = host.firstElementChild;
+    message.textContent = text;
+    message.setAttribute("role", state.error ? "alert" : "status");
+    host.querySelector("button")?.remove();
+    // Keep the close control outside the live region to avoid duplicate speech.
+    if (!state.busy) appendStatusDismiss(panel, host);
+  }
+
+  clearTimeout(panel.noticeTimer);
+  panel.setNoticeTimer(undefined);
+  if (toast && !state.error && !state.busy) {
+    const shown = state.status;
+    panel.setNoticeTimer(
+      setTimeout(() => {
+        if (panel.getState().status !== shown) return;
+        panel.onNoticeTimeout();
+      }, 6000),
+    );
+  }
+  if (!toast && state.error && state.status) appendStatusDismiss(panel, node);
+}
