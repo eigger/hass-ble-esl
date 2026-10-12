@@ -57,6 +57,20 @@ export function elementShape(element) {
   });
 }
 
+// Snapshot the render identity and frame size used to decide which canvas
+// previews and renderer bounds still describe the current elements.
+export function createLayerRecords(elements) {
+  return Object.fromEntries(
+    elements.map((element) => [
+      element.id,
+      {
+        shape: elementShape(element),
+        size: [element.width, element.height],
+      },
+    ]),
+  );
+}
+
 // undefined means unknown or frame-based, null means the renderer found no
 // visible content, and an array is the visible box relative to the frame.
 export function visibleBounds(element, { record, layerBounds }) {

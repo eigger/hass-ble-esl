@@ -96,6 +96,7 @@ import {
   alignmentGuides as calculateAlignmentGuides,
   clampMoved as clampMovedGeometry,
   clampResized as clampResizedGeometry,
+  createLayerRecords,
   elementShape,
   fitZoom as calculateFitZoom,
   moveBound as isMoveBound,
@@ -2044,12 +2045,7 @@ export class BleEslDesigner extends HTMLElement {
     );
   }
   renderRecords() {
-    return Object.fromEntries(
-      this.document.elements.map((el) => [
-        el.id,
-        { shape: this.shape(el), size: [el.width, el.height] },
-      ]),
-    );
+    return createLayerRecords(this.document.elements);
   }
   // undefined: not known, use the frame. null: rendered with nothing visible.
   visibleBounds(element) {

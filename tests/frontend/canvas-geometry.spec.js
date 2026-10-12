@@ -3,6 +3,7 @@ import {
   alignmentGuides,
   clampMoved,
   clampResized,
+  createLayerRecords,
   elementShape,
   fitZoom,
   moveBound,
@@ -91,6 +92,27 @@ test("render shape ignores frame changes and summarizes uploaded image data", ()
       image: `data:image/png;base64,${"b".repeat(100)}`,
     }),
   ).not.toBe(elementShape(original));
+});
+
+test("layer render records snapshot shape identity and frame dimensions", () => {
+  const current = [
+    element({ id: "one" }),
+    element({ id: "two", type: "text", text: "hello", width: 20, height: 6 }),
+  ];
+  const records = createLayerRecords(current);
+
+  expect(Object.keys(records)).toEqual(["one", "two"]);
+  expect(records.one).toEqual({
+    shape: elementShape(current[0]),
+    size: [10, 8],
+  });
+  expect(records.two).toEqual({
+    shape: elementShape(current[1]),
+    size: [20, 6],
+  });
+
+  current[0].width = 18;
+  expect(records.one.size).toEqual([10, 8]);
 });
 
 test("visible bounds distinguish unknown, empty, and renderer measured content", () => {
