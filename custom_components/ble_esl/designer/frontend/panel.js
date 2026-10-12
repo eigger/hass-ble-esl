@@ -32,6 +32,8 @@ import {
   restoreStoredDrafts as restoreDraftDocuments,
 } from "./editor/draft-store.js";
 import {
+  entityName as resolveEntityName,
+  entityValue as resolveEntityValue,
   filterEntities,
   listSupportedEntities,
   renderEntityPreview as renderEntityPreviewMarkup,
@@ -942,30 +944,10 @@ export class BleEslDesigner extends HTMLElement {
     return listSupportedEntities(this.hass?.states);
   }
   entityName(state) {
-    return (
-      this.hass.formatEntityName?.(state) ||
-      state.attributes.friendly_name ||
-      state.entity_id
-    );
+    return resolveEntityName(state, this.hass);
   }
   value(element) {
-    if (element.type === "text") return element.text;
-    const state = this.hass.states[element.entity_id];
-    if (!state) return t(this.hass, "Unavailable");
-    if (
-      element.decimals !== undefined &&
-      !["unknown", "unavailable"].includes(state.state)
-    )
-      return (
-        Number(state.state).toFixed(element.decimals) +
-        (element.show_unit && state.attributes.unit_of_measurement
-          ? " " + state.attributes.unit_of_measurement
-          : "")
-      );
-    const formatted = this.hass.formatEntityState?.(state) || state.state;
-    if (!element.show_unit && state.attributes.unit_of_measurement)
-      return state.state;
-    return formatted;
+    return resolveEntityValue(element, this.hass, t(this.hass, "Unavailable"));
   }
   sensorType(state) {
     return getSensorType(state);

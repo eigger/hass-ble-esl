@@ -3,6 +3,34 @@
 const ENTITY_DOMAINS =
   /^(sensor|binary_sensor|weather|input_number|number|input_boolean|input_select|select|counter)\./;
 
+export function entityName(state, hass) {
+  return (
+    hass?.formatEntityName?.(state) ||
+    state.attributes.friendly_name ||
+    state.entity_id
+  );
+}
+
+export function entityValue(element, hass, unavailableLabel) {
+  if (element.type === "text") return element.text;
+  const state = hass.states[element.entity_id];
+  if (!state) return unavailableLabel;
+  if (
+    element.decimals !== undefined &&
+    !["unknown", "unavailable"].includes(state.state)
+  )
+    return (
+      Number(state.state).toFixed(element.decimals) +
+      (element.show_unit && state.attributes.unit_of_measurement
+        ? " " + state.attributes.unit_of_measurement
+        : "")
+    );
+  const formatted = hass.formatEntityState?.(state) || state.state;
+  if (!element.show_unit && state.attributes.unit_of_measurement)
+    return state.state;
+  return formatted;
+}
+
 export function listSupportedEntities(states) {
   return Object.values(states || {}).filter((state) =>
     ENTITY_DOMAINS.test(state.entity_id),
