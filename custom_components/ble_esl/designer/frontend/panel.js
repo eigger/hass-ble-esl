@@ -12,6 +12,7 @@ import {
 } from "./spec-editor.js";
 import { normalizeImportedDocument } from "./editor/document-operations.js";
 import { handleImageUpload } from "./editor/image-upload.js";
+import { renderColorPicker } from "./editor/color-picker.js";
 import {
   clone,
   createId,
@@ -1155,18 +1156,13 @@ export class BleEslDesigner extends HTMLElement {
     if (grid) grid.innerHTML = renderIconChoicesMarkup(this.icons, search, esc);
   }
   colorPicker(key, value, label) {
-    return `<label>${label}<div class="picker" role="group" aria-label="${label}">${[
-      ...palette(this.tag.colors),
-      ...(["background", "display-background"].includes(key) &&
-      key !== "display-background"
-        ? ["transparent"]
-        : []),
-    ]
-      .map(
-        (color) =>
-          `<button class="swatch" style="--swatch:${color};${color === "transparent" ? "background:repeating-conic-gradient(#ccc 0% 25%,white 0% 50%) 50%/8px 8px" : ""}" data-pick="${key}" data-value="${color}" aria-label="${label}: ${t(this.hass, color)}" title="${t(this.hass, color)}" aria-pressed="${value === color}"></button>`,
-      )
-      .join("")}</div></label>`;
+    return renderColorPicker({
+      key,
+      value,
+      label,
+      colors: palette(this.tag.colors),
+      translate: (message) => t(this.hass, message),
+    });
   }
   panelMenu(action, open, label, id) {
     return `<button class="icon-button" data-action="${action}" aria-label="${t(this.hass, "Toggle {label} panel", { label: t(this.hass, label) })}" aria-controls="${id}" title="${open ? t(this.hass, "Hide") : t(this.hass, "Show")} ${t(this.hass, label)}" aria-expanded="${open}">${icon("menu")}</button>`;
