@@ -1,0 +1,89 @@
+import { test, expect } from "@playwright/test";
+import {
+  renderAlignmentGuides,
+  renderLayerMarkup,
+  renderSelectionMarkup,
+  renderStageMarkup,
+} from "../../custom_components/ble_esl/designer/frontend/editor/canvas/view.js";
+
+const escape = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ],
+  );
+const translate = (key, values) =>
+  values ? key.replace("{corner}", values.corner) : key;
+
+test("canvas view composes accessible layers and exact preview markup", () => {
+  const element = {
+    id: "sensor<&",
+    type: "sensor",
+    x: 2,
+    y: 3,
+    width: 12,
+    height: 8,
+    color: "#123456",
+    font_size: 9,
+    align: "center",
+  };
+  const layer = renderLayerMarkup({
+    element,
+    index: 1,
+    selected: true,
+    rendered: "layer-data",
+    label: "Room <sensor>",
+    content: "21°C",
+    hitBounds: [1, 0, 11, 8],
+    layerImage: '<img class="layer-preview" src="layer-data">',
+    faded: true,
+    escape,
+  });
+  expect(layer).toContain('data-id="sensor&lt;&amp;"');
+  expect(layer).toContain('aria-label="Room &lt;sensor&gt;"');
+  expect(layer).toContain('aria-pressed="true"');
+  expect(layer).toContain("z-index:2");
+  expect(layer).toContain("left:1px;top:0px;width:10px;height:8px");
+  expect(layer).toContain('style="opacity:.2"');
+
+  const stage = renderStageMarkup({
+    preview: "preview-data",
+    previewLabel: "Exact display",
+    layers: [layer],
+    guides: "<span>guide</span>",
+    selection: "<div>selection</div>",
+  });
+  expect(stage).toMatch(
+    /^<img class="exact" src="preview-data" alt="Exact display">/,
+  );
+  expect(stage).toContain(layer);
+  expect(stage.endsWith("<span>guide</span><div>selection</div>")).toBe(true);
+});
+
+test("selection view scales handles with zoom and guides match their axis", () => {
+  const markup = renderSelectionMarkup({
+    element: { id: "active", x: 10, y: 20, width: 16, height: 12 },
+    visible: [2, 1, 14, 11],
+    zoom: 2,
+    coarsePointer: true,
+    translate,
+    escape,
+    deleteIcon: "delete-icon",
+  });
+  expect(markup).toContain('data-id="active"');
+  expect(markup).toContain("left:12px;top:21px;width:12px;height:10px");
+  expect(markup).toContain("width:16px;height:16px");
+  expect(markup).toContain('aria-label="Resize nw"');
+  expect(markup).toContain("transform:scale(0.5)");
+  expect(markup).toContain("delete-icon");
+
+  const guides = renderAlignmentGuides([
+    { axis: "x", position: 8 },
+    { axis: "y", position: 12 },
+  ]);
+  expect(guides).toContain("left:8px;top:0;height:100%;border-left");
+  expect(guides).toContain("left:0;top:12px;width:100%;border-top");
+  expect(renderAlignmentGuides([])).toBe("");
+});

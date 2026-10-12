@@ -39,6 +39,12 @@ import {
   handlePointer as handleCanvasPointer,
 } from "./editor/canvas/interactions.js";
 import {
+  renderAlignmentGuides,
+  renderLayerMarkup,
+  renderSelectionMarkup,
+  renderStageMarkup,
+} from "./editor/canvas/view.js";
+import {
   alignmentGuides as calculateAlignmentGuides,
   clampMoved as clampMovedGeometry,
   clampResized as clampResizedGeometry,
@@ -2132,71 +2138,81 @@ export class BleEslDesigner extends HTMLElement {
       focusedId = focused?.dataset.id,
       focusedStage = focused?.classList?.contains("stage");
     stage.classList.toggle("exact-mode", !!this.preview);
-    stage.innerHTML =
-      (this.preview
-        ? `<img class="exact" src="${this.preview}" alt="${t(this.hass, "Exact rendered display")}">`
-        : "") +
-      this.document.elements
-        .map((element, index) => {
-          const state = this.hass?.states[element.entity_id];
-          const label =
-            element.label ||
+    const layers = this.document.elements.map((element, index) => {
+      const state = this.hass?.states[element.entity_id];
+      const label =
+        element.type === "imagespec"
+          ? this.layerLabel(element)
+          : element.label ||
             (state ? this.entityName(state) : element.entity_id);
-          let content = "";
-          if (element.type === "sensor")
-            content = this.sensorContent(element, state, label);
-          if (element.type === "image" && element.image)
-            content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}${element.circle ? ";border-radius:50%" : ""}${element.rotate ? `;transform:rotate(${Number(element.rotate) || 0}deg)` : ""}">`;
-          if (element.type === "text")
-            content = esc(this.tokenText(element.text)).replace(/\n/g, "<br>");
-          if (element.type === "icon")
-            content = this.iconGlyph(
-              this.tokenText(
-                element.state_icons?.[this.sampleState()?.state] ||
-                  element.icon,
-              ),
-              Math.min(element.width, element.height),
-            );
-          if (shapeTypes.includes(element.type)) {
-            const hollow = element.type !== "line" && element.filled === false;
-            const paint = hollow
-              ? `fill="none" stroke="currentColor" stroke-width="${(element.line_width || 1) * 2}" vector-effect="non-scaling-stroke"`
-              : 'fill="currentColor"';
-            const radius =
-              element.radius ?? Math.min(element.width, element.height) / 5;
-            const shape =
-              element.type === "triangle"
-                ? `<polygon points="50,0 100,100 0,100" ${paint}/>`
-                : element.type === "ellipse"
-                  ? `<ellipse cx="50" cy="50" rx="50" ry="50" ${paint}/>`
-                  : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
-            content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
-          }
-          const record = this.layerRecords?.[element.id];
-          const stale =
-            !record ||
-            record.shape !== this.shape(element) ||
-            record.size[0] !== element.width ||
-            record.size[1] !== element.height;
-          if (element.type === "imagespec" && stale)
-            content = `<div role="status" aria-label="${t(this.hass, "Preview updating")}" title="${t(this.hass, "This element needs a renderer preview to show its current appearance")}" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">${t(this.hass, "Preview updating…")}</div>`;
-          const rendered =
-            (this.gesture && element.type === "image") || stale
-              ? undefined
-              : this.layerPreviews[element.id];
-          const visible = this.visibleBounds(element);
-          const box = [0, 0, element.width, element.height];
-          const hitBounds =
-            visible === undefined ? box : (visible ?? (rendered ? null : box));
-          const hitArea = hitBounds
-            ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
-            : "";
-          const selected = element.id === this.selected;
-          return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""} ${selected ? "selected" : ""}" data-id="${esc(element.id)}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(element.type === "imagespec" ? this.layerLabel(element) : label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? this.layerImage(element, rendered) : ""}<div class="content" ${this.mode === "template" && element.state && element.state !== this.sampleState()?.state ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}</div>`;
-        })
-        .join("") +
-      this.alignmentGuidesMarkup() +
-      this.selectionMarkup();
+      let content = "";
+      if (element.type === "sensor")
+        content = this.sensorContent(element, state, label);
+      if (element.type === "image" && element.image)
+        content = `<img src="${esc(element.image)}" alt="" style="width:100%;height:100%;object-fit:${element.image_fit === "stretch" ? "fill" : element.image_fit === "fill" ? "cover" : "contain"}${element.circle ? ";border-radius:50%" : ""}${element.rotate ? `;transform:rotate(${Number(element.rotate) || 0}deg)` : ""}">`;
+      if (element.type === "text")
+        content = esc(this.tokenText(element.text)).replace(/\n/g, "<br>");
+      if (element.type === "icon")
+        content = this.iconGlyph(
+          this.tokenText(
+            element.state_icons?.[this.sampleState()?.state] || element.icon,
+          ),
+          Math.min(element.width, element.height),
+        );
+      if (shapeTypes.includes(element.type)) {
+        const hollow = element.type !== "line" && element.filled === false;
+        const paint = hollow
+          ? `fill="none" stroke="currentColor" stroke-width="${(element.line_width || 1) * 2}" vector-effect="non-scaling-stroke"`
+          : 'fill="currentColor"';
+        const radius =
+          element.radius ?? Math.min(element.width, element.height) / 5;
+        const shape =
+          element.type === "triangle"
+            ? `<polygon points="50,0 100,100 0,100" ${paint}/>`
+            : element.type === "ellipse"
+              ? `<ellipse cx="50" cy="50" rx="50" ry="50" ${paint}/>`
+              : `<rect width="100" height="100" rx="${element.type === "rounded_rectangle" ? (radius / element.width) * 100 : 0}" ry="${element.type === "rounded_rectangle" ? (radius / element.height) * 100 : 0}" ${paint}/>`;
+        content = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${shape}</svg>`;
+      }
+      const record = this.layerRecords?.[element.id];
+      const stale =
+        !record ||
+        record.shape !== this.shape(element) ||
+        record.size[0] !== element.width ||
+        record.size[1] !== element.height;
+      if (element.type === "imagespec" && stale)
+        content = `<div role="status" aria-label="${t(this.hass, "Preview updating")}" title="${t(this.hass, "This element needs a renderer preview to show its current appearance")}" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">${t(this.hass, "Preview updating…")}</div>`;
+      const rendered =
+        (this.gesture && element.type === "image") || stale
+          ? undefined
+          : this.layerPreviews[element.id];
+      const visible = this.visibleBounds(element);
+      const box = [0, 0, element.width, element.height];
+      const hitBounds =
+        visible === undefined ? box : (visible ?? (rendered ? null : box));
+      return renderLayerMarkup({
+        element,
+        index,
+        selected: element.id === this.selected,
+        rendered,
+        label,
+        content,
+        hitBounds,
+        layerImage: rendered ? this.layerImage(element, rendered) : "",
+        faded:
+          this.mode === "template" &&
+          element.state &&
+          element.state !== this.sampleState()?.state,
+        escape: esc,
+      });
+    });
+    stage.innerHTML = renderStageMarkup({
+      preview: this.preview,
+      previewLabel: t(this.hass, "Exact rendered display"),
+      layers,
+      guides: this.alignmentGuidesMarkup(),
+      selection: this.selectionMarkup(),
+    });
     if (focusedId)
       stage
         .querySelector(`.el[data-id="${CSS.escape(focusedId)}"]`)
@@ -2211,31 +2227,18 @@ export class BleEslDesigner extends HTMLElement {
     });
   }
   selectionMarkup() {
-    const element = this.element;
-    if (!element) return "";
-    const visible = this.visibleBounds(element),
-      [left, top, right, bottom] = visible || [
-        0,
-        0,
-        element.width,
-        element.height,
-      ],
-      width = right - left,
-      height = bottom - top;
-    const handleSize =
-      (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
-    const moveTarget = `<span class="move-handle" aria-label="${t(this.hass, "Move selected element")}" style="position:absolute;left:${width / 2 - handleSize / 2}px;top:${height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(width, height) * this.zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3m3-3 3 3m-3 17-3-3m3 3 3-3M2 12l3-3m-3 3 3 3m17-3-3-3m3 3-3 3"/></svg></span>`;
-    return `<div class="selection-box" data-id="${esc(element.id)}" style="position:absolute;left:${element.x + left}px;top:${element.y + top}px;width:${width}px;height:${height}px;outline:${1.5 / this.zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${["nw", "ne", "sw", "se"].map((corner) => `<span class="handle" data-corner="${corner}" aria-label="${t(this.hass, "Resize {corner}", { corner })}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="${t(this.hass, "Delete selected element")}" title="${t(this.hass, "Delete")}" style="pointer-events:auto;transform:scale(${1 / this.zoom});transform-origin:bottom right">${icon("delete")}</button></div>`;
+    return renderSelectionMarkup({
+      element: this.element,
+      visible: this.element ? this.visibleBounds(this.element) : undefined,
+      zoom: this.zoom,
+      coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+      translate: (key, values) => t(this.hass, key, values),
+      escape: esc,
+      deleteIcon: icon("delete"),
+    });
   }
   alignmentGuidesMarkup() {
-    if (!this.snapGuides?.length) return "";
-    return this.snapGuides
-      .map((guide) =>
-        guide.axis === "x"
-          ? `<span aria-hidden="true" style="position:absolute;left:${guide.position}px;top:0;height:100%;border-left:1px dashed #e53935;pointer-events:none;z-index:9998"></span>`
-          : `<span aria-hidden="true" style="position:absolute;left:0;top:${guide.position}px;width:100%;border-top:1px dashed #e53935;pointer-events:none;z-index:9998"></span>`,
-      )
-      .join("");
+    return renderAlignmentGuides(this.snapGuides);
   }
   alignmentGuides(element, resize) {
     return calculateAlignmentGuides({
