@@ -22,6 +22,7 @@ responsibilities include:
 | `editor/canvas/interactions.js` | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows. |
 | `editor/inspector/layers.js` | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel. |
 | `editor/inspector/spec-sections.js` | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits. |
+| `editor/inspector/optional-properties.js` | Renders optional style and advanced controls for legacy element types. Translation, HTML escaping, icon color picker, and supported dither methods are explicit inputs; document changes and history stay in the panel. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -214,4 +215,10 @@ fields by the established priority, preserves required nested groups, places
 position controls between common and advanced settings, and receives the
 advanced section's open state from the panel. `BleEslDesigner` continues to
 compose the inspector and owns its state and document updates.
+
+The legacy property-control extraction moves optional style and advanced
+markup for text, shapes, images, icons, progress bars, and gauges into
+`editor/inspector/optional-properties.js`. The panel supplies translation,
+escaping, the icon color picker, and renderer-supported dither methods. It
+continues to compose these controls and owns all property edits and history.
 
