@@ -620,6 +620,66 @@ test("slow previews never overlap and render the latest edit", async ({
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
+test("clearing a template sample invalidates its pending preview result and error", async ({
+  page,
+}) => {
+  await page.waitForTimeout(250);
+  await page.evaluate(() => {
+    window.previewRequests = [];
+    window.previewApplications = 0;
+    window.previewErrors = 0;
+    window.panel.mode = "template";
+    window.panel.sampleEntity = "sensor.old_sample";
+    window.panel.previewController.delay = 0;
+    window.panel.previewRequest = () =>
+      new Promise((resolve, reject) =>
+        window.previewRequests.push({ resolve, reject }),
+      );
+    window.panel.applyPreviewResult = () => window.previewApplications++;
+    window.panel.report = () => window.previewErrors++;
+    window.panel.queuePreview();
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.previewRequests.length))
+    .toBe(1);
+  await page.evaluate(() => window.panel.queuePreview());
+  await expect
+    .poll(() => page.evaluate(() => window.panel.previewController.queued))
+    .toBe(true);
+  await page.evaluate(() => {
+    window.panel.sampleEntity = "";
+    window.panel.queuePreview();
+    window.previewRequests[0].resolve({ png: "stale", layers: {} });
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.panel.previewController.inFlight))
+    .toBe(false);
+  expect(await page.evaluate(() => window.previewApplications)).toBe(0);
+  expect(await page.evaluate(() => window.previewRequests.length)).toBe(1);
+
+  await page.evaluate(() => {
+    window.panel.sampleEntity = "sensor.another_sample";
+    window.panel.queuePreview();
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.previewRequests.length))
+    .toBe(2);
+  await page.evaluate(() => window.panel.queuePreview());
+  await expect
+    .poll(() => page.evaluate(() => window.panel.previewController.queued))
+    .toBe(true);
+  await page.evaluate(() => {
+    window.panel.sampleEntity = "";
+    window.panel.queuePreview();
+    window.previewRequests[1].reject(new Error("stale preview error"));
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.panel.previewController.inFlight))
+    .toBe(false);
+  expect(await page.evaluate(() => window.previewErrors)).toBe(0);
+  expect(await page.evaluate(() => window.previewRequests.length)).toBe(2);
+});
+
 async function modalSource(page, id) {
   const modal = page.getByRole("dialog", { name: "Component editor" });
   await modal
