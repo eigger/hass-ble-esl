@@ -301,11 +301,14 @@ class EslManager extends HTMLElement {
       () => {
         if (anchor.isConnected) anchor.focus();
         else
-          this.shadowRoot
-            .querySelector(
+          (
+            this.shadowRoot.querySelector(
               `[data-action="automations"][data-entry="${CSS.escape(tag.entry_id)}"]`,
+            ) ||
+            this.shadowRoot.querySelector(
+              `[data-action="edit"][data-entry="${CSS.escape(tag.entry_id)}"]`,
             )
-            ?.focus();
+          )?.focus();
       },
     );
   }

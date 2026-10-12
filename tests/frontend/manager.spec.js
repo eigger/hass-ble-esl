@@ -1359,7 +1359,7 @@ test("choosing another card during editor boot honors latest selection", async (
   ).toBeDisabled();
 });
 
-test("multiple automations show count, state, editor links and manual association controls", async ({
+test("multiple automations show count, state, editor links and per-row design actions", async ({
   page,
 }) => {
   const card = page.locator('[data-entry="demo-writable"]').first();
@@ -1372,28 +1372,16 @@ test("multiple automations show count, state, editor links and manual associatio
     dialog.getByRole("link", { name: "Night screen" }),
   ).toHaveAttribute("href", "/config/automation/edit/night");
   await expect(dialog).toContainText("Inactive");
-  const mutation = page.waitForRequest(
-    (request) =>
-      request.method() === "POST" &&
-      request.postDataJSON()?.action === "link_automation",
-  );
-  await dialog
-    .getByLabel("Existing automation")
-    .selectOption("automation.weekly");
-  await dialog
-    .getByRole("button", { name: "Link automation", exact: true })
-    .click();
-  expect((await mutation).postDataJSON()).toEqual({
-    type: "ble_esl/designer",
-    action: "link_automation",
-    entry_id: "demo-writable",
-    entity_id: "automation.weekly",
-  });
-  await expect(dialog.locator(".row")).toHaveCount(4);
-  page.once("dialog", (dialog) => dialog.accept());
-  await dialog
-    .getByRole("button", { name: "Unlink Weekly summary", exact: true })
-    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Edit automation design", exact: true }),
+  ).toHaveCount(3);
+  await expect(dialog.locator("#search, #automation")).toHaveCount(0);
+  await expect(
+    dialog.getByRole("button", { name: "Edit selected automation design" }),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole("button", { name: "Link automation", exact: true }),
+  ).toHaveCount(0);
   await expect(dialog.locator(".row")).toHaveCount(3);
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
@@ -1406,30 +1394,27 @@ test("multiple automations show count, state, editor links and manual associatio
   await expect(dialog.locator(".row")).toHaveCount(3);
 });
 
-test("zero and one automation summaries and mobile bottom sheet", async ({
+test("unlinked tags show an empty state without association controls", async ({
   page,
 }) => {
   const card = page.locator('[data-entry="demo-discovery"]').first();
-  await expect(card).toContainText("Link automation");
+  await expect(card).toContainText("No connected automations");
+  await expect(card.locator('[data-action="automations"]')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
-  await card.locator('[data-action="automations"]').click();
+  await card.getByRole("button", { name: "Edit tag design" }).click();
+  await page
+    .getByRole("button", { name: "Connected automations", exact: true })
+    .click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await expect(dialog).toContainText("No connected automations");
-  await dialog.getByLabel("Search automations").fill("Night");
-  await dialog
-    .getByLabel("Existing automation")
-    .selectOption("automation.night");
-  await dialog
-    .getByRole("button", { name: "Link automation", exact: true })
-    .click();
-  await expect(dialog.locator(".row")).toHaveCount(1);
+  await expect(dialog.locator("input, select")).toHaveCount(0);
+  await expect(dialog.locator(".row")).toHaveCount(0);
   await page.screenshot({
     path: "artifacts/manager-automations-mobile.png",
   });
   const box = await dialog.boundingBox();
   expect(Math.abs(box.y + box.height - 844)).toBeLessThan(2);
   await dialog.getByRole("button", { name: "Close automations" }).click();
-  await expect(card).toContainText("Night screen · Inactive");
 });
 
 test("detected associations have no unlink control and missing associations have no unsafe edit link", async ({
@@ -1519,48 +1504,47 @@ test("automation dialog preserves keyboard focus across unrelated and relevant H
   ).toContainText("Active");
 });
 
-test("closing a pending link and opening another ESL keeps the result associated with original ESL", async ({
+test("unlinking the last manual association restores focus to the design action", async ({
   page,
 }) => {
   await page.evaluate(() => {
     const manager = window.manager;
     const callWS = manager.hass.callWS;
+    const linked = [
+      {
+        entity_id: "automation.manual",
+        name: "Manual automation",
+        state: "on",
+        id: "manual",
+        source: "manual",
+        missing: false,
+        link_id: "manual-link",
+      },
+    ];
+    manager.automationCache.set("demo-writable", { linked, available: [] });
     manager.hass = {
       ...manager.hass,
-      callWS: async (msg) => {
-        if (msg.action !== "link_automation") return callWS(msg);
-        const result = await callWS(msg);
-        return new Promise(
-          (resolve) => (window.releaseLink = () => resolve(result)),
-        );
+      callWS: async (message) => {
+        if (message.action === "automations")
+          return { linked, available: [] };
+        if (message.action === "unlink_automation")
+          return { linked: [], available: [] };
+        return callWS(message);
       },
     };
+    manager.renderCards();
   });
-  await page
-    .locator('[data-action="automations"][data-entry="demo-writable"]')
-    .click();
+  const card = page.locator('[data-entry="demo-writable"]').first();
+  await card.locator('[data-action="automations"]').click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  page.once("dialog", (confirmation) => confirmation.accept());
   await dialog
-    .getByLabel("Existing automation")
-    .selectOption("automation.weekly");
-  await dialog
-    .getByRole("button", { name: "Link automation", exact: true })
-    .click();
-  await page.waitForFunction(() => window.releaseLink);
-  await dialog.getByRole("button", { name: "Close automations" }).click();
-  await page
-    .locator('[data-action="automations"][data-entry="demo-discovery"]')
+    .getByRole("button", { name: "Unlink Manual automation", exact: true })
     .click();
   await expect(dialog).toContainText("No connected automations");
-  await page.evaluate(() => window.releaseLink());
-  await expect(dialog.locator(".row")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Close automations" }).click();
-  await expect(
-    page.locator('[data-entry="demo-writable"]').first(),
-  ).toContainText("4 automations · 2 active");
-  await expect(
-    page.locator('[data-entry="demo-discovery"]').first(),
-  ).toContainText("Link automation");
+  await expect(card.locator('[data-action="automations"]')).toHaveCount(0);
+  await expect(card.locator('[data-action="edit"]')).toBeFocused();
 });
 
 test("successful image timestamp changes reload the thumbnail at the same proxy URL", async ({
@@ -1672,7 +1656,6 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
             .querySelector(".toolbar")
             .getBoundingClientRect();
           const nav = host
-            .getRootNode()
             .querySelector(".editor-nav")
             .getBoundingClientRect();
           return [
@@ -1680,12 +1663,13 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
             host.scrollTop === 0,
             nav.height >= 56 && nav.bottom < innerHeight,
             header.height === (innerWidth > 650 ? 56 : 48),
-            Math.abs(header.top - nav.bottom) < 1,
-            Math.abs(toolbar.top - header.bottom) < 1,
+            Math.abs(header.top - host.getBoundingClientRect().top) < 1,
+            Math.abs(nav.top - header.bottom) < 1,
+            Math.abs(toolbar.top - nav.bottom) < 1,
           ];
         }),
       )
-      .toEqual([true, true, true, true, true, true]);
+      .toEqual([true, true, true, true, true, true, true]);
     expect(await page.evaluate(() => document.scrollingElement.scrollTop)).toBe(
       0,
     );
