@@ -39,6 +39,7 @@ responsibilities include:
 | `editor/inspector/optional-properties.js`                                                                         | Renders optional style and advanced controls for legacy element types. Translation, HTML escaping, icon color picker, and supported dither methods are explicit inputs; document changes and history stay in the panel.                                                                                                    |
 | `editor/inspector/text-alignment.js`                                                                              | Renders font-size and accessible text-alignment controls for sensor and text elements. It receives translation and HTML-escaping helpers; `data-pick="align"` continues through the panel's existing edit and history path.                                                                                                |
 | `editor/inspector/weather-controls.js`                                                                            | Renders weather sensor time and field selectors. It receives the selected sensor values and a translation callback; the panel decides when weather controls apply and continues to own property changes and history.                                                                                                       |
+| `editor/inspector/sensor-options.js`                                                                              | Prepares legacy sensor inspector style choices, numeric eligibility, weather state choices, and template sample states from explicit inputs. The panel retains Home Assistant lookup, localization, and template context ownership.                                                                                        |
 | `editor/inspector/legacy-properties.js`                                                                           | Composes property controls for non-imagespec elements into Content, Position, Style, and Advanced sections. The panel supplies explicit rendering callbacks and precomputed sensor choices; event handling, HA lookups, and document mutations remain panel-owned.                                                         |
 | `model.js`                                                                                                        | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`.                                                                                                                         |
 | `editor/document-operations.js`                                                                                   | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies.                                                                                                                                                                                             |
@@ -356,3 +357,11 @@ The color-picker extraction moves accessible swatch markup into
 labels, and continues to own color selection and document history through the
 existing `data-pick` event path. Background controls retain their transparent
 swatch and patterned preview.
+
+The legacy sensor-options extraction moves preparation of compatible template
+styles, numeric-field eligibility, weather template states, and sample state
+choices into `editor/inspector/sensor-options.js`. The panel supplies resolved
+Home Assistant states, templates, entities, and classification callbacks;
+lookup, localization, inspector rendering, and document edits remain at the
+panel boundary. The legacy inspector continues to receive the same
+`sensorOptions` shape.
