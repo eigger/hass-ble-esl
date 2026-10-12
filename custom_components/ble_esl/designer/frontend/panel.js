@@ -103,6 +103,7 @@ import {
   elementShape,
   fitZoom as calculateFitZoom,
   moveBound as isMoveBound,
+  selectionOverlayGeometry as calculateSelectionOverlayGeometry,
   staggerElement as calculateStaggeredElement,
   visibleBounds as calculateVisibleBounds,
 } from "./editor/canvas/geometry.js";
@@ -1961,11 +1962,16 @@ export class BleEslDesigner extends HTMLElement {
     });
   }
   selectionMarkup() {
+    const element = this.element,
+      coarsePointer = window.matchMedia("(pointer: coarse)").matches;
     return renderSelectionMarkup({
-      element: this.element,
-      visible: this.element ? this.visibleBounds(this.element) : undefined,
-      zoom: this.zoom,
-      coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+      element,
+      geometry: calculateSelectionOverlayGeometry({
+        element,
+        visible: element ? this.visibleBounds(element) : undefined,
+        zoom: this.zoom,
+        coarsePointer,
+      }),
       translate: (key, values) => t(this.hass, key, values),
       escape: esc,
       deleteIcon: icon("delete"),
@@ -1990,37 +1996,34 @@ export class BleEslDesigner extends HTMLElement {
     const overlay = this.shadowRoot.querySelector(".selection-box"),
       element = this.element;
     if (!overlay || !element) return;
-    const visible = this.visibleBounds(element),
-      [left, top, right, bottom] = visible || [
-        0,
-        0,
-        element.width,
-        element.height,
-      ],
-      width = right - left,
-      height = bottom - top;
-    const handleSize =
-      (window.matchMedia("(pointer: coarse)").matches ? 32 : 20) / this.zoom;
-    overlay.style.left = `${element.x + left}px`;
-    overlay.style.top = `${element.y + top}px`;
-    overlay.style.width = `${width}px`;
-    overlay.style.height = `${height}px`;
+    const geometry = calculateSelectionOverlayGeometry({
+      element,
+      visible: this.visibleBounds(element),
+      zoom: this.zoom,
+      coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+    });
+    overlay.style.left = `${geometry.left}px`;
+    overlay.style.top = `${geometry.top}px`;
+    overlay.style.width = `${geometry.width}px`;
+    overlay.style.height = `${geometry.height}px`;
     overlay.style.outlineWidth = `${1.5 / this.zoom}px`;
     for (const handle of overlay.querySelectorAll(".handle")) {
       const corner = handle.dataset.corner;
-      handle.style.left = `${corner.endsWith("w") ? -handleSize : width}px`;
-      handle.style.top = `${corner.startsWith("n") ? -handleSize : height}px`;
-      handle.style.width = `${handleSize}px`;
-      handle.style.height = `${handleSize}px`;
+      handle.style.left = `${corner.endsWith("w") ? -geometry.handleSize : geometry.width}px`;
+      handle.style.top = `${corner.startsWith("n") ? -geometry.handleSize : geometry.height}px`;
+      handle.style.width = `${geometry.handleSize}px`;
+      handle.style.height = `${geometry.handleSize}px`;
     }
     const moveTarget = overlay.querySelector(".move-handle");
     if (moveTarget) {
-      moveTarget.style.left = `${width / 2 - handleSize / 2}px`;
-      moveTarget.style.top = `${height / 2 - handleSize / 2}px`;
-      moveTarget.style.width = `${handleSize}px`;
-      moveTarget.style.height = `${handleSize}px`;
+      moveTarget.style.left = `${geometry.width / 2 - geometry.handleSize / 2}px`;
+      moveTarget.style.top = `${geometry.height / 2 - geometry.handleSize / 2}px`;
+      moveTarget.style.width = `${geometry.handleSize}px`;
+      moveTarget.style.height = `${geometry.handleSize}px`;
       moveTarget.style.display =
-        Math.max(width, height) * this.zoom < 36 ? "grid" : "none";
+        Math.max(geometry.width, geometry.height) * this.zoom < 36
+          ? "grid"
+          : "none";
     }
     const trash = overlay.querySelector(".delete-handle");
     if (trash) trash.style.transform = `scale(${1 / this.zoom})`;

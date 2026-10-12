@@ -22,6 +22,31 @@ export function fitZoom({
   );
 }
 
+export function selectionOverlayGeometry({
+  element,
+  visible,
+  zoom,
+  coarsePointer,
+}) {
+  if (!element) return null;
+  const [left, top, right, bottom] = visible || [
+      0,
+      0,
+      element.width,
+      element.height,
+    ],
+    width = right - left,
+    height = bottom - top;
+  return {
+    left: element.x + left,
+    top: element.y + top,
+    width,
+    height,
+    zoom,
+    handleSize: (coarsePointer ? 32 : 20) / zoom,
+  };
+}
+
 // Place newly added elements beside existing ones without mutating either
 // the source element or the document's element list.
 export function staggerElement(element, elements, tag, step = 8) {

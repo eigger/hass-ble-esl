@@ -8,6 +8,7 @@ import {
   elementShape,
   fitZoom,
   moveBound,
+  selectionOverlayGeometry,
   staggerElement,
   visibleBounds,
 } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
@@ -73,6 +74,32 @@ test("new element staggering skips occupied positions and stops at tag bounds", 
       tag,
     ),
   ).toMatchObject({ x: 24, y: 16 });
+});
+
+test("selection overlay geometry shares visible bounds and pointer-scaled handles", () => {
+  expect(
+    selectionOverlayGeometry({
+      element: element({ x: 10, y: 20, width: 16, height: 12 }),
+      visible: [2, 1, 14, 11],
+      zoom: 2,
+      coarsePointer: true,
+    }),
+  ).toEqual({
+    left: 12,
+    top: 21,
+    width: 12,
+    height: 10,
+    zoom: 2,
+    handleSize: 16,
+  });
+  expect(
+    selectionOverlayGeometry({
+      element: element({ width: 16, height: 12 }),
+      visible: undefined,
+      zoom: 1,
+      coarsePointer: false,
+    }),
+  ).toMatchObject({ left: 4, top: 3, width: 16, height: 12, handleSize: 20 });
 });
 
 test("render shape ignores frame changes and summarizes uploaded image data", () => {
