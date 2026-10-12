@@ -24,6 +24,7 @@ responsibilities include:
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
 | `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, entity display-name/value formatting rules, and selected-entity preview markup. Home Assistant state and formatting callbacks, localization, icon setup, and add actions remain at the panel boundary.                                                            |
 | `editor/tag-selector.js`                                                                                          | Renders escaped tag option markup with the selected tag and physical dimensions. The panel retains tag naming, loading, and selection state.                                                                                                                                                                               |
+| `editor/document-indicators.js`                                                                                   | Updates undo/redo availability and the dirty-save badge, label, and preview title without rebuilding the editor. The panel retains document history and dirty state and supplies translation and icon helpers.                                                                                                             |
 | `editor/entity-pickers.js`                                                                                        | Configures the Home Assistant entity pickers used by the library, element binding, and template sample selection, and adapts their selection events through callbacks. State lookup and document edits remain in the panel.                                                                                                |
 | `editor/entity-icons.js`                                                                                          | Resolves the designer's default icon for a Home Assistant entity from its explicit state record. The panel keeps a compatibility method; icon-catalog loading and rendering remain separate.                                                                                                                               |
 | `editor/template-controls.js`                                                                                     | Renders sensor-template controls and token-tool markup from explicit mode, values, choices, translation, and escaping inputs. The panel owns template editing state, sample selection, persistence, and document changes.                                                                                                  |
@@ -327,3 +328,10 @@ The tag-selector extraction moves tag option markup into
 `editor/tag-selector.js`. The panel supplies the current tags, selected tag,
 display-name callback, and HTML escaping helper; tag loading, state lookup, and
 selection handling remain panel-owned.
+
+The document-indicators extraction moves the in-place updates for undo/redo
+availability and dirty-save presentation into
+`editor/document-indicators.js`. The panel retains its compatibility methods,
+history and dirty-state ownership, and supplies the save-mode value, translated
+labels, and save icon. The accessible save labels, keyboard shortcut hint,
+dirty badge, and preview title remain unchanged.

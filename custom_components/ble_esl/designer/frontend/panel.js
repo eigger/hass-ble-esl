@@ -24,6 +24,10 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import { renderStatusView } from "./editor/status-view.js";
+import {
+  markDocumentDirty,
+  syncDocumentHistoryControls,
+} from "./editor/document-indicators.js";
 import { renderTagOptions } from "./editor/tag-selector.js";
 import {
   createLoadingSteps,
@@ -804,34 +808,23 @@ export class BleEslDesigner extends HTMLElement {
     this.syncHistoryControls();
   }
   syncHistoryControls() {
-    const undo = this.shadowRoot.querySelector('[data-action="undo"]'),
-      redo = this.shadowRoot.querySelector('[data-action="redo"]');
-    if (undo) undo.disabled = !this.undoStack.length || this.busy;
-    if (redo) redo.disabled = !this.redoStack.length || this.busy;
+    syncDocumentHistoryControls(this.shadowRoot, {
+      undoCount: this.undoStack.length,
+      redoCount: this.redoStack.length,
+      busy: this.busy,
+    });
   }
   // Without a full render: show that there is something to save, and that
   // the picture is no longer the exact render.
   markDirty() {
-    this.syncHistoryControls();
-    const save = this.shadowRoot.querySelector('[data-action="save"]');
-    if (save) {
-      save.innerHTML = this._automationSaveMode
-        ? t(this.hass, "Save to automation")
-        : `${toolIcon("save")}<span>${t(this.hass, "Save")} ·</span>`;
-      const label = this._automationSaveMode
-        ? t(this.hass, "Save to automation")
-        : t(this.hass, "Save (unsaved changes)");
-      save.setAttribute("aria-label", label);
-      save.title = this._automationSaveMode
-        ? label
-        : t(this.hass, "Save (unsaved changes) (⌘/Ctrl S)");
-    }
-    const badge = this.shadowRoot.querySelector("#dirty-badge");
-    if (badge) badge.hidden = false;
-    const title = this.shadowRoot
-      .querySelector(".canvas-wrap")
-      ?.previousElementSibling?.querySelector("span");
-    if (title) title.textContent = t(this.hass, "Editing preview");
+    markDocumentDirty(this.shadowRoot, {
+      undoCount: this.undoStack.length,
+      redoCount: this.redoStack.length,
+      busy: this.busy,
+      automationSaveMode: this._automationSaveMode,
+      translate: (key) => t(this.hass, key),
+      saveIcon: toolIcon("save"),
+    });
   }
   edited(render = true) {
     this.session.markDirty();
