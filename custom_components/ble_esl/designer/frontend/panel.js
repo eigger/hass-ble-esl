@@ -30,6 +30,7 @@ import {
 import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
 import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
 import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
+import { renderWeatherControls } from "./editor/inspector/weather-controls.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -1931,33 +1932,9 @@ export class BleEslDesigner extends HTMLElement {
       html += `<label class="wide">${t(this.hass, "Text")}<textarea data-property="text" rows="3">${esc(element.text)}</textarea></label>`;
     if (element.type === "sensor") {
       if (element.entity_id.startsWith("weather."))
-        html += `<label>${t(this.hass, "When")}<select data-property="weather_when" aria-label="${t(this.hass, "Weather time")}">${[
-          ["now", t(this.hass, "Now")],
-          ["later_today", t(this.hass, "Later today")],
-          ["tomorrow", t(this.hass, "Tomorrow")],
-          ["in_2_days", t(this.hass, "In 2 days")],
-          ["in_3_days", t(this.hass, "In 3 days")],
-        ]
-          .map(
-            ([key, label]) =>
-              `<option value="${key}" ${(element.weather_when || "now") === key ? "selected" : ""}>${label}</option>`,
-          )
-          .join(
-            "",
-          )}</select></label><label>${t(this.hass, "Show")}<select data-property="weather_field" aria-label="${t(this.hass, "Weather value")}">${[
-          ["condition", t(this.hass, "Condition")],
-          ["temperature", t(this.hass, "Temperature")],
-          ["templow", t(this.hass, "Low temperature")],
-          ["precipitation", t(this.hass, "Rain / snow")],
-          ["precipitation_probability", t(this.hass, "Rain chance")],
-          ["wind_speed", t(this.hass, "Wind speed")],
-          ["humidity", t(this.hass, "Humidity")],
-        ]
-          .map(
-            ([key, label]) =>
-              `<option value="${key}" ${(element.weather_field || "condition") === key ? "selected" : ""}>${label}</option>`,
-          )
-          .join("")}</select></label>`;
+        html += renderWeatherControls(element, {
+          translate: (message) => t(this.hass, message),
+        });
       html += `<label class="wide">${t(this.hass, "Tile style")}<select data-property="template" aria-label="${t(this.hass, "Sensor tile style")}"><option value="auto">${t(this.hass, "By sensor type")}</option><option value="default" ${element.template === "default" ? "selected" : ""}>${t(this.hass, "HA tile")}</option>${Object.keys(
         this.templates,
       )
