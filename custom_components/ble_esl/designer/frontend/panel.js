@@ -24,6 +24,13 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import {
+  createDefaultSensorTemplate,
+  outputType as getSensorOutputType,
+  sensorType as getSensorType,
+  templateCompatibility as getTemplateCompatibility,
+  templateTypes as getTemplateTypes,
+} from "./editor/sensor-templates.js";
+import {
   handleLayerListClick,
   renderLayerRows,
 } from "./editor/inspector/layers.js";
@@ -983,73 +990,22 @@ export class BleEslDesigner extends HTMLElement {
     return formatted;
   }
   sensorType(state) {
-    return (
-      state.entity_id.split(".")[0] +
-      ":" +
-      (state.attributes.device_class || "default")
-    );
+    return getSensorType(state);
   }
   sampleState() {
     return this.hass.states[this.sampleEntity];
   }
   defaultTemplate() {
-    const tag = { width: 140, height: 60, colors: "BWRY" };
-    const make = (type, fields) => ({ ...newElement(type, tag), ...fields });
-    return {
-      ...emptyDocument(),
-      elements: [
-        make("icon", { x: 4, y: 14, width: 32, height: 32, icon: "{{icon}}" }),
-        make("text", {
-          x: 44,
-          y: 4,
-          width: 92,
-          height: 18,
-          font_size: 12,
-          text: "{{name}}",
-        }),
-        make("text", {
-          x: 44,
-          y: 25,
-          width: 92,
-          height: 31,
-          font_size: 20,
-          text: "{{state}} {{unit}}",
-        }),
-      ],
-    };
+    return createDefaultSensorTemplate({ emptyDocument, newElement });
   }
   outputType(state) {
-    if (!state) return "text";
-    if (state.entity_id.startsWith("weather.")) return "weather";
-    if (
-      state.entity_id.startsWith("binary_sensor.") ||
-      ["on", "off"].includes(state.state)
-    )
-      return "binary";
-    return (state.state.trim() !== "" &&
-      Number.isFinite(Number(state.state))) ||
-      state.attributes.unit_of_measurement
-      ? "numeric"
-      : "text";
+    return getSensorOutputType(state);
   }
   templateCompatibility(template, key) {
-    const type = template?.sensor_type || key;
-    if (type.startsWith("output:")) return type.split(":")[1];
-    if (type.startsWith("binary_sensor:")) return "binary";
-    if (type.startsWith("weather:")) return "weather";
-    return "numeric";
+    return getTemplateCompatibility(template, key);
   }
   templateTypes() {
-    return [
-      ...new Set([
-        "output:numeric",
-        "output:binary",
-        "output:text",
-        "output:weather",
-        ...Object.keys(this.templates),
-        ...this.templateDrafts.keys(),
-      ]),
-    ];
+    return getTemplateTypes(this.templates, this.templateDrafts);
   }
   templateControls() {
     if (this.mode !== "template") return "";
