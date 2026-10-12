@@ -57,6 +57,7 @@ import {
 import {
   configureBoundEntityPicker,
   configureLibraryEntityPicker,
+  replaceEntityPickerElements,
 } from "./editor/entity-pickers.js";
 import { defaultEntityIcon } from "./editor/entity-icons.js";
 import {
@@ -1725,12 +1726,9 @@ export class BleEslDesigner extends HTMLElement {
   // fresh ones without a full render(), which would end inline editing and
   // drop an open dialog or menu.
   upgradeEntityPickers() {
-    for (const old of this.shadowRoot.querySelectorAll("ha-entity-picker")) {
-      const fresh = document.createElement("ha-entity-picker");
-      for (const { name, value } of old.attributes)
-        fresh.setAttribute(name, value);
-      old.replaceWith(fresh);
-    }
+    replaceEntityPickerElements(this.shadowRoot, () =>
+      document.createElement("ha-entity-picker"),
+    );
     this.renderEntities();
     this.bindEntityPickers();
     this.shadowRoot.querySelector("ble-esl-component-editor")?.upgradeSource();
