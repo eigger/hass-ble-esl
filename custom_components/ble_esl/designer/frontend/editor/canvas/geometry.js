@@ -47,6 +47,20 @@ export function selectionOverlayGeometry({
   };
 }
 
+export function contextMenuPosition({
+  pointerX,
+  pointerY,
+  viewportWidth,
+  viewportHeight,
+  menuWidth = 228,
+  menuHeight = 220,
+}) {
+  return {
+    left: Math.min(pointerX, viewportWidth - menuWidth),
+    top: Math.min(pointerY, viewportHeight - menuHeight),
+  };
+}
+
 // Place newly added elements beside existing ones without mutating either
 // the source element or the document's element list.
 export function staggerElement(element, elements, tag, step = 8) {
