@@ -60,7 +60,10 @@ class EslManager extends HTMLElement {
       this.saveAutomation(event.detail),
     );
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
-    this.editorNav.addEventListener("click", (event) => this.click(event));
+    this.editorNav.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this.click(event);
+    });
     this.shadowRoot
       .querySelector("#search")
       .addEventListener("input", (event) => {
