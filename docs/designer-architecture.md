@@ -21,6 +21,7 @@ responsibilities include:
 | `editor/canvas/geometry.js` | Pure canvas calculations for renderer-dependent visible bounds, render-shape signatures, alignment guides, and move/resize frame clamping. Renderer records, layer bounds, tag dimensions, zoom, and snap tolerance are explicit inputs; it does not read the panel, DOM, or Home Assistant. |
 | `editor/canvas/interactions.js` | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows. |
 | `editor/inspector/layers.js` | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel. |
+| `editor/inspector/spec-sections.js` | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -206,4 +207,11 @@ ordering, and deletion actions into `editor/inspector/layers.js`. The panel
 continues to compose the inspector and owns the document and edit history; the
 layer module preserves the front-first order, accessible labels, and focus
 restoration after a row action.
+
+The imagespec inspector extraction moves field grouping into
+`editor/inspector/spec-sections.js`. It keeps documentation first, sorts common
+fields by the established priority, preserves required nested groups, places
+position controls between common and advanced settings, and receives the
+advanced section's open state from the panel. `BleEslDesigner` continues to
+compose the inspector and owns its state and document updates.
 

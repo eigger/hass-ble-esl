@@ -373,6 +373,31 @@ test("imagespec common fields come first and advanced settings stay open after r
   );
 });
 
+test("imagespec inspector groups documentation, common, required, and advanced fields", async ({
+  page,
+}) => {
+  const sections = await page.evaluate(() => {
+    const panel = window.panel;
+    panel.specAdvancedOpen = true;
+    return panel.specEditorSections(
+      '<p class="spec-doc">Field documentation</p><label>Size<input data-spec="size"></label><label>Custom<input data-spec="custom_option"></label><fieldset><legend>Required group</legend><label>Title<input data-spec="settings.title" data-required="true"></label></fieldset>',
+      '<h3 class="wide group-title">Position controls</h3>',
+    );
+  });
+  const documentation = sections.indexOf("Field documentation");
+  const common = sections.indexOf("Common properties");
+  const size = sections.indexOf('data-spec="size"');
+  const required = sections.indexOf('data-spec="settings.title"');
+  const position = sections.indexOf("Position controls");
+  const advanced = sections.indexOf('data-spec="custom_option"');
+  expect(documentation).toBeLessThan(common);
+  expect(common).toBeLessThan(size);
+  expect(size).toBeLessThan(required);
+  expect(required).toBeLessThan(position);
+  expect(position).toBeLessThan(advanced);
+  expect(sections).toContain('<details class="wide spec-advanced" open>');
+});
+
 test("nested required diagram and plot fields remain visible before Advanced", async ({
   page,
 }) => {
