@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3b2
+
+### Fixed
+
+- Designer toast messages no longer resize the hidden status line and shift the canvas, including on narrow screens.
+
 ## 1.2.3b1
 
 ### Added

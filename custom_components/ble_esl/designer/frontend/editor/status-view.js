@@ -22,7 +22,6 @@ export function renderStatusView(panel) {
   const node = panel.root.querySelector(".status");
   if (!node) return;
   const text = panel.translate(state.status);
-  node.textContent = text;
   node.classList.toggle("error", !!state.error);
   node.setAttribute("role", state.error ? "alert" : "status");
 
@@ -32,6 +31,10 @@ export function renderStatusView(panel) {
   const toast =
     Boolean(state.status) &&
     ((state.error && state.errorSource !== "preview") || notice);
+  // The floating toast carries the full message. Keep only the status
+  // placeholder's minimum height here so wrapped messages cannot move the
+  // canvas when the toast appears or disappears.
+  node.textContent = toast ? "" : text;
   node.classList.toggle("toasting", toast);
   if (toast) node.setAttribute("aria-hidden", "true");
   else node.removeAttribute("aria-hidden");
