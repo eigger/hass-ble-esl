@@ -66,6 +66,7 @@ import {
   sensorType as getSensorType,
   templateCompatibility as getTemplateCompatibility,
   templateTypes as getTemplateTypes,
+  substituteTemplateTokens,
 } from "./editor/sensor-templates.js";
 import {
   handleLayerListClick,
@@ -1157,7 +1158,7 @@ export class BleEslDesigner extends HTMLElement {
       unit: state?.attributes.unit_of_measurement || "",
       icon: state?.attributes.icon || this.defaultIcon(state),
     };
-    return text.replace(/{{(name|state|unit|icon)}}/g, (_, key) => values[key]);
+    return substituteTemplateTokens(text, values);
   }
   defaultIcon(state) {
     return defaultEntityIcon(state);
