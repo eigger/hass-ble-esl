@@ -35,6 +35,8 @@ class EslManager extends HTMLElement {
     this.sort = "default";
     this.view = "dashboard";
     this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><div class="header-title-wrap"><h1>${t(this.hass, "ESL Manager")}</h1><span class="version-tag" id="panel-version" title="${t(this.hass, "BLE ESL integration version")}" style="display: none;"></span></div><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><div class="message-wrap" hidden><p class="message" role="status"></p><button type="button" data-action="dismiss-message">×</button></div><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
+    this.editorNav = this.shadowRoot.querySelector(".editor-nav");
+    this.editorContext = this.editorNav.querySelector(".editor-context");
     bindStatic(this.shadowRoot);
     this.automationDialog = document.createElement("ble-esl-automation-dialog");
     this.shadowRoot.append(this.automationDialog);
@@ -58,6 +60,10 @@ class EslManager extends HTMLElement {
       this.saveAutomation(event.detail),
     );
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
+    this.editorNav.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this.click(event);
+    });
     this.shadowRoot
       .querySelector("#search")
       .addEventListener("input", (event) => {
@@ -278,7 +284,7 @@ class EslManager extends HTMLElement {
           }
         : { ...item, state: "unavailable" };
     });
-    if (!linked.length) return t(this.hass, "Link automation");
+    if (!linked.length) return t(this.hass, "No connected automations");
     const active = linked.filter((item) => item.state === "on").length;
     if (linked.length === 1)
       return `${linked[0].name} · ${linked[0].missing || !["on", "off"].includes(linked[0].state) ? t(this.hass, "Unavailable") : active ? t(this.hass, "Active") : t(this.hass, "Inactive")}`;
@@ -347,15 +353,10 @@ class EslManager extends HTMLElement {
   }
   cardActions(tag) {
     const entry = escapeHtml(tag.entry_id);
-    const linked =
-      !this.automationErrors.has(tag.entry_id) &&
-      this.editableAutomations(tag).length;
-    return linked
-      ? `<button class="primary" data-action="edit-automation" data-entry="${entry}">${t(this.hass, "Edit automation design")}</button><button data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`
-      : `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`;
+    return `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`;
   }
   updateEditorContext() {
-    const node = this.shadowRoot.querySelector(".editor-context");
+    const node = this.editorContext;
     const session = this.automationEditSession;
     const entry =
       session?.entry_id ||
@@ -451,7 +452,13 @@ class EslManager extends HTMLElement {
       valid(duration) && Number.isFinite(Number(duration.state))
         ? `${Number(duration.state).toFixed(1)} s`
         : "—";
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd><button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(this.automationLabel(tag))}">${e(this.automationLabel(tag))}</button></dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
+    const automationData = this.automationCache.get(tag.entry_id);
+    const showAutomationDialog =
+      !automationData ||
+      automationData.linked.length > 0 ||
+      this.automationErrors.has(tag.entry_id);
+    const automationLabel = this.automationLabel(tag);
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd>${showAutomationDialog ? `<button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(automationLabel)}">${e(automationLabel)}</button>` : e(automationLabel)}</dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
   }
   renderCards() {
     this.updateEditorContext();
@@ -577,6 +584,8 @@ class EslManager extends HTMLElement {
     if (!this.editor) {
       const editor = document.createElement("ble-esl-designer");
       editor.setAttribute("managed", "");
+      this.editorNav.slot = "managed-navigation";
+      editor.append(this.editorNav);
       editor.tag = tag;
       editor.panel = this._panel;
       editor.narrow = this.narrow;
@@ -594,7 +603,7 @@ class EslManager extends HTMLElement {
             tag,
         );
     }
-    this.shadowRoot.querySelector('[data-action="dashboard"]').focus();
+    this.editorNav.querySelector('[data-action="dashboard"]').focus();
     this.updateEditorContext();
     return this.editor?.tag?.entry_id === tag.entry_id || !this.editor?.ready;
   }
@@ -1199,17 +1208,6 @@ class EslManager extends HTMLElement {
         (tag) => tag.entry_id === button.dataset.entry,
       );
       if (tag) this.showAutomations(tag, button);
-    }
-    if (button.dataset.action === "edit-automation") {
-      const tag = this.tags.find(
-        (item) => item.entry_id === button.dataset.entry,
-      );
-      if (tag) {
-        const candidates = this.editableAutomations(tag);
-        if (!this.automationErrors.has(tag.entry_id) && candidates.length === 1)
-          await this.editAutomation(tag.entry_id, candidates[0].entity_id);
-        else this.showAutomations(tag, button);
-      }
     }
     if (button.dataset.action === "editor-automations") {
       const entry =

@@ -16,9 +16,9 @@ The image and **Last successful send** come from `last_updated_content`: the las
 
 Choose **Edit tag design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
-**Edit automation design** opens a single available linked automation directly,
-or offers a choice when several are available. **Edit tag design** still opens the
-ordinary local design. The editor header shows the tag and automation being
+Each tag card shows one **Edit tag design** button, whether or not automations
+are linked. To edit a linked automation's design, open **Connected automations**
+and choose that automation. The editor header shows the tag and automation being
 edited, and **Save to automation** remains labelled on narrow screens.
 
 Filter **Low battery** to see tags whose own battery-warning sensor is active.
@@ -36,9 +36,9 @@ The automation contains a copy of the exported action. Ordinary designer saves d
 
 ## Existing automation associations
 
-Open **Automations** on a card or **Connected automations** above the Designer. Cards show **Link automation** for zero associations, the name and state for one, or the count and active count for several. The list opens beside the card on desktop and as a bottom sheet on mobile. Each available automation name links to its HA editor.
+Open **Automations** on a card or **Connected automations** above the Designer. Cards show the name and state for one association, or the count and active count for several; tags without associations show **No connected automations**. The list opens beside the card on desktop and as a bottom sheet on mobile. Each automation name links to its HA editor, and **Edit automation design** opens its design editor.
 
-Automations that directly reference this ESL's device or entities are detected automatically. Search and select an existing automation to manually associate indirect script/template references. Associating an automation only stores a relationship: it does not modify its actions, apply this design, or transmit to the tag. Use **Edit automation design** to update an existing direct-target action, or **Payload YAML** to supply an action manually.
+Automations that directly reference this ESL's device or entities are detected automatically. Existing manual associations also appear in the list. An association only records a relationship: it does not modify automation actions, apply this design, or transmit to the tag. Use **Payload YAML** to supply an action manually.
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
 

@@ -76,6 +76,7 @@ export class YamlDialog extends HTMLElement {
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .check{display:flex;gap:6px;align-items:center;font-size:13px}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
+      .warnings{color:var(--warning-color,#986000);margin:0;padding-left:18px;font-size:12px}
     </style><dialog aria-label="${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}"><form method="dialog">
       <h2>${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}</h2>
       ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? "The template's triggers are included. Change them in Home Assistant after creating the automation." : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
@@ -97,7 +98,8 @@ export class YamlDialog extends HTMLElement {
             )
       }</p>
       ${"live_payload" in this.result && !this.result.automation ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
-      ${this.result.issues.length ? `<ul class="issues">${this.result.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
+      ${this.result.validation_errors?.length ? `<ul class="issues">${this.result.validation_errors.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
+      ${this.result.warnings?.filter((warning) => !this.result.validation_errors?.includes(warning)).length ? `<ul class="warnings">${this.result.warnings.filter((warning) => !this.result.validation_errors?.includes(warning)).map((warning) => `<li>${esc(warning)}</li>`).join("")}</ul>` : ""}
       <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
       <p role="status">${esc(this.creationError)}</p>
       <div class="actions">${this.result.automation ? (this.createdId ? `<a href="/config/automation/edit/${encodeURIComponent(this.createdId)}">${t(this.hass, "Edit automation")}</a>` : `<button type="button" data-create class="primary" ${this.creating ? "disabled" : ""}>${t(this.hass, this.creating ? "Working…" : "Create automation")}</button>`) : ""}<button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
