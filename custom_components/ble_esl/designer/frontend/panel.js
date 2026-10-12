@@ -30,7 +30,7 @@ import {
   markDocumentDirty,
   syncDocumentHistoryControls,
 } from "./editor/document-indicators.js";
-import { renderTagOptions } from "./editor/tag-selector.js";
+import { renderTagOptions, resolveTagName } from "./editor/tag-selector.js";
 import {
   renderPanelToggle,
   workspaceStickyOffsets,
@@ -857,11 +857,7 @@ export class BleEslDesigner extends HTMLElement {
   // The user's alias for a tag (as the dashboard shows it), else the product title.
   tagName(tag) {
     const state = this.hass?.states?.[tag.entities?.alias];
-    return state &&
-      !["unknown", "unavailable"].includes(state.state) &&
-      state.state.trim()
-      ? state.state
-      : tag.title;
+    return resolveTagName(tag, state);
   }
   report(error, source = "operation") {
     this.status = errorText(

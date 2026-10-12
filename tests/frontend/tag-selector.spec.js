@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { renderTagOptions } from "../../custom_components/ble_esl/designer/frontend/editor/tag-selector.js";
+import {
+  renderTagOptions,
+  resolveTagName,
+} from "../../custom_components/ble_esl/designer/frontend/editor/tag-selector.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(
@@ -9,6 +12,15 @@ const escapeHtml = (value) =>
         char
       ],
   );
+
+test("tag alias display falls back for unavailable or blank states", () => {
+  const tag = { title: "Bedroom", entities: { alias: "input_text.tag_name" } };
+  expect(resolveTagName(tag, { state: "Kitchen" })).toBe("Kitchen");
+  expect(resolveTagName(tag, { state: "unknown" })).toBe("Bedroom");
+  expect(resolveTagName(tag, { state: "unavailable" })).toBe("Bedroom");
+  expect(resolveTagName(tag, { state: "  " })).toBe("Bedroom");
+  expect(resolveTagName(tag, null)).toBe("Bedroom");
+});
 
 test("tag selector options keep selected tag, dimensions, labels, and escaping", () => {
   const selected = {
