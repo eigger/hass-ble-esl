@@ -24,6 +24,10 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import {
+  handleLayerListClick,
+  renderLayerRows,
+} from "./editor/inspector/layers.js";
+import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
   handleKey as handleCanvasKey,
@@ -1411,15 +1415,17 @@ export class BleEslDesigner extends HTMLElement {
         "",
       )}</select></label><button data-action="zoom-in" aria-label="${t(this.hass, "Zoom in")}">+</button><button data-action="create-automation" ${this.mode === "template" || sessionLocked || !tag?.writable ? "hidden" : ""}>${t(this.hass, "Create automation")}</button></div><div class="editor-content"><div class="status" role="status"></div>${
       tag
-        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="template-start" ${this.mode === "template" || sessionLocked || !this.tag ? "hidden" : ""}><h2>${t(this.hass, "Design gallery")}</h2><p class="template-hint">${t(this.hass, "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.")}</p><button class="primary wide" data-action="design-templates">${t(this.hass, "Browse design gallery")}</button></div><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Tile style parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this tile style.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div>${element ? this.elementActions() : ""}<div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${[
-            ...this.document.elements,
-          ]
-            .reverse()
-            .map(
-              (item) =>
-                `<div class="layer-row ${item.visible === false ? "hidden-layer" : ""}"><button class="layer ${item.id === this.selected ? "active" : ""}" data-select="${esc(item.id)}" aria-pressed="${item.id === this.selected}">${esc(this.layerLabel(item))}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="visible" aria-label="${item.visible === false ? t(this.hass, "Show") : t(this.hass, "Hide")} ${esc(this.layerLabel(item))}" aria-pressed="${item.visible === false}" title="${item.visible === false ? t(this.hass, "Hidden: click to show") : t(this.hass, "Hide")}">${toolIcon(item.visible === false ? "eyeoff" : "preview")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="up" aria-label="${esc(t(this.hass, "Move {label} forward", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Bring forward")}">${toolIcon("up")}</button><button class="icon-button" data-layer="${esc(item.id)}" data-layer-action="down" aria-label="${esc(t(this.hass, "Move {label} backward", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Send backward")}">${toolIcon("down")}</button><button class="icon-button danger" data-delete-layer="${esc(item.id)}" aria-label="${esc(t(this.hass, "Delete {label}", { label: this.layerLabel(item) }))}" title="${t(this.hass, "Delete")}">${icon("delete")}</button></div>`,
-            )
-            .join("")}</div></section></aside></div>`
+        ? `<div class="workspace ${this.libraryOpen ? "" : "library-closed"} ${this.inspectorOpen ? "" : "inspector-closed"}"><section id="library" class="library card"><div class="template-start" ${this.mode === "template" || sessionLocked || !this.tag ? "hidden" : ""}><h2>${t(this.hass, "Design gallery")}</h2><p class="template-hint">${t(this.hass, "Start from a ready-made design such as a date label, Wi-Fi QR code or weather. Adjust its options, add it as editable elements and optionally create the automation that keeps it up to date.")}</p><button class="primary wide" data-action="design-templates">${t(this.hass, "Browse design gallery")}</button></div><div class="panel-heading"><h2>${this.mode === "template" ? t(this.hass, "Tile style parts") : t(this.hass, "Entities")}</h2>${this.panelMenu("toggle-library", this.libraryOpen, "entities", "library")}</div>${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div></section><section class="card preview-card"><div class="panel-heading">${!this.libraryOpen ? this.panelMenu("toggle-library", false, "entities", "library") : ""}<h2>${tag.width} × ${tag.height} · ${esc(tag.colors)} <span class="muted">${this.preview ? t(this.hass, "Exact rendered preview") : t(this.hass, "Editing preview")}</span></h2>${!this.inspectorOpen ? this.panelMenu("toggle-inspector", false, "properties", "inspector") : ""}</div><div class="canvas-wrap"><div class="stage-space" style="width:${tag.width * this.zoom}px;height:${tag.height * this.zoom}px"><div class="stage" style="width:${tag.width}px;height:${tag.height}px;transform:scale(${this.zoom});background:${this.document.background}" tabindex="0" role="group" aria-label="${t(this.hass, "Display canvas")}" aria-describedby="canvas-tips"></div>${this.mode === "template" && !this.sampleEntity ? `<div class="empty-note">${t(this.hass, "Choose a sample sensor above to preview this tile style.")}</div>` : ""}</div></div><details class="tips" ${this.tipsOpen ? "open" : ""}><summary>${t(this.hass, "Keyboard & mouse tips")}</summary><p id="canvas-tips" class="muted">${t(this.hass, "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes")}</p></details></section><aside id="inspector" class="inspector side-column"><section class="card"><div class="panel-heading"><h2>${element ? t(this.hass, "Element properties") : t(this.hass, "Select an element")}</h2>${this.panelMenu("toggle-inspector", this.inspectorOpen, "properties", "inspector")}</div>${element ? this.elementActions() : ""}<div class="props">${element && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}</div></section><section class="card layer-card"><h2>${t(this.hass, "Layers")}</h2><div class="layers">${renderLayerRows(
+            {
+              elements: this.document.elements,
+              selected: this.selected,
+              layerLabel: (item) => this.layerLabel(item),
+              t: (key, values) => t(this.hass, key, values),
+              esc,
+              icon,
+              toolIcon,
+            },
+          )}</div></section></aside></div>`
         : ""
     }</div>`;
     const saveButton = this.shadowRoot.querySelector('[data-action="save"]');
@@ -2730,55 +2736,7 @@ export class BleEslDesigner extends HTMLElement {
       this.add(button.dataset.add);
       return;
     }
-    if (button.dataset.deleteLayer) {
-      const kept = this.selected;
-      this.selected = button.dataset.deleteLayer;
-      this.transform("delete");
-      if (
-        kept &&
-        kept !== button.dataset.deleteLayer &&
-        this.document.elements.some((el) => el.id === kept)
-      ) {
-        this.selected = kept;
-        this.render();
-      }
-      return;
-    }
-    if (button.dataset.layerAction) {
-      const elements = this.document.elements,
-        index = elements.findIndex((el) => el.id === button.dataset.layer),
-        item = elements[index];
-      if (!item) return;
-      const target =
-        button.dataset.layerAction === "up"
-          ? index + 1
-          : button.dataset.layerAction === "down"
-            ? index - 1
-            : index;
-      if (target < 0 || target >= elements.length) return;
-      this.checkpoint();
-      if (button.dataset.layerAction === "visible")
-        item.visible = item.visible === false;
-      else
-        [elements[index], elements[target]] = [
-          elements[target],
-          elements[index],
-        ];
-      this.edited();
-      // The panel was rebuilt: keep keyboard focus on the same control.
-      this.shadowRoot
-        .querySelector(
-          `[data-layer="${CSS.escape(item.id)}"][data-layer-action="${button.dataset.layerAction}"]`,
-        )
-        ?.focus();
-      return;
-    }
-    if (button.dataset.select) {
-      this.selected = button.dataset.select;
-      this.render();
-      this.focusElement();
-      return;
-    }
+    if (handleLayerListClick(this, button)) return;
     const action = button.dataset.action;
     if (action === "preview-variables") {
       this.editAutomationPreviewVariables();
