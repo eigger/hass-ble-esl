@@ -4,6 +4,7 @@ import {
   alignmentGuides,
   clampMoved,
   clampResized,
+  contextMenuPosition,
   createLayerRecords,
   elementShape,
   fitZoom,
@@ -100,6 +101,33 @@ test("selection overlay geometry shares visible bounds and pointer-scaled handle
       coarsePointer: false,
     }),
   ).toMatchObject({ left: 4, top: 3, width: 16, height: 12, handleSize: 20 });
+});
+
+test("context menu placement clamps pointer coordinates to viewport bounds", () => {
+  expect(
+    contextMenuPosition({
+      pointerX: 100,
+      pointerY: 80,
+      viewportWidth: 800,
+      viewportHeight: 600,
+    }),
+  ).toEqual({ left: 100, top: 80 });
+  expect(
+    contextMenuPosition({
+      pointerX: 790,
+      pointerY: 590,
+      viewportWidth: 800,
+      viewportHeight: 600,
+    }),
+  ).toEqual({ left: 572, top: 380 });
+  expect(
+    contextMenuPosition({
+      pointerX: 20,
+      pointerY: 15,
+      viewportWidth: 180,
+      viewportHeight: 160,
+    }),
+  ).toEqual({ left: -48, top: -60 });
 });
 
 test("render shape ignores frame changes and summarizes uploaded image data", () => {

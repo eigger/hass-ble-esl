@@ -99,6 +99,7 @@ import {
   adoptLayerRecords,
   clampMoved as clampMovedGeometry,
   clampResized as clampResizedGeometry,
+  contextMenuPosition as calculateContextMenuPosition,
   createLayerRecords,
   elementShape,
   fitZoom as calculateFitZoom,
@@ -2523,8 +2524,14 @@ export class BleEslDesigner extends HTMLElement {
     menu.className = "context-menu";
     menu.setAttribute("role", "menu");
     menu.setAttribute("aria-label", t(this.hass, "Element actions"));
-    menu.style.left = `${Math.min(event.clientX, window.innerWidth - 228)}px`;
-    menu.style.top = `${Math.min(event.clientY, window.innerHeight - 220)}px`;
+    const position = calculateContextMenuPosition({
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    });
+    menu.style.left = `${position.left}px`;
+    menu.style.top = `${position.top}px`;
     menu.innerHTML = renderElementActionMenu({
       t: (message) => t(this.hass, message),
       icon,
