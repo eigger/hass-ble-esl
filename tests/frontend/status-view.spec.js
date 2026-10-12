@@ -83,6 +83,7 @@ test("status view keeps routine, preview error, and operation toast semantics", 
       text: root.querySelector(".toast span").textContent,
       dismiss: !!root.querySelector(".toast [data-action=dismiss-status]"),
       inlineHidden: root.querySelector(".status").getAttribute("aria-hidden"),
+      inlineText: root.querySelector(".status").textContent,
     };
     clearTimeout(timer);
     root.remove();
@@ -104,5 +105,6 @@ test("status view keeps routine, preview error, and operation toast semantics", 
     text: "Display saved",
     dismiss: true,
     inlineHidden: "true",
+    inlineText: "",
   });
 });

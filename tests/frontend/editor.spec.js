@@ -1231,7 +1231,7 @@ test("saving keeps the selection box on the content", async ({ page }) => {
   const before = await selectionBox(page);
   // The server hands the document back with its defaults filled in.
   await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.locator(".status")).toContainText("Display saved");
+  await expect(page.locator(".toast")).toContainText("Display saved");
   expect(await selectionBox(page)).toEqual(before);
 });
 
@@ -1496,7 +1496,7 @@ test("saving an imagespec element preserves layer records and rendered preview w
 
   // Saving the document preserves the rendered imagespec layer and records without showing placeholder.
   await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.locator(".status")).toHaveText(/Display saved/);
+  await expect(page.locator(".toast")).toHaveText(/Display saved/);
   expect(
     await page.evaluate(
       () => Object.keys(window.panel.layerRecords || {}).length,
@@ -1895,7 +1895,7 @@ test("the inspector groups its fields and an error message can be dismissed", as
   expect(titles).toEqual(["Content", "Position & size (px)", "Style"]);
   await expect(page.locator("details.advanced")).toBeVisible();
   await page.evaluate(() => window.panel.report(new Error("Broken")));
-  await expect(page.locator(".status")).toContainText("Broken");
+  await expect(page.locator(".toast")).toContainText("Broken");
   await page.getByRole("button", { name: "Dismiss message" }).click();
   await expect(page.locator(".status.error")).toHaveCount(0);
   await page.locator('[data-property="x"]').fill("12");
