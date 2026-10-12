@@ -50,6 +50,7 @@ import {
 import {
   entityName as resolveEntityName,
   entityValue as resolveEntityValue,
+  firstNumericSensorEntity,
   filterEntities,
   listSupportedEntities,
   renderEntityPreview as renderEntityPreviewMarkup,
@@ -1460,11 +1461,7 @@ export class BleEslDesigner extends HTMLElement {
     this.stagger(element);
     if (type === "plot") {
       // The example names a sensor nobody has; start from one that records numbers.
-      const sensor = this.entities().find(
-        (state) =>
-          state.entity_id.startsWith("sensor.") &&
-          Number.isFinite(Number.parseFloat(state.state)),
-      );
+      const sensor = firstNumericSensorEntity(this.entities());
       if (sensor) element.spec.data[0].entity = sensor.entity_id;
     }
     this.document.elements.push(element);

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   entityName,
   entityValue,
+  firstNumericSensorEntity,
   filterEntities,
   listSupportedEntities,
   renderEntityPreview,
@@ -99,6 +100,17 @@ test("entity library includes supported domains and filters by ID or display nam
       (state) => state.entity_id,
     ),
   ).toEqual(["weather.home"]);
+});
+
+test("plot default sensor picks the first sensor with a numeric prefix", () => {
+  const states = [
+    { entity_id: "weather.home", state: "sunny" },
+    { entity_id: "sensor.mode", state: "warm" },
+    { entity_id: "sensor.first", state: "12 °C" },
+    { entity_id: "sensor.second", state: "21.5" },
+  ];
+  expect(firstNumericSensorEntity(states)).toBe(states[2]);
+  expect(firstNumericSensorEntity(states.slice(0, 2))).toBeUndefined();
 });
 
 test("entity preview escapes HA-provided values and keeps the add action contract", () => {
