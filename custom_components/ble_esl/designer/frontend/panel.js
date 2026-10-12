@@ -27,6 +27,7 @@ import {
   handleLayerListClick,
   renderLayerRows,
 } from "./editor/inspector/layers.js";
+import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -2079,70 +2080,12 @@ export class BleEslDesigner extends HTMLElement {
     );
   }
   specEditorSections(markup, position) {
-    const template = document.createElement("template");
-    template.innerHTML = markup;
-    const commonNames = [
-      "value",
-      "font",
-      "font_size",
-      "size",
-      "color",
-      "fill",
-      "outline",
-      "inner_radius",
-      "image",
-      "url",
-      "points",
-      "values",
-      "data",
-      "icon",
-      "align",
-      "text",
-      "source",
-      "columns",
-      "rows",
-    ];
-    const common = [];
-    const advanced = [];
-    const information = [];
-    for (const child of template.content.children) {
-      const control = child.matches("[data-spec]")
-        ? child
-        : child.querySelector("[data-spec]");
-      const requiredDescendant = child.querySelector(
-        '[data-spec][data-required="true"]',
-      );
-      if (child.matches(".spec-doc, .muted")) information.push(child.outerHTML);
-      else if (
-        (child.tagName === "LABEL" ||
-          (child.tagName === "FIELDSET" && requiredDescendant)) &&
-        control &&
-        (commonNames.includes(control.dataset.spec.split(".").at(-1)) ||
-          control.dataset.required === "true" ||
-          requiredDescendant)
-      )
-        common.push(child.outerHTML);
-      else advanced.push(child.outerHTML);
-    }
-    common.sort((left, right) => {
-      const rank = (markup) => {
-        const node = document.createElement("template");
-        node.innerHTML = markup;
-        const path =
-          node.content.querySelector("[data-spec]")?.dataset.spec || "";
-        const name = path.split(".").at(-1);
-        const index = commonNames.indexOf(name);
-        return index < 0 ? commonNames.length : index;
-      };
-      return rank(left) - rank(right);
+    return renderSpecEditorSections({
+      markup,
+      position,
+      translate: (message) => t(this.hass, message),
+      advancedOpen: this.specAdvancedOpen,
     });
-    const commonSection = common.length
-      ? `<h3 class="wide group-title">${t(this.hass, "Common properties")}</h3>${common.join("")}`
-      : "";
-    const advancedSection = advanced.length
-      ? `<details class="wide spec-advanced" ${this.specAdvancedOpen ? "open" : ""}><summary>${t(this.hass, "Advanced settings")}</summary><div class="props">${advanced.join("")}</div></details>`
-      : "";
-    return information.join("") + commonSection + position + advancedSection;
   }
   // Pickers created before HA defined the element keep their properties as
   // plain fields that can shadow the upgraded element's accessors. Swap in
