@@ -31,6 +31,7 @@ import {
   syncDocumentHistoryControls,
 } from "./editor/document-indicators.js";
 import { renderTagOptions } from "./editor/tag-selector.js";
+import { renderPanelToggle } from "./editor/workspace-controls.js";
 import {
   createLoadingSteps,
   renderLoadingContent,
@@ -1178,7 +1179,14 @@ export class BleEslDesigner extends HTMLElement {
     });
   }
   panelMenu(action, open, label, id) {
-    return `<button class="icon-button" data-action="${action}" aria-label="${t(this.hass, "Toggle {label} panel", { label: t(this.hass, label) })}" aria-controls="${id}" title="${open ? t(this.hass, "Hide") : t(this.hass, "Show")} ${t(this.hass, label)}" aria-expanded="${open}">${icon("menu")}</button>`;
+    return renderPanelToggle({
+      action,
+      open,
+      label,
+      id,
+      translate: (message, values) => t(this.hass, message, values),
+      iconMarkup: icon("menu"),
+    });
   }
   render() {
     if (this.loading) {
