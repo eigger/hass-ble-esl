@@ -36,6 +36,7 @@ import {
   workspaceStickyOffsets,
 } from "./editor/workspace-controls.js";
 import {
+  completeLoadingStep,
   createLoadingSteps,
   renderLoadingContent,
 } from "./editor/loading-view.js";
@@ -756,9 +757,7 @@ export class BleEslDesigner extends HTMLElement {
     }
   }
   stepDone(key) {
-    if (!this.loading || this.loading.error) return;
-    const step = this.loading.steps.find((item) => item.key === key);
-    if (step) step.done = true;
+    if (!completeLoadingStep(this.loading, key)) return;
     const node = this.shadowRoot.querySelector(".loading");
     if (node) node.innerHTML = this.loadingInner();
   }

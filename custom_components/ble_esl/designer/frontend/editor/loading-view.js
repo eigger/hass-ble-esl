@@ -10,6 +10,13 @@ export function createLoadingSteps() {
   return LOADING_STEPS.map(([key, label]) => ({ key, label, done: false }));
 }
 
+export function completeLoadingStep(loading, key) {
+  if (!loading || loading.error) return false;
+  const step = loading.steps.find((item) => item.key === key);
+  if (step) step.done = true;
+  return true;
+}
+
 export function renderLoadingContent(loading, { translate, escapeHtml }) {
   const { error, steps } = loading;
   if (error)
