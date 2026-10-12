@@ -38,6 +38,7 @@ import {
   handleKey as handleCanvasKey,
   handlePointer as handleCanvasPointer,
 } from "./editor/canvas/interactions.js";
+import { renderSensorContent } from "./editor/canvas/sensor-content.js";
 import {
   renderAlignmentGuides,
   renderLayerMarkup,
@@ -2073,8 +2074,9 @@ export class BleEslDesigner extends HTMLElement {
         key = state.entity_id.split(".")[0] + ":default";
     }
     const template = this.templates[key];
+    let templateValues;
     if (template && state) {
-      const values = {
+      templateValues = {
         name: label,
         state:
           element.decimals === undefined ||
@@ -2086,29 +2088,17 @@ export class BleEslDesigner extends HTMLElement {
           : "",
         icon: this.defaultIcon(state),
       };
-      const text = (value) =>
-        String(value).replace(
-          /{{(name|state|unit|icon)}}/g,
-          (_, name) => values[name],
-        );
-      return template.document.elements
-        .filter((child) => !child.state || child.state === state.state)
-        .map((child) => {
-          const sx = element.width / template.width,
-            sy = element.height / template.height;
-          const content =
-            child.type === "text"
-              ? esc(text(child.text)).replace(/\n/g, "<br>")
-              : child.type === "icon"
-                ? this.iconGlyph(
-                    text(child.icon),
-                    Math.min(child.width * sx, child.height * sy),
-                  )
-                : "";
-          return `<div style="position:absolute;left:${child.x * sx}px;top:${child.y * sy}px;width:${child.width * sx}px;height:${child.height * sy}px;overflow:hidden;color:${child.color};background:${["rectangle", "line"].includes(child.type) ? child.color : child.background};font-size:${child.font_size * Math.min(sx, sy)}px;text-align:${child.align}">${content}</div>`;
-        })
-        .join("");
+      return renderSensorContent({
+        element,
+        stateValue: state.state,
+        label,
+        template,
+        templateValues,
+        escapeHtml: esc,
+        iconGlyph: (name, size) => this.iconGlyph(name, size),
+      });
     }
+
     const weatherNumber =
       state?.entity_id.startsWith("weather.") &&
       element.weather_field &&
@@ -2122,14 +2112,24 @@ export class BleEslDesigner extends HTMLElement {
           ? " " + state.attributes[element.weather_field + "_unit"]
           : "")
       : this.value(element);
-    const icon = weatherNumber
+    const iconName = weatherNumber
       ? this.defaultIcon({
           entity_id: "sensor.weather",
           state: value,
           attributes: { device_class: element.weather_field },
         })
       : this.defaultIcon(state);
-    return `<div class="tile-icon">${this.iconGlyph(icon, 32)}</div><div class="tile-copy">${element.show_label ? `<div class="label">${esc(label)}</div>` : ""}<div class="value">${visual ? "" : esc(value)}</div></div>`;
+    return renderSensorContent({
+      element,
+      stateValue: state?.state,
+      label,
+      template: undefined,
+      iconName,
+      value,
+      visual,
+      escapeHtml: esc,
+      iconGlyph: (name, size) => this.iconGlyph(name, size),
+    });
   }
   drawStage() {
     const stage = this.shadowRoot.querySelector(".stage");

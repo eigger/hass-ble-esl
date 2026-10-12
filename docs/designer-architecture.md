@@ -20,6 +20,7 @@ responsibilities include:
 | `editor/preview.js` / `PreviewController` | Owns the 200 ms debounce, single in-flight request, one latest queued rerun, sequence invalidation, and stale-result/error suppression. It receives request, context validity, result, and error callbacks; it does not assign layers or render the stage. |
 | `editor/canvas/geometry.js` | Pure canvas calculations for renderer-dependent visible bounds, render-shape signatures, alignment guides, and move/resize frame clamping. Renderer records, layer bounds, tag dimensions, zoom, and snap tolerance are explicit inputs; it does not read the panel, DOM, or Home Assistant. |
 | `editor/canvas/view.js` | Builds accessible canvas layer, exact-preview, alignment-guide, and selection-overlay markup from explicit view values. The panel prepares layer content and renderer metadata, attaches the result, restores focus, updates HA icons, and retains preview/state ownership. |
+| `editor/canvas/sensor-content.js` | Renders sensor tile and template child markup from explicit display values. The panel resolves HA state, templates, weather values, numbers, and icons; this module does not query HA or own editor state. |
 | `editor/canvas/interactions.js` | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows. |
 | `editor/inspector/layers.js` | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel. |
 | `editor/inspector/spec-sections.js` | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits. |
@@ -207,6 +208,13 @@ alignment-guide markup, and selection-overlay markup into
 render freshness, attaches the composed markup, restores keyboard focus, updates
 Home Assistant icons, and mutates selection/preview state. The view module has
 no panel, DOM, geometry, or Home Assistant dependency.
+
+The sensor-content extraction moves template-child and sensor-tile markup into
+`editor/canvas/sensor-content.js`. The panel continues to resolve Home Assistant
+state, templates, sensor values, weather attributes, and icons, then passes the
+display values and rendering helpers explicitly. Template substitution,
+conditional child selection, scaling, and tile markup stay in the canvas view
+module; it does not own state or make Home Assistant lookups.
 
 The interaction extraction moves keyboard commands, pointer gestures, and
 inline text editing into `editor/canvas/interactions.js`. The panel retains its
