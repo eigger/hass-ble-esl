@@ -1,9 +1,67 @@
 import { test, expect } from "@playwright/test";
 import {
+  entityName,
+  entityValue,
   filterEntities,
   listSupportedEntities,
   renderEntityPreview,
 } from "../../custom_components/ble_esl/designer/frontend/editor/entity-library.js";
+
+test("entity names prefer HA formatting, then friendly name, then entity ID", () => {
+  const state = {
+    entity_id: "sensor.office",
+    attributes: { friendly_name: "Office temperature" },
+  };
+  expect(entityName(state, { formatEntityName: () => "HA name" })).toBe(
+    "HA name",
+  );
+  expect(entityName(state, {})).toBe("Office temperature");
+  expect(entityName({ entity_id: "sensor.office", attributes: {} }, {})).toBe(
+    "sensor.office",
+  );
+});
+
+test("entity values preserve text, unavailable, decimal, unit, and HA formatting rules", () => {
+  const hass = {
+    states: {
+      "sensor.temp": {
+        entity_id: "sensor.temp",
+        state: "20.56",
+        attributes: { unit_of_measurement: "°C" },
+      },
+      "sensor.unknown": {
+        entity_id: "sensor.unknown",
+        state: "unknown",
+        attributes: { unit_of_measurement: "°C" },
+      },
+    },
+    formatEntityState: (state) => `${state.state} formatted`,
+  };
+  expect(entityValue({ type: "text", text: "literal" }, hass, "N/A")).toBe(
+    "literal",
+  );
+  expect(entityValue({ entity_id: "sensor.missing" }, hass, "N/A")).toBe("N/A");
+  expect(
+    entityValue(
+      { entity_id: "sensor.temp", decimals: 1, show_unit: true },
+      hass,
+      "N/A",
+    ),
+  ).toBe("20.6 °C");
+  expect(
+    entityValue({ entity_id: "sensor.temp", show_unit: false }, hass, "N/A"),
+  ).toBe("20.56");
+  expect(
+    entityValue({ entity_id: "sensor.temp", show_unit: true }, hass, "N/A"),
+  ).toBe("20.56 formatted");
+  expect(
+    entityValue(
+      { entity_id: "sensor.unknown", decimals: 1, show_unit: true },
+      hass,
+      "N/A",
+    ),
+  ).toBe("unknown formatted");
+});
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

@@ -22,7 +22,7 @@ responsibilities include:
 | `editor/canvas/view.js`                                                                                           | Builds accessible canvas layer, exact-preview, alignment-guide, and selection-overlay markup from explicit view values. The panel prepares layer content and renderer metadata, attaches the result, restores focus, updates HA icons, and retains preview/state ownership.                                                |
 | `editor/canvas/sensor-content.js`                                                                                 | Renders sensor tile and template child markup from explicit display values. The panel resolves HA state, templates, weather values, numbers, and icons; this module does not query HA or own editor state.                                                                                                                 |
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
-| `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, and selected-entity preview markup. Home Assistant state, formatted names/values, localization, icon setup, and add actions remain in the panel.                                                                                                                  |
+| `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, entity display-name/value formatting rules, and selected-entity preview markup. Home Assistant state and formatting callbacks, localization, icon setup, and add actions remain at the panel boundary.                                                            |
 | `editor/entity-pickers.js`                                                                                        | Configures the Home Assistant entity pickers used by the library, element binding, and template sample selection, and adapts their selection events through callbacks. State lookup and document edits remain in the panel.                                                                                                |
 | `editor/entity-icons.js`                                                                                          | Resolves the designer's default icon for a Home Assistant entity from its explicit state record. The panel keeps a compatibility method; icon-catalog loading and rendering remain separate.                                                                                                                               |
 | `editor/template-controls.js`                                                                                     | Renders sensor-template controls and token-tool markup from explicit mode, values, choices, translation, and escaping inputs. The panel owns template editing state, sample selection, persistence, and document changes.                                                                                                  |
@@ -237,6 +237,13 @@ The panel supplies Home Assistant states, formatted names and values,
 translation, and HTML escaping, and continues to configure the state icon,
 picker events, and sensor-add action. This keeps entity-library rules
 independent of the panel and Home Assistant runtime.
+
+The entity display-formatting extraction moves entity-name fallback and sensor
+value formatting rules into `editor/entity-library.js`. The panel supplies the
+Home Assistant formatter and translated unavailable label, retaining its
+compatibility methods and state lookup boundary. Text elements, missing or
+unknown states, decimal precision, units, and Home Assistant formatted values
+keep their established behavior.
 
 The interaction extraction moves keyboard commands, pointer gestures, and
 inline text editing into `editor/canvas/interactions.js`. The panel retains its
