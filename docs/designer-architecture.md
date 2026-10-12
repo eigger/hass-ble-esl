@@ -24,6 +24,7 @@ responsibilities include:
 | `editor/inspector/spec-sections.js` | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits. |
 | `editor/inspector/optional-properties.js` | Renders optional style and advanced controls for legacy element types. Translation, HTML escaping, icon color picker, and supported dither methods are explicit inputs; document changes and history stay in the panel. |
 | `editor/inspector/text-alignment.js` | Renders font-size and accessible text-alignment controls for sensor and text elements. It receives translation and HTML-escaping helpers; `data-pick="align"` continues through the panel's existing edit and history path. |
+| `editor/inspector/weather-controls.js` | Renders weather sensor time and field selectors. It receives the selected sensor values and a translation callback; the panel decides when weather controls apply and continues to own property changes and history. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -227,4 +228,9 @@ The text-style extraction moves the font-size field and left/center/right
 alignment controls into `editor/inspector/text-alignment.js`. The renderer
 preserves the existing button labels, pressed state, and `data-pick="align"`
 event contract; the panel continues to apply changes and record history.
+
+The weather-sensor control extraction moves the “When” and “Show” selectors
+into `editor/inspector/weather-controls.js`. The panel still decides whether
+the selected entity is a weather sensor and owns all resulting document edits
+and history.
 
