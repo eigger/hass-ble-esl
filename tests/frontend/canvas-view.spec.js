@@ -3,6 +3,7 @@ import {
   renderAlignmentGuides,
   renderLayerImageMarkup,
   renderLayerMarkup,
+  resolveLayerLabel,
   renderSelectionMarkup,
   renderStageMarkup,
 } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/view.js";
@@ -18,6 +19,39 @@ const escape = (value) =>
   );
 const translate = (key, values) =>
   values ? key.replace("{corner}", values.corner) : key;
+
+test("layer labels preserve element-specific and Home Assistant fallbacks", () => {
+  const format = {
+    state: { entity_id: "sensor.room", state: "21" },
+    entityName: (state) => `Name: ${state.entity_id}`,
+    specLabel: (element) => `Spec: ${element.spec.type}`,
+  };
+  expect(
+    resolveLayerLabel({ type: "imagespec", spec: { type: "text" } }, format),
+  ).toBe("Spec: text");
+  expect(resolveLayerLabel({ type: "text", text: "" }, format)).toBe("text");
+  expect(resolveLayerLabel({ type: "icon", icon: "mdi:home" }, format)).toBe(
+    "mdi:home",
+  );
+  expect(
+    resolveLayerLabel(
+      { type: "sensor", label: "Room", entity_id: "sensor.room" },
+      format,
+    ),
+  ).toBe("Room");
+  expect(
+    resolveLayerLabel({ type: "sensor", entity_id: "sensor.room" }, format),
+  ).toBe("Name: sensor.room");
+  expect(
+    resolveLayerLabel(
+      { type: "input_boolean", entity_id: "input_boolean.lamp" },
+      {
+        ...format,
+        state: null,
+      },
+    ),
+  ).toBe("input_boolean.lamp");
+});
 
 test("layer image view aligns renderer ink with resized non-text frames", () => {
   const element = { type: "imagespec", width: 16, height: 12 };

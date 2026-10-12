@@ -1,6 +1,18 @@
 // Canvas markup stays separate from the panel's preview, state, and DOM work.
 // The panel prepares each layer's content and renderer metadata, then passes
 // those view values here for consistent accessible markup.
+export function resolveLayerLabel(element, { state, entityName, specLabel }) {
+  if (element.type === "imagespec") return specLabel(element);
+  if (element.type === "text") return element.text || element.type;
+  if (element.type === "icon") return element.icon || element.type;
+  // "text" is only a leftover default on the other kinds.
+  return (
+    element.label ||
+    (state ? entityName(state) : element.entity_id) ||
+    element.type.replaceAll("_", " ")
+  );
+}
+
 export function renderLayerImageMarkup({
   element,
   src,

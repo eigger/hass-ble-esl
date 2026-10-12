@@ -93,6 +93,7 @@ import { renderSensorContent } from "./editor/canvas/sensor-content.js";
 import {
   renderAlignmentGuides,
   renderLayerImageMarkup,
+  resolveLayerLabel,
   renderLayerMarkup,
   renderSelectionMarkup,
   renderStageMarkup,
@@ -1436,16 +1437,11 @@ export class BleEslDesigner extends HTMLElement {
     });
   }
   layerLabel(item) {
-    if (item.type === "imagespec") return specLabel(item);
-    if (item.type === "text") return item.text || item.type;
-    if (item.type === "icon") return item.icon || item.type;
-    // "text" is only a leftover default on the other kinds.
-    const state = this.hass?.states[item.entity_id];
-    return (
-      item.label ||
-      (state ? this.entityName(state) : item.entity_id) ||
-      item.type.replaceAll("_", " ")
-    );
+    return resolveLayerLabel(item, {
+      state: this.hass?.states[item.entity_id],
+      entityName: (state) => this.entityName(state),
+      specLabel,
+    });
   }
   specDefinition(element) {
     return this.specs?.types.find((type) => type.type === element.spec?.type);
