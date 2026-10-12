@@ -37,6 +37,14 @@ export function listSupportedEntities(states) {
   );
 }
 
+export function firstNumericSensorEntity(entities) {
+  return entities.find(
+    (state) =>
+      state.entity_id.startsWith("sensor.") &&
+      Number.isFinite(Number.parseFloat(state.state)),
+  );
+}
+
 export function filterEntities(entities, query, entityName) {
   const normalizedQuery = String(query || "").toLowerCase();
   return entities.filter((state) =>
