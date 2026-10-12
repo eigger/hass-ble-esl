@@ -22,6 +22,7 @@ import {
   jpegOrientation,
 } from "./model.js";
 import { EditorSession } from "./editor/session.js";
+import { PreviewController } from "./editor/preview.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -189,7 +190,6 @@ export class BleEslDesigner extends HTMLElement {
     this._automationPreviewVariables = null;
     this.specAdvancedOpen = false;
     this.busy = false;
-    this.previewSequence = 0;
     this.pendingUploads = new Set();
     this.drafts = new Map();
     this.libraryOpen = true;
@@ -200,6 +200,17 @@ export class BleEslDesigner extends HTMLElement {
     this.sampleEntity = "";
     this.mode = "display";
     this.templateKey = "output:numeric";
+    this.previewController = new PreviewController({
+      request: () => this.previewRequest(),
+      captureContext: () => this.documentSessionContext(),
+      isValid: (context, sequence) =>
+        sequence === this.previewController.sequence &&
+        this.isConnected &&
+        !this.gesture &&
+        this.isDocumentSessionCurrent(context),
+      onResult: (result) => this.applyPreviewResult(result),
+      onError: (error) => this.report(error, "preview"),
+    });
     this.shadowRoot.addEventListener("contextmenu", (event) =>
       this.contextMenu(event),
     );
@@ -380,8 +391,7 @@ export class BleEslDesigner extends HTMLElement {
     this.layerOffsets = {};
     this.layerRecords = [];
     this.templateEntities = [];
-    this.previewSequence++;
-    clearTimeout(this.previewTimer);
+    this.invalidatePreview();
     this.render();
     this.queuePreview();
     return true;
@@ -398,8 +408,7 @@ export class BleEslDesigner extends HTMLElement {
     this.busy = false;
     this.converting = false;
     this.convertRun = (this.convertRun || 0) + 1;
-    clearTimeout(this.previewTimer);
-    this.previewSequence++;
+    this.invalidatePreview();
     this.gestureCancel?.();
     this.editingTextId = null;
     this.typingProperty = null;
@@ -620,8 +629,7 @@ export class BleEslDesigner extends HTMLElement {
     if (this.ready) this.persistDrafts();
     clearTimeout(this.noticeTimer);
     window.removeEventListener("beforeunload", this.beforeUnload);
-    clearTimeout(this.previewTimer);
-    this.previewSequence++;
+    this.invalidatePreview();
     this.gestureCancel?.();
     this.gesture = null;
     this.resizeObserver.disconnect();
@@ -815,7 +823,7 @@ export class BleEslDesigner extends HTMLElement {
   edited(render = true) {
     this.session.markDirty();
     this.preview = null;
-    this.previewSequence++;
+    this.invalidatePreview();
     if (render) this.render();
     else {
       this.drawStage();
@@ -1212,8 +1220,7 @@ export class BleEslDesigner extends HTMLElement {
     this.layerOffsets = {};
     this.layerRecords = [];
     this.templateEntities = [];
-    this.previewSequence++;
-    clearTimeout(this.previewTimer);
+    this.invalidatePreview();
     this.render();
     if (this._automationSaveMode) this.queuePreview();
   }
@@ -3096,8 +3103,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   beginTextEdit() {
     if (this.element?.type !== "text") return;
-    clearTimeout(this.previewTimer);
-    this.previewSequence++;
+    this.invalidatePreview();
     this.preview = null;
     // The exact image would show the old text under the one being typed.
     this.shadowRoot.querySelector(".stage").classList.remove("exact-mode");
@@ -3668,8 +3674,7 @@ export class BleEslDesigner extends HTMLElement {
       if (!moved) {
         moved = true;
         this.preview = null;
-        this.previewSequence++;
-        clearTimeout(this.previewTimer);
+        this.invalidatePreview();
       }
       if (resize) {
         // The dragged edge stops at the label's edge; the other stays put.
@@ -3799,8 +3804,7 @@ export class BleEslDesigner extends HTMLElement {
         ) {
           moved = true;
           this.preview = null;
-          this.previewSequence++;
-          clearTimeout(this.previewTimer);
+          this.invalidatePreview();
         }
         pendingMove = move;
         if (gestureFrame) return;
@@ -3853,51 +3857,43 @@ export class BleEslDesigner extends HTMLElement {
       Math.round((event.clientY - rect.top) / this.zoom),
     );
   }
+  get previewTimer() {
+    // Compatibility for existing browser checks that cancel a pending render.
+    return this.previewController?.timer || null;
+  }
+  invalidatePreview() {
+    this.previewController.invalidate();
+  }
+  applyPreviewResult(result) {
+    this.preview = result.png;
+    this.layerPreviews = result.layers;
+    this.layerBounds = result.layers._bounds || {};
+    this.layerOffsets = result.layers._offsets || {};
+    this.layerRecords = this.renderRecords();
+    this.templateEntities = [
+      ...new Set(Object.values(result.layers._dependencies || {}).flat()),
+    ];
+    this.drawStage();
+    const title = this.shadowRoot
+      .querySelector(".canvas-wrap")
+      ?.previousElementSibling?.querySelector("span");
+    if (title) title.textContent = t(this.hass, "Exact rendered preview");
+    if (this.error && this.errorSource === "preview") {
+      // The render that failed has been fixed.
+      this.error = false;
+      this.errorSource = null;
+      this.status = "Exact rendered preview";
+      this.renderStatus();
+    }
+  }
   queuePreview() {
-    clearTimeout(this.previewTimer);
+    this.previewController.cancelScheduled();
     if (!this.tag || this.editingTextId) return;
-    const sequence = ++this.previewSequence;
-    this.previewTimer = setTimeout(async () => {
-      if (this.previewInFlight) {
-        this.previewQueued = true;
-        return;
-      }
-      this.previewInFlight = true;
-      try {
-        if (this.mode === "template" && !this.sampleEntity) return;
-        const result = await this.previewRequest();
-        if (sequence === this.previewSequence && !this.gesture) {
-          this.preview = result.png;
-          this.layerPreviews = result.layers;
-          this.layerBounds = result.layers._bounds || {};
-          this.layerOffsets = result.layers._offsets || {};
-          this.layerRecords = this.renderRecords();
-          this.templateEntities = [
-            ...new Set(Object.values(result.layers._dependencies || {}).flat()),
-          ];
-          this.drawStage();
-          const title = this.shadowRoot
-            .querySelector(".canvas-wrap")
-            ?.previousElementSibling?.querySelector("span");
-          if (title) title.textContent = t(this.hass, "Exact rendered preview");
-          if (this.error && this.errorSource === "preview") {
-            // The render that failed has been fixed.
-            this.error = false;
-            this.errorSource = null;
-            this.status = "Exact rendered preview";
-            this.renderStatus();
-          }
-        }
-      } catch (error) {
-        if (sequence === this.previewSequence) this.report(error, "preview");
-      } finally {
-        this.previewInFlight = false;
-        if (this.previewQueued) {
-          this.previewQueued = false;
-          this.queuePreview();
-        }
-      }
-    }, 200);
+    if (this.mode === "template" && !this.sampleEntity) {
+      this.invalidatePreview();
+      return;
+    }
+    this.previewController.schedule();
   }
 }
 // HA loads ha-entity-picker lazily. Opening this panel directly (or reloading

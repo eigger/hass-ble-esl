@@ -15,8 +15,9 @@ responsibilities include:
 
 | Current owner | Responsibilities |
 |---|---|
-| `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; preview scheduling; import/export, save and send; Home Assistant API calls. It exposes compatibility accessors for active session state. |
+| `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; import/export, save and send; Home Assistant API calls. It applies preview results through an explicit callback and exposes compatibility accessors for active session state. |
 | `editor/session.js` / `EditorSession` | Owns the active document, selected element, undo/redo history, dirty flag, history limit, and capture/restore/reset transitions. |
+| `editor/preview.js` / `PreviewController` | Owns the 200 ms debounce, single in-flight request, one latest queued rerun, sequence invalidation, and stale-result/error suppression. It receives request, context validity, result, and error callbacks; it does not assign layers or render the stage. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -24,7 +25,7 @@ responsibilities include:
 | `i18n.js`, `locales/` | Home Assistant language selection, translations, and localized rerender support. |
 | `manager.js` | Dashboard, device discovery/status presentation, filtering/sorting, editor entry/exit, automation association and editing. It embeds `ble-esl-designer` and owns automation configuration matching and saving. |
 
-`panel.js` is 3,937 lines and `manager.js` is 1,256 lines at this baseline.
+`panel.js` is 3,912 lines and `manager.js` is 1,256 lines at this phase.
 Line count is context, not a success metric: boundaries should follow ownership
 and change flow, not arbitrary file-size targets.
 
@@ -36,9 +37,14 @@ undo/redo stacks, and dirty flag. `BleEslDesigner` exposes `document`,
 delegate to the session, so existing manager and host call sites remain valid
 while callers migrate. Session methods own reset, capture/restore, history
 checkpoints, undo/redo steps, and dirty transitions. The panel still owns
-per-tag drafts, template drafts, mode, zoom, and preview state. The manager
-does not own ordinary display editing state; it asks the editor to load a tag
-and reads its draft indicator.
+per-tag drafts, template drafts, mode, zoom, and rendered preview state. The
+preview controller owns scheduling state and checks a captured document
+session context plus its sequence before forwarding results or errors. The
+panel retains `previewRequest()` as the replaceable request seam and
+`queuePreview()` as a compatibility scheduling method. A pending timer is
+also exposed through the read-only `previewTimer` compatibility accessor.
+The manager does not own ordinary display editing state; it asks the editor
+to load a tag and reads its draft indicator.
 
 Automation editing is an intentional cross-component exception. `manager.js`
 captures the editor's return state, owns the automation source/configuration
@@ -124,11 +130,14 @@ frontend specs after runtime changes:
   cancellation through `pointercancel`, window blur, or explicit gesture
   cancellation restores the pre-gesture frame. Text editing shortcuts and
   keyboard nudge/delete/undo remain available.
-- **Preview freshness:** preview is debounced (currently 200 ms), requests do
-  not pile up without bound, and only the newest relevant response updates the
-  stage. A late response cannot overwrite a newer document/session or a live
-  gesture. Preview-parameter changes invalidate the applicable preview cache
-  without becoming document edits.
+- **Preview freshness:** preview is debounced (currently 200 ms), with one
+  in-flight request and at most one queued rerun that reads the latest editor
+  state. Sequence invalidation and captured session checks ensure only the
+  newest relevant response or error reaches the panel. A late response cannot
+  overwrite a newer document/session or a live gesture. The panel callback
+  assigns layer results and draws the stage. Removing a template sample
+  invalidates pending and queued preview work. Preview-parameter changes
+  invalidate the applicable preview cache without becoming document edits.
 - **Exact and interactive canvas:** exact renderer output and editable element
   overlays stay aligned; editing remains usable while a fresh renderer result
   is pending. Fit/zoom, mobile layout, and manager-embedded layout remain
@@ -162,8 +171,9 @@ change does not run them.
 4. Keep HA transport, tag capabilities, and automation configuration writes
    outside reusable editor views. Preserve the manager's guarded automation
    matching and write boundary.
-5. Extract preview scheduling with its sequence/session invalidation rules
-   intact. Keep gesture-time rendering and exact preview behavior coordinated.
+5. Preview scheduling is extracted into `editor/preview.js`. Keep its callback
+   contract, sequence/session invalidation rules, and gesture-time rendering
+   coordinated as the remaining editor views are extracted.
 6. Split by cohesive responsibility and actual dependency direction. Do not
    create a file or custom element solely to meet a line-count target.
 7. Keep each migration step reviewable and reversible; update this baseline
