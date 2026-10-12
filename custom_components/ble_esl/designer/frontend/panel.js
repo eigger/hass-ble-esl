@@ -28,6 +28,7 @@ import {
   renderLayerRows,
 } from "./editor/inspector/layers.js";
 import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
+import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -1834,90 +1835,12 @@ export class BleEslDesigner extends HTMLElement {
   // Optional settings of the older kinds: left blank they keep imagespec's
   // default, so a design that never sets one draws as before.
   extraProperties(element) {
-    const type = element.type,
-      text = ["sensor", "text"].includes(type),
-      shape = shapeTypes.includes(type) && type !== "line";
-    const choice = (key, label, options, fallback = "default") =>
-      `<label>${label}<select data-property="${key}" aria-label="${label}"><option value="">${t(this.hass, fallback)}</option>${options.map((value) => `<option value="${value}" ${element[key] === value ? "selected" : ""}>${t(this.hass, value.replaceAll("_", " "))}</option>`).join("")}</select></label>`;
-    const number = (key, label, min, max, placeholder = "") =>
-      `<label>${label}<input data-property="${key}" type="number" step="1" min="${min}" max="${max}" placeholder="${placeholder}" value="${esc(element[key] ?? "")}"></label>`;
-    const flag = (key, label, fallback) =>
-      `<label class="wide check"><input type="checkbox" data-property="${key}" ${(element[key] ?? fallback) ? "checked" : ""}>${label}</label>`;
-    const methods = (
-      this.specs?.dither_methods?.length
-        ? this.specs.dither_methods
-        : ["none", "floyd"]
-    ).filter((method) => method !== "none");
-    const dither =
-      element.dither === true
-        ? "floyd"
-        : element.dither === false
-          ? "none"
-          : (element.dither ?? "");
-    let style = "",
-      advanced = "";
-    if (text)
-      advanced +=
-        choice("valign", t(this.hass, "Vertical align"), [
-          "top",
-          "middle",
-          "bottom",
-        ]) +
-        choice(
-          "fit",
-          t(this.hass, "Fit"),
-          ["shrink", "ellipsis", "shrink_ellipsis"],
-          "default (shrink ellipsis)",
-        ) +
-        number(
-          "max_lines",
-          t(this.hass, "Max lines"),
-          1,
-          20,
-          type === "text" ? "3" : "1",
-        ) +
-        number("min_font_size", t(this.hass, "Min font size"), 1, 200, "8") +
-        number("padding", t(this.hass, "Padding"), 0, 100, "0") +
-        number("line_spacing", t(this.hass, "Line spacing"), 0, 100, "2") +
-        `<label class="wide">${t(this.hass, "Font file")}<input data-property="font" placeholder="${t(this.hass, "Default font")}" value="${esc(element.font ?? "")}"></label>`;
-    if (shape)
-      style +=
-        flag("filled", t(this.hass, "Filled"), true) +
-        number("line_width", t(this.hass, "Outline width"), 1, 20, "1") +
-        (type === "rounded_rectangle"
-          ? number("radius", t(this.hass, "Corner radius"), 0, 200, "auto")
-          : "");
-    if (type === "icon")
-      advanced +=
-        number("stroke_width", t(this.hass, "Outline width"), 0, 20, "0") +
-        this.colorPicker(
-          "stroke_fill",
-          element.stroke_fill ?? "white",
-          t(this.hass, "Outline colour"),
-        );
-    if (type === "image")
-      style +=
-        number("rotate", t(this.hass, "Rotate (°)"), -360, 360, "0") +
-        flag("circle", t(this.hass, "Crop to circle"), false);
-    if (type === "progress_bar")
-      style +=
-        choice(
-          "direction",
-          t(this.hass, "Direction"),
-          ["right", "left", "up", "down"],
-          "default (right)",
-        ) +
-        number("radius", t(this.hass, "Corner radius"), 0, 200, "0") +
-        number("line_width", t(this.hass, "Outline width"), 1, 20, "1") +
-        flag("show_percentage", t(this.hass, "Show percentage"), false);
-    if (type === "gauge")
-      style +=
-        number("thickness", t(this.hass, "Arc thickness"), 1, 100, "8") +
-        flag("show_value", t(this.hass, "Show value"), true);
-    if (["progress_bar", "gauge"].includes(type))
-      advanced += `<label class="wide">${t(this.hass, "Font file")}<input data-property="font" placeholder="${t(this.hass, "Default font")}" value="${esc(element.font ?? "")}"></label>`;
-    advanced += `<label class="wide">${t(this.hass, "Dither")}<select data-property="dither" aria-label="${t(this.hass, "Dither")}"><option value="">${type === "image" ? t(this.hass, "default (floyd)") : t(this.hass, "off (default)")}</option><option value="none" ${dither === "none" ? "selected" : ""}>${t(this.hass, "none")}</option>${methods.map((method) => `<option value="${esc(method)}" ${dither === method ? "selected" : ""}>${esc(method)}</option>`).join("")}</select></label>`;
-    return { style, advanced };
+    return renderOptionalProperties(element, {
+      translate: (message) => t(this.hass, message),
+      escapeHtml: esc,
+      colorPicker: (key, value, label) => this.colorPicker(key, value, label),
+      ditherMethods: this.specs?.dither_methods,
+    });
   }
   properties(element) {
     if (!element)
