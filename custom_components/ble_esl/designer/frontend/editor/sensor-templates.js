@@ -38,6 +38,10 @@ export function templateTypes(templates, drafts) {
   ];
 }
 
+export function substituteTemplateTokens(text, values) {
+  return text.replace(/{{(name|state|unit|icon)}}/g, (_, key) => values[key]);
+}
+
 export function createDefaultSensorTemplate({ emptyDocument, newElement }) {
   const tag = { width: 140, height: 60, colors: "BWRY" };
   const make = (type, fields) => ({ ...newElement(type, tag), ...fields });

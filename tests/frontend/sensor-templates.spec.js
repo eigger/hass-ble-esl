@@ -3,6 +3,7 @@ import {
   createDefaultSensorTemplate,
   outputType,
   sensorType,
+  substituteTemplateTokens,
   templateCompatibility,
   templateTypes,
 } from "../../custom_components/ble_esl/designer/frontend/editor/sensor-templates.js";
@@ -73,4 +74,21 @@ test("default sensor template preserves its established element layout", () => {
       element.type === "icon" ? element.icon : element.text,
     ),
   ).toEqual(["{{icon}}", "{{name}}", "{{state}} {{unit}}"]);
+});
+
+test("template token substitution replaces supported tokens and leaves other text alone", () => {
+  expect(
+    substituteTemplateTokens(
+      "{{name}}: {{state}} {{unit}} {{icon}} / {{unknown}}",
+      {
+        name: "Kitchen",
+        state: "21.5",
+        unit: "°C",
+        icon: "mdi:home",
+      },
+    ),
+  ).toBe("Kitchen: 21.5 °C mdi:home / {{unknown}}");
+  expect(
+    substituteTemplateTokens("{{state}} / {{state}}", { state: "on" }),
+  ).toBe("on / on");
 });
