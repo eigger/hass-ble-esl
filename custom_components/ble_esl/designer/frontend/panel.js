@@ -23,6 +23,14 @@ import {
 } from "./model.js";
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
+import {
+  alignmentGuides as calculateAlignmentGuides,
+  clampMoved as clampMovedGeometry,
+  clampResized as clampResizedGeometry,
+  elementShape,
+  moveBound as isMoveBound,
+  visibleBounds as calculateVisibleBounds,
+} from "./editor/canvas/geometry.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -2397,44 +2405,16 @@ export class BleEslDesigner extends HTMLElement {
       .join("");
   }
   alignmentGuides(element, resize) {
-    const boundsFor = (item) => {
-        const bounds = this.visibleBounds(item);
-        return bounds || [0, 0, item.width, item.height];
-      },
-      [left, top, right, bottom] = boundsFor(element),
-      xAnchors = resize
-        ? [resize.endsWith("w") ? left : right]
-        : [left, (left + right) / 2, right],
-      yAnchors = resize
-        ? [resize.startsWith("n") ? top : bottom]
-        : [top, (top + bottom) / 2, bottom],
-      xTargets = [0, this.tag.width / 2, this.tag.width],
-      yTargets = [0, this.tag.height / 2, this.tag.height];
-    for (const peer of this.document.elements) {
-      if (peer.id === element.id || peer.visible === false) continue;
-      const bounds = this.visibleBounds(peer);
-      if (bounds === null) continue;
-      const [x1, y1, x2, y2] = bounds || [0, 0, peer.width, peer.height];
-      xTargets.push(peer.x + x1, peer.x + (x1 + x2) / 2, peer.x + x2);
-      yTargets.push(peer.y + y1, peer.y + (y1 + y2) / 2, peer.y + y2);
-    }
-    const nearest = (axis, anchors, targets, origin) => {
-      let result;
-      for (const anchor of anchors)
-        for (const position of targets) {
-          const distance = Math.abs(position - (origin + anchor));
-          if (
-            distance <= 6 / this.zoom &&
-            (!result || distance < result.distance)
-          )
-            result = { axis, position, distance };
-        }
-      return result;
-    };
-    return [
-      nearest("x", xAnchors, xTargets, element.x),
-      nearest("y", yAnchors, yTargets, element.y),
-    ].filter(Boolean);
+    return calculateAlignmentGuides({
+      element,
+      elements: this.document.elements,
+      tag: this.tag,
+      layerRecords: this.layerRecords,
+      layerBounds: this.layerBounds,
+      zoom: this.zoom,
+      resize,
+      snapTolerance: 6,
+    });
   }
   updateSelectionOverlay() {
     const overlay = this.shadowRoot.querySelector(".selection-box"),
@@ -2481,21 +2461,7 @@ export class BleEslDesigner extends HTMLElement {
   // size, text...) leaves them describing the old content, so the element's
   // frame stands in until the new preview arrives.
   shape(element) {
-    // An uploaded image is a data URL of megabytes: stand in for it.
-    const { image, ...rest } = element;
-    return JSON.stringify({
-      ...rest,
-      image: image && [
-        image.length,
-        image.slice(0, 40),
-        image.slice(image.length / 2 - 20, image.length / 2 + 20),
-        image.slice(-40),
-      ],
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-    });
+    return elementShape(element);
   }
   // The server returns the saved document with its defaults filled in. That
   // changes nothing on screen, so what the last render still describes stays.
@@ -2528,23 +2494,10 @@ export class BleEslDesigner extends HTMLElement {
   }
   // undefined: not known, use the frame. null: rendered with nothing visible.
   visibleBounds(element) {
-    const record = this.layerRecords?.[element.id];
-    // A text box is its frame: the text fits into it, so its box must not
-    // follow the ink and jump back when the frame is resized.
-    // An image is its frame as well: "contain" leaves margins around the
-    // picture, and a box on the ink would not match what x/y/size move.
-    if (element.type === "text" || element.type === "image") return undefined;
-    if (!record || record.shape !== this.shape(element)) return undefined;
-    const dw = element.width - record.size[0],
-      dh = element.height - record.size[1],
-      bounds = this.layerBounds[element.id];
-    if (!bounds) return dw || dh ? undefined : null;
-    return [
-      bounds[0],
-      bounds[1],
-      Math.max(bounds[0] + 1, bounds[2] + dw),
-      Math.max(bounds[1] + 1, bounds[3] + dh),
-    ];
+    return calculateVisibleBounds(element, {
+      record: this.layerRecords?.[element.id],
+      layerBounds: this.layerBounds,
+    });
   }
   // Clamp a moved element so what it draws, not just its frame, stays on the
   // label. With an anchor other than "lt" ("mm", "rm", ...) the ink sits at an
@@ -2553,45 +2506,28 @@ export class BleEslDesigner extends HTMLElement {
   // `bound`: the element was on the label before, so one hanging off it stays put.
   // `visible` is the drawn area relative to the frame, measured before the move.
   clampMoved(element, bound, visible) {
-    if (bound && visible) {
-      const fit = (pos, lo, hi, limit) =>
-        Math.min(Math.max(pos, -lo), limit - hi);
-      element.x = fit(element.x, visible[0], visible[2], this.tag.width);
-      element.y = fit(element.y, visible[1], visible[3], this.tag.height);
-      return clampBox(element, this.tag, false);
-    }
-    return clampBox(element, this.tag, bound);
+    Object.assign(
+      element,
+      clampMovedGeometry(element, this.tag, bound, visible),
+    );
+    return element;
   }
   // Whether a move keeps the element on the label. Its frame may hang off the
   // label after an earlier clamped move while what it draws is still on it:
   // that one is bound as well, or its next move would not be clamped at all.
   moveBound(element, visible) {
-    if (onLabel(element, this.tag)) return true;
-    return (
-      !!visible &&
-      element.x + visible[0] >= 0 &&
-      element.y + visible[1] >= 0 &&
-      element.x + visible[2] <= this.tag.width &&
-      element.y + visible[3] <= this.tag.height
-    );
+    return isMoveBound(element, this.tag, visible);
   }
   // After a resize: trim the frame so the grown content stays on the label.
   clampResized(element) {
-    for (const [pos, size, lo, hi, limit] of [
-      ["x", "width", 0, 2, this.tag.width],
-      ["y", "height", 1, 3, this.tag.height],
-    ]) {
-      let visible = this.visibleBounds(element);
-      if (!visible) return;
-      const low = -(element[pos] + visible[lo]);
-      if (low > 0) {
-        element[pos] += low;
-        element[size] = Math.max(1, element[size] - low);
-        visible = this.visibleBounds(element);
-      }
-      const over = element[pos] + visible[hi] - limit;
-      if (over > 0) element[size] = Math.max(1, element[size] - over);
-    }
+    Object.assign(
+      element,
+      clampResizedGeometry(element, {
+        tag: this.tag,
+        layerRecords: this.layerRecords,
+        layerBounds: this.layerBounds,
+      }),
+    );
   }
   // A new element lands beside the ones already there, not exactly on them.
   stagger(element) {

@@ -18,6 +18,7 @@ responsibilities include:
 | `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; import/export, save and send; Home Assistant API calls. It applies preview results through an explicit callback and exposes compatibility accessors for active session state. |
 | `editor/session.js` / `EditorSession` | Owns the active document, selected element, undo/redo history, dirty flag, history limit, and capture/restore/reset transitions. |
 | `editor/preview.js` / `PreviewController` | Owns the 200 ms debounce, single in-flight request, one latest queued rerun, sequence invalidation, and stale-result/error suppression. It receives request, context validity, result, and error callbacks; it does not assign layers or render the stage. |
+| `editor/canvas/geometry.js` | Pure canvas calculations for renderer-dependent visible bounds, render-shape signatures, alignment guides, and move/resize frame clamping. Renderer records, layer bounds, tag dimensions, zoom, and snap tolerance are explicit inputs; it does not read the panel, DOM, or Home Assistant. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -184,4 +185,11 @@ The first runtime extraction moves imported-document normalization into
 remains as a compatibility delegate, and the operation receives document
 defaults, cloning, and ID generation explicitly. Imported document fields,
 legacy element defaults, and missing-ID generation remain unchanged.
+
+The canvas geometry extraction moves renderer-aware shape signatures, visible
+bounds, alignment guide calculations, and move/resize frame clamping into
+`editor/canvas/geometry.js`. The panel keeps compatibility methods and applies
+returned frame copies to its active document, preserving history ownership.
+Geometry receives layer records and renderer bounds explicitly; pointer
+gestures, canvas markup, and element staggering remain panel responsibilities.
 
