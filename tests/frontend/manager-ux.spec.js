@@ -72,6 +72,14 @@ test("one linked automation opens from the connected list and names its save des
   await page.evaluate(() => {
     const manager = window.manager;
     const data = manager.automationCache.get("demo-writable");
+    const callWS = manager.hass.callWS;
+    manager.hass = {
+      ...manager.hass,
+      callWS: async (message) =>
+        message.action === "automations"
+          ? { ...data, linked: [data.linked[0]] }
+          : callWS(message),
+    };
     manager.automationCache.set("demo-writable", {
       ...data,
       linked: [data.linked[0]],
