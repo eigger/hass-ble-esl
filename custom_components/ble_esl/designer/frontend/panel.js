@@ -4,12 +4,8 @@ import "./yaml-dialog.js";
 import "./import-dialog.js";
 import "./template-dialog.js";
 import "./preview-parameters-dialog.js";
-import {
-  applySpecInput,
-  newSpecElement,
-  specEditorHtml,
-  specLabel,
-} from "./spec-editor.js";
+import { newSpecElement, specEditorHtml, specLabel } from "./spec-editor.js";
+import { applySpecInput } from "./editor/inspector/spec-input.js";
 import { normalizeImportedDocument } from "./editor/document-operations.js";
 import { handleImageUpload } from "./editor/image-upload.js";
 import { renderColorPicker } from "./editor/color-picker.js";
