@@ -17,6 +17,7 @@ responsibilities include:
 |---|---|
 | `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and document; selection, undo/redo, dirty state and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; preview scheduling; import/export, save and send; Home Assistant API calls. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
+| `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
 | `component-editor.js`, `yaml-dialog.js`, `import-dialog.js`, `template-dialog.js`, `preview-parameters-dialog.js` | Focused custom elements for component configuration and modal workflows. The panel supplies their editor context and handles their results. |
 | `i18n.js`, `locales/` | Home Assistant language selection, translations, and localized rerender support. |
@@ -163,4 +164,10 @@ change does not run them.
    create a file or custom element solely to meet a line-count target.
 7. Keep each migration step reviewable and reversible; update this baseline
    when observed contracts change.
+
+The first runtime extraction moves imported-document normalization into
+`editor/document-operations.js`. `BleEslDesigner.normalizeImportedDocument()`
+remains as a compatibility delegate, and the operation receives document
+defaults, cloning, and ID generation explicitly. Imported document fields,
+legacy element defaults, and missing-ID generation remain unchanged.
 

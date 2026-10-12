@@ -10,6 +10,7 @@ import {
   specEditorHtml,
   specLabel,
 } from "./spec-editor.js";
+import { normalizeImportedDocument } from "./editor/document-operations.js";
 import {
   clone,
   createId,
@@ -3482,47 +3483,11 @@ export class BleEslDesigner extends HTMLElement {
     }
   }
   normalizeImportedDocument(document) {
-    const normalized = {
-      ...emptyDocument(),
-      ...document,
-      elements: Array.isArray(document?.elements) ? document.elements : [],
-    };
-    // Mirror the server schema defaults so preview, imported display and the
-    // next save all render the same minimal-but-valid document identically.
-    const defaults = {
-      spec: {},
-      color: "black",
-      background: "transparent",
-      visible: true,
-      font_size: 24,
-      text: "Text",
-      image: "",
-      image_fit: "contain",
-      icon: "{{icon}}",
-      state: "",
-      state_icons: {},
-      template: "auto",
-      weather_when: "now",
-      weather_field: "condition",
-      entity_id: "",
-      field_templates: {},
-      data_field: "",
-      attribute: "",
-      value: 0,
-      min_value: 0,
-      max_value: 100,
-      icon_rules: [],
-      label: "",
-      show_label: true,
-      show_unit: true,
-      align: "left",
-    };
-    normalized.elements = normalized.elements.map((element) => ({
-      ...clone(defaults),
-      ...element,
-      id: element.id || createId(),
-    }));
-    return normalized;
+    return normalizeImportedDocument(document, {
+      emptyDocument,
+      clone,
+      createId,
+    });
   }
 
   key(event) {
