@@ -22,6 +22,53 @@ test.beforeEach(async ({ page }) => {
     window.panel.render();
   });
 });
+test("pointer cancellation restores the frame without creating an undo step", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  const before = await page.evaluate(() => ({
+    x: window.panel.element.x,
+    y: window.panel.element.y,
+    undoCount: window.panel.undoStack.length,
+  }));
+  await page.evaluate(() => {
+    window.__designerPointerId = null;
+    window.addEventListener(
+      "pointerdown",
+      (event) => (window.__designerPointerId = event.pointerId),
+      { capture: true, once: true },
+    );
+  });
+  const box = await page.locator(".el.selected").boundingBox();
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 50, y + 30);
+  await expect
+    .poll(() => page.evaluate(() => window.panel.element.x))
+    .not.toBe(before.x);
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new PointerEvent("pointercancel", {
+        pointerId: window.__designerPointerId,
+        bubbles: true,
+      }),
+    ),
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        x: window.panel.element.x,
+        y: window.panel.element.y,
+        undoCount: window.panel.undoStack.length,
+        gesture: !!window.panel.gesture,
+      })),
+    )
+    .toEqual({ ...before, gesture: false });
+  await page.mouse.up();
+});
+
 test("sensor defaults, keyboard, dragging, resize, undo, save and preview", async ({
   page,
 }) => {
