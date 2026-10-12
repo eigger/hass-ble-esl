@@ -140,7 +140,7 @@ export default {
   "ESL Manager": "ESL 매니저",
   "Edit alias": "별칭 편집",
   "Edit component": "컴포넌트 편집",
-  "Edit tag design": "ESL 디자인 편집",
+  "Edit tag design": "디자인 편집",
   "Edit display text": "화면 텍스트 편집",
   "Edit sensor": "센서 편집",
   "Editing preview": "편집 미리보기",

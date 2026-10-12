@@ -219,6 +219,7 @@ const managedStyle = `
 .editor-content{display:contents}
 :host([managed]){display:flex;flex-direction:column;min-height:0;overflow:hidden}
 :host([managed]) header,:host([managed]) .toolbar,:host([managed]) .template-controls{position:static;flex:none}
+:host([managed]) ::slotted(.editor-nav){display:flex;flex:none}
 :host([managed]) .editor-content{display:block;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 @media(max-width:650px){:host([managed]) header{flex-wrap:nowrap;min-height:48px;padding:0 12px}:host([managed]) header ha-menu-button,:host([managed]) header h1,:host([managed]) header .version{display:none}:host([managed]) .tabs{margin-left:0;flex:1}:host([managed]) .tabs button{flex:1}}
 `;
@@ -786,7 +787,7 @@ export class BleEslDesigner extends HTMLElement {
     });
   }
   renderLoading() {
-    this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
+    this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<slot name="managed-navigation"></slot><div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;
     const menu = this.shadowRoot.querySelector("ha-menu-button");
     if (menu) {
       menu.hass = this.hass;
@@ -1291,7 +1292,7 @@ export class BleEslDesigner extends HTMLElement {
           }),
         })
       : "";
-    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} ${TOOLBAR_STYLE} ${WORKSPACE_STYLE} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}${this.templateControls()}${renderToolbar(
+    this.shadowRoot.innerHTML = `<style>${style} .el.selected{outline:none!important;border:none!important} ${TOOLBAR_STYLE} ${WORKSPACE_STYLE} [hidden]{display:none!important} .spec-group{border:1px solid var(--divider-color,#cbd3de);border-radius:6px;margin:0;padding:6px 8px} .spec-group legend{font-size:12px} .spec-doc{display:block;font-size:12px} .props textarea[data-json]{font:11px ui-monospace,Menlo,Consolas,monospace} [aria-invalid="true"]{border-color:#c33!important} .field-error{display:block;color:#c33;font-size:12px;margin-top:2px} .group-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--secondary-text-color,#637083);margin:12px 0 0;font-weight:600} .advanced summary{cursor:pointer;margin:10px 0 6px;color:var(--secondary-text-color,#637083)} .swatch{box-shadow:0 0 0 1px var(--secondary-text-color,#888)} .dirty-badge{font-size:12px;color:#b45309;white-space:nowrap} .status.error{display:flex;align-items:center;gap:8px;color:#c33} .status button{padding:0 8px;line-height:20px} .hint{font-size:12px;line-height:1.4;color:var(--secondary-text-color,#637083);margin:4px 0 8px} .layer-row.hidden-layer .layer{opacity:.5;text-decoration:line-through} .el.hidden-el{opacity:.3} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<slot name="managed-navigation"></slot>${this.templateControls()}${renderToolbar(
       {
         tag,
         mode: this.mode,
