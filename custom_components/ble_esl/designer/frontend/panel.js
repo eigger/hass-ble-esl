@@ -25,6 +25,10 @@ import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import { renderStatusView } from "./editor/status-view.js";
 import {
+  createLoadingSteps,
+  renderLoadingContent,
+} from "./editor/loading-view.js";
+import {
   renderIconChoices as renderIconChoicesMarkup,
   renderIconGlyph,
 } from "./editor/icon-picker.js";
@@ -202,14 +206,6 @@ const ELEMENT_ACTIONS = [
   ["center", "Center horizontally", ""],
 ];
 
-const LOADING_STEPS = [
-  ["fonts", "fonts"],
-  ["icons", "icons"],
-  ["templates", "tile styles"],
-  ["specs", "component specs"],
-  ["tags", "devices"],
-];
-
 export class BleEslDesigner extends HTMLElement {
   constructor() {
     super();
@@ -218,7 +214,7 @@ export class BleEslDesigner extends HTMLElement {
     // Shown instead of the editor until the first boot() has its data.
     this.loading = {
       error: null,
-      steps: LOADING_STEPS.map(([key, label]) => ({ key, label, done: false })),
+      steps: createLoadingSteps(),
     };
     this.ready = false;
     this.readyPromise = new Promise((resolve) => (this.resolveReady = resolve));
@@ -664,11 +660,7 @@ export class BleEslDesigner extends HTMLElement {
     if (initial) {
       this.loading = {
         error: null,
-        steps: LOADING_STEPS.map(([key, label]) => ({
-          key,
-          label,
-          done: false,
-        })),
+        steps: createLoadingSteps(),
       };
     } else {
       this.refreshing = true;
@@ -755,12 +747,10 @@ export class BleEslDesigner extends HTMLElement {
     if (node) node.innerHTML = this.loadingInner();
   }
   loadingInner() {
-    const { error, steps } = this.loading;
-    if (error)
-      return `<p class="error">${esc(error)}</p><button data-action="reload">${t(this.hass, "Retry")}</button>`;
-    const done = steps.filter((item) => item.done).length;
-    const waiting = steps.find((item) => !item.done);
-    return `<p>${esc(t(this.hass, "Loading {step}… ({done}/{count})", { step: t(this.hass, waiting?.label || "designer"), done, count: steps.length }))}</p><progress aria-label="${t(this.hass, "Loading designer")}" max="${steps.length}" value="${done}"></progress>`;
+    return renderLoadingContent(this.loading, {
+      translate: (key, values) => t(this.hass, key, values),
+      escapeHtml: esc,
+    });
   }
   headerHtml() {
     const sessionLocked =

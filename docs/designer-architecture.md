@@ -316,3 +316,8 @@ into `editor/status-view.js`. The panel supplies the current status snapshot,
 translation and timeout callbacks; it retains status state and notice timing
 ownership. Routine status text, preview errors, dismiss controls, and temporary
 save/send notices preserve their existing accessibility behavior.
+
+The loading-view extraction moves initial loading-step definitions and
+progress/error markup into `editor/loading-view.js`. The panel retains boot
+requests, step completion timing, the loading shell, and retry behavior; the
+view receives loading state plus translation and HTML-escaping helpers.
