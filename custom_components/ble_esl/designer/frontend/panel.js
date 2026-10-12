@@ -24,6 +24,10 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import {
+  renderIconChoices as renderIconChoicesMarkup,
+  renderIconGlyph,
+} from "./editor/icon-picker.js";
+import {
   persistDrafts as persistStoredDrafts,
   restoreStoredDrafts as restoreDraftDocuments,
 } from "./editor/draft-store.js";
@@ -1251,19 +1255,11 @@ export class BleEslDesigner extends HTMLElement {
     );
   }
   iconGlyph(name, size = 24) {
-    return `<span class="mdi" aria-hidden="true" style="font-size:${size}px">${esc(this.icons[name] || "")}</span>`;
+    return renderIconGlyph(name, size, this.icons, esc);
   }
   renderIconChoices(search = "") {
     const grid = this.shadowRoot.querySelector(".icon-picker");
-    if (grid)
-      grid.innerHTML = Object.keys(this.icons)
-        .filter((name) => name.includes(search.toLowerCase()))
-        .slice(0, 120)
-        .map(
-          (name) =>
-            `<button data-icon="${name}" aria-label="${name}" title="${name}">${this.iconGlyph(name)}</button>`,
-        )
-        .join("");
+    if (grid) grid.innerHTML = renderIconChoicesMarkup(this.icons, search, esc);
   }
   colorPicker(key, value, label) {
     return `<label>${label}<div class="picker" role="group" aria-label="${label}">${[
