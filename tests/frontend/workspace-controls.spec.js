@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { renderPanelToggle } from "../../custom_components/ble_esl/designer/frontend/editor/workspace-controls.js";
+import {
+  renderPanelToggle,
+  workspaceStickyOffsets,
+} from "../../custom_components/ble_esl/designer/frontend/editor/workspace-controls.js";
 
 const translate = (key, values = {}) =>
   key.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? `{${name}}`);
@@ -31,4 +34,21 @@ test("workspace panel toggle exposes its target, state, and accessible labels", 
   expect(open).toContain('aria-label="Toggle properties panel"');
   expect(open).toContain('title="Hide properties"');
   expect(open).toContain('aria-expanded="true"');
+});
+
+test("workspace sticky offsets account for the sticky header and toolbar", () => {
+  expect(
+    workspaceStickyOffsets({
+      headerHeight: 56,
+      toolbarHeight: 44,
+      fixed: true,
+    }),
+  ).toEqual({ barTop: "56px", scrollPaddingTop: "100px" });
+  expect(
+    workspaceStickyOffsets({
+      headerHeight: 48,
+      toolbarHeight: 40,
+      fixed: false,
+    }),
+  ).toEqual({ barTop: "48px", scrollPaddingTop: "" });
 });

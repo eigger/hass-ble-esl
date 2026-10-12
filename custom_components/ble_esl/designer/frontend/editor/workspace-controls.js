@@ -10,3 +10,10 @@ export function renderPanelToggle({
   const panelLabel = translate(label);
   return `<button class="icon-button" data-action="${action}" aria-label="${translate("Toggle {label} panel", { label: panelLabel })}" aria-controls="${id}" title="${open ? translate("Hide") : translate("Show")} ${panelLabel}" aria-expanded="${open}">${iconMarkup}</button>`;
 }
+
+export function workspaceStickyOffsets({ headerHeight, toolbarHeight, fixed }) {
+  return {
+    barTop: `${headerHeight}px`,
+    scrollPaddingTop: fixed ? `${headerHeight + toolbarHeight}px` : "",
+  };
+}
