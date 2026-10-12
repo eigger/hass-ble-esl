@@ -4,6 +4,7 @@ import {
   clampMoved,
   clampResized,
   elementShape,
+  fitZoom,
   moveBound,
   visibleBounds,
 } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
@@ -17,6 +18,41 @@ const element = (overrides = {}) => ({
   width: 10,
   height: 8,
   ...overrides,
+});
+
+test("fit zoom keeps the preview margin, precision, and zoom bounds", () => {
+  expect(
+    fitZoom({
+      viewportWidth: 360,
+      viewportHeight: 260,
+      tagWidth: 200,
+      tagHeight: 100,
+    }),
+  ).toBe(1.5);
+  expect(
+    fitZoom({
+      viewportWidth: 393,
+      viewportHeight: 393,
+      tagWidth: 100,
+      tagHeight: 100,
+    }),
+  ).toBe(3.33);
+  expect(
+    fitZoom({
+      viewportWidth: 20,
+      viewportHeight: 20,
+      tagWidth: 100,
+      tagHeight: 100,
+    }),
+  ).toBe(0.1);
+  expect(
+    fitZoom({
+      viewportWidth: 10000,
+      viewportHeight: 10000,
+      tagWidth: 100,
+      tagHeight: 100,
+    }),
+  ).toBe(8);
 });
 
 test("render shape ignores frame changes and summarizes uploaded image data", () => {

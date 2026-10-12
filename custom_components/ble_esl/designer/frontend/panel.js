@@ -96,6 +96,7 @@ import {
   clampMoved as clampMovedGeometry,
   clampResized as clampResizedGeometry,
   elementShape,
+  fitZoom as calculateFitZoom,
   moveBound as isMoveBound,
   visibleBounds as calculateVisibleBounds,
 } from "./editor/canvas/geometry.js";
@@ -1376,18 +1377,12 @@ export class BleEslDesigner extends HTMLElement {
     if (this.zoomMode !== "fit" || !this.tag) return;
     const previewWindow = this.shadowRoot.querySelector(".canvas-wrap");
     if (!previewWindow) return;
-    this.zoom = Math.max(
-      0.1,
-      Math.min(
-        8,
-        Math.floor(
-          Math.min(
-            (previewWindow.clientWidth - 60) / this.tag.width,
-            (previewWindow.clientHeight - 60) / this.tag.height,
-          ) * 100,
-        ) / 100,
-      ),
-    );
+    this.zoom = calculateFitZoom({
+      viewportWidth: previewWindow.clientWidth,
+      viewportHeight: previewWindow.clientHeight,
+      tagWidth: this.tag.width,
+      tagHeight: this.tag.height,
+    });
     const stage = this.shadowRoot.querySelector(".stage"),
       space = this.shadowRoot.querySelector(".stage-space");
     stage.style.transform = `scale(${this.zoom})`;
