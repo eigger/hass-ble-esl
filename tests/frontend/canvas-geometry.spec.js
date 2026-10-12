@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import {
+  adoptLayerRecords,
   alignmentGuides,
   clampMoved,
   clampResized,
@@ -113,6 +114,40 @@ test("layer render records snapshot shape identity and frame dimensions", () => 
 
   current[0].width = 18;
   expect(records.one.size).toEqual([10, 8]);
+});
+
+test("document adoption keeps only measured records and refreshes normalized shapes", () => {
+  const current = [
+    element({ id: "image", type: "image" }),
+    element({ id: "spec", type: "imagespec" }),
+    element({ id: "visible" }),
+    element({ id: "empty" }),
+    element({ id: "unknown" }),
+  ];
+  const layerRecords = createLayerRecords(current);
+  const saved = current.map((item) => ({ ...item, normalized: true }));
+  saved.push(element({ id: "new" }));
+  const adopted = adoptLayerRecords({
+    currentElements: current,
+    savedElements: saved,
+    layerRecords,
+    hasVisibleBounds: (item) => ["visible", "empty"].includes(item.id),
+  });
+
+  expect(Object.keys(adopted)).toEqual(["image", "spec", "visible", "empty"]);
+  expect(
+    adoptLayerRecords({
+      currentElements: [current[0]],
+      savedElements: [saved[0]],
+      layerRecords: null,
+      hasVisibleBounds: () => false,
+    }),
+  ).toEqual({});
+  for (const id of Object.keys(adopted)) {
+    const savedItem = saved.find((item) => item.id === id);
+    expect(adopted[id].shape).toBe(elementShape(savedItem));
+    expect(adopted[id].size).toBe(layerRecords[id].size);
+  }
 });
 
 test("visible bounds distinguish unknown, empty, and renderer measured content", () => {
