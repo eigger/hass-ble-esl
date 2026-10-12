@@ -22,6 +22,10 @@ import {
   jpegOrientation,
 } from "./model.js";
 import { EditorSession } from "./editor/session.js";
+import {
+  renderElementActionBar,
+  renderElementActionMenu,
+} from "./editor/element-actions.js";
 import { PreviewController } from "./editor/preview.js";
 import { renderStatusView } from "./editor/status-view.js";
 import {
@@ -202,15 +206,6 @@ const managedStyle = `
 
 // HA tears the panel down on in-app navigation, which beforeunload never sees,
 // so unsaved designs are parked here for the rest of the browser session.
-// Right-click menu and the inspector's action bar share these.
-const ELEMENT_ACTIONS = [
-  ["duplicate", "Duplicate", "⌘/Ctrl D"],
-  ["delete", "Delete", "⌫"],
-  ["back", "Send back", ""],
-  ["front", "Bring front", ""],
-  ["center", "Center horizontally", ""],
-];
-
 export class BleEslDesigner extends HTMLElement {
   constructor() {
     super();
@@ -2611,19 +2606,22 @@ export class BleEslDesigner extends HTMLElement {
     menu.setAttribute("aria-label", t(this.hass, "Element actions"));
     menu.style.left = `${Math.min(event.clientX, window.innerWidth - 228)}px`;
     menu.style.top = `${Math.min(event.clientY, window.innerHeight - 220)}px`;
-    menu.innerHTML = ELEMENT_ACTIONS.map(
-      ([action, label, key]) =>
-        `<button role="menuitem" data-action="${action}">${action === "delete" ? icon("delete") : toolIcon(action)}<span>${t(this.hass, label)}</span><kbd>${key}</kbd></button>`,
-    ).join("");
+    menu.innerHTML = renderElementActionMenu({
+      t: (message) => t(this.hass, message),
+      icon,
+      toolIcon,
+    });
     this.shadowRoot.append(menu);
     menu.querySelector("button").focus();
   }
   // The same actions as the right-click menu, reachable by touch.
   elementActions() {
-    return `<div class="element-actions" role="toolbar" aria-label="${t(this.hass, "Element actions")}">${ELEMENT_ACTIONS.map(
-      ([action, label, key]) =>
-        `<button class="icon-button ${action === "delete" ? "danger" : ""}" data-action="${action}" ${this.busy ? "disabled" : ""} aria-label="${t(this.hass, label)}" title="${t(this.hass, label)}${key ? ` (${key})` : ""}">${action === "delete" ? icon("delete") : toolIcon(action)}</button>`,
-    ).join("")}</div>`;
+    return renderElementActionBar({
+      busy: this.busy,
+      t: (message) => t(this.hass, message),
+      icon,
+      toolIcon,
+    });
   }
   beginTextEdit() {
     return beginCanvasTextEdit(this);
