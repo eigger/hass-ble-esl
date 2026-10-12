@@ -1,5 +1,27 @@
 import { clampBox, onLabel } from "../../model.js";
 
+// Fit a tag inside the preview viewport while retaining the editor's margin,
+// hundredth-step zoom, and supported zoom range.
+export function fitZoom({
+  viewportWidth,
+  viewportHeight,
+  tagWidth,
+  tagHeight,
+}) {
+  return Math.max(
+    0.1,
+    Math.min(
+      8,
+      Math.floor(
+        Math.min(
+          (viewportWidth - 60) / tagWidth,
+          (viewportHeight - 60) / tagHeight,
+        ) * 100,
+      ) / 100,
+    ),
+  );
+}
+
 // Renderer records describe the visible content for a particular element
 // shape, independently of its frame position and dimensions. Large data URLs
 // are summarized so checking a render record does not duplicate megabytes.
