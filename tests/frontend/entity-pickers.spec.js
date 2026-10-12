@@ -1,0 +1,75 @@
+import { test, expect } from "@playwright/test";
+import {
+  configureBoundEntityPicker,
+  configureLibraryEntityPicker,
+  SENSOR_PICKER_DOMAINS,
+} from "../../custom_components/ble_esl/designer/frontend/editor/entity-pickers.js";
+
+function picker() {
+  const listeners = {};
+  return {
+    listeners,
+    addEventListener(name, callback) {
+      listeners[name] = callback;
+    },
+  };
+}
+
+test("library picker configures supported domains and forwards selection", () => {
+  const target = picker();
+  const hass = { states: {} };
+  const selected = [];
+  configureLibraryEntityPicker(target, {
+    hass,
+    value: "sensor.office",
+    label: "Sensor",
+    searchLabel: "Search sensors",
+    onValueChanged: (value) => selected.push(value),
+  });
+
+  expect(target.hass).toBe(hass);
+  expect(target.includeDomains).toEqual(SENSOR_PICKER_DOMAINS);
+  expect(target.includeDomains).not.toBe(SENSOR_PICKER_DOMAINS);
+  expect(target).toMatchObject({
+    label: "Sensor",
+    searchLabel: "Search sensors",
+    allowCustomEntity: false,
+    value: "sensor.office",
+  });
+  target.listeners["value-changed"]({ detail: { value: "weather.home" } });
+  expect(selected).toEqual(["weather.home"]);
+});
+
+test("bound picker stops propagation and ignores empty or unchanged values", () => {
+  const target = picker();
+  const selected = [];
+  const includeDomains = ["sensor", "weather"];
+  configureBoundEntityPicker(target, {
+    hass: { states: {} },
+    value: "sensor.office",
+    label: "Bound entity",
+    includeDomains,
+    onValueChanged: (value) => selected.push(value),
+  });
+
+  expect(target).toMatchObject({
+    label: "Bound entity",
+    searchLabel: "Bound entity",
+    allowCustomEntity: false,
+    required: true,
+    value: "sensor.office",
+    includeDomains,
+  });
+  const emit = (value) => {
+    let stopped = false;
+    target.listeners["value-changed"]({
+      detail: { value },
+      stopPropagation: () => (stopped = true),
+    });
+    return stopped;
+  };
+  expect(emit("")).toBe(true);
+  expect(emit("sensor.office")).toBe(true);
+  expect(emit("sensor.kitchen")).toBe(true);
+  expect(selected).toEqual(["sensor.kitchen"]);
+});

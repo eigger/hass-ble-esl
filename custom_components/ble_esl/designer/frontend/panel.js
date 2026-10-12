@@ -37,6 +37,10 @@ import {
   renderEntityPreview as renderEntityPreviewMarkup,
 } from "./editor/entity-library.js";
 import {
+  configureBoundEntityPicker,
+  configureLibraryEntityPicker,
+} from "./editor/entity-pickers.js";
+import {
   createDefaultSensorTemplate,
   outputType as getSensorOutputType,
   sensorType as getSensorType,
@@ -1907,53 +1911,36 @@ export class BleEslDesigner extends HTMLElement {
   renderEntities() {
     const picker = this.shadowRoot.querySelector("#entity-picker");
     if (!picker) return;
-    picker.hass = this.hass;
-    picker.includeDomains = [
-      "sensor",
-      "binary_sensor",
-      "weather",
-      "input_number",
-      "number",
-      "input_boolean",
-      "input_select",
-      "select",
-      "counter",
-    ];
-    picker.label = t(this.hass, "Sensor");
-    picker.searchLabel = t(this.hass, "Search sensors");
-    picker.allowCustomEntity = false;
-    picker.value = this.libraryEntity;
-    picker.addEventListener("value-changed", (event) => {
-      const id = event.detail.value;
-      if (!id) {
-        this.libraryEntity = "";
-        this.renderEntityPreview();
-        return;
-      }
-      this.libraryEntity = id;
-      this.add("sensor", this.hass.states[id]);
+    configureLibraryEntityPicker(picker, {
+      hass: this.hass,
+      value: this.libraryEntity,
+      label: t(this.hass, "Sensor"),
+      searchLabel: t(this.hass, "Search sensors"),
+      onValueChanged: (id) => {
+        if (!id) {
+          this.libraryEntity = "";
+          this.renderEntityPreview();
+          return;
+        }
+        this.libraryEntity = id;
+        this.add("sensor", this.hass.states[id]);
+      },
     });
     this.renderEntityPreview();
   }
   bindEntityPickers() {
-    const configure = (picker, value, label) => {
-      picker.label = label;
-      picker.searchLabel = label;
-      picker.allowCustomEntity = false;
-      picker.required = true;
-      picker.value = value;
-      picker.hass = this.hass;
-      picker.includeDomains =
-        this.shadowRoot.querySelector("#entity-picker").includeDomains;
-      picker.addEventListener("value-changed", (event) => {
-        event.stopPropagation();
-        const next = event.detail.value;
-        if (!next || next === value) return;
-        this.change({
-          target: { id: picker.id, dataset: picker.dataset, value: next },
-        });
+    const configure = (picker, value, label) =>
+      configureBoundEntityPicker(picker, {
+        hass: this.hass,
+        value,
+        label,
+        includeDomains:
+          this.shadowRoot.querySelector("#entity-picker").includeDomains,
+        onValueChanged: (next) =>
+          this.change({
+            target: { id: picker.id, dataset: picker.dataset, value: next },
+          }),
       });
-    };
     const bound = this.shadowRoot.querySelector(
       'ha-entity-picker[data-property="entity_id"]',
     );
