@@ -1,5 +1,6 @@
 import { t, language, bindStatic, localize, errorText } from "./i18n.js";
-import { hasStoredDraft } from "./panel.js";
+import { hasStoredDraft } from "./editor/draft-store.js";
+import "./panel.js";
 import "./automation-dialog.js";
 import { chooseOne, closeChoiceDialogs } from "./choice-dialog.js";
 

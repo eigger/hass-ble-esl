@@ -24,6 +24,10 @@ import {
 import { EditorSession } from "./editor/session.js";
 import { PreviewController } from "./editor/preview.js";
 import {
+  persistDrafts as persistStoredDrafts,
+  restoreStoredDrafts as restoreDraftDocuments,
+} from "./editor/draft-store.js";
+import {
   filterEntities,
   listSupportedEntities,
   renderEntityPreview as renderEntityPreviewMarkup,
@@ -173,18 +177,6 @@ const managedStyle = `
 
 // HA tears the panel down on in-app navigation, which beforeunload never sees,
 // so unsaved designs are parked here for the rest of the browser session.
-const DRAFT_KEY = "ble_esl_designer_drafts";
-const readStoredDrafts = () => {
-  try {
-    const stored = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "{}");
-    return stored && typeof stored === "object" ? stored : {};
-  } catch {
-    return {};
-  }
-};
-export const hasStoredDraft = (entryId) =>
-  Object.hasOwn(readStoredDrafts(), entryId);
-
 // Right-click menu and the inspector's action bar share these.
 const ELEMENT_ACTIONS = [
   ["duplicate", "Duplicate", "⌘/Ctrl D"],
@@ -632,39 +624,11 @@ export class BleEslDesigner extends HTMLElement {
     return this.draftDocuments().has(entryId);
   }
   persistDrafts() {
-    const stored = {};
-    for (const [entryId, document] of this.draftDocuments()) {
-      const tag = this.tags.find((item) => item.entry_id === entryId);
-      if (tag)
-        stored[entryId] = { width: tag.width, height: tag.height, document };
-    }
-    try {
-      if (Object.keys(stored).length)
-        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(stored));
-      else sessionStorage.removeItem(DRAFT_KEY);
-    } catch {
-      // Storage may be full or blocked; the draft is then simply not kept.
-    }
+    persistStoredDrafts(this.draftDocuments(), this.tags);
   }
   // Only drafts for a tag of the same size come back; the rest are dropped.
   restoreStoredDrafts() {
-    const stored = readStoredDrafts();
-    try {
-      sessionStorage.removeItem(DRAFT_KEY);
-    } catch {
-      // Nothing to clean up.
-    }
-    for (const [entryId, draft] of Object.entries(stored)) {
-      const tag = this.tags.find((item) => item.entry_id === entryId);
-      if (
-        tag &&
-        draft?.document &&
-        tag.width === draft.width &&
-        tag.height === draft.height &&
-        !this.drafts.has(entryId)
-      )
-        this.drafts.set(entryId, draft.document);
-    }
+    restoreDraftDocuments(this.drafts, this.tags);
   }
   disconnectedCallback() {
     // An instance that never loaded must not wipe drafts it never restored.
