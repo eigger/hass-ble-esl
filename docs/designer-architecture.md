@@ -23,6 +23,7 @@ responsibilities include:
 | `editor/canvas/sensor-content.js`                                                                                 | Renders sensor tile and template child markup from explicit display values. The panel resolves HA state, templates, weather values, numbers, and icons; this module does not query HA or own editor state.                                                                                                                 |
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
 | `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, and selected-entity preview markup. Home Assistant state, formatted names/values, localization, icon setup, and add actions remain in the panel.                                                                                                                  |
+| `editor/draft-store.js`                                                                                           | Owns the session-storage key, serialization, safe reads/writes, and same-size draft restoration. The panel selects which documents are dirty drafts; the manager imports `hasStoredDraft()` directly and imports the panel explicitly for custom-element registration.                                                     |
 | `editor/canvas/interactions.js`                                                                                   | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows.                                             |
 | `editor/inspector/layers.js`                                                                                      | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel.                                                                                              |
 | `editor/inspector/spec-sections.js`                                                                               | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits.                                                     |
@@ -101,8 +102,9 @@ depend on the document shape and defaults produced there.
 
 ### Manager-to-editor compatibility surface
 
-`manager.js` currently imports `hasStoredDraft(entryId)` from `panel.js` and
-uses the editor element as a cross-component API. Before narrowing that API,
+`manager.js` imports `hasStoredDraft(entryId)` from `editor/draft-store.js` and
+imports `panel.js` for custom-element registration. It uses the editor element
+as a cross-component API for editing operations. Before narrowing that API,
 preserve or deliberately migrate these call sites:
 
 | Purpose                                          | Current editor surface used by the manager                                                                                                                                                                                                                                                                                                    |
@@ -273,3 +275,10 @@ existing optional-property, text-alignment, and weather-control renderers and
 keeps the established field ordering and event attributes. The panel retains
 the imagespec path, supplies Home Assistant and template context, and handles
 all edits, focus, and undo history.
+
+The draft-store extraction moves the session-storage format and safe
+serialization into `editor/draft-store.js`. It preserves the storage key,
+same-dimension restore rule, one-shot removal after restore, and quiet handling
+of blocked/full storage. The panel still decides which active or parked
+documents count as dirty drafts, while the manager reads the stored-draft flag
+directly rather than coupling that query to the panel module.
