@@ -99,6 +99,7 @@ import {
   elementShape,
   fitZoom as calculateFitZoom,
   moveBound as isMoveBound,
+  staggerElement as calculateStaggeredElement,
   visibleBounds as calculateVisibleBounds,
 } from "./editor/canvas/geometry.js";
 const esc = (value) =>
@@ -2089,19 +2090,10 @@ export class BleEslDesigner extends HTMLElement {
   }
   // A new element lands beside the ones already there, not exactly on them.
   stagger(element) {
-    const taken = (x, y) =>
-      this.document.elements.some((item) => item.x === x && item.y === y);
-    while (taken(element.x, element.y)) {
-      const x = element.x + 8,
-        y = element.y + 8;
-      if (
-        x + element.width > this.tag.width ||
-        y + element.height > this.tag.height
-      )
-        break;
-      element.x = x;
-      element.y = y;
-    }
+    Object.assign(
+      element,
+      calculateStaggeredElement(element, this.document.elements, this.tag),
+    );
   }
   add(type, entity, x, y) {
     this.checkpoint();

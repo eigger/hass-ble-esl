@@ -6,6 +6,7 @@ import {
   elementShape,
   fitZoom,
   moveBound,
+  staggerElement,
   visibleBounds,
 } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
 
@@ -53,6 +54,23 @@ test("fit zoom keeps the preview margin, precision, and zoom bounds", () => {
       tagHeight: 100,
     }),
   ).toBe(8);
+});
+
+test("new element staggering skips occupied positions and stops at tag bounds", () => {
+  const initial = element({ x: 4, y: 3 });
+  const existing = [initial, element({ id: "next", x: 12, y: 11 })];
+  const added = element({ id: "added", x: 4, y: 3, width: 8, height: 4 });
+
+  expect(staggerElement(added, existing, tag)).toMatchObject({ x: 20, y: 19 });
+  expect(added).toMatchObject({ x: 4, y: 3 });
+  expect(existing).toHaveLength(2);
+  expect(
+    staggerElement(
+      element({ x: 24, y: 16, width: 8, height: 8 }),
+      [element({ x: 24, y: 16, width: 8, height: 8 })],
+      tag,
+    ),
+  ).toMatchObject({ x: 24, y: 16 });
 });
 
 test("render shape ignores frame changes and summarizes uploaded image data", () => {

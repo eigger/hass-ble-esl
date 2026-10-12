@@ -22,6 +22,21 @@ export function fitZoom({
   );
 }
 
+// Place newly added elements beside existing ones without mutating either
+// the source element or the document's element list.
+export function staggerElement(element, elements, tag, step = 8) {
+  const placed = { ...element };
+  const taken = (x, y) => elements.some((item) => item.x === x && item.y === y);
+  while (taken(placed.x, placed.y)) {
+    const x = placed.x + step,
+      y = placed.y + step;
+    if (x + placed.width > tag.width || y + placed.height > tag.height) break;
+    placed.x = x;
+    placed.y = y;
+  }
+  return placed;
+}
+
 // Renderer records describe the visible content for a particular element
 // shape, independently of its frame position and dimensions. Large data URLs
 // are summarized so checking a render record does not duplicate megabytes.
