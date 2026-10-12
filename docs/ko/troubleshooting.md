@@ -86,6 +86,8 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 **쓰기는 성공했는데 패널에 다른 것이 보임.** `success: true`인데 라벨이 그대로이거나, 줄무늬가 생기거나, 거울상입니다. 이미지는 태그에 도달했고, 태그가 잘못된 크기나 색 순서로 해석한 것 — 하드웨어와 맞지 않는 프리셋입니다. 미검증 WOLINK / easyTag 프리셋과 크기만 맞춘 XTE 프리셋이 틀릴 수 있는 지점이 여기입니다. **Last Updated Content**(보낸 것)와 태그 사진을 비교하고, 진단 파일의 프리셋을 태그에 인쇄된 라벨과 대조하세요([models.md](../models.md)). 둘을 첨부해 [이슈를 열어](https://github.com/eigger/hass-ble-esl/issues) 주세요 — 프리셋은 그렇게 고쳐집니다.
 
+**Gicisky 7.5인치 BWR** 태그에서 쓰기는 성공했는데 빨간 줄무늬나 지속적인 빨간 노이즈가 보인다면 USB 저장 볼륨 손상일 수도 있습니다. 이슈 제보자는 태그의 2MB USB 볼륨을 FAT12로 다시 포맷해 해결했습니다. 절차는 [이슈 #177](https://github.com/eigger/hass-ble-esl/issues/177)을 참고하세요.
+
 **BLE 통신 전에 액션 자체가 에러.** 렌더링되지 않는 템플릿, 없는 폰트 파일, 받을 수 없는 `dlimg` URL: 액션이 그 메시지와 함께 즉시 실패하고 쓰기 센서에는 아무것도 기록되지 않습니다. **개발자 도구 → 액션**에서 `dry_run: true`로 재현하고 **Preview Content**를 보세요 — 미리보기가 맞으면 페이로드는 문제없습니다.
 
 **쓰기가 시도되지 않음.** 액션은 `locked`(**Write Lock** 스위치가 켜짐 — `ble_esl.write`도 막습니다)로 끝나거나, `ble_esl.write_guarded`의 경우 `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 실패로 치지 않습니다: Failure Count와 Last Failure Time은 그대로입니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](../actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요. BLE 락까지 갔다가 멈춘 쓰기는 **Write Duration** 속성에 `success: false`와 `skipped: locked` / `duplicate` / `dropped`를 남깁니다 — 자동화 트레이스는 액션이 실행됐다고 하는데 태그는 그대로일 때 확인할 곳입니다. Write Lock 스위치에 막힌 모든 `ble_esl.write`(큐에 넣기 전에 검사하지 않습니다)와, 순서를 기다리는 동안 조건이 바뀐 guarded 쓰기가 여기 해당합니다. `ble_esl.write_guarded`는 큐에 넣기 전에도 검사하므로, 평범한 중복은 아무것도 기록하지 않고 반환됩니다.
