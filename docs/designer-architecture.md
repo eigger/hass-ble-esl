@@ -19,6 +19,7 @@ responsibilities include:
 | `editor/session.js` / `EditorSession` | Owns the active document, selected element, undo/redo history, dirty flag, history limit, and capture/restore/reset transitions. |
 | `editor/preview.js` / `PreviewController` | Owns the 200 ms debounce, single in-flight request, one latest queued rerun, sequence invalidation, and stale-result/error suppression. It receives request, context validity, result, and error callbacks; it does not assign layers or render the stage. |
 | `editor/canvas/geometry.js` | Pure canvas calculations for renderer-dependent visible bounds, render-shape signatures, alignment guides, and move/resize frame clamping. Renderer records, layer bounds, tag dimensions, zoom, and snap tolerance are explicit inputs; it does not read the panel, DOM, or Home Assistant. |
+| `editor/canvas/view.js` | Builds accessible canvas layer, exact-preview, alignment-guide, and selection-overlay markup from explicit view values. The panel prepares layer content and renderer metadata, attaches the result, restores focus, updates HA icons, and retains preview/state ownership. |
 | `editor/canvas/interactions.js` | Pointer, keyboard, and inline-text interaction handlers. They receive the panel explicitly and request document, history, preview, and rendering work through its existing methods; the panel keeps compatibility entry points and owns gesture state used by other workflows. |
 | `editor/inspector/layers.js` | Renders layer rows and handles selection, visibility, ordering, and deletion. Rendering receives elements and label/icon/translation helpers explicitly; actions delegate document history and rerendering through the panel. |
 | `editor/inspector/spec-sections.js` | Groups imagespec property markup into documentation, ordered common fields, position controls, and advanced settings. The panel supplies markup, translated labels, position controls, and the open state; this module does not own inspector state or document edits. |
@@ -199,6 +200,13 @@ bounds, alignment guide calculations, and move/resize frame clamping into
 returned frame copies to its active document, preserving history ownership.
 Geometry receives layer records and renderer bounds explicitly; pointer
 gesture state, canvas markup, and element staggering remain panel responsibilities.
+
+The canvas view extraction moves layer wrapper markup, exact-preview composition,
+alignment-guide markup, and selection-overlay markup into
+`editor/canvas/view.js`. The panel still prepares each element's content and
+render freshness, attaches the composed markup, restores keyboard focus, updates
+Home Assistant icons, and mutates selection/preview state. The view module has
+no panel, DOM, geometry, or Home Assistant dependency.
 
 The interaction extraction moves keyboard commands, pointer gestures, and
 inline text editing into `editor/canvas/interactions.js`. The panel retains its
