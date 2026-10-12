@@ -25,6 +25,7 @@ import {
 } from "./editor/element-actions.js";
 import { PreviewController } from "./editor/preview.js";
 import { renderStatusView } from "./editor/status-view.js";
+import { renderHeader } from "./editor/header-view.js";
 import {
   markDocumentDirty,
   syncDocumentHistoryControls,
@@ -756,7 +757,15 @@ export class BleEslDesigner extends HTMLElement {
     const version =
       this._panelInfo?.config?.version ||
       import.meta.url.match(/\/ble_esl_designer\/([^/]+)\//)?.[1];
-    return `<header><ha-menu-button></ha-menu-button><h1>${t(this.hass, "ESL Designer")}</h1><span>${t(this.hass, "Live Home Assistant data on e-paper")}</span>${version ? `<span class="version" title="${t(this.hass, "BLE ESL integration version")}">v${esc(version)}</span>` : ""}<nav class="tabs" aria-label="${t(this.hass, "Designer mode")}"><button data-action="display-mode" aria-pressed="${this.mode === "display"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Display")}</button><button data-action="template-mode" aria-pressed="${this.mode === "template"}" ${this.loading || this.refreshing || sessionLocked ? "disabled" : ""}>${t(this.hass, "Sensor tile styles")}</button></nav></header>`;
+    return renderHeader({
+      mode: this.mode,
+      loading: this.loading,
+      refreshing: this.refreshing,
+      sessionLocked,
+      version,
+      translate: (key) => t(this.hass, key),
+      escapeHtml: esc,
+    });
   }
   renderLoading() {
     this.shadowRoot.innerHTML = `<style>${style} header{position:sticky;top:0;z-index:30} ${loadingStyle}${managedStyle}</style>${this.headerHtml()}<div class="loading" role="status" aria-live="polite">${this.loadingInner()}</div>`;

@@ -24,6 +24,7 @@ responsibilities include:
 | `editor/sensor-templates.js`                                                                                      | Owns pure sensor output classification, template compatibility/type enumeration, and default sensor-template document construction. Document factories are explicit inputs; entity lookup, localization, and template editing state remain in the panel.                                                                   |
 | `editor/entity-library.js`                                                                                        | Owns supported-entity filtering, entity search matching, entity display-name/value formatting rules, and selected-entity preview markup. Home Assistant state and formatting callbacks, localization, icon setup, and add actions remain at the panel boundary.                                                            |
 | `editor/tag-selector.js`                                                                                          | Renders escaped tag option markup with the selected tag and physical dimensions. The panel retains tag naming, loading, and selection state.                                                                                                                                                                               |
+| `editor/header-view.js`                                                                                           | Renders the editor title, version, and mode tabs from explicit mode, lock/loading state, version, translation, and escaping inputs. The panel retains Home Assistant menu setup and derives session/version state.                                                                                                         |
 | `editor/document-indicators.js`                                                                                   | Updates undo/redo availability and the dirty-save badge, label, and preview title without rebuilding the editor. The panel retains document history and dirty state and supplies translation and icon helpers.                                                                                                             |
 | `editor/element-actions.js`                                                                                       | Shares action metadata and accessible markup between the canvas context menu and inspector action bar. The panel retains context-menu positioning/focus and all document actions.                                                                                                                                          |
 | `editor/image-upload.js`                                                                                          | Owns the asynchronous image-file upload lifecycle, EXIF orientation correction, and stale-document/session guards. The panel continues to own upload busy state, history checkpoints, document edits, and error reporting through the explicit panel argument.                                                             |
@@ -328,6 +329,12 @@ The loading-view extraction moves initial loading-step definitions and
 progress/error markup into `editor/loading-view.js`. The panel retains boot
 requests, step completion timing, the loading shell, and retry behavior; the
 view receives loading state plus translation and HTML-escaping helpers.
+
+The header-view extraction moves the editor title, version label, and mode-tab
+markup into `editor/header-view.js`. The panel continues to derive the version
+and session lock and configure the Home Assistant menu; the view receives the
+mode and readiness state plus translation and escaping helpers. Tab labels,
+pressed state, lock-based disabling, and version escaping are preserved.
 
 The tag-selector extraction moves tag option markup into
 `editor/tag-selector.js`. The panel supplies the current tags, selected tag,
