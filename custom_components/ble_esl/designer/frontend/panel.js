@@ -78,6 +78,7 @@ import { renderOptionalProperties } from "./editor/inspector/optional-properties
 import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
 import { renderWeatherControls } from "./editor/inspector/weather-controls.js";
 import { renderLegacyElementProperties } from "./editor/inspector/legacy-properties.js";
+import { buildSensorOptions } from "./editor/inspector/sensor-options.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -1684,67 +1685,24 @@ export class BleEslDesigner extends HTMLElement {
       );
     }
 
-    const sensorOptions = {
-      isWeather: false,
-      templateStyles: [],
-      templateStates: [],
-      numeric: false,
-    };
-    if (element.type === "sensor") {
-      const state = this.hass.states[element.entity_id];
-      sensorOptions.isWeather = element.entity_id.startsWith("weather.");
-      sensorOptions.templateStyles = Object.keys(this.templates)
-        .filter(
-          (key) =>
-            this.templateCompatibility(this.templates[key], key) ===
-            this.outputType(state),
-        )
-        .map((key) => ({
-          value: key,
-          label:
-            this.templates[key]?.name ||
-            this.templateDrafts.get(key)?.name ||
-            (key.startsWith("output:")
-              ? t(this.hass, "{type} style", { type: key.split(":")[1] })
-              : key.replace(":", " · ")),
-          selected: element.template === key,
-        }));
-      sensorOptions.numeric =
-        state &&
-        !state.entity_id.startsWith("binary_sensor.") &&
-        (state.entity_id.startsWith("weather.")
-          ? element.weather_field && element.weather_field !== "condition"
-          : state.state.trim() !== "" && Number.isFinite(Number(state.state)));
-    }
-    if (this.mode === "template" && element.type !== "icon")
-      sensorOptions.templateStates = [
-        ...new Set([
-          "on",
-          "off",
-          ...(this.templateKey.startsWith("weather:")
-            ? [
-                "sunny",
-                "cloudy",
-                "partlycloudy",
-                "rainy",
-                "pouring",
-                "snowy",
-                "snowy-rainy",
-                "clear-night",
-                "fog",
-                "windy",
-                "hail",
-                "lightning",
-                "lightning-rainy",
-              ]
-            : []),
-          ...this.entities()
-            .filter(
-              (entity) => this.sensorType(entity) === this.templateSensorType,
-            )
-            .map((entity) => entity.state),
-        ]),
-      ];
+    const sensorOptions = buildSensorOptions(element, {
+      mode: this.mode,
+      templateKey: this.templateKey,
+      templates: this.templates,
+      templateDrafts: this.templateDrafts,
+      templateSensorType: this.templateSensorType,
+      state:
+        element.type === "sensor" ? this.hass.states[element.entity_id] : null,
+      entities:
+        this.mode === "template" && element.type !== "icon"
+          ? this.entities()
+          : [],
+      outputType: (state) => this.outputType(state),
+      templateCompatibility: (template, key) =>
+        this.templateCompatibility(template, key),
+      sensorType: (state) => this.sensorType(state),
+      outputStyleLabel: (type) => t(this.hass, "{type} style", { type }),
+    });
 
     const translate = (message, values) => t(this.hass, message, values);
     return renderLegacyElementProperties(element, {
