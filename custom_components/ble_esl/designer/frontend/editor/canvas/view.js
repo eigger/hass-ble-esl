@@ -1,6 +1,25 @@
 // Canvas markup stays separate from the panel's preview, state, and DOM work.
 // The panel prepares each layer's content and renderer metadata, then passes
 // those view values here for consistent accessible markup.
+export function renderLayerImageMarkup({
+  element,
+  src,
+  offset,
+  bounds,
+  record,
+}) {
+  if (!offset || !bounds)
+    return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
+  // Grow by what the frame grew, as the selection box does, so the box stays
+  // on the image while the frame is dragged.
+  const grows = record && element.type !== "text",
+    dw = grows ? element.width - record.size[0] : 0,
+    dh = grows ? element.height - record.size[1] : 0,
+    width = Math.max(1, bounds[2] - bounds[0] + dw),
+    height = Math.max(1, bounds[3] - bounds[1] + dh);
+  return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0]}px;top:${offset[1]}px;width:${width}px;height:${height}px">`;
+}
+
 export function renderLayerMarkup({
   element,
   index,

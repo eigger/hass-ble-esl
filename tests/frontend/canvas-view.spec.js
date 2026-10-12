@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   renderAlignmentGuides,
+  renderLayerImageMarkup,
   renderLayerMarkup,
   renderSelectionMarkup,
   renderStageMarkup,
@@ -16,6 +17,36 @@ const escape = (value) =>
   );
 const translate = (key, values) =>
   values ? key.replace("{corner}", values.corner) : key;
+
+test("layer image view aligns renderer ink with resized non-text frames", () => {
+  const element = { type: "imagespec", width: 16, height: 12 };
+  const cropped = renderLayerImageMarkup({
+    element,
+    src: "layer-data",
+    offset: [-2, 1],
+    bounds: [0, 0, 10, 8],
+    record: { size: [10, 8] },
+  });
+  expect(cropped).toContain('src="layer-data" alt="" aria-hidden="true"');
+  expect(cropped).toContain("left:-2px;top:1px;width:16px;height:12px");
+
+  const text = renderLayerImageMarkup({
+    element: { ...element, type: "text" },
+    src: "text-layer",
+    offset: [2, 3],
+    bounds: [0, 0, 10, 8],
+    record: { size: [10, 8] },
+  });
+  expect(text).toContain("left:2px;top:3px;width:10px;height:8px");
+  expect(
+    renderLayerImageMarkup({
+      element,
+      src: "fallback",
+      offset: null,
+      bounds: null,
+    }),
+  ).not.toContain("style=");
+});
 
 test("canvas view composes accessible layers and exact preview markup", () => {
   const element = {

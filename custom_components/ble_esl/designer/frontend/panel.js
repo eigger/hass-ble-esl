@@ -87,6 +87,7 @@ import {
 import { renderSensorContent } from "./editor/canvas/sensor-content.js";
 import {
   renderAlignmentGuides,
+  renderLayerImageMarkup,
   renderLayerMarkup,
   renderSelectionMarkup,
   renderStageMarkup,
@@ -1407,19 +1408,13 @@ export class BleEslDesigner extends HTMLElement {
   // The layer of an element that draws beyond its frame is cropped to what it
   // drew: it sits at an offset from the frame and follows the frame's scale.
   layerImage(element, src) {
-    const offset = this.layerOffsets?.[element.id],
-      bounds = this.layerBounds?.[element.id],
-      record = this.layerRecords?.[element.id];
-    if (!offset || !bounds)
-      return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true">`;
-    // Grow by what the frame grew, as the selection box does, so the box
-    // stays on the image while the frame is dragged.
-    const grows = record && element.type !== "text",
-      dw = grows ? element.width - record.size[0] : 0,
-      dh = grows ? element.height - record.size[1] : 0,
-      width = Math.max(1, bounds[2] - bounds[0] + dw),
-      height = Math.max(1, bounds[3] - bounds[1] + dh);
-    return `<img class="layer-preview" src="${src}" alt="" aria-hidden="true" style="inset:auto;left:${offset[0]}px;top:${offset[1]}px;width:${width}px;height:${height}px">`;
+    return renderLayerImageMarkup({
+      element,
+      src,
+      offset: this.layerOffsets?.[element.id],
+      bounds: this.layerBounds?.[element.id],
+      record: this.layerRecords?.[element.id],
+    });
   }
   layerLabel(item) {
     if (item.type === "imagespec") return specLabel(item);
