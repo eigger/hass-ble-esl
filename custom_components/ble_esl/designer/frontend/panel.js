@@ -42,6 +42,10 @@ import {
 } from "./editor/entity-pickers.js";
 import { defaultEntityIcon } from "./editor/entity-icons.js";
 import {
+  renderTemplateControls,
+  renderTemplateParts,
+} from "./editor/template-controls.js";
+import {
   createDefaultSensorTemplate,
   outputType as getSensorOutputType,
   sensorType as getSensorType,
@@ -983,18 +987,25 @@ export class BleEslDesigner extends HTMLElement {
   }
   templateControls() {
     if (this.mode !== "template") return "";
-    return `<div class="template-controls"><p class="muted template-note" style="flex:1 1 100%;margin:0">${t(this.hass, "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.")}</p><div style="min-width:240px;max-width:360px"><ha-entity-picker id="template-sample"></ha-entity-picker><span class="muted">${t(this.hass, "{type} output", { type: this.outputType(this.sampleState()) })}</span></div><label>${t(this.hass, "Name")} <input id="template-name" aria-label="${t(this.hass, "Style name")}" value="${esc(this.templateName)}"></label><label>${t(this.hass, "Tile style")} <select id="template-type" aria-label="${t(this.hass, "Tile style")}">${this.templateTypes()
-      .map(
-        (key) =>
-          `<option value="${esc(key)}" ${key === this.templateKey ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? t(this.hass, "{type} style", { type: key.split(":")[1] }) : key.replace(":", " · ")))}</option>`,
-      )
-      .join(
-        "",
-      )}</select></label><label>${t(this.hass, "W")} <input id="template-width" aria-label="${t(this.hass, "Style width")}" type="number" min="16" max="1000" value="${this.tag?.width}"></label><label>${t(this.hass, "H")} <input id="template-height" aria-label="${t(this.hass, "Style height")}" type="number" min="16" max="1000" value="${this.tag?.height}"></label></div>`;
+    return renderTemplateControls({
+      mode: this.mode,
+      translate: (text, vars) => t(this.hass, text, vars),
+      escapeHtml: esc,
+      sampleOutput: this.outputType(this.sampleState()),
+      templateTypes: this.templateTypes(),
+      templates: this.templates,
+      templateDrafts: this.templateDrafts,
+      templateKey: this.templateKey,
+      templateName: this.templateName,
+      width: this.tag?.width,
+      height: this.tag?.height,
+    });
   }
   templateParts() {
-    if (this.mode !== "template") return "";
-    return `<div class="tools">${["name", "state", "unit"].map((name) => `<button data-token="${name}">${t(this.hass, name[0].toUpperCase() + name.slice(1))}</button>`).join("")}<button data-action="add-state-icon">${t(this.hass, "State icon")}</button></div>`;
+    return renderTemplateParts({
+      mode: this.mode,
+      translate: (text) => t(this.hass, text),
+    });
   }
   switchMode(mode) {
     // Automation edits are isolated display sessions; don't let the user
