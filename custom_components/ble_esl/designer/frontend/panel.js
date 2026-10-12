@@ -29,6 +29,7 @@ import {
 } from "./editor/inspector/layers.js";
 import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
 import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
+import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -1877,9 +1878,10 @@ export class BleEslDesigner extends HTMLElement {
     if (element.type === "gauge")
       style += field("font_size", t(this.hass, "Font size"), "number");
     if (["sensor", "text"].includes(element.type))
-      style +=
-        field("font_size", t(this.hass, "Font size"), "number") +
-        `<label>${t(this.hass, "Align")}<div class="picker" role="group" aria-label="${t(this.hass, "Text alignment")}">${["left", "center", "right"].map((value) => `<button class="align-button" data-pick="align" data-value="${value}" aria-label="${t(this.hass, `Align ${value}`)}" title="${t(this.hass, `Align ${value}`)}" aria-pressed="${element.align === value}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 9h12M3 14h18M${value === "right" ? 9 : value === "center" ? 6 : 3} 19h12"/></svg></button>`).join("")}</div></label>`;
+      style += renderTextAlignmentControls(element, {
+        translate: (message) => t(this.hass, message),
+        escapeHtml: esc,
+      });
     style += this.colorPicker("color", element.color, t(this.hass, "Colour"));
     if (shapeTypes.includes(element.type))
       style += `<label class="wide">${t(this.hass, "Shape")}<select data-property="type" aria-label="${t(this.hass, "Shape")}">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
