@@ -6,6 +6,7 @@ import {
   renderSelectionMarkup,
   renderStageMarkup,
 } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/view.js";
+import { selectionOverlayGeometry } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
 
 const escape = (value) =>
   String(value ?? "").replace(
@@ -96,9 +97,12 @@ test("canvas view composes accessible layers and exact preview markup", () => {
 test("selection view scales handles with zoom and guides match their axis", () => {
   const markup = renderSelectionMarkup({
     element: { id: "active", x: 10, y: 20, width: 16, height: 12 },
-    visible: [2, 1, 14, 11],
-    zoom: 2,
-    coarsePointer: true,
+    geometry: selectionOverlayGeometry({
+      element: { id: "active", x: 10, y: 20, width: 16, height: 12 },
+      visible: [2, 1, 14, 11],
+      zoom: 2,
+      coarsePointer: true,
+    }),
     translate,
     escape,
     deleteIcon: "delete-icon",
