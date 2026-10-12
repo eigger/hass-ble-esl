@@ -12,6 +12,18 @@ export const SENSOR_PICKER_DOMAINS = Object.freeze([
   "counter",
 ]);
 
+export function replaceEntityPickerElements(root, createPicker) {
+  const replacements = [];
+  for (const oldPicker of root.querySelectorAll("ha-entity-picker")) {
+    const newPicker = createPicker();
+    for (const { name, value } of oldPicker.attributes)
+      newPicker.setAttribute(name, value);
+    oldPicker.replaceWith(newPicker);
+    replacements.push(newPicker);
+  }
+  return replacements;
+}
+
 export function configureLibraryEntityPicker(
   picker,
   { hass, value, label, searchLabel, onValueChanged },

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   configureBoundEntityPicker,
   configureLibraryEntityPicker,
+  replaceEntityPickerElements,
   SENSOR_PICKER_DOMAINS,
 } from "../../custom_components/ble_esl/designer/frontend/editor/entity-pickers.js";
 
@@ -14,6 +15,46 @@ function picker() {
     },
   };
 }
+
+test("picker upgrade replaces each legacy node with a fresh attribute copy", () => {
+  const replaced = [];
+  const oldPickers = [
+    {
+      attributes: [
+        { name: "id", value: "entity-picker" },
+        { name: "label", value: "Sensor" },
+      ],
+      replaceWith(node) {
+        replaced.push(node);
+      },
+    },
+    {
+      attributes: [{ name: "id", value: "template-sample" }],
+      replaceWith(node) {
+        replaced.push(node);
+      },
+    },
+  ];
+  const root = {
+    querySelectorAll(selector) {
+      expect(selector).toBe("ha-entity-picker");
+      return oldPickers;
+    },
+  };
+  const replacements = replaceEntityPickerElements(root, () => ({
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    },
+  }));
+
+  expect(replacements).toHaveLength(2);
+  expect(replaced).toEqual(replacements);
+  expect(replacements.map((node) => node.attributes)).toEqual([
+    { id: "entity-picker", label: "Sensor" },
+    { id: "template-sample" },
+  ]);
+});
 
 test("library picker configures supported domains and forwards selection", () => {
   const target = picker();
