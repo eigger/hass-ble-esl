@@ -333,10 +333,11 @@ save/send notices preserve their existing accessibility behavior. The status
 module also resolves the send-button hint from explicit tag capability and
 busy-status values; the panel remains the state owner.
 
-The loading-view extraction moves initial loading-step definitions and
-progress/error markup into `editor/loading-view.js`. The panel retains boot
-requests, step completion timing, the loading shell, and retry behavior; the
-view receives loading state plus translation and HTML-escaping helpers.
+The loading-view extraction moves initial loading-step definitions,
+completion transitions, and progress/error markup into
+`editor/loading-view.js`. The panel retains boot requests, step completion
+timing, the loading shell, and retry behavior; the view receives loading state
+plus translation and HTML-escaping helpers.
 
 The header-view extraction moves the editor title, version label, and mode-tab
 markup into `editor/header-view.js`. The panel continues to derive the version
