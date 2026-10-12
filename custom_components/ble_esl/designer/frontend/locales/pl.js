@@ -582,4 +582,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Odłączyć {name} od tego ESL? Sama automatyzacja nie zostanie zmieniona.",
   Continue: "Dalej",
+  "Restore": "Przywróć",
+  "Restore saved design": "Przywróć",
+  "Restore the last saved design? Unsaved changes will be discarded.": "Przywrócić ostatnio zapisany projekt? Niezapisane zmiany zostaną odrzucone.",
 };

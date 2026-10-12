@@ -584,4 +584,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
   Continue: "続行",
+  "Restore": "復元",
+  "Restore saved design": "復元",
+  "Restore the last saved design? Unsaved changes will be discarded.": "最後に保存したデザインに戻しますか？未保存の変更は破棄されます。",
 };

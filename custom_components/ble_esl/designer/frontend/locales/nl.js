@@ -585,4 +585,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
   Continue: "Doorgaan",
+  "Restore": "Herstellen",
+  "Restore saved design": "Herstellen",
+  "Restore the last saved design? Unsaved changes will be discarded.": "Het laatst opgeslagen ontwerp herstellen? Niet-opgeslagen wijzigingen worden verwijderd.",
 };
