@@ -31,6 +31,7 @@ import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
 import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
 import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
 import { renderWeatherControls } from "./editor/inspector/weather-controls.js";
+import { renderLegacyElementProperties } from "./editor/inspector/legacy-properties.js";
 import {
   beginTextEdit as beginCanvasTextEdit,
   finishTextEdit as finishCanvasTextEdit,
@@ -1847,20 +1848,17 @@ export class BleEslDesigner extends HTMLElement {
   properties(element) {
     if (!element)
       return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" && !this._automationSaveMode ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
-    const field = (key, label, type = "text", wide = false) =>
-      `<label class="${wide ? "wide" : ""}">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
-    const group = (title, body) =>
-      body ? `<h3 class="wide group-title">${title}</h3>${body}` : "";
-    const position = group(
-      t(this.hass, "Position & size (px)"),
-      ["x", "y", "width", "height"]
+    if (element.type === "imagespec") {
+      const field = (key, label, type = "text") =>
+        `<label class="">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
+      const position = `<h3 class="wide group-title">${t(this.hass, "Position & size (px)")}</h3>${[
+        "x",
+        "y",
+        "width",
+        "height",
+      ]
         .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
-        .join(""),
-    );
-    let html = "",
-      style = "",
-      picker = "";
-    if (element.type === "imagespec")
+        .join("")}`;
       return this.specEditorSections(
         specEditorHtml(
           this.specDefinition(element),
@@ -1871,34 +1869,42 @@ export class BleEslDesigner extends HTMLElement {
         ),
         position,
       );
-    if (["progress_bar", "gauge"].includes(element.type))
-      html +=
-        field("min_value", t(this.hass, "Minimum"), "number") +
-        field("max_value", t(this.hass, "Maximum"), "number") +
-        field("value", t(this.hass, "Value"), "number", true);
-    if (element.type === "gauge")
-      style += field("font_size", t(this.hass, "Font size"), "number");
-    if (["sensor", "text"].includes(element.type))
-      style += renderTextAlignmentControls(element, {
-        translate: (message) => t(this.hass, message),
-        escapeHtml: esc,
-      });
-    style += this.colorPicker("color", element.color, t(this.hass, "Colour"));
-    if (shapeTypes.includes(element.type))
-      style += `<label class="wide">${t(this.hass, "Shape")}<select data-property="type" aria-label="${t(this.hass, "Shape")}">${shapeTypes.map((type) => `<option value="${type}" ${element.type === type ? "selected" : ""}>${type.replace("_", " ")}</option>`).join("")}</select></label>`;
+    }
 
-    if (element.type === "image")
-      html += `<label class="wide">${t(this.hass, "Image URL")}<input data-property="image" aria-label="${t(this.hass, "Image URL")}" placeholder="${t(this.hass, "Paste a URL, or upload below")}" value="${esc(element.image?.startsWith("data:") ? "" : (element.image ?? ""))}"></label><label class="wide">${t(this.hass, "Image")}<input id="image-file" aria-label="${t(this.hass, "Upload image")}" type="file" accept="image/*"></label><label class="wide">${t(this.hass, "Fit")}<select data-property="image_fit" aria-label="${t(this.hass, "Image fit")}">${["contain", "fill", "stretch"].map((value) => `<option value="${value}" ${element.image_fit === value ? "selected" : ""}>${t(this.hass, value)}</option>`).join("")}</select></label>`;
-    if (element.type === "icon")
-      html += `<label class="wide">${t(this.hass, "Icon")}<button class="icon-choice" data-action="pick-icon" aria-label="${t(this.hass, "Choose icon")}">${this.iconGlyph(this.tokenText(element.icon), 24)}<span>${element.icon === "{{icon}}" ? t(this.hass, "HA state icon") : esc(element.icon.replace("mdi:", ""))}</span></button><input data-property="icon" aria-label="${t(this.hass, "Icon name")}" value="${esc(element.icon)}" hidden></label>`;
-
-    const extra = this.extraProperties(element);
-    style += extra.style;
-    style += `<label class="wide check"><input type="checkbox" data-property="visible" ${element.visible === false ? "" : "checked"}>${t(this.hass, "Visible")}</label>`;
-    if (this.mode === "template" && element.type === "icon")
-      html += this.stateIconRows(element);
+    const sensorOptions = {
+      isWeather: false,
+      templateStyles: [],
+      templateStates: [],
+      numeric: false,
+    };
+    if (element.type === "sensor") {
+      const state = this.hass.states[element.entity_id];
+      sensorOptions.isWeather = element.entity_id.startsWith("weather.");
+      sensorOptions.templateStyles = Object.keys(this.templates)
+        .filter(
+          (key) =>
+            this.templateCompatibility(this.templates[key], key) ===
+            this.outputType(state),
+        )
+        .map((key) => ({
+          value: key,
+          label:
+            this.templates[key]?.name ||
+            this.templateDrafts.get(key)?.name ||
+            (key.startsWith("output:")
+              ? t(this.hass, "{type} style", { type: key.split(":")[1] })
+              : key.replace(":", " · ")),
+          selected: element.template === key,
+        }));
+      sensorOptions.numeric =
+        state &&
+        !state.entity_id.startsWith("binary_sensor.") &&
+        (state.entity_id.startsWith("weather.")
+          ? element.weather_field && element.weather_field !== "condition"
+          : state.state.trim() !== "" && Number.isFinite(Number(state.state)));
+    }
     if (this.mode === "template" && element.type !== "icon")
-      html += `<label class="wide">${t(this.hass, "Show for state")}<input data-property="state" aria-label="${t(this.hass, "Visible state")}" placeholder="${t(this.hass, "All states")}" list="template-states" value="${esc(element.state || "")}"><datalist id="template-states">${[
+      sensorOptions.templateStates = [
         ...new Set([
           "on",
           "off",
@@ -1921,65 +1927,35 @@ export class BleEslDesigner extends HTMLElement {
             : []),
           ...this.entities()
             .filter(
-              (state) => this.sensorType(state) === this.templateSensorType,
+              (entity) => this.sensorType(entity) === this.templateSensorType,
             )
-            .map((state) => state.state),
+            .map((entity) => entity.state),
         ]),
-      ]
-        .map((state) => `<option value="${esc(state)}"></option>`)
-        .join("")}</datalist></label>`;
-    if (element.type === "text")
-      html += `<label class="wide">${t(this.hass, "Text")}<textarea data-property="text" rows="3">${esc(element.text)}</textarea></label>`;
-    if (element.type === "sensor") {
-      if (element.entity_id.startsWith("weather."))
-        html += renderWeatherControls(element, {
-          translate: (message) => t(this.hass, message),
-        });
-      html += `<label class="wide">${t(this.hass, "Tile style")}<select data-property="template" aria-label="${t(this.hass, "Sensor tile style")}"><option value="auto">${t(this.hass, "By sensor type")}</option><option value="default" ${element.template === "default" ? "selected" : ""}>${t(this.hass, "HA tile")}</option>${Object.keys(
-        this.templates,
-      )
-        .filter(
-          (key) =>
-            this.templateCompatibility(this.templates[key], key) ===
-            this.outputType(this.hass.states[element.entity_id]),
-        )
-        .map(
-          (key) =>
-            `<option value="${esc(key)}" ${element.template === key ? "selected" : ""}>${esc(this.templates[key]?.name || this.templateDrafts.get(key)?.name || (key.startsWith("output:") ? t(this.hass, "{type} style", { type: key.split(":")[1] }) : key.replace(":", " · ")))}</option>`,
-        )
-        .join(
-          "",
-        )}<option value="__new__">${t(this.hass, "＋ Create tile style…")}</option></select></label>`;
-      picker = `<ha-entity-picker class="wide" data-property="entity_id"></ha-entity-picker>`;
-      html += `<label class="wide check"><input type="checkbox" data-property="show_label" ${element.show_label ? "checked" : ""}>${t(this.hass, "Show label")}</label>`;
-      if (element.show_label)
-        html += field("label", t(this.hass, "Label override"), "text", true);
-      const state = this.hass.states[element.entity_id];
-      const numeric =
-        state &&
-        !state.entity_id.startsWith("binary_sensor.") &&
-        (state.entity_id.startsWith("weather.")
-          ? element.weather_field && element.weather_field !== "condition"
-          : state.state.trim() !== "" && Number.isFinite(Number(state.state)));
-      if (numeric) {
-        html += `<label class="wide check"><input type="checkbox" data-property="show_unit" ${element.show_unit ? "checked" : ""}>${t(this.hass, "Show unit")}</label>`;
-        if (element.show_unit)
-          html += field(
-            "decimals",
-            t(this.hass, "Decimals (auto when blank)"),
-            "number",
-            true,
-          );
-      }
-    }
-    return (
-      group(t(this.hass, "Content"), picker + html) +
-      position +
-      group(t(this.hass, "Style"), style) +
-      (extra.advanced
-        ? `<details class="wide advanced" ${this.advancedOpen ? "open" : ""}><summary>${t(this.hass, "Advanced")}</summary><div class="props">${extra.advanced}</div></details>`
-        : "")
-    );
+      ];
+
+    const translate = (message, values) => t(this.hass, message, values);
+    return renderLegacyElementProperties(element, {
+      translate,
+      escapeHtml: esc,
+      colorPicker: (key, value, label) => this.colorPicker(key, value, label),
+      iconGlyph: (name, size) => this.iconGlyph(name, size),
+      tokenText: (value) => this.tokenText(value),
+      stateIconRows: (item) => this.stateIconRows(item),
+      extraProperties: (item) => this.extraProperties(item),
+      textAlignmentControls: (item) =>
+        renderTextAlignmentControls(item, {
+          translate: (message) => translate(message),
+          escapeHtml: esc,
+        }),
+      weatherControls: (item) =>
+        renderWeatherControls(item, {
+          translate: (message) => translate(message),
+        }),
+      shapeTypes,
+      mode: this.mode,
+      advancedOpen: this.advancedOpen,
+      sensorOptions,
+    });
   }
   specEditorSections(markup, position) {
     return renderSpecEditorSections({
