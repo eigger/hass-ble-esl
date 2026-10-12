@@ -310,3 +310,9 @@ The template-control extraction moves sensor-template control and token-tool
 markup into `editor/template-controls.js`. The panel supplies current template
 values and choices plus translation and escaping helpers; template selection,
 sample-entity handling, persistence, and document edits stay in the panel.
+
+The status-view extraction moves inline status and floating notice presentation
+into `editor/status-view.js`. The panel supplies the current status snapshot,
+translation and timeout callbacks; it retains status state and notice timing
+ownership. Routine status text, preview errors, dismiss controls, and temporary
+save/send notices preserve their existing accessibility behavior.
