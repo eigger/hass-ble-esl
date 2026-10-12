@@ -94,6 +94,7 @@ import {
 } from "./editor/canvas/view.js";
 import {
   alignmentGuides as calculateAlignmentGuides,
+  adoptLayerRecords,
   clampMoved as clampMovedGeometry,
   clampResized as clampResizedGeometry,
   createLayerRecords,
@@ -2026,23 +2027,14 @@ export class BleEslDesigner extends HTMLElement {
   // The server returns the saved document with its defaults filled in. That
   // changes nothing on screen, so what the last render still describes stays.
   adoptDocument(saved) {
-    const current = this.document.elements
-      .filter((el) =>
-        el.type === "image" || el.type === "imagespec"
-          ? !!this.layerRecords?.[el.id]
-          : this.visibleBounds(el) !== undefined,
-      )
-      .map((el) => el.id);
+    const records = adoptLayerRecords({
+      currentElements: this.document.elements,
+      savedElements: saved.elements,
+      layerRecords: this.layerRecords,
+      hasVisibleBounds: (element) => this.visibleBounds(element) !== undefined,
+    });
     this.document = saved;
-    const records = this.layerRecords || {};
-    this.layerRecords = Object.fromEntries(
-      saved.elements
-        .filter((el) => current.includes(el.id))
-        .map((el) => [
-          el.id,
-          { shape: this.shape(el), size: records[el.id].size },
-        ]),
-    );
+    this.layerRecords = records;
   }
   renderRecords() {
     return createLayerRecords(this.document.elements);

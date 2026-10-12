@@ -71,6 +71,37 @@ export function createLayerRecords(elements) {
   );
 }
 
+// Keep renderer results for previously measured elements when a server save
+// returns the same document with normalized defaults filled in.
+export function adoptLayerRecords({
+  currentElements,
+  savedElements,
+  layerRecords,
+  hasVisibleBounds,
+}) {
+  const records = layerRecords || {};
+  const measuredIds = new Set(
+    currentElements
+      .filter((element) =>
+        element.type === "image" || element.type === "imagespec"
+          ? !!records[element.id]
+          : hasVisibleBounds(element),
+      )
+      .map((element) => element.id),
+  );
+  return Object.fromEntries(
+    savedElements
+      .filter((element) => measuredIds.has(element.id))
+      .map((element) => [
+        element.id,
+        {
+          shape: elementShape(element),
+          size: records[element.id].size,
+        },
+      ]),
+  );
+}
+
 // undefined means unknown or frame-based, null means the renderer found no
 // visible content, and an array is the visible box relative to the frame.
 export function visibleBounds(element, { record, layerBounds }) {
