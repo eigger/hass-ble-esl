@@ -6,9 +6,16 @@ test.beforeEach(async ({ page, request }) => {
   await expect(page.locator(".card")).toHaveCount(2);
   await expect(
     page.locator(
-      '[data-entry="demo-writable"] [data-action="edit-automation"]',
+      '[data-entry="demo-writable"] [data-action="automations"]',
     ),
   ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.manager.automationCache.get("demo-writable")?.linked.length,
+      ),
+    )
+    .toBeGreaterThan(0);
 });
 
 test("cards label read-only devices and frame the complete last successful image", async ({
@@ -58,20 +65,30 @@ test("cards label read-only devices and frame the complete last successful image
   ).toBeVisible();
 });
 
-test("one linked automation opens directly and names its save destination", async ({
+test("one linked automation opens from the connected list and names its save destination", async ({
   page,
 }) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
   await page.evaluate(() => {
     const manager = window.manager;
     const data = manager.automationCache.get("demo-writable");
+    const callWS = manager.hass.callWS;
+    manager.hass = {
+      ...manager.hass,
+      callWS: async (message) =>
+        message.action === "automations"
+          ? { ...data, linked: [data.linked[0]] }
+          : callWS(message),
+    };
     manager.automationCache.set("demo-writable", {
       ...data,
       linked: [data.linked[0]],
     });
     manager.renderCards();
   });
-  await page
-    .locator('.card[data-entry="demo-writable"]')
+  await card.locator('[data-action="automations"]').click();
+  const dialog = page.getByRole("dialog", { name: "Connected automations" });
+  await dialog
     .getByRole("button", { name: "Edit automation design", exact: true })
     .click();
   await expect(
@@ -120,13 +137,11 @@ test("editor context follows template mode and the selected tag", async ({
   );
 });
 
-test("multiple automations open a choice and stale cache errors never pick one", async ({
+test("multiple automations open as a list and stale cache errors never pick one", async ({
   page,
 }) => {
   const card = page.locator('.card[data-entry="demo-writable"]');
-  await card
-    .getByRole("button", { name: "Edit automation design", exact: true })
-    .click();
+  await card.locator('[data-action="automations"]').click();
   const dialog = page.getByRole("dialog", { name: "Connected automations" });
   await expect(dialog).toBeVisible();
   await expect(
@@ -138,6 +153,7 @@ test("multiple automations open a choice and stale cache errors never pick one",
     window.manager.renderCards();
   });
   await expect(card.locator('[data-action="edit-automation"]')).toHaveCount(0);
+  await expect(card.locator('[data-action="automations"]')).toBeVisible();
   await expect(
     card.getByRole("button", { name: "Edit tag design", exact: true }),
   ).toBeVisible();
@@ -301,11 +317,11 @@ test("the editor bar stays compact on a phone in long translations", async ({
       .locator('[data-entry="demo-writable"] [data-action="edit"]')
       .click();
     await page.waitForFunction(() =>
-      window.manager.shadowRoot.querySelector(".editor-nav"),
+      window.manager.editor.querySelector(".editor-nav"),
     );
     const height = await page.evaluate(() =>
       Math.round(
-        window.manager.shadowRoot
+        window.manager.editor
           .querySelector(".editor-nav")
           .getBoundingClientRect().height,
       ),
