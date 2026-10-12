@@ -10,6 +10,7 @@ from datetime import timedelta
 from html import escape
 from io import BytesIO
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -628,4 +629,4 @@ app.router.add_post("/reset", reset)
 app.router.add_static("/ble_esl_designer_fonts", ROOT / "custom_components/ble_esl/fonts")
 app.router.add_static("/frontend", ROOT / "custom_components/ble_esl/designer/frontend")
 if __name__ == "__main__":
-    web.run_app(app, host="127.0.0.1", port=8765)
+    web.run_app(app, host="127.0.0.1", port=int(os.environ.get("DESIGNER_PORT", "8765")))

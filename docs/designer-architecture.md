@@ -15,7 +15,8 @@ responsibilities include:
 
 | Current owner | Responsibilities |
 |---|---|
-| `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and document; selection, undo/redo, dirty state and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; preview scheduling; import/export, save and send; Home Assistant API calls. |
+| `panel.js` / `BleEslDesigner` | Editor lifecycle and loading; selected tag and drafts; display and sensor-tile modes; markup and stage rendering; property and layer UI; pointer/keyboard gestures; preview scheduling; import/export, save and send; Home Assistant API calls. It exposes compatibility accessors for active session state. |
+| `editor/session.js` / `EditorSession` | Owns the active document, selected element, undo/redo history, dirty flag, history limit, and capture/restore/reset transitions. |
 | `model.js` | Shared document helpers: cloning, IDs, palette, empty document, element bounds/defaults, and JPEG orientation. These are mostly data-oriented helpers, although ID creation uses browser `crypto`. |
 | `editor/document-operations.js` | Pure imported-document normalization. The panel supplies document defaults, cloning, and ID creation as explicit dependencies. |
 | `spec-editor.js`, `dynamic-fields.js` | Imagespec field definitions/input helpers and dynamic property controls used by the panel and dialogs. |
@@ -29,12 +30,15 @@ and change flow, not arbitrary file-size targets.
 
 ## State ownership and access today
 
-The editor element is the live owner of the working display and sensor-tile
-state. In particular, `document`, `selected`, `undoStack`, `redoStack`,
-`dirty`, per-tag `drafts`, template drafts, mode, zoom and preview state are
-stored directly on `BleEslDesigner`. Most editor handlers read and mutate those
-fields directly. The manager does not own ordinary display editing state; it
-asks the editor to load a tag and reads its draft indicator.
+`EditorSession` is the live owner of the active document, selected element,
+undo/redo stacks, and dirty flag. `BleEslDesigner` exposes `document`,
+`selected`, `undoStack`, `redoStack`, and `dirty` compatibility accessors that
+delegate to the session, so existing manager and host call sites remain valid
+while callers migrate. Session methods own reset, capture/restore, history
+checkpoints, undo/redo steps, and dirty transitions. The panel still owns
+per-tag drafts, template drafts, mode, zoom, and preview state. The manager
+does not own ordinary display editing state; it asks the editor to load a tag
+and reads its draft indicator.
 
 Automation editing is an intentional cross-component exception. `manager.js`
 captures the editor's return state, owns the automation source/configuration
@@ -91,11 +95,11 @@ preserve or deliberately migrate these call sites:
 | Automation payload import and preview parameters | `prepareAutomationPayload(payload, background, entryId, previewVariables)`, `requestPreviewVariables(variables, missingName)`, `applyAutomationPayload(result, payload, background, allowEmpty, entryId, token, previewVariables)`, plus `document` to record the imported background. |
 | Automation payload export and completion | `api("export", data)` produces the validated payload. The manager then writes HA automation config. On success it compares `editor.document` with the submitted snapshot; if unchanged, it directly sets `editor.dirty = false` and calls `editor.render()`. |
 
-This inventory reflects real coupling, including direct state mutation. It is a
-compatibility constraint for staged work, not a recommendation to keep these
-members public forever. A session/API extraction should replace the manager's
-direct `document`/`dirty` access with an explicit contract only when all
-callers and stale-session checks move together.
+This inventory reflects real coupling, including direct state mutation through
+compatibility accessors. It is a compatibility constraint for staged work, not
+a recommendation to keep these members public forever. A later API extraction
+should replace the manager's direct `document`/`dirty` access with an explicit
+contract only when all callers and stale-session checks move together.
 
 ## UX and correctness invariants
 

@@ -21,6 +21,7 @@ import {
   newElement,
   jpegOrientation,
 } from "./model.js";
+import { EditorSession } from "./editor/session.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -171,10 +172,7 @@ export class BleEslDesigner extends HTMLElement {
     this.ready = false;
     this.readyPromise = new Promise((resolve) => (this.resolveReady = resolve));
     this.refreshing = false;
-    this.document = emptyDocument();
-    this.selected = null;
-    this.undoStack = [];
-    this.redoStack = [];
+    this.session = new EditorSession(emptyDocument());
     this.zoom = 1;
     this.zoomMode = "fit";
     this.resizeObserver = new ResizeObserver(() => {
@@ -188,7 +186,6 @@ export class BleEslDesigner extends HTMLElement {
     this.errorSource = null;
     this.preview = null;
     this.layerPreviews = {};
-    this.dirty = false;
     this._automationPreviewVariables = null;
     this.specAdvancedOpen = false;
     this.busy = false;
@@ -229,6 +226,38 @@ export class BleEslDesigner extends HTMLElement {
       if (event.target.closest(".stage")) event.preventDefault();
     });
     this.shadowRoot.addEventListener("drop", (event) => this.drop(event));
+  }
+  // Keep the existing manager and host surface stable while EditorSession
+  // becomes the single owner of active document state.
+  get document() {
+    return this.session.document;
+  }
+  set document(value) {
+    this.session.document = value;
+  }
+  get selected() {
+    return this.session.selected;
+  }
+  set selected(value) {
+    this.session.selected = value;
+  }
+  get undoStack() {
+    return this.session.undoStack;
+  }
+  set undoStack(value) {
+    this.session.undoStack = value;
+  }
+  get redoStack() {
+    return this.session.redoStack;
+  }
+  set redoStack(value) {
+    this.session.redoStack = value;
+  }
+  get dirty() {
+    return this.session.dirty;
+  }
+  set dirty(value) {
+    this.session.markDirty(value);
   }
   set panel(value) {
     this._panelInfo = value;
@@ -332,15 +361,14 @@ export class BleEslDesigner extends HTMLElement {
       return false;
     if (result.issues.length || (!allowEmpty && result.different_pixels !== 0))
       return false;
-    this.document = clone(this.document);
-    this.document.elements = result.elements;
-    this.document.background = palette(this.tag.colors).includes(background)
+    const document = clone(this.document);
+    document.elements = result.elements;
+    document.background = palette(this.tag.colors).includes(background)
       ? background
       : "white";
-    this.selected = result.elements.at(-1)?.id || null;
-    this.undoStack = [];
-    this.redoStack = [];
-    this.dirty = false;
+    this.session.reset(document, {
+      selected: result.elements.at(-1)?.id || null,
+    });
     this.busy = false;
     this._automationSessionPending = false;
     this._automationSaveMode = true;
@@ -376,9 +404,8 @@ export class BleEslDesigner extends HTMLElement {
     this.editingTextId = null;
     this.typingProperty = null;
     if (!state) {
-      this.dirty = false;
-      this.undoStack = [];
-      this.redoStack = [];
+      this.session.markDirty(false);
+      this.session.clearHistory();
       if (this.ready && this.tag) {
         this.drafts.delete(this.tag.entry_id);
         this.load(
@@ -393,11 +420,13 @@ export class BleEslDesigner extends HTMLElement {
         state.tag
       : state.tag;
     this.tag = tag;
-    this.document = clone(state.document);
-    this.selected = state.selected;
-    this.dirty = state.dirty;
-    this.undoStack = clone(state.undoStack);
-    this.redoStack = clone(state.redoStack);
+    this.session.restore({
+      document: clone(state.document),
+      selected: state.selected,
+      dirty: state.dirty,
+      undoStack: clone(state.undoStack),
+      redoStack: clone(state.redoStack),
+    });
     this.drafts = new Map(
       [...state.drafts].map(([key, value]) => [key, clone(value)]),
     );
@@ -736,13 +765,10 @@ export class BleEslDesigner extends HTMLElement {
       this.templateAutomation = null;
     this.tag = tag;
     this.automationImportRun = (this.automationImportRun || 0) + 1;
-    this.document = clone(
-      this.drafts.get(tag.entry_id) || tag.document || emptyDocument(),
+    this.session.reset(
+      clone(this.drafts.get(tag.entry_id) || tag.document || emptyDocument()),
+      { dirty: this.drafts.has(tag.entry_id) },
     );
-    this.selected = null;
-    this.undoStack = [];
-    this.redoStack = [];
-    this.dirty = this.drafts.has(tag.entry_id);
     this.preview = null;
     this.layerPreviews = {};
     this.error = false;
@@ -753,9 +779,7 @@ export class BleEslDesigner extends HTMLElement {
     this.queuePreview();
   }
   checkpoint() {
-    this.undoStack.push(clone(this.document));
-    if (this.undoStack.length > 100) this.undoStack.shift();
-    this.redoStack = [];
+    this.session.checkpoint();
     this.syncHistoryControls();
   }
   syncHistoryControls() {
@@ -789,7 +813,7 @@ export class BleEslDesigner extends HTMLElement {
     if (title) title.textContent = t(this.hass, "Editing preview");
   }
   edited(render = true) {
-    this.dirty = true;
+    this.session.markDirty();
     this.preview = null;
     this.previewSequence++;
     if (render) this.render();
@@ -1015,13 +1039,14 @@ export class BleEslDesigner extends HTMLElement {
     )
       return;
     if (mode === "template") {
+      const active = this.session.capture();
       this.displaySession = {
         tag: this.tag,
-        document: this.document,
-        selected: this.selected,
-        dirty: this.dirty,
-        undo: this.undoStack,
-        redo: this.redoStack,
+        document: active.document,
+        selected: active.selected,
+        dirty: active.dirty,
+        undo: active.undoStack,
+        redo: active.redoStack,
       };
       this.mode = mode;
       this.loadTemplate(this.templateKey);
@@ -1030,11 +1055,13 @@ export class BleEslDesigner extends HTMLElement {
       this.mode = mode;
       const session = this.displaySession;
       this.tag = session.tag;
-      this.document = session.document;
-      this.selected = session.selected;
-      this.dirty = session.dirty;
-      this.undoStack = session.undo;
-      this.redoStack = session.redo;
+      this.session.restore({
+        document: session.document,
+        selected: session.selected,
+        dirty: session.dirty,
+        undoStack: session.undo,
+        redoStack: session.redo,
+      });
       this.preview = null;
       this.layerPreviews = {};
       this.render();
@@ -1077,16 +1104,16 @@ export class BleEslDesigner extends HTMLElement {
         : key.replace(":", " · "));
     this.templateSensorType =
       template.sensor_type || key.split(":").slice(0, 2).join(":");
-    this.document = clone(template.document);
+    const document = clone(template.document);
     if (
       !this.templates[key] &&
       !this.templateDrafts.has(key) &&
       /^(binary_sensor|weather):|^output:(binary|weather)/.test(key)
     )
-      this.document.elements = this.document.elements.filter(
+      document.elements = document.elements.filter(
         (el) => el.text !== "{{state}} {{unit}}",
       );
-    this.dirty = !!template.dirty;
+    this.session.reset(document, { dirty: !!template.dirty });
     this.sampleEntity =
       this.entities().find(
         (state) =>
@@ -1098,9 +1125,6 @@ export class BleEslDesigner extends HTMLElement {
           this.templateSensorType.split(":")[0],
       )?.entity_id ||
       "";
-    this.selected = null;
-    this.undoStack = [];
-    this.redoStack = [];
     this.preview = null;
     this.status = "";
     this.render();
@@ -1755,9 +1779,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   // Undo steps only for edits that took: half-typed input changes nothing.
   pushUndo(snapshot) {
-    this.undoStack.push(snapshot);
-    if (this.undoStack.length > 100) this.undoStack.shift();
-    this.redoStack = [];
+    this.session.pushUndo(snapshot);
     this.syncHistoryControls();
   }
   specInput(input) {
@@ -2951,11 +2973,7 @@ export class BleEslDesigner extends HTMLElement {
         await this.boot();
         return;
       } else if (action === "undo" || action === "redo") {
-        const source = action === "undo" ? this.undoStack : this.redoStack,
-          target = action === "undo" ? this.redoStack : this.undoStack;
-        if (source.length) {
-          target.push(clone(this.document));
-          this.document = source.pop();
+        if (this.session.stepHistory(action)) {
           if (!this.element) this.selected = null;
           this.edited();
         }

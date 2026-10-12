@@ -1,11 +1,12 @@
 import { defineConfig } from "@playwright/test";
+const port = process.env.DESIGNER_PORT || "8765";
 export default defineConfig({
   testDir: "tests/frontend",
   testMatch: "*.spec.js",
   fullyParallel: false,
   workers: 1,
   use: {
-    baseURL: "http://127.0.0.1:8765",
+    baseURL: `http://127.0.0.1:${port}`,
     viewport: { width: 1440, height: 1000 },
   },
   // CI logs only show complete lines; the default "dot" reporter looks hung.
@@ -20,7 +21,8 @@ export default defineConfig({
   ],
   webServer: {
     command: `${process.env.DESIGNER_PYTHON || ".venv/bin/python"} scripts/designer_demo.py`,
-    url: "http://127.0.0.1:8765",
+    url: `http://127.0.0.1:${port}`,
+    env: { DESIGNER_PORT: port },
     reuseExistingServer: !process.env.CI,
   },
 });
