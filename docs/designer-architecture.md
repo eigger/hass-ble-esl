@@ -378,3 +378,9 @@ The imagespec palette extraction moves grouped renderer-type selector markup
 into `editor/inspector/spec-palette.js`. The panel supplies renderer metadata,
 mode, translation, and escaping; imagespec element construction, default
 sensor selection for plots, document history, and focus remain panel-owned.
+
+The state-icon inspector extraction moves state-to-icon row and picker markup
+into `editor/inspector/state-icons.js`. The panel supplies sample state,
+output classification, default icon and glyph callbacks, translation, and
+escaping. Icon catalog state, mapping edits, and document history remain in
+the panel.

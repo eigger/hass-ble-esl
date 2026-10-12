@@ -71,6 +71,7 @@ import {
   renderLayerRows,
 } from "./editor/inspector/layers.js";
 import { renderSpecEditorSections } from "./editor/inspector/spec-sections.js";
+import { renderStateIconRows } from "./editor/inspector/state-icons.js";
 import { renderSpecPalette } from "./editor/inspector/spec-palette.js";
 import { renderOptionalProperties } from "./editor/inspector/optional-properties.js";
 import { renderTextAlignmentControls } from "./editor/inspector/text-alignment.js";
@@ -1398,26 +1399,15 @@ export class BleEslDesigner extends HTMLElement {
       option.textContent = `${t(this.hass, "Fit")} (${Math.round(this.zoom * 100)}%)`;
   }
   stateIconRows(element) {
-    const sample = this.sampleState();
-    const states = [
-      ...new Set([
-        ...(this.outputType(sample) === "binary"
-          ? ["on", "off"]
-          : sample
-            ? [sample.state]
-            : []),
-        ...Object.keys(element.state_icons || {}),
-      ]),
-    ];
-    return `<div class="wide"><strong>${t(this.hass, "State → icon")}</strong>${states
-      .map((state) => {
-        const name = element.state_icons?.[state] || "{{icon}}";
-        const stateObj = sample && { ...sample, state };
-        return `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="min-width:48px">${esc(state)}</span><span>→</span><button class="icon-choice" data-action="pick-icon" data-icon-state="${esc(state)}" aria-label="${esc(t(this.hass, "Choose icon for {state}", { state }))}">${this.iconGlyph(name === "{{icon}}" ? this.defaultIcon(stateObj) : name)}<span>${name === "{{icon}}" ? t(this.hass, "HA state icon") : esc(name.replace("mdi:", ""))}</span></button></div>`;
-      })
-      .join(
-        "",
-      )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="${t(this.hass, "New icon state")}" placeholder="${t(this.hass, "Another state")}"><button data-action="add-icon-state" aria-label="${t(this.hass, "Add state mapping")}">+</button></div><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="${t(this.hass, "Search icons")}" placeholder="${t(this.hass, "Search icons")}"><button data-icon="{{icon}}">${t(this.hass, "HA state icon")}</button><div class="icon-picker"></div></div></div>`;
+    return renderStateIconRows({
+      element,
+      sample: this.sampleState(),
+      outputType: (state) => this.outputType(state),
+      defaultIcon: (state) => this.defaultIcon(state),
+      iconGlyph: (name) => this.iconGlyph(name),
+      translate: (message, values) => t(this.hass, message, values),
+      escapeHtml: esc,
+    });
   }
   // The layer of an element that draws beyond its frame is cropped to what it
   // drew: it sits at an offset from the frame and follows the frame's scale.
