@@ -842,6 +842,7 @@ export class BleEslDesigner extends HTMLElement {
       redoCount: this.redoStack.length,
       busy: this.busy,
       automationSaveMode: this._automationSaveMode,
+      mode: this.mode,
       translate: (key) => t(this.hass, key),
       saveIcon: toolIcon("save"),
     });
@@ -2447,6 +2448,38 @@ export class BleEslDesigner extends HTMLElement {
           this.notice = this.status;
           this.error = ["locked", "failed"].includes(result.status);
         }
+      } else if (action === "restore") {
+        if (
+          this._automationSaveMode ||
+          this.mode === "template" ||
+          !this.tag ||
+          !this.dirty
+        )
+          return;
+        if (
+          !window.confirm(
+            t(
+              this.hass,
+              "Restore the last saved design? Unsaved changes will be discarded.",
+            ),
+          )
+        )
+          return;
+        const restored = clone(this.tag.document || emptyDocument());
+        this.drafts.delete(this.tag.entry_id);
+        this.session.reset(restored);
+        this.preview = null;
+        this.layerPreviews = {};
+        this.layerBounds = {};
+        this.layerOffsets = {};
+        this.layerRecords = this.renderRecords();
+        this.selected = null;
+        this.status = "Ready";
+        this.notice = null;
+        this.error = false;
+        this.invalidatePreview();
+        this.render();
+        this.queuePreview();
       } else if (action === "reload") {
         // Retry after a failed first load shows the error instead.
         if (this.refreshing || (this.loading && !this.loading.error)) return;

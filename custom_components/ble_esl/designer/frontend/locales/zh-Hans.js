@@ -551,4 +551,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要将 {name} 与此 ESL 取消关联吗？自动化本身不会更改。",
   Continue: "继续",
+  "Restore": "恢复",
+  "Restore saved design": "恢复",
+  "Restore the last saved design? Unsaved changes will be discarded.": "恢复上次保存的设计？未保存的更改将被丢弃。",
 };

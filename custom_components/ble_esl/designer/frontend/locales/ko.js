@@ -572,4 +572,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
   Continue: "계속",
+  "Restore": "복원",
+  "Restore saved design": "복원",
+  "Restore the last saved design? Unsaved changes will be discarded.": "마지막으로 저장한 디자인을 복원할까요? 저장하지 않은 변경 사항은 사라집니다.",
 };

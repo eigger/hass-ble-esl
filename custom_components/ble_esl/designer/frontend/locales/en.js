@@ -574,4 +574,7 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Unlink {name} from this ESL? The automation itself is not changed.",
   Continue: "Continue",
+  "Restore": "Restore",
+  "Restore saved design": "Restore",
+  "Restore the last saved design? Unsaved changes will be discarded.": "Restore the last saved design? Unsaved changes will be discarded.",
 };
