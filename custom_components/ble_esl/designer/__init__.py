@@ -50,6 +50,7 @@ from .specs import (
     describe,
     frozen_corners,
     resolve_templates,
+    templates_in,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -490,27 +491,25 @@ class Designer:
                     )
             except MissingTemplateParameter as err:
                 missing = {err.name}
-                sample_variables = dict(preview_variables)
-                sample_variables[err.name] = ""
-                for _ in range(64):
-                    try:
-                        resolve_templates(self.hass, imported, set(), sample_variables)
-                        compile_payload(
-                            self.hass,
-                            {"elements": elements},
-                            preview_variables=sample_variables,
-                        )
-                        break
-                    except MissingTemplateParameter as next_err:
-                        if next_err.name in sample_variables:
+                sources = dict.fromkeys(
+                    templates_in(imported) + templates_in(elements)
+                )
+                for source in sources:
+                    sample_variables = dict(preview_variables)
+                    for _ in range(64):
+                        try:
+                            resolve_templates(self.hass, source, set(), sample_variables)
                             break
-                        missing.add(next_err.name)
-                        sample_variables[next_err.name] = ""
-                    except HomeAssistantError:
-                        # A blank sample may not fit the variable's operation
-                        # (for example, adding a number). Keep the real missing
-                        # names found so far and let the user provide its type.
-                        break
+                        except MissingTemplateParameter as next_err:
+                            if next_err.name in sample_variables:
+                                break
+                            missing.add(next_err.name)
+                            sample_variables[next_err.name] = ""
+                        except HomeAssistantError:
+                            # A blank sample may not fit the variable's operation
+                            # (for example, adding a number). Continue with the
+                            # other template fields so this import stays editable.
+                            break
                 return {
                     "missing_parameters": sorted(missing),
                     "elements": [],
