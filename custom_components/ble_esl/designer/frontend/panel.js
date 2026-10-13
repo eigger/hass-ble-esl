@@ -252,6 +252,7 @@ export class BleEslDesigner extends HTMLElement {
     this.notice = null;
     this.errorSource = null;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this._automationPreviewVariables = null;
     this.specAdvancedOpen = false;
@@ -418,11 +419,15 @@ export class BleEslDesigner extends HTMLElement {
     entryId,
     previewVariables = {},
   ) {
+    const rotation =
+      typeof rotate === "string" && /^(0|90|180|270)$/.test(rotate.trim())
+        ? Number(rotate.trim())
+        : rotate;
     return this.api("import_payload", {
       entry_id: entryId,
       payload,
       background,
-      rotate,
+      rotate: rotation,
       existing: 0,
       preview_variables: previewVariables,
     });
@@ -459,6 +464,7 @@ export class BleEslDesigner extends HTMLElement {
     this._automationPreviewVariables = clone(previewVariables);
     this._automationBackground = this.document.background;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.layerBounds = {};
     this.layerOffsets = {};
@@ -534,6 +540,7 @@ export class BleEslDesigner extends HTMLElement {
     this.inspectorOpen = state.inspectorOpen;
     this.search = state.search;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.error = false;
     this.errorSource = null;
@@ -823,6 +830,7 @@ export class BleEslDesigner extends HTMLElement {
       { dirty: this.drafts.has(tag.entry_id) },
     );
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.error = false;
     this.status = tag.writable
@@ -859,6 +867,7 @@ export class BleEslDesigner extends HTMLElement {
     this.session.markDirty();
     this.preview = null;
     this.devicePreview = null;
+    this.setDeviceOutputPending();
     this.invalidatePreview();
     if (render) this.render();
     else {
@@ -866,6 +875,17 @@ export class BleEslDesigner extends HTMLElement {
       this.markDirty();
     }
     this.queuePreview();
+  }
+  setDeviceOutputPending() {
+    const output = this.shadowRoot.querySelector(".device-output");
+    if (!output || !this.document.rotate) return;
+    output.querySelector("img")?.remove();
+    if (!output.querySelector(".muted")) {
+      const pending = document.createElement("span");
+      pending.className = "muted";
+      pending.textContent = t(this.hass, "Preview updating…");
+      output.append(pending);
+    }
   }
   // The user's alias for a tag (as the dashboard shows it), else the product title.
   tagName(tag) {
@@ -1000,6 +1020,7 @@ export class BleEslDesigner extends HTMLElement {
         redoStack: session.redo,
       });
       this.preview = null;
+      this.devicePreview = null;
       this.layerPreviews = {};
       this.render();
       this.queuePreview();
@@ -1063,6 +1084,7 @@ export class BleEslDesigner extends HTMLElement {
       )?.entity_id ||
       "";
     this.preview = null;
+    this.devicePreview = null;
     this.status = "";
     this.render();
     this.queuePreview();
@@ -1144,6 +1166,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   invalidatePreviewForParameters() {
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.layerBounds = {};
     this.layerOffsets = {};
@@ -1637,6 +1660,7 @@ export class BleEslDesigner extends HTMLElement {
       template_id: id,
       parameters,
       existing: replace ? 0 : context.document.elements.length,
+      rotate: context.document.rotate || 0,
     });
     if (!this.isDocumentSessionCurrent(context)) return { stale: true };
     if (result.elements.length) {
@@ -2438,14 +2462,7 @@ export class BleEslDesigner extends HTMLElement {
           this.notice = this.status;
         }
         if (action === "preview") {
-          this.preview = result.png;
-          this.layerPreviews = result.layers;
-          this.layerBounds = result.layers._bounds || {};
-          this.layerOffsets = result.layers._offsets || {};
-          this.layerRecords = this.renderRecords();
-          this.templateEntities = [
-            ...new Set(Object.values(result.layers._dependencies || {}).flat()),
-          ];
+          this.applyPreviewResult(result);
           this.status = "Exact rendered preview";
         }
         if (action === "send") {
@@ -2484,6 +2501,7 @@ export class BleEslDesigner extends HTMLElement {
         this.drafts.delete(this.tag.entry_id);
         this.session.reset(restored);
         this.preview = null;
+        this.devicePreview = null;
         this.layerPreviews = {};
         this.layerBounds = {};
         this.layerOffsets = {};
@@ -2784,6 +2802,7 @@ export class BleEslDesigner extends HTMLElement {
       this.dirty = true;
       this.render();
       this.preview = null;
+      this.devicePreview = null;
       this.drawStage();
       this.queuePreview();
       return;
@@ -2960,6 +2979,17 @@ export class BleEslDesigner extends HTMLElement {
   applyPreviewResult(result) {
     this.preview = result.png;
     this.devicePreview = result.device_png || result.png;
+    const deviceOutput = this.shadowRoot.querySelector(".device-output");
+    if (deviceOutput && this.document.rotate) {
+      deviceOutput.querySelector(".muted")?.remove();
+      let image = deviceOutput.querySelector("img");
+      if (!image) {
+        image = document.createElement("img");
+        image.alt = t(this.hass, "Device output");
+        deviceOutput.append(image);
+      }
+      image.src = this.devicePreview;
+    }
     this.layerPreviews = result.layers;
     this.layerBounds = result.layers._bounds || {};
     this.layerOffsets = result.layers._offsets || {};

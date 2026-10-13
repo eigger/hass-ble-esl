@@ -323,6 +323,8 @@ class Designer:
                 "Fix the design first: " + "; ".join(exported["validation_errors"][:3])
             )
         preset = self.preset(entry)
+        if document.get("rotate") in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         background = validate(document, preset)["background"]
 
         def write(template_id, file_name):
@@ -367,9 +369,11 @@ class Designer:
             await self._reload_design_templates()
         return {"id": template_id, "yaml": text}
 
-    def design_template_list(self, entry):
+    def design_template_list(self, entry, rotate=0):
         """The ready-made designs, described for this tag's display."""
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         return [
             describe_template(template, preset.width, preset.height)
             for template in self.design_templates.values()
@@ -395,7 +399,7 @@ class Designer:
         if missing:
             raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
 
-    async def preview_design_template(self, entry, template_id, parameters=None):
+    async def preview_design_template(self, entry, template_id, parameters=None, rotate=0):
         """A design template drawn for this tag, as the real renderer shows it now.
 
         Values not given use their defaults; a default entity that does not
@@ -406,6 +410,8 @@ class Designer:
         if template is None:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         given = dict(parameters or {})
         for name, parameter in template["parameters"].items():
             if parameter["type"] != "entity" or name in given:
@@ -431,17 +437,24 @@ class Designer:
         }
 
     async def apply_design_template(
-        self, entry, template_id, parameters=None, existing=0, preview_variables=None
+        self, entry, template_id, parameters=None, existing=0, preview_variables=None, rotate=0
     ):
         """A design template's elements for this tag, imported like a pasted payload."""
         template = self.design_templates.get(template_id)
         if template is None:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         built = build_template(template, preset.width, preset.height, preset.colors, parameters)
         await self.ensure_template_inputs(template, built["parameters"])
         imported = await self.import_payload(
-            entry, built["payload"], built["background"], existing, preview_variables
+            entry,
+            built["payload"],
+            built["background"],
+            existing,
+            preview_variables,
+            rotate,
         )
         return {
             **imported,
@@ -686,7 +699,10 @@ async def websocket_designer(hass, connection, msg):
         if "template_id" not in msg:
             raise HomeAssistantError("template_id is required")
         result = await designer.preview_design_template(
-            designer.entry(msg["entry_id"]), msg["template_id"], msg.get("parameters")
+            designer.entry(msg["entry_id"]),
+            msg["template_id"],
+            msg.get("parameters"),
+            msg.get("rotate", 0),
         )
     elif action == "save_design_template":
         result = await designer.save_design_template(
@@ -698,7 +714,9 @@ async def websocket_designer(hass, connection, msg):
         )
     elif action == "design_templates":
         await designer.reload_design_templates()
-        result = designer.design_template_list(designer.entry(msg["entry_id"]))
+        result = designer.design_template_list(
+            designer.entry(msg["entry_id"]), msg.get("rotate", 0)
+        )
     elif action == "apply_design_template":
         if "template_id" not in msg:
             raise HomeAssistantError("template_id is required")
@@ -708,6 +726,7 @@ async def websocket_designer(hass, connection, msg):
             msg.get("parameters"),
             msg.get("existing", 0),
             msg.get("preview_variables"),
+            msg.get("rotate", 0),
         )
     elif action == "save_template":
         result = await designer.save_template(msg["key"], msg["template"])

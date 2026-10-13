@@ -90,6 +90,7 @@ export class TemplateDialog extends HTMLElement {
     try {
       this.templates = await panel.api("design_templates", {
         entry_id: context.entryId,
+        rotate: context.document.rotate || 0,
       });
     } catch (error) {
       this.note = error.message || String(error);
@@ -109,6 +110,7 @@ export class TemplateDialog extends HTMLElement {
         const result = await this.panel.api("preview_design_template", {
           entry_id: this.context.entryId,
           template_id: template.id,
+          rotate: this.context.document.rotate || 0,
         });
         this.previews[template.id] = result.png;
       } catch {
@@ -142,6 +144,7 @@ export class TemplateDialog extends HTMLElement {
           entry_id: this.context.entryId,
           template_id: this.chosen.id,
           parameters: this.values(),
+          rotate: this.context.document.rotate || 0,
         })
       ).png;
     } catch (error) {
@@ -314,6 +317,7 @@ export class TemplateDialog extends HTMLElement {
         });
         this.templates = await this.panel.api("design_templates", {
           entry_id: this.context.entryId,
+          rotate: this.context.document.rotate || 0,
         });
         const input = this.shadowRoot.querySelector("[data-save-name]");
         if (input) input.value = "";

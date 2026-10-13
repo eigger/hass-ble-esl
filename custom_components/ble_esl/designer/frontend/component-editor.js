@@ -38,7 +38,7 @@ export class ComponentEditor extends HTMLElement {
     this.opener = panel.shadowRoot.activeElement;
     this.hass = panel.hass;
     this.original = element;
-    this.draft = element ? clone(element) : newElement("text", panel.tag);
+    this.draft = element ? clone(element) : newElement("text", panel.canvasTag);
     this.draft.background = "transparent";
     this.draft.data_field ||= "";
     this.draft.icon_rules ||= [];

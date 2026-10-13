@@ -60,6 +60,8 @@ def parse_action(text):
     loaded = yaml.load(text, Loader=_NoAliases)
     data = loaded.get("data", loaded) if isinstance(loaded, dict) else {}
     rotate = data.get("rotate", 0) if isinstance(data, dict) else 0
+    if isinstance(rotate, str) and rotate.strip() in {"0", "90", "180", "270"}:
+        rotate = int(rotate.strip())
     if rotate not in (0, 90, 180, 270):
         raise HomeAssistantError("Rotation must be 0, 90, 180, or 270")
     return items, background, rotate
