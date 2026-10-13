@@ -42,7 +42,7 @@ Automations that directly reference this ESL's device or entities are detected a
 
 Use **Unlink** to remove a manual association. Detected references remain visible while the automation references the ESL; **Remove manual link** removes only an additional manual association. Associations survive restart and automation entity renaming. Removed/unavailable automations show **Unavailable** and their manual associations can still be removed.
 
-Choose **Edit automation design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save to automation** rereads the latest configuration and replaces only the uniquely matched action's `data.payload`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
+Choose **Edit automation design** beside a linked automation to edit its `ble_esl.write` payload in an isolated session. **Save to automation** rereads the latest configuration and updates the uniquely matched action's `data.payload` and `data.rotate`, preserving triggers, conditions, and other actions. A changed or ambiguous action, unsupported target, or invalid design blocks the save. Leaving the session restores the prior design and undo history. Saving does not send anything over Bluetooth.
 
 Automation variables are preview parameters in this session. Safe literal values
 from the automation can supply defaults. Missing values open a form where you
@@ -71,6 +71,7 @@ into fixed coordinates through preview parameters.
 | Add a text, shape, icon or image | The four icon buttons under **Components**, one click each. **＋ Add component** opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon |
 | Add a sensor | Pick it in **Entities**: one sensor component that draws the icon, name and value. **Configure** edits it; [Convert to elements](#convert-to-elements) splits it into elements |
 | Add **any** imagespec element | **All elements** → choose one → **Add**. All thirty types are there: shapes, text (tables and multi-line text too), codes (QR, bar, data matrix), charts, media (icon, image), layout containers, widgets |
+| Set display rotation | Choose `0°`, `90°`, `180°` or `270°` in the rotation selector. At `90°`/`270°`, the editing canvas uses the swapped dimensions so elements stay upright; the device output preview keeps the panel dimensions and shows the rotated result |
 | Move, resize | Drag the element or its corner handle; arrow keys nudge one pixel, Shift ten |
 | Edit a value | The **Element properties** panel lists every field imagespec has for the type except the position (the frame sets that), plus `dither`; required fields are marked `*`, defaults show as placeholders |
 | Reorder, duplicate, delete | Right click → **Send back** / **Bring front**; Ctrl+D or the menu to duplicate; Delete or Backspace, or the menu, to delete. The **Layers** list selects |

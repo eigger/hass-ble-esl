@@ -525,14 +525,18 @@ async def preview(document, preset, preview_variables=None):
     variables = _preview_variable_map(preview_variables)
     snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts, variables)
     payload = [item for _, part in snapshots for item in part]
-    image, layers = await asyncio.to_thread(
+    image, device, layers = await asyncio.to_thread(
         render_document, HASS, preset, document, payload, snapshots
     )
     buffer = BytesIO()
     image.save(buffer, "PNG")
+    device_buffer = BytesIO()
+    device.save(device_buffer, "PNG")
     return web.json_response(
         {
             "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "device_png": "data:image/png;base64,"
+            + base64.b64encode(device_buffer.getvalue()).decode(),
             "payload": payload,
             "layers": layers,
         }
@@ -583,7 +587,7 @@ async def demo_image(request):
         },
         {"type": "text_fit", "x": 12, "y": 52, "width": 226, "height": 54, "value": "21.3 °C"},
     ]
-    image, _ = await asyncio.to_thread(
+    image, _, _ = await asyncio.to_thread(
         render_document, HASS, preset, {"background": "white", "elements": []}, payload, []
     )
     buffer = BytesIO()

@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import contextlib
+from dataclasses import replace
 from functools import partial
 from io import BytesIO
 import json
@@ -34,7 +35,7 @@ from .design_templates import (
     template_text,
 )
 from .export import automation_draft, export_yaml, plain
-from .importer import convert, different_pixels, elements_from, parse, payloads
+from .importer import convert, different_pixels, elements_from, parse_action, payloads
 from .layout import (
     compile_payload,
     live_payload,
@@ -199,15 +200,19 @@ class Designer:
         # The elements' payloads in order are the document's payload: one
         # evaluation of every template serves the display and the layers.
         payload = [item for _, part in snapshots for item in part]
-        image, layers = await self.render(preset, document, payload, snapshots)
-        return document, image, payload, layers
+        image, device, layers = await self.render(preset, document, payload, snapshots)
+        return document, image, device, payload, layers
 
     async def preview(self, entry, document, preview_variables=None):
-        _, image, payload, layers = await self.draw(entry, document, preview_variables)
+        _, image, device, payload, layers = await self.draw(entry, document, preview_variables)
         buffer = BytesIO()
         image.save(buffer, "PNG")
+        device_buffer = BytesIO()
+        device.save(device_buffer, "PNG")
         return {
             "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "device_png": "data:image/png;base64,"
+            + base64.b64encode(device_buffer.getvalue()).decode(),
             "payload": payload,
             "layers": layers,
         }
@@ -231,7 +236,12 @@ class Designer:
             async with self.render_lock:
                 await self.hass.async_add_executor_job(
                     partial(
-                        render_image, self.hass, preset, payload, background=document["background"]
+                        render_image,
+                        self.hass,
+                        preset,
+                        payload,
+                        rotate=document["rotate"],
+                        background=document["background"],
                     )
                 )
         except HomeAssistantError as err:
@@ -269,6 +279,7 @@ class Designer:
             entry.runtime_data.device_id,
             issues,
             automation_payload,
+            document["rotate"],
         )
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
@@ -312,6 +323,8 @@ class Designer:
                 "Fix the design first: " + "; ".join(exported["validation_errors"][:3])
             )
         preset = self.preset(entry)
+        if document.get("rotate") in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         background = validate(document, preset)["background"]
 
         def write(template_id, file_name):
@@ -356,9 +369,11 @@ class Designer:
             await self._reload_design_templates()
         return {"id": template_id, "yaml": text}
 
-    def design_template_list(self, entry):
+    def design_template_list(self, entry, rotate=0):
         """The ready-made designs, described for this tag's display."""
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         return [
             describe_template(template, preset.width, preset.height)
             for template in self.design_templates.values()
@@ -384,7 +399,7 @@ class Designer:
         if missing:
             raise HomeAssistantError(f"Font not found: {', '.join(sorted(missing))}")
 
-    async def preview_design_template(self, entry, template_id, parameters=None):
+    async def preview_design_template(self, entry, template_id, parameters=None, rotate=0):
         """A design template drawn for this tag, as the real renderer shows it now.
 
         Values not given use their defaults; a default entity that does not
@@ -395,6 +410,8 @@ class Designer:
         if template is None:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         given = dict(parameters or {})
         for name, parameter in template["parameters"].items():
             if parameter["type"] != "entity" or name in given:
@@ -420,17 +437,24 @@ class Designer:
         }
 
     async def apply_design_template(
-        self, entry, template_id, parameters=None, existing=0, preview_variables=None
+        self, entry, template_id, parameters=None, existing=0, preview_variables=None, rotate=0
     ):
         """A design template's elements for this tag, imported like a pasted payload."""
         template = self.design_templates.get(template_id)
         if template is None:
             raise HomeAssistantError(f"There is no design template {template_id}")
         preset = self.preset(entry)
+        if rotate in (90, 270):
+            preset = replace(preset, width=preset.height, height=preset.width)
         built = build_template(template, preset.width, preset.height, preset.colors, parameters)
         await self.ensure_template_inputs(template, built["parameters"])
         imported = await self.import_payload(
-            entry, built["payload"], built["background"], existing, preview_variables
+            entry,
+            built["payload"],
+            built["background"],
+            existing,
+            preview_variables,
+            rotate,
         )
         return {
             **imported,
@@ -450,11 +474,13 @@ class Designer:
 
     async def import_yaml(self, entry, text, existing=0, preview_variables=None):
         """Elements for a pasted payload, and how faithfully they stand for it."""
-        items, background = parse(text)
-        return await self.import_payload(entry, items, background, existing, preview_variables)
+        items, background, rotate = parse_action(text)
+        return await self.import_payload(
+            entry, items, background, existing, preview_variables, rotate
+        )
 
     async def import_payload(
-        self, entry, items, background=None, existing=0, preview_variables=None
+        self, entry, items, background=None, existing=0, preview_variables=None, rotate=0
     ):
         """Import a structured automation payload without YAML size/alias handling."""
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
@@ -464,8 +490,13 @@ class Designer:
                 "The automation payload is too large to import (5 MiB maximum)"
             )
         preset = self.preset(entry)
+        edit_preset = (
+            replace(preset, width=preset.height, height=preset.width)
+            if rotate in (90, 270)
+            else preset
+        )
         preview_variables = _preview_variable_map(preview_variables)
-        elements, imported, issues = elements_from(items, preset, max(0, 100 - existing))
+        elements, imported, issues = elements_from(items, edit_preset, max(0, 100 - existing))
         different = None
         if elements:
             try:
@@ -481,6 +512,7 @@ class Designer:
                             background
                             if background in ("white", "black", "red", "yellow")
                             else "white",
+                            rotate,
                         )
                     )
             except MissingTemplateParameter as err:
@@ -490,6 +522,7 @@ class Designer:
                     "issues": [],
                     "different_pixels": None,
                     "background": background,
+                    "rotate": rotate,
                 }
             except HomeAssistantError as err:
                 issues.append(f"render: {err}")
@@ -498,6 +531,7 @@ class Designer:
             "issues": issues,
             "different_pixels": different,
             "background": background,
+            "rotate": rotate,
         }
 
     async def convert(self, entry, document, element_id):
@@ -526,7 +560,15 @@ class Designer:
             try:
                 async with self.render_lock:
                     different = await self.hass.async_add_executor_job(
-                        partial(different_pixels, self.hass, preset, original, rebuilt)
+                        partial(
+                            different_pixels,
+                            self.hass,
+                            preset,
+                            original,
+                            rebuilt,
+                            document["background"],
+                            document["rotate"],
+                        )
                     )
             except HomeAssistantError as err:
                 issues.append(f"render: {err}")
@@ -550,7 +592,7 @@ class Designer:
         snapshots = snapshot_layers(self.hass, document, {}, {})
         payload = [item for _, part in snapshots for item in part]
         preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
-        image, layers = await self.render(preset, document, payload, snapshots)
+        image, _, layers = await self.render(preset, document, payload, snapshots)
         buffer = BytesIO()
         image.save(buffer, "PNG")
         return {
@@ -564,7 +606,7 @@ class Designer:
             raise HomeAssistantError("This tag protocol does not support image writes")
         generation = entry.runtime_data.write_generation
         async with self.locks.setdefault(entry.entry_id, asyncio.Lock()):
-            document, image, payload, _ = await self.draw(entry, document)
+            document, _, image, payload, _ = await self.draw(entry, document)
             # An advertisement can refine the preset while drawing awaits.
             # Check before build_write_job_from_data publishes the preview; it
             # resolves the preset again before its first await, so nothing can
@@ -572,7 +614,11 @@ class Designer:
             preset = self.preset(entry)
             if (preset.width, preset.height) != image.size:
                 raise HomeAssistantError("The tag's display size changed; reload the designer")
-            service_data = {"payload": payload, "background": document["background"]}
+            service_data = {
+                "payload": payload,
+                "background": document["background"],
+                "rotate": document["rotate"],
+            }
             job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
             # Explicit sends also restore a tag that was reset externally.
             job.prevent_duplicate_send = False
@@ -616,6 +662,7 @@ class Designer:
         vol.Optional("text"): str,
         vol.Optional("payload"): [dict],
         vol.Optional("background"): str,
+        vol.Optional("rotate"): vol.In((0, 90, 180, 270)),
         vol.Optional("existing"): vol.All(int, vol.Range(min=0, max=1000)),
         vol.Optional("element_id"): str,
         vol.Optional("template"): dict,
@@ -650,7 +697,10 @@ async def websocket_designer(hass, connection, msg):
         if "template_id" not in msg:
             raise HomeAssistantError("template_id is required")
         result = await designer.preview_design_template(
-            designer.entry(msg["entry_id"]), msg["template_id"], msg.get("parameters")
+            designer.entry(msg["entry_id"]),
+            msg["template_id"],
+            msg.get("parameters"),
+            msg.get("rotate", 0),
         )
     elif action == "save_design_template":
         result = await designer.save_design_template(
@@ -662,7 +712,9 @@ async def websocket_designer(hass, connection, msg):
         )
     elif action == "design_templates":
         await designer.reload_design_templates()
-        result = designer.design_template_list(designer.entry(msg["entry_id"]))
+        result = designer.design_template_list(
+            designer.entry(msg["entry_id"]), msg.get("rotate", 0)
+        )
     elif action == "apply_design_template":
         if "template_id" not in msg:
             raise HomeAssistantError("template_id is required")
@@ -672,6 +724,7 @@ async def websocket_designer(hass, connection, msg):
             msg.get("parameters"),
             msg.get("existing", 0),
             msg.get("preview_variables"),
+            msg.get("rotate", 0),
         )
     elif action == "save_template":
         result = await designer.save_template(msg["key"], msg["template"])
@@ -718,6 +771,7 @@ async def websocket_designer(hass, connection, msg):
             msg.get("background"),
             msg.get("existing", 0),
             msg.get("preview_variables"),
+            msg.get("rotate", 0),
         )
     elif action == "convert":
         result = await designer.convert(

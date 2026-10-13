@@ -71,7 +71,7 @@ def plain(value):
     return value
 
 
-def export_yaml(payload, background, device_id, issues=(), live=None):
+def export_yaml(payload, background, device_id, issues=(), live=None, rotate=0):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
 
     ``live`` is the same payload with its templates left as written: the
@@ -88,10 +88,13 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
     )
     payload = plain(payload)
     live = None if live is None else plain(live)
+    data = {"background": background, "payload": payload}
+    if rotate:
+        data["rotate"] = rotate
     service = {
         "action": "ble_esl.write",
         "target": {"device_id": device_id or "<your device>"},
-        "data": {"background": background, "payload": payload},
+        "data": data,
     }
     payload_errors = [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)]
     scalar_errors = _json_value_errors(payload)
@@ -122,9 +125,7 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
     }
     if live is not None:
         result["live_payload"] = dump(live)
-        result["live_service"] = dump(
-            {**service, "data": {"background": background, "payload": live}}
-        )
+        result["live_service"] = dump({**service, "data": {**data, "payload": live}})
     return result
 
 

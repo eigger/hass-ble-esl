@@ -147,6 +147,7 @@ DOCUMENT = vol.Schema(
         vol.Required("version"): 1,
         vol.Required("elements"): vol.All([ELEMENT], vol.Length(max=100)),
         vol.Optional("background", default="white"): COLOR,
+        vol.Optional("rotate", default=0): vol.In((0, 90, 180, 270)),
     }
 )
 

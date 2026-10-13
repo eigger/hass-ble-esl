@@ -54,6 +54,19 @@ def parse(text):
     return data, background if isinstance(background, str) else None
 
 
+def parse_action(text):
+    """The payload, background, and canvas rotation in a pasted write action."""
+    items, background = parse(text)
+    loaded = yaml.load(text, Loader=_NoAliases)
+    data = loaded.get("data", loaded) if isinstance(loaded, dict) else {}
+    rotate = data.get("rotate", 0) if isinstance(data, dict) else 0
+    if isinstance(rotate, str) and rotate.strip() in {"0", "90", "180", "270"}:
+        rotate = int(rotate.strip())
+    if rotate not in (0, 90, 180, 270):
+        raise HomeAssistantError("Rotation must be 0, 90, 180, or 270")
+    return items, background, rotate
+
+
 def elements_from(items, preset, room=MAX_ELEMENTS):
     """Designer elements for each placeable item, what could not be placed, and why.
 
@@ -184,12 +197,12 @@ def payloads(hass, imported, elements, preview_variables=None):
     )
 
 
-def different_pixels(hass, preset, original, rebuilt, background="white"):
+def different_pixels(hass, preset, original, rebuilt, background="white", rotate=0):
     """How many pixels differ between the two payloads once drawn.
 
     Zero means the designer will write exactly what the automation did.
     """
-    before = render_image(hass, preset, original, background=background)
-    after = render_image(hass, preset, rebuilt, background=background)
+    before = render_image(hass, preset, original, rotate=rotate, background=background)
+    after = render_image(hass, preset, rebuilt, rotate=rotate, background=background)
     differing = ImageChops.difference(before, after).convert("L").point(lambda v: 255 if v else 0)
     return differing.histogram()[255]

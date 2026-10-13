@@ -252,6 +252,7 @@ export class BleEslDesigner extends HTMLElement {
     this.notice = null;
     this.errorSource = null;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this._automationPreviewVariables = null;
     this.specAdvancedOpen = false;
@@ -308,6 +309,10 @@ export class BleEslDesigner extends HTMLElement {
   // becomes the single owner of active document state.
   get document() {
     return this.session.document;
+  }
+  get canvasTag() {
+    if (!this.tag || ![90, 270].includes(this.document?.rotate)) return this.tag;
+    return { ...this.tag, width: this.tag.height, height: this.tag.width };
   }
   set document(value) {
     this.session.document = value;
@@ -410,13 +415,19 @@ export class BleEslDesigner extends HTMLElement {
   prepareAutomationPayload(
     payload,
     background,
+    rotate,
     entryId,
     previewVariables = {},
   ) {
+    const rotation =
+      typeof rotate === "string" && /^(0|90|180|270)$/.test(rotate.trim())
+        ? Number(rotate.trim())
+        : rotate;
     return this.api("import_payload", {
       entry_id: entryId,
       payload,
       background,
+      rotate: rotation,
       existing: 0,
       preview_variables: previewVariables,
     });
@@ -443,6 +454,7 @@ export class BleEslDesigner extends HTMLElement {
     document.background = palette(this.tag.colors).includes(background)
       ? background
       : "white";
+    document.rotate = result.rotate || 0;
     this.session.reset(document, {
       selected: result.elements.at(-1)?.id || null,
     });
@@ -452,6 +464,7 @@ export class BleEslDesigner extends HTMLElement {
     this._automationPreviewVariables = clone(previewVariables);
     this._automationBackground = this.document.background;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.layerBounds = {};
     this.layerOffsets = {};
@@ -527,6 +540,7 @@ export class BleEslDesigner extends HTMLElement {
     this.inspectorOpen = state.inspectorOpen;
     this.search = state.search;
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.error = false;
     this.errorSource = null;
@@ -816,6 +830,7 @@ export class BleEslDesigner extends HTMLElement {
       { dirty: this.drafts.has(tag.entry_id) },
     );
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.error = false;
     this.status = tag.writable
@@ -851,6 +866,8 @@ export class BleEslDesigner extends HTMLElement {
   edited(render = true) {
     this.session.markDirty();
     this.preview = null;
+    this.devicePreview = null;
+    this.setDeviceOutputPending();
     this.invalidatePreview();
     if (render) this.render();
     else {
@@ -858,6 +875,17 @@ export class BleEslDesigner extends HTMLElement {
       this.markDirty();
     }
     this.queuePreview();
+  }
+  setDeviceOutputPending() {
+    const output = this.shadowRoot.querySelector(".device-output");
+    if (!output || !this.document.rotate) return;
+    output.querySelector("img")?.remove();
+    if (!output.querySelector(".muted")) {
+      const pending = document.createElement("span");
+      pending.className = "muted";
+      pending.textContent = t(this.hass, "Preview updating…");
+      output.append(pending);
+    }
   }
   // The user's alias for a tag (as the dashboard shows it), else the product title.
   tagName(tag) {
@@ -992,6 +1020,7 @@ export class BleEslDesigner extends HTMLElement {
         redoStack: session.redo,
       });
       this.preview = null;
+      this.devicePreview = null;
       this.layerPreviews = {};
       this.render();
       this.queuePreview();
@@ -1055,6 +1084,7 @@ export class BleEslDesigner extends HTMLElement {
       )?.entity_id ||
       "";
     this.preview = null;
+    this.devicePreview = null;
     this.status = "";
     this.render();
     this.queuePreview();
@@ -1136,6 +1166,7 @@ export class BleEslDesigner extends HTMLElement {
   }
   invalidatePreviewForParameters() {
     this.preview = null;
+    this.devicePreview = null;
     this.layerPreviews = {};
     this.layerBounds = {};
     this.layerOffsets = {};
@@ -1233,13 +1264,15 @@ export class BleEslDesigner extends HTMLElement {
         return [selector, node?.scrollLeft, node?.scrollTop];
       },
     );
-    const tag = this.tag,
+    const tag = this.canvasTag,
+      physicalTag = this.tag,
       element = this.element,
       sessionLocked =
         this._automationSessionPending || this._automationSaveMode;
     const workspaceMarkup = tag
       ? renderWorkspace({
           tag,
+          physicalTag,
           mode: this.mode,
           libraryOpen: this.libraryOpen,
           inspectorOpen: this.inspectorOpen,
@@ -1247,6 +1280,9 @@ export class BleEslDesigner extends HTMLElement {
           preview: Boolean(this.preview),
           zoom: this.zoom,
           background: this.document.background,
+          devicePreview: this.devicePreview,
+          rotate: this.document.rotate || 0,
+          rotationEditable: !this._automationSessionPending,
           sampleEntity: this.sampleEntity,
           tipsOpen: this.tipsOpen,
           hasElement: Boolean(element),
@@ -1444,14 +1480,14 @@ export class BleEslDesigner extends HTMLElement {
     this.zoom = calculateFitZoom({
       viewportWidth: previewWindow.clientWidth,
       viewportHeight: previewWindow.clientHeight,
-      tagWidth: this.tag.width,
-      tagHeight: this.tag.height,
+      tagWidth: this.canvasTag.width,
+      tagHeight: this.canvasTag.height,
     });
     const stage = this.shadowRoot.querySelector(".stage"),
       space = this.shadowRoot.querySelector(".stage-space");
     stage.style.transform = `scale(${this.zoom})`;
-    space.style.width = `${this.tag.width * this.zoom}px`;
-    space.style.height = `${this.tag.height * this.zoom}px`;
+    space.style.width = `${this.canvasTag.width * this.zoom}px`;
+    space.style.height = `${this.canvasTag.height * this.zoom}px`;
     this.updateSelectionOverlay();
     const option = this.shadowRoot.querySelector('#zoom option[value="fit"]');
     if (option)
@@ -1502,7 +1538,7 @@ export class BleEslDesigner extends HTMLElement {
     const definition = this.specs.types.find((item) => item.type === type);
     if (!definition) return;
     this.checkpoint();
-    const element = newSpecElement(definition, newElement, this.tag);
+    const element = newSpecElement(definition, newElement, this.canvasTag);
     this.stagger(element);
     if (type === "plot") {
       // The example names a sensor nobody has; start from one that records numbers.
@@ -1605,6 +1641,7 @@ export class BleEslDesigner extends HTMLElement {
       this.checkpoint();
       if (replace) {
         this.document.elements = [];
+        this.document.rotate = result.rotate || 0;
         if (palette(this.tag.colors).includes(result.background))
           this.document.background = result.background;
       }
@@ -1623,6 +1660,7 @@ export class BleEslDesigner extends HTMLElement {
       template_id: id,
       parameters,
       existing: replace ? 0 : context.document.elements.length,
+      rotate: context.document.rotate || 0,
     });
     if (!this.isDocumentSessionCurrent(context)) return { stale: true };
     if (result.elements.length) {
@@ -2022,7 +2060,7 @@ export class BleEslDesigner extends HTMLElement {
     return calculateAlignmentGuides({
       element,
       elements: this.document.elements,
-      tag: this.tag,
+      tag: this.canvasTag,
       layerRecords: this.layerRecords,
       layerBounds: this.layerBounds,
       zoom: this.zoom,
@@ -2105,7 +2143,7 @@ export class BleEslDesigner extends HTMLElement {
   clampMoved(element, bound, visible) {
     Object.assign(
       element,
-      clampMovedGeometry(element, this.tag, bound, visible),
+      clampMovedGeometry(element, this.canvasTag, bound, visible),
     );
     return element;
   }
@@ -2113,14 +2151,14 @@ export class BleEslDesigner extends HTMLElement {
   // label after an earlier clamped move while what it draws is still on it:
   // that one is bound as well, or its next move would not be clamped at all.
   moveBound(element, visible) {
-    return isMoveBound(element, this.tag, visible);
+    return isMoveBound(element, this.canvasTag, visible);
   }
   // After a resize: trim the frame so the grown content stays on the label.
   clampResized(element) {
     Object.assign(
       element,
       clampResizedGeometry(element, {
-        tag: this.tag,
+        tag: this.canvasTag,
         layerRecords: this.layerRecords,
         layerBounds: this.layerBounds,
       }),
@@ -2130,16 +2168,16 @@ export class BleEslDesigner extends HTMLElement {
   stagger(element) {
     Object.assign(
       element,
-      calculateStaggeredElement(element, this.document.elements, this.tag),
+      calculateStaggeredElement(element, this.document.elements, this.canvasTag),
     );
   }
   add(type, entity, x, y) {
     this.checkpoint();
-    const element = newElement(type, this.tag, entity);
+    const element = newElement(type, this.canvasTag, entity);
     if (x !== undefined) {
       element.x = x;
       element.y = y;
-      clampBox(element, this.tag);
+      clampBox(element, this.canvasTag);
     } else this.stagger(element);
     this.document.elements.push(element);
     this.selected = element.id;
@@ -2388,8 +2426,8 @@ export class BleEslDesigner extends HTMLElement {
               ? await this.api("save_template", {
                   key: this.templateKey,
                   template: {
-                    width: this.tag.width,
-                    height: this.tag.height,
+                    width: this.canvasTag.width,
+                    height: this.canvasTag.height,
                     name: this.templateName,
                     sensor_type: this.templateSensorType,
                     document: this.document,
@@ -2424,14 +2462,7 @@ export class BleEslDesigner extends HTMLElement {
           this.notice = this.status;
         }
         if (action === "preview") {
-          this.preview = result.png;
-          this.layerPreviews = result.layers;
-          this.layerBounds = result.layers._bounds || {};
-          this.layerOffsets = result.layers._offsets || {};
-          this.layerRecords = this.renderRecords();
-          this.templateEntities = [
-            ...new Set(Object.values(result.layers._dependencies || {}).flat()),
-          ];
+          this.applyPreviewResult(result);
           this.status = "Exact rendered preview";
         }
         if (action === "send") {
@@ -2470,6 +2501,7 @@ export class BleEslDesigner extends HTMLElement {
         this.drafts.delete(this.tag.entry_id);
         this.session.reset(restored);
         this.preview = null;
+        this.devicePreview = null;
         this.layerPreviews = {};
         this.layerBounds = {};
         this.layerOffsets = {};
@@ -2556,9 +2588,9 @@ export class BleEslDesigner extends HTMLElement {
       const copy = clone(element);
       copy.id = createId();
       // Step back instead when the copy would be clamped onto the original.
-      copy.x += copy.x + copy.width + 8 > this.tag.width ? -8 : 8;
-      copy.y += copy.y + copy.height + 8 > this.tag.height ? -8 : 8;
-      clampBox(copy, this.tag, onLabel(element, this.tag));
+      copy.x += copy.x + copy.width + 8 > this.canvasTag.width ? -8 : 8;
+      copy.y += copy.y + copy.height + 8 > this.canvasTag.height ? -8 : 8;
+      clampBox(copy, this.canvasTag, onLabel(element, this.canvasTag));
       elements.push(copy);
       this.selected = copy.id;
     }
@@ -2575,7 +2607,7 @@ export class BleEslDesigner extends HTMLElement {
       elements.push(element);
     }
     if (action === "center")
-      element.x = Math.round((this.tag.width - element.width) / 2);
+      element.x = Math.round((this.canvasTag.width - element.width) / 2);
     this.edited();
     this.focusElement();
   }
@@ -2656,8 +2688,8 @@ export class BleEslDesigner extends HTMLElement {
       );
       this.document.elements.forEach((el) => clampBox(el, this.tag, false));
       const stage = this.shadowRoot.querySelector(".stage");
-      stage.style.width = `${this.tag.width}px`;
-      stage.style.height = `${this.tag.height}px`;
+      stage.style.width = `${this.canvasTag.width}px`;
+      stage.style.height = `${this.canvasTag.height}px`;
       this.edited(false);
       this.fitPreview();
       return;
@@ -2683,7 +2715,7 @@ export class BleEslDesigner extends HTMLElement {
       if (this.typingProperty !== input) {
         this.checkpoint();
         this.typingProperty = input;
-        this.typedOnLabel = onLabel(this.element, this.tag);
+        this.typedOnLabel = onLabel(this.element, this.canvasTag);
         this.typedMoveBound = this.moveBound(
           this.element,
           this.visibleBounds(this.element),
@@ -2746,13 +2778,20 @@ export class BleEslDesigner extends HTMLElement {
     if (key === "decimals" && this.element.decimals !== undefined)
       this.element.decimals = Math.max(0, Math.min(6, this.element.decimals));
     // Typed geometry is kept to the label when the field is committed.
-    clampBox(this.element, this.tag, false);
+    clampBox(this.element, this.canvasTag, false);
   }
   async change(event) {
     if (this.busy) return;
     this.gestureFinish?.(false);
     const input = event.target,
       id = input.id;
+    if (id === "display-rotate") {
+      this.checkpoint();
+      this.document.rotate = Number(input.value);
+      this.zoomMode = "fit";
+      this.edited();
+      return;
+    }
     if (id === "template-type") {
       this.loadTemplate(input.value);
       return;
@@ -2763,6 +2802,7 @@ export class BleEslDesigner extends HTMLElement {
       this.dirty = true;
       this.render();
       this.preview = null;
+      this.devicePreview = null;
       this.drawStage();
       this.queuePreview();
       return;
@@ -2877,7 +2917,7 @@ export class BleEslDesigner extends HTMLElement {
               this.typedMoveBound ?? true,
               this.visibleBounds(this.element),
             );
-          else clampBox(this.element, this.tag, onFrame);
+          else clampBox(this.element, this.canvasTag, onFrame);
           this.edited();
         } else if (input.type === "number") {
           // Show the value the element kept: it may have been clamped to the
@@ -2938,6 +2978,18 @@ export class BleEslDesigner extends HTMLElement {
   }
   applyPreviewResult(result) {
     this.preview = result.png;
+    this.devicePreview = result.device_png || result.png;
+    const deviceOutput = this.shadowRoot.querySelector(".device-output");
+    if (deviceOutput && this.document.rotate) {
+      deviceOutput.querySelector(".muted")?.remove();
+      let image = deviceOutput.querySelector("img");
+      if (!image) {
+        image = document.createElement("img");
+        image.alt = t(this.hass, "Device output");
+        deviceOutput.append(image);
+      }
+      image.src = this.devicePreview;
+    }
     this.layerPreviews = result.layers;
     this.layerBounds = result.layers._bounds || {};
     this.layerOffsets = result.layers._offsets || {};

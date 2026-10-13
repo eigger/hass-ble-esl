@@ -1,6 +1,7 @@
 """Render the display exactly as a write would, plus movable editor layers."""
 
 import base64
+from dataclasses import replace
 from io import BytesIO
 
 from PIL import Image, ImageChops
@@ -77,10 +78,17 @@ def render_document(hass, preset, document, payload, snapshots):
     text or fills for transparency. Font drawing uses imagespec's monochrome
     masks, so covered pixels are exact.
     """
-    canvas = render_image(hass, preset, payload, background=document["background"])
+    rotate = document.get("rotate", 0)
+    edit_preset = (
+        replace(preset, width=preset.height, height=preset.width) if rotate in (90, 270) else preset
+    )
+    canvas = render_image(hass, edit_preset, payload, background=document["background"])
+    device = render_image(hass, preset, payload, rotate=rotate, background=document["background"])
     previews = {"_bounds": {}, "_offsets": {}, "_values": {}, "_dependencies": {}}
     for element, element_payload in snapshots:
         previews["_values"][element["id"]] = element.get("_templated_fields", {})
         previews["_dependencies"][element["id"]] = element.get("_template_entities", [])
-        previews[element["id"]] = element_layer(hass, preset, element, element_payload, previews)
-    return canvas, previews
+        previews[element["id"]] = element_layer(
+            hass, edit_preset, element, element_payload, previews
+        )
+    return canvas, device, previews
