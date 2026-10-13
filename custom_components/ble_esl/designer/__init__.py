@@ -506,6 +506,11 @@ class Designer:
                             break
                         missing.add(next_err.name)
                         sample_variables[next_err.name] = ""
+                    except HomeAssistantError:
+                        # A blank sample may not fit the variable's operation
+                        # (for example, adding a number). Keep the real missing
+                        # names found so far and let the user provide its type.
+                        break
                 return {
                     "missing_parameters": sorted(missing),
                     "elements": [],

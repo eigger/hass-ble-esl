@@ -384,6 +384,12 @@ async def test_import_reports_all_missing_preview_parameters_together(hass, woli
     assert result["missing_parameters"] == ["font_bold", "font_regular"]
 
 
+async def test_missing_numeric_parameter_survives_discovery_sample(hass, wolink_entry):
+    payload = [{"type": "text", "x": 5, "y": 5, "value": "{{ count + 1 }}"}]
+    result = await hass.data[KEY].import_payload(wolink_entry, payload, "white")
+    assert result["missing_parameters"] == ["count"]
+
+
 async def test_optional_undefined_template_variables_do_not_require_parameters(hass, wolink_entry):
     payload = [
         {
