@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.3
+
+### Added
+
+- Restore saved ESL designs from the Designer.
+
+### Changed
+
+- Improved automation design editing, including clearer save and restore behavior and focus handling.
+
+### Fixed
+
+- Designer toast messages no longer resize the hidden status line or shift the canvas, including on narrow screens.
+- The Designer shows all missing automation preview variables together.
+
 ## 1.2.3b2
 
 ### Fixed
