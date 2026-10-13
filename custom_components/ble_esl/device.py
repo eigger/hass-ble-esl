@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING, NamedTuple
 
 from homeassistant.components.bluetooth import async_last_service_info
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothEntityKey,
 )
-from homeassistant.const import ATTR_HW_VERSION, ATTR_SW_VERSION
+from homeassistant.const import (
+    ATTR_HW_VERSION,
+    ATTR_MANUFACTURER,
+    ATTR_MODEL,
+    ATTR_NAME,
+    ATTR_SW_VERSION,
+)
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
-from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
-from sensor_state_data import DeviceKey
+from sensor_state_data import DeviceKey, SensorDeviceInfo
 
 from .esl_ble.base import AdvertisementInfo, DevicePreset, EslProtocol
 
@@ -29,13 +35,36 @@ def device_key_to_bluetooth_entity_key(
     return PassiveBluetoothEntityKey(device_key.key, device_key.device_id)
 
 
-def hass_device_info(sensor_device_info):
+def hass_device_info(sensor_device_info: SensorDeviceInfo) -> DeviceInfo:
     """Convert sensor device info to HA device info, keeping sw/hw versions."""
-    device_info = sensor_device_info_to_hass_device_info(sensor_device_info)
-    if sensor_device_info.sw_version is not None:
-        device_info[ATTR_SW_VERSION] = sensor_device_info.sw_version
-    if sensor_device_info.hw_version is not None:
-        device_info[ATTR_HW_VERSION] = sensor_device_info.hw_version
+    return _device_info(
+        sensor_device_info.name,
+        sensor_device_info.manufacturer,
+        sensor_device_info.model,
+        sensor_device_info.sw_version,
+        sensor_device_info.hw_version,
+    )
+
+
+@lru_cache(maxsize=64)
+def _device_info(
+    name: str | None,
+    manufacturer: str | None,
+    model: str | None,
+    sw_version: str | None,
+    hw_version: str | None,
+) -> DeviceInfo:
+    """Return cached device info for these values, leaving None values unset."""
+    device_info = DeviceInfo()
+    for key, value in (
+        (ATTR_NAME, name),
+        (ATTR_MANUFACTURER, manufacturer),
+        (ATTR_MODEL, model),
+        (ATTR_SW_VERSION, sw_version),
+        (ATTR_HW_VERSION, hw_version),
+    ):
+        if value is not None:
+            device_info[key] = value
     return device_info
 
 
