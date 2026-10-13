@@ -496,9 +496,7 @@ class Designer:
             else preset
         )
         preview_variables = _preview_variable_map(preview_variables)
-        elements, imported, issues = elements_from(
-            items, edit_preset, max(0, 100 - existing)
-        )
+        elements, imported, issues = elements_from(items, edit_preset, max(0, 100 - existing))
         different = None
         if elements:
             try:

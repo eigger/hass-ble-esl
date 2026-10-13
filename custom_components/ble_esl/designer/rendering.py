@@ -80,9 +80,7 @@ def render_document(hass, preset, document, payload, snapshots):
     """
     rotate = document.get("rotate", 0)
     edit_preset = (
-        replace(preset, width=preset.height, height=preset.width)
-        if rotate in (90, 270)
-        else preset
+        replace(preset, width=preset.height, height=preset.width) if rotate in (90, 270) else preset
     )
     canvas = render_image(hass, edit_preset, payload, background=document["background"])
     device = render_image(hass, preset, payload, rotate=rotate, background=document["background"])

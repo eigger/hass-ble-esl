@@ -125,9 +125,7 @@ def export_yaml(payload, background, device_id, issues=(), live=None, rotate=0):
     }
     if live is not None:
         result["live_payload"] = dump(live)
-        result["live_service"] = dump(
-            {**service, "data": {**data, "payload": live}}
-        )
+        result["live_service"] = dump({**service, "data": {**data, "payload": live}})
     return result
 
 
