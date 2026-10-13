@@ -45,7 +45,13 @@ from .layout import (
 )
 from .manager import AutomationLinks, tag_metadata
 from .rendering import render_document, snapshot_layers
-from .specs import MissingTemplateParameter, describe, frozen_corners, resolve_templates
+from .specs import (
+    MissingTemplateParameter,
+    describe,
+    frozen_corners,
+    resolve_templates,
+    template_parameters,
+)
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
@@ -484,8 +490,15 @@ class Designer:
                         )
                     )
             except MissingTemplateParameter as err:
+                missing = set(
+                    template_parameters(self.hass, imported, preview_variables)
+                )
+                missing.update(
+                    template_parameters(self.hass, elements, preview_variables)
+                )
+                missing.add(err.name)
                 return {
-                    "missing_parameters": [err.name],
+                    "missing_parameters": sorted(missing),
                     "elements": [],
                     "issues": [],
                     "different_pixels": None,

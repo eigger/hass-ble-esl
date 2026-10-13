@@ -864,18 +864,19 @@ class EslManager extends HTMLElement {
           previewVariables,
         );
         if (!current()) return;
-        const missing = imported.missing_parameters?.[0];
-        if (!missing) break;
-        if (prompted.has(missing))
+        const missing = imported.missing_parameters || [];
+        if (!missing.length) break;
+        const unresolved = missing.filter((name) => !prompted.has(name));
+        if (!unresolved.length)
           throw new Error(
             t(this.hass, "This preview parameter is still undefined: {name}", {
-              name: missing,
+              name: missing[0],
             }),
           );
-        prompted.add(missing);
+        unresolved.forEach((name) => prompted.add(name));
         const values = await editor.requestPreviewVariables(
           previewVariables,
-          missing,
+          unresolved,
         );
         if (!current()) return;
         if (values === null) {

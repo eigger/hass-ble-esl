@@ -41,16 +41,21 @@ export class PreviewParametersDialog extends HTMLElement {
     });
   }
 
-  open(panel, variables = {}, missingName = null) {
+  open(panel, variables = {}, missingNames = null) {
     this.panel = panel;
     this.hass = panel.hass;
     this.closed = false;
     this.resolvePromise = null;
-    this._missingName = missingName || null;
+    this._missingNames = Array.isArray(missingNames)
+      ? missingNames
+      : missingNames
+        ? [missingNames]
+        : [];
+    this._missingName = this._missingNames[0] || null;
     this.allowEmptyMissing = false;
     this.values = structuredClone(variables || {});
-    if (missingName && !Object.hasOwn(this.values, missingName))
-      this.values[missingName] = "";
+    for (const name of this._missingNames)
+      if (!Object.hasOwn(this.values, name)) this.values[name] = "";
     this.render();
     return new Promise((resolve) => {
       this.resolvePromise = resolve;
