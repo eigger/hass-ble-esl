@@ -393,9 +393,16 @@ async def test_missing_numeric_parameter_survives_discovery_sample(hass, wolink_
             "value": "{{ count + 1 }} {{ label }}",
         },
         {"type": "text", "x": 5, "y": 35, "value": "{{ description }}"},
+        {"type": "text", "x": 5, "y": 65, "value": "{{ 10 / divisor }} {{ note }}"},
     ]
     result = await hass.data[KEY].import_payload(wolink_entry, payload, "white")
-    assert result["missing_parameters"] == ["count", "description", "label"]
+    assert result["missing_parameters"] == [
+        "count",
+        "description",
+        "divisor",
+        "label",
+        "note",
+    ]
 
 
 async def test_optional_undefined_template_variables_do_not_require_parameters(hass, wolink_entry):

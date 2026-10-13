@@ -491,12 +491,10 @@ class Designer:
                     )
             except MissingTemplateParameter as err:
                 missing = {err.name}
-                sources = dict.fromkeys(
-                    templates_in(imported) + templates_in(elements)
-                )
+                sources = dict.fromkeys(templates_in(imported) + templates_in(elements))
                 for source in sources:
                     sample_variables = dict(preview_variables)
-                    sample_values = ("", 0, "sample", False, [], {})
+                    sample_values = ("", 0, 1, "sample", False, [], [1], {}, {"value": 1})
                     sampled_name = None
                     sample_index = 0
                     for _ in range(64):
