@@ -49,8 +49,8 @@ from .specs import (
     MissingTemplateParameter,
     describe,
     frozen_corners,
+    missing_template_parameters,
     resolve_templates,
-    templates_in,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -490,32 +490,10 @@ class Designer:
                         )
                     )
             except MissingTemplateParameter as err:
-                missing = {err.name}
-                sources = dict.fromkeys(templates_in(imported) + templates_in(elements))
-                for source in sources:
-                    sample_variables = dict(preview_variables)
-                    sample_values = ("", 0, 1, "sample", False, [], [1], {}, {"value": 1})
-                    sampled_name = None
-                    sample_index = 0
-                    for _ in range(64):
-                        try:
-                            resolve_templates(self.hass, source, set(), sample_variables)
-                            break
-                        except MissingTemplateParameter as next_err:
-                            if next_err.name in sample_variables:
-                                break
-                            missing.add(next_err.name)
-                            sampled_name = next_err.name
-                            sample_index = 0
-                            sample_variables[sampled_name] = sample_values[sample_index]
-                        except HomeAssistantError:
-                            # Try common JSON types so an arithmetic or string
-                            # operation on one missing name does not hide later
-                            # names in this template field.
-                            sample_index += 1
-                            if sampled_name is None or sample_index >= len(sample_values):
-                                break
-                            sample_variables[sampled_name] = sample_values[sample_index]
+                missing = set(
+                    missing_template_parameters(self.hass, [imported, elements], preview_variables)
+                )
+                missing.add(err.name)
                 return {
                     "missing_parameters": sorted(missing),
                     "elements": [],

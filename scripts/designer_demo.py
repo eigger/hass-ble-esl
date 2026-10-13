@@ -52,6 +52,7 @@ from custom_components.ble_esl.designer.specs import (
     MissingTemplateParameter,
     describe,
     frozen_corners,
+    missing_template_parameters,
     resolve_templates,
 )
 from custom_components.ble_esl.esl_ble.base import DevicePreset
@@ -394,9 +395,15 @@ async def handle(request):
                     HASS, imported, elements, _preview_variable_map(msg.get("preview_variables"))
                 )
             except MissingTemplateParameter as err:
+                missing = set(
+                    missing_template_parameters(
+                        HASS, [imported, elements], msg.get("preview_variables")
+                    )
+                )
+                missing.add(err.name)
                 return web.json_response(
                     {
-                        "missing_parameters": [err.name],
+                        "missing_parameters": sorted(missing),
                         "elements": [],
                         "issues": [],
                         "different_pixels": None,
