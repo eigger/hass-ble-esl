@@ -490,9 +490,7 @@ class Designer:
                         )
                     )
             except MissingTemplateParameter as err:
-                missing = set(
-                    missing_template_parameters(self.hass, [imported, elements], preview_variables)
-                )
+                missing = set(missing_template_parameters(self.hass, imported, preview_variables))
                 missing.add(err.name)
                 return {
                     "missing_parameters": sorted(missing),

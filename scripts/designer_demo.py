@@ -396,9 +396,7 @@ async def handle(request):
                 )
             except MissingTemplateParameter as err:
                 missing = set(
-                    missing_template_parameters(
-                        HASS, [imported, elements], msg.get("preview_variables")
-                    )
+                    missing_template_parameters(HASS, imported, msg.get("preview_variables"))
                 )
                 missing.add(err.name)
                 return web.json_response(
