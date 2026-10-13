@@ -188,7 +188,7 @@ export function handlePointer(panel, event) {
     snapshot = clone(panel.document),
     // An element that hangs off the label (an imported frame) is not pulled
     // back by the first move.
-    bound = onLabel(start, panel.tag),
+    bound = onLabel(start, panel.canvasTag),
     startVisible = panel.visibleBounds(start);
   let moved = false,
     pendingMove = null,
@@ -221,14 +221,14 @@ export function handlePointer(panel, event) {
       [element.x, element.width] = edge(
         start.x,
         start.width,
-        panel.tag.width,
+        panel.canvasTag.width,
         resize.endsWith("w"),
         dx,
       );
       [element.y, element.height] = edge(
         start.y,
         start.height,
-        panel.tag.height,
+        panel.canvasTag.height,
         resize.startsWith("n"),
         dy,
       );
@@ -244,7 +244,7 @@ export function handlePointer(panel, event) {
       panel.drawStage();
       return;
     }
-    clampBox(element, panel.tag, bound);
+    clampBox(element, panel.canvasTag, bound);
     if (resize && (bound || panel.moveBound(start, startVisible)))
       panel.clampResized(element);
     panel.snapGuides = panel.alignmentGuides(element, resize);

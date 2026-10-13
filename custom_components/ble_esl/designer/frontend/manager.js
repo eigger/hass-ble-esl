@@ -860,6 +860,7 @@ class EslManager extends HTMLElement {
         imported = await editor.prepareAutomationPayload(
           data.payload,
           data.background,
+          data.rotate || 0,
           entryId,
           previewVariables,
         );
@@ -1166,6 +1167,8 @@ class EslManager extends HTMLElement {
           t(this.hass, "The selected write action is no longer available."),
         );
       data.payload = exported.payload_data;
+      if (snapshot.document.rotate) data.rotate = snapshot.document.rotate;
+      else delete data.rotate;
       await this.hass.callApi(
         "POST",
         `config/automation/config/${encodeURIComponent(source.configId)}`,

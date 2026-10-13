@@ -94,11 +94,11 @@ data:
 
 **ESL Manager**는 모든 태그를 한눈에 보는 대시보드입니다. 별칭, 배터리, 마지막으로 전송에 성공한 이미지, 화면 동기화 여부, 최근 전송 결과와 소요 시간, 연결된 자동화를 보여 주며 검색, 필터, 정렬을 지원합니다. 카드에서 바로 디자이너나 태그를 그리는 자동화를 열 수 있습니다.
 
-사이드바의 **ESL Manager**로 payload를 눈으로 보며 만듭니다. 요소를 끌어 옮기고 크기를 바꾸고 겹쳐 놓으며, [imagespec 요소](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) 서른 가지(도형, 텍스트, QR / 바코드, 차트, 표 등)를 모두 추가해 각 필드를 편집할 수 있고, Jinja 템플릿도 쓸 수 있습니다. 미리보기, 태그로 보내는 이미지, 내보내는 **Payload YAML**(payload, 또는 템플릿을 쓴 그대로 둔 완성된 `ble_esl.write` 액션. 그래서 자동화가 센서를 따라갑니다)은 같은 렌더러가 그리는 같은 payload입니다. **Import YAML**은 이미 가진 액션의 payload를 디자이너로 가져오고, **Convert to elements**는 센서나 기존 컴포넌트를 평범한 요소로 바꿉니다. Bluetooth Send는 디자인을 먼저 저장하고 사용자가 요청할 때만 전송합니다. 디자이너는 센서 변경 시 자동 전송하지 않습니다. 내보낸 액션으로 Home Assistant 자동화에서 갱신 시점을 설정하세요.
+사이드바의 **ESL Manager**로 payload를 눈으로 보며 만듭니다. 요소를 끌어 옮기고 크기를 바꾸고 겹쳐 놓으며, [imagespec 요소](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) 서른 가지(도형, 텍스트, QR / 바코드, 차트, 표 등)를 모두 추가해 각 필드를 편집할 수 있고, Jinja 템플릿도 쓸 수 있습니다. `0°/90°/180°/270°` 회전을 선택할 수 있습니다. 회전 시 편집 캔버스는 요소를 똑바로 배치할 수 있는 좌표계로 유지되고, 기기 출력 미리보기는 실제 방향으로 표시됩니다. **Payload YAML**은 같은 payload와 회전값을 내보냅니다. **Import YAML**은 이미 가진 액션의 payload와 회전값을 디자이너로 가져오고, **Convert to elements**는 센서나 기존 컴포넌트를 평범한 요소로 바꿉니다. Bluetooth Send는 디자인을 먼저 저장하고 사용자가 요청할 때만 전송합니다. 디자이너는 센서 변경 시 자동 전송하지 않습니다. 내보낸 액션으로 Home Assistant 자동화에서 갱신 시점을 설정하세요.
 
 **[디자이너 가이드 →](docs/ko/designer.md)**
 
-연결된 자동화 목록에서 **Edit automation design**으로 기존 `ble_esl.write` payload를 별도 편집 세션에서 열고, **Save automation**으로 저장할 수 있습니다. 최신 자동화 설정을 다시 읽어 선택한 액션의 `data.payload`만 바꿉니다. 선택 액션이 변경·중복되었거나 디자인이 유효하지 않으면 저장을 막으며, 저장은 Bluetooth 전송을 하지 않습니다. 세션을 나가면 원래 디자인과 실행 취소 기록을 복원합니다.
+연결된 자동화 목록에서 **Edit automation design**으로 기존 `ble_esl.write` payload를 별도 편집 세션에서 열고, **Save automation**으로 저장할 수 있습니다. 최신 자동화 설정을 다시 읽어 선택한 액션의 `data.payload`와 `data.rotate`를 갱신합니다. 선택 액션이 변경·중복되었거나 디자인이 유효하지 않으면 저장을 막으며, 저장은 Bluetooth 전송을 하지 않습니다. 세션을 나가면 원래 디자인과 실행 취소 기록을 복원합니다.
 
 ## 액션
 
