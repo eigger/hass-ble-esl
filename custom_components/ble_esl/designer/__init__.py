@@ -496,6 +496,9 @@ class Designer:
                 )
                 for source in sources:
                     sample_variables = dict(preview_variables)
+                    sample_values = ("", 0, "sample", False, [], {})
+                    sampled_name = None
+                    sample_index = 0
                     for _ in range(64):
                         try:
                             resolve_templates(self.hass, source, set(), sample_variables)
@@ -504,12 +507,17 @@ class Designer:
                             if next_err.name in sample_variables:
                                 break
                             missing.add(next_err.name)
-                            sample_variables[next_err.name] = ""
+                            sampled_name = next_err.name
+                            sample_index = 0
+                            sample_variables[sampled_name] = sample_values[sample_index]
                         except HomeAssistantError:
-                            # A blank sample may not fit the variable's operation
-                            # (for example, adding a number). Continue with the
-                            # other template fields so this import stays editable.
-                            break
+                            # Try common JSON types so an arithmetic or string
+                            # operation on one missing name does not hide later
+                            # names in this template field.
+                            sample_index += 1
+                            if sampled_name is None or sample_index >= len(sample_values):
+                                break
+                            sample_variables[sampled_name] = sample_values[sample_index]
                 return {
                     "missing_parameters": sorted(missing),
                     "elements": [],
