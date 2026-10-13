@@ -388,7 +388,7 @@ async def test_send_writes_the_pixels_of_the_exported_payload(hass, wolink_entry
 async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
     hass.states.async_set("sensor.room_temperature", "21.26", {"unit_of_measurement": "°C"})
     manager = hass.data[KEY]
-    payload = (await manager.draw(wolink_entry, document()))[2]
+    payload = (await manager.draw(wolink_entry, document()))[3]
     result = await manager.export(wolink_entry, document())
     assert yaml.safe_load(result["payload"]) == payload
     assert result["issues"] == []
@@ -506,6 +506,7 @@ async def test_websocket_import_payload_accepts_typed_empty_payload(
         "issues": [],
         "different_pixels": None,
         "background": "white",
+        "rotate": 0,
     }
 
 
