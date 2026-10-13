@@ -14,7 +14,6 @@ import re
 
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.template import Template
-from jinja2 import meta
 import imagespec
 from imagespec.spec import UNSET
 
@@ -336,32 +335,6 @@ def templates_in(value):
         return [found for item in value.values() for found in templates_in(item)]
     if isinstance(value, list):
         return [found for item in value for found in templates_in(item)]
-    return []
-
-
-def template_parameters(hass, value, preview_variables=None):
-    """Names referenced by templates that are not already in their context."""
-    preview_variables = preview_variables or {}
-    if isinstance(value, str) and _TEMPLATE.search(value):
-        template = Template(value, hass)
-        try:
-            names = meta.find_undeclared_variables(template._env.parse(value))
-        except Exception:
-            return []
-        available = set(template._env.globals) | set(preview_variables)
-        return sorted(names - available)
-    if isinstance(value, dict):
-        return [
-            name
-            for item in value.values()
-            for name in template_parameters(hass, item, preview_variables)
-        ]
-    if isinstance(value, list):
-        return [
-            name
-            for item in value
-            for name in template_parameters(hass, item, preview_variables)
-        ]
     return []
 
 

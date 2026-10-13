@@ -377,7 +377,7 @@ async def test_import_reports_all_missing_preview_parameters_together(hass, woli
             "type": "text",
             "x": 5,
             "y": 5,
-            "value": "{{ font_bold }} {{ font_regular }}",
+            "value": "{{ font_bold }} {{ font_regular }} {{ optional | default('ESL') }}",
         }
     ]
     result = await hass.data[KEY].import_payload(wolink_entry, payload, "white")

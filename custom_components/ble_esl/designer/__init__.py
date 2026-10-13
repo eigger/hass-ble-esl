@@ -50,7 +50,6 @@ from .specs import (
     describe,
     frozen_corners,
     resolve_templates,
-    template_parameters,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -490,13 +489,23 @@ class Designer:
                         )
                     )
             except MissingTemplateParameter as err:
-                missing = set(
-                    template_parameters(self.hass, imported, preview_variables)
-                )
-                missing.update(
-                    template_parameters(self.hass, elements, preview_variables)
-                )
-                missing.add(err.name)
+                missing = {err.name}
+                sample_variables = dict(preview_variables)
+                sample_variables[err.name] = ""
+                for _ in range(64):
+                    try:
+                        resolve_templates(self.hass, imported, set(), sample_variables)
+                        compile_payload(
+                            self.hass,
+                            {"elements": elements},
+                            preview_variables=sample_variables,
+                        )
+                        break
+                    except MissingTemplateParameter as next_err:
+                        if next_err.name in sample_variables:
+                            break
+                        missing.add(next_err.name)
+                        sample_variables[next_err.name] = ""
                 return {
                     "missing_parameters": sorted(missing),
                     "elements": [],
