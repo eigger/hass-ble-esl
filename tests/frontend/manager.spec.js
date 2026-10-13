@@ -105,7 +105,7 @@ test("preview parameters remain outside the saved automation payload", async ({
                 y: 8,
                 width: 220,
                 height: 28,
-                value: "{{ font_bold }}",
+                value: "{{ font_bold }} {{ font_regular }}",
                 color: "black",
               },
             ],
@@ -123,6 +123,12 @@ test("preview parameters remain outside the saved automation payload", async ({
   await parameters
     .getByLabel("font_bold", { exact: true })
     .fill("first-preview.ttf");
+  await expect(
+    parameters.getByLabel("font_regular", { exact: true }),
+  ).toBeVisible();
+  await parameters
+    .getByLabel("font_regular", { exact: true })
+    .fill("regular-preview.ttf");
   await parameters
     .getByRole("button", { name: "Apply preview values" })
     .click();
@@ -134,6 +140,9 @@ test("preview parameters remain outside the saved automation payload", async ({
     .getByLabel("font_bold", { exact: true })
     .fill("second-preview.ttf");
   await parameters
+    .getByLabel("font_regular", { exact: true })
+    .fill("second-regular.ttf");
+  await parameters
     .getByRole("button", { name: "Apply preview values" })
     .click();
   await expect
@@ -143,12 +152,19 @@ test("preview parameters remain outside the saved automation payload", async ({
       ),
     )
     .toBe("second-preview.ttf");
+  expect(
+    await page.evaluate(
+      () => window.manager.editor._automationPreviewVariables.font_regular,
+    ),
+  ).toBe("second-regular.ttf");
   await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.locator(".message")).toContainText("Automation saved.");
   const saved = await page.evaluate(() =>
     window.manager.hass.callApi("GET", "config/automation/config/morning"),
   );
-  expect(saved.actions[0].data.payload[0].value).toBe("{{ font_bold }}");
+  expect(saved.actions[0].data.payload[0].value).toBe(
+    "{{ font_bold }} {{ font_regular }}",
+  );
   expect(JSON.stringify(saved)).not.toContain("second-preview.ttf");
 });
 
@@ -1525,8 +1541,7 @@ test("unlinking the last manual association restores focus to the design action"
     manager.hass = {
       ...manager.hass,
       callWS: async (message) => {
-        if (message.action === "automations")
-          return { linked, available: [] };
+        if (message.action === "automations") return { linked, available: [] };
         if (message.action === "unlink_automation")
           return { linked: [], available: [] };
         return callWS(message);
@@ -1655,9 +1670,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
           const toolbar = root
             .querySelector(".toolbar")
             .getBoundingClientRect();
-          const nav = host
-            .querySelector(".editor-nav")
-            .getBoundingClientRect();
+          const nav = host.querySelector(".editor-nav").getBoundingClientRect();
           return [
             root.querySelector(".editor-content").scrollTop > 0,
             host.scrollTop === 0,

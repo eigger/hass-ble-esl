@@ -41,16 +41,21 @@ export class PreviewParametersDialog extends HTMLElement {
     });
   }
 
-  open(panel, variables = {}, missingName = null) {
+  open(panel, variables = {}, missingNames = null) {
     this.panel = panel;
     this.hass = panel.hass;
     this.closed = false;
     this.resolvePromise = null;
-    this._missingName = missingName || null;
-    this.allowEmptyMissing = false;
+    this._missingNames = Array.isArray(missingNames)
+      ? missingNames
+      : missingNames
+        ? [missingNames]
+        : [];
+    this._missingName = this._missingNames[0] || null;
+    this.allowEmptyMissing = new Set();
     this.values = structuredClone(variables || {});
-    if (missingName && !Object.hasOwn(this.values, missingName))
-      this.values[missingName] = "";
+    for (const name of this._missingNames)
+      if (!Object.hasOwn(this.values, name)) this.values[name] = "";
     this.render();
     return new Promise((resolve) => {
       this.resolvePromise = resolve;
@@ -79,11 +84,13 @@ export class PreviewParametersDialog extends HTMLElement {
         type: row.querySelector("[data-type]").value,
         value: row.querySelector("[data-value]").value,
       })),
-      allowEmptyMissing: Boolean(
-        this.shadowRoot.querySelector("[data-allow-empty]")?.checked,
-      ),
+      allowEmptyMissing: [
+        ...this.shadowRoot.querySelectorAll("[data-allow-empty]"),
+      ]
+        .filter((checkbox) => checkbox.checked)
+        .map((checkbox) => checkbox.dataset.allowEmpty),
     };
-    this.allowEmptyMissing = snapshot.allowEmptyMissing;
+    this.allowEmptyMissing = new Set(snapshot.allowEmptyMissing);
     this.hass = hass;
     this.render();
     for (const [index, state] of snapshot.rows.entries()) {
@@ -98,9 +105,12 @@ export class PreviewParametersDialog extends HTMLElement {
       this.shadowRoot.querySelector("[data-all-json]").value =
         snapshot.advancedText;
     }
-    if (this.shadowRoot.querySelector("[data-allow-empty]"))
-      this.shadowRoot.querySelector("[data-allow-empty]").checked =
-        snapshot.allowEmptyMissing;
+    for (const checkbox of this.shadowRoot.querySelectorAll(
+      "[data-allow-empty]",
+    ))
+      checkbox.checked = snapshot.allowEmptyMissing.includes(
+        checkbox.dataset.allowEmpty,
+      );
     if (snapshot.activeKind) {
       const row =
         snapshot.activeRow === undefined
@@ -126,9 +136,19 @@ export class PreviewParametersDialog extends HTMLElement {
         return `<fieldset data-row="${index}"><legend>${esc(name || t(this.hass, "New parameter"))}</legend><label>${t(this.hass, "Parameter name")}<input data-name value="${esc(name)}" autocomplete="off" spellcheck="false"></label><label>${t(this.hass, "Type")}<select data-type><option value="string" ${type === "string" ? "selected" : ""}>${t(this.hass, "String")}</option><option value="number" ${type === "number" ? "selected" : ""}>${t(this.hass, "Number")}</option><option value="boolean" ${type === "boolean" ? "selected" : ""}>${t(this.hass, "Boolean")}</option><option value="json" ${type === "json" ? "selected" : ""}>${t(this.hass, "Object, array or null")}</option></select></label><label class="value-label">${t(this.hass, "Value")}${field}</label><button type="button" data-remove="${index}" aria-label="${t(this.hass, "Remove parameter {name}", { name })}">${t(this.hass, "Remove")}</button></fieldset>`;
       })
       .join("");
-    const missing = missingName
-      ? `<p class="missing" role="status">${t(this.hass, "Enter a preview value for {name}.", { name: missingName })}</p>`
-      : "";
+    const missingNames = this.missingNames;
+    const missing = missingNames
+      .map(
+        (name) =>
+          `<p class="missing" role="status">${t(this.hass, "Enter a preview value for {name}.", { name })}</p>`,
+      )
+      .join("");
+    const emptyOptions = missingNames
+      .map(
+        (name) =>
+          `<label class="empty-option"><input type="checkbox" data-allow-empty="${esc(name)}" ${this.allowEmptyMissing.has(name) ? "checked" : ""}>${t(this.hass, "Use an empty string for {name}", { name })}</label>`,
+      )
+      .join("");
     this.shadowRoot.innerHTML = `<style>
       dialog{width:min(680px,94vw);max-height:90vh;padding:0;border:1px solid var(--divider-color,#cbd3de);border-radius:10px;background:var(--card-background-color,white);color:var(--primary-text-color,#18232f);font:14px system-ui}
       dialog::backdrop{background:#0006} form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:90vh;box-sizing:border-box;overflow:auto}
@@ -141,7 +161,7 @@ export class PreviewParametersDialog extends HTMLElement {
       <h2 id="preview-parameters-title">${t(this.hass, "Preview parameters")}</h2>
       <p id="preview-parameters-description" class="muted">${t(this.hass, "These typed values are used only to preview and validate this design. They are not saved to the automation.")}</p>
       ${missing}${rows || `<p class="muted">${t(this.hass, "No preview parameters yet. Add one for a variable used by a template.")}</p>`}
-      ${missingName ? `<label class="empty-option"><input type="checkbox" data-allow-empty ${this.allowEmptyMissing ? "checked" : ""}>${t(this.hass, "Use an empty string for {name}", { name: missingName })}</label>` : ""}
+      ${emptyOptions}
       <button type="button" data-add>${t(this.hass, "Add parameter")}</button>
       <details class="advanced"><summary>${t(this.hass, "Advanced: edit all parameters as JSON")}</summary><label>${t(this.hass, "Preview parameter object")}<textarea data-all-json spellcheck="false" aria-label="${t(this.hass, "Preview parameter object")}">${esc(JSON.stringify(this.values, null, 2))}</textarea></label></details>
       <p class="error" role="alert" ${error ? "" : "hidden"}>${esc(error)}</p>
@@ -193,12 +213,18 @@ export class PreviewParametersDialog extends HTMLElement {
     return this._missingName || null;
   }
 
+  get missingNames() {
+    return this._missingNames || (this.missingName ? [this.missingName] : []);
+  }
+
   change(event) {
     const emptyCheckbox = event
       .composedPath()
       .find((node) => node?.matches?.("[data-allow-empty]"));
     if (emptyCheckbox) {
-      this.allowEmptyMissing = emptyCheckbox.checked;
+      if (emptyCheckbox.checked)
+        this.allowEmptyMissing.add(emptyCheckbox.dataset.allowEmpty);
+      else this.allowEmptyMissing.delete(emptyCheckbox.dataset.allowEmpty);
       return;
     }
     const typeSelect = event
@@ -382,14 +408,11 @@ export class PreviewParametersDialog extends HTMLElement {
       this.showError("missing-value");
       return;
     }
-    if (
-      this.missingName &&
-      map[this.missingName] === "" &&
-      !this.shadowRoot.querySelector("[data-allow-empty]")?.checked
-    ) {
+    for (const name of this.missingNames) {
+      if (!Object.hasOwn(map, name)) return this.showError("missing-value");
+      if (map[name] !== "" || this.allowEmptyMissing.has(name)) continue;
       const missingRow = [...this.shadowRoot.querySelectorAll("fieldset")].find(
-        (row) =>
-          row.querySelector("[data-name]").value.trim() === this.missingName,
+        (row) => row.querySelector("[data-name]").value.trim() === name,
       );
       this.setFieldError(missingRow, "missing-value");
       return this.showError("missing-value");

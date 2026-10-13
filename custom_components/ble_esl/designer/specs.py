@@ -371,6 +371,36 @@ def resolve_templates(hass, value, entities, preview_variables=None):
     return value
 
 
+def missing_template_parameters(hass, value, preview_variables=None):
+    """Discover missing names in independent template fields for one batch prompt."""
+    missing = set()
+    sources = dict.fromkeys(templates_in(value))
+    for source in sources:
+        sample_variables = dict(preview_variables or {})
+        sample_values = ("", 0, 1, "sample", False, [], [1], {}, {"value": 1})
+        sampled_name = None
+        sample_index = 0
+        for _ in range(64):
+            try:
+                resolve_templates(hass, source, set(), sample_variables)
+                break
+            except MissingTemplateParameter as err:
+                if err.name in sample_variables:
+                    break
+                missing.add(err.name)
+                sampled_name = err.name
+                sample_index = 0
+                sample_variables[sampled_name] = sample_values[sample_index]
+            except HomeAssistantError:
+                # Try common JSON values so a type mismatch in one expression
+                # does not hide later missing names in this template field.
+                sample_index += 1
+                if sampled_name is None or sample_index >= len(sample_values):
+                    break
+                sample_variables[sampled_name] = sample_values[sample_index]
+    return sorted(missing)
+
+
 def _field(field, percent=False):
     result = {"name": field.name, "kind": field.kind, "required": field.required}
     if percent and field.name == "points":
