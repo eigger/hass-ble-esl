@@ -181,6 +181,20 @@ test("a missing parameter cannot silently default to an empty string", async ({
     .toEqual({ required_name: "", other: "changed" });
 });
 
+test("every missing parameter in a batch must be filled or explicitly blanked", async ({
+  page,
+}) => {
+  const modal = await openParameters(page, {}, ["first", "second"]);
+  await modal.locator('[data-value][aria-label="first"]').fill("one");
+  await modal.getByRole("button", { name: "Apply preview values" }).click();
+  await expect(modal.getByRole("alert")).toContainText("missing parameter");
+  await modal.locator('[data-value][aria-label="second"]').fill("two");
+  await modal.getByRole("button", { name: "Apply preview values" }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.parameterRequest))
+    .toEqual({ first: "one", second: "two" });
+});
+
 test("explicit empty-string choice persists through parameter row rerenders", async ({
   page,
 }) => {
