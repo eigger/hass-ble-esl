@@ -14,6 +14,7 @@ const commonNames = [
   "data",
   "icon",
   "align",
+  "rotate",
   "text",
   "source",
   "columns",

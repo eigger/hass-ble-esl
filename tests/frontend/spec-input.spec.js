@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { applySpecInput } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/spec-input.js";
+import { specEditorHtml } from "../../custom_components/ble_esl/designer/frontend/spec-editor.js";
 
 function input(path, value, extra = {}) {
   const attributes = new Map(),
@@ -98,4 +99,23 @@ test("supports template-valued JSON fields and boolean controls", () => {
     true,
   );
   expect(spec.enabled).toBe(false);
+});
+
+test("renders quarter-turn rotation as an enum and stores it as a number", () => {
+  const rotation = {
+      name: "rotate",
+      kind: "number",
+      required: false,
+      default: 0,
+      enum: [0, 90, 180, 270],
+    },
+    definition = { type: "battery", fields: [rotation] },
+    html = specEditorHtml(definition, {}, [], [], {});
+  expect(html).toContain('data-spec="rotate"');
+  expect(html).toContain('<option value="90"');
+  expect(html).toContain('<option value="270"');
+
+  const spec = {};
+  expect(applySpecInput(input("rotate", "90"), spec, definition)).toBe(true);
+  expect(spec.rotate).toBe(90);
 });
