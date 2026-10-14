@@ -1292,6 +1292,19 @@ test("an imagespec element is added from the list, edited by its fields and expo
   await expect(yaml).toHaveValue(/ {2}x: 48\n {2}y: 48\n {2}radius: 39/);
 });
 
+test("generic rotation is editable on battery elements and appears in the payload", async ({ page }) => {
+  await page.getByLabel("Add element").selectOption("battery");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  const rotation = page.locator('[data-spec="rotate"]');
+  await expect(rotation).toBeVisible();
+  await rotation.selectOption("90");
+  await page.waitForFunction(() => window.panel.preview && !window.panel.error);
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  await expect(
+    page.locator("ble-esl-yaml-dialog dialog").getByLabel("YAML", { exact: true }),
+  ).toHaveValue(/- type: battery[\s\S]*?rotate: 90/);
+});
+
 test("every imagespec element can be added and rendered", async ({ page }) => {
   // Each preview renders every element added so far.
   test.setTimeout(120_000);

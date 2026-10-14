@@ -15,6 +15,7 @@ import re
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.template import Template
 import imagespec
+from imagespec.schema import SCHEMA_VERSION
 from imagespec.spec import UNSET
 
 BOX = ("x_start", "y_start", "x_end", "y_end")
@@ -66,6 +67,19 @@ SAMPLE_IMAGE = (
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAA"
     "BLbSncAAAAKklEQVR42r2NMQ4AIBCDwP//GQcTB5NbZWKgqQBQAer1xUR1ksfHhR8+NtY6I+1HmsaCAAAAAElFTkSuQmCC"
 )
+
+# The common per-element rotation contract first appeared in imagespec schema v4.
+# Keep the Manager editor compatible with older installed imagespec versions: an
+# authored rotation control is useful only when the renderer can apply it.
+_ROTATION_SCHEMA_VERSION = 4
+_GENERIC_ROTATE_FIELD = {
+    "name": "rotate",
+    "kind": "number",
+    "required": False,
+    "default": 0,
+    "doc": "Clockwise element rotation in 90-degree steps; types with their own `rotate` field keep its meaning",
+    "enum": [0, 90, 180, 270],
+}
 
 # type -> (spec without its geometry keys, frame width, frame height)
 EXAMPLES = {
@@ -433,6 +447,15 @@ def describe():
                 continue
             role, keys = GEOMETRY[name]
             example, width, height = new_spec(name)
+            fields = [
+                _field(field, role == "points")
+                for field in spec.fields
+                if field.name not in keys or role == "points"
+            ]
+            if SCHEMA_VERSION >= _ROTATION_SCHEMA_VERSION and not any(
+                field["name"] == "rotate" for field in fields
+            ):
+                fields.append(_GENERIC_ROTATE_FIELD.copy())
             types.append(
                 {
                     "type": name,
@@ -440,11 +463,7 @@ def describe():
                     "doc": spec.doc,
                     "role": role,
                     "geometry": list(keys),
-                    "fields": [
-                        _field(field, role == "points")
-                        for field in spec.fields
-                        if field.name not in keys or role == "points"
-                    ],
+                    "fields": fields,
                     "example": example,
                     "width": width,
                     "height": height,

@@ -7,6 +7,7 @@ import json
 
 from homeassistant.exceptions import HomeAssistantError
 import imagespec
+from imagespec.schema import SCHEMA_VERSION
 from PIL import Image, ImageChops
 import pytest
 import voluptuous as vol
@@ -55,6 +56,28 @@ def test_describe_lists_fields_without_the_derived_geometry():
     assert {"fill", "outline", "width", "radius", "corners"} <= names
     assert by_type["text"]["category"] == "text"
     assert by_type["plot"]["fields"]
+
+
+def test_generic_rotation_is_offered_only_for_renderer_supported_types():
+    by_type = {item["type"]: item for item in describe()["types"]}
+    battery = [field for field in by_type["battery"]["fields"] if field["name"] == "rotate"]
+    dlimg = [field for field in by_type["dlimg"]["fields"] if field["name"] == "rotate"]
+
+    if SCHEMA_VERSION >= 4:
+        assert battery == [
+            {
+                "name": "rotate",
+                "kind": "number",
+                "required": False,
+                "default": 0,
+                "doc": "Clockwise element rotation in 90-degree steps; types with their own `rotate` field keep its meaning",
+                "enum": [0, 90, 180, 270],
+            }
+        ]
+    else:
+        assert battery == []  # Do not offer a control until imagespec can render it.
+    assert len(dlimg) == 1  # Keep the type-specific arbitrary-angle source rotation.
+    assert "enum" not in dlimg[0]
 
 
 @pytest.mark.parametrize("type_", element_types())
@@ -129,6 +152,21 @@ def test_stored_position_keys_are_ignored():
     spec, _, _ = new_spec("rectangle")
     stored = {**spec, "x_start": 500, "y_end": 9000}
     assert spec_payload(stored, 10, 20, 30, 40) == spec_payload(spec, 10, 20, 30, 40)
+
+
+def test_generic_rotation_survives_import_and_payload_build():
+    payload = {
+        "type": "battery",
+        "x": 10,
+        "y": 20,
+        "width": 40,
+        "height": 16,
+        "level": 70,
+        "rotate": 90,
+    }
+    spec, x, y, width, height = from_payload(payload)
+    assert spec["rotate"] == 90
+    assert spec_payload(spec, x, y, width, height) == payload
 
 
 def test_templates_are_found_and_rendered_like_an_automation(hass):
