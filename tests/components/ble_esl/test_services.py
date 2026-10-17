@@ -31,6 +31,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
+import voluptuous as vol
 
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
@@ -411,6 +412,46 @@ async def test_write_services_reject_non_list_payloads(
         )
 
     assert tag_writer.write_prepared.await_count == 0
+
+
+@pytest.mark.parametrize(
+    ("service", "data"),
+    [
+        ("write", {"rotate": 45}),
+        ("write", {"rotate": "sideways"}),
+        ("write", {"background": "not-a-color"}),
+        ("write", {"dry_run": "maybe"}),
+        ("write_guarded", {"rotate": 360}),
+        ("write_guarded", {"debounce_override_ms": -1}),
+        ("write_guarded", {"debounce_override_ms": "soon"}),
+    ],
+)
+async def test_write_services_reject_invalid_options(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str, data: dict
+) -> None:
+    """Bad values for known keys fail schema validation, before any render."""
+    with pytest.raises(vol.Invalid):
+        await call(hass, service, device_id_of(hass), **data)
+
+    assert tag_writer.write_prepared.await_count == 0
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_coerce_options_and_keep_unknown_keys(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str
+) -> None:
+    """Strings from templates are coerced; keys the schema does not know still pass."""
+    await call(
+        hass,
+        service,
+        device_id_of(hass),
+        rotate="90",
+        background="#000",
+        dry_run="false",
+        some_future_key=1,
+    )
+
+    assert tag_writer.write_prepared.await_count == 1
 
 
 async def test_unavailable_handle_counts_as_failed_attempts(

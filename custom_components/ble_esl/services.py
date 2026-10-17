@@ -45,10 +45,11 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import async_extract_config_entry_ids
 from homeassistant.util.dt import now
-from PIL import Image
+from PIL import Image, ImageColor
 import voluptuous as vol
 
 from .const import (
@@ -75,7 +76,37 @@ from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
-WRITE_SERVICE_SCHEMA = vol.Schema({vol.Required("payload"): list}, extra=vol.ALLOW_EXTRA)
+# imagespec's one-letter color shorthands, on top of the names and #RGB /
+# #RRGGBB that PIL understands.
+_COLOR_SHORTHANDS = frozenset({"w", "b", "r", "y", "g", "o"})
+
+
+def _color(value: Any) -> str:
+    """A color the renderer resolves (it would otherwise fall back to white)."""
+    value = cv.string(value)
+    if value.strip().lower() in _COLOR_SHORTHANDS:
+        return value
+    try:
+        ImageColor.getrgb(value.strip().lower())
+    except ValueError:
+        raise vol.Invalid(f"unknown color: {value!r}") from None
+    return value
+
+
+# Known keys are validated; anything else (the entity/device/area target and
+# keys from older automations) passes through untouched.
+WRITE_SERVICE_SCHEMA = vol.Schema(
+    {
+        vol.Required("payload"): list,
+        vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
+        vol.Optional("background"): _color,
+        vol.Optional("dry_run"): cv.boolean,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+WRITE_GUARDED_SERVICE_SCHEMA = WRITE_SERVICE_SCHEMA.extend(
+    {vol.Optional("debounce_override_ms"): vol.All(vol.Coerce(int), vol.Range(min=0))}
+)
 
 
 @callback
@@ -92,7 +123,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         SERVICE_WRITE_GUARDED,
         partial(_async_write_guarded, hass),
-        schema=WRITE_SERVICE_SCHEMA,
+        schema=WRITE_GUARDED_SERVICE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
 
