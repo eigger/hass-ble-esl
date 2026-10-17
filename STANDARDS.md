@@ -11,9 +11,9 @@
 - 실제 기본 브랜치: `main`
 - 테스트 경로: `tests/components/ble_esl/` (브라우저 테스트는 `tests/frontend/`)
 - 변경 전 지원 최소 HA / 선언 근거: 2025.12.0 (`hacs.json`, README 설치 절)
-- 적용 후 지원 최소 HA: **2026.10.0** — 사용자가 "최소 버전을 올려"라고 명시 지시. 구버전 비호환을 근거로 한 상향은 아님(다만 테스트 헬퍼가 `DeviceRegistry.async_get_devices`를 써서 2025.12.0에서는 그대로 실행되지 않음을 로컬 확인). 값은 사용자가 지정하지 않아 현재 테스트 버전으로 선택
+- 적용 후 지원 최소 HA: **2025.12.0 유지** — 중간에 2026.10.0 상향을 시도했으나 사용자가 "가능하면 내리고"라고 해 되돌림. 테스트 헬퍼를 두 버전 호환으로 고쳐 2025.12.0에서 통과함을 확인
 - current HA 테스트 환경: Python 3.14 / HA 2026.10.0 / pytest-homeassistant-custom-component 0.13.371
-- 최소 HA 검증 환경: current와 동일(최소=current이므로 단일 job)
+- 최소 HA 검증 환경: Python 3.13 / HA 2025.12.0 / plugin 0.13.298 (`requirements_test_min.txt`, `constraints/homeassistant-min.txt`), CI job `minimum-ha`
 - 최소 package 검증: `blesession>=0.9.0`, `imagespec[datamatrix]>=1.1.0` — CI `dependency-modes: minimum`이 정확한 하한 설치
 
 ## 예외

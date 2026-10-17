@@ -14,8 +14,8 @@
 | 구현 / 독립 리뷰 | 주 에이전트(사용자 지시) / Opus 서브 에이전트 — 지적 사항은 항목 표의 GOV-05 행 참조 |
 | 중앙 현황표 반영 | 미반영 |
 | 변경 전 지원 최소 HA | 2025.12.0 (`hacs.json`) |
-| 유지·변경 지원 최소 | **2026.10.0으로 상향** — 사용자 명시 지시, 비호환 근거 없음(STANDARDS.md) |
-| current 테스트 | Py 3.14 / HA 2026.10.0 / plugin 0.13.371 |
+| 유지·변경 지원 최소 | 2025.12.0 유지(상향 시도 후 사용자 요청으로 복원) |
+| current 테스트 / 최소 테스트 | Py 3.14 / HA 2026.10.0 / plugin 0.13.371 ; Py 3.13 / HA 2025.12.0 / plugin 0.13.298 |
 | 이전 검토 기록 | 최초 검토 |
 | 채택 판정 | **이관 진행 중** (원격 CI·중앙 표 미완) |
 
@@ -28,9 +28,9 @@
 | GOV-04 | TODO | 중앙 표 미갱신 — 하단 "반영할 내용" |
 | GOV-05 | EXCEPTION | 구현은 주 에이전트(사용자 지시), 독립 리뷰는 Opus 서브 에이전트. STANDARDS.md 예외 참조. 리뷰 지적(최소 환경 주장 오류, imagespec 하한, 상태값, 옛 경로)은 수정함 |
 | HA-01…HA-13 | TODO | 이번 작업은 CI·테스트 구조·문서 이관만 수행, 구현 코드(Core 대응 구조·migration 등)는 재감사하지 않음 |
-| TEST-08 | PASS | `tests/components/ble_esl/` (+`__init__.py` 계층), pytest.ini `testpaths` 일치. 루트 `tests/conftest.py`는 없고 fixture는 domain conftest에 둠 |
+| TEST-08 | PASS | `tests/components/ble_esl/` (+`__init__.py` 계층), pytest.ini `testpaths` 일치. 루트 `tests/conftest.py`(설명용 최소 파일)와 domain conftest에 fixture 배치 |
 | TEST-02, TEST-03, TEST-09 | PASS | `tests/components/ble_esl/conftest.py`가 `hass`·`enable_custom_integrations`·`MockConfigEntry` 사용, `setup_entry`가 `hass.config_entries.async_setup` 실행 |
-| TEST-04, HACS-01 | TODO | 최소=current=2026.10.0 단일 환경, 상향은 사용자 명시 지시. 로컬은 통과했으나 원격 CI 미실행이라 PASS로 표시하지 않음. hacs.json `homeassistant: 2026.10.0` 확인함 |
+| TEST-04, HACS-01 | TODO | 지원 최소 2025.12.0 유지, 별도 `minimum-ha` job. 로컬: current(2026.10.0/py3.14/0.13.371)와 최소(2025.12.0/py3.13/0.13.298/blesession 0.9.0/imagespec 1.1.0) 모두 1097 passed, 3 skipped. 원격 CI 미실행이라 PASS 아님 |
 | TEST-05, DEP-02, DEP-05 | TODO | 로컬 Py3.14 / HA 2026.10.0 / plugin 0.13.371 / blesession 0.9.0 / imagespec 1.1.0(manifest 하한 `>=0.9.0`, `>=1.1.0`)에서 1097 passed, 3 skipped (3 skip은 test_design_templates의 automation 없음 케이스). CI minimum 모드 미실행 |
 | DEP-01, DEP-06 | PASS | runtime=manifest requirements, 테스트 requirements_test.txt, 린트 requirements_lint.txt 분리 |
 | DEP-07, CI-06 | TODO | 공통 action이 HA component 요구사항 재귀 설치·`pip check` — 원격 실행 미확인 |
@@ -47,4 +47,4 @@
 
 ## 반영할 중앙 현황표 내용 (미반영)
 
-`hass-ble-esl / main`: 진행 중 — 기준 SHA 7acd9ca, 적용: CI 공통화·tests/components 이관·STANDARDS/체크리스트·배지, 최소 HA 2026.10.0 상향, 남은 일: 원격 CI 통과·required checks 갱신·dependency-update dry-run·중앙 표 갱신.
+`hass-ble-esl / main`: 진행 중 — 기준 SHA 7acd9ca, 적용: CI 공통화·tests/components 이관·STANDARDS/체크리스트·배지, 최소 HA 2025.12.0 유지+최소 환경 CI 추가, 남은 일: 원격 CI 통과·required checks 갱신·dependency-update dry-run·중앙 표 갱신.

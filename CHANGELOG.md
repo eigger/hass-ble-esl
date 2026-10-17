@@ -4,8 +4,18 @@
 
 ### Changed
 
-- **Minimum Home Assistant raised from 2025.12 to 2026.10** (`hacs.json`, README). Update Home Assistant before updating this integration.
+- Minimum Home Assistant stays at 2025.12; it is now tested in CI against exactly 2025.12.0 as well as the current release.
 - Tests moved to `tests/components/ble_esl/`; CI now uses the shared hass-repo-standards workflows (see `STANDARDS.md`).
+
+## 1.3.0
+
+### Added
+
+- Expose imagespec element rotation in the ESL Manager designer.
+
+### Fixed
+
+- Sensor device info is no longer mutated in the cache.
 
 ## 1.2.3
 

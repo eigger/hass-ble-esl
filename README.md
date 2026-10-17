@@ -2,7 +2,7 @@
 <!-- hass-standards:badges:start -->
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
 [![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202026.10.0-41BDF5?style=flat-square)](hacs.json)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
@@ -49,7 +49,7 @@ Full model list with resolutions and model codes: **[docs/models.md](docs/models
 
 ## Installation
 
-Requires Home Assistant **2026.10** or newer.
+Requires Home Assistant **2025.12** or newer.
 
 1. Install via **HACS** (custom repository `eigger/hass-ble-esl`), or copy `custom_components/ble_esl` into your config.
 2. Restart Home Assistant.

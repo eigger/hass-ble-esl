@@ -14,14 +14,15 @@ pytest
 
 ## Verified environments
 
-CI ([tests.yml](../.github/workflows/tests.yml)) runs the suite against a real Home Assistant; the workflow asserts the installed version:
+CI ([tests.yml](../.github/workflows/tests.yml)) runs the suite against a real Home Assistant in separate environments; the workflow asserts the installed version:
 
 | Job | Python | Home Assistant | Test plugin | Libraries |
 |---|---|---|---|---|
-| current | 3.14 | 2026.10.0 (also the declared minimum in `hacs.json`) | `pytest-homeassistant-custom-component` 0.13.371 | latest allowed by `manifest.json` |
-| minimum libraries | 3.14 | 2026.10.0 | 0.13.371 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
+| current | 3.14 | 2026.10.0 | `pytest-homeassistant-custom-component` 0.13.371 | latest allowed by `manifest.json` |
+| current, minimum libraries | 3.14 | 2026.10.0 | 0.13.371 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
+| minimum HA | 3.13 | 2025.12.0 (`hacs.json`) | 0.13.298 | latest allowed by `manifest.json` |
 
-The minimum was raised from 2025.12.0 to 2026.10.0 on the maintainer's explicit instruction. A local run on 2025.12.0 also hit a test helper that needs a newer Home Assistant API (`DeviceRegistry.async_get_devices`), so the suite no longer supports 2025.12.0 as is. Because minimum and tested release are now equal, one environment covers both. If a lower minimum is declared again, add a separate job with its own pinned Home Assistant, plugin and Python. Not covered: physical tags beyond those listed in the README.
+The minimum environment lives in `requirements_test_min.txt` and `constraints/homeassistant-min.txt` (the `pycares<5` pin is needed by HA 2025.12's `aiodns==3.5.0`). Dependabot leaves both alone: raising the declared minimum needs a real incompatibility with an older Home Assistant and an explicit decision, not a test-tool bump. Test helpers must keep working on both releases (for example `device_of` in the test conftest). Not covered: physical tags beyond those listed in the README.
 
 `ruff check .` and `ruff format --check .` (version pinned in `requirements_lint.txt`) must pass; adding a protocol is described in [esl_ble/README.md](../custom_components/ble_esl/esl_ble/README.md). New dependencies go in `manifest.json` `requirements` (runtime), not in the test requirements, and are exercised by the real-Home-Assistant tests.
 

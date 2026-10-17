@@ -2,7 +2,7 @@
 <!-- hass-standards:badges:start -->
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#설치)
 [![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202026.10.0-41BDF5?style=flat-square)](hacs.json)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
 [![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
 [![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
@@ -50,7 +50,7 @@ BLE 프로토콜 4계열, 판매 브랜드는 다음과 같습니다:
 
 ## 설치
 
-Home Assistant **2026.10** 이상이 필요합니다.
+Home Assistant **2025.12** 이상이 필요합니다.
 
 1. **HACS**(사용자 지정 저장소 `eigger/hass-ble-esl`)로 설치하거나, `custom_components/ble_esl`을 설정 폴더에 복사합니다.
 2. Home Assistant를 재시작합니다.

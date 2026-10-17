@@ -12,10 +12,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  # Home Assistant 2026.10.0 is both the declared minimum (hacs.json) and the
-  # tested release (requirements_test.txt), so one job covers both. The
-  # "minimum" mode also installs the exact imagespec/blesession lower bounds
-  # declared in manifest.json.
+  # Current Home Assistant (requirements_test.txt), plus the exact minimum
+  # imagespec/blesession versions declared in manifest.json.
   current:
     uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@7acd9cab6ac774e4695f2c962e3d88b5faa4620d
     with:
@@ -26,6 +24,19 @@ jobs:
       minimum-packages: '["imagespec", "blesession"]'
       ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
       expected-ha-version: '2026.10.0'
+      test-profile: ha
+      pytest-args: tests/components/ble_esl/ -v --timeout 120
+  # Exact minimum Home Assistant declared in hacs.json (2025.12.0). Its
+  # plugin/Python pair is separate from current and is not raised with it.
+  minimum-ha:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@7acd9cab6ac774e4695f2c962e3d88b5faa4620d
+    with:
+      domain: ble_esl
+      python-versions: '["3.13"]'
+      requirements: requirements_test_min.txt
+      constraints: constraints/homeassistant-min.txt
+      ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
+      expected-ha-version: '2025.12.0'
       test-profile: ha
       pytest-args: tests/components/ble_esl/ -v --timeout 120
   # The visual editor's browser tests use their own runner and a demo server,

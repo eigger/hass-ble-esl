@@ -8,6 +8,7 @@ protocol's write path and the renderer stubbed out, steerable per test).
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 import time
@@ -35,6 +36,22 @@ ADDRESS = "66:66:54:20:00:55"
 IDENT = "54200055"
 # PID=0x1234, AppVer=0x0201 (513), HwVer=0x0403 (1027), DispVer=0x0605 (1541), battery 3000 mV
 WOLINK_MFR_BYTES = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
+
+
+@pytest.fixture(autouse=True)
+def enable_event_loop_debug() -> None:
+    """Replace the plugin's fixture of the same name.
+
+    Many codec/session tests drive coroutines with asyncio.run(), which leaves no
+    current event loop behind. Older plugin releases (the minimum-HA CI job) call
+    get_event_loop() unconditionally, so every following test errored in setup.
+    """
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.set_debug(True)
 
 
 @pytest.fixture(autouse=True)
@@ -82,7 +99,12 @@ async def setup_entry(
 
 def device_of(hass: HomeAssistant, address: str = ADDRESS) -> dr.DeviceEntry:
     """The HA device of a tag."""
-    devices = dr.async_get(hass).async_get_devices(connections={(CONNECTION_BLUETOOTH, address)})
+    registry = dr.async_get(hass)
+    connections = {(CONNECTION_BLUETOOTH, address)}
+    if hasattr(registry, "async_get_devices"):
+        devices = list(registry.async_get_devices(connections=connections))
+    else:  # Home Assistant before the multi-entry device lookup (minimum support)
+        devices = [d for d in [registry.async_get_device(connections=connections)] if d]
     assert len(devices) == 1, devices
     return devices[0]
 
