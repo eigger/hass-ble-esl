@@ -21,7 +21,7 @@ CI ([tests.yml](../.github/workflows/tests.yml)) runs the suite against a real H
 | current | 3.14 | 2026.10.0 (also the declared minimum in `hacs.json`) | `pytest-homeassistant-custom-component` 0.13.371 | latest allowed by `manifest.json` |
 | minimum libraries | 3.14 | 2026.10.0 | 0.13.371 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
 
-The minimum was raised from 2025.12.0 to 2026.10.0 on the maintainer's explicit instruction, not because of an API incompatibility; the old 2025.12.0 environment passed the same suite. Because minimum and tested release are now equal, one environment covers both. If a lower minimum is declared again, add a separate job with its own pinned Home Assistant, plugin and Python. Not covered: physical tags beyond those listed in the README.
+The minimum was raised from 2025.12.0 to 2026.10.0 on the maintainer's explicit instruction. A local run on 2025.12.0 also hit a test helper that needs a newer Home Assistant API (`DeviceRegistry.async_get_devices`), so the suite no longer supports 2025.12.0 as is. Because minimum and tested release are now equal, one environment covers both. If a lower minimum is declared again, add a separate job with its own pinned Home Assistant, plugin and Python. Not covered: physical tags beyond those listed in the README.
 
 `ruff check .` and `ruff format --check .` (version pinned in `requirements_lint.txt`) must pass; adding a protocol is described in [esl_ble/README.md](../custom_components/ble_esl/esl_ble/README.md). New dependencies go in `manifest.json` `requirements` (runtime), not in the test requirements, and are exercised by the real-Home-Assistant tests.
 

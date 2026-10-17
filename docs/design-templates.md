@@ -113,7 +113,7 @@ automation:
 
 ## Checking a template
 
-Run the test-suite: `tests/test_design_templates.py` loads every bundled template and, for several display sizes and color sets, imports its payload, renders it, and checks the designer reproduces it with `0` pixels different. It also validates the automation with Home Assistant.
+Run the test-suite: `tests/components/ble_esl/test_design_templates.py` loads every bundled template and, for several display sizes and color sets, imports its payload, renders it, and checks the designer reproduces it with `0` pixels different. It also validates the automation with Home Assistant.
 
 ## API
 
