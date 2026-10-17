@@ -1,6 +1,6 @@
 # Development
 
-Tests run against a real Home Assistant core (`pytest-homeassistant-custom-component`), laid out like Home Assistant Core's component tests under `tests/components/ble_esl/` (the visual editor's browser tests are in `tests/frontend/`). They need the Python version current Home Assistant requires (3.14):
+Tests run against a real Home Assistant core (`pytest-homeassistant-custom-component`), laid out like Home Assistant Core's component tests under `tests/components/ble_esl/` (the visual editor's browser tests are in `tests/components/ble_esl/frontend/`). They need the Python version current Home Assistant requires (3.14):
 
 ```bash
 python3.14 -m venv .venv && source .venv/bin/activate

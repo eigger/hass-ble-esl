@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { EditorSession } from "../../custom_components/ble_esl/designer/frontend/editor/session.js";
+import { EditorSession } from "../../../../custom_components/ble_esl/designer/frontend/editor/session.js";
 
 const documentWith = (value) => ({
   version: 1,

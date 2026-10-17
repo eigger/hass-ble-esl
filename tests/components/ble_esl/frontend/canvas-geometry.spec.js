@@ -12,7 +12,7 @@ import {
   selectionOverlayGeometry,
   staggerElement,
   visibleBounds,
-} from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
 
 const tag = { width: 32, height: 24 };
 const element = (overrides = {}) => ({

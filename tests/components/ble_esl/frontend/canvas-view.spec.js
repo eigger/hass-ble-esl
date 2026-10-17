@@ -6,8 +6,8 @@ import {
   resolveLayerLabel,
   renderSelectionMarkup,
   renderStageMarkup,
-} from "../../custom_components/ble_esl/designer/frontend/editor/canvas/view.js";
-import { selectionOverlayGeometry } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/canvas/view.js";
+import { selectionOverlayGeometry } from "../../../../custom_components/ble_esl/designer/frontend/editor/canvas/geometry.js";
 
 const escape = (value) =>
   String(value ?? "").replace(

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { renderTextAlignmentControls } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/text-alignment.js";
+import { renderTextAlignmentControls } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/text-alignment.js";
 
 test("text alignment controls preserve font size, accessible labels, and selection state", () => {
   const controls = renderTextAlignmentControls(

@@ -530,7 +530,7 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
   // 4×2 pixels with orientation 6: shown upright it is 2×4.
   await page
     .getByLabel("Upload image", { exact: true })
-    .setInputFiles("tests/frontend/fixtures/exif-rotated.jpg");
+    .setInputFiles("tests/components/ble_esl/frontend/fixtures/exif-rotated.jpg");
   await expect
     .poll(() =>
       page.evaluate(() =>

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderSpecPalette } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/spec-palette.js";
+import { renderSpecPalette } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/spec-palette.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

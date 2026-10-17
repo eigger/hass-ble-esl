@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   renderPanelToggle,
   workspaceStickyOffsets,
-} from "../../custom_components/ble_esl/designer/frontend/editor/workspace-controls.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/workspace-controls.js";
 
 const translate = (key, values = {}) =>
   key.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? `{${name}}`);

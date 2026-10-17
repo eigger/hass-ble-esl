@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   markDocumentDirty,
   syncDocumentHistoryControls,
-} from "../../custom_components/ble_esl/designer/frontend/editor/document-indicators.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/document-indicators.js";
 
 test("document indicators retain save labels, dirty state, and history availability", () => {
   const undo = { disabled: false };

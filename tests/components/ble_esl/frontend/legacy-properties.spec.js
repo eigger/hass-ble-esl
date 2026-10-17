@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { renderLegacyElementProperties } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/legacy-properties.js";
+import { renderLegacyElementProperties } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/legacy-properties.js";
 
 const dependencies = (overrides = {}) => ({
   translate: (message) => message,

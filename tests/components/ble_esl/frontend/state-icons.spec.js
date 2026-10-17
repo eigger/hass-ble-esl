@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderStateIconRows } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/state-icons.js";
+import { renderStateIconRows } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/state-icons.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

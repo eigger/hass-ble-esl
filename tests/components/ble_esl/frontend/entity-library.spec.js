@@ -6,7 +6,7 @@ import {
   filterEntities,
   listSupportedEntities,
   renderEntityPreview,
-} from "../../custom_components/ble_esl/designer/frontend/editor/entity-library.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/entity-library.js";
 
 test("entity names prefer HA formatting, then friendly name, then entity ID", () => {
   const state = {

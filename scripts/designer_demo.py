@@ -562,7 +562,7 @@ async def reset(request):
 
 
 async def index(request):
-    return web.FileResponse(ROOT / "tests/frontend/demo.html")
+    return web.FileResponse(ROOT / "tests/components/ble_esl/frontend/demo.html")
 
 
 async def states(request):

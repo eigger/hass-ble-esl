@@ -6,11 +6,11 @@ import {
   substituteTemplateTokens,
   templateCompatibility,
   templateTypes,
-} from "../../custom_components/ble_esl/designer/frontend/editor/sensor-templates.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/sensor-templates.js";
 import {
   emptyDocument,
   newElement,
-} from "../../custom_components/ble_esl/designer/frontend/model.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/model.js";
 
 const state = (entity_id, value, attributes = {}) => ({
   entity_id,

@@ -2,8 +2,8 @@ import { test, expect } from "@playwright/test";
 import {
   clone,
   emptyDocument,
-} from "../../custom_components/ble_esl/designer/frontend/model.js";
-import { normalizeImportedDocument } from "../../custom_components/ble_esl/designer/frontend/editor/document-operations.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/model.js";
+import { normalizeImportedDocument } from "../../../../custom_components/ble_esl/designer/frontend/editor/document-operations.js";
 
 const dependencies = {
   clone,

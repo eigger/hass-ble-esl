@@ -178,7 +178,7 @@ frontend specs after runtime changes:
   retry/recovery paths; cancelled or stale asynchronous work cannot mutate a
   newer session.
 
-The primary existing browser coverage is in `tests/frontend/editor.spec.js`,
+The primary existing browser coverage is in `tests/components/ble_esl/frontend/editor.spec.js`,
 `manager.spec.js`, `manager-ux.spec.js`, `language.spec.js`, and
 `parameters.spec.js`. Their cases cover editor operations, draft restoration,
 automation-session safety, responsive layout, localization, focus retention,

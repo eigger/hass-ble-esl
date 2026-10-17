@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { renderWeatherControls } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/weather-controls.js";
+import { renderWeatherControls } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/weather-controls.js";
 
 const translate = (message) => message;
 

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { applySpecInput } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/spec-input.js";
-import { specEditorHtml } from "../../custom_components/ble_esl/designer/frontend/spec-editor.js";
+import { applySpecInput } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/spec-input.js";
+import { specEditorHtml } from "../../../../custom_components/ble_esl/designer/frontend/spec-editor.js";
 
 function input(path, value, extra = {}) {
   const attributes = new Map(),

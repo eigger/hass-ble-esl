@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderColorPicker } from "../../custom_components/ble_esl/designer/frontend/editor/color-picker.js";
+import { renderColorPicker } from "../../../../custom_components/ble_esl/designer/frontend/editor/color-picker.js";
 
 test("color picker renders accessible swatches and the background transparency option", () => {
   const markup = renderColorPicker({

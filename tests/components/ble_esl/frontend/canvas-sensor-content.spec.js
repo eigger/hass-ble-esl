@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderSensorContent } from "../../custom_components/ble_esl/designer/frontend/editor/canvas/sensor-content.js";
+import { renderSensorContent } from "../../../../custom_components/ble_esl/designer/frontend/editor/canvas/sensor-content.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

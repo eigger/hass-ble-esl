@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { renderLayerRows } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/layers.js";
+import { renderLayerRows } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/layers.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

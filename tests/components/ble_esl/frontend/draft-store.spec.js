@@ -5,7 +5,7 @@ import {
   persistDrafts,
   readStoredDrafts,
   restoreStoredDrafts,
-} from "../../custom_components/ble_esl/designer/frontend/editor/draft-store.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/draft-store.js";
 
 function memoryStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
