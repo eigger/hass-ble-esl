@@ -238,7 +238,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_model()
 
         current_addresses = self._async_current_ids(include_ignore=False)
-        for discovery_info in async_discovered_service_info(self.hass, False):
+        for discovery_info in async_discovered_service_info(self.hass, True):
             address = discovery_info.address
             if address in current_addresses or address in self._discovered_devices:
                 continue
