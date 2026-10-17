@@ -6,6 +6,17 @@
 
 - Minimum Home Assistant stays at 2025.12; it is now tested in CI against exactly 2025.12.0 as well as the current release.
 - Tests moved to `tests/components/ble_esl/`; CI now uses the shared hass-repo-standards workflows (see `STANDARDS.md`).
+- The `write` and `write_guarded` services now validate their known options: `rotate` must be 0, 90, 180 or 270, `background` a color name or `#RGB`/`#RRGGBB`, `dry_run` a boolean and `debounce_override_ms` a non-negative integer. Invalid values are rejected before rendering instead of failing mid-render or silently falling back to white. Other keys are still accepted.
+- The Failure Count sensor's state class is now `total_increasing`, since the count restarts at 0 when the entry reloads.
+- `bluetooth-sensor-state-data` and `sensor-state-data`, which the integration imports directly, are now declared in the manifest requirements, and the manifest declares `integration_type: device`.
+- A failed write attempt that will be retried is logged at debug level; only the final failure is a warning.
+- Manual setup lists only tags a connectable Bluetooth radio sees.
+
+### Fixed
+
+- Diagnostics no longer include the tag's MAC address inside write error messages.
+- The Alias text entity updates its state immediately; tag entities are no longer polled.
+- A designer panel registration failure no longer leaves the entry's platforms loaded behind a failed setup.
 
 ## 1.3.0
 
