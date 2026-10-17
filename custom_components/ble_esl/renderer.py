@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+from io import BytesIO
 import logging
 import os
 import threading
@@ -20,6 +21,13 @@ PALETTES: dict[str, list[str]] = {
     "BWR": ["black", "white", "red"],
     "BWRY": ["black", "white", "red", "yellow"],
 }
+
+
+def encode_png(image: Image.Image) -> bytes:
+    """PNG-encode a rendered image (CPU-bound; run in an executor)."""
+    buffer = BytesIO()
+    image.save(buffer, "PNG")
+    return buffer.getvalue()
 
 
 async def _run_on_recorder(hass, func):

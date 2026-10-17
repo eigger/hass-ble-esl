@@ -11,12 +11,10 @@ from __future__ import annotations
 import asyncio
 from asyncio import Future, Lock
 from collections.abc import Awaitable, Callable, Mapping
-import contextlib
 import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial
-from io import BytesIO
 import logging
 import time
 from typing import Any, Literal, cast
@@ -71,7 +69,7 @@ from .device import resolve_preset
 from .esl_ble import WriteResult
 from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset
 from .esl_ble.wolink.const import ERROR_UNLOCK_FAILED
-from .renderer import render_image
+from .renderer import encode_png, render_image
 from .types import BleEslConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -340,9 +338,7 @@ async def build_write_job_from_data(
                 background=service_data.get("background", "white"),
             )
         )
-    buffer = BytesIO()
-    image.save(buffer, "PNG")
-    image_png = buffer.getvalue()
+    image_png = await hass.async_add_executor_job(encode_png, image)
     if lifecycle_generation == data.lifecycle_generation and (
         preview_generation is None or preview_generation == data.request_generation
     ):
@@ -690,14 +686,18 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
             if started:
                 assert duration_task is not None
                 duration_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await duration_task
-                if data.start_time is not None:
-                    data.duration_coordinator.async_set_updated_data(
-                        round(time.monotonic() - data.start_time, 2)
-                    )
-                data.start_time = None
-                data.connectivity_coordinator.async_set_updated_data(False)
+                try:
+                    # Not `await duration_task`: its CancelledError would have
+                    # to be suppressed, which would also swallow a cancellation
+                    # of this task. wait() raises only for the latter.
+                    await asyncio.wait([duration_task])
+                finally:
+                    if data.start_time is not None:
+                        data.duration_coordinator.async_set_updated_data(
+                            round(time.monotonic() - data.start_time, 2)
+                        )
+                    data.start_time = None
+                    data.connectivity_coordinator.async_set_updated_data(False)
 
 
 async def run_ble_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:

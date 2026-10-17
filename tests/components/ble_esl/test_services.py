@@ -1307,6 +1307,37 @@ async def test_reload_during_transfer_forgets_uncertain_last_image(
     assert tag_writer.write_prepared.await_count == 3
 
 
+async def test_cancelling_a_write_while_its_timer_stops_is_not_swallowed(
+    hass: HomeAssistant, wolink_entry, tag_writer, monkeypatch
+) -> None:
+    """Cancelling the write while the duration timer winds down propagates,
+    and the write still clears its in-progress state."""
+    from custom_components.ble_esl import services as svc
+
+    stopping = asyncio.Event()
+    release = asyncio.Event()
+
+    async def slow_to_stop(data):
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            stopping.set()
+            await release.wait()
+            raise
+
+    monkeypatch.setattr(svc, "_update_duration_loop", slow_to_stop)
+    job = await svc.build_write_job_from_data(hass, wolink_entry, {"payload": PAYLOAD})
+    write_task = hass.async_create_task(svc.run_ble_write(hass, job))
+    await stopping.wait()
+    write_task.cancel()
+    release.set()
+
+    with pytest.raises(asyncio.CancelledError):
+        await write_task
+    assert wolink_entry.runtime_data.start_time is None
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
+
+
 # ── Unexpected errors ────────────────────────────────────────────────────
 
 
