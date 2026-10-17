@@ -18,8 +18,8 @@ CI ([tests.yml](../.github/workflows/tests.yml)) runs the suite against a real H
 
 | Job | Python | Home Assistant | Test plugin | Libraries |
 |---|---|---|---|---|
-| current | 3.14 | 2026.10.0 | `pytest-homeassistant-custom-component` 0.13.371 | latest allowed by `manifest.json` |
-| current, minimum libraries | 3.14 | 2026.10.0 | 0.13.371 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
+| current | 3.14 | 2026.10.1 | `pytest-homeassistant-custom-component` 0.13.372 | latest allowed by `manifest.json` |
+| current, minimum libraries | 3.14 | 2026.10.1 | 0.13.372 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
 | minimum HA | 3.13 | 2025.12.0 (`hacs.json`) | 0.13.298 | latest allowed by `manifest.json` |
 
 The minimum environment lives in `requirements_test_min.txt` and `constraints/homeassistant-min.txt` (the `pycares<5` pin is needed by HA 2025.12's `aiodns==3.5.0`). Dependabot leaves both alone: raising the declared minimum needs a real incompatibility with an older Home Assistant and an explicit decision, not a test-tool bump. Test helpers must keep working on both releases (for example `device_of` in the test conftest). Not covered: physical tags beyond those listed in the README.
