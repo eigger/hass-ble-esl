@@ -581,8 +581,10 @@ async def execute_write(hass: HomeAssistant, job: WriteJob) -> WriteOutcome:
         _LOGGER.debug("Write to %s timing: %s", address, report)
         if attempt.error is not None:
             # Not `attempt.ok`: a declined attempt is not a failure, and the
-            # guard has already said why it was skipped.
-            _LOGGER.warning(
+            # guard has already said why it was skipped. An attempt a retry
+            # follows is routine on BLE; only the one that ends the write warns.
+            _LOGGER.log(
+                logging.DEBUG if attempt.retrying else logging.WARNING,
                 "Write failed to %s (attempt %d/%d): %s",
                 address,
                 attempt.number,

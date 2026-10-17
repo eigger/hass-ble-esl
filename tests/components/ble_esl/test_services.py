@@ -568,6 +568,26 @@ async def test_a_final_error_is_one_attempt_and_one_failure(
     assert "retrying" not in failed
 
 
+async def test_only_the_final_failed_attempt_logs_a_warning(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, caplog
+) -> None:
+    """A failed attempt a retry follows logs at DEBUG; the last one warns."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
+    tag_writer.write_result = fail("boom", connect=0.5)
+    caplog.set_level(logging.DEBUG, logger="custom_components.ble_esl.services")
+
+    with pytest.raises(HomeAssistantError, match="after 3 attempts: boom"):
+        await call(hass, "write", device_id_of(hass))
+
+    failed = [
+        (r.levelno, r.getMessage())
+        for r in caplog.records
+        if r.getMessage().startswith("Write failed to")
+    ]
+    assert [level for level, _ in failed] == [logging.DEBUG, logging.DEBUG, logging.WARNING]
+    assert "(attempt 3/3): boom" in failed[-1][1]
+
+
 async def test_a_report_that_cannot_be_built_does_not_stop_the_write(
     hass: HomeAssistant, enable_bluetooth, tag_writer, caplog
 ) -> None:
