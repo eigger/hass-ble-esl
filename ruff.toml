@@ -29,7 +29,7 @@ ignore = [
 [lint.isort]
 force-sort-within-sections = true
 combine-as-imports = true
-known-first-party = ["custom_components"]
+known-first-party = ["custom_components", "tests"]
 
 [format]
 docstring-code-format = true

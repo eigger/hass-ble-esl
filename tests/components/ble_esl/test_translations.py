@@ -9,7 +9,7 @@ import re
 import pytest
 import yaml
 
-COMPONENT = Path(__file__).resolve().parents[1] / "custom_components" / "ble_esl"
+COMPONENT = Path(__file__).resolve().parents[3] / "custom_components" / "ble_esl"
 STRINGS = json.loads((COMPONENT / "strings.json").read_text())
 TRANSLATIONS = sorted((COMPONENT / "translations").glob("*.json"))
 

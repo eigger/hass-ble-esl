@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from bt import inject_bluetooth_service_info, service_info
-from conftest import ADDRESS, IDENT, setup_entry, wolink_service_info
 from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_USER, ConfigEntryState
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
@@ -25,6 +23,8 @@ from custom_components.ble_esl.const import (
 from custom_components.ble_esl.esl_ble.easytag.const import SERVICE_UUID as EASYTAG_UUID
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PICKSMART_ID
 from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
+from tests.components.ble_esl.bt import inject_bluetooth_service_info, service_info
+from tests.components.ble_esl.conftest import ADDRESS, IDENT, setup_entry, wolink_service_info
 
 
 @pytest.fixture(autouse=True)

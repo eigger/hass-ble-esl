@@ -3,7 +3,7 @@
 Every ESL protocol is one package under `esl_ble/<id>/`. The contract below is
 **enforced**: a protocol or parser class that misses a required piece raises
 `ProtocolContractError` when it is defined (import time), listing everything
-that is missing, and `tests/test_protocol_contract.py` runs the same checks
+that is missing, and `tests/components/ble_esl/test_protocol_contract.py` runs the same checks
 plus the package-layout ones against every registered protocol.
 
 ## Package layout
@@ -126,11 +126,11 @@ the BLE lock, the attempt bound, the retries and the report.
 2. `manifest.json`: add the `bluetooth` matcher(s) so Home Assistant starts a
    discovery flow for the tags.
 3. `README.md` (repo root): supported-models table and gallery entry.
-4. Tests: `tests/test_<id>_image.py` for pixel buffers & palette packing,
-   `tests/test_<id>_parser.py` for advertisement matchers & broadcast data,
-   `tests/test_<id>_wire.py` for the wire codecs (no hardware),
-   `tests/test_<id>_writer.py` for the session against a mocked BleakClient,
-   and a sample advertisement in `tests/test_protocol_contract.py`. Integration
+4. Tests: `tests/components/ble_esl/test_<id>_image.py` for pixel buffers & palette packing,
+   `tests/components/ble_esl/test_<id>_parser.py` for advertisement matchers & broadcast data,
+   `tests/components/ble_esl/test_<id>_wire.py` for the wire codecs (no hardware),
+   `tests/components/ble_esl/test_<id>_writer.py` for the session against a mocked BleakClient,
+   and a sample advertisement in `tests/components/ble_esl/test_protocol_contract.py`. Integration
    behaviour (discovery, entities, services) is covered generically through a
-   real Home Assistant; add a case to `tests/test_config_flow.py` if the
+   real Home Assistant; add a case to `tests/components/ble_esl/test_config_flow.py` if the
    protocol's discovery differs (e.g. model detection).

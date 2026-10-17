@@ -115,7 +115,7 @@ automation:
 
 ## 템플릿 검증
 
-테스트를 실행하세요. `tests/test_design_templates.py`는 모든 기본 템플릿을 읽어 여러 화면 크기와 색 조합에서 payload를 가져오고, 렌더링한 뒤 디자이너가 `0` 픽셀 차이로 재현하는지 확인합니다. 자동화도 Home Assistant로 검증합니다.
+테스트를 실행하세요. `tests/components/ble_esl/test_design_templates.py`는 모든 기본 템플릿을 읽어 여러 화면 크기와 색 조합에서 payload를 가져오고, 렌더링한 뒤 디자이너가 `0` 픽셀 차이로 재현하는지 확인합니다. 자동화도 Home Assistant로 검증합니다.
 
 ## API
 

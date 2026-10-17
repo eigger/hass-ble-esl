@@ -1,8 +1,13 @@
 # hass-ble-esl
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?logo=home-assistant)](https://hacs.xyz/)
-[![GitHub Release](https://img.shields.io/github/release/eigger/hass-ble-esl.svg)](https://github.com/eigger/hass-ble-esl/releases)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl)](https://github.com/eigger/hass-ble-esl/blob/main/LICENSE)
-![integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=%24.ble_esl.total)
+<!-- hass-standards:badges:start -->
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+<!-- hass-standards:badges:end -->
 
 English | **[한국어](README.ko.md)**
 
@@ -63,6 +68,8 @@ bluetooth_proxy:
 
 > [!TIP]
 > Hardware suggestions: the [Seeed Studio XIAO W5500](https://ko.aliexpress.com/item/1005009310322353.html) (XIAO ESP32 with wired Ethernet) is a good proxy — Ethernet keeps the radio free for BLE, and the community thread [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31) covers other boards.
+
+Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md) (Korean; checked 2026-10-18). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
 

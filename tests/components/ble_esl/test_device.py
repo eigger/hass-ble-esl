@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bt import service_info
-from conftest import ADDRESS, IDENT, device_of, setup_entry
 from homeassistant.core import HomeAssistant
 
 from custom_components.ble_esl import device
 from custom_components.ble_esl.device import build_device_info
 from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PS_ID
+from tests.components.ble_esl.bt import service_info
+from tests.components.ble_esl.conftest import ADDRESS, IDENT, device_of, setup_entry
 
 
 async def test_build_device_info_matches_registry(hass: HomeAssistant, enable_bluetooth) -> None:
