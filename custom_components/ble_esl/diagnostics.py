@@ -124,7 +124,7 @@ def _mask_mac_deep(value: Any, address: str) -> Any:
     """Apply _mask_mac to every string inside nested dicts, lists and tuples."""
     if isinstance(value, dict):
         return {key: _mask_mac_deep(item, address) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
+    if type(value) in (list, tuple):
         return type(value)(_mask_mac_deep(item, address) for item in value)
     return _mask_mac(value, address)
 
