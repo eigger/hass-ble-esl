@@ -24,7 +24,7 @@
 | 규칙 ID | 상태 | 근거 / 남은 작업 |
 |---|---|---|
 | GOV-01, GOV-02 | PASS | STANDARDS.md 작성, workflow는 `@7acd9ca…` 전체 SHA 고정, editor job의 외부 action도 full SHA |
-| GOV-03 | TODO | 채택 PR [#242](https://github.com/eigger/hass-ble-esl/pull/242) 진행 중. CHANGELOG `Unreleased`에 영향(최소 HA 상향) 기록 |
+| GOV-03 | TODO | 채택 PR [#242](https://github.com/eigger/hass-ble-esl/pull/242) 진행 중. CHANGELOG `Unreleased`에 변경 기록(최소 HA는 유지) |
 | GOV-04 | TODO | 중앙 표 미갱신 — 하단 "반영할 내용" |
 | GOV-05 | EXCEPTION | 구현은 주 에이전트(사용자 지시), 독립 리뷰는 Opus 서브 에이전트. STANDARDS.md 예외 참조. 리뷰 지적(최소 환경 주장 오류, imagespec 하한, 상태값, 옛 경로)은 수정함 |
 | HA-01…HA-13 | TODO | 이번 작업은 CI·테스트 구조·문서 이관만 수행, 구현 코드(Core 대응 구조·migration 등)는 재감사하지 않음 |
