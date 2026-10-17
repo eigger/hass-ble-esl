@@ -7,7 +7,7 @@
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황표: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
 - 조율: 주 에이전트(Claude Code 세션) / 구현: 주 에이전트 직접(사용자가 "작성 후 서브 에이전트 리뷰"를 지시) / 독립 리뷰·검증: Opus 서브 에이전트
-- 중앙 현황 갱신일: 미반영 (중앙 리포 push 미수행, 반영할 내용은 ADOPTION_CHECKLIST.md 하단)
+- 중앙 현황 갱신일: 2026-10-18 (hass-repo-standards `e83700c`)
 - 실제 기본 브랜치: `main`
 - 테스트 경로: `tests/components/ble_esl/` (브라우저 테스트는 `tests/components/ble_esl/frontend/`)
 - 변경 전 지원 최소 HA / 선언 근거: 2025.12.0 (`hacs.json`, README 설치 절)
