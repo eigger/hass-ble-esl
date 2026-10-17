@@ -70,7 +70,7 @@ bluetooth_proxy:
 > [!TIP]
 > 하드웨어 추천: [Seeed Studio XIAO W5500](https://ko.aliexpress.com/item/1005009310322353.html)(유선 이더넷이 달린 XIAO ESP32)이 좋은 프록시입니다 — 이더넷을 쓰면 라디오가 BLE에만 쓰입니다. 다른 보드는 커뮤니티 글 [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31)를 참고하세요.
 
-공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md)(한국어, 2026-10-18 확인)를, 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
+공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서는 [Bluetooth 프록시 설정](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)을, 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
 
 `hass-gicisky`나 `hass-zhsunyco`에서 오셨나요? 태그를 새 `ble_esl` 도메인으로 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꿔야 합니다 — 페이로드는 그대로입니다. **[마이그레이션 가이드 →](docs/ko/migration.md)**
 
