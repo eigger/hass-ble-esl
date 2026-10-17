@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { handleImageUpload } from "../../custom_components/ble_esl/designer/frontend/editor/image-upload.js";
+import { handleImageUpload } from "../../../../custom_components/ble_esl/designer/frontend/editor/image-upload.js";
 
 test("image upload records one edit and clears its busy state", async () => {
   const previousReader = globalThis.FileReader;

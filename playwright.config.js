@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 const port = process.env.DESIGNER_PORT || "8765";
 export default defineConfig({
-  testDir: "tests/frontend",
+  testDir: "tests/components/ble_esl/frontend",
   testMatch: "*.spec.js",
   fullyParallel: false,
   workers: 1,

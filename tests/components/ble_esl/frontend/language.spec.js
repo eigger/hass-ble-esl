@@ -204,11 +204,11 @@ test("locale switches preserve invalid spec drafts and translate validation with
 test("locale catalogs match component languages and preserve interpolation tokens", async () => {
   const { readdirSync } = await import("node:fs");
   const { messages } =
-    await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+    await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
   const { language, supportedLanguages, t } =
-    await import("../../custom_components/ble_esl/designer/frontend/i18n.js");
+    await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
   const componentLanguages = readdirSync(
-    new URL("../../custom_components/ble_esl/translations/", import.meta.url),
+    new URL("../../../../custom_components/ble_esl/translations/", import.meta.url),
   )
     .filter((name) => name.endsWith(".json"))
     .map((name) => name.slice(0, -5))
@@ -272,7 +272,7 @@ for (const [code, save] of localizedControls) {
     page,
   }) => {
     const { messages } =
-      await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+      await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
     const copy = messages[code];
     await page.goto(`/?manager&lang=${code}`);
     await expect(
@@ -343,7 +343,7 @@ test("automation creation preserves its name and device across locale changes", 
 // it is a brand, a technical term or a word the language shares with English.
 test("non-English locales leave no untranslated copy beyond shared words", async () => {
   const { messages } =
-    await import("../../custom_components/ble_esl/designer/frontend/locales/index.js");
+    await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
   const shared = {
     de: [
       "ESL Designer",

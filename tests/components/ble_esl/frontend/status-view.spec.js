@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sendButtonHint } from "../../custom_components/ble_esl/designer/frontend/editor/status-view.js";
+import { sendButtonHint } from "../../../../custom_components/ble_esl/designer/frontend/editor/status-view.js";
 
 test("send button hint reflects tag capability and busy status", () => {
   const translate = (message) => `translated: ${message}`;

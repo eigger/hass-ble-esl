@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   renderTemplateControls,
   renderTemplateParts,
-} from "../../custom_components/ble_esl/designer/frontend/editor/template-controls.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/template-controls.js";
 
 const translate = (text, variables = {}) =>
   text.replace(/\{(\w+)\}/g, (_, key) => variables[key]);

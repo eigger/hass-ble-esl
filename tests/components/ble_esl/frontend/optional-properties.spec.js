@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { renderOptionalProperties } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/optional-properties.js";
+import { renderOptionalProperties } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/optional-properties.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

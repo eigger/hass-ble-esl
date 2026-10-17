@@ -4,7 +4,7 @@ import {
   configureLibraryEntityPicker,
   replaceEntityPickerElements,
   SENSOR_PICKER_DOMAINS,
-} from "../../custom_components/ble_esl/designer/frontend/editor/entity-pickers.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/entity-pickers.js";
 
 function picker() {
   const listeners = {};

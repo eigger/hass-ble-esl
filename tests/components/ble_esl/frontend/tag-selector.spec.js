@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   renderTagOptions,
   resolveTagName,
-} from "../../custom_components/ble_esl/designer/frontend/editor/tag-selector.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/tag-selector.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

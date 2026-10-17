@@ -3,7 +3,7 @@ import {
   ELEMENT_ACTIONS,
   renderElementActionBar,
   renderElementActionMenu,
-} from "../../custom_components/ble_esl/designer/frontend/editor/element-actions.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/element-actions.js";
 
 const renderOptions = {
   t: (message) => message,

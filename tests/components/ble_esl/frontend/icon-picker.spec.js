@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   renderIconChoices,
   renderIconGlyph,
-} from "../../custom_components/ble_esl/designer/frontend/editor/icon-picker.js";
+} from "../../../../custom_components/ble_esl/designer/frontend/editor/icon-picker.js";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(

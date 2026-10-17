@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { buildSensorOptions } from "../../custom_components/ble_esl/designer/frontend/editor/inspector/sensor-options.js";
+import { buildSensorOptions } from "../../../../custom_components/ble_esl/designer/frontend/editor/inspector/sensor-options.js";
 
 const build = (element, overrides = {}) =>
   buildSensorOptions(element, {

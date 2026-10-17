@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { defaultEntityIcon } from "../../custom_components/ble_esl/designer/frontend/editor/entity-icons.js";
+import { defaultEntityIcon } from "../../../../custom_components/ble_esl/designer/frontend/editor/entity-icons.js";
 
 const state = (entity_id, value, attributes = {}) => ({
   entity_id,
