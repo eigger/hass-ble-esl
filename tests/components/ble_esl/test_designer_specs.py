@@ -7,7 +7,6 @@ import json
 
 from homeassistant.exceptions import HomeAssistantError
 import imagespec
-from imagespec.schema import SCHEMA_VERSION
 from PIL import Image, ImageChops
 import pytest
 import voluptuous as vol
@@ -63,19 +62,16 @@ def test_generic_rotation_is_offered_only_for_renderer_supported_types():
     battery = [field for field in by_type["battery"]["fields"] if field["name"] == "rotate"]
     dlimg = [field for field in by_type["dlimg"]["fields"] if field["name"] == "rotate"]
 
-    if SCHEMA_VERSION >= 4:
-        assert battery == [
-            {
-                "name": "rotate",
-                "kind": "number",
-                "required": False,
-                "default": 0,
-                "doc": "Clockwise element rotation in 90-degree steps; types with their own `rotate` field keep its meaning",
-                "enum": [0, 90, 180, 270],
-            }
-        ]
-    else:
-        assert battery == []  # Do not offer a control until imagespec can render it.
+    assert battery == [
+        {
+            "name": "rotate",
+            "kind": "number",
+            "required": False,
+            "default": 0,
+            "doc": "Clockwise element rotation in 90-degree steps; types with their own `rotate` field keep its meaning",
+            "enum": [0, 90, 180, 270],
+        }
+    ]
     assert len(dlimg) == 1  # Keep the type-specific arbitrary-angle source rotation.
     assert "enum" not in dlimg[0]
 

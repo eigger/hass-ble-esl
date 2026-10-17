@@ -15,7 +15,9 @@ import re
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.template import Template
 import imagespec
-from imagespec.schema import SCHEMA_VERSION
+
+# Not exported by imagespec (1.1.0 has no public "no default" marker); it is
+# what Field.default holds when a field has none.
 from imagespec.spec import UNSET
 
 BOX = ("x_start", "y_start", "x_end", "y_end")
@@ -68,10 +70,8 @@ SAMPLE_IMAGE = (
     "BLbSncAAAAKklEQVR42r2NMQ4AIBCDwP//GQcTB5NbZWKgqQBQAer1xUR1ksfHhR8+NtY6I+1HmsaCAAAAAElFTkSuQmCC"
 )
 
-# The common per-element rotation contract first appeared in imagespec schema v4.
-# Keep the Manager editor compatible with older installed imagespec versions: an
-# authored rotation control is useful only when the renderer can apply it.
-_ROTATION_SCHEMA_VERSION = 4
+# imagespec renders a common per-element `rotate` (schema v4, every version the
+# manifest allows); types with no field of their own get this control.
 _GENERIC_ROTATE_FIELD = {
     "name": "rotate",
     "kind": "number",
@@ -452,9 +452,7 @@ def describe():
                 for field in spec.fields
                 if field.name not in keys or role == "points"
             ]
-            if SCHEMA_VERSION >= _ROTATION_SCHEMA_VERSION and not any(
-                field["name"] == "rotate" for field in fields
-            ):
+            if not any(field["name"] == "rotate" for field in fields):
                 fields.append(_GENERIC_ROTATE_FIELD.copy())
             types.append(
                 {
