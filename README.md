@@ -13,7 +13,7 @@ English | **[한국어](README.ko.md)**
 
 Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
-**Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** One action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.
+**Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring. It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
 | 2.1" (250×128) | 2.9" (296×128) | 4.2" (400×300) | 10.2" (960×640) |
 |---|---|---|---|
@@ -21,14 +21,6 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 | Gicisky | Gicisky | Poshiji PSJ-420 | Gicisky |
 
 Photos of real tags. [More examples with YAML →](examples/README.md)
-
-## Why e-paper tags?
-
-An **electronic shelf label (ESL)** is the display retailers use for shelf prices: an **e-paper** (e-ink) screen with its own battery and a Bluetooth radio. E-paper only draws power while the picture *changes* — holding a static image costs nothing, so a tag runs for months to years on its battery, is readable in daylight like printed paper, and emits no light.
-
-That makes them ideal for information that should just *be there*, in places with no power outlet: a room calendar on the door, today's weather by the coat rack, the bin-collection day on the fridge, a "who is home" board, the print progress on the 3D printer, an inventory label on a storage box. Stick one anywhere and forget about charging it.
-
-This integration talks to those tags directly from Home Assistant over BLE. You describe the layout in YAML (text, icons, QR codes, charts, images — anything from your entities), and the tag shows it.
 
 ## Supported tags
 
@@ -44,34 +36,33 @@ BLE protocol families, sold under these brands:
 
 Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
-> [!WARNING]
-> Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
+Key features:
+
+- Two actions, `ble_esl.write` and `ble_esl.write_guarded` (skips unchanged images, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
+- **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
+- Failure sensors and a diagnostics download that say at which stage a write failed and through which radio.
+
+## Requirements
+
+- Home Assistant **2025.12** or newer, with [HACS](https://hacs.xyz/) for the recommended install.
+- A Bluetooth adapter or ESPHome Bluetooth proxy that supports **active connections** (see [Bluetooth](#bluetooth)).
+- A supported tag (above).
 
 ## Installation
-
-Requires Home Assistant **2025.12** or newer.
 
 1. Install via **HACS** (custom repository `eigger/hass-ble-esl`), or copy `custom_components/ble_esl` into your config.
 2. Restart Home Assistant.
 3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
 
-Use a **Bluetooth proxy** rather than the host's built-in adapter whenever you can, and set it to **active** — most write problems trace back to a passive proxy or a weak adapter. Keep the scan interval at its default.
-
-```yaml
-esp32_ble_tracker:
-  scan_parameters:
-    active: true
-
-bluetooth_proxy:
-  active: true
-```
-
-> [!TIP]
-> Hardware suggestions: the [Seeed Studio XIAO W5500](https://ko.aliexpress.com/item/1005009310322353.html) (XIAO ESP32 with wired Ethernet) is a good proxy — Ethernet keeps the radio free for BLE, and the community thread [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31) covers other boards.
-
-Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md) (Korean; checked 2026-10-18). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
+Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
 
 Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
+
+### Bluetooth
+
+Use a **Bluetooth proxy** rather than the host's built-in adapter whenever you can, and set it to **active** (`bluetooth_proxy: active: true`, plus `esp32_ble_tracker: scan_parameters: active: true` as the starting configuration) — most write problems trace back to a passive proxy or a weak adapter. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
+
+ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md) (Korean; checked 2026-10-18). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Quick start
 
@@ -90,85 +81,42 @@ data:
       size: 40
 ```
 
-The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity, so you can iterate on a layout without wearing the panel.
+The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity. More: [usage overview](docs/usage.md), ready-made layouts in [`examples/`](examples/README.md), the visual [Designer guide](docs/designer.md).
 
-A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements — text, icons, lines, QR codes, progress bars, gauges, pie/bar charts, history plots, downloaded images — and any value can be a Jinja template over your entities. Ready-made layouts for every supported resolution are in [`examples/`](examples/README.md); the [Payload Editor](https://eigger.github.io/BLE_ESL_Payload_Editor.html) and [Image Uploader](https://eigger.github.io/Gicisky_Image_Uploader.html) web tools let you draft one in the browser.
+## Limits and warnings
 
-## Visual editor
+> [!WARNING]
+> Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
 
-![ESL Manager dashboard](https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/manager/dashboard.png)
+- XTE sizes other than 2.13", 2.66", 2.9" and 4.2" are size-only presets picked by hand; a preset that does not match the hardware can produce a successful write but a wrong-looking panel.
+- **Preview Content** is what was rendered, not a readback of the panel.
+- The designer does not transmit on sensor changes; schedule updates with automations. E-paper is not an LCD — avoid overly frequent redraws; `write_guarded` and the Prevent Duplicate Send / Debounce Delay options help.
 
-**ESL Manager** is the dashboard of every tag: its alias, battery, last successfully sent image, whether the display is in sync, the latest transmission result and duration, and its automations — with search, filters and sorting. From a card you open the designer or the automation that draws the tag.
+## Documentation
 
-Open **ESL Manager** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send saves the design first and sends only when requested. The designer does not automatically transmit on sensor changes; schedule updates with Home Assistant automations using the exported action.
-
-**[Designer guide →](docs/designer.md)**
-
-Existing YAML actions remain available.
-
-## Actions
-
-Both actions take a standard `target:` (a tag device, one of its entities, or an area/floor/label containing tags) and write each target in turn.
-
-| Action | Use it for |
-|---|---|
-| `ble_esl.write` | Always send (unless `dry_run`) |
-| `ble_esl.write_guarded` | Automations that fire often: skips unchanged images, honours the **Write Lock** switch, and debounces bursts |
-
-| Parameter | Default | Description |
+| Topic | English | 한국어 |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
-| `rotate` | `0` | `0`, `90`, `180`, `270` |
-| `background` | `white` | `white`, `black`, `red`, `yellow` |
-| `dry_run` | `false` | Render to **Preview Content** only |
-| `debounce_override_ms` | option value | `write_guarded` only: override the debounce for this call (`0` = now) |
+| Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
+| Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
+| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md) |
+| Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
+| Supported models and where to buy | [docs/models.md](docs/models.md) | — |
+| ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
+| Design templates | [docs/design-templates.md](docs/design-templates.md) | [docs/ko/design-templates.md](docs/ko/design-templates.md) |
+| Migration from hass-gicisky / hass-zhsunyco | [docs/migration.md](docs/migration.md) | [docs/ko/migration.md](docs/ko/migration.md) |
+| Protocol notes (ETAG, XTE) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) | — |
+| Examples | [examples/README.md](examples/README.md) | — |
+| Development: tests, verified environments, lint, adding a protocol | [docs/development.md](docs/development.md) | — |
 
-Both actions can return a per-tag result via `response_variable`. Full reference — dithering photos and charts, rotation, response data, the entities each tag exposes, fonts: **[docs/actions.md](docs/actions.md)**.
+Related projects: [imagespec](https://github.com/eigger/imagespec) (the renderer behind `payload:`), [Stash](https://github.com/eigger/stash) (home inventory that prints labels to ESL tags), [hass-gicisky](https://github.com/eigger/hass-gicisky) (archived predecessor) — see [docs/usage.md](docs/usage.md#related-projects).
 
-## Options
-
-**Settings → Devices & services → BLE ESL → Configure**:
-
-| Option | Default | Range | Description |
-|--------|---------|-------|-------------|
-| **Model** | — | model list | Shown only for protocols that cannot report their model (WOLINK, easyTag) |
-| **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
-| **Prevent Duplicate Send** | off | on/off | Skip sending when the image is unchanged |
-| **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones |
-
-> [!TIP]
-> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [docs/actions.md](docs/actions.md#write-breakdown).
-
-## Payload & rendering
-
-Layouts are rendered by **[imagespec](https://github.com/eigger/imagespec)**; its docs are the reference for elements and fields:
-
-| Topic | Link |
-|-------|------|
-| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) |
-| All element fields & defaults | [imagespec README — Element Reference](https://github.com/eigger/imagespec#elements-reference) |
-| Layout, palette, LLM authoring guide | [imagespec/docs/authoring.md](https://github.com/eigger/imagespec/blob/main/docs/authoring.md) |
-| Dithering (per-element only) | [imagespec/docs/dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md) |
-
-What this integration adds on top:
-
-- **Resolution and palette** come from the tag's preset, not the call. Off-palette colors are quantized to the nearest supported one (BW, BWR or BWRY).
-- **Rotation** (`rotate: 90/180/270`) rotates the canvas; the output stays the panel size.
-- **Dithering** is per element: put `dither` on photos and charts (`dlimg`, `pie`, `diagram`, `plot`, `sparkline`, `progress_bar`, `gauge`), not on text.
-- **`plot`** reads history from the Recorder; **`dlimg`** accepts `/config/...` paths, HTTP(S) URLs and data URIs.
-- **Fonts:** `NotoSansKR-Regular.ttf` is the default; drop your own `.ttf` into `config/www/fonts/` and reference it by name. See [fonts](docs/actions.md#fonts).
-- Prefer `row` / `column` / `stack` layout over hand-placed coordinates.
-
-## Feedback & support
+## Support
 
 - A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
-- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (MAC redacted).
+- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (tag MAC redacted; check the rest before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting)).
 - Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
 
-## Related
+## License
 
-- [imagespec](https://github.com/eigger/imagespec) — the rendering engine behind `payload:`
-- [Stash](https://github.com/eigger/stash) — self-hosted home inventory manager that prints labels to ESL tags via Home Assistant
-- [hass-gicisky](https://github.com/eigger/hass-gicisky) — the archived PickSmart-only predecessor ([migration guide](docs/migration.md))
-- [Development](docs/development.md) — running the test suite, lint, adding a protocol
+[MIT](LICENSE)
