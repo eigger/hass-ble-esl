@@ -84,6 +84,10 @@ async def test_initial_states(hass: HomeAssistant, wolink_entry) -> None:
 
 
 async def test_alias_text_entity(hass: HomeAssistant, wolink_entry) -> None:
+    """The entity pushes its own state: nothing polls it after the call."""
+    for entity_id in (f"switch.zhsunyco_{IDENT}_write_lock", f"text.zhsunyco_{IDENT}_alias"):
+        entity = hass.data["entity_components"][entity_id.split(".")[0]].get_entity(entity_id)
+        assert entity is not None and entity.should_poll is False
     await hass.services.async_call(
         "text",
         "set_value",

@@ -34,9 +34,10 @@ class BleEslTextEntity(BleEslEntity, RestoreText):
         self._bind_tag(hass, entry)
         self._attr_native_value = self._data.label
 
-    def set_value(self, value: str) -> None:
-        """Change the selected option."""
+    async def async_set_value(self, value: str) -> None:
+        """Set the alias."""
         self._attr_native_value = value
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
