@@ -23,7 +23,7 @@ jobs:
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
       ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
-      expected-ha-version: '2026.10.0'
+      expected-ha-version: '2026.10.1'
       test-profile: ha
       pytest-args: tests/components/ble_esl/ -v --timeout 120
   # Exact minimum Home Assistant declared in hacs.json (2025.12.0). Its
@@ -56,7 +56,7 @@ jobs:
         python-version: '3.14'
         requirements: requirements_test.txt
         ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
-        expected-ha-version: '2026.10.0'
+        expected-ha-version: '2026.10.1'
         test-profile: ha
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
