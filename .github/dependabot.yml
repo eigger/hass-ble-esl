@@ -7,9 +7,14 @@
 # new version reports in the same PR. manifest.json requirements (imagespec)
 # are handled by .github/workflows/update_dependencies.yml instead.
 #
-# Not covered here: the test job's Python version (.github/workflows/tests.yml).
-# When Home Assistant moves to a newer Python, the test-package bump PR fails
-# on the old interpreter; raise python-version in that PR by hand.
+# Not covered here: the test job's Python version and expected-ha-version
+# (.github/workflows/tests.yml). When Home Assistant moves to a newer Python,
+# the test-package bump PR fails on the old interpreter; raise python-version
+# and expected-ha-version in that PR by hand.
+#
+# hacs.json declares the minimum supported Home Assistant. A test-tool bump is
+# not a reason to raise it; raise it only for a real incompatibility with an
+# older release, together with the README and the test environment.
 version: 2
 updates:
   - package-ecosystem: pip
@@ -21,6 +26,7 @@ updates:
     groups:
       home-assistant-test:
         patterns:
+          - homeassistant
           - pytest-homeassistant-custom-component
           - bluetooth-sensor-state-data
           - sensor-state-data
@@ -34,8 +40,3 @@ updates:
       interval: weekly
       day: monday
     labels: [dependencies, ci]
-    ignore:
-      # Tracked by branch on purpose (HACS/hassfest validators follow HA releases);
-      # per-commit SHA bumps would be noise.
-      - dependency-name: hacs/action
-      - dependency-name: home-assistant/actions

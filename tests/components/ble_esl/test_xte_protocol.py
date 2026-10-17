@@ -7,7 +7,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 from blesession import ConnectFailed, SessionTrace, session as session_mod
-from bt import binary_values, sensor_values, service_info, update_device
 from PIL import Image
 import pytest
 
@@ -22,6 +21,7 @@ from custom_components.ble_esl.esl_ble.xte.devices import (
 )
 from custom_components.ble_esl.esl_ble.xte.image import PALETTES, buffer_size
 from custom_components.ble_esl.esl_ble.xte.wire import blocks, run_length
+from tests.components.ble_esl.bt import binary_values, sensor_values, service_info, update_device
 
 PSJ_420 = PRESETS["psj-420"]
 PSJ_213 = PRESETS["psj-213"]

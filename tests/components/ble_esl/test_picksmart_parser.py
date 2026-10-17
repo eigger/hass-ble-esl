@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bt import binary_values, sensor_values, service_info, update_device
-
 from custom_components.ble_esl.esl_ble.picksmart.const import (
     MANUFACTURER_ID,
     SERVICE_UUIDS,
@@ -19,6 +17,7 @@ from custom_components.ble_esl.esl_ble.picksmart.parser import (
     is_picksmart_advertisement,
 )
 from custom_components.ble_esl.esl_ble.picksmart.wire import parse_advertisement
+from tests.components.ble_esl.bt import binary_values, sensor_values, service_info, update_device
 
 
 def test_picksmart_parser_supported():

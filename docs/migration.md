@@ -37,12 +37,12 @@ what to note down beforehand, and how to verify the result.
 | Options | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay is gone (retries pace themselves). **Model** stays only while an advertisement does not name the model, and is hidden while the tag is not visible |
 | Model detection | from advertisement | from advertisement; unknown device numbers fall back to a manual model pick |
 | Fonts | `custom_components/gicisky/fonts/`, then `config/www/fonts/` | `custom_components/ble_esl/fonts/`, then `config/www/fonts/` |
-| Minimum Home Assistant | 2025.1 | **2025.12** |
+| Minimum Home Assistant | 2025.1 | **2026.10** |
 | New in `ble_esl` | — | multi-target `target:` (device / area / floor / label), `response_variable` per-tag results, diagnostics download, per-stage write timings |
 
 ### Before you start
 
-1. **Home Assistant 2025.12 or newer** is required.
+1. **Home Assistant 2026.10 or newer** is required.
 2. Note anything you customised on the old devices — it is not carried over:
    - the **Alias** text entity value,
    - the **Options** (retry count, prevent duplicate send, debounce),

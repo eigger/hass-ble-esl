@@ -30,12 +30,12 @@
 | 옵션 | Retry Count, Write Delay, Prevent Duplicate Send, Debounce Delay | Retry Count, Prevent Duplicate Send, Debounce Delay — Write Delay는 없어짐(재시도가 알아서 간격을 둠). **Model**은 광고가 모델을 정하지 못하는 동안에만 남고, 태그가 보이지 않는 동안에는 숨겨짐 |
 | 모델 인식 | 광고에서 | 광고에서; 등록되지 않은 device number는 수동 모델 선택으로 |
 | 폰트 | `custom_components/gicisky/fonts/`, 그다음 `config/www/fonts/` | `custom_components/ble_esl/fonts/`, 그다음 `config/www/fonts/` |
-| 최소 Home Assistant | 2025.1 | **2025.12** |
+| 최소 Home Assistant | 2025.1 | **2026.10** |
 | `ble_esl`에서 새로 생긴 것 | — | 다중 `target:` (기기 / 구역 / 층 / 레이블), `response_variable`로 태그별 결과, 진단 다운로드, 단계별 쓰기 타이밍 |
 
 ### 시작 전에
 
-1. **Home Assistant 2025.12 이상**이 필요합니다.
+1. **Home Assistant 2026.10 이상**이 필요합니다.
 2. 기존 기기에서 직접 바꿔 둔 것을 적어 둡니다 — 이어지지 않습니다:
    - **Alias** 텍스트 엔티티 값,
    - **옵션** (재시도 횟수, 중복 전송 방지, 디바운스),

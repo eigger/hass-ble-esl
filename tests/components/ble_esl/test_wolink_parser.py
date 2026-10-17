@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from bt import binary_values, sensor_values, service_info, update_device
-
 from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
 from custom_components.ble_esl.esl_ble.wolink.const import (
     MANUFACTURER_ID,
@@ -15,6 +13,7 @@ from custom_components.ble_esl.esl_ble.wolink.devices import PRESETS
 from custom_components.ble_esl.esl_ble.wolink.parser import (
     WolinkBluetoothDeviceData,
 )
+from tests.components.ble_esl.bt import binary_values, sensor_values, service_info, update_device
 
 
 def test_parser_supported():

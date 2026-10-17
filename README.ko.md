@@ -1,8 +1,13 @@
 # hass-ble-esl
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?logo=home-assistant)](https://hacs.xyz/)
-[![GitHub Release](https://img.shields.io/github/release/eigger/hass-ble-esl.svg)](https://github.com/eigger/hass-ble-esl/releases)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl)](https://github.com/eigger/hass-ble-esl/blob/main/LICENSE)
-![integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=%24.ble_esl.total)
+<!-- hass-standards:badges:start -->
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#설치)
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202026.10.0-41BDF5?style=flat-square)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+<!-- hass-standards:badges:end -->
 
 **[English](README.md)** | 한국어
 
@@ -45,7 +50,7 @@ BLE 프로토콜 4계열, 판매 브랜드는 다음과 같습니다:
 
 ## 설치
 
-Home Assistant **2025.12** 이상이 필요합니다.
+Home Assistant **2026.10** 이상이 필요합니다.
 
 1. **HACS**(사용자 지정 저장소 `eigger/hass-ble-esl`)로 설치하거나, `custom_components/ble_esl`을 설정 폴더에 복사합니다.
 2. Home Assistant를 재시작합니다.
@@ -64,6 +69,8 @@ bluetooth_proxy:
 
 > [!TIP]
 > 하드웨어 추천: [Seeed Studio XIAO W5500](https://ko.aliexpress.com/item/1005009310322353.html)(유선 이더넷이 달린 XIAO ESP32)이 좋은 프록시입니다 — 이더넷을 쓰면 라디오가 BLE에만 쓰입니다. 다른 보드는 커뮤니티 글 [Great ESP32 board for an ESPHome Bluetooth proxy](https://community.home-assistant.io/t/great-esp32-board-for-an-esphome-bluetooth-proxy/916767/31)를 참고하세요.
+
+공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md)(한국어, 2026-10-18 확인)를, 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
 
 `hass-gicisky`나 `hass-zhsunyco`에서 오셨나요? 태그를 새 `ble_esl` 도메인으로 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꿔야 합니다 — 페이로드는 그대로입니다. **[마이그레이션 가이드 →](docs/ko/migration.md)**
 

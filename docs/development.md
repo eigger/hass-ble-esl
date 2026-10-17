@@ -1,16 +1,29 @@
 # Development
 
-Tests run against a real Home Assistant core (`pytest-homeassistant-custom-component`), so they need the Python version current Home Assistant requires (3.14):
+Tests run against a real Home Assistant core (`pytest-homeassistant-custom-component`), laid out like Home Assistant Core's component tests under `tests/components/ble_esl/` (the visual editor's browser tests are in `tests/frontend/`). They need the Python version current Home Assistant requires (3.14):
 
 ```bash
 python3.14 -m venv .venv && source .venv/bin/activate
 pip install -r requirements_test.txt
 pip install -r <(python -c "import json; print('\n'.join(json.load(open('custom_components/ble_esl/manifest.json'))['requirements']))")
-pip install -r <(python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics)
+pip install -r <(python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics frontend panel_custom websocket_api)
 pytest
 ```
 
-CI tests against the Home Assistant release the test package pins (currently 2026.9); the declared minimum in `hacs.json` (2025.12) is supported but not exercised by the suite. `ruff check` and `ruff format --check` (version pinned in `requirements_lint.txt`) must pass; adding a protocol is described in [esl_ble/README.md](../custom_components/ble_esl/esl_ble/README.md).
+`ble_esl` is a HACS custom integration; it follows Home Assistant Core's structure but makes no claim to Core inclusion or a quality tier. The shared rules it follows are recorded in [STANDARDS.md](../STANDARDS.md) and checked in [ADOPTION_CHECKLIST.md](../ADOPTION_CHECKLIST.md).
+
+## Verified environments
+
+CI ([tests.yml](../.github/workflows/tests.yml)) runs the suite against a real Home Assistant; the workflow asserts the installed version:
+
+| Job | Python | Home Assistant | Test plugin | Libraries |
+|---|---|---|---|---|
+| current | 3.14 | 2026.10.0 (also the declared minimum in `hacs.json`) | `pytest-homeassistant-custom-component` 0.13.371 | latest allowed by `manifest.json` |
+| minimum libraries | 3.14 | 2026.10.0 | 0.13.371 | exact `blesession` / `imagespec` lower bounds from `manifest.json` |
+
+The minimum was raised from 2025.12.0 to 2026.10.0 on the maintainer's explicit instruction, not because of an API incompatibility; the old 2025.12.0 environment passed the same suite. Because minimum and tested release are now equal, one environment covers both. If a lower minimum is declared again, add a separate job with its own pinned Home Assistant, plugin and Python. Not covered: physical tags beyond those listed in the README.
+
+`ruff check .` and `ruff format --check .` (version pinned in `requirements_lint.txt`) must pass; adding a protocol is described in [esl_ble/README.md](../custom_components/ble_esl/esl_ble/README.md). New dependencies go in `manifest.json` `requirements` (runtime), not in the test requirements, and are exercised by the real-Home-Assistant tests.
 
 The designer frontend's current ownership boundaries, host contracts, UX
 invariants, and incremental migration constraints are recorded in the

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Minimum Home Assistant raised from 2025.12 to 2026.10** (`hacs.json`, README). Update Home Assistant before updating this integration.
+- Tests moved to `tests/components/ble_esl/`; CI now uses the shared hass-repo-standards workflows (see `STANDARDS.md`).
+
 ## 1.2.3
 
 ### Added

@@ -6,7 +6,6 @@ import asyncio
 
 from blesession import session as session_mod
 from blesession.testing import FakeClient, FakeDevice, fake_connect
-from bt import service_info, update_device
 import pytest
 
 from custom_components.ble_esl import esl_ble
@@ -23,6 +22,7 @@ from custom_components.ble_esl.esl_ble.base import (
     WriteResult,
     battery_percent,
 )
+from tests.components.ble_esl.bt import service_info, update_device
 
 PRESET = DevicePreset(key="p", display_name='Panel 2.9"', width=296, height=128)
 PRESET_WITH_RES = DevicePreset(key="q", display_name="Panel 296x128", width=296, height=128)

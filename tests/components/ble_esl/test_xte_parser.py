@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from unittest.mock import MagicMock
 
-from bt import binary_values, sensor_values, service_info, update_device
 import pytest
 
 from custom_components.ble_esl.esl_ble.xte.const import MANUFACTURER_ID
@@ -14,6 +13,7 @@ from custom_components.ble_esl.esl_ble.xte.parser import (
     XteBluetoothDeviceData,
     is_xte_advertisement,
 )
+from tests.components.ble_esl.bt import binary_values, sensor_values, service_info, update_device
 
 PSJ_420 = PRESETS["psj-420"]
 PSJ_213 = PRESETS["psj-213"]

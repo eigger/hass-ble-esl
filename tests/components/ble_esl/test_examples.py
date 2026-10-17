@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = Path(__file__).resolve().parents[3] / "examples"
 
 
 @pytest.mark.parametrize(

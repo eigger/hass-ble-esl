@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
-from bt import inject_bluetooth_service_info
-from conftest import ADDRESS, IDENT, WOLINK_MFR_BYTES, device_of, setup_entry, wolink_service_info
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL, DOMAIN, WRITE_LOCK
+from tests.components.ble_esl.bt import inject_bluetooth_service_info
+from tests.components.ble_esl.conftest import (
+    ADDRESS,
+    IDENT,
+    WOLINK_MFR_BYTES,
+    device_of,
+    setup_entry,
+    wolink_service_info,
+)
 
 
 async def test_setup_creates_device_and_entities(hass: HomeAssistant, wolink_entry) -> None:

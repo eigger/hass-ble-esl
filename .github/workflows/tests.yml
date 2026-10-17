@@ -1,104 +1,61 @@
+# Shared standards: eigger/hass-repo-standards @ 7acd9ca (reviewed 2026-10-18).
 name: Tests
-
-on:
+'on':
   push:
-    branches: [main, master]
-  pull_request:
-
+    branches:
+    - main
+  pull_request: null
+  workflow_dispatch: null
+permissions:
+  contents: read
 concurrency:
-  group: tests-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - name: Install ruff
-        run: pip install -r requirements_lint.txt
-
-      - name: Lint
-        run: python -m ruff check custom_components/ tests/ docs/ scripts/
-
-      - name: Format check
-        run: python -m ruff format --check custom_components/ tests/ docs/ scripts/
-
-  test:
-    # Tests run against a real Home Assistant (pytest-homeassistant-custom-component),
-    # which requires the Python version current Home Assistant needs.
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
-          cache: pip
-          cache-dependency-path: |
-            requirements_test.txt
-            custom_components/ble_esl/manifest.json
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements_test.txt
-          python -c "import json; print('\n'.join(json.load(open('custom_components/ble_esl/manifest.json'))['requirements']))" > requirements.txt
-          pip install -r requirements.txt
-          python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics frontend panel_custom websocket_api > requirements_ha.txt
-          pip install -r requirements_ha.txt
-
-      - name: Run tests
-        run: python -m pytest tests/ -v --timeout 120
-
-  # The visual editor's browser tests use their own runner and a demo server, so
-  # they run beside the Python tests instead of after them.
+  # Home Assistant 2026.10.0 is both the declared minimum (hacs.json) and the
+  # tested release (requirements_test.txt), so one job covers both. The
+  # "minimum" mode also installs the exact imagespec/blesession lower bounds
+  # declared in manifest.json.
+  current:
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@7acd9cab6ac774e4695f2c962e3d88b5faa4620d
+    with:
+      domain: ble_esl
+      python-versions: '["3.14"]'
+      requirements: requirements_test.txt
+      dependency-modes: '["current", "minimum"]'
+      minimum-packages: '["imagespec", "blesession"]'
+      ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
+      expected-ha-version: '2026.10.0'
+      test-profile: ha
+      pytest-args: tests/components/ble_esl/ -v --timeout 120
+  # The visual editor's browser tests use their own runner and a demo server,
+  # so they run beside the Python tests.
   editor:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
-          cache: pip
-          cache-dependency-path: |
-            requirements_test.txt
-            custom_components/ble_esl/manifest.json
-
-      - name: Install dependencies
-        # The demo server renders with the integration's own code, which imports
-        # the same Home Assistant components the Python tests need.
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements_test.txt
-          python -c "import json; print('\n'.join(json.load(open('custom_components/ble_esl/manifest.json'))['requirements']))" > requirements.txt
-          pip install -r requirements.txt
-          python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics frontend panel_custom websocket_api > requirements_ha.txt
-          pip install -r requirements_ha.txt
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install browser test dependencies
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
-
-      - name: Test visual editor
-        timeout-minutes: 5
-        env:
-          DESIGNER_PYTHON: python
-        run: npm test
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    # The demo server renders with the integration's own code, which imports
+    # the same Home Assistant components the Python tests need.
+    - uses: eigger/hass-repo-standards/actions/python-environment@d5dcaa03cfe91923a5ca2fe0ab79595b222eb90e # validated environment implementation
+      with:
+        domain: ble_esl
+        python-version: '3.14'
+        requirements: requirements_test.txt
+        ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
+        expected-ha-version: '2026.10.0'
+        test-profile: ha
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '22'
+        cache: npm
+    - run: |
+        npm ci
+        npx playwright install --with-deps chromium
+    - name: Test visual editor
+      timeout-minutes: 5
+      env:
+        DESIGNER_PYTHON: python
+      run: npm test

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from bt import inject_bluetooth_service_info, service_info
-from conftest import IDENT, device_id_of, setup_entry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
@@ -14,6 +12,8 @@ from custom_components.ble_esl.const import DOMAIN
 from custom_components.ble_esl.esl_ble.base import WriteResult
 from custom_components.ble_esl.esl_ble.easytag import EasyTagProtocol
 from custom_components.ble_esl.esl_ble.easytag.const import SERVICE_UUID as EASYTAG_UUID
+from tests.components.ble_esl.bt import inject_bluetooth_service_info, service_info
+from tests.components.ble_esl.conftest import IDENT, device_id_of, setup_entry
 
 EASYTAG_ADDRESS = "3D:00:00:E5:7D:76"
 EASYTAG_IDENT = "00e57d76"
