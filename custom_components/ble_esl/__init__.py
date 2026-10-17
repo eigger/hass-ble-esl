@@ -190,10 +190,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     )
     track_reports(entry.runtime_data)
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(bt_coordinator.async_start())
+    # The panel first: if it cannot be registered, setup fails before any
+    # platform is loaded instead of leaving them behind a failed entry.
     designer = hass.data[DESIGNER_KEY]
     await designer.register_panel()
+    try:
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except BaseException:
+        designer.remove_panel_if_unused(entry.entry_id)
+        raise
+    entry.async_on_unload(bt_coordinator.async_start())
     return True
 
 

@@ -119,18 +119,24 @@ class Designer:
         """Show the sidebar panel while at least one tag is configured."""
         if self.panel_registered:
             return
+        # Claimed before the awaits so a concurrent entry setup does not
+        # register it twice; released again if registration fails.
         self.panel_registered = True
-        integration = await async_get_integration(self.hass, DOMAIN)
-        await panel_custom.async_register_panel(
-            self.hass,
-            PANEL,
-            "ble-esl-manager",
-            sidebar_title="ESL Manager",
-            sidebar_icon="mdi:label-multiple",
-            module_url=f"/ble_esl_designer/{integration.version}/manager.js",
-            config={"version": str(integration.version)},
-            require_admin=True,
-        )
+        try:
+            integration = await async_get_integration(self.hass, DOMAIN)
+            await panel_custom.async_register_panel(
+                self.hass,
+                PANEL,
+                "ble-esl-manager",
+                sidebar_title="ESL Manager",
+                sidebar_icon="mdi:label-multiple",
+                module_url=f"/ble_esl_designer/{integration.version}/manager.js",
+                config={"version": str(integration.version)},
+                require_admin=True,
+            )
+        except BaseException:
+            self.panel_registered = False
+            raise
 
     @callback
     def remove_panel_if_unused(self, unloading_entry_id):
