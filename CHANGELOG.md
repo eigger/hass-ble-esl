@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.4.0
 
 ### Changed
 
@@ -17,6 +17,7 @@
 
 - Diagnostics no longer include the tag's MAC address inside write error messages.
 - A designer panel registration failure no longer leaves the entry's platforms loaded behind a failed setup.
+- Home Assistant's YAML editor reads a bare `y` as a boolean and saved `y: 22` as `'true': 22`, so `write` failed with a missing `y`. Designer exports now quote `"y"` (and `y`/`n`/`yes`/`no`/`on`/`off` values), a `true` element key is repaired back to `y` with a warning, and the docs and examples write `"y":`.
 
 ## 1.3.0
 
