@@ -4,6 +4,32 @@ English | **[한국어](ko/troubleshooting.md)**
 
 When a label does not update, the integration has usually already recorded why. This page is the order to look in: first the two sensors that hold the last write's breakdown, then the cases those sensors cannot see, then what to attach to an issue.
 
+Proxy setup and the generic connection troubleshooting order shared by the Bluetooth integrations are in the [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md#troubleshooting). This page adds what is specific to BLE ESL tags; BLE ESL's proxy notes are in [bluetooth.md](bluetooth.md).
+
+## Discovery vs. connection
+
+A tag that shows up in Home Assistant has only been **discovered**: a radio received its advertisement. That says nothing yet about whether a GATT connection, the protocol handshake or the image transfer will work — those happen only when a write runs. The **Signal Strength** sensor and the advertisement in the diagnostics come from discovery; the write sensors below (`failed_stage`, `via`, the stage timings) come from the connection.
+
+- The radio that heard the tag best is not necessarily the one the connection used. `via` is the radio the link took; when `via_unconfirmed` is `true` it is only the radio that heard the tag best, and `advertised_via` appears when the strongest advertisement came from a different radio than the link.
+- Connecting needs `bluetooth_proxy.active: true` on an ESPHome proxy (or a local adapter that can connect); a proxy without it forwards advertisements only. See [bluetooth.md](bluetooth.md#proxy-configuration).
+- BLE ESL does not pair or bond with any tag, and no wake-up step (button press or similar) is part of any protocol in this integration. Each write attempt makes up to two connection attempts, because a sleeping tag often answers the second one; whether a particular tag model needs to be woken by hand has **not been verified**.
+
+## Per-protocol conditions
+
+What each protocol does after the link is up, as implemented in [`esl_ble/`](../custom_components/ble_esl/esl_ble/README.md). Where a row says *not verified*, the integration makes no claim either way.
+
+| Protocol | Authentication / pairing | Other apps and integrations | Transfer constraints |
+|---|---|---|---|
+| **PickSmart** (Gicisky) | No pairing or authentication. After subscribing to notifications the integration waits 0.2 s and sends START up to 3 times (0.4 s each); no answer = `auth` failure with `start_probes: 3`. | Not verified; if a vendor app or another integration is connected to the tag, disconnect it before writing. | 240-byte parts, each acknowledged by the tag; the tag may ask for a part again, and the write gives up after 6 requests in a row for one part. |
+| **WOLINK** (Zhsunyco) | No BLE pairing. The tag sends a nonce on its auth characteristic and the integration answers it; a wrong answer makes the tag drop the link and is reported as *device error 5: unlock failed*. | Not verified; disconnect other apps or gateways before writing. | Chunk size follows the negotiated MTU (200–506 bytes, never below 200). The completion wait is the panel refresh and grows with image size. The **Model** option must be picked by hand (WOLINK does not report its model). |
+| **easyTag** (Zhsunyco) | No pairing or authentication exchange. Untested on physical tags. | Not verified. | Fixed packet gap (20 ms) and a 20 s reply timeout per frame; the completion wait is the panel refresh. The **Model** option must be picked by hand. |
+| **ETAG** (Hipoink) | No pairing. The integration reads the panel firmware after connecting and refuses firmware it does not know without retrying (`SE0213NP61-TNG-A0` verified, `SE0213MN50-TNG-A0` untested). | **Close the companion Bluetooth Label app** before connecting from Home Assistant ([etag.md](etag.md)). | Every 240-byte packet must fit in one write-without-response, so the link needs an ATT MTU of at least 243; less fails with `ETAG write size … is too small`. Each packet is acknowledged; command replies wait up to 30 s. |
+| **XTE** (Poshiji) | No pairing or authentication. Presets with an unimplemented pixel layout (some device numbers) are refused **before connecting**. | **Only one integration may write to the tag** ([xte.md](xte.md)). | 0.5 s pause after subscribing to notifications; writes use the smaller of 244 bytes and the link's reported write limit (20 bytes accepted). Size-only presets are hand-picked and untested. |
+
+A refused write (unsupported firmware, preset or device number) is not retried: retrying cannot change the answer.
+
+**Power:** a low battery can let the tag keep advertising but drop the link under load (`link_lost`) or fail the panel refresh. Check the **Battery** sensor: it is read from the advertisement on PickSmart, WOLINK and XTE and from the write session on easyTag; ETAG does not report a battery level. The low-battery binary sensor turns on at 2.5 V (10 % on XTE), where e-paper refresh becomes unreliable even though BLE still works ([actions.md](actions.md#entities)).
+
 ## Where to look
 
 Open the tag's device page (**Settings → Devices & services → BLE ESL → the tag**). Under *Diagnostic* there are three entities to read, in this order:
@@ -74,7 +100,7 @@ The image was sent; the tag did not confirm.
 - **`likely_cause_key: session.gatt_mismatch`** — the tag connected but does not expose the service or characteristic the protocol needs (or its write size is too small): another model or firmware than the preset assumes, or a link that has not negotiated its MTU. A missing service or characteristic is **not retried**; a too-small write size is, because it can be a link that has not yet negotiated its MTU.
 
 - **`rssi` is low but `paths` is 2 or more** — another radio might do better; HA picks the strongest advertisement to connect through, so the alternative is only used after a failure. Check `via` to see which one was used (if `via_unconfirmed` is `true`, it is only the one that heard the tag best).
-- **Everything fails at `connect` right after adding a proxy** — the proxy must be `active: true` in both `esp32_ble_tracker` and `bluetooth_proxy` (see the [README](../README.md#installation)); a passive proxy sees tags but cannot connect.
+- **Everything fails at `connect` right after adding a proxy** — the proxy must have `bluetooth_proxy: active: true` to make connections, and BLE ESL's starting configuration also sets `esp32_ble_tracker: scan_parameters: active: true` (see [bluetooth.md](bluetooth.md#proxy-configuration)); a proxy without `bluetooth_proxy.active` forwards advertisements, so it sees tags but cannot connect.
 - **`start_probes` above 1 on successful writes** (PickSmart) — the tag was slow to answer after connecting. Harmless once in a while, but it is where a marginal link shows first; if it is 2–3 on most writes, treat it like a `transfer` problem.
 - **Only large images fail** — WOLINK / easyTag panels take longer to refresh the bigger they are; `finish_s` of tens of seconds is normal for 7.5" and above, and the wait allowed grows with the image size. On XTE and WOLINK, a smaller `chunk_size` (e.g. 20 on some XTE proxies, or 200 on low-MTU links) makes large images take far longer than with a higher negotiated MTU; a different proxy or a local adapter usually reports a higher value.
 
@@ -104,3 +130,12 @@ Home Assistant also records the Write Duration attributes with each state change
 4. Which radio the tag uses (`via` — proxy model and ESPHome version, or the adapter) if the failure is `connect` or `transfer`.
 
 Debug logging is rarely needed; if asked, add `custom_components.ble_esl: debug` under `logger:` and reproduce once.
+
+### Remove sensitive information before posting
+
+Issues and Discussions are public. The diagnostics download redacts the tag's `address` and `unique_id` and masks the tag's MAC inside the advertised name and source, but it does not remove everything:
+
+- `via` / `advertised_via` (in `last_write`, `last_failure_write`, entity attributes and action responses) contain the **proxy's or adapter's** name and MAC, and the advertisement's `source` in the diagnostics is the receiving radio's address. Replace them with something like `esp-proxy-1 (XX:XX:…)` if you do not want to share them; keep the proxy model and whether it is a proxy or a local adapter.
+- The device identifier and entity IDs contain the last 8 hex digits of the tag's MAC. That is enough to tell tags apart; replace it if you prefer.
+- Payloads, **Last Updated Content** images, error messages and automation traces can contain your calendar entries, names, addresses, URLs with tokens or other personal data from your entities. Crop or blank them.
+- Debug logs: collect only the reproduction window under the `custom_components.ble_esl` logger, check them for addresses and tokens, and turn debug logging off afterwards.
