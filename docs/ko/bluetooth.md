@@ -6,7 +6,7 @@
 
 BLE ESL은 이미지를 보낼 때 태그마다 GATT로(`blesession`을 통해) 연결합니다. Home Assistant에는 **active 연결**이 가능한 Bluetooth 어댑터나 ESPHome Bluetooth 프록시가 필요합니다. 태그의 광고가 보인다고 해서 쓸 수 있는 것은 아닙니다.
 
-공통 프록시 설정·추천 하드웨어·일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md)(한국어, 2026-10-18 확인)에 있습니다. 이 문서에는 BLE ESL 고유 내용만 남기고, 태그별 조건과 실패 센서는 [troubleshooting.md](troubleshooting.md)에 있습니다.
+공통 프록시 설정·추천 하드웨어·일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md)에 있습니다. 이 문서에는 BLE ESL 고유 내용만 남기고, 태그별 조건과 실패 센서는 [troubleshooting.md](troubleshooting.md)에 있습니다.
 
 ## 프록시 설정
 

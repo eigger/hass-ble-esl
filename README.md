@@ -62,7 +62,7 @@ Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the n
 
 Use a **Bluetooth proxy** rather than the host's built-in adapter whenever you can, and set it to **active** (`bluetooth_proxy: active: true`, plus `esp32_ble_tracker: scan_parameters: active: true` as the starting configuration) — most write problems trace back to a passive proxy or a weak adapter. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
 
-ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md) (Korean; checked 2026-10-18). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
+ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Quick start
 

@@ -4,7 +4,7 @@ English | **[한국어](ko/troubleshooting.md)**
 
 When a label does not update, the integration has usually already recorded why. This page is the order to look in: first the two sensors that hold the last write's breakdown, then the cases those sensors cannot see, then what to attach to an issue.
 
-Proxy setup and the generic connection troubleshooting order shared by the Bluetooth integrations are in the [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md#연결-문제-확인-순서) (Korean; checked 2026-10-18). This page adds what is specific to BLE ESL tags; BLE ESL's proxy notes are in [bluetooth.md](bluetooth.md).
+Proxy setup and the generic connection troubleshooting order shared by the Bluetooth integrations are in the [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md#troubleshooting). This page adds what is specific to BLE ESL tags; BLE ESL's proxy notes are in [bluetooth.md](bluetooth.md).
 
 ## Discovery vs. connection
 

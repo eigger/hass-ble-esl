@@ -6,7 +6,7 @@
 
 라벨이 갱신되지 않을 때, 통합구성요소는 대개 그 이유를 이미 기록해 두었습니다. 이 문서는 어디를 어떤 순서로 볼지 정리한 것입니다: 먼저 마지막 쓰기의 내역을 담고 있는 두 센서, 그다음 그 센서로는 볼 수 없는 경우, 마지막으로 이슈에 첨부할 것.
 
-Bluetooth 통합이 함께 쓰는 프록시 설정과 일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md#연결-문제-확인-순서)(한국어, 2026-10-18 확인)에 있습니다. 이 문서는 BLE ESL 태그 고유 내용을 더하며, BLE ESL의 프록시 안내는 [bluetooth.md](bluetooth.md)에 있습니다.
+Bluetooth 통합이 함께 쓰는 프록시 설정과 일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md#문제-해결)에 있습니다. 이 문서는 BLE ESL 태그 고유 내용을 더하며, BLE ESL의 프록시 안내는 [bluetooth.md](bluetooth.md)에 있습니다.
 
 ## 발견과 연결의 차이
 

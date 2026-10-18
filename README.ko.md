@@ -64,7 +64,7 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 가능하면 호스트 내장 어댑터 대신 **Bluetooth 프록시**를 쓰고, **active**로 설정하세요(`bluetooth_proxy: active: true`, 시작 설정으로 `esp32_ble_tracker: scan_parameters: active: true`도 함께) — 쓰기 문제 대부분은 패시브 프록시나 약한 어댑터에서 옵니다. 스캔 간격은 기본값으로 둡니다. 발견된 태그가 곧 연결이 되는 것은 아닙니다: 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
 
-ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/bluetooth.md)(한국어, 2026-10-18 확인). 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
+ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md). 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
 
 ## 빠른 시작
 
