@@ -20,4 +20,8 @@
 
 | 규칙 ID | 이유 | 담당자 | 재검토 조건 |
 |---|---|---|---|
-| GOV-05 | 구현을 서브 에이전트가 아닌 주 에이전트가 수행(사용자 지시: 작성 후 서브 에이전트 리뷰). 독립 리뷰는 Opus 서브 에이전트가 수행 | @eigger | 다음 표준 재검토 때 구현도 위임 | 
+| GOV-05 | 초기 CI·테스트 구조 이관은 서브 에이전트가 아닌 주 에이전트가 수행(사용자 지시: 작성 후 서브 에이전트 리뷰). 이후 감사 수정·README 재편은 구현 서브 에이전트가, 리뷰는 별도 Opus 에이전트가 수행 | @eigger | 다음 표준 재검토 때 구현도 위임 |
+| HA-01, HA-08 | 엔티티 unique ID가 태그 MAC 마지막 8자리만 사용(`ble_esl_{identifier}_{key}`). 첫 2바이트만 다른 두 태그는 충돌 가능. 변경하려면 registry 마이그레이션·entry 버전 증가 필요 | @eigger | 충돌 사례 보고 또는 다음 데이터 형식 변경 시 |
+| HA-13 | write-lock 스위치가 RestoreEntity 대신 `entry.data`를 갱신해 상태 보존 | @eigger | 데이터 형식 마이그레이션을 도입할 때 |
+| HA-11 | 서비스 오류 메시지가 번역 키가 아닌 영어 문자열(`unknown_protocol`만 번역) | @eigger | 서비스 오류 번역 작업 시 |
+| HA-10 | `designer/specs.py`가 공개 export가 없는 `imagespec.spec.UNSET`을 import | @eigger | imagespec가 공개 export를 제공할 때 |
