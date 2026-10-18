@@ -4,7 +4,7 @@
 
 BLE ESL connects to each tag over GATT (through `blesession`) to send an image. Home Assistant needs a Bluetooth adapter or an ESPHome Bluetooth proxy that can make **active connections**; seeing a tag's advertisement is not enough to write to it.
 
-The shared proxy setup, recommended hardware and the generic connection troubleshooting order live in the [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). This page keeps what is specific to BLE ESL; tag-specific conditions and the failure sensors are in [troubleshooting.md](troubleshooting.md).
+The shared proxy setup, recommended hardware and the generic connection troubleshooting order live in the [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md). This page keeps what is specific to BLE ESL; tag-specific conditions and the failure sensors are in [troubleshooting.md](troubleshooting.md).
 
 ## Proxy configuration
 

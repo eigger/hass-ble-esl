@@ -32,40 +32,44 @@ BLE protocol families, sold under these brands:
 | Protocol | Brand | Sizes | Colors | Status | Buy |
 |---|---|---|---|---|---|
 | **ETAG** | Hipoink | 2.13" (250 × 122) | BWR | ✅ verified; [protocol notes](docs/etag.md) | [AliExpress](https://de.aliexpress.com/item/1005009110927073.html) |
-| **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ verified on hardware | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
+| **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ verified on hardware | [AliExpress](https://ko.aliexpress.com/item/100502399342939.html) |
 | **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ 2.13", 2.66", 2.9" and 4.2" verified on real tags by owner; other sizes size-only presets | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7" and 4.2" BWRY and 2.9" BWR verified on hardware; other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
 Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
-Key features:
+## Key features
 
-- Two actions, `ble_esl.write` and `ble_esl.write_guarded` (skips unchanged images, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
-- **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
-- Failure sensors and a diagnostics download that say at which stage a write failed and through which radio.
+- **imagespec layouts**: Rich declarative payloads (text, lines, rectangles, icons, QR codes, images, and Jinja templates) powered by [imagespec](https://github.com/eigger/imagespec).
+- **ESL Manager**: Integrated sidebar dashboard and visual designer to build layouts interactively and export ready-to-use YAML.
+- **Guarded writes**: `ble_esl.write_guarded` skips unchanged content, respects a manual write-lock switch, and debounces rapid consecutive updates.
+- **Diagnostic sensors**: Detailed failure stage sensors and diagnostics reporting RF signal strength and connection paths.
 
 ## Requirements
 
-- Home Assistant **2025.12** or newer, with [HACS](https://hacs.xyz/) for the recommended install.
+- Home Assistant **2025.12** or newer, with [HACS](https://hacs.xyz/) for recommended installation.
 - A Bluetooth adapter or ESPHome Bluetooth proxy that supports **active connections** (see [Bluetooth](#bluetooth)).
-- A supported tag (above).
+- A supported tag (see [Supported tags](#supported-tags)).
 
 ## Installation
 
-1. Install via **HACS** (custom repository `eigger/hass-ble-esl`), or copy `custom_components/ble_esl` into your config.
+1. Install via **HACS** (custom repository `eigger/hass-ble-esl`), or copy `custom_components/ble_esl` into your config directory.
 2. Restart Home Assistant.
-3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
+3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add manually via **Add integration → BLE ESL**.
 
-Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
+Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) can be tuned under **Configure**; see [docs/usage.md](docs/usage.md#options).
 
-Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
+Upgrading from `hass-gicisky` or `hass-zhsunyco`? See the **[Migration guide →](docs/migration.md)**.
 
 ### Bluetooth
 
-Use a **Bluetooth proxy** rather than the host's built-in adapter whenever you can, and set it to **active** (`bluetooth_proxy: active: true`, plus `esp32_ble_tracker: scan_parameters: active: true` as the starting configuration) — most write problems trace back to a passive proxy or a weak adapter. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
+Transmitting images to ESL tags requires **active GATT connections** (passive advertisement scanning is not sufficient).
 
-ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
+- An **active ESPHome Bluetooth proxy** (`bluetooth_proxy: active: true`) is strongly recommended over onboard host Bluetooth for reliable range and stability.
+- **Shared proxy setup & hardware**: Follow the canonical [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md) for recommended hardware, antenna advice, and ESPHome firmware configuration.
+- **Integration-specific details**: Single-write concurrency locking, radio arbitration, and local settings are detailed in [docs/bluetooth.md](docs/bluetooth.md).
+- **Troubleshooting & failure stages**: Check [docs/troubleshooting.md](docs/troubleshooting.md) for connection error codes and diagnostic sensors.
 
 ## Quick start
 
@@ -84,7 +88,10 @@ data:
       size: 40
 ```
 
-The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity. More: [usage overview](docs/usage.md), ready-made layouts in [`examples/`](examples/README.md), the visual [Designer guide](docs/designer.md).
+- **Payload syntax**: Layouts use [imagespec](https://github.com/eigger/imagespec) declarative syntax. See the shared [imagespec payload guide](https://github.com/eigger/imagespec/blob/main/docs/payload.md) for full syntax, element types (`text`, `line`, `rectangle`, `icon`, `qrcode`, `image`), styling, and color/dithering options.
+- **Preview safely**: Add `dry_run: true` to render without transmitting — verify the output on the tag's **Preview Content** entity.
+- **Visual designer**: Open **ESL Manager** in the Home Assistant sidebar to interactively design screens and export YAML.
+- **More examples**: See [usage overview](docs/usage.md) and ready-made layouts in [`examples/`](examples/README.md).
 
 ## Limits and warnings
 
@@ -99,9 +106,10 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 
 | Topic | English | 한국어 |
 |---|---|---|
-| Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
-| Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) ([Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md)) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
-| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
+| Usage overview: first layout, visual editor, actions, options | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
+| Payload & layout syntax | [imagespec payload guide](https://github.com/eigger/imagespec/blob/main/docs/payload.md) | [imagespec payload 안내](https://github.com/eigger/imagespec/blob/main/docs/payload.ko.md) |
+| Bluetooth setup & proxy | [docs/bluetooth.md](docs/bluetooth.md) ([Proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md)) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) ([프록시 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)) |
+| Troubleshooting & failure stages | [docs/troubleshooting.md](docs/troubleshooting.md) ([blesession guide](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.md)) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) ([blesession 안내](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.ko.md)) |
 | Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
 | Supported models and where to buy | [docs/models.md](docs/models.md) | — |
 | ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
@@ -109,7 +117,7 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 | Migration from hass-gicisky / hass-zhsunyco | [docs/migration.md](docs/migration.md) | [docs/ko/migration.md](docs/ko/migration.md) |
 | Protocol notes (ETAG, XTE) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) | — |
 | Examples | [examples/README.md](examples/README.md) | — |
-| Development: tests, verified environments, lint, adding a protocol | [docs/development.md](docs/development.md) | — |
+| Development: tests, environments, lint | [docs/development.md](docs/development.md) | — |
 
 <!-- hass-standards:support:start -->
 ## Support

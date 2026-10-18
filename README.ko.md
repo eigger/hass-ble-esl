@@ -39,17 +39,18 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)** (영어). 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md) (영어)를 보세요.
 
-주요 기능:
+## 주요 기능
 
-- 두 액션 `ble_esl.write`와 `ble_esl.write_guarded`(바뀌지 않은 이미지는 건너뛰고, Write Lock 스위치를 존중하며, 연속 호출을 디바운스). 레이아웃은 [imagespec](https://github.com/eigger/imagespec) 요소와 Jinja 템플릿으로 적습니다.
-- **ESL Manager**: 같은 payload를 YAML로 내보내는 사이드바 대시보드와 비주얼 디자이너.
-- 쓰기가 어느 단계에서, 어떤 라디오를 거쳐 실패했는지 알려 주는 실패 센서와 진단 다운로드.
+- **imagespec 레이아웃**: [imagespec](https://github.com/eigger/imagespec) 기반의 선언적 페이로드(텍스트, 선, 사각형, 아이콘, QR 코드, 이미지 및 Jinja 템플릿 지원).
+- **ESL Manager**: 사이드바 대시보드와 비주얼 디자이너를 통해 시각적으로 레이아웃을 작성하고 YAML로 바로 내보내기.
+- **보호된 쓰기(Guarded Writes)**: `ble_esl.write_guarded`로 변경 없는 화면 전송 건너뛰기, Write Lock 스위치 존중, 연속 호출 디바운스 지원.
+- **진단 센서**: 상세 실패 단계 센서와 진단 로그를 통해 무선 신호 및 GATT 연결 상태 파악.
 
 ## 요구사항
 
 - Home Assistant **2025.12** 이상. 권장 설치에는 [HACS](https://hacs.xyz/)가 필요합니다.
 - **active 연결**을 지원하는 Bluetooth 어댑터나 ESPHome Bluetooth 프록시([Bluetooth](#bluetooth) 참고).
-- 위 표의 지원 태그.
+- 위 표의 지원 태그(참고: [지원 태그](#지원-태그)).
 
 ## 설치
 
@@ -57,15 +58,18 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 2. Home Assistant를 재시작합니다.
 3. 범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
 
-옵션(Retry Count, Prevent Duplicate Send, Debounce Delay, WOLINK / easyTag의 Model)은 **구성**에 있습니다. [docs/ko/usage.md](docs/ko/usage.md#옵션)를 보세요.
+옵션(Retry Count, Prevent Duplicate Send, Debounce Delay, WOLINK / easyTag의 Model)은 **구성**에서 설정할 수 있습니다. [docs/ko/usage.md](docs/ko/usage.md#옵션)를 보세요.
 
-`hass-gicisky`나 `hass-zhsunyco`에서 오셨나요? 태그를 새 `ble_esl` 도메인으로 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꿔야 합니다 — 페이로드는 그대로입니다. **[마이그레이션 가이드 →](docs/ko/migration.md)**
+`hass-gicisky`나 `hass-zhsunyco`에서 오셨나요? **[마이그레이션 가이드 →](docs/ko/migration.md)**를 참고하세요.
 
 ### Bluetooth
 
-가능하면 호스트 내장 어댑터 대신 **Bluetooth 프록시**를 쓰고, **active**로 설정하세요(`bluetooth_proxy: active: true`, 시작 설정으로 `esp32_ble_tracker: scan_parameters: active: true`도 함께) — 쓰기 문제 대부분은 패시브 프록시나 약한 어댑터에서 옵니다. 스캔 간격은 기본값으로 둡니다. 발견된 태그가 곧 연결이 되는 것은 아닙니다: 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
+태그에 화면을 전송하려면 **active GATT 연결**이 필수입니다(단순 광고 패킷 수신만으로는 불충분).
 
-ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md). 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
+- 안정적인 전송과 수신 범위를 위해 호스트 내장 블루투스 대신 **active ESPHome Bluetooth 프록시**(`bluetooth_proxy: active: true`) 사용을 강력히 권장합니다.
+- **공용 프록시 설정 및 하드웨어**: 권장 하드웨어, 안테나 팁 및 ESPHome 펌웨어 설정은 공용 [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)를 참고하세요.
+- **통합 전용 무선 특성**: 단일 쓰기 잠금, 무선 우선순위 및 로컬 설정은 [docs/ko/bluetooth.md](docs/ko/bluetooth.md)에 정리되어 있습니다.
+- **트러블슈팅 및 실패 단계**: 연결 오류 코드와 진단 센서는 [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md)를 참고하세요.
 
 ## 빠른 시작
 
@@ -84,7 +88,10 @@ data:
       size: 40
 ```
 
-몇 초 뒤 태그가 갱신됩니다. `dry_run: true`를 붙이면 보내지 않고 렌더링만 하며, 결과는 태그의 **Preview Content** 이미지 엔티티에 나타납니다. 더 보기: [사용 개요](docs/ko/usage.md), [`examples/`](examples/README.md)(영어)의 완성된 레이아웃, 비주얼 [디자이너 가이드](docs/ko/designer.md).
+- **페이로드 문법**: 레이아웃은 [imagespec](https://github.com/eigger/imagespec) 선언적 규격을 따릅니다. 전체 문법, 지원 요소(`text`, `line`, `rectangle`, `icon`, `qrcode`, `image`), 스타일 및 색상/디더링 옵션은 공용 [imagespec payload 안내](https://github.com/eigger/imagespec/blob/main/docs/payload.ko.md)를 참고하세요.
+- **미리보기**: `dry_run: true`를 추가하면 블루투스로 전송하지 않고 렌더링만 수행하여 태그의 **Preview Content** 이미지 엔티티에서 결과를 미리 확인할 수 있습니다.
+- **비주얼 디자이너**: Home Assistant 사이드바의 **ESL Manager**를 열어 대화형으로 화면을 디자인하고 YAML로 내보낼 수 있습니다.
+- **예제 더 보기**: [사용 개요](docs/ko/usage.md)와 [`examples/`](examples/README.md)(영어)의 완성된 레이아웃을 확인하세요.
 
 ## 제한사항과 주의
 
@@ -99,9 +106,10 @@ data:
 
 | 주제 | 한국어 | English |
 |---|---|---|
-| 사용 개요: 첫 레이아웃, 비주얼 에디터, 액션, 옵션, 페이로드와 렌더링 | [docs/ko/usage.md](docs/ko/usage.md) | [docs/usage.md](docs/usage.md) |
-| Bluetooth 설정 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) ([Bluetooth proxy 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)) | [docs/bluetooth.md](docs/bluetooth.md) |
-| 트러블슈팅과 제보 | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| 사용 개요: 첫 레이아웃, 비주얼 에디터, 액션, 옵션 | [docs/ko/usage.md](docs/ko/usage.md) | [docs/usage.md](docs/usage.md) |
+| Payload 및 레이아웃 문법 | [imagespec payload 안내](https://github.com/eigger/imagespec/blob/main/docs/payload.ko.md) | [imagespec payload guide](https://github.com/eigger/imagespec/blob/main/docs/payload.md) |
+| Bluetooth 설정 및 프록시 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) ([프록시 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)) | [docs/bluetooth.md](docs/bluetooth.md) ([Proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md)) |
+| 트러블슈팅과 제보 | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) ([blesession 안내](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.ko.md)) | [docs/troubleshooting.md](docs/troubleshooting.md) ([blesession guide](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.md)) |
 | 액션, 응답 데이터, 엔티티, 폰트 | — (영어만) | [docs/actions.md](docs/actions.md) |
 | 지원 모델과 구매처 | — (영어만) | [docs/models.md](docs/models.md) |
 | ESL Manager / 디자이너 | [docs/ko/designer.md](docs/ko/designer.md) | [docs/designer.md](docs/designer.md) |
@@ -109,7 +117,7 @@ data:
 | Migration from hass-gicisky / hass-zhsunyco | [docs/ko/migration.md](docs/ko/migration.md) | [docs/migration.md](docs/migration.md) |
 | 프로토콜 노트 (ETAG, XTE) | — (영어만) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) |
 | 예제 | — (영어만) | [examples/README.md](examples/README.md) |
-| 개발: 테스트, 검증 환경, 린트, 프로토콜 추가 | — (영어만) | [docs/development.md](docs/development.md) |
+| 개발: 테스트, 검증 환경, 린트 | — (영어만) | [docs/development.md](docs/development.md) |
 
 <!-- hass-standards:support:start -->
 ## 지원
