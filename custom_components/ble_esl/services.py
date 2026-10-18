@@ -71,6 +71,7 @@ from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DeviceP
 from .esl_ble.wolink.const import ERROR_UNLOCK_FAILED
 from .renderer import encode_png, render_image
 from .types import BleEslConfigEntry
+from .yaml11 import repair_yaml11_keys
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -333,7 +334,7 @@ async def build_write_job_from_data(
                 render_image,
                 hass,
                 preset,
-                service_data.get("payload", ""),
+                repair_yaml11_keys(service_data.get("payload", "")),
                 rotate=service_data.get("rotate", 0),
                 background=service_data.get("background", "white"),
             )

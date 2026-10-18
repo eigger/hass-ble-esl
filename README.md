@@ -77,7 +77,7 @@ data:
     - type: text
       value: Hello World!
       x: 10
-      y: 10
+      "y": 10
       size: 40
 ```
 

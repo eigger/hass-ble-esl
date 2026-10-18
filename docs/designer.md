@@ -104,7 +104,7 @@ data:
       # (other keys left out)
       value: '{% set v = states(''sensor.room'') %}{% set n = v|float(none) %}{{ v|capitalize if v in [''unavailable'', ''unknown''] else ((''%.1f''|format(n) if n is not none else v)) ~ '' °C'' }}'
       x: 8
-      y: 8
+      "y": 8
       width: 120
       height: 40
 ```

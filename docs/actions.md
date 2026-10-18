@@ -30,7 +30,7 @@ data:
     - type: text
       value: Hello World!
       x: 10
-      y: 10
+      "y": 10
       size: 40
 ```
 
@@ -47,24 +47,24 @@ data:
     - type: text
       value: Living room
       x: 10
-      y: 8
+      "y": 8
       size: 28
     - type: dlimg
       url: "/config/www/photo.jpg"
       x: 10
-      y: 40
+      "y": 40
       xsize: 120
       ysize: 90
       dither: floyd
     - type: pie
       x: 150
-      y: 40
+      "y": 40
       radius: 40
       values: "A,40,orange;B,60,blue"
       dither: atkinson
     - type: diagram
       x: 250
-      y: 40
+      "y": 40
       width: 130
       height: 90
       bars:
@@ -88,7 +88,7 @@ data:
     - type: text
       value: Rotated!
       x: 10
-      y: 10
+      "y": 10
       size: 30
       color: white
 ```
@@ -105,7 +105,7 @@ data:
     - type: text
       value: Preview Test
       x: 10
-      y: 10
+      "y": 10
       size: 30
 ```
 
@@ -121,7 +121,7 @@ data:
     - type: text
       value: "Home Status"
       x: 10
-      y: 5
+      "y": 5
       size: 24
       font: "fonts/NotoSansKR-Bold.ttf"
     - type: line
@@ -134,12 +134,12 @@ data:
     - type: icon
       value: thermometer
       x: 10
-      y: 45
+      "y": 45
       size: 24
     - type: text
       value: "{{ states('sensor.temperature') }}°C"
       x: 40
-      y: 48
+      "y": 48
       size: 20
     - type: progress_bar
       x_start: 10
@@ -152,7 +152,7 @@ data:
     - type: qrcode
       data: "https://www.home-assistant.io"
       x: 180
-      y: 40
+      "y": 40
       width: 60
       height: 60
 ```
@@ -180,7 +180,7 @@ data:
     - type: text
       value: Guarded Write
       x: 10
-      y: 10
+      "y": 10
       size: 36
 ```
 
@@ -196,7 +196,7 @@ data:
     - type: text
       value: Immediate
       x: 10
-      y: 10
+      "y": 10
       size: 36
 ```
 
@@ -305,7 +305,7 @@ Custom font example:
 - type: text
   value: "Custom Font"
   x: 10
-  y: 10
+  "y": 10
   size: 30
   font: "MyCustomFont.ttf"
 ```

@@ -124,6 +124,10 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 Home Assistant는 Write Duration의 속성도 상태 변경마다 기록하므로, 실패 시각 근처의 그 센서 히스토리에는 마지막 실패뿐 아니라 모든 시도의 내역이 있습니다.
 
+## 자동화 편집기의 `Missing required argument(s) 'y'`
+
+Home Assistant의 YAML 편집기는 YAML 1.1을 따르므로 따옴표 없는 `y`(`n`, `yes`, `no`, `on`, `off` 포함)를 불리언으로 읽습니다. `y: 22`를 저장하면 키가 `'true': 22`로 바뀌고, `color: y`는 `true`가 됩니다. `"y": 22`, `color: "y"`처럼 따옴표로 감싸세요. 연동이 `true` 키를 `y`로 복구하고 경고를 남기지만, 근본 해결은 따옴표입니다. 디자이너가 내보내는 YAML은 이미 따옴표가 붙어 있습니다.
+
 ## 이슈에 첨부할 것
 
 1. 기기 페이지의 **진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, `last_write`와 `last_failure_write`가 들어 있고, 태그의 MAC은 가려집니다.

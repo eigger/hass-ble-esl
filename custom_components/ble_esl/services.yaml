@@ -9,13 +9,13 @@ write:
         - type: text
           value: Hello World!
           x: 10
-          y: 10
+          "y": 10
           size: 40
       default:
         - type: text
           value: Hello World!
           x: 10
-          y: 10
+          "y": 10
           size: 40
       selector:
         object:
@@ -53,13 +53,13 @@ write_guarded:
         - type: text
           value: Hello World!
           x: 10
-          y: 10
+          "y": 10
           size: 40
       default:
         - type: text
           value: Hello World!
           x: 10
-          y: 10
+          "y": 10
           size: 40
       selector:
         object:

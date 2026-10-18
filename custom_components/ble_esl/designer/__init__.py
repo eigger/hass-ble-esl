@@ -24,6 +24,7 @@ from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
 from ..renderer import encode_png, render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
+from ..yaml11 import repair_yaml11_keys
 from .design_templates import (
     build as build_template,
     check_name,
@@ -475,6 +476,7 @@ class Designer:
             raise HomeAssistantError(
                 "The automation payload is too large to import (5 MiB maximum)"
             )
+        items = repair_yaml11_keys(items)
         preset = self.preset(entry)
         preview_variables = _preview_variable_map(preview_variables)
         elements, imported, issues = elements_from(items, preset, max(0, 100 - existing))

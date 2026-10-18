@@ -122,6 +122,10 @@ A write that fails only sometimes is the reason Last Failure Time keeps its attr
 
 Home Assistant also records the Write Duration attributes with each state change, so the history of that sensor around the failure time has the breakdown of every attempt, not only the last failed one.
 
+## `Missing required argument(s) 'y'` in the automation editor
+
+Home Assistant's YAML editor reads YAML 1.1, where a bare `y` (also `n`, `yes`, `no`, `on`, `off`) is a boolean. Saving `y: 22` turns the key into `'true': 22`, and a colour written as `color: y` becomes `true`. Write them quoted: `"y": 22` and `color: "y"`. The integration repairs a `true` key back to `y` and logs a warning, but quoting is the real fix. YAML exported by the designer is already quoted.
+
 ## What to attach to an issue
 
 1. The **diagnostics download** from the device page. It contains the protocol, preset, firmware, options, the last advertisement, `last_write` and `last_failure_write`; the tag's MAC is redacted.
