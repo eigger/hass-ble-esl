@@ -120,7 +120,7 @@ Change the action name; keep everything else.
      - type: text
        value: Hello World!
        x: 10
-       y: 10
+       "y": 10
        size: 40
 ```
 

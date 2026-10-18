@@ -1289,7 +1289,7 @@ test("an imagespec element is added from the list, edited by its fields and expo
     /- type: pie\n {2}values: A,1;B,3\n {2}inner_radius: 20/,
   );
   // Position keys come from the frame, in display coordinates.
-  await expect(yaml).toHaveValue(/ {2}x: 48\n {2}y: 48\n {2}radius: 39/);
+  await expect(yaml).toHaveValue(/ {2}x: 48\n {2}"y": 48\n {2}radius: 39/);
 });
 
 test("generic rotation is editable on battery elements and appears in the payload", async ({ page }) => {

@@ -63,7 +63,7 @@ layouts:                     # one payload per display size
       font: ${font}
       anchor: mt
       x: 125
-      y: 10
+      "y": 10
       size: 45
 
 automation:                  # optional

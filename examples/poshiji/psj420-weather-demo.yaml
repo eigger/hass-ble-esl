@@ -94,7 +94,7 @@ actions:
         - type: text
           value: '{{ date_str }}'
           x: 20
-          y: 27
+          "y": 27
           size: 35
           font: '{{ font_bold }}'
           color: white
@@ -102,7 +102,7 @@ actions:
         - type: text
           value: '{{ time_str }} 기준'
           x: 380
-          y: 27
+          "y": 27
           size: 22
           font: '{{ font_med }}'
           color: white
@@ -110,14 +110,14 @@ actions:
         - type: icon
           value: weather-{{ weather_state }}
           x: 100
-          y: 125
+          "y": 125
           size: 110
           color: black
           anchor: mm
         - type: text
           value: '{{ desc_cond }}'
           x: 100
-          y: 195
+          "y": 195
           size: 24
           font: '{{ font_bold }}'
           color: black
@@ -125,7 +125,7 @@ actions:
         - type: text
           value: '{{ temp_now }}°'
           x: 290
-          y: 125
+          "y": 125
           size: 85
           font: '{{ font_bold }}'
           color: red
@@ -133,7 +133,7 @@ actions:
         - type: text
           value: 최저 {{ temp_min }}° / 최고 {{ temp_max }}°
           x: 290
-          y: 195
+          "y": 195
           size: 22
           font: '{{ font_med }}'
           color: black
@@ -148,7 +148,7 @@ actions:
         - type: text
           value: '{{ line1_text }}'
           x: 200
-          y: 252
+          "y": 252
           size: 20
           font: '{{ font_bold }}'
           color: '{{ color_line1 }}'
@@ -156,7 +156,7 @@ actions:
         - type: text
           value: '{{ line2_text }}'
           x: 200
-          y: 280
+          "y": 280
           size: 20
           font: '{{ font_med }}'
           color: black

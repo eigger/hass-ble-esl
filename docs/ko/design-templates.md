@@ -65,7 +65,7 @@ layouts:                     # 화면 크기별 payload
       font: ${font}
       anchor: mt
       x: 125
-      y: 10
+      "y": 10
       size: 45
 
 automation:                  # 선택

@@ -9,6 +9,7 @@ from homeassistant.exceptions import HomeAssistantError
 import voluptuous as vol
 import yaml
 
+from ..yaml11 import Yaml11SafeDumper
 from .importer import MAX_ELEMENTS, _NoAliases
 
 _LOGGER = logging.getLogger(__name__)
@@ -267,7 +268,7 @@ def template_text(template_id, name, width, height, background, payload):
     return text
 
 
-class _Dumper(yaml.SafeDumper):
+class _Dumper(Yaml11SafeDumper):
     def ignore_aliases(self, data):
         return True
 

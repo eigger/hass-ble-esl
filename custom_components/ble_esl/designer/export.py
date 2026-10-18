@@ -6,8 +6,10 @@ import math
 from imagespec import validate as validate_payload
 import yaml
 
+from ..yaml11 import Yaml11SafeDumper
 
-class _PlainDumper(yaml.SafeDumper):
+
+class _PlainDumper(Yaml11SafeDumper):
     """Never emit &anchors: a payload pasted into an automation must read as written."""
 
     def ignore_aliases(self, data):
