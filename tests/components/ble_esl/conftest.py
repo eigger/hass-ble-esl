@@ -37,6 +37,14 @@ IDENT = "54200055"
 # PID=0x1234, AppVer=0x0201 (513), HwVer=0x0403 (1027), DispVer=0x0605 (1541), battery 3000 mV
 WOLINK_MFR_BYTES = bytes([0x12, 0x34, 0x02, 0x01, 0x04, 0x03, 0x06, 0x05, 0x0B, 0xB8])
 
+# <!-- hass-standards:domain-fixtures:start -->
+# Use pytest_homeassistant_custom_component.common.MockConfigEntry for
+# mock_config_entry when the integration uses config entries.
+# Define mock_client only when an external communication client is present.
+# Mock external communication boundaries, never Home Assistant core modules.
+# Keep integration-specific fixtures below this managed block.
+# <!-- hass-standards:domain-fixtures:end -->
+
 
 @pytest.fixture(autouse=True)
 def enable_event_loop_debug() -> None:

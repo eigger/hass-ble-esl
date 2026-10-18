@@ -5,6 +5,7 @@
 ### Changed
 
 - Minimum Home Assistant stays at 2025.12; it is now tested in CI against exactly 2025.12.0 as well as the current release.
+- Synchronize repository with latest shared standards (`eigger/hass-repo-standards@f0ce06b`): standardized README header/support/related-projects/license template markers and flat badges, enforce central test configuration (`tests/conftest.py` and `domain-fixtures` skeleton), add central template compliance check (`check-standards`) to Validate workflow, and align blesession troubleshooting documentation structure.
 - Tests moved to `tests/components/ble_esl/`; CI now uses the shared hass-repo-standards workflows (see `STANDARDS.md`).
 - The `write` and `write_guarded` services now validate their known options: `rotate` must be 0, 90, 180 or 270, `background` a color name or `#RGB`/`#RRGGBB`, `dry_run` a boolean and `debounce_override_ms` a non-negative integer. Invalid values are rejected before rendering instead of failing mid-render or silently falling back to white. Other keys are still accepted. Behavior changes for existing automations: `dry_run: "false"`/`"off"` is now read as false (it used to count as true and only preview), while `dry_run` null/empty, a negative `debounce_override_ms`, and an empty, `null` or unknown `background` are now rejected instead of being tolerated.
 - The Failure Count sensor's state class is now `total_increasing`, since the count restarts at 0 when the entry reloads.

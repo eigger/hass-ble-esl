@@ -1,17 +1,20 @@
-# hass-ble-esl
+<!-- hass-standards:header:start -->
+# BLE ESL
+
+Bluetooth Low Energy electronic shelf labels for Home Assistant.
+
+**English** | [한국어](README.ko.md)
+
 <!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat)](https://github.com/eigger/hass-ble-esl/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#installation)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
 <!-- hass-standards:badges:end -->
-
-English | **[한국어](README.ko.md)**
-
-Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
+<!-- hass-standards:header:end -->
 
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring. It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
@@ -97,8 +100,8 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 | Topic | English | 한국어 |
 |---|---|---|
 | Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
-| Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
-| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md) |
+| Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) ([Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md)) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
+| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
 | Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
 | Supported models and where to buy | [docs/models.md](docs/models.md) | — |
 | ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
@@ -108,15 +111,22 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 | Examples | [examples/README.md](examples/README.md) | — |
 | Development: tests, verified environments, lint, adding a protocol | [docs/development.md](docs/development.md) | — |
 
-Related projects: [imagespec](https://github.com/eigger/imagespec) (the renderer behind `payload:`), [Stash](https://github.com/eigger/stash) (home inventory that prints labels to ESL tags), [hass-gicisky](https://github.com/eigger/hass-gicisky) (archived predecessor) — see [docs/usage.md](docs/usage.md#related-projects).
-
+<!-- hass-standards:support:start -->
 ## Support
 
-- A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
-- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (tag MAC redacted; check the rest before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting)).
-- Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
-- Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
+- [Issues](https://github.com/eigger/hass-ble-esl/issues): Report bugs or request features.
+<!-- hass-standards:support:end -->
 
+<!-- hass-standards:related-projects:start -->
+## Related Projects
+
+- [imagespec](https://github.com/eigger/imagespec): The declarative layout and renderer behind ESL tag payloads.
+- [Stash](https://github.com/eigger/stash): Home inventory system with direct printing to ESL tags.
+- [hass-gicisky](https://github.com/eigger/hass-gicisky): Archived predecessor integration.
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
 ## License
 
-[MIT](LICENSE)
+Released under the [MIT License](LICENSE).
+<!-- hass-standards:license:end -->

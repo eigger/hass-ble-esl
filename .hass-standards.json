@@ -14,5 +14,46 @@
   "installation_links": {
     "README.md": "#installation",
     "README.ko.md": "#설치"
-  }
+  },
+  "readme": {
+    "title": "BLE ESL",
+    "descriptions": {
+      "en": "Bluetooth Low Energy electronic shelf labels for Home Assistant.",
+      "ko": "Home Assistant를 위한 Bluetooth Low Energy 전자식 매대 표시기(ESL) 통합입니다."
+    },
+    "issues": true,
+    "discussions": false,
+    "license_name": "MIT License",
+    "license_notices": {
+      "en": [],
+      "ko": []
+    },
+    "related_projects": [
+      {
+        "name": "imagespec",
+        "url": "https://github.com/eigger/imagespec",
+        "description": {
+          "en": "The declarative layout and renderer behind ESL tag payloads.",
+          "ko": "ESL 태그 payload 뒤의 선언적 레이아웃 및 렌더러."
+        }
+      },
+      {
+        "name": "Stash",
+        "url": "https://github.com/eigger/stash",
+        "description": {
+          "en": "Home inventory system with direct printing to ESL tags.",
+          "ko": "ESL 태그에 직접 라벨을 출력하는 가정 재고 관리 시스템."
+        }
+      },
+      {
+        "name": "hass-gicisky",
+        "url": "https://github.com/eigger/hass-gicisky",
+        "description": {
+          "en": "Archived predecessor integration.",
+          "ko": "보관 처리된 전신 통합구성요소."
+        }
+      }
+    ]
+  },
+  "exceptions": []
 }

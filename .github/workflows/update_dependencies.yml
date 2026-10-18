@@ -1,4 +1,4 @@
-# Shared standards: eigger/hass-repo-standards @ 7acd9ca (reviewed 2026-10-18).
+# Shared standards: eigger/hass-repo-standards @ f0ce06b (reviewed 2026-10-18).
 name: Update dependencies
 'on':
   schedule:
@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@7acd9cab6ac774e4695f2c962e3d88b5faa4620d
+    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@f0ce06bc9a8e3a51fc8260777b30750d368f4983
     with:
       domain: ble_esl
       packages: '["imagespec", "blesession"]'

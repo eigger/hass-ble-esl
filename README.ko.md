@@ -1,19 +1,20 @@
-# hass-ble-esl
+<!-- hass-standards:header:start -->
+# BLE ESL
+
+Home Assistant를 위한 Bluetooth Low Energy 전자식 매대 표시기(ESL) 통합입니다.
+
+[English](README.md) | **한국어**
+
 <!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#설치)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat)](https://github.com/eigger/hass-ble-esl/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat)](#설치)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat)](LICENSE)
+[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
 <!-- hass-standards:badges:end -->
-
-**[English](README.md)** | 한국어
-
-> 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
-
-범용 BLE 전자가격표시기(ESL) Home Assistant 통합구성요소
+<!-- hass-standards:header:end -->
 
 **배터리 하나로 수개월에서 수년 동안 Home Assistant 데이터를 보여주는 e-paper 디스플레이.** BLE ESL은 [HACS](https://hacs.xyz/) 사용자 지정(custom) 통합구성요소입니다: 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다. Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
 
@@ -99,26 +100,33 @@ data:
 | 주제 | 한국어 | English |
 |---|---|---|
 | 사용 개요: 첫 레이아웃, 비주얼 에디터, 액션, 옵션, 페이로드와 렌더링 | [docs/ko/usage.md](docs/ko/usage.md) | [docs/usage.md](docs/usage.md) |
-| Bluetooth 설정 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) | [docs/bluetooth.md](docs/bluetooth.md) |
-| 트러블슈팅과 제보 | [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Bluetooth 설정 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) ([Bluetooth proxy 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)) | [docs/bluetooth.md](docs/bluetooth.md) |
+| 트러블슈팅과 제보 | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | 액션, 응답 데이터, 엔티티, 폰트 | — (영어만) | [docs/actions.md](docs/actions.md) |
 | 지원 모델과 구매처 | — (영어만) | [docs/models.md](docs/models.md) |
 | ESL Manager / 디자이너 | [docs/ko/designer.md](docs/ko/designer.md) | [docs/designer.md](docs/designer.md) |
 | 디자인 템플릿 | [docs/ko/design-templates.md](docs/ko/design-templates.md) | [docs/design-templates.md](docs/design-templates.md) |
-| hass-gicisky / hass-zhsunyco에서 마이그레이션 | [docs/ko/migration.md](docs/ko/migration.md) | [docs/migration.md](docs/migration.md) |
+| Migration from hass-gicisky / hass-zhsunyco | [docs/ko/migration.md](docs/ko/migration.md) | [docs/migration.md](docs/migration.md) |
 | 프로토콜 노트 (ETAG, XTE) | — (영어만) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) |
 | 예제 | — (영어만) | [examples/README.md](examples/README.md) |
 | 개발: 테스트, 검증 환경, 린트, 프로토콜 추가 | — (영어만) | [docs/development.md](docs/development.md) |
 
-관련 프로젝트: [imagespec](https://github.com/eigger/imagespec)(`payload:` 뒤의 렌더러), [Stash](https://github.com/eigger/stash)(ESL 태그에 라벨을 출력하는 가정 재고 관리자), [hass-gicisky](https://github.com/eigger/hass-gicisky)(보관 처리된 전신) — [docs/ko/usage.md](docs/ko/usage.md#관련-프로젝트) 참고.
-
+<!-- hass-standards:support:start -->
 ## 지원
 
-- 라벨이 갱신되지 않나요? **[docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)** — 실패 센서가 쓰기가 어디서, 왜 죽었는지 알려줍니다.
-- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(태그 MAC은 가려짐. 나머지는 올리기 전에 확인하세요 — [제거할 정보](docs/ko/troubleshooting.md#올리기-전에-민감-정보-제거)).
-- 질문이나 아이디어? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
-- WOLINK나 easyTag 태그를 테스트하셨거나, 수동 모델 선택을 요구한 Poshiji 크기가 있나요? 알려 주세요 — 그렇게 프리셋이 검증됩니다.
+- [Issues](https://github.com/eigger/hass-ble-esl/issues): 버그를 신고하거나 기능을 요청하세요.
+<!-- hass-standards:support:end -->
 
+<!-- hass-standards:related-projects:start -->
+## 관련 프로젝트
+
+- [imagespec](https://github.com/eigger/imagespec): ESL 태그 payload 뒤의 선언적 레이아웃 및 렌더러.
+- [Stash](https://github.com/eigger/stash): ESL 태그에 직접 라벨을 출력하는 가정 재고 관리 시스템.
+- [hass-gicisky](https://github.com/eigger/hass-gicisky): 보관 처리된 전신 통합구성요소.
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
 ## 라이선스
 
-[MIT](LICENSE)
+[MIT License](LICENSE) 라이선스로 배포됩니다.
+<!-- hass-standards:license:end -->
