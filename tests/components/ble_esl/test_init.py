@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ble_esl.const import CONF_MODEL, CONF_PROTOCOL, DOMAIN, WRITE_LOCK
+from custom_components.ble_esl.designer import KEY as DESIGNER_KEY
 from tests.components.ble_esl.bt import inject_bluetooth_service_info
 from tests.components.ble_esl.conftest import (
     ADDRESS,
@@ -137,3 +140,34 @@ async def test_unknown_protocol_id_fails_setup_clearly(
     assert entry.state is ConfigEntryState.SETUP_ERROR
     assert entry.error_reason_translation_key == "unknown_protocol"
     assert entry.error_reason_translation_placeholders == {"protocol": "poshiji"}
+
+
+async def test_panel_failure_fails_setup_before_platforms_load(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """A panel that cannot be registered fails setup with nothing half-loaded,
+    and a later setup registers it."""
+    inject_bluetooth_service_info(hass, wolink_service_info())
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=ADDRESS,
+        title=f"Zhsunyco {IDENT}",
+        data={CONF_PROTOCOL: "wolink", CONF_MODEL: "290"},
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "homeassistant.components.panel_custom.async_register_panel",
+        side_effect=RuntimeError("panel"),
+    ):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert hass.states.get(f"switch.zhsunyco_{IDENT}_write_lock") is None
+    assert hass.data[DESIGNER_KEY].panel_registered is False
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.state is ConfigEntryState.LOADED
+    assert hass.data[DESIGNER_KEY].panel_registered is True
+    assert hass.states.get(f"switch.zhsunyco_{IDENT}_write_lock").state == "off"

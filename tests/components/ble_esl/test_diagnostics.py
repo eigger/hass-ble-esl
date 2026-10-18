@@ -121,3 +121,25 @@ async def test_diagnostics_masks_mac_in_name_and_survives_parse_errors(
     assert result["advertisement"]["name"] == "**REDACTED**"
     assert result["advertisement"]["parsed"] == {"error": "ValueError: bad"}
     assert result["advertisement"]["rssi"] == -60  # the rest of the download is intact
+
+
+async def test_diagnostics_masks_mac_in_write_errors(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator, enable_bluetooth, tag_writer
+) -> None:
+    """blesession names the tag's MAC in its errors; the download must not."""
+    assert await async_setup_component(hass, "diagnostics", {})
+    entry = await setup_entry(hass, options={CONF_RETRY_COUNT: 1})
+    tag_writer.available = False
+    with pytest.raises(HomeAssistantError, match="No connectable radio sees"):
+        await hass.services.async_call(
+            DOMAIN, "write", {"device_id": device_id_of(hass), "payload": []}, blocking=True
+        )
+
+    result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
+
+    failure = result["write_state"]["last_failure_write"]
+    assert "No connectable radio sees **REDACTED**" in failure["error"]
+    assert result["write_state"]["last_write"]["error"] == failure["error"]
+    dump = str(result)
+    assert ADDRESS not in dump and ADDRESS.lower() not in dump
+    assert ADDRESS.replace(":", "") not in dump.replace(IDENT, "")

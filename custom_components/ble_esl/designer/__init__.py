@@ -4,7 +4,6 @@ import asyncio
 import base64
 import contextlib
 from functools import partial
-from io import BytesIO
 import json
 import math
 import os
@@ -23,7 +22,7 @@ import voluptuous as vol
 from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
-from ..renderer import render_image
+from ..renderer import encode_png, render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from .design_templates import (
     build as build_template,
@@ -120,18 +119,24 @@ class Designer:
         """Show the sidebar panel while at least one tag is configured."""
         if self.panel_registered:
             return
+        # Claimed before the awaits so a concurrent entry setup does not
+        # register it twice; released again if registration fails.
         self.panel_registered = True
-        integration = await async_get_integration(self.hass, DOMAIN)
-        await panel_custom.async_register_panel(
-            self.hass,
-            PANEL,
-            "ble-esl-manager",
-            sidebar_title="ESL Manager",
-            sidebar_icon="mdi:label-multiple",
-            module_url=f"/ble_esl_designer/{integration.version}/manager.js",
-            config={"version": str(integration.version)},
-            require_admin=True,
-        )
+        try:
+            integration = await async_get_integration(self.hass, DOMAIN)
+            await panel_custom.async_register_panel(
+                self.hass,
+                PANEL,
+                "ble-esl-manager",
+                sidebar_title="ESL Manager",
+                sidebar_icon="mdi:label-multiple",
+                module_url=f"/ble_esl_designer/{integration.version}/manager.js",
+                config={"version": str(integration.version)},
+                require_admin=True,
+            )
+        except BaseException:
+            self.panel_registered = False
+            raise
 
     @callback
     def remove_panel_if_unused(self, unloading_entry_id):
@@ -208,12 +213,15 @@ class Designer:
         image, layers = await self.render(preset, document, payload, snapshots)
         return document, image, payload, layers
 
+    async def _png_data_url(self, image):
+        """The image as a PNG data: URL, encoded off the event loop."""
+        png = await self.hass.async_add_executor_job(encode_png, image)
+        return "data:image/png;base64," + base64.b64encode(png).decode()
+
     async def preview(self, entry, document, preview_variables=None):
         _, image, payload, layers = await self.draw(entry, document, preview_variables)
-        buffer = BytesIO()
-        image.save(buffer, "PNG")
         return {
-            "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "png": await self._png_data_url(image),
             "payload": payload,
             "layers": layers,
         }
@@ -417,10 +425,8 @@ class Designer:
             image = await self.hass.async_add_executor_job(
                 partial(render_image, self.hass, preset, payload, background=built["background"])
             )
-        buffer = BytesIO()
-        image.save(buffer, "PNG")
         return {
-            "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "png": await self._png_data_url(image),
             "layout": built["layout"],
             "scaled": built["scaled"],
         }
@@ -559,10 +565,8 @@ class Designer:
         payload = [item for _, part in snapshots for item in part]
         preset = DevicePreset("template", "Template", template["width"], template["height"], "BWRY")
         image, layers = await self.render(preset, document, payload, snapshots)
-        buffer = BytesIO()
-        image.save(buffer, "PNG")
         return {
-            "png": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+            "png": await self._png_data_url(image),
             "payload": payload,
             "layers": layers,
         }

@@ -29,6 +29,9 @@ class BleEslEntity:
     """
 
     _attr_has_entity_name = True
+    # Everything is pushed (advertisements, coordinators, service calls);
+    # entities write their own state when it changes.
+    _attr_should_poll = False
     #: Unique-id suffix; set on the class, or pass `key` to _bind_tag().
     _key: str
 

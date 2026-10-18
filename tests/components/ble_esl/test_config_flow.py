@@ -207,6 +207,25 @@ async def test_user_flow_lists_discovered_tags(hass: HomeAssistant, enable_bluet
     assert result["result"].unique_id == ADDRESS
 
 
+async def test_user_flow_skips_tags_only_passive_scanners_see(
+    hass: HomeAssistant, enable_bluetooth
+) -> None:
+    """A tag no connectable radio sees could not be written, so it is not offered."""
+    inject_bluetooth_service_info(
+        hass,
+        service_info(
+            PICKSMART_ADDRESS,
+            name="PickSmart",
+            manufacturer_data={PICKSMART_ID: bytes([0x33, 0x1A, 0x81, 0x01, 0x40])},
+            connectable=False,
+        ),
+    )
+
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_devices_found"
+
+
 async def test_user_flow_without_devices_aborts(hass: HomeAssistant, enable_bluetooth) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": SOURCE_USER})
     assert result["type"] is FlowResultType.ABORT

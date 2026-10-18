@@ -258,7 +258,7 @@ class BleEslFailureCountSensorEntity(BleEslCoordinatorEntity[int], SensorEntity)
 
     _key = "failure_count"
     _attr_translation_key = "failure_count"
-    _attr_state_class = SensorStateClass.TOTAL
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_icon = "mdi:alert-circle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 

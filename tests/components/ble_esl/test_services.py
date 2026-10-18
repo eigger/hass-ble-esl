@@ -31,6 +31,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
+import voluptuous as vol
 
 from custom_components.ble_esl.const import (
     CONF_PREVENT_DUPLICATE_SEND,
@@ -413,6 +414,46 @@ async def test_write_services_reject_non_list_payloads(
     assert tag_writer.write_prepared.await_count == 0
 
 
+@pytest.mark.parametrize(
+    ("service", "data"),
+    [
+        ("write", {"rotate": 45}),
+        ("write", {"rotate": "sideways"}),
+        ("write", {"background": "not-a-color"}),
+        ("write", {"dry_run": "maybe"}),
+        ("write_guarded", {"rotate": 360}),
+        ("write_guarded", {"debounce_override_ms": -1}),
+        ("write_guarded", {"debounce_override_ms": "soon"}),
+    ],
+)
+async def test_write_services_reject_invalid_options(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str, data: dict
+) -> None:
+    """Bad values for known keys fail schema validation, before any render."""
+    with pytest.raises(vol.Invalid):
+        await call(hass, service, device_id_of(hass), **data)
+
+    assert tag_writer.write_prepared.await_count == 0
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_coerce_options_and_keep_unknown_keys(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str
+) -> None:
+    """Strings from templates are coerced; keys the schema does not know still pass."""
+    await call(
+        hass,
+        service,
+        device_id_of(hass),
+        rotate="90",
+        background="#000",
+        dry_run="false",
+        some_future_key=1,
+    )
+
+    assert tag_writer.write_prepared.await_count == 1
+
+
 async def test_unavailable_handle_counts_as_failed_attempts(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
@@ -566,6 +607,26 @@ async def test_a_final_error_is_one_attempt_and_one_failure(
     failed = hass.states.get(f"sensor.zhsunyco_{IDENT}_last_failure_time").attributes
     assert (failed["attempt"], failed["error"]) == (1, "Unsupported preset")
     assert "retrying" not in failed
+
+
+async def test_only_the_final_failed_attempt_logs_a_warning(
+    hass: HomeAssistant, enable_bluetooth, tag_writer, caplog
+) -> None:
+    """A failed attempt a retry follows logs at DEBUG; the last one warns."""
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 3})
+    tag_writer.write_result = fail("boom", connect=0.5)
+    caplog.set_level(logging.DEBUG, logger="custom_components.ble_esl.services")
+
+    with pytest.raises(HomeAssistantError, match="after 3 attempts: boom"):
+        await call(hass, "write", device_id_of(hass))
+
+    failed = [
+        (r.levelno, r.getMessage())
+        for r in caplog.records
+        if r.getMessage().startswith("Write failed to")
+    ]
+    assert [level for level, _ in failed] == [logging.DEBUG, logging.DEBUG, logging.WARNING]
+    assert "(attempt 3/3): boom" in failed[-1][1]
 
 
 async def test_a_report_that_cannot_be_built_does_not_stop_the_write(
@@ -1244,6 +1305,37 @@ async def test_reload_during_transfer_forgets_uncertain_last_image(
     response = await respond(hass, "write_guarded", device_id, payload=previous_payload)
     assert response[device_id]["status"] == "written"
     assert tag_writer.write_prepared.await_count == 3
+
+
+async def test_cancelling_a_write_while_its_timer_stops_is_not_swallowed(
+    hass: HomeAssistant, wolink_entry, tag_writer, monkeypatch
+) -> None:
+    """Cancelling the write while the duration timer winds down propagates,
+    and the write still clears its in-progress state."""
+    from custom_components.ble_esl import services as svc
+
+    stopping = asyncio.Event()
+    release = asyncio.Event()
+
+    async def slow_to_stop(data):
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            stopping.set()
+            await release.wait()
+            raise
+
+    monkeypatch.setattr(svc, "_update_duration_loop", slow_to_stop)
+    job = await svc.build_write_job_from_data(hass, wolink_entry, {"payload": PAYLOAD})
+    write_task = hass.async_create_task(svc.run_ble_write(hass, job))
+    await stopping.wait()
+    write_task.cancel()
+    release.set()
+
+    with pytest.raises(asyncio.CancelledError):
+        await write_task
+    assert wolink_entry.runtime_data.start_time is None
+    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
 
 
 # ── Unexpected errors ────────────────────────────────────────────────────

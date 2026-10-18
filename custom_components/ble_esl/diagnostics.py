@@ -115,7 +115,18 @@ async def async_get_config_entry_diagnostics(
             "temperature_c": data.temperature_coordinator.data,
         },
     }
-    return async_redact_data(diagnostics, TO_REDACT)
+    # Error strings (e.g. blesession's "No connectable radio sees <MAC> ...")
+    # can carry the address too, so mask it in every string value.
+    return _mask_mac_deep(async_redact_data(diagnostics, TO_REDACT), data.address)
+
+
+def _mask_mac_deep(value: Any, address: str) -> Any:
+    """Apply _mask_mac to every string inside nested dicts, lists and tuples."""
+    if isinstance(value, dict):
+        return {key: _mask_mac_deep(item, address) for key, item in value.items()}
+    if type(value) in (list, tuple):
+        return type(value)(_mask_mac_deep(item, address) for item in value)
+    return _mask_mac(value, address)
 
 
 def _mask_mac(value: Any, address: str) -> Any:

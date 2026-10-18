@@ -60,6 +60,11 @@ async def test_entity_categories_and_device_classes(hass: HomeAssistant, wolink_
         states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").attributes["device_class"]
         == "connectivity"
     )
+    # The count restarts at 0 on reload, which total_increasing treats as a reset.
+    assert (
+        states.get(f"sensor.zhsunyco_{IDENT}_failure_count").attributes["state_class"]
+        == "total_increasing"
+    )
     assert states.get(f"sensor.zhsunyco_{IDENT}_battery").attributes["device_class"] == "battery"
     assert states.get(f"sensor.zhsunyco_{IDENT}_voltage").attributes["unit_of_measurement"] == "V"
     # RSSI is registered but disabled by default.
@@ -79,6 +84,10 @@ async def test_initial_states(hass: HomeAssistant, wolink_entry) -> None:
 
 
 async def test_alias_text_entity(hass: HomeAssistant, wolink_entry) -> None:
+    """The entity pushes its own state: nothing polls it after the call."""
+    for entity_id in (f"switch.zhsunyco_{IDENT}_write_lock", f"text.zhsunyco_{IDENT}_alias"):
+        entity = hass.data["entity_components"][entity_id.split(".")[0]].get_entity(entity_id)
+        assert entity is not None and entity.should_poll is False
     await hass.services.async_call(
         "text",
         "set_value",
