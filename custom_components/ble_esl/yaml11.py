@@ -16,6 +16,9 @@ _LOGGER = logging.getLogger(__name__)
 # Plain scalars that YAML 1.1 reads as booleans (compared case-insensitively).
 _YAML11_BOOLS = frozenset({"y", "n", "yes", "no", "on", "off"})
 
+# An automation repeats on a schedule: warn about a repaired payload once.
+_warned: list[bool] = []
+
 
 class Yaml11SafeDumper(yaml.SafeDumper):
     """Quote strings YAML 1.1 would turn into booleans, so the editor keeps them."""
@@ -47,8 +50,10 @@ def repair_yaml11_keys(payload: Any) -> Any:
                 changed = True
         repaired.append(element)
     if changed:
-        _LOGGER.warning(
+        _LOGGER.log(
+            logging.DEBUG if _warned else logging.WARNING,
             "A payload element had the key 'true' instead of 'y' (the Home Assistant "
-            "YAML editor reads a bare y as a boolean); using 'y'. Write it as \"y\": ..."
+            "YAML editor reads a bare y as a boolean); using 'y'. Write it as \"y\": ...",
         )
+        _warned[:] = [True]
     return repaired if changed else payload

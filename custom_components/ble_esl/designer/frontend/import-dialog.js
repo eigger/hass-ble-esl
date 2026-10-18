@@ -51,7 +51,7 @@ export class ImportDialog extends HTMLElement {
     </style><dialog aria-label="${t(this.panel.hass, "Import YAML")}"><form method="dialog">
       <h2>${t(this.panel.hass, "Import YAML")}</h2>
       <p class="muted">${t(this.panel.hass, "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.")}</p>
-      <textarea aria-label="${t(this.panel.hass, "YAML to import")}" spellcheck="false" placeholder="- type: text&#10;  value: Hello&#10;  x: 10&#10;  y: 10">${esc(text)}</textarea>
+      <textarea aria-label="${t(this.panel.hass, "YAML to import")}" spellcheck="false" placeholder="- type: text&#10;  value: Hello&#10;  x: 10&#10;  &quot;y&quot;: 10">${esc(text)}</textarea>
       ${note ? `<p class="note" role="status">${esc(t(this.panel.hass, note))}</p>` : ""}
       ${issues.length ? `<ul class="issues">${issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
       <div class="actions">${done ? "" : `<button type="button" data-mode="add" class="primary">${t(this.panel.hass, "Add to display")}</button><button type="button" data-mode="replace">${t(this.panel.hass, "Replace display")}</button>`}<button type="button" data-close>${done ? t(this.panel.hass, "Close") : t(this.panel.hass, "Cancel")}</button></div>
