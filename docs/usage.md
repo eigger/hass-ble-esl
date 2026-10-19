@@ -96,7 +96,7 @@ What this integration adds on top:
 - **Resolution and palette** come from the tag's preset, not the call. Off-palette colors are quantized to the nearest supported one (BW, BWR or BWRY).
 - **Rotation** (`rotate: 90/180/270`) rotates the canvas; the output stays the panel size.
 - **Dithering** is per element: put `dither` on photos and charts (`dlimg`, `pie`, `diagram`, `plot`, `sparkline`, `progress_bar`, `gauge`), not on text.
-- **`plot`** reads history from the Recorder; **`dlimg`** accepts `/config/...` paths, HTTP(S) URLs and data URIs.
+- **`plot`** reads history from the Recorder; **`dlimg`** accepts `/config/...` paths, HTTP(S) URLs and data URIs, read with Home Assistant's own access, which is why `write` and `write_guarded` are admin-only (automations are unaffected).
 - **Fonts:** `NotoSansKR-Regular.ttf` is the default; drop your own `.ttf` into `config/www/fonts/` and reference it by name. See [fonts](actions.md#fonts).
 - Prefer `row` / `column` / `stack` layout over hand-placed coordinates.
 

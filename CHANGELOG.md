@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1
+
+### Security
+
+- `ble_esl.write` and `ble_esl.write_guarded` are now admin-only services. Their payload can make `dlimg` open any local image file Home Assistant can read and fetch any HTTP(S) URL, and the rendered image is shown in the Preview Content and Last Updated Content image entities, which every logged-in user can view. A non-admin user could therefore read image files or make Home Assistant request internal URLs.
+
+### Changed
+
+- Behavior change: calls from non-admin users, including a dashboard button or a script run by a non-admin user, now fail with `Unauthorized`. Automations and scripts started without a user (time or state triggers, designer-made automations) are unaffected. To let non-admins refresh a tag, trigger an automation that calls `ble_esl.write`.
+
 ## 1.4.0
 
 ### Changed
