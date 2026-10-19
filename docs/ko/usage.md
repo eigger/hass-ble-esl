@@ -98,7 +98,7 @@ data:
 - **해상도와 팔레트**는 호출이 아니라 태그의 프리셋에서 옵니다. 팔레트 밖의 색은 가장 가까운 지원 색(BW, BWR, BWRY)으로 양자화됩니다.
 - **회전** (`rotate: 90/180/270`)은 캔버스를 돌립니다; 출력 크기는 패널 크기 그대로입니다.
 - **디더링**은 요소 단위입니다: 사진과 차트(`dlimg`, `pie`, `diagram`, `plot`, `sparkline`, `progress_bar`, `gauge`)에 `dither`를 붙이고, 텍스트에는 붙이지 마세요.
-- **`plot`** 은 Recorder에서 히스토리를 읽습니다; **`dlimg`** 는 `/config/...` 경로, HTTP(S) URL, data URI를 받습니다.
+- **`plot`** 은 Recorder에서 히스토리를 읽습니다; **`dlimg`** 는 `/config/...` 경로, HTTP(S) URL, data URI를 받으며 Home Assistant 자체 권한으로 읽습니다. 그래서 `write`와 `write_guarded`는 관리자 전용입니다(자동화는 영향 없음).
 - **폰트:** 기본은 `NotoSansKR-Regular.ttf`; `config/www/fonts/`에 `.ttf`를 넣고 이름으로 참조합니다. [fonts](../actions.md#fonts)(영어)를 보세요.
 - 좌표를 손으로 찍기보다 `row` / `column` / `stack` 레이아웃을 쓰세요.
 

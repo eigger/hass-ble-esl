@@ -4,6 +4,8 @@ Reference for the two actions this integration registers, the data they return, 
 
 ## Actions
 
+> **Admin only.** `write` and `write_guarded` can only be called by administrators (or by automations and scripts started without a user, such as time or state triggers). `dlimg` reads local image files and fetches URLs with Home Assistant's own access, and the rendered result is shown in the preview image entities, so a non-admin user must not be able to supply a payload. For a dashboard button used by non-admins, trigger an automation (an `input_boolean` or an event) and call `ble_esl.write` inside it.
+
 Both actions take a standard `target:`: a BLE ESL device, any of its entities, or an area/floor/label containing one. Several tags can be targeted in one call; they are written one at a time (one BLE attempt holds the radio at a time; a tag that has to retry lets the others go first) and failures are reported together at the end. The examples below use `device_id`.
 
 ### `ble_esl.write`

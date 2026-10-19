@@ -26,8 +26,8 @@ from blesession import (
     WriteTimeout,
     generic_cause,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import HomeAssistantError, Unauthorized, UnknownUser
 from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
@@ -372,6 +372,67 @@ async def test_dry_run_only_updates_preview(hass: HomeAssistant, wolink_entry, t
     assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
     assert wolink_entry.runtime_data.last_image_data is None  # not counted as sent
+
+
+@pytest.mark.parametrize("dry_run", [True, False])
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_reject_non_admin_users(
+    hass: HomeAssistant, wolink_entry, tag_writer, hass_read_only_user, service: str, dry_run: bool
+) -> None:
+    """dlimg reads local files and URLs, so a non-admin must not reach the renderer."""
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(
+            DOMAIN,
+            service,
+            {"device_id": device_id_of(hass), "payload": PAYLOAD, "dry_run": dry_run},
+            blocking=True,
+            context=Context(user_id=hass_read_only_user.id),
+        )
+
+    assert tag_writer.write_prepared.await_count == 0
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state == "unknown"
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_accept_admin_users(
+    hass: HomeAssistant, wolink_entry, tag_writer, hass_admin_user, service: str
+) -> None:
+    await hass.services.async_call(
+        DOMAIN,
+        service,
+        {"device_id": device_id_of(hass), "payload": PAYLOAD, "dry_run": True},
+        blocking=True,
+        context=Context(user_id=hass_admin_user.id),
+    )
+
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_accept_calls_without_user_context(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str
+) -> None:
+    """Automations and scripts started by the system carry no user and keep working."""
+    await call(hass, service, device_id_of(hass), dry_run=True)
+
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_write_services_reject_unknown_user(
+    hass: HomeAssistant, wolink_entry, tag_writer, service: str
+) -> None:
+    with pytest.raises(UnknownUser):
+        await hass.services.async_call(
+            DOMAIN,
+            service,
+            {"device_id": device_id_of(hass), "payload": PAYLOAD, "dry_run": True},
+            blocking=True,
+            context=Context(user_id="does-not-exist"),
+        )
+
+    assert tag_writer.write_prepared.await_count == 0
 
 
 @pytest.mark.parametrize("service", ["write", "write_guarded"])

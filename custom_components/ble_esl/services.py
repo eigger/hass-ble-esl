@@ -45,7 +45,10 @@ from homeassistant.core import (
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.service import async_extract_config_entry_ids
+from homeassistant.helpers.service import (
+    async_extract_config_entry_ids,
+    async_register_admin_service,
+)
 from homeassistant.util.dt import now
 from PIL import Image, ImageColor
 import voluptuous as vol
@@ -110,15 +113,22 @@ WRITE_GUARDED_SERVICE_SCHEMA = WRITE_SERVICE_SCHEMA.extend(
 
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
-    """Register the domain services (once per HA instance)."""
-    hass.services.async_register(
+    """Register the domain services (once per HA instance).
+
+    Admin only: the payload can make dlimg read local image files and fetch
+    URLs, and the result is exposed through the preview image entities.
+    Automations run without a user context and are unaffected.
+    """
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_WRITE,
         partial(_async_write, hass),
         schema=WRITE_SERVICE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_WRITE_GUARDED,
         partial(_async_write_guarded, hass),
