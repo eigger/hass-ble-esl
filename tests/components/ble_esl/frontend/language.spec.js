@@ -208,7 +208,10 @@ test("locale catalogs match component languages and preserve interpolation token
   const { language, supportedLanguages, t } =
     await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
   const componentLanguages = readdirSync(
-    new URL("../../../../custom_components/ble_esl/translations/", import.meta.url),
+    new URL(
+      "../../../../custom_components/ble_esl/translations/",
+      import.meta.url,
+    ),
   )
     .filter((name) => name.endsWith(".json"))
     .map((name) => name.slice(0, -5))
@@ -322,7 +325,9 @@ test("automation creation preserves its name and device across locale changes", 
     .getByRole("button", { name: "자동화 만들기", exact: true })
     .click();
   const dialog = page.locator("ble-esl-yaml-dialog");
-  await expect(dialog.locator("textarea")).toHaveValue(/use_saved_design: true/);
+  await expect(dialog.locator("textarea")).toHaveValue(
+    /use_saved_design: true/,
+  );
   await dialog.getByLabel("이름", { exact: true }).fill("거실 화면 갱신");
   await page.screenshot({ path: "artifacts/create-automation-ko.png" });
   await setLanguage(page, "en");
