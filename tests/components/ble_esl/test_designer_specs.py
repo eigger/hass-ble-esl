@@ -508,9 +508,9 @@ async def test_a_templated_polygon_and_a_list_template_still_export(hass, wolink
     assert now[1]["values"] == [1, 2, 3]
     # The corners are as of now, everything else keeps its template.
     assert live[0]["points"] == now[0]["points"]
+    assert any("polygon's corners are as of now" in issue for issue in result["issues"])
     assert live[0]["fill"] == "{{ 'black' }}"
     assert live[1]["values"] == "{{ [1, 2, 3] }}"
-    assert any("polygon's corners are as of now" in issue for issue in result["issues"])
     assert resolve_templates(hass, live, set()) == now
 
 

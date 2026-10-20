@@ -1153,7 +1153,13 @@ async def test_automation_draft_uses_current_design_and_registered_device(hass, 
     designer = hass.data[KEY]
     result = await designer.automation(wolink_entry, document())
     config = result["automation"]
-    assert config["triggers"] == [{"trigger": "state", "entity_id": ["sensor.room_temperature"]}]
+    assert config["triggers"] == [
+        {
+            "trigger": "state",
+            "entity_id": ["sensor.room_temperature"],
+            "not_to": ["unavailable", "unknown"],
+        }
+    ]
     assert config["conditions"] == []
     assert config["actions"][0]["target"] == {"device_id": wolink_entry.runtime_data.device_id}
     assert config["actions"][0]["data"]["payload"] == yaml.safe_load(result["payload"])

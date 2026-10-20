@@ -2,6 +2,7 @@
 
 import base64
 from io import BytesIO
+from types import SimpleNamespace
 
 from PIL import Image, ImageChops
 import pytest
@@ -109,7 +110,11 @@ async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
     hass.states.async_set("binary_sensor.laundry", "on")
     result = await hass.data[KEY].automation(wolink_entry, icon_document(rotation=0))
     assert result["automation"]["triggers"] == [
-        {"trigger": "state", "entity_id": ["binary_sensor.laundry"]}
+        {
+            "trigger": "state",
+            "entity_id": ["binary_sensor.laundry"],
+            "not_to": ["unavailable", "unknown"],
+        }
     ]
 
 
@@ -179,10 +184,76 @@ async def test_automation_passes_script_variables_to_native_templates(hass, woli
     )
     data = result["automation"]["actions"][0]["data"]
     assert "preview only" not in data["design"]
-    assert data["design_variables"] == {"message": "{{ message }}"}
-    data["design_variables"] = {
-        key: Template(value, hass).async_render({"message": "Actual run"})
-        for key, value in data["design_variables"].items()
+    assert data["design_specs"] == {"native": source["elements"][0]["spec"]}
+    data["design_specs"] = {
+        key: {
+            **spec,
+            "value": Template(spec["value"], hass).async_render({"message": "Actual run"}),
+        }
+        for key, spec in data["design_specs"].items()
     }
     job = await build_write_job_from_data(hass, wolink_entry, data)
     assert job.image_png
+
+
+async def test_automation_templates_can_read_trigger_objects(hass, wolink_entry):
+    from homeassistant.helpers.template import Template
+
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    source = {
+        "version": 1,
+        "elements": [
+            {
+                "id": "native",
+                "type": "imagespec",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 40,
+                "spec": {"type": "text", "value": "{{ trigger.to_state.state }}", "size": 24},
+            }
+        ],
+    }
+    result = await hass.data[KEY].automation(
+        wolink_entry, source, preview_variables={"trigger": {"to_state": {"state": "off"}}}
+    )
+    data = result["automation"]["actions"][0]["data"]
+    assert "design_variables" not in data
+    state = SimpleNamespace(state="on")
+    variables = {"trigger": SimpleNamespace(to_state=state)}
+    data["design_specs"] = {
+        key: {**spec, "value": Template(spec["value"], hass).async_render(variables)}
+        for key, spec in data["design_specs"].items()
+    }
+    assert (await build_write_job_from_data(hass, wolink_entry, data)).image_png
+
+
+async def test_invalid_design_specs_raise_a_service_error(hass, wolink_entry):
+    from homeassistant.exceptions import ServiceValidationError
+
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    source = {
+        "version": 1,
+        "elements": [
+            {
+                "id": "native",
+                "type": "imagespec",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 40,
+                "spec": {"type": "text", "value": "{{ message }}", "size": 24},
+            }
+        ],
+    }
+    result = await hass.data[KEY].automation(
+        wolink_entry, source, preview_variables={"message": "x"}
+    )
+    data = result["automation"]["actions"][0]["data"]
+    for bad in ("oops", {"type": "row"}, {"value": "x"}):
+        with pytest.raises(ServiceValidationError):
+            await build_write_job_from_data(
+                hass, wolink_entry, {**data, "design_specs": {"native": bad}}
+            )

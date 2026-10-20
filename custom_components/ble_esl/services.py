@@ -43,7 +43,7 @@ from homeassistant.core import (
     SupportsResponse,
     callback,
 )
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import (
@@ -102,7 +102,7 @@ WRITE_SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("payload"): list,
         vol.Optional("design"): vol.Any(dict, str),
-        vol.Optional("design_variables"): dict,
+        vol.Optional("design_specs"): dict,
         vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("background"): _color,
         vol.Optional("dry_run"): cv.boolean,
@@ -345,16 +345,32 @@ async def build_write_job_from_data(
         # Import lazily: the optional designer also uses this write pipeline.
         from .designer import KEY
         from .designer.automation_source import decode_design
-        from .designer.layout import compile_payload, validate
+        from .designer.layout import compile_payload, validate, validate_spec
+        from .designer.specs import templates_in
 
         designer = hass.data[KEY]
-        document = validate(decode_design(service_data["design"]), preset)
+        try:
+            document = validate(decode_design(service_data["design"]), preset)
+            # HA rendered these with the automation's own variables (trigger, this, ...).
+            rendered_specs = service_data.get("design_specs") or {}
+            for element in document["elements"]:
+                if (
+                    element["type"] == "imagespec"
+                    and element["id"] in rendered_specs
+                    and templates_in(element["spec"])
+                ):
+                    element["spec"] = rendered_specs[element["id"]]
+                    if not isinstance(element["spec"], dict):
+                        raise vol.Invalid(f"{element['id']}: design_specs must hold objects")
+                    validate_spec(element)
+                    element["_spec_resolved"] = True
+        except (ValueError, vol.Invalid) as err:
+            raise ServiceValidationError(f"Invalid design: {err}") from err
         payload = compile_payload(
             hass,
             document,
             designer.templates,
             await designer.forecasts(document),
-            preview_variables=service_data.get("design_variables"),
         )
         service_data = {**service_data, "payload": payload, "background": document["background"]}
 

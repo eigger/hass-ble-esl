@@ -24,9 +24,9 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
-        "design_variables": {
-          "name": "Designer variables",
-          "description": "Automation variables supplied to templates in the designer source."
+        "design_specs": {
+          "name": "Designer templates",
+          "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
         }
       }
     },
@@ -58,9 +58,9 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
-        "design_variables": {
-          "name": "Designer variables",
-          "description": "Automation variables supplied to templates in the designer source."
+        "design_specs": {
+          "name": "Designer templates",
+          "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
         }
       }
     }

@@ -19,8 +19,9 @@ write:
           size: 40
       selector:
         object:
-    design_variables:
+    design_specs:
       required: false
+      description: imagespec element templates from the designer source, rendered by Home Assistant with the automation variables.
       selector:
         object:
     design:
@@ -72,8 +73,9 @@ write_guarded:
           size: 40
       selector:
         object:
-    design_variables:
+    design_specs:
       required: false
+      description: imagespec element templates from the designer source, rendered by Home Assistant with the automation variables.
       selector:
         object:
     design:

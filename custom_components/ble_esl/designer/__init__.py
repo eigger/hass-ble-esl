@@ -51,6 +51,7 @@ from .specs import (
     frozen_corners,
     missing_template_parameters,
     resolve_templates,
+    templates_in,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -251,41 +252,23 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
-        dynamic_geometry = [
-            element
-            for element in document["elements"]
-            if element["type"] == "imagespec" and frozen_corners(element["spec"])
-        ]
-        if automation_edit:
+        # The action carries the design, so a templated polygon is rendered live by
+        # the automation; the payload beside it is only a readable snapshot.
+        if not automation_edit:
+            # The design keeps polygon corners live; a copied payload alone cannot.
             issues.extend(
-                f"blocking: {element['id']}: templated polygon corners cannot be safely saved"
-                for element in dynamic_geometry
-            )
-            # Never turn preview parameters into stored polygon coordinates.
-            automation_payload = (
-                None
-                if dynamic_geometry
-                else live_payload(self.hass, document, self.templates, forecasts)
-            )
-        else:
-            issues.extend(
-                f"{element['id']}: the polygon's corners are as of now in the live YAML"
-                for element in dynamic_geometry
-            )
-            automation_payload = live_payload(
-                self.hass,
-                document,
-                self.templates,
-                forecasts,
-            )
-        parameters = sorted(
-            {
-                name
+                f"{element['id']}: the polygon's corners are as of now in the payload without the design"
                 for element in document["elements"]
-                if element["type"] == "imagespec"
-                for name in missing_template_parameters(self.hass, element["spec"])
-            }
+                if element["type"] == "imagespec" and frozen_corners(element["spec"])
+            )
+        automation_payload = live_payload(
+            self.hass, document, self.templates, forecasts, preview_variables
         )
+        design_specs = {
+            element["id"]: element["spec"]
+            for element in document["elements"]
+            if element["type"] == "imagespec" and templates_in(element["spec"])
+        }
         result = export_yaml(
             payload,
             document["background"],
@@ -293,7 +276,7 @@ class Designer:
             issues,
             automation_payload,
             design=document,
-            design_variables={name: "{{ " + name + " }}" for name in parameters},
+            design_specs=design_specs,
         )
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
@@ -333,8 +316,22 @@ class Designer:
             defaults = {
                 "mode": "queued",
                 "max": 2,
+                "max_exceeded": "silent",
                 **(defaults or {}),
-                "triggers": [{"trigger": "state", "entity_id": entities}] if entities else [],
+                "triggers": (
+                    [
+                        {
+                            "trigger": "state",
+                            "entity_id": entities,
+                            # State changes only; skip attribute-only updates and
+                            # entering unavailable/unknown, so a tag keeps its last
+                            # reading and shows the new one once the entity returns.
+                            "not_to": ["unavailable", "unknown"],
+                        }
+                    ]
+                    if entities
+                    else []
+                ),
             }
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
 
