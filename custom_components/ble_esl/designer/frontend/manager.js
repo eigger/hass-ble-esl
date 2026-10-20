@@ -1,3 +1,4 @@
+import { decodeAutomationDesign } from "./editor/automation-source.js";
 import { t, language, bindStatic, localize, errorText } from "./i18n.js";
 import { hasStoredDraft } from "./editor/draft-store.js";
 import "./panel.js";
@@ -855,6 +856,8 @@ class EslManager extends HTMLElement {
         );
       let previewVariables = this.safeAutomationVariables(config, selectedPath);
       const prompted = new Set();
+      const design =
+        data.design === undefined ? null : decodeAutomationDesign(data.design);
       let imported;
       for (let attempt = 0; attempt < 64; attempt++) {
         imported = await editor.prepareAutomationPayload(
@@ -889,6 +892,12 @@ class EslManager extends HTMLElement {
         throw new Error(
           t(this.hass, "Too many preview parameters are missing."),
         );
+      if (design)
+        imported = {
+          elements: design.elements,
+          issues: [],
+          different_pixels: 0,
+        };
       if (
         imported.issues.length ||
         (data.payload.length && imported.different_pixels !== 0)
@@ -903,7 +912,7 @@ class EslManager extends HTMLElement {
         !editor.applyAutomationPayload(
           imported,
           data.payload,
-          data.background,
+          design?.background ?? data.background,
           data.payload.length === 0,
           entryId,
           token,
@@ -1167,6 +1176,12 @@ class EslManager extends HTMLElement {
           t(this.hass, "The selected write action is no longer available."),
         );
       data.payload = exported.payload_data;
+      if (exported.design_source !== undefined)
+        data.design = exported.design_source;
+      else delete data.design;
+      if (exported.design_variables)
+        data.design_variables = exported.design_variables;
+      else delete data.design_variables;
       await this.hass.callApi(
         "POST",
         `config/automation/config/${encodeURIComponent(source.configId)}`,

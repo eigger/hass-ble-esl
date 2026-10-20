@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "테스트 실행",
           "description": "기기에 전송하지 않고 이미지만 생성합니다."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "디바운스 재정의",
           "description": "이번 호출에 한해 설정된 디바운스 지연을 재정의합니다(0 = 즉시)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

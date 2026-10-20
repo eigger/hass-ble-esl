@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "Пробный запуск",
           "description": "Создаёт изображение без отправки на устройство."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "Переопределить антидребезг",
           "description": "Переопределяет настроенную задержку антидребезга для этого вызова (0 = немедленно)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

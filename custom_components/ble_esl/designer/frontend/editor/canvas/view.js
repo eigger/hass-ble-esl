@@ -42,12 +42,13 @@ export function renderLayerMarkup({
   hitBounds,
   layerImage = "",
   faded = false,
+  ghost = false,
   escape,
 }) {
   const hitArea = hitBounds
     ? `<div class="hit-area" style="left:${hitBounds[0]}px;top:${hitBounds[1]}px;width:${hitBounds[2] - hitBounds[0]}px;height:${hitBounds[3] - hitBounds[1]}px"></div>`
     : "";
-  return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""} ${selected ? "selected" : ""}" data-id="${escape(element.id)}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${escape(label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? layerImage : ""}<div class="content" ${faded ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}</div>`;
+  return `<div class="el ${element.visible === false ? "hidden-el" : ""} ${rendered ? "rendered" : ""}${ghost ? " ghost" : ""} ${selected ? "selected" : ""}" data-id="${escape(element.id)}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${escape(label || (element.type === "text" ? element.text : "") || element.type)}" style="left:${element.x}px;top:${element.y}px;width:${element.width}px;height:${element.height}px;color:${element.color};background:transparent;font-size:${element.font_size}px;text-align:${element.align};z-index:${index + 1}">${rendered ? layerImage : ""}<div class="content" ${faded ? 'style="opacity:.2"' : ""}>${content}</div>${hitArea}</div>`;
 }
 
 export function renderStageMarkup({

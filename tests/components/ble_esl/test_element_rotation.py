@@ -1,0 +1,188 @@
+"""Element transforms preserve live component behavior and exported pixels."""
+
+import base64
+from io import BytesIO
+
+from PIL import Image, ImageChops
+import pytest
+
+from custom_components.ble_esl.designer import KEY
+from custom_components.ble_esl.designer.layout import compile_payload, validate
+from custom_components.ble_esl.esl_ble.base import DevicePreset
+from custom_components.ble_esl.renderer import render_image
+
+
+def icon_document(rotation=90, visible=True):
+    return {
+        "version": 1,
+        "elements": [
+            {
+                "id": "laundry",
+                "type": "conditional_icon",
+                "entity_id": "binary_sensor.laundry",
+                "data_field": "state",
+                "icon": "mdi:help",
+                "icon_rules": [
+                    {"kind": "state", "state": "on", "icon": "mdi:washing-machine"},
+                    {"kind": "state", "state": "off", "icon": "mdi:washing-machine-off"},
+                ],
+                "x": 60,
+                "y": 30,
+                "width": 40,
+                "height": 30,
+                "rotation": rotation,
+                "visible": visible,
+            }
+        ],
+    }
+
+
+async def test_rotation_preserves_rules_and_refreshes_from_the_entity(hass):
+    preset = DevicePreset("test", "Test", 200, 100, "BWR")
+    hass.states.async_set("binary_sensor.laundry", "on")
+    doc = validate(icon_document(), preset)
+    payload = compile_payload(hass, doc)
+    assert doc["elements"][0]["type"] == "conditional_icon"
+    assert doc["elements"][0]["icon_rules"][0]["state"] == "on"
+    assert payload[0]["type"] == "group" and payload[0]["rotate"] == 90
+    assert payload[0]["elements"][0]["value"] == "mdi:washing-machine"
+    hass.states.async_set("binary_sensor.laundry", "off")
+    assert compile_payload(hass, doc)[0]["elements"][0]["value"] == "mdi:washing-machine-off"
+
+
+@pytest.mark.parametrize(
+    "kind", ["text", "sensor", "icon", "conditional_icon", "rectangle", "imagespec"]
+)
+async def test_rotation_is_available_for_every_component_format(hass, kind):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    raw = icon_document()
+    raw["elements"][0].update(
+        type=kind,
+        text="Laundry",
+        spec={"type": "rectangle", "fill": "red"} if kind == "imagespec" else {},
+    )
+    if kind != "imagespec":
+        del raw["elements"][0]["spec"]
+    doc = validate(raw, DevicePreset("test", "Test", 200, 100, "BWR"))
+    assert compile_payload(hass, doc)[0]["rotate"] == 90
+
+
+async def test_rotated_preview_matches_export_and_layer_bounds(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    designer = hass.data[KEY]
+    doc = icon_document()
+    result = await designer.preview(wolink_entry, doc)
+    image = Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))).convert("RGB")
+    expected = await hass.async_add_executor_job(
+        lambda: render_image(
+            hass, wolink_entry.runtime_data.preset, result["payload"], background="white"
+        )
+    )
+    assert ImageChops.difference(image, expected).getbbox() is None
+    assert result["layers"]["_bounds"]["laundry"] is not None
+
+
+async def test_hidden_icon_ghosts_are_editing_metadata_only(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "off")
+    result = await hass.data[KEY].preview(wolink_entry, icon_document(visible=False))
+    assert result["payload"] == []
+    image = Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))).convert("RGB")
+    assert image.getextrema() == ((255, 255),) * 3
+    assert result["layers"]["_ghosts"]["laundry"].startswith("data:image/png")
+    assert result["layers"]["_ghost_bounds"]["laundry"] is not None
+
+
+async def test_automation_keeps_original_component_configuration(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    source = icon_document(rotation=0)
+    source["elements"][0]["field_templates"] = {
+        "color": "{{ 'red' if value == 'on' else 'black' }}"
+    }
+    result = await hass.data[KEY].automation(wolink_entry, source)
+    action = result["automation"]["actions"][0]
+    assert "design" in action["data"], (
+        "Automation must carry the source design, not just today's pixels"
+    )
+
+
+async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    result = await hass.data[KEY].automation(wolink_entry, icon_document(rotation=0))
+    assert result["automation"]["triggers"] == [
+        {"trigger": "state", "entity_id": ["binary_sensor.laundry"]}
+    ]
+
+
+async def test_automation_write_resolves_current_rules_after_ha_renders_action_data(
+    hass, wolink_entry
+):
+    from homeassistant.helpers.template import Template
+
+    from custom_components.ble_esl.designer.automation_source import decode_design
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    hass.states.async_set("binary_sensor.laundry", "on")
+    source = icon_document()
+    source["elements"][0]["field_templates"] = {
+        "color": "{{ 'red' if value == 'on' else 'black' }}"
+    }
+    exported = await hass.data[KEY].automation(wolink_entry, source)
+    action = exported["automation"]["actions"][0]
+    data = {**action["data"], "design": Template(action["data"]["design"], hass).async_render()}
+    assert (
+        decode_design(data["design"])["elements"][0]["field_templates"]
+        == source["elements"][0]["field_templates"]
+    )
+    first = await build_write_job_from_data(hass, wolink_entry, data)
+    hass.states.async_set("binary_sensor.laundry", "off")
+    second = await build_write_job_from_data(hass, wolink_entry, data)
+    assert first.image_png != second.image_png
+
+
+async def test_input_state_change_runs_the_exported_automation(hass, wolink_entry, tag_writer):
+    from homeassistant.setup import async_setup_component
+
+    hass.states.async_set("binary_sensor.laundry", "off")
+    result = await hass.data[KEY].automation(wolink_entry, icon_document())
+    config = {"id": "live-tag", **result["automation"]}
+    assert await async_setup_component(hass, "automation", {"automation": [config]})
+    await hass.async_block_till_done()
+    hass.states.async_set("binary_sensor.laundry", "on")
+    await hass.async_block_till_done()
+    assert tag_writer.write_prepared.await_count == 1
+    hass.states.async_set("binary_sensor.laundry", "off")
+    await hass.async_block_till_done()
+    assert tag_writer.write_prepared.await_count == 2
+
+
+async def test_automation_passes_script_variables_to_native_templates(hass, wolink_entry):
+    from homeassistant.helpers.template import Template
+
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    source = {
+        "version": 1,
+        "elements": [
+            {
+                "id": "native",
+                "type": "imagespec",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 40,
+                "spec": {"type": "text", "value": "{{ message }}", "size": 24},
+            }
+        ],
+    }
+    result = await hass.data[KEY].automation(
+        wolink_entry, source, preview_variables={"message": "preview only"}
+    )
+    data = result["automation"]["actions"][0]["data"]
+    assert "preview only" not in data["design"]
+    assert data["design_variables"] == {"message": "{{ message }}"}
+    data["design_variables"] = {
+        key: Template(value, hass).async_render({"message": "Actual run"})
+        for key, value in data["design_variables"].items()
+    }
+    job = await build_write_job_from_data(hass, wolink_entry, data)
+    assert job.image_png

@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "试运行",
           "description": "仅生成图像，不发送到设备。"
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "覆盖防抖",
           "description": "仅本次调用覆盖已配置的防抖延迟（0 = 立即）。"
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

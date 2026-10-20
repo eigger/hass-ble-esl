@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "Simulação",
           "description": "Gera a imagem sem enviá-la ao dispositivo."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "Substituir debounce",
           "description": "Substitui o atraso de debounce configurado para esta chamada (0 = imediato)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

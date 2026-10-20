@@ -1,12 +1,13 @@
 """Render the display exactly as a write would, plus movable editor layers."""
 
 import base64
+from copy import deepcopy
 from io import BytesIO
 
 from PIL import Image, ImageChops
 
 from ..renderer import render_image
-from .layout import compile_payload, resolve_component
+from .layout import compile_payload, resolve_component, sensor_icon
 from .specs import resolve_templates
 
 
@@ -33,6 +34,27 @@ def snapshot_layers(hass, document, templates, forecasts, preview_variables=None
             forecasts,
             preview_variables=preview_variables,
         )
+        if element["type"] in ("icon", "conditional_icon") and (
+            not element["visible"] or not element["icon"]
+        ):
+            ghost = deepcopy(element)
+            state = hass.states.get(element["entity_id"])
+            ghost["visible"] = True
+            ghost["icon"] = element["icon"] or next(
+                (
+                    rule["icon"]
+                    for rule in element["icon_rules"]
+                    if rule["icon"] and rule["icon"] != "{{icon}}"
+                ),
+                sensor_icon(state) if state is not None else "mdi:help-circle-outline",
+            )
+            element["_ghost_payload"] = compile_payload(
+                hass,
+                {"elements": [ghost]},
+                templates,
+                forecasts,
+                preview_variables=preview_variables,
+            )
         layers.append((element, payload))
     return layers
 
@@ -78,9 +100,24 @@ def render_document(hass, preset, document, payload, snapshots):
     masks, so covered pixels are exact.
     """
     canvas = render_image(hass, preset, payload, background=document["background"])
-    previews = {"_bounds": {}, "_offsets": {}, "_values": {}, "_dependencies": {}}
+    previews = {
+        "_bounds": {},
+        "_offsets": {},
+        "_values": {},
+        "_dependencies": {},
+        "_ghosts": {},
+        "_ghost_bounds": {},
+        "_ghost_offsets": {},
+    }
     for element, element_payload in snapshots:
         previews["_values"][element["id"]] = element.get("_templated_fields", {})
         previews["_dependencies"][element["id"]] = element.get("_template_entities", [])
         previews[element["id"]] = element_layer(hass, preset, element, element_payload, previews)
+        if "_ghost_payload" in element:
+            metadata = {"_bounds": {}, "_offsets": {}}
+            previews["_ghosts"][element["id"]] = element_layer(
+                hass, preset, element, element["_ghost_payload"], metadata
+            )
+            previews["_ghost_bounds"].update(metadata["_bounds"])
+            previews["_ghost_offsets"].update(metadata["_offsets"])
     return canvas, previews

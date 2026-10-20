@@ -1843,3 +1843,80 @@ test("manager header fits narrow mobile widths without clipping controls", async
   expect(bounds.height).toBeLessThanOrEqual(57);
   expect(bounds.childrenFit).toBe(true);
 });
+
+test("automation editing keeps component rules and writes the source back", async ({
+  page,
+  request,
+}) => {
+  const source = {
+    version: 1,
+    background: "white",
+    elements: [
+      {
+        id: "conditional-source",
+        type: "conditional_icon",
+        x: 10,
+        y: 10,
+        width: 40,
+        height: 40,
+        entity_id: "binary_sensor.laundry_finished",
+        icon: "mdi:washing-machine",
+        rotation: 90,
+        icon_rules: [{ kind: "state", state: "on", icon: "mdi:check" }],
+        field_templates: { color: "{{ 'red' if value == 'on' else 'black' }}" },
+      },
+    ],
+  };
+  const design =
+    "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
+  await request.post("/api/config/automation/config/morning", {
+    data: {
+      id: "morning",
+      alias: "Morning",
+      triggers: [],
+      conditions: [],
+      actions: [
+        {
+          action: "ble_esl.write",
+          target: { device_id: "demo-device-0" },
+          data: {
+            background: "white",
+            payload: [
+              {
+                type: "icon",
+                value: "mdi:washing-machine",
+                x: 10,
+                y: 10,
+                size: 40,
+              },
+            ],
+            design,
+          },
+        },
+      ],
+      mode: "single",
+    },
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements[0]),
+  ).toMatchObject(source.elements[0]);
+  await page.getByRole("button", { name: "Save to automation" }).click();
+  await expect(page.locator(".message")).toContainText("Automation saved.");
+  const response = await request.get("/api/config/automation/config/morning");
+  const saved = await response.json();
+  const decoded = JSON.parse(
+    JSON.parse(saved.actions[0].data.design.slice(3, -15)),
+  );
+  expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+});

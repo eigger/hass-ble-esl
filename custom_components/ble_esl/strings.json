@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "Dry Run",
           "description": "Generate the image without sending it to the device."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "Debounce Override",
           "description": "Override the configured debounce delay for this call (0 = immediate)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

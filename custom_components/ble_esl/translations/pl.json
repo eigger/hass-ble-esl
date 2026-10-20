@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "Próba",
           "description": "Generuje obraz bez wysyłania go do urządzenia."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "Nadpisz odbicie",
           "description": "Nadpisuje skonfigurowane opóźnienie odbicia dla tego wywołania (0 = natychmiast)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

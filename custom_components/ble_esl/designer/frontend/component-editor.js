@@ -1,3 +1,4 @@
+import { renderElementRotation } from "./editor/rotation-control.js";
 import { t, language, rerenderWithDialogs } from "./i18n.js";
 import "./dynamic-fields.js";
 import { clone, newElement } from "./model.js";
@@ -127,7 +128,7 @@ export class ComponentEditor extends HTMLElement {
       ${numeric ? `<div class="pair"><label>${t(this.hass, "Minimum")}<input id="min_value" aria-label="${t(this.hass, "Component minimum")}" type="number" value="${d.min_value ?? 0}"></label><label>${t(this.hass, "Maximum")}<input id="max_value" aria-label="${t(this.hass, "Component maximum")}" type="number" value="${d.max_value ?? 100}"></label></div>${!d.data_field ? `<label>${t(this.hass, "Value")}<input id="value" type="number" value="${d.value ?? 0}"></label>` : ""}` : ""}
       ${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].includes(d.type) ? `<label>${t(this.hass, "Shape")}<select id="shape" aria-label="${t(this.hass, "Component shape")}">${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].map((type) => `<option value="${type}" ${type === d.type ? "selected" : ""}>${type.replaceAll("_", " ")}</option>`).join("")}</select></label>` : ""}
       ${d.type === "image" ? `<label>${t(this.hass, "Image")}<input id="upload" type="file" accept="image/*"></label>` : ""}
-      <div class="pair"><label>${t(this.hass, "Width")}<input id="width" aria-label="${t(this.hass, "Component width")}" type="number" min="1" value="${d.width}"></label><label>${t(this.hass, "Height")}<input id="height" aria-label="${t(this.hass, "Component height")}" type="number" min="1" value="${d.height}"></label></div></section><section class="preview"><strong>${t(this.hass, "Live preview")}</strong><div class="state" id="current-state"></div><div class="pixels"><img id="pixels" alt="${t(this.hass, "Component pixel preview")}"></div><div class="error" role="status"></div></section></div><footer><button id="cancel">${t(this.hass, "Cancel")}</button><button id="apply" class="primary">${this.original ? t(this.hass, "Apply") : t(this.hass, "Add to display")}</button></footer></dialog>`;
+      ${renderElementRotation(d, (message) => t(this.hass, message))}<div class="pair"><label>${t(this.hass, "Width")}<input id="width" aria-label="${t(this.hass, "Component width")}" type="number" min="1" value="${d.width}"></label><label>${t(this.hass, "Height")}<input id="height" aria-label="${t(this.hass, "Component height")}" type="number" min="1" value="${d.height}"></label></div></section><section class="preview"><strong>${t(this.hass, "Live preview")}</strong><div class="state" id="current-state"></div><div class="pixels"><img id="pixels" alt="${t(this.hass, "Component pixel preview")}"></div><div class="error" role="status"></div></section></div><footer><button id="cancel">${t(this.hass, "Cancel")}</button><button id="apply" class="primary">${this.original ? t(this.hass, "Apply") : t(this.hass, "Add to display")}</button></footer></dialog>`;
     const root = this.shadowRoot;
     root.querySelector("dialog").addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -160,6 +161,10 @@ export class ComponentEditor extends HTMLElement {
       d.type = event.target.value;
       this.redraw();
     });
+    root.querySelector('[data-property="rotation"]').onchange = (event) => {
+      d.rotation = Number(event.target.value);
+      this.queuePreview();
+    };
     root.querySelector("#field").onchange = (event) => {
       d.data_field = event.target.value;
       if (d.data_field === "attribute")

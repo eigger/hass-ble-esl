@@ -144,7 +144,11 @@ export function adoptLayerRecords({
 // undefined means unknown or frame-based, null means the renderer found no
 // visible content, and an array is the visible box relative to the frame.
 export function visibleBounds(element, { record, layerBounds }) {
-  if (element.type === "text" || element.type === "image") return undefined;
+  if (
+    !element.rotation &&
+    (element.type === "text" || element.type === "image")
+  )
+    return undefined;
   if (!record || record.shape !== elementShape(element)) return undefined;
 
   const dw = element.width - record.size[0];

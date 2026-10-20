@@ -1,3 +1,4 @@
+import { renderElementRotation } from "../rotation-control.js";
 export function renderLegacyElementProperties(element, dependencies) {
   const {
     translate,
@@ -34,7 +35,7 @@ export function renderLegacyElementProperties(element, dependencies) {
     translate("Position & size (px)"),
     ["x", "y", "width", "height"]
       .map((key) => field(key, key[0].toUpperCase() + key.slice(1), "number"))
-      .join(""),
+      .join("") + renderElementRotation(element, translate),
   );
   let html = "";
   let style = "";
