@@ -16,7 +16,11 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
-**Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring. It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
+**Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.**
+
+BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.
+
+It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
 | 2.1" (250×128) | 2.9" (296×128) | 4.2" (400×300) | 10.2" (960×640) |
 |---|---|---|---|
@@ -37,7 +41,9 @@ BLE protocol families, sold under these brands:
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7" and 4.2" BWRY and 2.9" BWR verified on hardware; other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
-Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**. Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
+Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**.
+
+Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
 Key features:
 
@@ -67,9 +73,15 @@ Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the n
 
 ### Bluetooth
 
-For remote Bluetooth, use a **Bluetooth proxy** with **active connections** (`bluetooth_proxy: active: true`; `esp32_ble_tracker: scan_parameters: active: true` is the documented starting scan configuration). Passive scanning can still support GATT connections; connection capability is controlled separately by `bluetooth_proxy.active`. A local adapter that works reliably can also be used. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
+For remote Bluetooth, use a **Bluetooth proxy** with **active connections** (`bluetooth_proxy: active: true`; `esp32_ble_tracker: scan_parameters: active: true` is the documented starting scan configuration). A local adapter that works reliably can also be used.
 
-ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
+Passive scanning can still support GATT connections; connection capability is controlled separately by `bluetooth_proxy.active`. Keep the scan interval at its default.
+
+A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
+
+- [BLE ESL Bluetooth setup](docs/bluetooth.md): ESPHome snippet and integration-specific guidance.
+- [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md): shared setup, hardware recommendations and connection troubleshooting.
+- [Troubleshooting](docs/troubleshooting.md): tag-specific conditions and failure sensors.
 
 ## Quick start
 
@@ -88,7 +100,11 @@ data:
       size: 40
 ```
 
-The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity. See the [payload guide](docs/payload.md) for this integration's rendering options and complete action examples. More: [usage overview](docs/usage.md), ready-made layouts in [`examples/`](examples/README.md), the visual [Designer guide](docs/designer.md).
+The tag refreshes in a few seconds.
+
+Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity.
+
+See the [payload guide](docs/payload.md) for rendering options and complete action examples, and the [documentation index](#documentation) for layouts, usage and the visual designer.
 
 ## Limits and warnings
 
@@ -115,14 +131,12 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 | Examples | [examples/README.md](examples/README.md) | — |
 | Development: tests, verified environments, lint, adding a protocol | [docs/development.md](docs/development.md) | — |
 
-Related projects: [imagespec](https://github.com/eigger/imagespec) (the renderer behind `payload:`), [Stash](https://github.com/eigger/stash) (home inventory that prints labels to ESL tags), [hass-gicisky](https://github.com/eigger/hass-gicisky) (archived predecessor) — see [docs/usage.md](docs/usage.md#related-projects).
-
-### Reporting and device help
+## Troubleshooting and diagnostics
 
 - A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
-- Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (tag MAC redacted; check the rest before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting)).
-- Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
-- Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
+- When reporting a bug, attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters.
+- The tag MAC is redacted, but check the remaining data before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting).
+- Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Share the result through the support links below to help verify presets.
 
 <!-- hass-standards:support:start -->
 ## Support
