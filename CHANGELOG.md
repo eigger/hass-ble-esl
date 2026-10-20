@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0
+
+### Added
+
+- Designer elements can be rotated (0/90/180/270°) without converting them to imagespec; the rotated element keeps its live entity bindings and conditional rules.
+
+### Changed
+
+- Automations made in the designer keep component rules live: the write action carries the original design (`design`) and re-renders it with current entity states on every run. Templated imagespec elements are passed as `design_specs`, which Home Assistant renders with the automation's own variables such as `trigger`.
+- New designer automations trigger on state changes only: attribute-only updates and a change to `unavailable`/`unknown` no longer rewrite the tag, and overflow runs are dropped silently.
+- Invalid `design` or `design_specs` input is reported as a service validation error.
+
 ## 1.4.1
 
 ### Security
