@@ -568,7 +568,7 @@ def resolve_component(hass, element):
     return element, state
 
 
-def live_payload(hass, document, templates=None, forecasts=None):
+def live_payload(hass, document, templates=None, forecasts=None, preview_variables=None):
     """The payload with imagespec templates left as written, for an automation.
 
     None when no element has one: the payload as it is then already is it.
@@ -578,7 +578,14 @@ def live_payload(hass, document, templates=None, forecasts=None):
         for element in document["elements"]
     ):
         return None
-    return compile_payload(hass, document, templates, forecasts, keep_templates=True)
+    return compile_payload(
+        hass,
+        document,
+        templates,
+        forecasts,
+        keep_templates=True,
+        preview_variables=preview_variables,
+    )
 
 
 # Pixel settings that shrink with a sensor template drawn smaller than designed.

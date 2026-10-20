@@ -48,7 +48,6 @@ from .rendering import render_document, snapshot_layers
 from .specs import (
     MissingTemplateParameter,
     describe,
-    frozen_corners,
     missing_template_parameters,
     resolve_templates,
     templates_in,
@@ -252,33 +251,11 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
-        dynamic_geometry = [
-            element
-            for element in document["elements"]
-            if element["type"] == "imagespec" and frozen_corners(element["spec"])
-        ]
-        if automation_edit:
-            issues.extend(
-                f"blocking: {element['id']}: templated polygon corners cannot be safely saved"
-                for element in dynamic_geometry
-            )
-            # Never turn preview parameters into stored polygon coordinates.
-            automation_payload = (
-                None
-                if dynamic_geometry
-                else live_payload(self.hass, document, self.templates, forecasts)
-            )
-        else:
-            issues.extend(
-                f"{element['id']}: the polygon's corners are as of now in the live YAML"
-                for element in dynamic_geometry
-            )
-            automation_payload = live_payload(
-                self.hass,
-                document,
-                self.templates,
-                forecasts,
-            )
+        # The action carries the design, so a templated polygon is rendered live by
+        # the automation; the payload beside it is only a readable snapshot.
+        automation_payload = live_payload(
+            self.hass, document, self.templates, forecasts, preview_variables
+        )
         design_specs = {
             element["id"]: element["spec"]
             for element in document["elements"]
@@ -339,9 +316,10 @@ class Designer:
                             "trigger": "state",
                             "entity_id": entities,
                             # State changes only; skip attribute-only updates and
-                            # the unavailable/unknown flips around a restart.
-                            "to": None,
+                            # entering or leaving unavailable/unknown, so a tag
+                            # keeps its last real reading.
                             "not_from": ["unavailable", "unknown"],
+                            "not_to": ["unavailable", "unknown"],
                         }
                     ]
                     if entities

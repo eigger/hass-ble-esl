@@ -100,6 +100,8 @@ def export_yaml(
     }
     if design is not None:
         service["data"]["design"] = encode_design(plain(design))
+    if design_specs:
+        service["data"]["design_specs"] = plain(design_specs)
     payload_errors = [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)]
     scalar_errors = _json_value_errors(payload)
     if live is not None:
@@ -130,7 +132,7 @@ def export_yaml(
     if design is not None:
         result["design_source"] = service["data"]["design"]
     if design_specs:
-        result["design_specs"] = plain(design_specs)
+        result["design_specs"] = service["data"]["design_specs"]
     if live is not None:
         result["live_payload"] = dump(live)
         result["live_service"] = dump(
@@ -139,7 +141,6 @@ def export_yaml(
                 "data": {
                     **service["data"],
                     "payload": live,
-                    **({"design_specs": result["design_specs"]} if design_specs else {}),
                 },
             }
         )
