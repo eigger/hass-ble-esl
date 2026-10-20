@@ -1157,7 +1157,6 @@ async def test_automation_draft_uses_current_design_and_registered_device(hass, 
         {
             "trigger": "state",
             "entity_id": ["sensor.room_temperature"],
-            "not_from": ["unavailable", "unknown"],
             "not_to": ["unavailable", "unknown"],
         }
     ]

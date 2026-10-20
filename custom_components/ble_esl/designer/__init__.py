@@ -48,6 +48,7 @@ from .rendering import render_document, snapshot_layers
 from .specs import (
     MissingTemplateParameter,
     describe,
+    frozen_corners,
     missing_template_parameters,
     resolve_templates,
     templates_in,
@@ -253,6 +254,13 @@ class Designer:
             issues.append(f"render: {err}")
         # The action carries the design, so a templated polygon is rendered live by
         # the automation; the payload beside it is only a readable snapshot.
+        if not automation_edit:
+            # The design keeps polygon corners live; a copied payload alone cannot.
+            issues.extend(
+                f"{element['id']}: the polygon's corners are as of now in the payload without the design"
+                for element in document["elements"]
+                if element["type"] == "imagespec" and frozen_corners(element["spec"])
+            )
         automation_payload = live_payload(
             self.hass, document, self.templates, forecasts, preview_variables
         )
@@ -316,9 +324,8 @@ class Designer:
                             "trigger": "state",
                             "entity_id": entities,
                             # State changes only; skip attribute-only updates and
-                            # entering or leaving unavailable/unknown, so a tag
-                            # keeps its last real reading.
-                            "not_from": ["unavailable", "unknown"],
+                            # entering unavailable/unknown, so a tag keeps its last
+                            # reading and shows the new one once the entity returns.
                             "not_to": ["unavailable", "unknown"],
                         }
                     ]

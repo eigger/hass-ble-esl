@@ -113,7 +113,6 @@ async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
         {
             "trigger": "state",
             "entity_id": ["binary_sensor.laundry"],
-            "not_from": ["unavailable", "unknown"],
             "not_to": ["unavailable", "unknown"],
         }
     ]
