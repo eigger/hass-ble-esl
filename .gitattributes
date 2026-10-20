@@ -1,0 +1,5 @@
+# Central templates and managed README rendering require exact LF content.
+/README.md text eol=lf
+/README.ko.md text eol=lf
+/tests/conftest.py text eol=lf
+/tests/components/ble_esl/test_payload_examples.py text eol=lf

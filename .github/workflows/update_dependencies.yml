@@ -1,4 +1,4 @@
-# Shared standards: eigger/hass-repo-standards @ 7acd9ca (reviewed 2026-10-18).
+# Shared standards: eigger/hass-repo-standards @ 0ec3111 (reviewed 2026-10-21).
 name: Update dependencies
 'on':
   schedule:
@@ -11,11 +11,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@7acd9cab6ac774e4695f2c962e3d88b5faa4620d
+    uses: eigger/hass-repo-standards/.github/workflows/dependency-update.yml@0ec31111a81b0ee5702f1d8a17f03616a10a5db6
     with:
+      standards-ref: 0ec31111a81b0ee5702f1d8a17f03616a10a5db6
       domain: ble_esl
       packages: '["imagespec", "blesession"]'
       python-version: '3.14'
       test-profile: ha
       ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
-      validation-command: python -m ruff check . && python -m ruff format --check . && python -m pytest tests/components/ble_esl/ -v --timeout 120
+      validation-command: python -m ruff check . && python -m ruff format --check . && python -m pytest tests/components/ble_esl/ -v --timeout 120 --ignore=tests/components/ble_esl/test_payload_examples.py

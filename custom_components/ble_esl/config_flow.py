@@ -286,10 +286,10 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return OptionsFlowHandler()
+        return BleEslOptionsFlow()
 
 
-class OptionsFlowHandler(OptionsFlowWithReload):
+class BleEslOptionsFlow(OptionsFlowWithReload):
     """Handle options flow for BLE ESL."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

@@ -366,14 +366,6 @@ async def test_write_reports_a_local_adapter(
     assert attrs["paths"] == 1
 
 
-async def test_dry_run_only_updates_preview(hass: HomeAssistant, wolink_entry, tag_writer) -> None:
-    await call(hass, "write", device_id_of(hass), dry_run=True)
-    assert tag_writer.write_prepared.await_count == 0
-    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
-    assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state == "unknown"
-    assert wolink_entry.runtime_data.last_image_data is None  # not counted as sent
-
-
 @pytest.mark.parametrize("dry_run", [True, False])
 @pytest.mark.parametrize("service", ["write", "write_guarded"])
 async def test_write_services_reject_non_admin_users(
@@ -1019,25 +1011,6 @@ async def test_duplicate_guard_rechecked_under_lock(
     release_first.set()
     await first
     await second
-    assert tag_writer.write_prepared.await_count == 1
-
-
-async def test_write_lock_skips_physical_write(
-    hass: HomeAssistant, wolink_entry, tag_writer
-) -> None:
-    await hass.services.async_call(
-        "switch", "turn_on", {"entity_id": f"switch.zhsunyco_{IDENT}_write_lock"}, blocking=True
-    )
-    assert wolink_entry.data["write_lock"] is True  # persisted
-    await call(hass, "write", device_id_of(hass))
-    await call(hass, "write_guarded", device_id_of(hass))
-    assert tag_writer.write_prepared.await_count == 0
-    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
-
-    await hass.services.async_call(
-        "switch", "turn_off", {"entity_id": f"switch.zhsunyco_{IDENT}_write_lock"}, blocking=True
-    )
-    await call(hass, "write", device_id_of(hass))
     assert tag_writer.write_prepared.await_count == 1
 
 

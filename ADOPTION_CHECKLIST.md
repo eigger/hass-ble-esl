@@ -1,5 +1,43 @@
 # 공통 규칙 적용 체크리스트
 
+## 2026-10-21 재검토
+
+이번 검토 대상은 main `b63733b`에서 시작한 로컬 변경이며, 검토 표준은 `0ec31111a81b0ee5702f1d8a17f03616a10a5db6`입니다. 아래 2026-10-18 채택 표는 이력으로 보존하며 이번 변경의 검증 결과와 구분합니다.
+
+| 항목 | 상태 | 이번 검토 근거 |
+|---|---|---|
+| GOV-01, GOV-02 | PASS | 최신 원격 main full SHA 확인, 깨끗한 검토 checkout, STANDARDS.md 기준 SHA 기록 |
+| GOV-03 | PASS | CHANGELOG Unreleased에 공통 기준·문서·CI·categories 변경 영향 기록 |
+| GOV-04 | TODO | 최신 중앙 현황표의 해당 행을 별도 로컬 checkout `artifacts/standards-status-20261021`에서 갱신. 기존 중앙 checkout의 사용자 변경 보존. 중앙 원격 미반영 |
+| GOV-05 | PASS | 구현 implement_docs/implement_contract와 독립 review_verify 분리. README 제목 부분 일치 교체 오류를 독립 리뷰에서 발견해 복구하고 재검사. 테스트 기존 482함수 AST 보존도 독립 확인 |
+| HACS-03 | PASS | [공식 기본 목록](https://github.com/hacs/default/blob/master/integration)에 `eigger/hass-ble-esl` 포함, 2026-10-21 확인 |
+| HACS-01, TEST-04 | PASS | 최소 지원 HA 2025.12.0, current HA 2026.10.1 유지. 정확한 두 환경에서 실제 통합 로딩·payload 계약·전체 회귀 통과 |
+| HA-02 | PASS | 실제 전자종이 정보 표시 용도로 `productivity_information` 선택. 공식 Core taxonomy 확인, 근거를 metadata/STANDARDS에 기록. 독립 리뷰에서 제품 목적과 일치 확인 |
+| DOC-01…DOC-07, TEST-08 | PASS | 중앙 README·설치 배지·Bluetooth 문서와 테스트 구조 검사 통과. 양언어 제목·본문·기기별 상세 보존을 독립 대조. 기존 482개 테스트 함수 보존, 중앙 collector 1개 추가 |
+| DOC-08 | PASS | 예제 2개를 각 current·정확한 하한·최소 HA 환경에서 실제 entry/service schema·repair_yaml11_keys·production render_image 및 설치된 imagespec API로 검증. 아래 환경 표와 로그 참조 |
+| CI-01…CI-12 | TODO | 공용 SHA/standards-ref·기존 이벤트·브라우저 job 보존, actionlint 1.7.12 및 중앙 checker 통과. 이번 변경 원격 CI·updater 실제 PR 실행 미검증 |
+| HACS-05 | TODO | 이번 변경의 원격 HACS/Hassfest 미실행. 과거 run을 재사용하지 않음 |
+| REL-01…REL-03 | N/A | 이번 작업에서 버전·태그·릴리스를 생성하지 않음 |
+
+중앙 원본 자체는 `python -X utf8 artifacts/standards-20261021/scripts/check_repository.py`로 검사하여 `Checked 37 documents, 7 workflows, JSON and caller input contracts`를 확인했습니다. 대상 통합의 실제 실행 결과는 아래에 기록합니다. Windows clone의 CRLF로 인한 원본 렌더러 검사 오류는 깨끗한 검토 checkout을 HEAD blob과 같은 LF로 복원한 뒤 재검증했습니다. 대상에는 `.gitattributes`로 양언어 README·중앙 conftest·payload scaffold 네 파일만 LF를 고정했습니다.
+
+### 이번 검증 환경과 결과
+
+| 환경 | 실제 Python / HA / 테스트 plugin | 실제 imagespec / blesession | payload | 일반 회귀 |
+|---|---|---|---|---|
+| current | 3.14.7 / 2026.10.1 / 0.13.372 | 1.1.0 / 0.9.0 | 2 passed | 1143 passed, 3 skipped (109.02s) |
+| current, 정확한 라이브러리 하한 | 3.14.7 / 2026.10.1 / 0.13.372 | 1.1.0 / 0.9.0 | 2 passed | 1143 passed, 3 skipped (109.19s) |
+| 최소 HA | 3.13.15 / 2025.12.0 / 0.13.298 | 1.1.0 / 0.9.0 | 2 passed | 1143 passed, 3 skipped (45.07s) |
+
+- 독립 검증은 WSL Ubuntu의 분리 환경 `/home/eigger/hass-ble-esl-review-20261021/{current,current-min,min-ha}`에서 수행했습니다. 중앙 `actions/python-environment/install.py`를 사용하며 설치 호출만 uv resolver로 연결한 재현 스크립트와 명령 결과는 `artifacts/review-20261021/`에 있습니다. 각 환경의 실제 HA/plugin/하한 assertion과 `pip check` 통과를 확인했습니다. 패키지를 검증 후 덮어 설치하지 않았습니다.
+- 최소 HA의 `lru-dict==1.3.0` C 확장 빌드에는 격리 Zig 컴파일러와 해당 링커가 지원하지 않는 `--exclude-libs,ALL`만 제거하는 빌드 wrapper를 사용했습니다. Python/HA/라이브러리 지원 선언이나 패키지 소스는 바꾸지 않았습니다. Windows/WSL 임시 경로 및 네이티브 빌드 실패 로그도 보존했습니다.
+- `python -m ruff check .`, `python -m ruff format --check .`(157 files)는 선언된 Ruff 0.17.1 격리 환경에서 재검증했습니다. actionlint 1.7.12의 전체 workflow 문법 검사, `check_integration.py .`, `sync_badges.py . --check`, `git diff --check`도 통과했습니다. README 손상 수정 후 다시 검사했습니다.
+- 실행 명령은 WSL의 저장소 루트에서 `/home/eigger/hass-ble-esl-review-20261021/MODE/bin/python artifacts/review-20261021/run_verify.py MODE`이며 MODE는 `current`, `current-min`, `min-ha`입니다. runner는 중앙 `run_payload_contract.py` 통과 후 `python -m pytest tests/components/ble_esl/ -v --timeout 120 --ignore=tests/components/ble_esl/test_payload_examples.py`를 실행합니다. 독립 보고는 `artifacts/review-20261021/REVIEW.md`, 환경별 `home-setup.log`·`verify.log`·`payload.log`·`regression.log`에 있습니다. 이 로그는 로컬 artifacts이며 Git에 포함하지 않았습니다.
+- 세 skip은 기존 `color_check`, `message`, `wifi` 디자인 템플릿에 automation이 없는 케이스입니다. 새 payload 예제는 skip 없이 모두 통과했습니다. current resolver 결과와 정확한 하한의 실제 설치값이 같지만 두 환경을 각각 검증했습니다.
+- 실제 장치·HA UI·브라우저 테스트·Docker 기반 HACS/Hassfest는 이번에 실행하지 않았습니다. 공용 CI의 해당 job과 기존 브라우저 job은 보존했습니다. 중앙 현황은 로컬 초안만 갱신했으며 원격에 반영하지 않았습니다. 아래 과거 HA-01/08·HA-10·HA-11·HA-13 예외는 별도 동작 변경 없이 유지하며, 이번 작업은 통합 전체의 새 품질 인증이 아닙니다.
+
+## 이전 채택 기록 (2026-10-18)
+
 [사용법과 판정 기준](https://github.com/eigger/hass-repo-standards/blob/7acd9cab6ac774e4695f2c962e3d88b5faa4620d/docs/checklist.md). 상태: `TODO` 미확인·미충족 / `PASS` 근거로 확인 / `EXCEPTION` / `N/A`. 원격 CI는 아직 실행되지 않았으므로 CI에 의존하는 항목은 `TODO`입니다.
 
 ## 검토 대상

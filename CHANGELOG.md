@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Refresh the shared repository standards, README templates, Bluetooth troubleshooting, and reusable CI at the reviewed 2026-10-21 standards commit.
+- Show the verified HACS Default status, official HACS Downloads badge, and direct HACS repository installation link in both README languages.
+- Document executable payload examples and validate them through Home Assistant and the installed imagespec renderer in current and minimum dependency environments.
+- Classify the electronic shelf label displays as `productivity_information` in the integration manifest.
+
 ## 1.5.0
 
 ### Added

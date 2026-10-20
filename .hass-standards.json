@@ -5,14 +5,101 @@
     "README.md",
     "README.ko.md"
   ],
-  "hacs": "custom",
+  "hacs": "default",
   "release": true,
   "installation_link": "#installation",
-  "hacs_default_evidence": "",
+  "hacs_default_evidence": "https://github.com/hacs/default/blob/master/integration includes eigger/hass-ble-esl; checked 2026-10-21.",
   "tests_workflow": "tests.yml",
   "validate_workflow": "validate.yml",
   "installation_links": {
     "README.md": "#installation",
     "README.ko.md": "#설치"
+  },
+  "readme": {
+    "title": "hass-ble-esl",
+    "descriptions": {
+      "en": "Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration",
+      "ko": "범용 BLE 전자가격표시기(ESL) Home Assistant 통합구성요소"
+    },
+    "issues": true,
+    "discussions": true,
+    "license_name": "MIT License",
+    "license_notices": {
+      "en": [],
+      "ko": []
+    },
+    "related_projects": [
+      {
+        "name": "imagespec",
+        "url": "https://github.com/eigger/imagespec",
+        "description": {
+          "en": "The renderer behind `payload:`.",
+          "ko": "`payload:` 뒤의 렌더러입니다."
+        }
+      },
+      {
+        "name": "Stash",
+        "url": "https://github.com/eigger/stash",
+        "description": {
+          "en": "Home inventory that prints labels to ESL tags.",
+          "ko": "ESL 태그에 라벨을 출력하는 가정 재고 관리자입니다."
+        }
+      },
+      {
+        "name": "hass-gicisky",
+        "url": "https://github.com/eigger/hass-gicisky",
+        "description": {
+          "en": "Archived predecessor of BLE ESL.",
+          "ko": "보관 처리된 BLE ESL의 전신입니다."
+        }
+      }
+    ]
+  },
+  "categories_review": {
+    "value": [
+      "productivity_information"
+    ],
+    "integration_type": "device",
+    "source": "README.md: battery-powered e-paper displays show Home Assistant data, calendars, weather, sensor readings and photos; custom_components/ble_esl/renderer.py prepares display images. Reviewed 2026-10-21 against official taxonomy https://github.com/home-assistant/core/blob/ec18d8b25d1ee39aa8b85a72a170e42bee33228c/homeassistant/generated/integration_categories.json . General information displays are the product purpose; sensor/switch platforms are auxiliary controls."
+  },
+  "payload": {
+    "examples": [
+      {
+        "path": "examples/payload/minimal.yaml",
+        "payload_path": [
+          "data",
+          "payload"
+        ],
+        "payload_format": "list",
+        "expected_size": [
+          296,
+          128
+        ],
+        "expected_palette": [
+          "#000000",
+          "#ffffff",
+          "#ff0000",
+          "#ffff00"
+        ]
+      },
+      {
+        "path": "examples/payload/template.yaml",
+        "payload_path": [
+          "data",
+          "payload"
+        ],
+        "payload_format": "list",
+        "expected_size": [
+          296,
+          128
+        ],
+        "expected_palette": [
+          "#000000",
+          "#ffffff",
+          "#ff0000",
+          "#ffff00"
+        ]
+      }
+    ]
   }
 }

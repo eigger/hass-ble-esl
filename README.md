@@ -1,17 +1,20 @@
+<!-- hass-standards:header:start -->
 # hass-ble-esl
-<!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#installation)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
-<!-- hass-standards:badges:end -->
-
-English | **[한국어](README.ko.md)**
 
 Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
+
+**English** | [한국어](README.ko.md)
+
+<!-- hass-standards:badges:start -->
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat)](https://github.com/eigger/hass-ble-esl/releases)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5?style=flat)](#installation)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat)](LICENSE)
+[![HACS Downloads](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=HACS+Downloads&query=%24%5B%3F%28%40.full_name%3D%3D%22eigger%2Fhass-ble-esl%22%29%5D.downloads&url=https%3A%2F%2Fdata-v2.hacs.xyz%2Fintegration%2Fdata.json)](https://www.hacs.xyz/)
+<!-- hass-standards:badges:end -->
+<!-- hass-standards:header:end -->
 
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.** BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring. It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
@@ -50,7 +53,11 @@ Key features:
 
 ## Installation
 
-1. Install via **HACS** (custom repository `eigger/hass-ble-esl`), or copy `custom_components/ble_esl` into your config.
+<!-- hass-standards:installation:start -->
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
+<!-- hass-standards:installation:end -->
+
+1. Install **BLE ESL** from the default **HACS** integration catalog, or copy `custom_components/ble_esl` into your config.
 2. Restart Home Assistant.
 3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
 
@@ -60,9 +67,9 @@ Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the n
 
 ### Bluetooth
 
-Use a **Bluetooth proxy** rather than the host's built-in adapter whenever you can, and set it to **active** (`bluetooth_proxy: active: true`, plus `esp32_ble_tracker: scan_parameters: active: true` as the starting configuration) — most write problems trace back to a passive proxy or a weak adapter. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
+For remote Bluetooth, use a **Bluetooth proxy** with **active connections** (`bluetooth_proxy: active: true`; `esp32_ble_tracker: scan_parameters: active: true` is the documented starting scan configuration). Passive scanning can still support GATT connections; connection capability is controlled separately by `bluetooth_proxy.active`. A local adapter that works reliably can also be used. Keep the scan interval at its default. A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
 
-ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.md). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
+ESPHome snippet, hardware suggestions and BLE ESL specifics: [docs/bluetooth.md](docs/bluetooth.md). Shared proxy setup, recommended hardware and the connection troubleshooting order: [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md). Tag-specific conditions and the failure sensors are in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Quick start
 
@@ -81,7 +88,7 @@ data:
       size: 40
 ```
 
-The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity. More: [usage overview](docs/usage.md), ready-made layouts in [`examples/`](examples/README.md), the visual [Designer guide](docs/designer.md).
+The tag refreshes in a few seconds. Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity. See the [payload guide](docs/payload.md) for this integration's rendering options and complete action examples. More: [usage overview](docs/usage.md), ready-made layouts in [`examples/`](examples/README.md), the visual [Designer guide](docs/designer.md).
 
 ## Limits and warnings
 
@@ -98,7 +105,7 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 |---|---|---|
 | Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
 | Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
-| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md) |
+| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
 | Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
 | Supported models and where to buy | [docs/models.md](docs/models.md) | — |
 | ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
@@ -110,13 +117,30 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 
 Related projects: [imagespec](https://github.com/eigger/imagespec) (the renderer behind `payload:`), [Stash](https://github.com/eigger/stash) (home inventory that prints labels to ESL tags), [hass-gicisky](https://github.com/eigger/hass-gicisky) (archived predecessor) — see [docs/usage.md](docs/usage.md#related-projects).
 
-## Support
+### Reporting and device help
 
 - A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
 - Found a bug? [Open an issue](https://github.com/eigger/hass-ble-esl/issues) and attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters (tag MAC redacted; check the rest before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting)).
 - Questions or ideas? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Please share — that is how presets get verified.
 
+<!-- hass-standards:support:start -->
+## Support
+
+- [Issues](https://github.com/eigger/hass-ble-esl/issues): Report bugs or request features.
+- [Discussions](https://github.com/eigger/hass-ble-esl/discussions): Ask questions and share your experience.
+<!-- hass-standards:support:end -->
+
+<!-- hass-standards:related-projects:start -->
+## Related Projects
+
+- [imagespec](https://github.com/eigger/imagespec): The renderer behind `payload:`.
+- [Stash](https://github.com/eigger/stash): Home inventory that prints labels to ESL tags.
+- [hass-gicisky](https://github.com/eigger/hass-gicisky): Archived predecessor of BLE ESL.
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
 ## License
 
-[MIT](LICENSE)
+Released under the [MIT License](LICENSE).
+<!-- hass-standards:license:end -->

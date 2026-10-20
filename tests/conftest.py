@@ -1,6 +1,8 @@
-"""Repository-wide test configuration.
+"""Shared Home Assistant test configuration."""
 
-The real Home Assistant fixtures come from pytest-homeassistant-custom-component
-(auto-loaded plugin); the integration's own fixtures live in
-tests/components/ble_esl/conftest.py.
-"""
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations):
+    """Enable custom integrations for all tests."""

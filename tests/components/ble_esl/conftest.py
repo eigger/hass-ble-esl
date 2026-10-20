@@ -6,11 +6,20 @@ advertisement the bluetooth integration has seen) and `tag_writer` (the
 protocol's write path and the renderer stubbed out, steerable per test).
 """
 
+# <!-- hass-standards:domain-fixtures:start -->
+# Use pytest_homeassistant_custom_component.common.MockConfigEntry for
+# mock_config_entry when the integration uses config entries.
+# Define mock_client only when an external communication client is present.
+# Mock external communication boundaries, never Home Assistant core modules.
+# Keep integration-specific fixtures below this managed block.
+# <!-- hass-standards:domain-fixtures:end -->
+
 from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from functools import partial
 import time
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -52,14 +61,6 @@ def enable_event_loop_debug() -> None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     loop.set_debug(True)
-
-
-@pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(request: pytest.FixtureRequest) -> None:
-    """Let Home Assistant load custom_components/ble_esl — only for tests that
-    use `hass`, so codec/session tests do not start a Home Assistant at all."""
-    if "hass" in request.fixturenames:
-        request.getfixturevalue("enable_custom_integrations")
 
 
 def wolink_service_info(
@@ -185,3 +186,62 @@ def tag_writer() -> TagWriter:
         patch.object(attempts_mod, "sleep", AsyncMock()),  # the retry pause
     ):
         yield writer
+
+
+@pytest.fixture
+def mock_config_entry() -> MockConfigEntry:
+    """A real HA config entry for the documented WOLINK 2.9-inch device."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=ADDRESS,
+        title=f"Zhsunyco {IDENT}",
+        data={CONF_PROTOCOL: "wolink", CONF_MODEL: "290"},
+    )
+
+
+@pytest.fixture
+async def payload_example_setup(hass, enable_bluetooth, mock_config_entry):
+    """Load the actual integration and actions without sending a BLE command."""
+    inject_bluetooth_service_info(hass, wolink_service_info())
+    mock_config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.services.has_service(DOMAIN, "write")
+    assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content") is not None
+    return mock_config_entry
+
+
+@pytest.fixture
+def payload_example_adapter(payload_example_setup):
+    """Bind real schema-normalized payloads to the production renderer."""
+
+    def adapter(hass, example_metadata, normalized_action, schema_data):
+        # Ordinary regressions do not need the optional central collector installed.
+        from hass_standards_payload import PreparedPayload
+
+        from custom_components.ble_esl.renderer import PALETTES, _make_context, render_image
+        from custom_components.ble_esl.yaml11 import repair_yaml11_keys
+
+        preset = payload_example_setup.runtime_data.preset
+        payload = repair_yaml11_keys(schema_data["payload"])
+        rotate = schema_data.get("rotate", 0)
+        background = schema_data.get("background", "white")
+        return PreparedPayload(
+            payload=payload,
+            context=_make_context(
+                hass, default_font="NotoSansKR-Regular.ttf", palette=PALETTES[preset.colors]
+            ),
+            render_options={
+                "width": preset.width,
+                "height": preset.height,
+                "rotate": rotate,
+                "rotate_mode": "canvas",
+                "background": background,
+                "dither": False,
+            },
+            prepare=partial(
+                render_image, hass, preset, payload, rotate=rotate, background=background
+            ),
+        )
+
+    return adapter
