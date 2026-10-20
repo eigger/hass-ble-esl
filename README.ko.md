@@ -1,19 +1,22 @@
+<!-- hass-standards:header:start -->
 # hass-ble-esl
-<!-- hass-standards:badges:start -->
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5?style=flat-square)](#설치)
-[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat-square)](https://github.com/eigger/hass-ble-esl/releases)
-[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat-square)](hacs.json)
-[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat-square&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
-[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat-square&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat-square)](LICENSE)
-[![Analytics reporting installs](https://img.shields.io/badge/dynamic/json?style=flat-square&color=41BDF5&label=Usage&query=%24.ble_esl.total&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json)](https://analytics.home-assistant.io/)
-<!-- hass-standards:badges:end -->
-
-**[English](README.md)** | 한국어
-
-> 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
 
 범용 BLE 전자가격표시기(ESL) Home Assistant 통합구성요소
+
+[English](README.md) | **한국어**
+
+<!-- hass-standards:badges:start -->
+[![Release](https://img.shields.io/github/v/release/eigger/hass-ble-esl?style=flat)](https://github.com/eigger/hass-ble-esl/releases)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5?style=flat)](#설치)
+[![Home Assistant minimum](https://img.shields.io/badge/HA-%E2%89%A5%202025.12.0-41BDF5?style=flat)](hacs.json)
+[![Tests](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/tests.yml?branch=main&style=flat&label=Tests)](https://github.com/eigger/hass-ble-esl/actions/workflows/tests.yml)
+[![Validate](https://img.shields.io/github/actions/workflow/status/eigger/hass-ble-esl/validate.yml?branch=main&style=flat&label=Validate)](https://github.com/eigger/hass-ble-esl/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/eigger/hass-ble-esl?style=flat)](LICENSE)
+[![HACS Downloads](https://img.shields.io/badge/dynamic/json?style=flat&color=41BDF5&label=HACS+Downloads&query=%24%5B%3F%28%40.full_name%3D%3D%22eigger%2Fhass-ble-esl%22%29%5D.downloads&url=https%3A%2F%2Fdata-v2.hacs.xyz%2Fintegration%2Fdata.json)](https://www.hacs.xyz/)
+<!-- hass-standards:badges:end -->
+<!-- hass-standards:header:end -->
+
+> 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
 
 **배터리 하나로 수개월에서 수년 동안 Home Assistant 데이터를 보여주는 e-paper 디스플레이.** BLE ESL은 [HACS](https://hacs.xyz/) 사용자 지정(custom) 통합구성요소입니다: 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다. Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
 
@@ -52,7 +55,11 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 ## 설치
 
-1. **HACS**(사용자 지정 저장소 `eigger/hass-ble-esl`)로 설치하거나, `custom_components/ble_esl`을 설정 폴더에 복사합니다.
+<!-- hass-standards:installation:start -->
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
+<!-- hass-standards:installation:end -->
+
+1. **HACS** 기본 통합 카탈로그에서 **BLE ESL**을 설치하거나, `custom_components/ble_esl`을 설정 폴더에 복사합니다.
 2. Home Assistant를 재시작합니다.
 3. 범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
 
@@ -62,9 +69,9 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 ### Bluetooth
 
-가능하면 호스트 내장 어댑터 대신 **Bluetooth 프록시**를 쓰고, **active**로 설정하세요(`bluetooth_proxy: active: true`, 시작 설정으로 `esp32_ble_tracker: scan_parameters: active: true`도 함께) — 쓰기 문제 대부분은 패시브 프록시나 약한 어댑터에서 옵니다. 스캔 간격은 기본값으로 둡니다. 발견된 태그가 곧 연결이 되는 것은 아닙니다: 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
+원격 Bluetooth 연결에는 **active 연결**이 가능한 **Bluetooth 프록시**를 쓰세요(`bluetooth_proxy: active: true`; 문서의 시작 스캔 설정은 `esp32_ble_tracker: scan_parameters: active: true`). 패시브 스캔으로도 GATT 연결은 가능하며 연결 기능은 `bluetooth_proxy.active`가 별도로 제어합니다. 안정적으로 동작하는 로컬 어댑터도 사용할 수 있습니다. 스캔 간격은 기본값으로 둡니다. 발견된 태그가 곧 연결이 되는 것은 아닙니다: 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
 
-ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/hass-repo-standards/blob/main/docs/bluetooth.ko.md). 태그별 조건과 실패 센서는 [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)를 참고하세요.
+ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md). 태그별 조건과 실패 센서는 [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md)를 참고하세요.
 
 ## 빠른 시작
 
@@ -83,7 +90,7 @@ data:
       size: 40
 ```
 
-몇 초 뒤 태그가 갱신됩니다. `dry_run: true`를 붙이면 보내지 않고 렌더링만 하며, 결과는 태그의 **Preview Content** 이미지 엔티티에 나타납니다. 더 보기: [사용 개요](docs/ko/usage.md), [`examples/`](examples/README.md)(영어)의 완성된 레이아웃, 비주얼 [디자이너 가이드](docs/ko/designer.md).
+몇 초 뒤 태그가 갱신됩니다. `dry_run: true`를 붙이면 보내지 않고 렌더링만 하며, 결과는 태그의 **Preview Content** 이미지 엔티티에 나타납니다. 이 통합의 렌더링 옵션과 전체 액션 예제는 [payload 안내](docs/payload.ko.md)를 보세요. 더 보기: [사용 개요](docs/ko/usage.md), [`examples/`](examples/README.md)(영어)의 완성된 레이아웃, 비주얼 [디자이너 가이드](docs/ko/designer.md).
 
 ## 제한사항과 주의
 
@@ -100,7 +107,7 @@ data:
 |---|---|---|
 | 사용 개요: 첫 레이아웃, 비주얼 에디터, 액션, 옵션, 페이로드와 렌더링 | [docs/ko/usage.md](docs/ko/usage.md) | [docs/usage.md](docs/usage.md) |
 | Bluetooth 설정 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) | [docs/bluetooth.md](docs/bluetooth.md) |
-| 트러블슈팅과 제보 | [docs/ko/troubleshooting.md](docs/ko/troubleshooting.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
+| 트러블슈팅과 제보 | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
 | 액션, 응답 데이터, 엔티티, 폰트 | — (영어만) | [docs/actions.md](docs/actions.md) |
 | 지원 모델과 구매처 | — (영어만) | [docs/models.md](docs/models.md) |
 | ESL Manager / 디자이너 | [docs/ko/designer.md](docs/ko/designer.md) | [docs/designer.md](docs/designer.md) |
@@ -112,13 +119,30 @@ data:
 
 관련 프로젝트: [imagespec](https://github.com/eigger/imagespec)(`payload:` 뒤의 렌더러), [Stash](https://github.com/eigger/stash)(ESL 태그에 라벨을 출력하는 가정 재고 관리자), [hass-gicisky](https://github.com/eigger/hass-gicisky)(보관 처리된 전신) — [docs/ko/usage.md](docs/ko/usage.md#관련-프로젝트) 참고.
 
-## 지원
+### 기기 도움말과 제보
 
-- 라벨이 갱신되지 않나요? **[docs/ko/troubleshooting.md](docs/ko/troubleshooting.md)** — 실패 센서가 쓰기가 어디서, 왜 죽었는지 알려줍니다.
-- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(태그 MAC은 가려짐. 나머지는 올리기 전에 확인하세요 — [제거할 정보](docs/ko/troubleshooting.md#올리기-전에-민감-정보-제거)).
+- 라벨이 갱신되지 않나요? **[docs/troubleshooting.ko.md](docs/troubleshooting.ko.md)** — 실패 센서가 쓰기가 어디서, 왜 죽었는지 알려줍니다.
+- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(태그 MAC은 가려짐. 나머지는 올리기 전에 확인하세요 — [제거할 정보](docs/troubleshooting.ko.md#올리기-전에-민감-정보-제거)).
 - 질문이나 아이디어? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
 - WOLINK나 easyTag 태그를 테스트하셨거나, 수동 모델 선택을 요구한 Poshiji 크기가 있나요? 알려 주세요 — 그렇게 프리셋이 검증됩니다.
 
+<!-- hass-standards:support:start -->
+## 지원
+
+- [Issues](https://github.com/eigger/hass-ble-esl/issues): 버그를 신고하거나 기능을 요청하세요.
+- [Discussions](https://github.com/eigger/hass-ble-esl/discussions): 질문하고 사용 경험을 공유하세요.
+<!-- hass-standards:support:end -->
+
+<!-- hass-standards:related-projects:start -->
+## 관련 프로젝트
+
+- [imagespec](https://github.com/eigger/imagespec): `payload:` 뒤의 렌더러입니다.
+- [Stash](https://github.com/eigger/stash): ESL 태그에 라벨을 출력하는 가정 재고 관리자입니다.
+- [hass-gicisky](https://github.com/eigger/hass-gicisky): 보관 처리된 BLE ESL의 전신입니다.
+<!-- hass-standards:related-projects:end -->
+
+<!-- hass-standards:license:start -->
 ## 라이선스
 
-[MIT](LICENSE)
+[MIT License](LICENSE) 라이선스로 배포됩니다.
+<!-- hass-standards:license:end -->

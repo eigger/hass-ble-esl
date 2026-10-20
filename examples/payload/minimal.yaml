@@ -1,0 +1,20 @@
+# WOLINK 2.9-inch (290), 296x128 BWRY. Select your own BLE ESL entity.
+action: ble_esl.write
+target:
+  entity_id: image.zhsunyco_54200055_preview_content
+data:
+  dry_run: true
+  background: white
+  payload:
+    - type: rectangle
+      x_start: 8
+      y_start: 8
+      x_end: 144
+      y_end: 120
+      fill: black
+    - type: rectangle
+      x_start: 152
+      y_start: 8
+      x_end: 288
+      y_end: 120
+      fill: red

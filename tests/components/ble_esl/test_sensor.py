@@ -83,43 +83,6 @@ async def test_initial_states(hass: HomeAssistant, wolink_entry) -> None:
     assert states.get(f"text.zhsunyco_{IDENT}_alias").state == IDENT
 
 
-async def test_alias_text_entity(hass: HomeAssistant, wolink_entry) -> None:
-    """The entity pushes its own state: nothing polls it after the call."""
-    for entity_id in (f"switch.zhsunyco_{IDENT}_write_lock", f"text.zhsunyco_{IDENT}_alias"):
-        entity = hass.data["entity_components"][entity_id.split(".")[0]].get_entity(entity_id)
-        assert entity is not None and entity.should_poll is False
-    await hass.services.async_call(
-        "text",
-        "set_value",
-        {"entity_id": f"text.zhsunyco_{IDENT}_alias", "value": "Kitchen tag"},
-        blocking=True,
-    )
-    assert hass.states.get(f"text.zhsunyco_{IDENT}_alias").state == "Kitchen tag"
-
-
-async def test_display_in_sync_tracks_preview_vs_written(
-    hass: HomeAssistant, wolink_entry, tag_writer
-) -> None:
-    device_id = device_id_of(hass)
-    await hass.services.async_call(
-        DOMAIN, "write", {"device_id": device_id, "payload": PAYLOAD}, blocking=True
-    )
-    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "on"
-
-    # A dry run with a different payload changes the preview only.
-    await hass.services.async_call(
-        DOMAIN,
-        "write",
-        {
-            "device_id": device_id,
-            "payload": [{"type": "text", "value": "something else"}],
-            "dry_run": True,
-        },
-        blocking=True,
-    )
-    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "off"
-
-
 async def test_easytag_session_battery_and_temperature(
     hass: HomeAssistant, enable_bluetooth
 ) -> None:

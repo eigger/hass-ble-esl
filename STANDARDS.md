@@ -1,13 +1,15 @@
 # 적용한 공통 규칙
 
-- 표준: https://github.com/eigger/hass-repo-standards/tree/7acd9cab6ac774e4695f2c962e3d88b5faa4620d
-- 참조 커밋 SHA: `7acd9cab6ac774e4695f2c962e3d88b5faa4620d` (workflow 호출도 이 SHA로 고정)
+- 표준: https://github.com/eigger/hass-repo-standards/tree/0ec31111a81b0ee5702f1d8a17f03616a10a5db6
+- 참조 커밋 SHA: `0ec31111a81b0ee5702f1d8a17f03616a10a5db6`
+- 재검토일: 2026-10-21 (대상 main `b63733b`, 로컬 작업 트리)
+- 이전 기준 SHA: `7acd9cab6ac774e4695f2c962e3d88b5faa4620d`
 - 채택일: 2026-10-18 (채택 PR: #242)
 - profile: integration / ha
 - 적용 점검표: [ADOPTION_CHECKLIST.md](ADOPTION_CHECKLIST.md)
 - 중앙 현황표: https://github.com/eigger/hass-repo-standards/blob/main/docs/adoption-status.md
-- 조율: 주 에이전트(Claude Code 세션) / 구현: 주 에이전트 직접(사용자가 "작성 후 서브 에이전트 리뷰"를 지시) / 독립 리뷰·검증: Opus 서브 에이전트
-- 중앙 현황 갱신일: 2026-10-18 (hass-repo-standards `e83700c`)
+- 조율: Codex root / 구현: implement_docs, implement_contract / 독립 리뷰·검증: review_verify
+- 중앙 현황: 최신 중앙 main의 해당 행을 별도 로컬 checkout에 갱신. 원격 반영 전이며 상세는 ADOPTION_CHECKLIST.md 참조
 - 실제 기본 브랜치: `main`
 - 테스트 경로: `tests/components/ble_esl/` (브라우저 테스트는 `tests/components/ble_esl/frontend/`)
 - 변경 전 지원 최소 HA / 선언 근거: 2025.12.0 (`hacs.json`, README 설치 절)
@@ -15,6 +17,17 @@
 - current HA 테스트 환경: Python 3.14 / HA 2026.10.1 / pytest-homeassistant-custom-component 0.13.372
 - 최소 HA 검증 환경: Python 3.13 / HA 2025.12.0 / plugin 0.13.298 (`requirements_test_min.txt`, `constraints/homeassistant-min.txt`), CI job `minimum-ha`
 - 최소 package 검증: `blesession>=0.9.0`, `imagespec[datamatrix]>=1.1.0` — CI `dependency-modes: minimum`이 정확한 하한 설치
+
+## 2026-10-21 재검토
+
+- README 공통 영역·HACS 설치 배지·Default 상태·HACS Downloads를 중앙 렌더러로 갱신합니다. 등재 근거: [HACS 공식 integration 목록](https://github.com/hacs/default/blob/master/integration), 2026-10-21 `eigger/hass-ble-esl` 포함 확인. Default는 Core 통합이라는 뜻이 아닙니다.
+- DOC-07은 같은 언어의 blesession 사용자 원본과 기기별 문제 해결을 연결하며, 기존 한국어 경로도 보존합니다.
+- DOC-08은 전체 HA 액션 YAML과 중앙 scaffold, 실제 서비스 스키마·통합 준비·imagespec 렌더링 계약을 추가합니다. Tests와 dependency updater의 `standards-ref`는 위 검토 SHA로 고정합니다.
+- HA-02 제품 분류는 `productivity_information`입니다. README의 실제 용도인 달력·날씨·센서 값·사진을 표시하는 전자종이 디스플레이가 근거이며, 보조 센서나 스위치 플랫폼으로 분류하지 않았습니다. 공식 taxonomy는 중앙 snapshot의 Core `ec18d8b25d1ee39aa8b85a72a170e42bee33228c`를 검토했습니다.
+- 옵션 flow 클래스 이름은 `BleEslOptionsFlow`로 명확히 하여 중앙 번역 검사가 `options.step.init`으로 인식하도록 했습니다. 옵션 동작·번역 내용·지원 버전은 유지합니다.
+- Windows checkout에서도 중앙 관리 파일의 정확한 비교가 유지되도록 `.gitattributes`에서 README 두 개·root conftest·payload scaffold 네 파일만 LF를 고정했습니다.
+- 독립 검증에서 current·정확한 라이브러리 하한·최소 HA 세 환경 모두 payload 2 passed, 회귀 1143 passed / 3 skipped를 확인했습니다. Ruff 0.17.1·actionlint·중앙 검사도 통과했습니다. 실제 버전·명령·검증 범위는 ADOPTION_CHECKLIST.md의 재검토 절에 별도로 기록합니다. 아래 과거 예외와 2026-10-18 실행 결과를 새 변경의 통과 근거로 재사용하지 않습니다.
+- 과거 GOV-05 위임 예외는 이번 재검토에서 구현/독립 리뷰 담당을 분리하여 해소했습니다. 과거 수행 방식은 아래 이력에 보존합니다. 기존 HA 동작 예외는 유지합니다. 원격 CI·중앙 원격 갱신·실물 기기 검증은 이번에 수행하지 않았습니다.
 
 ## 예외
 

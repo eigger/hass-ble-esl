@@ -4,13 +4,33 @@ Tests run against a real Home Assistant core (`pytest-homeassistant-custom-compo
 
 ```bash
 python3.14 -m venv .venv && source .venv/bin/activate
-pip install -r requirements_test.txt
-pip install -r <(python -c "import json; print('\n'.join(json.load(open('custom_components/ble_esl/manifest.json'))['requirements']))")
-pip install -r <(python scripts/ha_component_requirements.py bluetooth usb recorder diagnostics frontend panel_custom websocket_api)
-pytest
+export STANDARDS_CHECKOUT="$(mktemp -d)"
+git clone https://github.com/eigger/hass-repo-standards.git "$STANDARDS_CHECKOUT"
+git -C "$STANDARDS_CHECKOUT" checkout 0ec31111a81b0ee5702f1d8a17f03616a10a5db6
+python -m pip install packaging==26.3
+export RUNNER_TEMP="$(mktemp -d)"
+export INPUT_DOMAIN=ble_esl
+export INPUT_REQUIREMENTS=requirements_test.txt
+export INPUT_TEST_PROFILE=ha
+export INPUT_EXPECTED_HA_VERSION=2026.10.1
+export INPUT_HA_COMPONENTS="bluetooth usb recorder diagnostics frontend panel_custom websocket_api"
+python "$STANDARDS_CHECKOUT/actions/python-environment/install.py"
+export PAYLOAD_REPOSITORY="$PWD"
+export PAYLOAD_DOMAIN=ble_esl
+export PYTHONPATH="$STANDARDS_CHECKOUT/scripts${PYTHONPATH:+:$PYTHONPATH}"
+python "$STANDARDS_CHECKOUT/scripts/run_payload_contract.py"
+python -m pytest tests/components/ble_esl/ -v --timeout 120 --ignore=tests/components/ble_esl/test_payload_examples.py
 ```
 
 `ble_esl` is a HACS custom integration; it follows Home Assistant Core's structure but makes no claim to Core inclusion or a quality tier. The shared rules it follows are recorded in [STANDARDS.md](../STANDARDS.md) and checked in [ADOPTION_CHECKLIST.md](../ADOPTION_CHECKLIST.md).
+
+## Documented payload contract
+
+The shared installer resolves manifest, test and required HA component dependencies together and runs `pip check`. The payload command above uses those already installed versions; it does not replace imagespec. It executes both [documented action examples](payload.md) with the real HA loader, action schema and production renderer, without dispatching a device command. Run it before the ordinary regression command. A skipped or failed payload contract is not a successful verification.
+
+`test_payload_examples.py` is the exact central collector scaffold. A plain `pytest` including it intentionally fails; it must be collected through `run_payload_contract.py` / the central plugin. After that succeeds, exclude only this scaffold from ordinary regression tests as shown above. The reusable Tests and dependency update workflows perform this sequence automatically.
+
+Use a separate Python 3.14 virtual environment for exact minimum libraries, with `INPUT_DEPENDENCY_MODE=minimum` and `INPUT_MINIMUM_PACKAGES='["imagespec", "blesession"]'` set **before** invoking the same installer and contract. For the separate minimum HA environment use Python 3.13, `INPUT_REQUIREMENTS=requirements_test_min.txt`, `INPUT_CONSTRAINTS=constraints/homeassistant-min.txt` and `INPUT_EXPECTED_HA_VERSION=2025.12.0`; leave dependency mode as current unless explicitly testing another minimum-library combination. Do not install newer renderer packages after resolving an environment to obtain a passing result. Record actual Python, HA, plugin, imagespec and blesession versions with the commands and results. These commands describe reproducible checks; completed checks and remaining gaps for this change are recorded in [ADOPTION_CHECKLIST.md](../ADOPTION_CHECKLIST.md).
 
 ## Verified environments
 

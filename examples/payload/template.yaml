@@ -1,0 +1,15 @@
+# HA evaluates these templates before the registered action schema.
+action: ble_esl.write
+target:
+  entity_id: image.zhsunyco_54200055_preview_content
+data:
+  dry_run: true
+  rotate: 90
+  background: white
+  payload:
+    - type: rectangle
+      x_start: 8
+      y_start: 8
+      x_end: "{{ 72 * 2 }}"
+      y_end: 120
+      fill: "{{ 'yellow' if 2 > 1 else 'black' }}"

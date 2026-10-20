@@ -42,6 +42,9 @@
       "connectable": true
     }
   ],
+  "categories": [
+    "productivity_information"
+  ],
   "codeowners": [
     "@eigger"
   ],
