@@ -322,7 +322,7 @@ test("automation creation preserves its name and device across locale changes", 
     .getByRole("button", { name: "자동화 만들기", exact: true })
     .click();
   const dialog = page.locator("ble-esl-yaml-dialog");
-  await expect(dialog).toContainText("실행 조건은 비어 있습니다");
+  await expect(dialog.locator("textarea")).toHaveValue(/use_saved_design: true/);
   await dialog.getByLabel("이름", { exact: true }).fill("거실 화면 갱신");
   await page.screenshot({ path: "artifacts/create-automation-ko.png" });
   await setLanguage(page, "en");

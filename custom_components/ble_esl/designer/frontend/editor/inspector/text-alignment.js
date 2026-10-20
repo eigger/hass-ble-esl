@@ -1,3 +1,4 @@
+import { materialIcon } from "../material-icons.js";
 const alignments = ["left", "center", "right"];
 
 export function renderTextAlignmentControls(
@@ -6,8 +7,7 @@ export function renderTextAlignmentControls(
 ) {
   const alignmentButtons = alignments
     .map((value) => {
-      const indent = value === "right" ? 9 : value === "center" ? 6 : 3;
-      return `<button class="align-button" data-pick="align" data-value="${value}" aria-label="${translate(`Align ${value}`)}" title="${translate(`Align ${value}`)}" aria-pressed="${element.align === value}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M${indent} 9h12M3 14h18M${indent} 19h12"/></svg></button>`;
+      return `<button class="align-button" data-pick="align" data-value="${value}" aria-label="${translate(`Align ${value}`)}" title="${translate(`Align ${value}`)}" aria-pressed="${element.align === value}">${materialIcon(`mdi:format-align-${value}`)}</button>`;
     })
     .join("");
 

@@ -1,3 +1,4 @@
+import { materialIcon } from "./editor/material-icons.js";
 import { decodeAutomationDesign } from "./editor/automation-source.js";
 import { t, language, bindStatic, localize, errorText } from "./i18n.js";
 import { hasStoredDraft } from "./editor/draft-store.js";
@@ -35,7 +36,7 @@ class EslManager extends HTMLElement {
     this.filter = "all";
     this.sort = "default";
     this.view = "dashboard";
-    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><div class="header-title-wrap"><h1>${t(this.hass, "ESL Manager")}</h1><span class="version-tag" id="panel-version" title="${t(this.hass, "BLE ESL integration version")}" style="display: none;"></span></div><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><div class="message-wrap" hidden><p class="message" role="status"></p><button type="button" data-action="dismiss-message">×</button></div><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
+    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><div class="header-title-wrap"><h1>${t(this.hass, "ESL Manager")}</h1><span class="version-tag" id="panel-version" title="${t(this.hass, "BLE ESL integration version")}" style="display: none;"></span></div><button data-action="refresh" aria-label="${t(this.hass, "Refresh")}" title="${t(this.hass, "Refresh")}">${materialIcon("reload")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><div class="message-wrap" hidden><p class="message" role="status"></p><button type="button" data-action="dismiss-message">${materialIcon("close")}</button></div><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
     this.editorNav = this.shadowRoot.querySelector(".editor-nav");
     this.editorContext = this.editorNav.querySelector(".editor-context");
     bindStatic(this.shadowRoot);
@@ -174,11 +175,35 @@ class EslManager extends HTMLElement {
       );
     }
     if (this.hass && !this.started) this.refresh();
+    this.onDesignSaved = (event) => {
+      // Serialize saves so a slower export cannot put older triggers back.
+      this.designSync = (this.designSync || Promise.resolve())
+        .then(() => this.syncSavedDesign(event.detail))
+        .catch((error) =>
+          this.message(
+            errorText(
+              this.hass,
+              "Could not update automatic display refresh",
+              error,
+            ),
+          ),
+        );
+    };
+    this.addEventListener("design-saved", this.onDesignSaved);
+    this.onHistory = () => this.restoreLocation();
+    window.addEventListener("popstate", this.onHistory);
+    this.onTagChanged = (event) => {
+      if (this.view === "editor") this.rememberTag(event.detail.entry_id);
+    };
+    this.addEventListener("tag-changed", this.onTagChanged);
     this.clockTimer = setInterval(() => {
       if (this.view === "dashboard") this.renderCards();
     }, 60000);
   }
   disconnectedCallback() {
+    this.removeEventListener("design-saved", this.onDesignSaved);
+    window.removeEventListener("popstate", this.onHistory);
+    this.removeEventListener("tag-changed", this.onTagChanged);
     clearInterval(this.clockTimer);
     clearTimeout(this.messageTimer);
     this.toastObserver?.disconnect();
@@ -231,6 +256,7 @@ class EslManager extends HTMLElement {
     try {
       this.tags = await this.api("list");
       this.renderCards();
+      this.restoreLocation();
       await this.loadAutomations();
     } catch (error) {
       this.message(errorText(this.hass, "Could not load ESL data", error));
@@ -421,10 +447,18 @@ class EslManager extends HTMLElement {
     const label = known
       ? t(this.hass, "Battery {value}", { value })
       : t(this.hass, "Battery —");
-    const fill = known
-      ? (Math.max(0, Math.min(100, Number(battery.state))) / 100) * 16
-      : 0;
-    const content = `<svg viewBox="0 0 26 16" aria-hidden="true"><rect x="1" y="1" width="21" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M24 5v6" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="3.5" width="${fill}" height="9" rx=".5" fill="currentColor"/></svg><span>${escapeHtml(value)}</span>`;
+    const level = known
+      ? Math.min(100, Math.max(0, Math.round(Number(battery.state) / 10) * 10))
+      : null;
+    const batteryIcon =
+      level === null
+        ? "mdi:battery-unknown"
+        : level === 100
+          ? "mdi:battery"
+          : level === 0
+            ? "mdi:battery-outline"
+            : `mdi:battery-${level}`;
+    const content = `${materialIcon(batteryIcon, 24)}<span>${escapeHtml(value)}</span>`;
     return tag.entities?.battery
       ? `<button data-entity="${escapeHtml(tag.entities.battery)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</button>`
       : `<span role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</span>`;
@@ -567,6 +601,29 @@ class EslManager extends HTMLElement {
         )
         ?.focus();
   }
+  async syncSavedDesign({ entry_id, document }) {
+    const tag = this.tags.find((t) => t.entry_id === entry_id);
+    if (!tag) return;
+    tag.document = structuredClone(document);
+    this.automationVersions.set(
+      entry_id,
+      (this.automationVersions.get(entry_id) || 0) + 1,
+    );
+  }
+  rememberTag(entryId) {
+    const url = new URL(window.location.href);
+    if ((url.searchParams.get("tag") || null) === (entryId || null)) return;
+    if (entryId) url.searchParams.set("tag", entryId);
+    else url.searchParams.delete("tag");
+    window.history.pushState({ ...window.history.state }, "", url);
+  }
+  restoreLocation() {
+    const entryId = new URL(window.location.href).searchParams.get("tag");
+    const tag = this.tags.find((t) => t.entry_id === entryId);
+    if (tag) this.openEditor(tag);
+    else if (!entryId && this.view === "editor")
+      this.shadowRoot.querySelector('[data-action="dashboard"]').click();
+  }
   openEditor(tag) {
     if (
       this.automationEditSession &&
@@ -582,6 +639,7 @@ class EslManager extends HTMLElement {
       return false;
     }
     this.message();
+    this.rememberTag(tag.entry_id);
     this.view = "editor";
     this.shadowRoot.querySelector("#dashboard").hidden = true;
     this.shadowRoot.querySelector("#editor").hidden = false;
@@ -825,7 +883,9 @@ class EslManager extends HTMLElement {
       const selectedAction = this.actionAt(config, selectedPath);
       if (
         !selectedAction ||
-        (selectedAction.action || selectedAction.service) !== "ble_esl.write"
+        !["ble_esl.write", "ble_esl.write_guarded"].includes(
+          selectedAction.action || selectedAction.service,
+        )
       )
         throw new Error(
           t(
@@ -834,6 +894,14 @@ class EslManager extends HTMLElement {
           ),
         );
       const data = selectedAction.data || selectedAction.service_data;
+      if (data?.use_saved_design) {
+        const savedTag = (await this.api("list")).find(
+          (t) => t.entry_id === entryId,
+        );
+        this.clearAutomationEdit(session);
+        this.openEditor(savedTag);
+        return;
+      }
       if (!data || !Array.isArray(data.payload))
         throw new Error(
           t(this.hass, "This write action has no editable payload list."),
@@ -1028,19 +1096,17 @@ class EslManager extends HTMLElement {
       }
       if (!value || typeof value !== "object") return;
       const service = value.action || value.service;
-      if (service === "ble_esl.write") {
+      if (["ble_esl.write", "ble_esl.write_guarded"].includes(service)) {
         const target = targetMatch(value);
         if (target.unsupported)
           unsupported.push({
             path,
-            label: String(value.alias || "ble_esl.write"),
+            label: String(value.alias || service),
           });
         else if (target.matches)
           matches.push({
             path,
-            label: String(
-              value.alias || `ble_esl.write (${matches.length + 1})`,
-            ),
+            label: String(value.alias || `${service} (${matches.length + 1})`),
           });
       }
       for (const [key, child] of Object.entries(value)) {
@@ -1168,7 +1234,9 @@ class EslManager extends HTMLElement {
       const data = action?.data || action?.service_data;
       if (
         !action ||
-        (action.action || action.service) !== "ble_esl.write" ||
+        !["ble_esl.write", "ble_esl.write_guarded"].includes(
+          action.action || action.service,
+        ) ||
         !data ||
         !Array.isArray(data.payload)
       )
@@ -1259,6 +1327,7 @@ class EslManager extends HTMLElement {
         )
       )
         return;
+      this.rememberTag(null);
       this.view = "dashboard";
       this.automationEditRun = (this.automationEditRun || 0) + 1;
       this.automationSaveRun = (this.automationSaveRun || 0) + 1;

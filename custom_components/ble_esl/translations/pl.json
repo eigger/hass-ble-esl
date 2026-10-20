@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Zapisz etykietę",
-      "description": "Zapisuje obraz etykiety na urządzeniu BLE ESL.",
+      "description": "Render and write the image. By default, skip an unchanged image; respect the write lock and debounce delay.",
       "fields": {
         "payload": {
           "name": "Zawartość",
@@ -24,6 +24,22 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
+        },
+        "debounce_override_ms": {
+          "name": "Nadpisz odbicie",
+          "description": "Nadpisuje skonfigurowane opóźnienie odbicia dla tego wywołania (0 = natychmiast)."
+        },
         "design_specs": {
           "name": "Designer templates",
           "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
@@ -32,7 +48,7 @@
     },
     "write_guarded": {
       "name": "Zapisz etykietę (z zabezpieczeniami)",
-      "description": "Zapisuje obraz etykiety z zabezpieczeniami (duplikaty, blokada zapisu, odbicie).",
+      "description": "Compatibility alias for Write. Unchanged images are skipped by default.",
       "fields": {
         "payload": {
           "name": "Zawartość",
@@ -57,6 +73,18 @@
         "design": {
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
         },
         "design_specs": {
           "name": "Designer templates",
@@ -148,13 +176,11 @@
         "data": {
           "model": "Model",
           "retry_count": "Liczba ponowień",
-          "prevent_duplicate_send": "Zapobiegaj podwójnemu wysyłaniu",
           "debounce_ms": "Opóźnienie odbicia (ms)"
         },
         "data_description": {
           "model": "Rozdzielczość ekranu i typ modelu ESL.",
           "retry_count": "Ile razy ponawiać zapis, zanim nastąpi rezygnacja.",
-          "prevent_duplicate_send": "Pomija zapis, gdy nowy obraz jest identyczny z ostatnio wysłanym.",
           "debounce_ms": "Oczekiwanie przed zapisem. Nowe żądanie anuluje oczekujące. 0 = wyłączone (zapis natychmiastowy)."
         }
       }

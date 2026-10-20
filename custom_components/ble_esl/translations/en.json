@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Write Label",
-      "description": "Write a label image to a BLE ESL device.",
+      "description": "Render and write the image. By default, skip an unchanged image; respect the write lock and debounce delay.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -24,6 +24,22 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
+        },
+        "debounce_override_ms": {
+          "name": "Debounce Override",
+          "description": "Override the configured debounce delay for this call (0 = immediate)."
+        },
         "design_specs": {
           "name": "Designer templates",
           "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
@@ -32,7 +48,7 @@
     },
     "write_guarded": {
       "name": "Write Guarded Label",
-      "description": "Write a label image with guards applied (duplicate, write lock, debounce).",
+      "description": "Compatibility alias for Write. Unchanged images are skipped by default.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -57,6 +73,18 @@
         "design": {
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
         },
         "design_specs": {
           "name": "Designer templates",
@@ -148,13 +176,11 @@
         "data": {
           "model": "Model",
           "retry_count": "Retry Count",
-          "prevent_duplicate_send": "Prevent Duplicate Send",
           "debounce_ms": "Debounce Delay (ms)"
         },
         "data_description": {
           "model": "ESL display resolution and model type.",
           "retry_count": "Number of times to retry writing to the device before giving up.",
-          "prevent_duplicate_send": "Skip writing when the new image is identical to the last one sent.",
           "debounce_ms": "Delay before writing to device. New writes cancel pending ones. 0 = disabled (immediate write)."
         }
       }

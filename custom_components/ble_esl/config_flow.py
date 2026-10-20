@@ -33,12 +33,10 @@ from . import esl_ble
 from .const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
-    CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
     CONF_RETRY_COUNT,
     DEFAULT_DEBOUNCE_MS,
     DEFAULT_MODEL,
-    DEFAULT_PREVENT_DUPLICATE_SEND,
     DEFAULT_PROTOCOL,
     DEFAULT_RETRY_COUNT,
     DOMAIN,
@@ -113,10 +111,6 @@ def _build_options_schema(
                     mode=NumberSelectorMode.BOX,
                 )
             ),
-            vol.Required(
-                CONF_PREVENT_DUPLICATE_SEND,
-                default=DEFAULT_PREVENT_DUPLICATE_SEND,
-            ): bool,
             vol.Required(CONF_DEBOUNCE_MS, default=DEFAULT_DEBOUNCE_MS): NumberSelector(
                 NumberSelectorConfig(
                     min=0,

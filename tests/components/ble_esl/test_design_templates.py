@@ -6,7 +6,6 @@ from homeassistant.components.automation.config import async_validate_config_ite
 from homeassistant.exceptions import HomeAssistantError
 import pytest
 import voluptuous as vol
-import yaml
 
 from custom_components.ble_esl.designer import KEY
 from custom_components.ble_esl.designer.design_templates import (
@@ -326,7 +325,7 @@ async def test_websocket_lists_and_applies_a_template(hass, wolink_entry, hass_w
     # The date template names no alias: the new automation takes the tag's title.
     assert draft["alias"] == wolink_entry.title
     assert draft["actions"][0]["action"] == "ble_esl.write"
-    assert "{{ now()" in yaml.dump(draft["actions"])
+    assert draft["actions"][0]["data"] == {"use_saved_design": True}
 
     await client.send_json(
         {

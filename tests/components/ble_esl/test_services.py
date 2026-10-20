@@ -34,7 +34,6 @@ from pytest_homeassistant_custom_component.common import async_fire_time_changed
 import voluptuous as vol
 
 from custom_components.ble_esl.const import (
-    CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
     DATA_LOCK,
     DOMAIN,
@@ -149,7 +148,7 @@ async def test_write_reports_the_radio_it_went_through(
     other = register_proxy(hass, "esp-kitchen", "AA:BB:CC:00:00:02")
     other.inject_advertisement(wolink_service_info(rssi=-50))
     tag_writer.write_result = ok(transfer=0.1, link=LinkInfo(via=proxy))
-    await call(hass, "write", device_id_of(hass))
+    await call(hass, "write", device_id_of(hass), skip_unchanged=False)
 
     attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
     assert attrs["via"] == "esp-livingroom (AA:BB:CC:00:00:01)" and attrs["rssi"] == -71
@@ -773,7 +772,7 @@ async def test_retry_pacing_follows_only_transfer_failures(
 
     # The action's response carries the same breakdown, pacing included.
     outcomes = iter([fail("stalled", transfer=1.0), ok(transfer=1.0)])
-    response = await respond(hass, "write", device_id_of(hass))
+    response = await respond(hass, "write", device_id_of(hass), skip_unchanged=False)
     timing = response[device_id_of(hass)]["timing"]
     assert (timing["attempt"], timing["transfer_s"], timing["pacing_s"]) == (2, 1.0, 0.05)
 
@@ -807,7 +806,10 @@ async def test_target_by_entity_and_area(hass: HomeAssistant, wolink_entry, tag_
     area = ar.async_get(hass).async_get_or_create("Kitchen")
     dr.async_get(hass).async_update_device(device_id_of(hass), area_id=area.id)
     await hass.services.async_call(
-        DOMAIN, "write", {"area_id": area.id, "payload": PAYLOAD}, blocking=True
+        DOMAIN,
+        "write",
+        {"area_id": area.id, "payload": PAYLOAD, "skip_unchanged": False},
+        blocking=True,
     )
     assert tag_writer.write_prepared.await_count == 2
 
@@ -901,7 +903,7 @@ async def test_duplicate_guard_ignores_failed_write(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
     """Only a successful write may suppress a later identical write_guarded call."""
-    await setup_entry(hass, options={CONF_RETRY_COUNT: 1, CONF_PREVENT_DUPLICATE_SEND: True})
+    await setup_entry(hass, options={CONF_RETRY_COUNT: 1})
     device_id = device_id_of(hass)
 
     tag_writer.write_result = WriteResult(success=False, error="boom")
@@ -920,7 +922,7 @@ async def test_duplicate_request_cancels_pending_debounced_write(
     hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
 ) -> None:
     """Returning to the displayed image cancels a different pending payload."""
-    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    entry = await setup_entry(hass, options={})
     device_id = device_id_of(hass)
 
     await call(hass, "write_guarded", device_id, debounce_override_ms=0)
@@ -944,7 +946,7 @@ async def test_duplicate_dry_run_preserves_pending_debounced_write(
     hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
 ) -> None:
     """A preview of the displayed image does not cancel a real pending write."""
-    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    entry = await setup_entry(hass, options={})
     device_id = device_id_of(hass)
 
     await call(hass, "write_guarded", device_id, debounce_override_ms=0)
@@ -971,7 +973,7 @@ async def test_duplicate_request_drops_fired_debounced_write_waiting_for_lock(
     hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
 ) -> None:
     """A duplicate request supersedes a timer that already fired on the lock."""
-    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    entry = await setup_entry(hass, options={})
     device_id = device_id_of(hass)
     lock = hass.data[DATA_LOCK]
     await call(hass, "write_guarded", device_id, debounce_override_ms=0)
@@ -1001,7 +1003,7 @@ async def test_duplicate_guard_rechecked_under_lock(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
     """Same payload arriving while an identical write is in flight is skipped."""
-    await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    await setup_entry(hass, options={})
     device_id = device_id_of(hass)
     first_started = asyncio.Event()
     release_first = asyncio.Event()
@@ -1044,7 +1046,7 @@ async def test_write_lock_skips_physical_write(
 async def test_dry_run_guarded_is_preview_only(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
-    await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    await setup_entry(hass, options={})
     device_id = device_id_of(hass)
     await call(hass, "write_guarded", device_id, dry_run=True)
     assert tag_writer.write_prepared.await_count == 0
@@ -1336,7 +1338,7 @@ async def test_reload_during_transfer_forgets_uncertain_last_image(
     hass: HomeAssistant, enable_bluetooth, tag_writer
 ) -> None:
     """A late transfer completion cannot restore a stale duplicate baseline."""
-    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    entry = await setup_entry(hass, options={})
     device_id = device_id_of(hass)
     old_data = entry.runtime_data
     previous_payload = PAYLOAD
@@ -1526,7 +1528,7 @@ async def test_response_mixed_targets(hass: HomeAssistant, enable_bluetooth, tag
 async def test_response_guarded_statuses(
     hass: HomeAssistant, enable_bluetooth, tag_writer, freezer
 ) -> None:
-    entry = await setup_entry(hass, options={CONF_PREVENT_DUPLICATE_SEND: True})
+    entry = await setup_entry(hass, options={})
     device_id = device_id_of(hass)
 
     assert (await respond(hass, "write_guarded", device_id, dry_run=True))[device_id] == {
@@ -1591,9 +1593,7 @@ async def test_last_images_survive_a_reload(
     assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_display_in_sync").state == "on"
 
     # The same payload after the restart is a duplicate: nothing is sent.
-    hass.config_entries.async_update_entry(
-        wolink_entry, options={CONF_PREVENT_DUPLICATE_SEND: True}
-    )
+    hass.config_entries.async_update_entry(wolink_entry, options={})
     await hass.async_block_till_done()
     response = await respond(hass, "write_guarded", device_id_of(hass))
     assert response[device_id_of(hass)]["status"] == "duplicate"
@@ -1695,9 +1695,11 @@ async def test_two_writes_to_one_tag_do_not_interleave(
 
     tag_writer.write_hook = hook
     device_id = device_id_of(hass)
-    first = hass.async_create_task(call(hass, "write", device_id))
+    first = hass.async_create_task(call(hass, "write", device_id, skip_unchanged=False))
     await asyncio.sleep(0)  # let the first write take the tag's lock
-    second = hass.async_create_task(call(hass, "write", device_id, payload=[*PAYLOAD, *PAYLOAD]))
+    second = hass.async_create_task(
+        call(hass, "write", device_id, payload=[*PAYLOAD, *PAYLOAD], skip_unchanged=False)
+    )
     await asyncio.gather(first, second)
 
     # first write: two attempts back to back; then the second write.
@@ -1749,44 +1751,22 @@ async def test_declined_attempt_is_reported_as_skipped(
     assert sensor(hass, "last_failure_time") == "unknown"
 
 
-async def test_write_declined_before_any_attempt_reaches_the_entity(
+async def test_locked_request_before_any_attempt_preserves_last_write_duration(
     hass: HomeAssistant, wolink_entry, tag_writer
 ) -> None:
-    """A write the guard stops on arrival still publishes its `skipped`.
-
-    `ble_esl.write` does not look at the write lock before queueing, so the
-    guard declines attempt 1 and nothing ever runs — the duration sensor is
-    not touched by the write itself, and the entity only rewrites its
-    attributes when its coordinator fires. Without a nudge the skip would
-    sit in `reports.last`, visible in the diagnostics download while the
-    entity still showed the previous write.
-    """
+    """A request stopped before transmission must not look like another write."""
     data = wolink_entry.runtime_data
-    await call(hass, "write", device_id_of(hass))  # a successful write first
-    assert hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes["success"]
-
-    written_duration = sensor(hass, "write_duration")
-    wakes: list[float] = []
-    remove = data.duration_coordinator.async_add_listener(
-        lambda: wakes.append(data.duration_coordinator.data)
-    )
-
+    await call(hass, "write", device_id_of(hass))
+    duration = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration")
+    wakes = []
+    remove = data.duration_coordinator.async_add_listener(lambda: wakes.append(True))
     data.write_lock = True
-    assert (await respond(hass, "write", device_id_of(hass)))[device_id_of(hass)] == {
-        "status": "locked"
-    }
+    response = await respond(hass, "write", device_id_of(hass), payload=text_payload("changed"))
+    assert response[device_id_of(hass)] == {"status": "locked"}
     remove()
-    # Woken exactly once, with the value it already had.
-    assert wakes == [float(written_duration)]
-
-    assert tag_writer.write_prepared.await_count == 1  # the first write only
-    attrs = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration").attributes
-    assert (attrs["success"], attrs["skipped"]) == (False, "locked")
-    assert "error" not in attrs
-    # Only the attributes moved: the state is still the last real write's
-    # duration, because nothing was written this time.
-    assert sensor(hass, "write_duration") == written_duration
-    assert hass.states.get(f"binary_sensor.zhsunyco_{IDENT}_connectivity").state == "off"
+    assert wakes == []
+    assert hass.states.get(duration.entity_id) is duration
+    assert tag_writer.write_prepared.await_count == 1
     assert sensor(hass, "failure_count") == "0"
 
 
@@ -1876,3 +1856,42 @@ def test_a_retry_after_a_transfer_failure_books_pacing_a_final_error_does_not() 
 def test_a_timed_out_attempt_is_not_retried() -> None:
     attempt = Attempt(number=1, trace=SessionTrace(), error=AttemptTimedOut(600), timed_out=True)
     assert _retry(attempt) is False
+
+
+@pytest.mark.parametrize("service", ["write", "write_guarded"])
+async def test_single_write_defaults_to_changed_images_and_can_explicitly_resend(
+    hass, enable_bluetooth, tag_writer, service
+):
+    entry = await setup_entry(hass, options={"prevent_duplicate_send": False})
+    target = device_id_of(hass)
+    first = await respond(hass, service, target)
+    assert first[target]["status"] == "written"
+    preview_at = entry.runtime_data.image_store.images.preview.at
+    written_at = entry.runtime_data.image_store.images.written.at
+    duration = hass.states.get(f"sensor.zhsunyco_{IDENT}_write_duration")
+    second = await respond(hass, service, target)
+    assert second[target]["status"] == "duplicate"
+    assert tag_writer.write_prepared.await_count == 1
+    assert entry.runtime_data.image_store.images.preview.at == preview_at
+    assert entry.runtime_data.image_store.images.written.at == written_at
+    assert hass.states.get(duration.entity_id) is duration
+    forced = await respond(hass, service, target, skip_unchanged=False)
+    assert forced[target]["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 2
+    changed = await respond(hass, service, target, payload=text_payload("different pixels"))
+    assert changed[target]["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 3
+
+
+async def test_unchanged_preview_does_not_publish_a_new_image_timestamp(hass, wolink_entry):
+    target = device_id_of(hass)
+    await call(hass, "write", target, dry_run=True)
+    before = wolink_entry.runtime_data.image_store.images.preview.at
+    notifications = []
+    remove = wolink_entry.runtime_data.preview_coordinator.async_add_listener(
+        lambda: notifications.append(True)
+    )
+    await call(hass, "write", target, dry_run=True)
+    assert notifications == []
+    assert wolink_entry.runtime_data.image_store.images.preview.at == before
+    remove()

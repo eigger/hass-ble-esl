@@ -1,6 +1,6 @@
 # Actions, entities and fonts
 
-Reference for the two actions this integration registers, the data they return, the entities each tag exposes, and font lookup. For what goes inside `payload:` see [imagespec](https://github.com/eigger/imagespec); for a first write see the [README](../README.md#quick-start).
+Reference for the Write action and its legacy alias, the data they return, the entities each tag exposes, and font lookup. For what goes inside `payload:` see [imagespec](https://github.com/eigger/imagespec); for a first write see the [README](../README.md#quick-start).
 
 ## Actions
 
@@ -10,11 +10,14 @@ Both actions take a standard `target:`: a BLE ESL device, any of its entities, o
 
 ### `ble_esl.write`
 
-Renders the payload and sends it to the tag (unless `dry_run: true`).
+Renders the current design or payload, then sends only when the final image differs from the last successful write. Set `skip_unchanged: false` to refresh an identical image. The Write Lock and debounce delay still apply. `dry_run: true` only renders the preview.
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| `payload` | yes | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/main/docs/elements.md) |
+| `use_saved_design` | no | `false` | Render the target tag’s current saved design instead of a payload |
+| `skip_unchanged` | no | `true` | Skip identical images; disable to resend |
+| `debounce_override_ms` | no | device option | Override debounce for this call (`0` = immediate) |
+| `payload` | unless using saved design | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/main/docs/elements.md) |
 | `rotate` | no | `0` | `0`, `90`, `180`, or `270` |
 | `background` | no | `white` | `white`, `black`, `red`, or `yellow` |
 | `dry_run` | no | `false` | Render only; updates **Preview Content** image entity without BLE send |
@@ -159,17 +162,18 @@ data:
       height: 60
 ```
 
-### `ble_esl.write_guarded`
+### Write options and compatibility
 
-Same rendering as `ble_esl.write`, with guards before BLE transmission:
+`ble_esl.write` applies these guards before BLE transmission. `ble_esl.write_guarded` remains a compatibility alias:
 
-- duplicate image skip (when **Prevent Duplicate Send** is enabled)
+- duplicate image skip (the action’s **Skip unchanged image**, enabled by default)
 - write lock check
 - debounce scheduling (**Debounce Delay** option, overridable per call)
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| `payload` | yes | — | Same as `ble_esl.write` |
+| `payload` | unless `use_saved_design: true` | — | List of imagespec elements |
+| `skip_unchanged` | no | `true` | Skip an image identical to the last successful write; disable to resend |
 | `rotate`, `background`, `dry_run` | no | — | Same as `ble_esl.write` |
 | `debounce_override_ms` | no | option value | Override debounce for this call (`0` = write immediately) |
 
@@ -204,8 +208,8 @@ data:
 
 | Action | When to use |
 |---------|-------------|
-| `ble_esl.write` | Always send (except explicit `dry_run`) |
-| `ble_esl.write_guarded` | Automations that fire often; skip duplicates and coalesce rapid updates |
+| `ble_esl.write` | Skip unchanged images by default; set `skip_unchanged: false` to resend |
+| `ble_esl.write_guarded` | Compatibility alias for `ble_esl.write` |
 
 ### Response data
 
@@ -229,8 +233,8 @@ Both actions can return what happened to each target. Ask for it with `response_
 |---|---|---|
 | `written` | Image is on the tag | `attempts`, `duration_s` (whole write, including time spent queued behind other tags between attempts), `timing` (the [write breakdown](#write-breakdown) of the attempt) |
 | `failed` | Every attempt failed | `error`, `attempts`, `duration_s`, `timing` of the last attempt |
-| `scheduled` | `write_guarded` debounced the write; it runs in the background after the quiet period (`delay_ms`). **Its result is not part of this response** — check the *Display In Sync* / *Failure Count* entities if you need it | `delay_ms` |
-| `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
+| `scheduled` | The debounce delay scheduled the write; it runs in the background after the quiet period (`delay_ms`). **Its result is not part of this response** — check the *Display In Sync* / *Failure Count* entities if you need it | `delay_ms` |
+| `duplicate` | Image unchanged, not sent (`skip_unchanged: true`) | |
 | `locked` | Write lock switch is on; preview updated only | |
 | `preview` | `dry_run`: rendered only | |
 | `dropped` | A queued write was superseded or its config entry unloaded before it reached the BLE lock | |

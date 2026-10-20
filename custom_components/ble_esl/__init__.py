@@ -199,6 +199,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     except BaseException:
         designer.remove_panel_if_unused(entry.entry_id)
         raise
+    designer.inputs.track(entry.entry_id)
+    entry.async_on_unload(lambda: designer.inputs.untrack(entry.entry_id))
     entry.async_on_unload(bt_coordinator.async_start())
     return True
 

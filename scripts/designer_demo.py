@@ -31,7 +31,12 @@ from custom_components.ble_esl.designer.design_templates import (
     pick_id,
     template_text,
 )
-from custom_components.ble_esl.designer.export import automation_draft, export_yaml, plain
+from custom_components.ble_esl.designer.export import (
+    automation_draft,
+    export_yaml,
+    plain,
+    saved_design_export,
+)
 from custom_components.ble_esl.designer.importer import (
     convert,
     different_pixels,
@@ -39,6 +44,7 @@ from custom_components.ble_esl.designer.importer import (
     parse as parse_payload,
     payloads,
 )
+from custom_components.ble_esl.designer.inputs import input_trigger
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
     live_payload,
@@ -493,11 +499,19 @@ async def handle(request):
             design=document,
         )
         if msg["action"] == "automation":
+            result = saved_design_export(result, variables)
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")
-            result["automation"] = automation_draft(
-                result, tag["title"], msg.get("automation_defaults")
-            )
+            defaults = msg.get("automation_defaults")
+            if defaults is None or "triggers" not in defaults:
+                defaults = {
+                    "mode": "queued",
+                    "max": 2,
+                    **(defaults or {}),
+                    "triggers": [input_trigger(tag["entry_id"])],
+                }
+                result["input_triggers"] = True
+            result["automation"] = automation_draft(result, tag["title"], defaults)
         return web.json_response(
             {
                 **result,

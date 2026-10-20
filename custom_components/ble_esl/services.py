@@ -56,13 +56,12 @@ import voluptuous as vol
 
 from .const import (
     CONF_DEBOUNCE_MS,
+    CONF_DISPLAY_ROTATION,
     CONF_MODEL,
-    CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
     DATA_LOCK,
     DEFAULT_DEBOUNCE_MS,
     DEFAULT_MODEL,
-    DEFAULT_PREVENT_DUPLICATE_SEND,
     DEFAULT_RETRY_COUNT,
     DOMAIN,
     SERVICE_WRITE,
@@ -73,7 +72,7 @@ from .device import resolve_preset
 from .esl_ble import WriteResult
 from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset
 from .esl_ble.wolink.const import ERROR_UNLOCK_FAILED
-from .renderer import encode_png, render_image
+from .renderer import encode_png, oriented_preset, render_image
 from .types import BleEslConfigEntry
 from .yaml11 import repair_yaml11_keys
 
@@ -100,18 +99,32 @@ def _color(value: Any) -> str:
 # keys from older automations) passes through untouched.
 WRITE_SERVICE_SCHEMA = vol.Schema(
     {
-        vol.Required("payload"): list,
+        vol.Optional("payload"): list,
         vol.Optional("design"): vol.Any(dict, str),
         vol.Optional("design_specs"): dict,
+        vol.Optional("use_saved_design"): cv.boolean,
+        vol.Optional("design_variables"): dict,
         vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("background"): _color,
         vol.Optional("dry_run"): cv.boolean,
+        vol.Optional("skip_unchanged", default=True): cv.boolean,
+        vol.Optional("debounce_override_ms"): vol.All(vol.Coerce(int), vol.Range(min=0)),
     },
     extra=vol.ALLOW_EXTRA,
 )
 WRITE_GUARDED_SERVICE_SCHEMA = WRITE_SERVICE_SCHEMA.extend(
     {vol.Optional("debounce_override_ms"): vol.All(vol.Coerce(int), vol.Range(min=0))}
 )
+
+
+def _require_write_source(data):
+    if "payload" not in data and not data.get("use_saved_design"):
+        raise vol.Invalid("required key not provided", path=["payload"])
+    return data
+
+
+WRITE_SERVICE_SCHEMA = vol.All(WRITE_SERVICE_SCHEMA, _require_write_source)
+WRITE_GUARDED_SERVICE_SCHEMA = vol.All(WRITE_GUARDED_SERVICE_SCHEMA, _require_write_source)
 
 
 @callback
@@ -134,7 +147,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
         hass,
         DOMAIN,
         SERVICE_WRITE_GUARDED,
-        partial(_async_write_guarded, hass),
+        partial(_async_write, hass),
         schema=WRITE_GUARDED_SERVICE_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
@@ -341,7 +354,7 @@ async def build_write_job_from_data(
     data.preset = preset
     data.parser.set_preset(preset)
 
-    if image is None and "design" in service_data:
+    if image is None and ("design" in service_data or service_data.get("use_saved_design")):
         # Import lazily: the optional designer also uses this write pipeline.
         from .designer import KEY
         from .designer.automation_source import decode_design
@@ -350,7 +363,12 @@ async def build_write_job_from_data(
 
         designer = hass.data[KEY]
         try:
-            document = validate(decode_design(service_data["design"]), preset)
+            document = validate(
+                designer.documents[entry.entry_id]
+                if service_data.get("use_saved_design")
+                else decode_design(service_data["design"]),
+                oriented_preset(preset, options.get(CONF_DISPLAY_ROTATION, 0)),
+            )
             # HA rendered these with the automation's own variables (trigger, this, ...).
             rendered_specs = service_data.get("design_specs") or {}
             for element in document["elements"]:
@@ -371,11 +389,16 @@ async def build_write_job_from_data(
             document,
             designer.templates,
             await designer.forecasts(document),
+            preview_variables=service_data.get("design_variables"),
         )
         service_data = {**service_data, "payload": payload, "background": document["background"]}
 
     if image is None:
-        render_lock = designer.render_lock if "design" in service_data else nullcontext()
+        render_lock = (
+            designer.render_lock
+            if "design" in service_data or service_data.get("use_saved_design")
+            else nullcontext()
+        )
         async with render_lock:
             image = await hass.async_add_executor_job(
                 partial(
@@ -383,13 +406,16 @@ async def build_write_job_from_data(
                     hass,
                     preset,
                     repair_yaml11_keys(service_data.get("payload", "")),
-                    rotate=service_data.get("rotate", 0),
+                    rotate=(service_data.get("rotate", 0) + options.get(CONF_DISPLAY_ROTATION, 0))
+                    % 360,
                     background=service_data.get("background", "white"),
                 )
             )
     image_png = await hass.async_add_executor_job(encode_png, image)
-    if lifecycle_generation == data.lifecycle_generation and (
-        preview_generation is None or preview_generation == data.request_generation
+    if (
+        lifecycle_generation == data.lifecycle_generation
+        and (preview_generation is None or preview_generation == data.request_generation)
+        and image_png != data.preview_coordinator.data
     ):
         data.preview_coordinator.async_set_updated_data(image_png)
         data.image_store.set_preview(image_png, now())
@@ -825,36 +851,19 @@ def schedule_debounced_write(hass: HomeAssistant, job: WriteJob, delay_s: float)
 
 
 async def _async_write(hass: HomeAssistant, service: ServiceCall) -> ServiceResponse:
-    """ble_esl.write: always send (unless dry_run)."""
-    dry_run = service.data.get("dry_run", False)
-
-    async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
-        data = entry.runtime_data
-        preview_generation: int | None = None
-        if not dry_run:
-            # A newer physical write supersedes guarded work still rendering,
-            # without making concurrent plain writes cancel one another.
-            data.request_generation += 1
-            preview_generation = data.request_generation
-            cancel_pending_write(data)
-        job = await build_write_job(hass, entry, service, preview_generation=preview_generation)
-        if dry_run:
-            return WriteOutcome("preview")
-        return await run_ble_write(hass, job)
-
-    return await _for_each_target(hass, service, handle)
-
-
-async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> ServiceResponse:
-    """ble_esl.write_guarded: duplicate guard, write lock, debounce, then send."""
+    """Write with lock/debounce guards; unchanged images are skipped by default."""
     dry_run = service.data.get("dry_run", False)
 
     async def handle(entry: BleEslConfigEntry) -> WriteOutcome:
         data = entry.runtime_data
         request_generation: int | None = None
+        preview_generation: int | None = None
+        skip_unchanged = service.data.get("skip_unchanged", True)
         if not dry_run:
             data.request_generation += 1
-            request_generation = data.request_generation
+            preview_generation = data.request_generation
+            if skip_unchanged:
+                request_generation = preview_generation
             # Invalidate a previous debounce as soon as this request arrives,
             # even if its render takes longer than the old timer.
             cancel_pending_write(data)
@@ -863,12 +872,10 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
             entry,
             service,
             request_generation=request_generation,
-            preview_generation=request_generation,
+            preview_generation=preview_generation,
         )
         options = {**entry.data, **entry.options}
-        job.prevent_duplicate_send = bool(
-            options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
-        )
+        job.prevent_duplicate_send = skip_unchanged
 
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.

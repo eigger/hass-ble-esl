@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "ラベルを書き込む",
-      "description": "BLE ESL デバイスにラベル画像を書き込みます。",
+      "description": "Render and write the image. By default, skip an unchanged image; respect the write lock and debounce delay.",
       "fields": {
         "payload": {
           "name": "ペイロード",
@@ -24,6 +24,22 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
+        },
+        "debounce_override_ms": {
+          "name": "デバウンスの上書き",
+          "description": "この呼び出しに限り、設定済みのデバウンス遅延を上書きします（0 = 即時）。"
+        },
         "design_specs": {
           "name": "Designer templates",
           "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
@@ -32,7 +48,7 @@
     },
     "write_guarded": {
       "name": "ラベルを保護付きで書き込む",
-      "description": "保護機能（重複防止、書き込みロック、デバウンス）を適用してラベル画像を書き込みます。",
+      "description": "Compatibility alias for Write. Unchanged images are skipped by default.",
       "fields": {
         "payload": {
           "name": "ペイロード",
@@ -57,6 +73,18 @@
         "design": {
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
         },
         "design_specs": {
           "name": "Designer templates",
@@ -148,13 +176,11 @@
         "data": {
           "model": "モデル",
           "retry_count": "再試行回数",
-          "prevent_duplicate_send": "重複送信の防止",
           "debounce_ms": "デバウンス遅延 (ms)"
         },
         "data_description": {
           "model": "ESL の画面解像度とモデルの種類です。",
           "retry_count": "書き込みを諦めるまでに再試行する回数です。",
-          "prevent_duplicate_send": "新しい画像が最後に送信した画像と同一の場合、書き込みをスキップします。",
           "debounce_ms": "書き込み前の待機時間です。新しい要求は待機中の要求を取り消します。0 = 無効（即時書き込み）。"
         }
       }

@@ -1,7 +1,7 @@
 """The last rendered and last written image of a tag, kept across restarts.
 
 Both are runtime state the write pipeline needs from the previous run:
-Prevent Duplicate Send compares a new render against the last image the
+Duplicate detection compares a new render against the last image the
 tag *received*, and Display In Sync compares the last render against it.
 Without them, every restart rewrote every tag on its next automation run
 and left Last Updated Content / Preview Content unknown until then.

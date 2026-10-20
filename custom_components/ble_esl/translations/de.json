@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Etikett schreiben",
-      "description": "Schreibt ein Etikettenbild auf ein BLE-ESL-Gerät.",
+      "description": "Render and write the image. By default, skip an unchanged image; respect the write lock and debounce delay.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -24,6 +24,22 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
+        },
+        "debounce_override_ms": {
+          "name": "Entprellung überschreiben",
+          "description": "Überschreibt die konfigurierte Entprellverzögerung für diesen Aufruf (0 = sofort)."
+        },
         "design_specs": {
           "name": "Designer templates",
           "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
@@ -32,7 +48,7 @@
     },
     "write_guarded": {
       "name": "Etikett geschützt schreiben",
-      "description": "Schreibt ein Etikettenbild mit Schutzmechanismen (Duplikate, Schreibsperre, Entprellung).",
+      "description": "Compatibility alias for Write. Unchanged images are skipped by default.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -57,6 +73,18 @@
         "design": {
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
         },
         "design_specs": {
           "name": "Designer templates",
@@ -148,13 +176,11 @@
         "data": {
           "model": "Modell",
           "retry_count": "Wiederholungen",
-          "prevent_duplicate_send": "Doppeltes Senden verhindern",
           "debounce_ms": "Entprellverzögerung (ms)"
         },
         "data_description": {
           "model": "Displayauflösung und Modelltyp des ESL.",
           "retry_count": "Wie oft das Schreiben wiederholt wird, bevor aufgegeben wird.",
-          "prevent_duplicate_send": "Überspringt das Schreiben, wenn das neue Bild mit dem zuletzt gesendeten identisch ist.",
           "debounce_ms": "Wartezeit vor dem Schreiben. Neue Anforderungen brechen ausstehende ab. 0 = deaktiviert (sofort schreiben)."
         }
       }

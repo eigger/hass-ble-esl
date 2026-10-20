@@ -19,10 +19,10 @@ from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 import voluptuous as vol
 
-from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
+from ..const import CONF_DISPLAY_ROTATION, CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
-from ..renderer import encode_png, render_image
+from ..renderer import encode_png, oriented_preset, prepare_payload, render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from ..yaml11 import repair_yaml11_keys
 from .design_templates import (
@@ -33,8 +33,9 @@ from .design_templates import (
     pick_id,
     template_text,
 )
-from .export import automation_draft, export_yaml, plain
+from .export import automation_draft, export_yaml, plain, saved_design_export
 from .importer import convert, different_pixels, elements_from, parse, payloads
+from .inputs import DesignInputs, input_trigger
 from .layout import (
     compile_payload,
     live_payload,
@@ -56,6 +57,7 @@ from .specs import (
 
 KEY = f"{DOMAIN}_designer"
 PANEL = "ble-esl-designer"
+FRONTEND_BUILD = "controls-3"
 MAX_STRUCTURED_PAYLOAD_BYTES = 5 * 1024 * 1024
 MAX_PREVIEW_VARIABLE_BYTES = 64 * 1024
 
@@ -102,6 +104,7 @@ class Designer:
         self.automation_links = AutomationLinks(hass)
         self.store = Store(hass, 1, f"{DOMAIN}.designer")
         self.documents = {}
+        self.inputs = DesignInputs(self)
         self.template_store = Store(hass, 1, f"{DOMAIN}.sensor_templates")
         self.templates = {}
         self.design_templates = {}
@@ -132,7 +135,7 @@ class Designer:
                 "ble-esl-manager",
                 sidebar_title="ESL Manager",
                 sidebar_icon="mdi:label-multiple",
-                module_url=f"/ble_esl_designer/{integration.version}/manager.js",
+                module_url=f"/ble_esl_designer/{integration.version}-{FRONTEND_BUILD}/manager.js",
                 config={"version": str(integration.version)},
                 require_admin=True,
             )
@@ -154,6 +157,7 @@ class Designer:
         document = validate(document, self.preset(entry))
         self.documents[entry.entry_id] = document
         await self.store.async_save(self.documents)
+        self.inputs.track(entry.entry_id)
         cancel_pending_write(entry.runtime_data)
         return document
 
@@ -185,12 +189,13 @@ class Designer:
     def preset(self, entry):
         """The preset a write would use now, refined by the last advertisement."""
         options = {**entry.data, **entry.options}
-        return resolve_preset(
+        preset = resolve_preset(
             self.hass,
             entry.runtime_data.protocol,
             entry.runtime_data.address,
             options.get(CONF_MODEL, DEFAULT_MODEL),
         ).preset
+        return oriented_preset(preset, options.get(CONF_DISPLAY_ROTATION, 0))
 
     async def render(self, preset, document, payload, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
@@ -269,6 +274,14 @@ class Designer:
             for element in document["elements"]
             if element["type"] == "imagespec" and templates_in(element["spec"])
         }
+        # Free-angle groups become native imagespec data images in exported YAML.
+        # The attached source still re-evaluates every binding at execution time.
+        portable = await self.hass.async_add_executor_job(
+            prepare_payload, self.hass, preset, payload
+        )
+        if portable != payload:
+            payload = portable
+            automation_payload = portable
         result = export_yaml(
             payload,
             document["background"],
@@ -290,48 +303,21 @@ class Designer:
 
     async def automation(self, entry, document, preview_variables=None, defaults=None):
         """Prepare a new automation from the current, possibly unsaved design."""
-        result = await self.export(entry, document, preview_variables)
+        result = saved_design_export(
+            await self.export(entry, document, preview_variables), preview_variables
+        )
         if not result["writable"]:
             raise HomeAssistantError("This ESL does not support writing")
         if not entry.runtime_data.device_id:
             raise HomeAssistantError("This ESL has no registered device")
         if defaults is None or "triggers" not in defaults:
-            validated = validate(document, self.preset(entry))
-            layers = snapshot_layers(
-                self.hass,
-                validated,
-                self.templates,
-                await self.forecasts(validated),
-                preview_variables=preview_variables,
-            )
-            entities = sorted(
-                {
-                    entity
-                    for element, _ in layers
-                    for entity in [element.get("entity_id"), *element.get("_template_entities", [])]
-                    if entity and not entity.startswith("{{")
-                }
-            )
-            result["input_triggers"] = bool(entities)
+            result["input_triggers"] = True
             defaults = {
                 "mode": "queued",
                 "max": 2,
                 "max_exceeded": "silent",
                 **(defaults or {}),
-                "triggers": (
-                    [
-                        {
-                            "trigger": "state",
-                            "entity_id": entities,
-                            # State changes only; skip attribute-only updates and
-                            # entering unavailable/unknown, so a tag keeps its last
-                            # reading and shows the new one once the entity returns.
-                            "not_to": ["unavailable", "unknown"],
-                        }
-                    ]
-                    if entities
-                    else []
-                ),
+                "triggers": [input_trigger(entry.entry_id)],
             }
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
 
@@ -617,6 +603,11 @@ class Designer:
             preset = self.preset(entry)
             if (preset.width, preset.height) != image.size:
                 raise HomeAssistantError("The tag's display size changed; reload the designer")
+            orientation = entry.options.get(CONF_DISPLAY_ROTATION, 0)
+            if orientation:
+                image = await self.hass.async_add_executor_job(
+                    lambda: image.rotate(-orientation, expand=True)
+                )
             service_data = {"payload": payload, "background": document["background"]}
             job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
             # Explicit sends also restore a tag that was reset externally.
@@ -634,6 +625,7 @@ class Designer:
                 "list",
                 "specs",
                 "save",
+                "orientation",
                 "preview",
                 "export",
                 "automation",
@@ -655,6 +647,7 @@ class Designer:
             )
         ),
         vol.Optional("entry_id"): str,
+        vol.Optional("rotation"): vol.In((0, 90, 180, 270)),
         vol.Optional("document"): dict,
         vol.Optional("preview_variables"): dict,
         vol.Optional("automation_edit"): bool,
@@ -722,6 +715,14 @@ async def websocket_designer(hass, connection, msg):
         result = await designer.save_template(msg["key"], msg["template"])
     elif action == "preview_template":
         result = await designer.preview_template(msg["template"], msg["entity_id"])
+    elif action == "orientation":
+        entry = designer.entry(msg["entry_id"])
+        hass.config_entries.async_update_entry(
+            entry, options={**entry.options, CONF_DISPLAY_ROTATION: msg["rotation"]}
+        )
+        cancel_pending_write(entry.runtime_data)
+        preset = designer.preset(entry)
+        result = {"rotation": msg["rotation"], "width": preset.width, "height": preset.height}
     elif action == "list":
         result = [
             {
@@ -731,6 +732,7 @@ async def websocket_designer(hass, connection, msg):
                 "width": (preset := designer.preset(entry)).width,
                 "height": preset.height,
                 "colors": preset.colors,
+                "rotation": entry.options.get(CONF_DISPLAY_ROTATION, 0),
                 "writable": getattr(entry.runtime_data.protocol, "writable", True),
                 "document": designer.documents.get(entry.entry_id),
             }
@@ -815,6 +817,16 @@ async def async_setup_designer(hass):
     await hass.http.async_register_static_paths(
         [
             # Versioned URL so an update never serves stale cached modules.
+            StaticPathConfig(
+                f"/ble_esl_designer/{integration.version}-{FRONTEND_BUILD}",
+                str(Path(__file__).parent / "frontend"),
+                False,
+            ),
+            StaticPathConfig(
+                f"/ble_esl_designer/{integration.version}-controls-2",
+                str(Path(__file__).parent / "frontend"),
+                False,
+            ),
             StaticPathConfig(
                 f"/ble_esl_designer/{integration.version}",
                 str(Path(__file__).parent / "frontend"),

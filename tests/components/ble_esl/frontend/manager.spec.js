@@ -1745,7 +1745,7 @@ test("card information aligns and battery stays at the right edge", async ({
   expect(metrics.map((metric) => metric.productRight)).toEqual([0, 0]);
   expect(metrics.map((metric) => metric.aligned)).toEqual([true, true]);
   expect(metrics.map((metric) => metric.border)).toEqual(["0px", "0px"]);
-  await expect(page.locator(".battery svg")).toHaveCount(2);
+  await expect(page.locator(".battery ha-icon")).toHaveCount(2);
 });
 
 test("thumbnail survives rerenders and waits for the next bitmap to load", async ({
@@ -1844,79 +1844,178 @@ test("manager header fits narrow mobile widths without clipping controls", async
   expect(bounds.childrenFit).toBe(true);
 });
 
-test("automation editing keeps component rules and writes the source back", async ({
+for (const service of ["ble_esl.write", "ble_esl.write_guarded"]) {
+  test(`automation editing keeps component rules and writes the source back (${service})`, async ({
+    page,
+    request,
+  }) => {
+    const source = {
+      version: 1,
+      background: "white",
+      elements: [
+        {
+          id: "conditional-source",
+          type: "conditional_icon",
+          x: 10,
+          y: 10,
+          width: 40,
+          height: 40,
+          entity_id: "binary_sensor.laundry_finished",
+          icon: "mdi:washing-machine",
+          rotation: 90,
+          icon_rules: [{ kind: "state", state: "on", icon: "mdi:check" }],
+          field_templates: {
+            color: "{{ 'red' if value == 'on' else 'black' }}",
+          },
+        },
+      ],
+    };
+    const design =
+      "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
+    await request.post("/api/config/automation/config/morning", {
+      data: {
+        id: "morning",
+        alias: "Morning",
+        triggers: [],
+        conditions: [],
+        actions: [
+          {
+            action: service,
+            target: { device_id: "demo-device-0" },
+            data: {
+              background: "white",
+              payload: [
+                {
+                  type: "icon",
+                  value: "mdi:washing-machine",
+                  x: 10,
+                  y: 10,
+                  size: 40,
+                },
+              ],
+              design,
+            },
+          },
+        ],
+        mode: "single",
+      },
+    });
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    await page
+      .getByRole("dialog", { name: "Connected automations" })
+      .getByRole("button", { name: "Edit automation design", exact: true })
+      .first()
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Save to automation" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => window.manager.editor.document.elements[0]),
+    ).toMatchObject(source.elements[0]);
+    await page.getByRole("button", { name: "Save to automation" }).click();
+    await expect(page.locator(".message")).toContainText("Automation saved.");
+    const response = await request.get("/api/config/automation/config/morning");
+    const saved = await response.json();
+    const decoded = JSON.parse(
+      JSON.parse(saved.actions[0].data.design.slice(3, -15)),
+    );
+    expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+  });
+}
+
+test("open tag is remembered in the URL across reload and browser navigation", async ({
+  page,
+}) => {
+  await page.locator("[data-action=edit][data-entry=demo-writable]").click();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
+  await page
+    .getByRole("combobox", { name: "Tag", exact: true })
+    .selectOption("demo-discovery");
+  await expect(page).toHaveURL(/tag=demo-discovery/);
+  await page.goBack();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
+});
+
+test("saving the tag editor updates the shared design without rewriting the linked automation", async ({
   page,
   request,
 }) => {
-  const source = {
-    version: 1,
-    background: "white",
-    elements: [
-      {
-        id: "conditional-source",
-        type: "conditional_icon",
-        x: 10,
-        y: 10,
-        width: 40,
-        height: 40,
-        entity_id: "binary_sensor.laundry_finished",
-        icon: "mdi:washing-machine",
-        rotation: 90,
-        icon_rules: [{ kind: "state", state: "on", icon: "mdi:check" }],
-        field_templates: { color: "{{ 'red' if value == 'on' else 'black' }}" },
-      },
-    ],
-  };
-  const design =
-    "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
   await request.post("/api/config/automation/config/morning", {
     data: {
       id: "morning",
       alias: "Morning",
-      triggers: [],
+      triggers: [
+        { trigger: "time", at: "08:00:00" },
+        {
+          trigger: "event",
+          event_type: "ble_esl_inputs_changed",
+          event_data: { entry_id: "demo-writable" },
+          id: "ble_esl_inputs",
+        },
+      ],
       conditions: [],
+      mode: "queued",
       actions: [
         {
-          action: "ble_esl.write",
+          action: "ble_esl.write_guarded",
           target: { device_id: "demo-device-0" },
           data: {
-            background: "white",
-            payload: [
-              {
-                type: "icon",
-                value: "mdi:washing-machine",
-                x: 10,
-                y: 10,
-                size: 40,
-              },
-            ],
-            design,
+            use_saved_design: true,
+            debounce_override_ms: 750,
           },
         },
       ],
-      mode: "single",
     },
   });
+  await page.locator("[data-action=edit][data-entry=demo-writable]").click();
+  await page.evaluate(() => {
+    const p = window.manager.editor;
+    p.document = { version: 1, elements: [], background: "white" };
+    p.add("sensor", p.hass.states["sensor.office_temperature"]);
+    p.element.rotation = 37.5;
+    p.edited();
+  });
   await page
-    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .getByRole("button", { name: "Save (unsaved changes)", exact: true })
     .click();
-  await page
-    .getByRole("dialog", { name: "Connected automations" })
-    .getByRole("button", { name: "Edit automation design", exact: true })
-    .first()
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Save to automation" }),
-  ).toBeVisible();
-  expect(
-    await page.evaluate(() => window.manager.editor.document.elements[0]),
-  ).toMatchObject(source.elements[0]);
-  await page.getByRole("button", { name: "Save to automation" }).click();
-  await expect(page.locator(".message")).toContainText("Automation saved.");
+  await expect
+    .poll(async () => {
+      const r = await request.get("/api/config/automation/config/morning");
+      return (await r.json()).triggers.find((t) => t.id === "ble_esl_inputs")
+        ?.event_data;
+    })
+    .toEqual({ entry_id: "demo-writable" });
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        async () =>
+          (await window.manager.api("list")).find(
+            (t) => t.entry_id === "demo-writable",
+          ).document.elements[0]?.rotation,
+      ),
+    )
+    .toBe(37.5);
   const response = await request.get("/api/config/automation/config/morning");
   const saved = await response.json();
-  const decoded = JSON.parse(
-    JSON.parse(saved.actions[0].data.design.slice(3, -15)),
-  );
-  expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+  expect(saved.triggers).toContainEqual({ trigger: "time", at: "08:00:00" });
+  expect(saved.actions[0].data.debounce_override_ms).toBe(750);
+  expect(saved.actions[0].data.use_saved_design).toBe(true);
+  expect(saved.actions[0].data.design).toBeUndefined();
+  expect(saved.actions[0].data.payload).toBeUndefined();
+  expect(
+    await page.evaluate(
+      async () =>
+        (await window.manager.api("list")).find(
+          (t) => t.entry_id === "demo-writable",
+        ).document.elements[0].rotation,
+    ),
+  ).toBe(37.5);
 });

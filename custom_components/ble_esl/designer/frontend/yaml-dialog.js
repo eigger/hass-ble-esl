@@ -1,3 +1,4 @@
+import { decodeAutomationDesign } from "./editor/automation-source.js";
 import { t } from "./i18n.js";
 import { createId } from "./model.js";
 const esc = (value) =>
@@ -32,7 +33,8 @@ export class YamlDialog extends HTMLElement {
       if (event.target.id === "automation-name") this.name = event.target.value;
     });
   }
-  open(result, onClose, hass) {
+  open(result, onClose, hass, saveDesign) {
+    this.saveDesign = saveDesign;
     this.hass = hass;
     this.result = result;
     this.onClose = onClose;
@@ -79,7 +81,7 @@ export class YamlDialog extends HTMLElement {
       .warnings{color:var(--warning-color,#986000);margin:0;padding-left:18px;font-size:12px}
     </style><dialog aria-label="${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}"><form method="dialog">
       <h2>${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}</h2>
-      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? (this.result.input_triggers ? "Input state changes trigger display updates. You can adjust the triggers in Home Assistant." : "The template's triggers are included. Change them in Home Assistant after creating the automation.") : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
+      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? (this.result.input_triggers ? "Input changes update this tag using its current saved design. Saving changes in the editor also updates which inputs are watched." : "The template's triggers are included. Change them in Home Assistant after creating the automation.") : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
       <div class="tabs" role="tablist">${shown
         .map(
           ([key, label]) =>
@@ -151,14 +153,29 @@ export class YamlDialog extends HTMLElement {
       this.creationError = "";
       this.render();
       try {
+        const config = {
+          ...structuredClone(this.result.automation),
+          id: this.automationId,
+          alias: this.name.trim(),
+        };
+        if (this.saveDesign && this.result.design_source) {
+          await this.saveDesign(
+            decodeAutomationDesign(this.result.design_source),
+          );
+          config.actions[0].data.use_saved_design = true;
+          delete config.actions[0].data.design;
+          delete config.actions[0].data.payload;
+          delete config.actions[0].data.background;
+          if (this.result.input_triggers)
+            config.triggers = config.triggers.map((trigger) => ({
+              ...trigger,
+              id: "ble_esl_inputs",
+            }));
+        }
         await this.hass.callApi(
           "POST",
           `config/automation/config/${this.automationId}`,
-          {
-            ...this.result.automation,
-            id: this.automationId,
-            alias: this.name.trim(),
-          },
+          config,
         );
         this.createdId = this.automationId;
       } catch (error) {

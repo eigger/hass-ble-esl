@@ -21,14 +21,13 @@ DATA_LOCK: HassKey[Lock] = HassKey(f"{DOMAIN}_ble_lock")
 CONF_PROTOCOL = "protocol"
 CONF_MODEL = "model"
 CONF_RETRY_COUNT = "retry_count"
-CONF_PREVENT_DUPLICATE_SEND = "prevent_duplicate_send"
 CONF_DEBOUNCE_MS = "debounce_ms"
+CONF_DISPLAY_ROTATION = "display_rotation"
 
 # Defaults
 DEFAULT_PROTOCOL = "wolink"
 DEFAULT_MODEL = "290"
 DEFAULT_RETRY_COUNT = 3
-DEFAULT_PREVENT_DUPLICATE_SEND = False
 DEFAULT_DEBOUNCE_MS = 0
 
 # Session-polled battery (protocols with session_battery, i.e. easyTag): the

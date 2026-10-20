@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "写入标签",
-      "description": "将标签图像写入 BLE ESL 设备。",
+      "description": "Render and write the image. By default, skip an unchanged image; respect the write lock and debounce delay.",
       "fields": {
         "payload": {
           "name": "载荷",
@@ -24,6 +24,22 @@
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
         },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
+        },
+        "debounce_override_ms": {
+          "name": "覆盖防抖",
+          "description": "仅本次调用覆盖已配置的防抖延迟（0 = 立即）。"
+        },
         "design_specs": {
           "name": "Designer templates",
           "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
@@ -32,7 +48,7 @@
     },
     "write_guarded": {
       "name": "受保护写入标签",
-      "description": "在保护机制（去重、写入锁定、防抖）下写入标签图像。",
+      "description": "Compatibility alias for Write. Unchanged images are skipped by default.",
       "fields": {
         "payload": {
           "name": "载荷",
@@ -57,6 +73,18 @@
         "design": {
           "name": "Designer source",
           "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
+        },
+        "use_saved_design": {
+          "name": "Use saved design",
+          "description": "Use the target tag's current saved design and rendering rules."
+        },
+        "skip_unchanged": {
+          "name": "Skip unchanged image",
+          "description": "Skip Bluetooth transmission if the final image matches the last successful write. Disable to refresh the same image again."
         },
         "design_specs": {
           "name": "Designer templates",
@@ -148,13 +176,11 @@
         "data": {
           "model": "型号",
           "retry_count": "重试次数",
-          "prevent_duplicate_send": "防止重复发送",
           "debounce_ms": "防抖延迟 (ms)"
         },
         "data_description": {
           "model": "ESL 屏幕分辨率和型号类型。",
           "retry_count": "放弃之前重试写入的次数。",
-          "prevent_duplicate_send": "当新图像与上次发送的图像相同时跳过写入。",
           "debounce_ms": "写入前的等待时间。新请求会取消待处理的请求。0 = 禁用（立即写入）。"
         }
       }

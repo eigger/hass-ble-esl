@@ -1,6 +1,7 @@
 """The designer's display as YAML for a ``ble_esl.write`` automation."""
 
 from functools import partial
+import json
 import math
 
 from imagespec import validate as validate_payload
@@ -145,6 +146,30 @@ def export_yaml(
             }
         )
     return result
+
+
+def saved_design_export(exported, preview_variables=None):
+    """Reference the persistent tag document; keep standalone exports explicit."""
+    action = yaml.safe_load(exported.get("live_service", exported["service"]))
+
+    # HA stringifies whole State/trigger objects; render their leaves while
+    # keeping the sample object shape, without copying preview values or specs.
+    def runtime_value(value, path):
+        if isinstance(value, dict):
+            return {
+                key: runtime_value(child, f"{path}[{json.dumps(key)}]")
+                for key, child in value.items()
+            }
+        return "{{ " + path + " }}"
+
+    variables = {
+        name: runtime_value(value, name) for name, value in (preview_variables or {}).items()
+    }
+    action["data"] = {"use_saved_design": True}
+    if variables:
+        action["data"]["design_variables"] = variables
+    service = yaml.dump(action, Dumper=_PlainDumper, sort_keys=False, allow_unicode=True)
+    return {**exported, "service": service, "live_service": service}
 
 
 def automation_draft(exported, name, defaults=None):

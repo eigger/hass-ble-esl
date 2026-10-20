@@ -38,7 +38,7 @@ Full model list with resolutions and model codes: **[docs/models.md](docs/models
 
 Key features:
 
-- Two actions, `ble_esl.write` and `ble_esl.write_guarded` (skips unchanged images, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
+- One Write action, `ble_esl.write` (skips unchanged images by default, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
 - **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
 - Failure sensors and a diagnostics download that say at which stage a write failed and through which radio.
 
@@ -54,7 +54,7 @@ Key features:
 2. Restart Home Assistant.
 3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
 
-Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
+Options (Retry Count, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
 
 Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
 
@@ -90,7 +90,7 @@ The tag refreshes in a few seconds. Add `dry_run: true` to render without sendin
 
 - XTE sizes other than 2.13", 2.66", 2.9" and 4.2" are size-only presets picked by hand; a preset that does not match the hardware can produce a successful write but a wrong-looking panel.
 - **Preview Content** is what was rendered, not a readback of the panel.
-- The designer does not transmit on sensor changes; schedule updates with automations. E-paper is not an LCD — avoid overly frequent redraws; `write_guarded` and the Prevent Duplicate Send / Debounce Delay options help.
+- The designer does not transmit on sensor changes; schedule updates with automations. E-paper is not an LCD — avoid overly frequent redraws; `write` skips unchanged images by default; Debounce Delay can coalesce bursts. Disable the action’s **Skip unchanged image** option to resend an identical image.
 
 ## Documentation
 

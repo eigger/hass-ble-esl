@@ -47,20 +47,22 @@ Existing YAML actions remain available. Full walkthrough: **[Designer guide](des
 
 ## Actions
 
-Both actions take a standard `target:` (a tag device, one of its entities, or an area/floor/label containing tags) and write each target in turn.
+The Write action takes a standard `target:` (a tag device, one of its entities, or an area/floor/label containing tags) and writes each target in turn.
 
 | Action | Use it for |
 |---|---|
-| `ble_esl.write` | Always send (unless `dry_run`) |
-| `ble_esl.write_guarded` | Automations that fire often: skips unchanged images, honours the **Write Lock** switch, and debounces bursts |
+| `ble_esl.write` | Skip unchanged images by default, honour the **Write Lock**, and debounce bursts |
+| `ble_esl.write_guarded` | Compatibility alias for `ble_esl.write` |
 
 | Parameter | Default | Description |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
+| `skip_unchanged` | `true` | Compare the final image with the last successful write; set `false` to resend |
+| `use_saved_design` | `false` | Render the target tag’s current saved design; no payload is needed |
+| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (required unless `use_saved_design: true`); use `[]` for an intentional blank screen |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | Render to **Preview Content** only |
-| `debounce_override_ms` | option value | `write_guarded` only: override the debounce for this call (`0` = now) |
+| `debounce_override_ms` | option value | Override the debounce for this call (`0` = now) |
 
 Both actions can return a per-tag result via `response_variable`. Full reference — dithering photos and charts, rotation, response data, the entities each tag exposes, fonts: **[actions.md](actions.md)**.
 
@@ -72,11 +74,10 @@ Both actions can return a per-tag result via `response_variable`. Full reference
 |--------|---------|-------|-------------|
 | **Model** | — | model list | Shown only for protocols that cannot report their model (WOLINK, easyTag) |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
-| **Prevent Duplicate Send** | off | on/off | Skip sending when the image is unchanged |
 | **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones |
 
 > [!TIP]
-> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [actions.md](actions.md#write-breakdown) and [troubleshooting.md](troubleshooting.md).
+> Frequent automations: leave the action’s **Skip unchanged image** enabled and optionally configure **Debounce Delay** to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [actions.md](actions.md#write-breakdown) and [troubleshooting.md](troubleshooting.md).
 
 These options are specific to BLE ESL; they are not Bluetooth proxy firmware settings.
 

@@ -1,3 +1,4 @@
+import { materialIcon } from "./material-icons.js";
 // Pure entity-library rules and markup. Home Assistant state and localization
 // stay at the editor boundary and enter through explicit values.
 const ENTITY_DOMAINS =
@@ -63,5 +64,5 @@ export function renderEntityPreview({
 }) {
   if (!state) return "";
   const entityId = escapeHtml(state.entity_id);
-  return `<div class="entity-state" data-entity="${entityId}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${escapeHtml(name)}</div><div class="state-value">${escapeHtml(value)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="${escapeHtml(addLabel)}" title="${escapeHtml(addLabel)}">+</button></div>`;
+  return `<div class="entity-state" data-entity="${entityId}" draggable="true"><ha-state-icon></ha-state-icon><div class="state-copy"><div class="state-name">${escapeHtml(name)}</div><div class="state-value">${escapeHtml(value)}</div></div><button class="icon-button" data-action="add-current-entity" aria-label="${escapeHtml(addLabel)}" title="${escapeHtml(addLabel)}">${materialIcon("plus")}</button></div>`;
 }

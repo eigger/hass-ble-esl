@@ -15,7 +15,6 @@ from custom_components.ble_esl.config_flow import _model_selector_options
 from custom_components.ble_esl.const import (
     CONF_DEBOUNCE_MS,
     CONF_MODEL,
-    CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
     CONF_RETRY_COUNT,
     DOMAIN,
@@ -252,7 +251,6 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     assert {
         CONF_MODEL,
         CONF_RETRY_COUNT,
-        CONF_PREVENT_DUPLICATE_SEND,
         CONF_DEBOUNCE_MS,
     } <= fields
 
@@ -261,7 +259,6 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
         user_input={
             CONF_MODEL: "36",
             CONF_RETRY_COUNT: 5,
-            CONF_PREVENT_DUPLICATE_SEND: True,
             CONF_DEBOUNCE_MS: 2000,
         },
     )
@@ -270,7 +267,6 @@ async def test_options_flow_updates_and_reloads(hass: HomeAssistant, enable_blue
     assert entry.options == {
         CONF_MODEL: "36",
         CONF_RETRY_COUNT: 5,
-        CONF_PREVENT_DUPLICATE_SEND: True,
         CONF_DEBOUNCE_MS: 2000,
     }
     # OptionsFlowWithReload reloaded the entry: the new model is in force.
@@ -307,7 +303,6 @@ async def test_options_flow_offers_model_for_unidentified_wolink(
         user_input={
             CONF_MODEL: "290-bwr",
             CONF_RETRY_COUNT: 3,
-            CONF_PREVENT_DUPLICATE_SEND: False,
             CONF_DEBOUNCE_MS: 0,
         },
     )
@@ -329,7 +324,6 @@ async def test_options_flow_keeps_model_when_hidden(hass: HomeAssistant, enable_
         result["flow_id"],
         user_input={
             CONF_RETRY_COUNT: 5,
-            CONF_PREVENT_DUPLICATE_SEND: False,
             CONF_DEBOUNCE_MS: 0,
         },
     )

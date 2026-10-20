@@ -530,7 +530,9 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
   // 4×2 pixels with orientation 6: shown upright it is 2×4.
   await page
     .getByLabel("Upload image", { exact: true })
-    .setInputFiles("tests/components/ble_esl/frontend/fixtures/exif-rotated.jpg");
+    .setInputFiles(
+      "tests/components/ble_esl/frontend/fixtures/exif-rotated.jpg",
+    );
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -1292,7 +1294,9 @@ test("an imagespec element is added from the list, edited by its fields and expo
   await expect(yaml).toHaveValue(/ {2}x: 48\n {2}"y": 48\n {2}radius: 39/);
 });
 
-test("generic rotation is editable on battery elements and appears in the payload", async ({ page }) => {
+test("generic rotation is editable on battery elements and appears in the payload", async ({
+  page,
+}) => {
   await page.getByLabel("Add element").selectOption("battery");
   await page.getByRole("button", { name: "Add", exact: true }).click();
   const rotation = page.locator('[data-spec="rotate"]');
@@ -1301,7 +1305,9 @@ test("generic rotation is editable on battery elements and appears in the payloa
   await page.waitForFunction(() => window.panel.preview && !window.panel.error);
   await page.getByRole("button", { name: "Payload YAML" }).click();
   await expect(
-    page.locator("ble-esl-yaml-dialog dialog").getByLabel("YAML", { exact: true }),
+    page
+      .locator("ble-esl-yaml-dialog dialog")
+      .getByLabel("YAML", { exact: true }),
   ).toHaveValue(/- type: battery[\s\S]*?rotate: 90/);
 });
 
@@ -1926,7 +1932,7 @@ test("the add-element hints show for a display and not for sensor templates", as
   await expect(page.locator("#library .hint")).toHaveCount(1);
 });
 
-test("new automation uses the unsaved design and current ESL with no triggers", async ({
+test("new automation links the unsaved design and current ESL input changes", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Add text", exact: true }).click();
@@ -1942,7 +1948,7 @@ test("new automation uses the unsaved design and current ESL with no triggers", 
     .getByRole("button", { name: "Create automation", exact: true })
     .click();
   const dialog = page.locator("ble-esl-yaml-dialog");
-  await expect(dialog).toContainText("No triggers are configured");
+  await expect(dialog).toContainText("Input changes update this tag");
   await expect(dialog.locator("textarea")).toHaveValue(/demo-device-0/);
   await dialog.getByLabel("Name", { exact: true }).fill("Room update");
   await dialog
@@ -1955,12 +1961,19 @@ test("new automation uses the unsaved design and current ESL with no triggers", 
   const { path, config } = requests[0];
   expect(path.endsWith(config.id)).toBe(true);
   expect(config.alias).toBe("Room update");
-  expect(config.triggers).toEqual([]);
+  expect(config.triggers).toEqual([
+    {
+      trigger: "event",
+      event_type: "ble_esl_inputs_changed",
+      event_data: { entry_id: "demo-writable" },
+      id: "ble_esl_inputs",
+    },
+  ]);
   expect(config.conditions).toEqual([]);
   expect(config.actions[0].action).toBe("ble_esl.write");
+  expect(config.actions[0].data.use_saved_design).toBe(true);
   expect(config.actions[0].target).toEqual({ device_id: "demo-device-0" });
-  expect(config.actions[0].data.payload).toHaveLength(1);
-  expect(config.actions[0].data.payload[0].value).toBe("Your text");
+  expect(config.actions[0].data).toEqual({ use_saved_design: true });
   await expect(page.locator(".el")).toHaveCount(1);
 });
 
@@ -2031,7 +2044,16 @@ test("design template: gallery applies elements and prefills the automation", as
     dialog.getByRole("link", { name: "Edit automation" }),
   ).toBeVisible();
   expect(configs[0].triggers).toEqual([{ trigger: "time", at: "18:30:15" }]);
-  expect(configs[0].actions[0].data.payload[0].value).toContain("now()");
+  expect(configs[0].actions[0].data).toEqual({ use_saved_design: true });
+  expect(
+    await page.evaluate(async () =>
+      JSON.stringify(
+        (await window.panel.api("list")).find(
+          (t) => t.entry_id === "demo-writable",
+        ).document,
+      ),
+    ),
+  ).toContain("now()");
   expect(errors).toEqual([]);
 });
 
@@ -2084,7 +2106,7 @@ test("design template triggers are dropped once the template's elements are gone
     .getByRole("button", { name: "Create automation", exact: true })
     .click();
   await expect(page.locator("ble-esl-yaml-dialog")).toContainText(
-    "No triggers are configured",
+    "Input changes update this tag",
   );
 });
 
