@@ -18,7 +18,11 @@
 
 > 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
 
-**배터리 하나로 수개월에서 수년 동안 Home Assistant 데이터를 보여주는 e-paper 디스플레이.** BLE ESL은 [HACS](https://hacs.xyz/) 사용자 지정(custom) 통합구성요소입니다: 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다. Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
+**배터리 하나로 수개월에서 수년 동안 Home Assistant 데이터를 보여주는 e-paper 디스플레이.**
+
+BLE ESL은 [HACS](https://hacs.xyz/) 사용자 지정(custom) 통합구성요소입니다. 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다.
+
+Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
 
 | 2.1" (250×128) | 2.9" (296×128) | 4.2" (400×300) | 10.2" (960×640) |
 |---|---|---|---|
@@ -39,7 +43,9 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7", 4.2" BWRY와 2.9" BWR 실기기 검증 완료; 다른 크기는 미검증 | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ 사양서 기반, 미검증 | — |
 
-해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)** (영어). 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md) (영어)를 보세요.
+해상도와 모델 코드가 있는 전체 목록: **[docs/models.md](docs/models.md)** (영어).
+
+다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md) (영어)를 보세요.
 
 주요 기능:
 
@@ -69,9 +75,15 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 ### Bluetooth
 
-원격 Bluetooth 연결에는 **active 연결**이 가능한 **Bluetooth 프록시**를 쓰세요(`bluetooth_proxy: active: true`; 문서의 시작 스캔 설정은 `esp32_ble_tracker: scan_parameters: active: true`). 패시브 스캔으로도 GATT 연결은 가능하며 연결 기능은 `bluetooth_proxy.active`가 별도로 제어합니다. 안정적으로 동작하는 로컬 어댑터도 사용할 수 있습니다. 스캔 간격은 기본값으로 둡니다. 발견된 태그가 곧 연결이 되는 것은 아닙니다: 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
+원격 Bluetooth 연결에는 **active 연결**이 가능한 **Bluetooth 프록시**를 쓰세요(`bluetooth_proxy: active: true`; 문서의 시작 스캔 설정은 `esp32_ble_tracker: scan_parameters: active: true`). 안정적으로 동작하는 로컬 어댑터도 사용할 수 있습니다.
 
-ESPHome 설정 예, 하드웨어 추천, BLE ESL 고유 사항: [docs/ko/bluetooth.md](docs/ko/bluetooth.md). 공통 프록시 설정·추천 하드웨어·연결 문제 확인 순서: [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md). 태그별 조건과 실패 센서는 [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md)를 참고하세요.
+패시브 스캔으로도 GATT 연결은 가능하며 연결 기능은 `bluetooth_proxy.active`가 별도로 제어합니다. 스캔 간격은 기본값으로 둡니다.
+
+발견된 태그가 곧 연결이 되는 것은 아닙니다. 첫 GATT 연결은 첫 쓰기 때 일어납니다. BLE ESL은 태그와 페어링하지 않습니다. 제조사 앱을 닫고(ETAG), 같은 태그에 쓰는 다른 통합이 없게 하세요.
+
+- [BLE ESL Bluetooth 설정](docs/ko/bluetooth.md): ESPHome 설정 예와 통합 고유 안내.
+- [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md): 공통 설정, 하드웨어 추천, 연결 문제 확인 순서.
+- [문제 해결](docs/troubleshooting.ko.md): 태그별 조건과 실패 센서.
 
 ## 빠른 시작
 
@@ -90,7 +102,11 @@ data:
       size: 40
 ```
 
-몇 초 뒤 태그가 갱신됩니다. `dry_run: true`를 붙이면 보내지 않고 렌더링만 하며, 결과는 태그의 **Preview Content** 이미지 엔티티에 나타납니다. 이 통합의 렌더링 옵션과 전체 액션 예제는 [payload 안내](docs/payload.ko.md)를 보세요. 더 보기: [사용 개요](docs/ko/usage.md), [`examples/`](examples/README.md)(영어)의 완성된 레이아웃, 비주얼 [디자이너 가이드](docs/ko/designer.md).
+몇 초 뒤 태그가 갱신됩니다.
+
+`dry_run: true`를 붙이면 보내지 않고 렌더링만 하며, 결과는 태그의 **Preview Content** 이미지 엔티티에 나타납니다.
+
+렌더링 옵션과 전체 액션 예제는 [payload 안내](docs/payload.ko.md), 레이아웃과 사용법, 비주얼 디자이너는 [문서 목록](#문서)을 보세요.
 
 ## 제한사항과 주의
 
@@ -117,14 +133,12 @@ data:
 | 예제 | — (영어만) | [examples/README.md](examples/README.md) |
 | 개발: 테스트, 검증 환경, 린트, 프로토콜 추가 | — (영어만) | [docs/development.md](docs/development.md) |
 
-관련 프로젝트: [imagespec](https://github.com/eigger/imagespec)(`payload:` 뒤의 렌더러), [Stash](https://github.com/eigger/stash)(ESL 태그에 라벨을 출력하는 가정 재고 관리자), [hass-gicisky](https://github.com/eigger/hass-gicisky)(보관 처리된 전신) — [docs/ko/usage.md](docs/ko/usage.md#관련-프로젝트) 참고.
-
-### 기기 도움말과 제보
+## 문제 해결과 진단
 
 - 라벨이 갱신되지 않나요? **[docs/troubleshooting.ko.md](docs/troubleshooting.ko.md)** — 실패 센서가 쓰기가 어디서, 왜 죽었는지 알려줍니다.
-- 버그를 찾으셨나요? [이슈를 열고](https://github.com/eigger/hass-ble-esl/issues) 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다(태그 MAC은 가려짐. 나머지는 올리기 전에 확인하세요 — [제거할 정보](docs/troubleshooting.ko.md#올리기-전에-민감-정보-제거)).
-- 질문이나 아이디어? [Discussions](https://github.com/eigger/hass-ble-esl/discussions)
-- WOLINK나 easyTag 태그를 테스트하셨거나, 수동 모델 선택을 요구한 Poshiji 크기가 있나요? 알려 주세요 — 그렇게 프리셋이 검증됩니다.
+- 버그를 제보할 때는 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다.
+- 태그 MAC은 가려지지만 나머지 데이터는 올리기 전에 확인하세요 — [제거할 정보](docs/troubleshooting.ko.md#올리기-전에-민감-정보-제거).
+- WOLINK나 easyTag 태그를 테스트하셨거나, 수동 모델 선택을 요구한 Poshiji 크기가 있나요? 아래 지원 링크로 결과를 알려 주시면 프리셋 검증에 도움이 됩니다.
 
 <!-- hass-standards:support:start -->
 ## 지원
