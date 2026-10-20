@@ -75,7 +75,7 @@ def plain(value):
 
 
 def export_yaml(
-    payload, background, device_id, issues=(), live=None, design=None, design_variables=None
+    payload, background, device_id, issues=(), live=None, design=None, design_specs=None
 ):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
 
@@ -100,8 +100,6 @@ def export_yaml(
     }
     if design is not None:
         service["data"]["design"] = encode_design(plain(design))
-    if design_variables:
-        service["data"]["design_variables"] = plain(design_variables)
     payload_errors = [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)]
     scalar_errors = _json_value_errors(payload)
     if live is not None:
@@ -131,11 +129,20 @@ def export_yaml(
     }
     if design is not None:
         result["design_source"] = service["data"]["design"]
-    if design_variables:
-        result["design_variables"] = service["data"]["design_variables"]
+    if design_specs:
+        result["design_specs"] = plain(design_specs)
     if live is not None:
         result["live_payload"] = dump(live)
-        result["live_service"] = dump({**service, "data": {**service["data"], "payload": live}})
+        result["live_service"] = dump(
+            {
+                **service,
+                "data": {
+                    **service["data"],
+                    "payload": live,
+                    **({"design_specs": result["design_specs"]} if design_specs else {}),
+                },
+            }
+        )
     return result
 
 

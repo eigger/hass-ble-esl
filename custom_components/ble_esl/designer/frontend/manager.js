@@ -1179,9 +1179,8 @@ class EslManager extends HTMLElement {
       if (exported.design_source !== undefined)
         data.design = exported.design_source;
       else delete data.design;
-      if (exported.design_variables)
-        data.design_variables = exported.design_variables;
-      else delete data.design_variables;
+      if (exported.design_specs) data.design_specs = exported.design_specs;
+      else delete data.design_specs;
       await this.hass.callApi(
         "POST",
         `config/automation/config/${encodeURIComponent(source.configId)}`,

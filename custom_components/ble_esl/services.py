@@ -102,7 +102,7 @@ WRITE_SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("payload"): list,
         vol.Optional("design"): vol.Any(dict, str),
-        vol.Optional("design_variables"): dict,
+        vol.Optional("design_specs"): dict,
         vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("background"): _color,
         vol.Optional("dry_run"): cv.boolean,
@@ -349,12 +349,17 @@ async def build_write_job_from_data(
 
         designer = hass.data[KEY]
         document = validate(decode_design(service_data["design"]), preset)
+        # HA rendered these with the automation's own variables (trigger, this, ...).
+        rendered_specs = service_data.get("design_specs") or {}
+        for element in document["elements"]:
+            if element["type"] == "imagespec" and element["id"] in rendered_specs:
+                element["spec"] = rendered_specs[element["id"]]
+                element["_spec_resolved"] = True
         payload = compile_payload(
             hass,
             document,
             designer.templates,
             await designer.forecasts(document),
-            preview_variables=service_data.get("design_variables"),
         )
         service_data = {**service_data, "payload": payload, "background": document["background"]}
 

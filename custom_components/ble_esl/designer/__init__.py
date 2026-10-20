@@ -51,6 +51,7 @@ from .specs import (
     frozen_corners,
     missing_template_parameters,
     resolve_templates,
+    templates_in,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -278,14 +279,11 @@ class Designer:
                 self.templates,
                 forecasts,
             )
-        parameters = sorted(
-            {
-                name
-                for element in document["elements"]
-                if element["type"] == "imagespec"
-                for name in missing_template_parameters(self.hass, element["spec"])
-            }
-        )
+        design_specs = {
+            element["id"]: element["spec"]
+            for element in document["elements"]
+            if element["type"] == "imagespec" and templates_in(element["spec"])
+        }
         result = export_yaml(
             payload,
             document["background"],
@@ -293,7 +291,7 @@ class Designer:
             issues,
             automation_payload,
             design=document,
-            design_variables={name: "{{ " + name + " }}" for name in parameters},
+            design_specs=design_specs,
         )
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
@@ -333,8 +331,22 @@ class Designer:
             defaults = {
                 "mode": "queued",
                 "max": 2,
+                "max_exceeded": "silent",
                 **(defaults or {}),
-                "triggers": [{"trigger": "state", "entity_id": entities}] if entities else [],
+                "triggers": (
+                    [
+                        {
+                            "trigger": "state",
+                            "entity_id": entities,
+                            # State changes only; skip attribute-only updates and
+                            # the unavailable/unknown flips around a restart.
+                            "to": None,
+                            "not_from": ["unavailable", "unknown"],
+                        }
+                    ]
+                    if entities
+                    else []
+                ),
             }
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
 
