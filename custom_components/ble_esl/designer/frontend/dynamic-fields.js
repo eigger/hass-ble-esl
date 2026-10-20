@@ -1,6 +1,7 @@
 import { t, language } from "./i18n.js";
 import { clone } from "./model.js";
 const fields = [
+  "rotation",
   "color",
   "icon",
   "background",

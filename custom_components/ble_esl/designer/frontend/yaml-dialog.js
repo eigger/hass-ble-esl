@@ -79,7 +79,7 @@ export class YamlDialog extends HTMLElement {
       .warnings{color:var(--warning-color,#986000);margin:0;padding-left:18px;font-size:12px}
     </style><dialog aria-label="${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}"><form method="dialog">
       <h2>${t(this.hass, this.result.automation ? "Create automation" : "Payload YAML")}</h2>
-      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? "The template's triggers are included. Change them in Home Assistant after creating the automation." : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
+      ${this.result.automation ? `<label>${t(this.hass, "Name")} <input id="automation-name" value="${esc(this.name)}" ${this.createdId || this.creating ? "disabled" : ""}></label><p class="muted">${t(this.hass, this.result.automation.triggers?.length ? (this.result.input_triggers ? "Input state changes trigger display updates. You can adjust the triggers in Home Assistant." : "The template's triggers are included. Change them in Home Assistant after creating the automation.") : "No triggers are configured. Set them in Home Assistant after creating the automation.")}</p>` : ""}
       <div class="tabs" role="tablist">${shown
         .map(
           ([key, label]) =>
@@ -87,19 +87,35 @@ export class YamlDialog extends HTMLElement {
         )
         .join("")}</div>
       <p class="muted">${esc(t(this.hass, hint))} ${
-        this.live
+        this.result.design_source && this.view === "service"
           ? t(
               this.hass,
-              "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
+              "Components and conditional rules are preserved and use current entity states each time the automation runs.",
             )
-          : t(
-              this.hass,
-              "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
-            )
+          : this.live
+            ? t(
+                this.hass,
+                "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
+              )
+            : t(
+                this.hass,
+                "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
+              )
       }</p>
       ${"live_payload" in this.result && !this.result.automation ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
       ${this.result.validation_errors?.length ? `<ul class="issues">${this.result.validation_errors.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
-      ${this.result.warnings?.filter((warning) => !this.result.validation_errors?.includes(warning)).length ? `<ul class="warnings">${this.result.warnings.filter((warning) => !this.result.validation_errors?.includes(warning)).map((warning) => `<li>${esc(warning)}</li>`).join("")}</ul>` : ""}
+      ${
+        this.result.warnings?.filter(
+          (warning) => !this.result.validation_errors?.includes(warning),
+        ).length
+          ? `<ul class="warnings">${this.result.warnings
+              .filter(
+                (warning) => !this.result.validation_errors?.includes(warning),
+              )
+              .map((warning) => `<li>${esc(warning)}</li>`)
+              .join("")}</ul>`
+          : ""
+      }
       <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
       <p role="status">${esc(this.creationError)}</p>
       <div class="actions">${this.result.automation ? (this.createdId ? `<a href="/config/automation/edit/${encodeURIComponent(this.createdId)}">${t(this.hass, "Edit automation")}</a>` : `<button type="button" data-create class="primary" ${this.creating ? "disabled" : ""}>${t(this.hass, this.creating ? "Working…" : "Create automation")}</button>`) : ""}<button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>

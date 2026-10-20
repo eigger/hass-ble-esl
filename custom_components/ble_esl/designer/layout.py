@@ -74,6 +74,7 @@ ELEMENT = vol.Schema(
             ("black", "white", "red", "yellow", "transparent")
         ),
         vol.Optional("visible", default=True): bool,
+        vol.Optional("rotation"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("font_size", default=24): vol.All(int, vol.Range(min=8, max=200)),
         vol.Optional("text", default="Text"): str,
         vol.Optional("image", default=""): str,
@@ -468,6 +469,7 @@ def conditional_icon(element, value, fallback):
 
 
 DYNAMIC_FIELDS = {
+    "rotation",
     "x",
     "y",
     "width",
@@ -629,6 +631,37 @@ def compile_payload(
         # legacy component template context remains its normal sensor context.
         element, _bound_state = resolve_component(hass, element)
         if not element["visible"]:
+            continue
+        if rotation := element.get("rotation", 0):
+            # Keep the original component and resolve it on every render. The
+            # group transforms all of its drawing primitives as one element.
+            local = deepcopy(element)
+            local.update(x=0, y=0, rotation=0)
+            children = compile_payload(
+                hass,
+                {"elements": [local]},
+                templates,
+                forecasts,
+                keep_templates=keep_templates,
+                preview_variables=preview_variables,
+            )
+            if children:
+                x, y = element["x"], element["y"]
+                width, height = element["width"], element["height"]
+                if rotation in (90, 270):
+                    x += (width - height) // 2
+                    y += (height - width) // 2
+                payload.append(
+                    {
+                        "type": "group",
+                        "x": x,
+                        "y": y,
+                        "width": width,
+                        "height": height,
+                        "rotate": rotation,
+                        "elements": children,
+                    }
+                )
             continue
         pending = (len(payload), element.get("dither"))
         x, y, width, height = (element[key] for key in ("x", "y", "width", "height"))

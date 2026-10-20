@@ -1878,7 +1878,7 @@ test("layers can be hidden and reordered, and the display background is set from
     await page.evaluate(() => window.panel.document.elements.at(-1).visible),
   ).toBe(false);
   await expect(page.locator(".el.hidden-el")).toHaveCount(1);
-  await page.getByRole("button", { name: /^Show / }).click();
+  await page.locator("[data-layer-action=visible][aria-label^=Show]").click();
   await page.locator(".canvas-wrap").click({ position: { x: 4, y: 4 } });
   expect(await page.evaluate(() => window.panel.selected)).toBeNull();
   await expect(page.locator(".inspector .group-title")).toHaveText("Display");

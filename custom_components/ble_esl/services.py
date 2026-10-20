@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import Future, Lock
 from collections.abc import Awaitable, Callable, Mapping
+from contextlib import nullcontext
 import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -100,6 +101,8 @@ def _color(value: Any) -> str:
 WRITE_SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("payload"): list,
+        vol.Optional("design"): vol.Any(dict, str),
+        vol.Optional("design_variables"): dict,
         vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("background"): _color,
         vol.Optional("dry_run"): cv.boolean,
@@ -338,17 +341,36 @@ async def build_write_job_from_data(
     data.preset = preset
     data.parser.set_preset(preset)
 
-    if image is None:
-        image = await hass.async_add_executor_job(
-            partial(
-                render_image,
-                hass,
-                preset,
-                repair_yaml11_keys(service_data.get("payload", "")),
-                rotate=service_data.get("rotate", 0),
-                background=service_data.get("background", "white"),
-            )
+    if image is None and "design" in service_data:
+        # Import lazily: the optional designer also uses this write pipeline.
+        from .designer import KEY
+        from .designer.automation_source import decode_design
+        from .designer.layout import compile_payload, validate
+
+        designer = hass.data[KEY]
+        document = validate(decode_design(service_data["design"]), preset)
+        payload = compile_payload(
+            hass,
+            document,
+            designer.templates,
+            await designer.forecasts(document),
+            preview_variables=service_data.get("design_variables"),
         )
+        service_data = {**service_data, "payload": payload, "background": document["background"]}
+
+    if image is None:
+        render_lock = designer.render_lock if "design" in service_data else nullcontext()
+        async with render_lock:
+            image = await hass.async_add_executor_job(
+                partial(
+                    render_image,
+                    hass,
+                    preset,
+                    repair_yaml11_keys(service_data.get("payload", "")),
+                    rotate=service_data.get("rotate", 0),
+                    background=service_data.get("background", "white"),
+                )
+            )
     image_png = await hass.async_add_executor_job(encode_png, image)
     if lifecycle_generation == data.lifecycle_generation and (
         preview_generation is None or preview_generation == data.request_generation

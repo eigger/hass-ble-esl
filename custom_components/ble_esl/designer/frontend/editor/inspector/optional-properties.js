@@ -72,7 +72,7 @@ export function renderOptionalProperties(
       );
   if (type === "image")
     style +=
-      number("rotate", translate("Rotate (°)"), -360, 360, "0") +
+      number("rotate", translate("Image rotation (°)"), -360, 360, "0") +
       flag("circle", translate("Crop to circle"), false);
   if (type === "progress_bar")
     style +=

@@ -19,6 +19,15 @@ write:
           size: 40
       selector:
         object:
+    design_variables:
+      required: false
+      selector:
+        object:
+    design:
+      required: false
+      description: Original designer document; renders entity bindings and conditional rules at each write.
+      selector:
+        object:
     rotate:
       required: false
       example: '0'
@@ -61,6 +70,15 @@ write_guarded:
           x: 10
           "y": 10
           size: 40
+      selector:
+        object:
+    design_variables:
+      required: false
+      selector:
+        object:
+    design:
+      required: false
+      description: Original designer document; renders entity bindings and conditional rules at each write.
       selector:
         object:
     rotate:

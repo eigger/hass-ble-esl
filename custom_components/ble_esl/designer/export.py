@@ -7,6 +7,7 @@ from imagespec import validate as validate_payload
 import yaml
 
 from ..yaml11 import Yaml11SafeDumper
+from .automation_source import encode_design
 
 
 class _PlainDumper(Yaml11SafeDumper):
@@ -73,7 +74,9 @@ def plain(value):
     return value
 
 
-def export_yaml(payload, background, device_id, issues=(), live=None):
+def export_yaml(
+    payload, background, device_id, issues=(), live=None, design=None, design_variables=None
+):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
 
     ``live`` is the same payload with its templates left as written: the
@@ -95,6 +98,10 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
         "target": {"device_id": device_id or "<your device>"},
         "data": {"background": background, "payload": payload},
     }
+    if design is not None:
+        service["data"]["design"] = encode_design(plain(design))
+    if design_variables:
+        service["data"]["design_variables"] = plain(design_variables)
     payload_errors = [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)]
     scalar_errors = _json_value_errors(payload)
     if live is not None:
@@ -122,11 +129,13 @@ def export_yaml(payload, background, device_id, issues=(), live=None):
         ),
         "warnings": [*warnings, *template_warnings],
     }
+    if design is not None:
+        result["design_source"] = service["data"]["design"]
+    if design_variables:
+        result["design_variables"] = service["data"]["design_variables"]
     if live is not None:
         result["live_payload"] = dump(live)
-        result["live_service"] = dump(
-            {**service, "data": {"background": background, "payload": live}}
-        )
+        result["live_service"] = dump({**service, "data": {**service["data"], "payload": live}})
     return result
 
 
@@ -145,4 +154,5 @@ def automation_draft(exported, name, defaults=None):
         "conditions": defaults.get("conditions", []),
         "actions": [action],
         "mode": defaults.get("mode", "single"),
+        **{key: defaults[key] for key in ("max", "max_exceeded") if key in defaults},
     }

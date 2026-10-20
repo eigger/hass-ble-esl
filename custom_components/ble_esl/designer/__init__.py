@@ -278,12 +278,22 @@ class Designer:
                 self.templates,
                 forecasts,
             )
+        parameters = sorted(
+            {
+                name
+                for element in document["elements"]
+                if element["type"] == "imagespec"
+                for name in missing_template_parameters(self.hass, element["spec"])
+            }
+        )
         result = export_yaml(
             payload,
             document["background"],
             entry.runtime_data.device_id,
             issues,
             automation_payload,
+            design=document,
+            design_variables={name: "{{ " + name + " }}" for name in parameters},
         )
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
@@ -302,6 +312,30 @@ class Designer:
             raise HomeAssistantError("This ESL does not support writing")
         if not entry.runtime_data.device_id:
             raise HomeAssistantError("This ESL has no registered device")
+        if defaults is None or "triggers" not in defaults:
+            validated = validate(document, self.preset(entry))
+            layers = snapshot_layers(
+                self.hass,
+                validated,
+                self.templates,
+                await self.forecasts(validated),
+                preview_variables=preview_variables,
+            )
+            entities = sorted(
+                {
+                    entity
+                    for element, _ in layers
+                    for entity in [element.get("entity_id"), *element.get("_template_entities", [])]
+                    if entity and not entity.startswith("{{")
+                }
+            )
+            result["input_triggers"] = bool(entities)
+            defaults = {
+                "mode": "queued",
+                "max": 2,
+                **(defaults or {}),
+                "triggers": [{"trigger": "state", "entity_id": entities}] if entities else [],
+            }
         return {**result, "automation": automation_draft(result, entry.title, defaults)}
 
     @property

@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "テスト実行",
           "description": "デバイスに送信せず画像の生成のみ行います。"
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "デバウンスの上書き",
           "description": "この呼び出しに限り、設定済みのデバウンス遅延を上書きします（0 = 即時）。"
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

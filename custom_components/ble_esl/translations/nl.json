@@ -19,6 +19,14 @@
         "dry_run": {
           "name": "Proefdraaien",
           "description": "Genereert de afbeelding zonder deze naar het apparaat te sturen."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     },
@@ -45,6 +53,14 @@
         "debounce_override_ms": {
           "name": "Debounce overschrijven",
           "description": "Overschrijft de ingestelde debouncevertraging voor deze aanroep (0 = direct)."
+        },
+        "design": {
+          "name": "Designer source",
+          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+        },
+        "design_variables": {
+          "name": "Designer variables",
+          "description": "Automation variables supplied to templates in the designer source."
         }
       }
     }

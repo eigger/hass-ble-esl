@@ -490,6 +490,7 @@ async def handle(request):
             tag["device_id"] if msg["action"] == "automation" else None,
             issues,
             live,
+            design=document,
         )
         if msg["action"] == "automation":
             if not tag["writable"]:

@@ -1,3 +1,4 @@
+import { renderElementRotation } from "./editor/rotation-control.js";
 import { t, language, rerenderWithDialogs, errorText } from "./i18n.js";
 import "./component-editor.js";
 import "./yaml-dialog.js";
@@ -1303,6 +1304,7 @@ export class BleEslDesigner extends HTMLElement {
         dirty: this.dirty,
         automationSessionPending: this._automationSessionPending,
         automationSaveMode: this._automationSaveMode,
+        showHiddenIcons: Boolean(this.showHiddenIcons),
         undoAvailable: this.undoStack.length > 0,
         redoAvailable: this.redoStack.length > 0,
         zoomMode: this.zoomMode,
@@ -1474,8 +1476,14 @@ export class BleEslDesigner extends HTMLElement {
     return renderLayerImageMarkup({
       element,
       src,
-      offset: this.layerOffsets?.[element.id],
-      bounds: this.layerBounds?.[element.id],
+      offset:
+        this.showHiddenIcons && this.layerPreviews._ghosts?.[element.id]
+          ? this.layerPreviews._ghost_offsets?.[element.id]
+          : this.layerOffsets?.[element.id],
+      bounds:
+        this.showHiddenIcons && this.layerPreviews._ghosts?.[element.id]
+          ? this.layerPreviews._ghost_bounds?.[element.id]
+          : this.layerBounds?.[element.id],
       record: this.layerRecords?.[element.id],
     });
   }
@@ -1708,7 +1716,8 @@ export class BleEslDesigner extends HTMLElement {
           this.specs?.dither_methods || [],
           this.hass,
         ),
-        position,
+        position +
+          renderElementRotation(element, (message) => t(this.hass, message)),
       );
     }
 
@@ -1955,10 +1964,14 @@ export class BleEslDesigner extends HTMLElement {
         record.size[1] !== element.height;
       if (element.type === "imagespec" && stale)
         content = `<div role="status" aria-label="${t(this.hass, "Preview updating")}" title="${t(this.hass, "This element needs a renderer preview to show its current appearance")}" style="width:100%;height:100%;display:grid;place-items:center;overflow:hidden;border:1px dashed #16838c;background:repeating-linear-gradient(135deg,transparent 0 6px,#16838c12 6px 12px);color:var(--secondary-text-color,#637083);font:10px system-ui;text-align:center">${t(this.hass, "Preview updating…")}</div>`;
+      const ghost =
+        !stale &&
+        this.showHiddenIcons &&
+        this.layerPreviews._ghosts?.[element.id];
       const rendered =
         (this.gesture && element.type === "image") || stale
           ? undefined
-          : this.layerPreviews[element.id];
+          : ghost || this.layerPreviews[element.id];
       const visible = this.visibleBounds(element);
       const box = [0, 0, element.width, element.height];
       const hitBounds =
@@ -1968,6 +1981,7 @@ export class BleEslDesigner extends HTMLElement {
         index,
         selected: element.id === this.selected,
         rendered,
+        ghost: Boolean(ghost),
         label,
         content,
         hitBounds,
@@ -2093,7 +2107,10 @@ export class BleEslDesigner extends HTMLElement {
   visibleBounds(element) {
     return calculateVisibleBounds(element, {
       record: this.layerRecords?.[element.id],
-      layerBounds: this.layerBounds,
+      layerBounds:
+        this.showHiddenIcons && this.layerPreviews._ghosts?.[element.id]
+          ? this.layerPreviews._ghost_bounds
+          : this.layerBounds,
     });
   }
   // Clamp a moved element so what it draws, not just its frame, stays on the
@@ -2314,6 +2331,12 @@ export class BleEslDesigner extends HTMLElement {
     }
     if (handleLayerListClick(this, button)) return;
     const action = button.dataset.action;
+    if (action === "show-hidden-icons") {
+      this.showHiddenIcons = !this.showHiddenIcons;
+      button.setAttribute("aria-pressed", String(this.showHiddenIcons));
+      this.drawStage();
+      return;
+    }
     if (action === "preview-variables") {
       this.editAutomationPreviewVariables();
       return;
@@ -2726,7 +2749,8 @@ export class BleEslDesigner extends HTMLElement {
     else if (key === "dither") {
       if (input.value === "") delete this.element.dither;
       else this.element.dither = input.value === "none" ? false : input.value;
-    } else
+    } else if (key === "rotation") this.element.rotation = Number(input.value);
+    else
       this.element[key] =
         input.type === "checkbox"
           ? input.checked
