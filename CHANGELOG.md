@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- XTE (Poshiji) writes that fail through an ESP32 Bluetooth proxy with *No response from device within 5s after command 0x04* are retried with ATT writes of at most 182 bytes, 30 ms apart; the first attempt keeps full-size writes. The proxy reports the dropped writes only in its own log (`status=143`, GATT congested), so the slower writes start after a failed attempt.
+
 ### Changed
 
 - Refresh the shared repository standards, README templates, Bluetooth troubleshooting, and reusable CI at the reviewed 2026-10-21 standards commit.

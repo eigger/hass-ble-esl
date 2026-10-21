@@ -77,7 +77,11 @@ integration writes to the same tag.
 
 After enabling notifications the writer waits 0.5 s before the prepare
 command, like the other protocols. Writes use the smaller of 244 bytes and
-the protocol's reported write limit.
+the protocol's reported write limit. After a failed attempt, the next attempt
+on that tag writes at most 182 bytes at a time, 30 ms apart, until one
+succeeds: through some ESP32 Bluetooth proxies the tag now and then loses
+block data (the proxy logs `status=143`, GATT congested) and never answers
+the end command.
 20-byte limits are accepted without changing logical XTE block contents.
 The Retry Count option applies to the Poshiji protocol; a retry after a failure
 mid-transfer paces each XTE command or block a little more, never per ATT chunk.

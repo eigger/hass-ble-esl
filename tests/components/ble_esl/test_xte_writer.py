@@ -9,10 +9,22 @@ from blesession import GattMismatch, SessionTrace
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.xte.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
+from custom_components.ble_esl.esl_ble.xte import writer
+from custom_components.ble_esl.esl_ble.xte.const import (
+    NOTIFY_UUID,
+    SERVICE_UUID,
+    SLOW_CHUNK,
+    SLOW_GAP_S,
+    WRITE_UUID,
+)
 from custom_components.ble_esl.esl_ble.xte.devices import PRESETS
 from custom_components.ble_esl.esl_ble.xte.wire import blocks, command, image_object
-from custom_components.ble_esl.esl_ble.xte.writer import XteError, XteSession, prepare
+from custom_components.ble_esl.esl_ble.xte.writer import (
+    XteError,
+    XteSession,
+    prepare,
+    write_session,
+)
 
 PSJ_420 = PRESETS["psj-420"]
 MAC = "AA:BB:CC:DD:EE:FF"
@@ -164,3 +176,45 @@ def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
     frames = 2 + len(blocks(image_object(b"\x55" * 30000, 400, 300)))
     # One settle after start_notify, then the pacing once per XTE frame.
     assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames
+
+
+def test_slow_session_writes_smaller_chunks_apart(monkeypatch):
+    sleeps = []
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+    client = FakeClient(mtu_payload=514)
+    trace = SessionTrace()
+    image = prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), MAC)
+    asyncio.run(XteSession(client, MAC, slow=True).send(image, trace=trace))
+    assert max(len(data) for data in client.writes) == SLOW_CHUNK
+    assert trace.facts["chunk_size"] == SLOW_CHUNK
+    assert trace.facts["chunk_gap_s"] == SLOW_GAP_S
+    # One settle after start_notify, then the gap after every ATT write.
+    assert sleeps == [pytest.approx(0.5)] + [pytest.approx(SLOW_GAP_S)] * len(client.writes)
+
+
+def test_attempt_after_a_failure_is_slow_until_one_succeeds(monkeypatch):
+    async def fake_sleep(seconds):
+        pass
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(writer, "_slow_next", set())
+    monkeypatch.setattr(writer, "REPLY_TIMEOUT_S", 0.01)
+    image = prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), MAC)
+
+    async def prepared():
+        return image
+
+    def attempt(client):
+        trace = SessionTrace()
+        asyncio.run(write_session(client, MAC, PSJ_420, prepared(), trace=trace))
+        return trace.facts["chunk_size"], max(len(data) for data in client.writes)
+
+    with pytest.raises(TimeoutError):
+        attempt(FakeClient(reply="timeout", mtu_payload=514))
+    assert attempt(FakeClient(mtu_payload=514)) == (SLOW_CHUNK, SLOW_CHUNK)
+    # Back to full-size writes once the tag took an image.
+    assert attempt(FakeClient(mtu_payload=514)) == (244, 244)
