@@ -231,6 +231,7 @@ def test_unimplemented_pixel_layout_is_refused_before_connecting(monkeypatch, nu
 
 @pytest.mark.parametrize("error", [None, ValueError("bad response"), TimeoutError()])
 def test_session_result_and_disconnect(monkeypatch, error):
+    monkeypatch.setattr(writer, "_slow_next", set())
     client = SimpleNamespace(is_connected=True, disconnect=AsyncMock())
     monkeypatch.setattr(session_mod, "establish_connection", AsyncMock(return_value=client))
     session = SimpleNamespace(send=AsyncMock(side_effect=error))
@@ -256,7 +257,7 @@ def test_session_result_and_disconnect(monkeypatch, error):
     # Encoded before connecting, in a worker thread, then handed to the session
     # together with the trace.
     prepare.assert_called_once_with(PSJ_420, image, advertisement().address)
-    factory.assert_called_once_with(client, advertisement().address, pacing_s=0.05)
+    factory.assert_called_once_with(client, advertisement().address, pacing_s=0.05, slow=False)
     session.send.assert_awaited_once_with(encoded, trace=trace)
     client.disconnect.assert_awaited_once()
 

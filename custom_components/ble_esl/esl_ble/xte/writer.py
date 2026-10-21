@@ -11,7 +11,6 @@ from blesession import Notifications, SessionTrace, characteristic_or_raise, wri
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
-    CHUNK_GAP_S,
     CMD_END,
     CMD_START,
     MAX_CHUNK,
@@ -22,6 +21,8 @@ from .const import (
     REPLY_START,
     REPLY_TIMEOUT_S,
     SERVICE_UUID,
+    SLOW_CHUNK,
+    SLOW_GAP_S,
     WRITE_UUID,
 )
 from .image import buffer_size, encode_image
@@ -33,6 +34,9 @@ if TYPE_CHECKING:
     from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
+
+# Tags whose last attempt failed; their next attempt writes slowly (SLOW_CHUNK).
+_slow_next: set[str] = set()
 
 
 def prepare(preset: DevicePreset, image: Image.Image, address: str) -> bytes:
@@ -49,19 +53,28 @@ async def write_session(
     pacing_s: float = 0.0,
     trace: SessionTrace,
 ) -> WriteResult:
-    """Send the object once the link is up."""
+    """Send the object once the link is up; slowly if the tag's last attempt failed."""
     obj = await prepared
-    await XteSession(client, address, pacing_s=pacing_s).send(obj, trace=trace)
+    slow = address in _slow_next
+    try:
+        await XteSession(client, address, pacing_s=pacing_s, slow=slow).send(obj, trace=trace)
+    except Exception:
+        _slow_next.add(address)
+        raise
+    _slow_next.discard(address)
     return WriteResult(success=True)
 
 
 class XteSession:
     """One connected XTE tag."""
 
-    def __init__(self, client: BleakClient, address: str, *, pacing_s: float = 0.0) -> None:
+    def __init__(
+        self, client: BleakClient, address: str, *, pacing_s: float = 0.0, slow: bool = False
+    ) -> None:
         self.client = client
         self.address = address
         self.pacing_s = max(0.0, pacing_s)
+        self.max_chunk, self.chunk_gap_s = (SLOW_CHUNK, SLOW_GAP_S) if slow else (MAX_CHUNK, 0.0)
         self.settle_s = NOTIFY_SETTLE_S
         self.reply_timeout_s = REPLY_TIMEOUT_S
 
@@ -72,7 +85,13 @@ class XteSession:
         write_char, notify_char = self._characteristics()
         size = self.chunk_size(write_char)
         frames = blocks(obj)
-        trace.note(settle_s=self.settle_s, parts=len(frames), bytes=len(obj), chunk_size=size)
+        trace.note(
+            settle_s=self.settle_s,
+            parts=len(frames),
+            bytes=len(obj),
+            chunk_size=size,
+            chunk_gap_s=self.chunk_gap_s,
+        )
         async with Notifications(self.client, notify_char, settle=self.settle_s) as replies:
             with trace.timed(STAGE_HANDSHAKE):
                 start = bytes((CMD_START,)) + len(obj).to_bytes(4, "big")
@@ -100,8 +119,8 @@ class XteSession:
         return write_char, notify_char
 
     def chunk_size(self, write_char: BleakGATTCharacteristic) -> int:
-        """The protocol's write-without-response limit, at most `MAX_CHUNK` bytes."""
-        size = min(MAX_CHUNK, write_char.max_write_without_response_size)
+        """The link's write-without-response limit, at most `max_chunk` bytes."""
+        size = min(self.max_chunk, write_char.max_write_without_response_size)
         if size < MIN_CHUNK:
             raise XteError(f"Invalid XTE write-without-response size: {size}")
         _LOGGER.debug("XTE %s write chunk size: %s bytes", self.address, size)
@@ -128,11 +147,11 @@ class XteSession:
         return check_reply(frame, expected)
 
     async def _write(self, char: BleakGATTCharacteristic, frame: bytes, size: int) -> None:
-        """One command or block as ATT writes `CHUNK_GAP_S` apart, then the pacing pause.
+        """One command or block as ATT writes `chunk_gap_s` apart, then the pacing pause.
 
         The pacing pause is per frame, not per ATT write: at a 20-byte limit a
         block is up to 61 writes.
         """
-        await write_chunks(self.client, char, frame, size, step="write", gap_s=CHUNK_GAP_S)
+        await write_chunks(self.client, char, frame, size, step="write", gap_s=self.chunk_gap_s)
         if self.pacing_s:
             await asyncio.sleep(self.pacing_s)

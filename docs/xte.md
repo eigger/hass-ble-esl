@@ -76,10 +76,12 @@ device. Use `dry_run: true` for a preview before writing. Make sure no other
 integration writes to the same tag.
 
 After enabling notifications the writer waits 0.5 s before the prepare
-command, like the other protocols. Writes use the smaller of 182 bytes and
-the protocol's reported write limit, 30 ms apart: through an ESP32 Bluetooth
-proxy, 244-byte or back-to-back writes are reported as congested (status 143),
-block data is lost and the tag never answers the end command.
+command, like the other protocols. Writes use the smaller of 244 bytes and
+the protocol's reported write limit. After a failed attempt, the next attempt
+on that tag writes at most 182 bytes at a time, 30 ms apart, until one
+succeeds: through some ESP32 Bluetooth proxies the tag now and then loses
+block data (the proxy logs `status=143`, GATT congested) and never answers
+the end command.
 20-byte limits are accepted without changing logical XTE block contents.
 The Retry Count option applies to the Poshiji protocol; a retry after a failure
 mid-transfer paces each XTE command or block a little more, never per ATT chunk.
@@ -164,8 +166,7 @@ so existing config entries keep working.
   always sends one full-screen record.
 - Logical block: `XTE 02`, big-endian uint16 total length, one-byte sum of all
   following bytes, total block count, zero-based block index, up to 1211 bytes
-  of object data. Each logical block is split into <=182-byte BLE writes
-  (the capture used 244-byte writes over a local adapter).
+  of object data. Each logical block is split into <=244-byte BLE writes.
 - Preparation: `XTE 01`, one-byte total length, one-byte payload sum,
   `01` followed by big-endian uint32 object length.
 - Finish: `58 54 45 01 08 04 04 00`.
@@ -198,7 +199,7 @@ nearby-device addresses are included in this repository.
 | Device not discovered | Bluetooth is enabled, device is in range, and the advertisement decodes as an XTE record (manufacturer ID `0x5258`, record type `fd`/`fe`/`fc`/`04`). Do not match on a fixed MAC/name. |
 | Tag stops being recognized | Discovery keys on the device number only, so battery and firmware changes are fine. If it still stops, capture the manufacturer data (`0x5258`) and open an issue. |
 | "XTE tag … has an unknown device number" in the log | Pick the model by size in the config flow. Open an issue with the logged line plus the tag's printed model and resolution so the size becomes a captured model. |
-| Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes, which ESP32 proxies drop. |
+| Response timeout or repeated failures | Verify that only one integration writes to the tag, check adapter/proxy reachability, and retain the underlying Poshiji error log. Smaller write limits are supported; do not force 244-byte writes. |
 | Preview updates but panel does not | The preview is not a readback. Check `dry_run` under `data`; neither example sets it, so both send to the panel. |
 | Weather automation does nothing | Check the target device ID, Naver weather/sensor entity IDs and daily forecast availability. Scheduled runs are on weekdays at 08:00, 11:00, 14:00 and 17:00. |
 

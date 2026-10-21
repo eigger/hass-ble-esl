@@ -12,12 +12,13 @@ NOTIFY_UUID = "00002760-08c2-11e1-9073-0e8ac72e0002"
 # Some adapters and proxies drop a write issued right after the CCCD write.
 NOTIFY_SETTLE_S = 0.5
 REPLY_TIMEOUT_S = 5.0
-# Through an ESP32 Bluetooth proxy (GATT congested, status 143) the tag loses
-# block data and never answers the end command when ATT writes are 244 bytes
-# or back to back; 182-byte writes 30 ms apart got through every time.
-CHUNK_GAP_S = 0.03
-MAX_CHUNK = 182
+MAX_CHUNK = 244
 MIN_CHUNK = 20
+# Through some ESP32 Bluetooth proxies (GATT congested, status 143) the tag
+# now and then loses block data and never answers the end command. After a
+# failed attempt the next one on that tag uses smaller writes, spaced out.
+SLOW_CHUNK = 182
+SLOW_GAP_S = 0.03
 
 BLOCK_DATA_SIZE = 1211  # a 1220-byte block minus its 9-byte header
 
