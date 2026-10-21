@@ -11,6 +11,7 @@ from blesession import Notifications, SessionTrace, characteristic_or_raise, wri
 
 from ..base import STAGE_FINISH, STAGE_HANDSHAKE, STAGE_TRANSFER, DevicePreset, WriteResult
 from .const import (
+    CHUNK_GAP_S,
     CMD_END,
     CMD_START,
     MAX_CHUNK,
@@ -99,7 +100,7 @@ class XteSession:
         return write_char, notify_char
 
     def chunk_size(self, write_char: BleakGATTCharacteristic) -> int:
-        """The protocol's write-without-response limit, at most 244 bytes."""
+        """The protocol's write-without-response limit, at most `MAX_CHUNK` bytes."""
         size = min(MAX_CHUNK, write_char.max_write_without_response_size)
         if size < MIN_CHUNK:
             raise XteError(f"Invalid XTE write-without-response size: {size}")
@@ -127,11 +128,11 @@ class XteSession:
         return check_reply(frame, expected)
 
     async def _write(self, char: BleakGATTCharacteristic, frame: bytes, size: int) -> None:
-        """One command or block as consecutive ATT writes, then the pacing pause.
+        """One command or block as ATT writes `CHUNK_GAP_S` apart, then the pacing pause.
 
-        The pause is per frame, not per ATT write: at a 20-byte limit a block
-        is up to 61 writes.
+        The pacing pause is per frame, not per ATT write: at a 20-byte limit a
+        block is up to 61 writes.
         """
-        await write_chunks(self.client, char, frame, size, step="write")
+        await write_chunks(self.client, char, frame, size, step="write", gap_s=CHUNK_GAP_S)
         if self.pacing_s:
             await asyncio.sleep(self.pacing_s)

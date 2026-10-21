@@ -9,7 +9,13 @@ from blesession import GattMismatch, SessionTrace
 from PIL import Image
 import pytest
 
-from custom_components.ble_esl.esl_ble.xte.const import NOTIFY_UUID, SERVICE_UUID, WRITE_UUID
+from custom_components.ble_esl.esl_ble.xte.const import (
+    CHUNK_GAP_S,
+    MAX_CHUNK,
+    NOTIFY_UUID,
+    SERVICE_UUID,
+    WRITE_UUID,
+)
 from custom_components.ble_esl.esl_ble.xte.devices import PRESETS
 from custom_components.ble_esl.esl_ble.xte.wire import blocks, command, image_object
 from custom_components.ble_esl.esl_ble.xte.writer import XteError, XteSession, prepare
@@ -57,7 +63,7 @@ class FakeClient:
 
     async def write_gatt_char(self, characteristic, data, response):
         assert characteristic is self.write_char and response is False
-        assert len(data) <= min(244, self.write_char.max_write_without_response_size)
+        assert len(data) <= min(MAX_CHUNK, self.write_char.max_write_without_response_size)
         self.writes.append(data)
         if self.fail_write:
             raise OSError("adapter write failed")
@@ -85,7 +91,7 @@ def test_transport_sequence(write_limit):
     asyncio.run(_client(client).send(prepare(PSJ_420, image, MAC), trace=trace))
     obj = image_object(b"\x55" * 30000, 400, 300)
     expected = [command(b"\x01" + len(obj).to_bytes(4, "big"))]
-    chunk_size = min(244, write_limit)
+    chunk_size = min(MAX_CHUNK, write_limit)
     assert trace.facts["chunk_size"] == chunk_size
     assert trace.facts["bytes"] == len(obj)
     assert {"settle_s", "parts"} <= trace.facts.keys()
@@ -148,7 +154,7 @@ def test_write_failure_after_disconnect_keeps_original_error():
     assert not client.stopped  # stop_notify skipped on a dropped link
 
 
-def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
+def test_settle_then_chunk_gap_and_pacing_per_frame(monkeypatch):
     sleeps = []
 
     async def fake_sleep(seconds):
@@ -161,6 +167,21 @@ def test_settle_then_pacing_per_frame_not_per_chunk(monkeypatch):
             prepare(PSJ_420, Image.new("RGB", (400, 300), "white"), MAC)
         )
     )
-    frames = 2 + len(blocks(image_object(b"\x55" * 30000, 400, 300)))
-    # One settle after start_notify, then the pacing once per XTE frame.
-    assert sleeps == [pytest.approx(0.5)] + [pytest.approx(0.05)] * frames
+    obj = image_object(b"\x55" * 30000, 400, 300)
+    start = command(b"\x01" + len(obj).to_bytes(4, "big"))
+    frames = [start, *blocks(obj), command(b"\x04\x00")]
+    # One settle after start_notify; every ATT write is followed by the chunk
+    # gap and every XTE frame by the pacing pause.
+    expected = [pytest.approx(0.5)]
+    for frame in frames:
+        expected += [pytest.approx(CHUNK_GAP_S)] * ((len(frame) + 19) // 20)
+        expected.append(pytest.approx(0.05))
+    assert sleeps == expected
+
+
+def test_writes_are_capped_for_esp32_proxies():
+    # 244-byte writes through an ESP32 Bluetooth proxy lose block data.
+    client = FakeClient(mtu_payload=514)
+    asyncio.run(_client(client).send(prepare(PSJ_420, Image.new("RGB", (400, 300)), MAC)))
+    assert MAX_CHUNK == 182
+    assert max(len(data) for data in client.writes) == MAX_CHUNK
