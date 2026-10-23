@@ -1028,12 +1028,19 @@ test("leaving automation edit before cold boot unlocks the editor", async ({
   await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
     "demo-writable",
   );
-  expect(await page.evaluate(() => window.manager.editor.document)).toEqual(
-    savedDocument,
-  );
+  // Back to the ordinary tag design: blank, as a tag always opens; neither
+  // the automation's import nor a design stored on the server is shown.
+  expect(await page.evaluate(() => window.manager.editor.document)).toEqual({
+    version: 1,
+    background: "white",
+    elements: [],
+  });
   await expect(
     page.getByRole("button", { name: "Save to automation" }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Add text", exact: true }),
+  ).toBeEnabled();
 });
 
 test("keeps edits made while an automation save is in flight dirty", async ({

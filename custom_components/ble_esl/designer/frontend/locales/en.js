@@ -589,4 +589,11 @@ export default {
   "Tag orientation": "Tag orientation",
   Portrait: "Portrait",
   Landscape: "Landscape",
+  "Save to existing automation…": "Save to existing automation…",
+  "Save to another automation…": "Save to another automation…",
+  "Choose the automation to save to:": "Choose the automation to save to:",
+  "Choose the write action to replace:": "Choose the write action to replace:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "No automation with a ble_esl.write action for this ESL was found.",
+  "Saved to {name}.": "Saved to {name}.",
 };

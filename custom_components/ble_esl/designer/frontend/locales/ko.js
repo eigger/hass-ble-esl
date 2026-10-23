@@ -587,4 +587,11 @@ export default {
   "Tag orientation": "태그 방향",
   Portrait: "세로",
   Landscape: "가로",
+  "Save to existing automation…": "기존 자동화에 저장…",
+  "Save to another automation…": "다른 자동화에 저장…",
+  "Choose the automation to save to:": "저장할 자동화를 선택하세요:",
+  "Choose the write action to replace:": "바꿀 쓰기 동작을 선택하세요:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "이 ESL용 ble_esl.write 동작이 있는 자동화를 찾지 못했습니다.",
+  "Saved to {name}.": "{name}에 저장했습니다.",
 };

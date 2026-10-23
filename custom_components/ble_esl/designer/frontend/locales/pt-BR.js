@@ -603,4 +603,12 @@ export default {
   "Tag orientation": "Orientação da etiqueta",
   Portrait: "Retrato",
   Landscape: "Paisagem",
+  "Save to existing automation…": "Salvar em uma automação existente…",
+  "Save to another automation…": "Salvar em outra automação…",
+  "Choose the automation to save to:": "Escolha a automação em que salvar:",
+  "Choose the write action to replace:":
+    "Escolha a ação de gravação a substituir:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "Nenhuma automação com uma ação ble_esl.write para este ESL foi encontrada.",
+  "Saved to {name}.": "Salvo em {name}.",
 };

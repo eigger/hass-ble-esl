@@ -604,4 +604,13 @@ export default {
   "Tag orientation": "Etikettenausrichtung",
   Portrait: "Hochformat",
   Landscape: "Querformat",
+  "Save to existing automation…": "In bestehender Automatisierung speichern…",
+  "Save to another automation…": "In anderer Automatisierung speichern…",
+  "Choose the automation to save to:":
+    "Automatisierung zum Speichern auswählen:",
+  "Choose the write action to replace:":
+    "Zu ersetzende Schreibaktion auswählen:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "Keine Automatisierung mit einer ble_esl.write-Aktion für diese ESL gefunden.",
+  "Saved to {name}.": "In {name} gespeichert.",
 };
