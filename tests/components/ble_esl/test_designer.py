@@ -94,15 +94,21 @@ async def test_manual_send_rewrites_and_respects_lock(
     assert tag_writer.write_prepared.await_count == 2
 
 
-async def test_legacy_auto_update_design_never_sends_on_sensor_changes(
-    hass, wolink_entry, tag_writer
-):
-    designer = hass.data[KEY]
+async def test_legacy_auto_update_options_are_dropped(hass, wolink_entry):
+    """Old designs that opted into automatic writes still load, without that option."""
     legacy = {**document(), "auto_update": True, "interval": 10}
-    await designer.preview(wolink_entry, legacy)
-    hass.states.async_set("sensor.room_temperature", "25")
-    await hass.async_block_till_done()
-    assert tag_writer.write_prepared.await_count == 0
+    validated = validate(legacy, DevicePreset("test", "test", 296, 128, "BWRY"))
+    assert "auto_update" not in validated
+    assert "interval" not in validated
+    assert (
+        validated["elements"]
+        == validate(document(), DevicePreset("test", "test", 296, 128, "BWRY"))["elements"]
+    )
+    exported = await hass.data[KEY].export(wolink_entry, legacy)
+    assert exported["validation_errors"] == []
+    for text in (exported["design_source"], exported["service"]):
+        assert "auto_update" not in text
+        assert "interval" not in text
 
 
 async def test_websocket_list_preview_validation_and_admin(

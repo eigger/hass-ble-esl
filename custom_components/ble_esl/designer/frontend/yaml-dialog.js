@@ -32,10 +32,12 @@ export class YamlDialog extends HTMLElement {
       if (event.target.id === "automation-name") this.name = event.target.value;
     });
   }
-  open(result, onClose, hass) {
+  // onCreated runs once the automation was created from this export.
+  open(result, onClose, hass, onCreated = null) {
     this.hass = hass;
     this.result = result;
     this.onClose = onClose;
+    this.onCreated = onCreated;
     this.view = result.automation ? "service" : "payload";
     this.name = result.automation?.alias || "";
     this.createdId = null;
@@ -161,6 +163,7 @@ export class YamlDialog extends HTMLElement {
           },
         );
         this.createdId = this.automationId;
+        this.onCreated?.(this.createdId);
       } catch (error) {
         this.creationError = error.message || String(error);
       } finally {

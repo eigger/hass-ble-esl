@@ -321,3 +321,73 @@ test("no action of the automation being edited is offered as another automation"
   await chooser.getByRole("button", { name: "Cancel" }).click();
   expect(await automation(request, "morning")).toEqual(config);
 });
+
+const openCreateAutomation = async (page) => {
+  await page
+    .locator('ble-esl-designer [data-action="create-automation"]')
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(
+    dialog.getByRole("button", { name: "Create automation", exact: true }),
+  ).toBeVisible();
+  return dialog;
+};
+
+test("creating an automation keeps the design there: it is no longer unsaved", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  const dialog = await openCreateAutomation(page);
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(await page.evaluate(() => window.manager.editor.dirty)).toBe(false);
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await expect(page.locator("ble-esl-designer .toolbar")).toBeVisible();
+  await expect(page.locator(".el")).toHaveCount(0);
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("ble_esl_designer_drafts"),
+    ),
+  ).toBeNull();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card).toBeVisible();
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+});
+
+test("a design changed after its automation export stays unsaved", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const dialog = await openCreateAutomation(page);
+  // The dialog is modal; a change can only come from the page itself here.
+  await page.evaluate(() => {
+    window.manager.editor.document.elements[0].x += 4;
+  });
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation", exact: true }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => window.manager.editor.dirty)).toBe(true);
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+});

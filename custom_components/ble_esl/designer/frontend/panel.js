@@ -674,7 +674,24 @@ export class BleEslDesigner extends HTMLElement {
     if (this.tag) this.drafts.delete(this.tag.entry_id);
     this.dirty = false;
     this.persistDrafts();
-    this.render();
+    // The Create automation dialog may still be open over the editor.
+    rerenderWithDialogs(this.shadowRoot, this.hass, () => this.render());
+  }
+  // A new automation now holds the design exported for it. Unless the design
+  // changed since, or this is no longer the same plain tag design, it is not
+  // unsaved work any more.
+  automationCreated(exported) {
+    if (
+      !exported ||
+      this.mode !== "display" ||
+      this._automationSessionToken ||
+      this._automationSessionPending ||
+      this._automationSaveMode ||
+      this.tag?.entry_id !== exported.entryId ||
+      JSON.stringify(this.document) !== exported.document
+    )
+      return;
+    this.markSavedElsewhere();
   }
   hasDraft(entryId) {
     return this.draftDocuments().has(entryId);
@@ -1425,12 +1442,15 @@ export class BleEslDesigner extends HTMLElement {
       // render() rebuilds the shadow tree, so the dialog opens after it.
       const dialog = document.createElement("ble-esl-yaml-dialog");
       this.shadowRoot.append(dialog);
+      const exported = this.yamlExportSource;
       dialog.open(
         this.yamlExport,
         () => this.shadowRoot.querySelector('[data-action="yaml"]')?.focus(),
         this.hass,
+        () => this.automationCreated(exported),
       );
       this.yamlExport = null;
+      this.yamlExportSource = null;
     }
     if (this.busy) {
       this.shadowRoot.querySelector(".workspace")?.setAttribute("inert", "");
@@ -2587,6 +2607,12 @@ export class BleEslDesigner extends HTMLElement {
         this.render();
         if (this.pendingUploads.size)
           await Promise.all([...this.pendingUploads]);
+        // What the dialog's automation will hold, to tell later whether the
+        // design was kept there unchanged.
+        const exportSource = {
+          entryId: this.tag.entry_id,
+          document: JSON.stringify(this.document),
+        };
         this.yamlExport = await this.api(
           action === "yaml" ? "export" : "automation",
           {
@@ -2601,6 +2627,7 @@ export class BleEslDesigner extends HTMLElement {
               : {}),
           },
         );
+        this.yamlExportSource = exportSource;
         if (this.yamlExport.automation) {
           const alias = this.hass.states[this.tag.entities?.alias]?.state;
           if (alias && !["unknown", "unavailable"].includes(alias))
