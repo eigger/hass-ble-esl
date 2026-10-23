@@ -1,3 +1,4 @@
+import { materialIcon } from "../material-icons.js";
 // Renders imagespec state-to-icon controls from explicit entity/icon helpers.
 // Editing the mappings continues through the panel's existing action path.
 export function renderStateIconRows({
@@ -27,5 +28,5 @@ export function renderStateIconRows({
     })
     .join(
       "",
-    )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="${translate("New icon state")}" placeholder="${translate("Another state")}"><button data-action="add-icon-state" aria-label="${translate("Add state mapping")}">+</button></div><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="${translate("Search icons")}" placeholder="${translate("Search icons")}"><button data-icon="{{icon}}">${translate("HA state icon")}</button><div class="icon-picker"></div></div></div>`;
+    )}<div style="display:flex;gap:6px;margin-top:8px"><input id="new-icon-state" aria-label="${translate("New icon state")}" placeholder="${translate("Another state")}"><button data-action="add-icon-state" aria-label="${translate("Add state mapping")}">${materialIcon("plus")}</button></div><div class="icon-popover" hidden><input id="icon-search" type="search" aria-label="${translate("Search icons")}" placeholder="${translate("Search icons")}"><button data-icon="{{icon}}">${translate("HA state icon")}</button><div class="icon-picker"></div></div></div>`;
 }

@@ -119,6 +119,13 @@ export function handleKey(panel, event) {
   }
   const cmd = event.metaKey || event.ctrlKey,
     key = event.key.toLowerCase();
+  if (cmd && key === "a" && inCanvas) {
+    event.preventDefault();
+    panel.selectIds(panel.document.elements.map((e) => e.id));
+    panel.render();
+    panel.focusElement();
+    return;
+  }
   if (cmd && ["z", "y", "s", "d"].includes(key)) {
     event.preventDefault();
     if (key === "d") panel.transform("duplicate");
@@ -143,6 +150,18 @@ export function handleKey(panel, event) {
   };
   if (inCanvas && panel.element && directions[event.key]) {
     event.preventDefault();
+    if (panel.selectedElements.length > 1) {
+      panel.checkpoint();
+      const step = event.shiftKey ? 10 : 1;
+      const [dx, dy] = directions[event.key];
+      for (const element of panel.selectedElements) {
+        element.x += dx * step;
+        element.y += dy * step;
+      }
+      panel.edited();
+      panel.focusElement();
+      return;
+    }
     const before = clone(panel.element),
       visible = panel.visibleBounds(before),
       snapshot = clone(panel.document),
@@ -169,17 +188,26 @@ export function handlePointer(panel, event) {
     return;
   const node = event.target.closest("[data-id]");
   if (!node) {
-    if (panel.selected && !panel.busy && event.target.closest(".canvas-wrap")) {
-      panel.finishTextEdit();
-      panel.selected = null;
-      panel.render();
-    }
+    if (event.target.closest(".canvas-wrap")) panel.beginMarquee(event);
+    return;
+  }
+  if (event.shiftKey || event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    panel.toggleSelection(node.dataset.id);
+    panel.render();
+    panel.focusElement();
     return;
   }
   const resize = event.target.closest(".handle")?.dataset.corner,
     selectionOverlay = event.target.closest(".selection-box");
   event.preventDefault();
-  panel.selected = node.dataset.id;
+  if (panel.selectedIds.has(node.dataset.id))
+    panel.selectIds(panel.selectedIds, node.dataset.id);
+  else panel.selected = node.dataset.id;
+  const group = panel.selectedElements.map((element) => ({
+    element,
+    start: clone(element),
+  }));
   const element = panel.element,
     start = clone(element),
     startX = event.clientX,
@@ -233,6 +261,15 @@ export function handlePointer(panel, event) {
         dy,
       );
     } else {
+      if (group.length > 1) {
+        for (const item of group) {
+          item.element.x = item.start.x + dx;
+          item.element.y = item.start.y + dy;
+        }
+        panel.snapGuides = [];
+        panel.drawStage();
+        return;
+      }
       element.x = start.x + dx;
       element.y = start.y + dy;
       panel.clampMoved(
@@ -274,7 +311,7 @@ export function handlePointer(panel, event) {
     panel.gestureCancel = null;
     panel.snapGuides = [];
     if (moved) {
-      Object.assign(element, start);
+      group.forEach((item) => Object.assign(item.element, item.start));
       panel.preview = previewBeforeGesture;
       panel.drawStage();
       if (panel.isConnected && !panel.preview) panel.queuePreview();
@@ -311,6 +348,7 @@ export function handlePointer(panel, event) {
         !moved &&
         !resize &&
         (!selectionOverlay || event.target.closest(".move-handle")) &&
+        group.length === 1 &&
         element.type === "text"
       ) {
         panel.beginTextEdit();

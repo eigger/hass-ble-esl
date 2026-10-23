@@ -22,8 +22,8 @@ test("text alignment controls preserve font size, accessible labels, and selecti
   expect(controls).toContain(
     'data-pick="align" data-value="right" aria-label="Align right" title="Align right" aria-pressed="false"',
   );
-  expect(controls).toContain("M6 9h12");
-  expect(controls).toContain("M6 19h12");
+  expect(controls).toContain('icon="mdi:format-align-center"');
+  expect(controls).not.toContain("<svg");
 });
 
 test("font size escapes authored values and unset alignment stays unselected", () => {

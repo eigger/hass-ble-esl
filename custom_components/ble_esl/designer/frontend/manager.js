@@ -1,3 +1,4 @@
+import { materialIcon } from "./editor/material-icons.js";
 import { decodeAutomationDesign } from "./editor/automation-source.js";
 import { t, language, bindStatic, localize, errorText } from "./i18n.js";
 import { hasStoredDraft } from "./editor/draft-store.js";
@@ -35,7 +36,7 @@ class EslManager extends HTMLElement {
     this.filter = "all";
     this.sort = "default";
     this.view = "dashboard";
-    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><div class="header-title-wrap"><h1>${t(this.hass, "ESL Manager")}</h1><span class="version-tag" id="panel-version" title="${t(this.hass, "BLE ESL integration version")}" style="display: none;"></span></div><button data-action="refresh">${t(this.hass, "Refresh")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><div class="message-wrap" hidden><p class="message" role="status"></p><button type="button" data-action="dismiss-message">×</button></div><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
+    this.shadowRoot.innerHTML = `<style>${css}</style><section id="dashboard"><header><ha-menu-button></ha-menu-button><div class="header-title-wrap"><h1>${t(this.hass, "ESL Manager")}</h1><span class="version-tag" id="panel-version" title="${t(this.hass, "BLE ESL integration version")}" style="display: none;"></span></div><button data-action="refresh" aria-label="${t(this.hass, "Refresh")}" title="${t(this.hass, "Refresh")}">${materialIcon("reload")}</button></header><div class="dashboard-content"><div class="controls"><input id="search" type="search" aria-label="${t(this.hass, "Search ESLs")}" placeholder="${t(this.hass, "Search aliases or devices")}"><select id="filter" aria-label="${t(this.hass, "Filter ESLs")}"><option value="all">${t(this.hass, "All ESLs")}</option><option value="error">${t(this.hass, "Errors")}</option><option value="unsynced">${t(this.hass, "Not in sync")}</option><option value="low-battery">${t(this.hass, "Low battery")}</option></select><select id="sort" aria-label="${t(this.hass, "Sort ESLs")}"><option value="default">${t(this.hass, "Default order")}</option><option value="attention">${t(this.hass, "Needs attention first")}</option><option value="battery">${t(this.hass, "Battery: lowest first")}</option><option value="name">${t(this.hass, "Name (A–Z)")}</option></select></div><div class="summary" role="status"></div><div class="grid"></div></div></section><div class="message-wrap" hidden><p class="message" role="status"></p><button type="button" data-action="dismiss-message">${materialIcon("close")}</button></div><section id="editor" hidden><div class="editor-nav"><button data-action="dashboard">${t(this.hass, "← Dashboard")}</button><span class="editor-context"></span><button data-action="editor-automations">${t(this.hass, "Connected automations")}</button></div><div id="editor-slot"></div></section>`;
     this.editorNav = this.shadowRoot.querySelector(".editor-nav");
     this.editorContext = this.editorNav.querySelector(".editor-context");
     bindStatic(this.shadowRoot);
@@ -174,11 +175,19 @@ class EslManager extends HTMLElement {
       );
     }
     if (this.hass && !this.started) this.refresh();
+    this.onHistory = () => this.restoreLocation();
+    window.addEventListener("popstate", this.onHistory);
+    this.onTagChanged = (event) => {
+      if (this.view === "editor") this.rememberTag(event.detail.entry_id);
+    };
+    this.addEventListener("tag-changed", this.onTagChanged);
     this.clockTimer = setInterval(() => {
       if (this.view === "dashboard") this.renderCards();
     }, 60000);
   }
   disconnectedCallback() {
+    window.removeEventListener("popstate", this.onHistory);
+    this.removeEventListener("tag-changed", this.onTagChanged);
     clearInterval(this.clockTimer);
     clearTimeout(this.messageTimer);
     this.toastObserver?.disconnect();
@@ -231,6 +240,7 @@ class EslManager extends HTMLElement {
     try {
       this.tags = await this.api("list");
       this.renderCards();
+      this.restoreLocation();
       await this.loadAutomations();
     } catch (error) {
       this.message(errorText(this.hass, "Could not load ESL data", error));
@@ -421,10 +431,18 @@ class EslManager extends HTMLElement {
     const label = known
       ? t(this.hass, "Battery {value}", { value })
       : t(this.hass, "Battery —");
-    const fill = known
-      ? (Math.max(0, Math.min(100, Number(battery.state))) / 100) * 16
-      : 0;
-    const content = `<svg viewBox="0 0 26 16" aria-hidden="true"><rect x="1" y="1" width="21" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M24 5v6" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="3.5" width="${fill}" height="9" rx=".5" fill="currentColor"/></svg><span>${escapeHtml(value)}</span>`;
+    const level = known
+      ? Math.min(100, Math.max(0, Math.round(Number(battery.state) / 10) * 10))
+      : null;
+    const batteryIcon =
+      level === null
+        ? "mdi:battery-unknown"
+        : level === 100
+          ? "mdi:battery"
+          : level === 0
+            ? "mdi:battery-outline"
+            : `mdi:battery-${level}`;
+    const content = `${materialIcon(batteryIcon, 24)}<span>${escapeHtml(value)}</span>`;
     return tag.entities?.battery
       ? `<button data-entity="${escapeHtml(tag.entities.battery)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</button>`
       : `<span role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${content}</span>`;
@@ -462,7 +480,7 @@ class EslManager extends HTMLElement {
       automationData.linked.length > 0 ||
       this.automationErrors.has(tag.entry_id);
     const automationLabel = this.automationLabel(tag);
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd>${showAutomationDialog ? `<button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(automationLabel)}">${e(automationLabel)}</button>` : e(automationLabel)}</dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.baseWidth ?? tag.width} × ${tag.baseHeight ?? tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd>${showAutomationDialog ? `<button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(automationLabel)}">${e(automationLabel)}</button>` : e(automationLabel)}</dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
   }
   renderCards() {
     this.updateEditorContext();
@@ -567,6 +585,20 @@ class EslManager extends HTMLElement {
         )
         ?.focus();
   }
+  rememberTag(entryId) {
+    const url = new URL(window.location.href);
+    if ((url.searchParams.get("tag") || null) === (entryId || null)) return;
+    if (entryId) url.searchParams.set("tag", entryId);
+    else url.searchParams.delete("tag");
+    window.history.pushState({ ...window.history.state }, "", url);
+  }
+  restoreLocation() {
+    const entryId = new URL(window.location.href).searchParams.get("tag");
+    const tag = this.tags.find((t) => t.entry_id === entryId);
+    if (tag) this.openEditor(tag);
+    else if (!entryId && this.view === "editor")
+      this.shadowRoot.querySelector('[data-action="dashboard"]').click();
+  }
   openEditor(tag) {
     if (
       this.automationEditSession &&
@@ -582,6 +614,7 @@ class EslManager extends HTMLElement {
       return false;
     }
     this.message();
+    this.rememberTag(tag.entry_id);
     this.view = "editor";
     this.shadowRoot.querySelector("#dashboard").hidden = true;
     this.shadowRoot.querySelector("#editor").hidden = false;
@@ -858,6 +891,12 @@ class EslManager extends HTMLElement {
       const prompted = new Set();
       const design =
         data.design === undefined ? null : decodeAutomationDesign(data.design);
+      // The action's own `rotate` wins, as it does when the automation runs.
+      const rotate = [0, 90, 180, 270].includes(
+        Number(data.rotate ?? design?.rotate ?? 0),
+      )
+        ? Number(data.rotate ?? design?.rotate ?? 0)
+        : 0;
       let imported;
       for (let attempt = 0; attempt < 64; attempt++) {
         imported = await editor.prepareAutomationPayload(
@@ -865,6 +904,7 @@ class EslManager extends HTMLElement {
           data.background,
           entryId,
           previewVariables,
+          rotate,
         );
         if (!current()) return;
         const missing = imported.missing_parameters || [];
@@ -917,6 +957,7 @@ class EslManager extends HTMLElement {
           entryId,
           token,
           previewVariables,
+          rotate,
         )
       ) {
         if (!current()) return;
@@ -1176,6 +1217,8 @@ class EslManager extends HTMLElement {
           t(this.hass, "The selected write action is no longer available."),
         );
       data.payload = exported.payload_data;
+      if (exported.rotate) data.rotate = exported.rotate;
+      else delete data.rotate;
       if (exported.design_source !== undefined)
         data.design = exported.design_source;
       else delete data.design;
@@ -1259,6 +1302,7 @@ class EslManager extends HTMLElement {
         )
       )
         return;
+      this.rememberTag(null);
       this.view = "dashboard";
       this.automationEditRun = (this.automationEditRun || 0) + 1;
       this.automationSaveRun = (this.automationSaveRun || 0) + 1;

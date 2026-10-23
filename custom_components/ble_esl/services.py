@@ -372,7 +372,12 @@ async def build_write_job_from_data(
             designer.templates,
             await designer.forecasts(document),
         )
-        service_data = {**service_data, "payload": payload, "background": document["background"]}
+        service_data = {
+            "rotate": document.get("rotate", 0),
+            **service_data,
+            "payload": payload,
+            "background": document["background"],
+        }
 
     if image is None:
         render_lock = designer.render_lock if "design" in service_data else nullcontext()

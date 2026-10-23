@@ -22,7 +22,12 @@ export function persistDrafts(drafts, tags, storage) {
   for (const [entryId, document] of drafts) {
     const tag = tags.find((item) => item.entry_id === entryId);
     if (tag)
-      stored[entryId] = { width: tag.width, height: tag.height, document };
+      stored[entryId] = {
+        // The physical size: the editor canvas turns with the design.
+        width: tag.baseWidth ?? tag.width,
+        height: tag.baseHeight ?? tag.height,
+        document,
+      };
   }
   try {
     if (Object.keys(stored).length)
@@ -48,8 +53,8 @@ export function restoreStoredDrafts(drafts, tags, storage) {
     if (
       tag &&
       draft?.document &&
-      tag.width === draft.width &&
-      tag.height === draft.height &&
+      (tag.baseWidth ?? tag.width) === draft.width &&
+      (tag.baseHeight ?? tag.height) === draft.height &&
       !drafts.has(entryId)
     )
       drafts.set(entryId, draft.document);

@@ -588,7 +588,19 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "¿Desvincular {name} de este ESL? La automatización en sí no se modifica.",
   Continue: "Continuar",
-  "Restore": "Restaurar",
+  Restore: "Restaurar",
   "Restore saved design": "Restaurar",
-  "Restore the last saved design? Unsaved changes will be discarded.": "¿Restaurar el último diseño guardado? Se descartarán los cambios sin guardar.",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "¿Restaurar el último diseño guardado? Se descartarán los cambios sin guardar.",
+  selected: "seleccionados",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "Los cambios se aplican a todos los componentes seleccionados. Los valores distintos quedan en blanco.",
+  Mixed: "Mixto",
+  "Rotation value (°)": "Valor de giro (°)",
+  "Show hidden icons": "Mostrar iconos ocultos",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "Muestra tenuemente los iconos invisibles para editarlos; no cambia la imagen de la etiqueta",
+  "Tag orientation": "Orientación de la etiqueta",
+  Portrait: "Vertical",
+  Landscape: "Horizontal",
 };

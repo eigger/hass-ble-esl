@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Designer elements can be rotated to any angle with a slider or numeric entry; free-angle groups are exported as portable imagespec images.
+- Rectangular tags can be switched between portrait and landscape from the editor toolbar.
+- Home Assistant Material icons are used throughout the manager and editor, and hidden or null icons show a selectable preview-only ghost.
+- The selected tag is kept in the URL, so reload and browser back/forward restore the open editor.
+- Multiple elements can be selected with a marquee or Shift/Ctrl/Cmd-click, moved together by drag or keyboard, edited through shared properties, and duplicated or deleted as a group with undo.
+
 ## 1.5.1
 
 ### Fixed

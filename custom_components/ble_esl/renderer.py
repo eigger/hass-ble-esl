@@ -1,7 +1,10 @@
 import asyncio
+import base64
 import concurrent.futures
+from dataclasses import replace
 from io import BytesIO
 import logging
+import math
 import os
 import threading
 
@@ -9,6 +12,8 @@ from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.exceptions import HomeAssistantError
 from imagespec import RenderContext, RenderError, render
+from imagespec.dispatch import render_element
+from imagespec.state import RenderState
 from PIL import Image
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,6 +94,66 @@ def _make_context(hass, *, default_font, palette):
     )
 
 
+def oriented_preset(preset, rotation):
+    """Logical canvas dimensions for a tag mounted sideways."""
+    if rotation % 180:
+        return replace(preset, width=preset.height, height=preset.width)
+    return preset
+
+
+def rotated_size(width, height, angle):
+    """Expanded Pillow rotation dimensions, without allocating a pixel surface."""
+    angle = angle % 360
+    if angle % 90 == 0:
+        return (height, width) if angle in (90, 270) else (width, height)
+    sine = abs(round(math.sin(math.radians(angle)), 15))
+    cosine = abs(round(math.cos(math.radians(angle)), 15))
+    extent_x, extent_y = width * cosine + height * sine, width * sine + height * cosine
+    return (
+        math.ceil(width / 2 + extent_x / 2) - math.floor(width / 2 - extent_x / 2),
+        math.ceil(height / 2 + extent_y / 2) - math.floor(height / 2 - extent_y / 2),
+    )
+
+
+def _prepare_payload(payload, context):
+    """Lower free-angle groups to portable imagespec images in the render worker.
+
+    imagespec 1.1 accepts numeric group angles but only draws quarter turns.
+    Rasterizing just these groups keeps alpha/layer order and leaves the source
+    components and their live bindings intact in the designer document.
+    """
+    prepared = []
+    for element in payload:
+        item = dict(element)
+        if "elements" in item:
+            item["elements"] = _prepare_payload(item["elements"], context)
+        angle = float(item.get("rotate", 0) or 0)
+        if item.get("type") == "group" and angle % 90:
+            width, height = round(item["width"]), round(item["height"])
+            state = RenderState(Image.new("RGBA", (width, height)), width, height, context)
+            render_element(state, {**item, "x": 0, "y": 0, "rotate": 0})
+            tile = state.img.rotate(-angle, expand=True, resample=Image.Resampling.BICUBIC)
+            item = {
+                "type": "dlimg",
+                "x": item.get("x", 0),
+                "y": item.get("y", 0),
+                "xsize": tile.width,
+                "ysize": tile.height,
+                "url": "data:image/png;base64," + base64.b64encode(encode_png(tile)).decode(),
+                "dither": item.get("dither", False),
+            }
+        prepared.append(item)
+    return prepared
+
+
+def prepare_payload(hass, preset, payload):
+    """Produce a portable payload for export; call in an executor."""
+    palette = PALETTES.get(preset.colors, ["black", "white", "red", "yellow"])
+    return _prepare_payload(
+        payload, _make_context(hass, default_font="NotoSansKR-Regular.ttf", palette=palette)
+    )
+
+
 def render_image(
     hass,
     preset,
@@ -103,7 +168,7 @@ def render_image(
 
     try:
         return render(
-            payload=payload,
+            payload=prepare_payload(hass, preset, payload),
             width=preset.width,
             height=preset.height,
             rotate=int(rotate),

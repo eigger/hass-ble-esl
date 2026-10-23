@@ -1745,7 +1745,7 @@ test("card information aligns and battery stays at the right edge", async ({
   expect(metrics.map((metric) => metric.productRight)).toEqual([0, 0]);
   expect(metrics.map((metric) => metric.aligned)).toEqual([true, true]);
   expect(metrics.map((metric) => metric.border)).toEqual(["0px", "0px"]);
-  await expect(page.locator(".battery svg")).toHaveCount(2);
+  await expect(page.locator(".battery ha-icon")).toHaveCount(2);
 });
 
 test("thumbnail survives rerenders and waits for the next bitmap to load", async ({
@@ -1919,4 +1919,109 @@ test("automation editing keeps component rules and writes the source back", asyn
     JSON.parse(saved.actions[0].data.design.slice(3, -15)),
   );
   expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+});
+
+for (const [name, action] of [
+  ["the action's rotate", { rotate: 90 }],
+  ["the design's rotate", { design: true }],
+]) {
+  test(`automation editing follows ${name} and writes it back`, async ({
+    page,
+    request,
+  }) => {
+    const source = {
+      version: 1,
+      background: "white",
+      rotate: 90,
+      elements: [
+        {
+          id: "portrait-text",
+          type: "text",
+          x: 4,
+          y: 4,
+          width: 60,
+          height: 24,
+          text: "Hi",
+        },
+      ],
+    };
+    const data = { background: "white", payload: [] };
+    if (action.rotate) data.rotate = action.rotate;
+    if (action.design)
+      data.design =
+        "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
+    else
+      data.design =
+        "{{ " +
+        JSON.stringify(JSON.stringify({ ...source, rotate: undefined })) +
+        " | from_json }}";
+    await request.post("/api/config/automation/config/morning", {
+      data: {
+        id: "morning",
+        alias: "Morning",
+        triggers: [],
+        conditions: [],
+        actions: [
+          {
+            action: "ble_esl.write",
+            target: { device_id: "demo-device-0" },
+            data,
+          },
+        ],
+        mode: "single",
+      },
+    });
+    const physical = await page.evaluate(() => {
+      const tag = window.manager.tags.find(
+        (t) => t.entry_id === "demo-writable",
+      );
+      return [tag.width, tag.height];
+    });
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    await page
+      .getByRole("dialog", { name: "Connected automations" })
+      .getByRole("button", { name: "Edit automation design", exact: true })
+      .first()
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Save to automation" }),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => [
+          window.manager.editor.document.rotate,
+          window.manager.editor.tag.width,
+          window.manager.editor.tag.height,
+        ]),
+      )
+      .toEqual([90, physical[1], physical[0]]);
+    await page.evaluate(() => window.manager.editor.setTagOrientation(0));
+    await page.getByRole("button", { name: "Save to automation" }).click();
+    await expect(page.locator(".message")).toContainText("Automation saved.");
+    const saved = await (
+      await request.get("/api/config/automation/config/morning")
+    ).json();
+    expect(saved.actions[0].data.rotate).toBeUndefined();
+  });
+}
+
+test("open tag is remembered in the URL across reload and browser navigation", async ({
+  page,
+}) => {
+  await page.locator("[data-action=edit][data-entry=demo-writable]").click();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
+  await page
+    .getByRole("combobox", { name: "Tag", exact: true })
+    .selectOption("demo-discovery");
+  await expect(page).toHaveURL(/tag=demo-discovery/);
+  await page.goBack();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
 });

@@ -34,8 +34,8 @@ def snapshot_layers(hass, document, templates, forecasts, preview_variables=None
             forecasts,
             preview_variables=preview_variables,
         )
-        if element["type"] in ("icon", "conditional_icon") and (
-            not element["visible"] or not element["icon"]
+        if not element["visible"] or (
+            element["type"] in ("icon", "conditional_icon") and not element["icon"]
         ):
             ghost = deepcopy(element)
             state = hass.states.get(element["entity_id"])

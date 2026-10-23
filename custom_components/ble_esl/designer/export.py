@@ -75,7 +75,14 @@ def plain(value):
 
 
 def export_yaml(
-    payload, background, device_id, issues=(), live=None, design=None, design_specs=None
+    payload,
+    background,
+    device_id,
+    issues=(),
+    live=None,
+    design=None,
+    design_specs=None,
+    rotate=0,
 ):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
 
@@ -98,6 +105,8 @@ def export_yaml(
         "target": {"device_id": device_id or "<your device>"},
         "data": {"background": background, "payload": payload},
     }
+    if rotate:
+        service["data"]["rotate"] = rotate
     if design is not None:
         service["data"]["design"] = encode_design(plain(design))
     if design_specs:
@@ -128,6 +137,7 @@ def export_yaml(
             dict.fromkeys([*render_errors, *blocking_errors, *payload_errors, *scalar_errors])
         ),
         "warnings": [*warnings, *template_warnings],
+        "rotate": rotate,
     }
     if design is not None:
         result["design_source"] = service["data"]["design"]

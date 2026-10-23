@@ -552,7 +552,19 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要將 {name} 與此 ESL 取消關聯嗎？自動化本身不會變更。",
   Continue: "繼續",
-  "Restore": "還原",
+  Restore: "還原",
   "Restore saved design": "還原",
-  "Restore the last saved design? Unsaved changes will be discarded.": "還原上次儲存的設計？未儲存的變更將會捨棄。",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "還原上次儲存的設計？未儲存的變更將會捨棄。",
+  selected: "已選取",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "變更會套用到所有選取的元件。不同的值顯示為空白。",
+  Mixed: "混合",
+  "Rotation value (°)": "旋轉值(°)",
+  "Show hidden icons": "顯示隱藏的圖示",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "編輯時淡淡顯示不可見的圖示;不會改變標籤影像",
+  "Tag orientation": "標籤方向",
+  Portrait: "直向",
+  Landscape: "橫向",
 };

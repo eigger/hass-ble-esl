@@ -257,3 +257,98 @@ async def test_invalid_design_specs_raise_a_service_error(hass, wolink_entry):
             await build_write_job_from_data(
                 hass, wolink_entry, {**data, "design_specs": {"native": bad}}
             )
+
+
+async def test_field_hidden_icon_with_null_glyph_still_has_an_editing_ghost(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    source = icon_document(rotation=0)
+    source["elements"][0]["field_templates"] = {"visible": "{{ false }}", "icon": "{{ none }}"}
+    result = await hass.data[KEY].preview(wolink_entry, source)
+    assert result["payload"] == []
+    assert result["layers"]["_ghost_bounds"]["laundry"]
+
+
+async def test_free_angle_rotation_changes_pixels_and_preserves_source(hass, wolink_entry):
+    source = icon_document(rotation=37.5)
+    hass.states.async_set("binary_sensor.laundry", "on")
+    result = await hass.data[KEY].preview(wolink_entry, source)
+    unrotated = await hass.data[KEY].preview(wolink_entry, icon_document(rotation=0))
+    assert result["png"] != unrotated["png"]
+    exported = await hass.data[KEY].export(wolink_entry, source)
+    assert exported["validation_errors"] == []
+    assert exported["payload_data"][0]["type"] == "dlimg"
+    actual = await hass.async_add_executor_job(
+        lambda: render_image(hass, wolink_entry.runtime_data.preset, exported["payload_data"])
+    )
+    preview_image = Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))).convert(
+        "RGB"
+    )
+    assert ImageChops.difference(actual, preview_image).getbbox() is None
+    from custom_components.ble_esl.designer.automation_source import decode_design
+
+    assert decode_design(exported["design_source"])["elements"][0]["rotation"] == 37.5
+
+
+@pytest.mark.parametrize("width,height", [(40, 30), (31, 22), (60, 40)])
+def test_rotated_size_matches_pillow_for_free_angles(width, height):
+    from custom_components.ble_esl.renderer import rotated_size
+
+    for angle in (0, 17, 37.5, 90, 123, 180, 270, 359, -35):
+        expected = Image.new("RGBA", (width, height)).rotate(-angle, expand=True).size
+        assert rotated_size(width, height, angle) == expected
+
+
+async def test_design_orientation_sets_canvas_export_and_written_output(hass, wolink_entry):
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    designer = hass.data[KEY]
+    physical = wolink_entry.runtime_data.preset
+    source = {**icon_document(rotation=0), "rotate": 90}
+    logical = designer.preset(wolink_entry, source["rotate"])
+    assert (logical.width, logical.height) == (physical.height, physical.width)
+    assert "display_rotation" not in wolink_entry.options
+
+    preview = await designer.preview(wolink_entry, source)
+    exported = await designer.export(wolink_entry, source)
+    assert exported["rotate"] == 90
+    assert "rotate: 90" in exported["service"]
+    upright = await designer.export(wolink_entry, icon_document(rotation=0))
+    assert upright["rotate"] == 0
+    assert "rotate:" not in upright["service"].split("design:")[0]
+
+    # The action's design carries the orientation; an explicit `rotate` overrides it.
+    job = await build_write_job_from_data(
+        hass, wolink_entry, {"design": exported["design_source"], "payload": []}
+    )
+    assert job.image.size == (physical.width, physical.height)
+    editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(
+        "RGB"
+    )
+    assert ImageChops.difference(job.image, editor_image.rotate(-90, expand=True)).getbbox() is None
+    plain_job = await build_write_job_from_data(
+        hass,
+        wolink_entry,
+        {"payload": exported["payload_data"], "rotate": 90, "background": "white"},
+    )
+    assert ImageChops.difference(plain_job.image, job.image).getbbox() is None
+
+
+async def test_import_payload_uses_the_automation_orientation(hass, wolink_entry, hass_ws_client):
+    designer = hass.data[KEY]
+    physical = wolink_entry.runtime_data.preset
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "import_payload",
+            "entry_id": wolink_entry.entry_id,
+            "payload": [{"type": "text", "value": "Hi", "x": 2, "y": 2, "size": 12}],
+            "rotation": 90,
+        }
+    )
+    response = await client.receive_json()
+    assert response["success"]
+    assert response["result"]["issues"] == []
+    assert response["result"]["different_pixels"] == 0
+    assert designer.preset(wolink_entry).width == physical.width

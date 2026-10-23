@@ -584,7 +584,19 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Отвязать {name} от этого ESL? Сама автоматизация не изменится.",
   Continue: "Продолжить",
-  "Restore": "Восстановить",
+  Restore: "Восстановить",
   "Restore saved design": "Восстановить",
-  "Restore the last saved design? Unsaved changes will be discarded.": "Восстановить последний сохранённый дизайн? Несохранённые изменения будут отменены.",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "Восстановить последний сохранённый дизайн? Несохранённые изменения будут отменены.",
+  selected: "выбрано",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "Изменения применяются ко всем выбранным компонентам. Разные значения остаются пустыми.",
+  Mixed: "Разные",
+  "Rotation value (°)": "Значение поворота (°)",
+  "Show hidden icons": "Показать скрытые значки",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "Бледно показывает невидимые значки для редактирования; изображение этикетки не меняется",
+  "Tag orientation": "Ориентация этикетки",
+  Portrait: "Книжная",
+  Landscape: "Альбомная",
 };
