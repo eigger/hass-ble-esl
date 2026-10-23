@@ -1,4 +1,6 @@
 {
   "name": "BLE ESL",
-  "homeassistant": "2025.12.0"
+  "homeassistant": "2025.12.0",
+  "zip_release": true,
+  "filename": "ble_esl.zip"
 }
