@@ -16,6 +16,8 @@ The image and **Last successful send** come from `last_updated_content`: the las
 
 Choose **Edit tag design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
+Designs live in automations. **Edit tag design** starts from a blank design, or from the unsaved draft this browser tab still holds for the tag; a linked automation's design is opened with **Edit automation design**. To keep a design, save it into an automation: **Create automation** makes a new one, **Save to existing automation…** writes it into an automation whose `ble_esl.write` action targets this tag, and **Save to automation** updates the automation being edited (**Save to another automation…** writes a copy into a different one). Work in progress is kept only as a draft in this browser tab's session storage; nothing is stored per tag on the server.
+
 Each tag card shows one **Edit tag design** button, whether or not automations
 are linked. To edit a linked automation's design, open **Connected automations**
 and choose that automation. The editor header shows the tag and automation being
@@ -32,7 +34,7 @@ keeps a small margin around the complete last successful image.
 
 In the Designer toolbar, choose **Create automation**, review the current design's action and name, then choose **Create automation** in the dialog. This creates a new Home Assistant automation with `ble_esl.write` targeted at the current ESL's registered device. Unsaved edits are included. Triggers and conditions are empty; use **Edit automation** to configure when it runs.
 
-The automation contains a copy of the exported action. Ordinary designer saves do not change that copy; open the existing automation with **Edit automation design** and use **Save to automation** to update its payload. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
+The automation contains a copy of the exported action. To change it later, open it with **Edit automation design** and use **Save to automation**, or write the current design into it with **Save to existing automation…**. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
 
 ## Existing automation associations
 
@@ -81,7 +83,7 @@ the remaining element options; values in the collapsed section are preserved.
 
 Where an element sits comes from its **frame** (X, Y, Width, Height), not from keys you type. A rectangle fills its frame, a circle is centred in it, a QR code, barcode or icon takes its size from it, a polygon's corners are percentages of it. That is why every element moves and resizes the same way, and why the exported payload has ordinary absolute coordinates. `text_fit` and `new_multiline` fit the frame, `rich_text` sits on the frame's middle line, and a line runs through the middle of the frame (vertical when the frame is taller than it is wide). Text, tables and the like are drawn from the frame's top left at their own size.
 
-Any value can be a [Jinja template](https://www.home-assistant.io/docs/configuration/templating/): `{{ states('sensor.room') }} °C`, `{{ [1, 2, 3] }}` for a list. The preview renders it with the current state and redraws when an entity it reads changes. The designer never automatically transmits when sensor values change. Schedule tag updates with Home Assistant automations using the exported action. **Send to tag** saves the design and writes now.
+Any value can be a [Jinja template](https://www.home-assistant.io/docs/configuration/templating/): `{{ states('sensor.room') }} °C`, `{{ [1, 2, 3] }}` for a list. The preview renders it with the current state and redraws when an entity it reads changes. The designer never automatically transmits when sensor values change. Schedule tag updates with Home Assistant automations using the exported action. **Send to tag** writes the current design now; it does not store the design anywhere.
 
 > `plot` reads the recorder, so it needs one that records the entity. A colour an imagespec element asks for that the tag cannot show is drawn as the nearest one it can; the older components only offer the tag's colours.
 
@@ -124,7 +126,7 @@ What stays as of the moment: the older sensor components (see [Convert to elemen
 
 The older components (sensor, text, icon, image, shapes, progress bar, gauge) are drawn from settings the designer keeps. **Convert to elements** (in the properties panel) turns the selected one into the plain imagespec elements it is drawn with, in its place, one undo step. Each field is then editable, and the YAML is ordinary imagespec.
 
-The properties panel groups its fields: **Content** (what the element shows or is bound to), **Position & size** (px), **Style**, and a collapsed **Advanced**. With nothing selected it offers the display **Background**. In **Layers**, each row can be hidden (eye), moved forward or backward, or deleted. The toolbar says *Unsaved changes* until you save, and the browser asks before leaving a page with unsaved work. A message in red can be dismissed with ×.
+The properties panel groups its fields: **Content** (what the element shows or is bound to), **Position & size** (px), **Style**, and a collapsed **Advanced**. With nothing selected it offers the display **Background**. In **Layers**, each row can be hidden (eye), moved forward or backward, or deleted. The toolbar says *Unsaved changes* until the design is saved into an automation; until then it is kept as a draft in this browser tab, and the browser asks before leaving a page with unsaved work. A message in red can be dismissed with ×.
 
 Their properties panel also has the optional settings imagespec offers for what each draws: text and sensors (vertical align, fit, max lines, min font size, padding, line spacing, font file), shapes (filled or outline only, outline width, corner radius), icons (outline width and colour), images (rotate, crop to circle), progress bars (direction, corner radius, outline width, percentage), gauges (arc thickness, show value), and **Dither** for any of them. A setting left blank keeps imagespec's default, and **Visible** hides an element without deleting it.
 

@@ -111,8 +111,6 @@ test("sensor defaults, keyboard, dragging, resize, undo, save and preview", asyn
   expect(
     Number(await page.locator('[data-property="width"]').inputValue()),
   ).toBeLessThan(140);
-  await page.getByRole("button", { name: "Save", exact: false }).click();
-  await expect(page.getByRole("status")).toContainText("Display saved");
   await expect(page.locator("img.exact")).toBeVisible();
   await page.screenshot({
     path: "artifacts/designer-desktop.png",
@@ -530,7 +528,9 @@ test("an uploaded photo is stored upright, with its EXIF orientation applied", a
   // 4×2 pixels with orientation 6: shown upright it is 2×4.
   await page
     .getByLabel("Upload image", { exact: true })
-    .setInputFiles("tests/components/ble_esl/frontend/fixtures/exif-rotated.jpg");
+    .setInputFiles(
+      "tests/components/ble_esl/frontend/fixtures/exif-rotated.jpg",
+    );
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -845,7 +845,7 @@ test("four corner handles follow visible content and backgrounds have no control
   );
 });
 
-test("Bluetooth send persists the design before starting transfer", async ({
+test("Bluetooth send transfers the design without storing it on the server", async ({
   page,
 }) => {
   const actions = [];
@@ -856,10 +856,12 @@ test("Bluetooth send persists the design before starting transfer", async ({
   await page.locator('[data-add="text"]').click();
   await page.getByRole("button", { name: "Send to tag", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("demo_only");
-  const sent = actions.lastIndexOf("send");
-  expect(sent).toBeGreaterThan(0);
-  expect(actions[sent - 1]).toBe("save");
-  expect(await page.evaluate(() => window.panel.dirty)).toBe(false);
+  expect(actions).toContain("send");
+  expect(actions).not.toContain("save");
+  // Sending does not keep the design anywhere: it stays unsaved work (the
+  // browser draft) until it is saved into an automation.
+  expect(await page.evaluate(() => window.panel.dirty)).toBe(true);
+  await expect(page.locator("#dirty-badge")).toBeVisible();
 });
 
 test("general templates edit individual fields in a separate modal", async ({
@@ -1225,16 +1227,6 @@ test("a text box keeps its frame after a font size change and a render", async (
   expect(await selectionBox(page)).toEqual(frame);
 });
 
-test("saving keeps the selection box on the content", async ({ page }) => {
-  await page.locator('[data-add="rectangle"]').click();
-  await rendered(page);
-  const before = await selectionBox(page);
-  // The server hands the document back with its defaults filled in.
-  await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.locator(".toast")).toContainText("Display saved");
-  expect(await selectionBox(page)).toEqual(before);
-});
-
 test("keys typed in the YAML dialog do not edit the design behind it", async ({
   page,
 }) => {
@@ -1292,7 +1284,9 @@ test("an imagespec element is added from the list, edited by its fields and expo
   await expect(yaml).toHaveValue(/ {2}x: 48\n {2}"y": 48\n {2}radius: 39/);
 });
 
-test("generic rotation is editable on battery elements and appears in the payload", async ({ page }) => {
+test("generic rotation is editable on battery elements and appears in the payload", async ({
+  page,
+}) => {
   await page.getByLabel("Add element").selectOption("battery");
   await page.getByRole("button", { name: "Add", exact: true }).click();
   const rotation = page.locator('[data-spec="rotate"]');
@@ -1301,7 +1295,9 @@ test("generic rotation is editable on battery elements and appears in the payloa
   await page.waitForFunction(() => window.panel.preview && !window.panel.error);
   await page.getByRole("button", { name: "Payload YAML" }).click();
   await expect(
-    page.locator("ble-esl-yaml-dialog dialog").getByLabel("YAML", { exact: true }),
+    page
+      .locator("ble-esl-yaml-dialog dialog")
+      .getByLabel("YAML", { exact: true }),
   ).toHaveValue(/- type: battery[\s\S]*?rotate: 90/);
 });
 
@@ -1497,7 +1493,7 @@ test("arrow keys and typed x/y keep an anchored element's drawn content on the l
   expect(area.top).toBe(0);
 });
 
-test("saving an imagespec element preserves layer records and rendered preview without placeholder", async ({
+test("an imagespec element keeps its layer records and rendered preview without a placeholder", async ({
   page,
 }) => {
   await page.getByLabel("Add element").selectOption("circle");
@@ -1507,9 +1503,6 @@ test("saving an imagespec element preserves layer records and rendered preview w
     () => Object.keys(window.panel.layerRecords || {}).length > 0,
   );
 
-  // Saving the document preserves the rendered imagespec layer and records without showing placeholder.
-  await page.getByRole("button", { name: /^Save/ }).click();
-  await expect(page.locator(".toast")).toHaveText(/Display saved/);
   expect(
     await page.evaluate(
       () => Object.keys(window.panel.layerRecords || {}).length,
@@ -1765,15 +1758,30 @@ test("a number outside its range is corrected in the field", async ({
   await expect(size).toHaveValue("8");
 });
 
-test("Ctrl+S inside a field saves instead of opening the browser dialog", async ({
+test("Ctrl+S never opens the browser dialog and stores nothing on the server", async ({
   page,
 }) => {
+  const actions = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/designer"))
+      actions.push(request.postDataJSON().action);
+  });
+  await page.evaluate(() => {
+    window.savePrevented = [];
+    window.addEventListener("keydown", (event) => {
+      if (event.key.toLowerCase() === "s")
+        window.savePrevented.push(event.defaultPrevented);
+    });
+  });
   await page.locator('[data-add="text"]').click();
   await page.locator('[data-property="x"]').focus();
   await page.keyboard.press("Control+s");
-  await expect
-    .poll(() => page.evaluate(() => window.panel.status))
-    .toBe("Display saved");
+  await page.locator(".stage").focus();
+  await page.keyboard.press("Control+s");
+  expect(await page.evaluate(() => window.savePrevented)).toEqual([true, true]);
+  expect(actions).not.toContain("save");
+  expect(await page.evaluate(() => window.panel.dirty)).toBe(true);
+  await expect(page.locator(".toast")).toHaveCount(0);
 });
 
 test("Refresh tags keeps the tag being edited and its unsaved design", async ({
@@ -1913,9 +1921,9 @@ test("the inspector groups its fields and an error message can be dismissed", as
   await expect(page.locator(".status.error")).toHaveCount(0);
   await page.locator('[data-property="x"]').fill("12");
   await expect(page.locator("#dirty-badge")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Save (unsaved changes)" }),
-  ).toBeVisible();
+  // A tag design has no Save of its own: it goes into an automation.
+  await expect(page.locator('[data-action="save"]')).toBeHidden();
+  await expect(page.locator('[data-action="restore"]')).toHaveCount(0);
 });
 
 test("the add-element hints show for a display and not for sensor templates", async ({
@@ -2245,7 +2253,7 @@ test("toolbar and left-panel controls are at least 38px and never overflow, in l
   }
 });
 
-test("save and send results float in view without moving the page, and clear themselves; errors stay", async ({
+test("send results float in view without moving the page, and clear themselves; errors stay", async ({
   page,
 }) => {
   await page.getByRole("button", { name: "Add text", exact: true }).click();
@@ -2258,9 +2266,9 @@ test("save and send results float in view without moving the page, and clear the
       .locator(".workspace")
       .evaluate((node) => node.getBoundingClientRect().top + scrollY);
   const before = await workspaceTop();
-  await page.locator('[data-action="save"]').click();
+  await page.locator('[data-action="send"]').click();
   const toast = page.locator(".toast");
-  await expect(toast).toContainText("Display saved");
+  await expect(toast).toContainText("demo_only");
   const inView = () =>
     toast.evaluate((node) => {
       const box = node.getBoundingClientRect();

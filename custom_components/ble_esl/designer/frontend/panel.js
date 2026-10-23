@@ -887,7 +887,6 @@ export class BleEslDesigner extends HTMLElement {
       redoCount: this.redoStack.length,
       busy: this.busy,
       automationSaveMode: this._automationSaveMode,
-      mode: this.mode,
       translate: (key) => t(this.hass, key),
       saveIcon: toolIcon("save"),
     });
@@ -2446,6 +2445,14 @@ export class BleEslDesigner extends HTMLElement {
       }
       return;
     }
+    // Designs are saved into automations; outside one, only a sensor tile
+    // style has a Save of its own (⌘/Ctrl S clicks the hidden button too).
+    if (
+      action === "save" &&
+      !this._automationSaveMode &&
+      this.mode !== "template"
+    )
+      return;
     if (action === "save" && this._automationSaveMode) {
       const sessionToken = this._automationSessionToken;
       const entryId = this.tag?.entry_id;
@@ -2499,17 +2506,6 @@ export class BleEslDesigner extends HTMLElement {
         this.render();
         if (this.pendingUploads.size)
           await Promise.all([...this.pendingUploads]);
-        if (action === "send") {
-          this.adoptDocument(
-            await this.api("save", {
-              entry_id: this.tag.entry_id,
-              document: this.document,
-            }),
-          );
-          this.tag.document = clone(this.document);
-          this.dirty = false;
-          this.drafts.delete(this.tag.entry_id);
-        }
         const result =
           this.mode === "template"
             ? action === "save"
@@ -2529,13 +2525,9 @@ export class BleEslDesigner extends HTMLElement {
                 document: this.document,
               });
         if (action === "save") {
-          this.adoptDocument(
-            this.mode === "template" ? result.document : result,
-          );
-          if (this.mode === "template")
-            this.templates[this.templateKey] = clone(result);
-          this.tag.document = clone(this.document);
-          this.drafts.delete(this.tag.entry_id);
+          // Only a sensor tile style is saved here (see the guard above).
+          this.adoptDocument(result.document);
+          this.templates[this.templateKey] = clone(result);
           this.dirty = false;
           if (this.mode === "template" && this.createdForElement) {
             const session = this.displaySession;
@@ -2547,8 +2539,7 @@ export class BleEslDesigner extends HTMLElement {
             session.dirty = true;
             this.createdForElement = null;
           }
-          this.status =
-            this.mode === "template" ? "Style saved" : "Display saved";
+          this.status = "Style saved";
           this.notice = this.status;
         }
         if (action === "preview") {
@@ -2577,38 +2568,6 @@ export class BleEslDesigner extends HTMLElement {
           this.notice = this.status;
           this.error = ["locked", "failed"].includes(result.status);
         }
-      } else if (action === "restore") {
-        if (
-          this._automationSaveMode ||
-          this.mode === "template" ||
-          !this.tag ||
-          !this.dirty
-        )
-          return;
-        if (
-          !window.confirm(
-            t(
-              this.hass,
-              "Restore the last saved design? Unsaved changes will be discarded.",
-            ),
-          )
-        )
-          return;
-        const restored = clone(this.tag.document || emptyDocument());
-        this.drafts.delete(this.tag.entry_id);
-        this.session.reset(restored);
-        this.preview = null;
-        this.layerPreviews = {};
-        this.layerBounds = {};
-        this.layerOffsets = {};
-        this.layerRecords = this.renderRecords();
-        this.selected = null;
-        this.status = "Ready";
-        this.notice = null;
-        this.error = false;
-        this.invalidatePreview();
-        this.render();
-        this.queuePreview();
       } else if (action === "reload") {
         // Retry after a failed first load shows the error instead.
         if (this.refreshing || (this.loading && !this.loading.error)) return;

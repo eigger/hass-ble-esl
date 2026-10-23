@@ -14,6 +14,11 @@
 ### Changed
 
 - The designer opens a tag with a blank design (or the unsaved browser draft) instead of a design stored on the server for the tag; designs are loaded from and saved to automations.
+- **Send to tag** only sends; it no longer stores the design first, so a sent design stays marked as unsaved (kept as the browser draft) until it is saved into an automation.
+
+### Removed
+
+- Stored per-tag designs are no longer used; open the automation that uses a design, or recreate it. The designer's per-tag **Save** and **Restore** buttons, the `save` websocket action and the `document` field of the tag list are gone; outside an automation, keep a design with **Create automation** or **Save to existing automation…**. Sensor tile styles keep their own **Save**. The old `.storage/ble_esl.designer` file is no longer read or written and is left untouched.
 
 ## 1.5.1
 

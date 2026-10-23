@@ -137,7 +137,6 @@ export default {
     "Только обнаружение: доступен предварительный просмотр; отправка пока не поддерживается.",
   "Dismiss message": "Закрыть сообщение",
   "Display canvas": "Полотно дисплея",
-  "Display saved": "Отображение сохранено",
   "Dynamic field pixel preview":
     "Предварительный просмотр пикселей динамического поля",
   "Dynamic fields": "Динамические поля",
@@ -584,10 +583,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Отвязать {name} от этого ESL? Сама автоматизация не изменится.",
   Continue: "Продолжить",
-  Restore: "Восстановить",
-  "Restore saved design": "Восстановить",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Восстановить последний сохранённый дизайн? Несохранённые изменения будут отменены.",
   selected: "выбрано",
   "Changes apply to all selected components. Mixed values are blank.":
     "Изменения применяются ко всем выбранным компонентам. Разные значения остаются пустыми.",

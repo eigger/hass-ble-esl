@@ -983,28 +983,6 @@ test("a newer same-ESL import wins over an older delayed import", async ({
 test("leaving automation edit before cold boot unlocks the editor", async ({
   page,
 }) => {
-  const savedDocument = {
-    version: 1,
-    background: "white",
-    elements: [
-      {
-        id: "saved-before-boot",
-        type: "text",
-        x: 8,
-        y: 8,
-        width: 90,
-        height: 32,
-        text: "Saved before boot",
-        font_size: 18,
-        color: "black",
-      },
-    ],
-  };
-  await page.evaluate((document) => {
-    window.manager.tags.find(
-      (tag) => tag.entry_id === "demo-writable",
-    ).document = document;
-  }, savedDocument);
   await page.route("**/frontend/icons.json", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     await route.continue();
@@ -1012,15 +990,9 @@ test("leaving automation edit before cold boot unlocks the editor", async ({
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
-  await page.evaluate((document) => {
-    const editor = window.manager.editor;
-    const load = editor.load.bind(editor);
-    editor.load = (tag) => {
-      if (tag.entry_id === "demo-writable") tag.document = document;
-      return load(tag);
-    };
+  await page.evaluate(() => {
     window.manager.editAutomation("demo-writable", "automation.morning");
-  }, savedDocument);
+  });
   await page.locator('[data-action="dashboard"]').click();
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
@@ -1028,8 +1000,8 @@ test("leaving automation edit before cold boot unlocks the editor", async ({
   await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
     "demo-writable",
   );
-  // Back to the ordinary tag design: blank, as a tag always opens; neither
-  // the automation's import nor a design stored on the server is shown.
+  // Back to the ordinary tag design: blank, as a tag always opens, not the
+  // automation's import.
   expect(await page.evaluate(() => window.manager.editor.document)).toEqual({
     version: 1,
     background: "white",

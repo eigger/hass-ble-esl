@@ -139,7 +139,6 @@ export default {
     "Solo Discovery: l'anteprima è disponibile; l'invio non è ancora supportato.",
   "Dismiss message": "Ignora messaggio",
   "Display canvas": "Visualizza tela",
-  "Display saved": "Visualizzazione salvata",
   "Dynamic field pixel preview": "Anteprima pixel campo dinamico",
   "Dynamic fields": "Campi dinamici",
   "ESL Designer": "Designer ESL",
@@ -587,10 +586,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Scollegare {name} da questo ESL? L'automazione stessa non viene modificata.",
   Continue: "Continua",
-  Restore: "Ripristina",
-  "Restore saved design": "Ripristina",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Ripristinare l’ultimo design salvato? Le modifiche non salvate verranno scartate.",
   selected: "selezionati",
   "Changes apply to all selected components. Mixed values are blank.":
     "Le modifiche si applicano a tutti i componenti selezionati. I valori diversi restano vuoti.",

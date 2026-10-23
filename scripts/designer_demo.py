@@ -108,7 +108,6 @@ TAGS = [
         "height": 122,
         "colors": "BWR",
         "writable": True,
-        "document": None,
     },
     {
         "entry_id": "demo-discovery",
@@ -117,7 +116,6 @@ TAGS = [
         "height": 200,
         "colors": "BWRY",
         "writable": False,
-        "document": None,
     },
 ]
 for index, tag in enumerate(TAGS):
@@ -460,9 +458,6 @@ async def handle(request):
             return web.Response(status=400, text=str(err))
         DESIGN_TEMPLATES[template_id] = {**parse_template(text), "source": "user"}
         return web.json_response({"id": template_id, "yaml": text})
-    if msg["action"] == "save":
-        tag["document"] = document
-        return web.json_response(document)
     if msg["action"] == "send":
         return web.json_response({"status": "demo_only"})
     if msg["action"] in ("export", "automation"):
@@ -508,6 +503,9 @@ async def handle(request):
                 "writable": tag["writable"],
             }
         )
+    if msg["action"] != "preview":
+        # Like Home Assistant's schema: e.g. the removed per-tag "save".
+        return web.Response(status=400, text=f"Unknown action {msg['action']}")
     return await preview(document, preset, msg.get("preview_variables"))
 
 
@@ -558,8 +556,6 @@ async def reset(request):
         "automation.temperature",
         "automation.night",
     ]
-    for tag in TAGS:
-        tag["document"] = None
     return web.json_response({})
 
 

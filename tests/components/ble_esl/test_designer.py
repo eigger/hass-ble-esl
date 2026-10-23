@@ -60,24 +60,21 @@ async def test_sensor_value_and_unavailable(hass: HomeAssistant):
     assert compile_payload(hass, doc)[2]["value"] == "Unavailable"
 
 
-async def test_panel_preview_save_and_restore(hass: HomeAssistant, wolink_entry):
+async def test_panel_preview_without_stored_designs(hass: HomeAssistant, wolink_entry):
     assert "ble-esl-designer" in hass.data[DATA_PANELS]
     designer = hass.data[KEY]
     entry = wolink_entry
     hass.states.async_set(
         "sensor.room_temperature", "21.26", {"friendly_name": "Office", "unit_of_measurement": "°C"}
     )
-    saved = await designer.save(entry, document())
-    assert "auto_update" not in saved
-    assert "interval" not in saved
-    result = await designer.preview(entry, saved)
+    result = await designer.preview(entry, document())
     with Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))) as image:
         assert image.size == (296, 128)
         assert image.getextrema() != ((255, 255), (255, 255), (255, 255))
     assert result["payload"][2]["value"] == "21.3 °C"
-    assert (await designer.store.async_load())[entry.entry_id] == saved
-    await hass.config_entries.async_reload(entry.entry_id)
-    assert designer.documents[entry.entry_id] == saved
+    # Layouts live in automations; the designer keeps no per-tag copy.
+    assert not hasattr(designer, "save")
+    assert not hasattr(designer, "documents")
 
 
 async def test_manual_send_rewrites_and_respects_lock(
@@ -97,15 +94,15 @@ async def test_manual_send_rewrites_and_respects_lock(
     assert tag_writer.write_prepared.await_count == 2
 
 
-async def test_legacy_save_never_sends_on_sensor_changes(hass, wolink_entry, tag_writer):
+async def test_legacy_auto_update_design_never_sends_on_sensor_changes(
+    hass, wolink_entry, tag_writer
+):
     designer = hass.data[KEY]
-    saved = await designer.save(wolink_entry, {**document(), "auto_update": True, "interval": 10})
-    assert "auto_update" not in saved
-    assert "interval" not in saved
+    legacy = {**document(), "auto_update": True, "interval": 10}
+    await designer.preview(wolink_entry, legacy)
     hass.states.async_set("sensor.room_temperature", "25")
     await hass.async_block_till_done()
     assert tag_writer.write_prepared.await_count == 0
-    assert (await designer.store.async_load())[wolink_entry.entry_id] == saved
 
 
 async def test_websocket_list_preview_validation_and_admin(
@@ -116,6 +113,7 @@ async def test_websocket_list_preview_validation_and_admin(
     result = await client.receive_json()
     assert result["success"]
     assert result["result"][0]["entry_id"] == wolink_entry.entry_id
+    assert "document" not in result["result"][0]
     await client.send_json(
         {
             "id": 2,
@@ -132,9 +130,20 @@ async def test_websocket_list_preview_validation_and_admin(
         {
             "id": 3,
             "type": "ble_esl/designer",
-            "action": "save",
+            "action": "preview",
             "entry_id": wolink_entry.entry_id,
             "document": {"version": 99, "elements": []},
+        }
+    )
+    assert (await client.receive_json())["success"] is False
+    # Per-tag layouts are no longer stored on the server.
+    await client.send_json(
+        {
+            "id": 4,
+            "type": "ble_esl/designer",
+            "action": "save",
+            "entry_id": wolink_entry.entry_id,
+            "document": document(),
         }
     )
     assert (await client.receive_json())["success"] is False
@@ -867,10 +876,9 @@ async def test_template_references_refresh_preview_without_sending(hass, wolink_
     doc["elements"][0]["field_templates"] = {
         "color": "{{ 'red' if states('sensor.other') | int > 0 else 'black' }}"
     }
-    saved = await manager.save(wolink_entry, doc)
-    assert (await manager.preview(wolink_entry, saved))["payload"][0]["color"] == "red"
+    assert (await manager.preview(wolink_entry, doc))["payload"][0]["color"] == "red"
     hass.states.async_set("sensor.other", "0")
-    assert (await manager.preview(wolink_entry, saved))["payload"][0]["color"] == "black"
+    assert (await manager.preview(wolink_entry, doc))["payload"][0]["color"] == "black"
     assert tag_writer.write_prepared.await_count == 0
 
 
@@ -1130,23 +1138,27 @@ async def test_sensor_template_scales_pixel_settings_and_passes_dither(hass):
     assert item["dither"] == "atkinson"
 
 
-async def test_loaded_legacy_designs_are_migrated_durably(hass, wolink_entry, tag_writer):
-    from custom_components.ble_esl.designer import Designer, async_setup_designer
+async def test_old_stored_designs_are_left_untouched(hass, wolink_entry, tag_writer):
+    from homeassistant.helpers.storage import Store
 
-    store = Designer(hass).store
-    legacy = {**document(), "auto_update": True, "interval": 10}
-    await store.async_save({"unloaded_tag": legacy})
-    # Registration is unrelated to persisted document migration.
+    from custom_components.ble_esl.designer import async_setup_designer
+
+    store = Store(hass, 1, "ble_esl.designer")
+    legacy = {"unloaded_tag": {**document(), "auto_update": True, "interval": 10}}
+    await store.async_save(legacy)
     with (
         patch("custom_components.ble_esl.designer.websocket_api.async_register_command"),
         patch("custom_components.ble_esl.designer.async_get_integration"),
         patch("homeassistant.components.http.HomeAssistantHTTP.async_register_static_paths"),
+        patch.object(Store, "async_load", autospec=True, wraps=Store.async_load) as load,
     ):
         await async_setup_designer(hass)
-    migrated = await store.async_load()
-    assert "auto_update" not in migrated["unloaded_tag"]
-    assert "interval" not in migrated["unloaded_tag"]
-    assert migrated["unloaded_tag"]["elements"] == legacy["elements"]
+    # Never read, never rewritten, never removed: the user's old file stays.
+    assert all(call.args[0].key != "ble_esl.designer" for call in load.call_args_list)
+    assert await store.async_load() == legacy
+    await hass.config_entries.async_remove(wolink_entry.entry_id)
+    await hass.async_block_till_done()
+    assert await store.async_load() == legacy
     assert tag_writer.write_prepared.await_count == 0
 
 

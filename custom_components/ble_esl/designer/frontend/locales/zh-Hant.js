@@ -128,7 +128,6 @@ export default {
     "僅發現：預覽可用；尚不支援發送。",
   "Dismiss message": "駁回消息",
   "Display canvas": "顯示畫布",
-  "Display saved": "顯示已儲存",
   "Dynamic field pixel preview": "動態場像素預覽",
   "Dynamic fields": "動態字段",
   "ESL Designer": "ESL 設計器",
@@ -552,10 +551,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要將 {name} 與此 ESL 取消關聯嗎？自動化本身不會變更。",
   Continue: "繼續",
-  Restore: "還原",
-  "Restore saved design": "還原",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "還原上次儲存的設計？未儲存的變更將會捨棄。",
   selected: "已選取",
   "Changes apply to all selected components. Mixed values are blank.":
     "變更會套用到所有選取的元件。不同的值顯示為空白。",

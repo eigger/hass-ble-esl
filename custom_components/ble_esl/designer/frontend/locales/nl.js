@@ -139,7 +139,6 @@ export default {
     "Alleen detectie: voorbeeld is beschikbaar; verzenden wordt nog niet ondersteund.",
   "Dismiss message": "Bericht negeren",
   "Display canvas": "Displaydoek",
-  "Display saved": "Weergave opgeslagen",
   "Dynamic field pixel preview": "Voorbeeld van dynamische veldpixels",
   "Dynamic fields": "Dynamische velden",
   "ESL Designer": "ESL-ontwerper",
@@ -585,10 +584,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
   Continue: "Doorgaan",
-  Restore: "Herstellen",
-  "Restore saved design": "Herstellen",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Het laatst opgeslagen ontwerp herstellen? Niet-opgeslagen wijzigingen worden verwijderd.",
   selected: "geselecteerd",
   "Changes apply to all selected components. Mixed values are blank.":
     "Wijzigingen gelden voor alle geselecteerde onderdelen. Afwijkende waarden blijven leeg.",

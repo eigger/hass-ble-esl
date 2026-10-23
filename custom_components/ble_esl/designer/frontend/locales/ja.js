@@ -138,7 +138,6 @@ export default {
     "検出のみ: プレビューが利用可能です。送信はまだサポートされていません。",
   "Dismiss message": "メッセージを閉じる",
   "Display canvas": "キャンバスを表示",
-  "Display saved": "表示が保存されました",
   "Dynamic field pixel preview": "動的フィールドピクセルプレビュー",
   "Dynamic fields": "動的フィールド",
   "ESL Designer": "ESL デザイナー",
@@ -584,10 +583,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
   Continue: "続行",
-  Restore: "復元",
-  "Restore saved design": "復元",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "最後に保存したデザインに戻しますか？未保存の変更は破棄されます。",
   selected: "件選択中",
   "Changes apply to all selected components. Mixed values are blank.":
     "変更は選択したすべてのコンポーネントに適用されます。値が異なる項目は空欄です。",
