@@ -585,4 +585,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "편집용으로 보이지 않는 아이콘을 흐리게 표시합니다. 라벨 이미지는 바뀌지 않습니다.",
   "Tag orientation": "태그 방향",
+  Portrait: "세로",
+  Landscape: "가로",
 };

@@ -601,4 +601,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Muestra tenuemente los iconos invisibles para editarlos; no cambia la imagen de la etiqueta",
   "Tag orientation": "Orientación de la etiqueta",
+  Portrait: "Vertical",
+  Landscape: "Horizontal",
 };

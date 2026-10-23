@@ -587,4 +587,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Show invisible icons faintly for editing; does not change the label image",
   "Tag orientation": "Tag orientation",
+  Portrait: "Portrait",
+  Landscape: "Landscape",
 };

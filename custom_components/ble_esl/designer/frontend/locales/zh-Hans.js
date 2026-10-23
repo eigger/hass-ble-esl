@@ -564,4 +564,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "编辑时淡淡显示不可见的图标;不会改变标签图像",
   "Tag orientation": "标签方向",
+  Portrait: "竖向",
+  Landscape: "横向",
 };

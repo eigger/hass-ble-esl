@@ -598,4 +598,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Toont onzichtbare pictogrammen vaag om te bewerken; het labelbeeld verandert niet",
   "Tag orientation": "Labeloriëntatie",
+  Portrait: "Staand",
+  Landscape: "Liggend",
 };

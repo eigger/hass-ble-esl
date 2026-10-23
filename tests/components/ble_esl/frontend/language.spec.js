@@ -365,6 +365,7 @@ test("non-English locales leave no untranslated copy beyond shared words", async
       "Inactive",
       "Maximum",
       "Minimum",
+      "Portrait",
       "Style",
       "Type",
       "Visible",

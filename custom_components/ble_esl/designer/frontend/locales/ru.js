@@ -597,4 +597,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Бледно показывает невидимые значки для редактирования; изображение этикетки не меняется",
   "Tag orientation": "Ориентация этикетки",
+  Portrait: "Книжная",
+  Landscape: "Альбомная",
 };

@@ -602,4 +602,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Unsichtbare Symbole zum Bearbeiten blass anzeigen; das Etikettenbild bleibt unverändert",
   "Tag orientation": "Etikettenausrichtung",
+  Portrait: "Hochformat",
+  Landscape: "Querformat",
 };

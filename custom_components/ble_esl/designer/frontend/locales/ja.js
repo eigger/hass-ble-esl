@@ -597,4 +597,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "編集用に非表示のアイコンを薄く表示します。ラベル画像は変わりません",
   "Tag orientation": "タグの向き",
+  Portrait: "縦向き",
+  Landscape: "横向き",
 };

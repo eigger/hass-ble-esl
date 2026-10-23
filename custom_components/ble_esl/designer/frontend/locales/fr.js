@@ -600,4 +600,6 @@ export default {
   "Show invisible icons faintly for editing; does not change the label image":
     "Affiche faiblement les icônes invisibles pour l’édition ; l’image de l’étiquette ne change pas",
   "Tag orientation": "Orientation de l’étiquette",
+  Portrait: "Portrait",
+  Landscape: "Paysage",
 };
