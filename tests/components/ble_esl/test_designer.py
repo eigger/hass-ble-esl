@@ -449,6 +449,7 @@ async def test_websocket_export(hass, wolink_entry, hass_ws_client):
         "issues",
         "payload_data",
         "design_source",
+        "rotate",
         "validation_errors",
         "warnings",
         "writable",
