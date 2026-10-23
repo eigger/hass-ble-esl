@@ -245,3 +245,93 @@ test("saving into an automation keeps the design's orientation", async ({
   );
   expect((await automation(request, "night")).actions[1].data.rotate).toBe(90);
 });
+
+test("a restored draft saved into an automation is no longer unsaved after a reload", async ({
+  page,
+  request,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(page.locator(".el")).toHaveCount(1);
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Save to existing automation…", exact: true })
+    .click();
+  const chooser = page.getByRole("dialog", {
+    name: "Choose the automation to save to:",
+  });
+  await chooser.getByRole("radio", { name: "Night screen" }).check();
+  await chooser.getByRole("button", { name: "Continue" }).click();
+  await expect(page.locator(".message")).toContainText(
+    "Saved to Night screen.",
+  );
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(
+    (await automation(request, "night")).actions[1].data.payload,
+  ).toHaveLength(1);
+
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await expect(page.locator("ble-esl-designer .toolbar")).toBeVisible();
+  await expect(page.locator(".el")).toHaveCount(0);
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card).toBeVisible();
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("ble_esl_designer_drafts"),
+    ),
+  ).toBeNull();
+});
+
+test("no action of the automation being edited is offered as another automation", async ({
+  page,
+  request,
+}) => {
+  const original = await automation(request, "morning");
+  const config = structuredClone(original);
+  const write = config.actions[1];
+  config.actions = [
+    config.actions[0],
+    { ...structuredClone(write), alias: "First screen" },
+    { ...structuredClone(write), alias: "Second screen" },
+  ];
+  await request.post("/api/config/automation/config/morning", {
+    data: config,
+  });
+  await page.evaluate(() => {
+    window.manager.editAutomation("demo-writable", "automation.morning");
+  });
+  const actions = page.getByRole("dialog", {
+    name: "Choose the write action to import:",
+  });
+  await actions.getByRole("radio", { name: "First screen" }).check();
+  await actions.getByRole("button", { name: "Continue" }).click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Save to another automation…", exact: true })
+    .click();
+  const chooser = page.getByRole("dialog", {
+    name: "Choose the automation to save to:",
+  });
+  await expect(chooser.getByRole("radio")).toHaveCount(2);
+  await expect(
+    chooser.getByRole("radio", { name: "Morning information" }),
+  ).toHaveCount(0);
+  await expect(
+    chooser.getByRole("radio", { name: "Night screen" }),
+  ).toHaveCount(1);
+  await chooser.getByRole("button", { name: "Cancel" }).click();
+  expect(await automation(request, "morning")).toEqual(config);
+});

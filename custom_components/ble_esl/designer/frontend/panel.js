@@ -668,6 +668,14 @@ export class BleEslDesigner extends HTMLElement {
       drafts.set(current.tag.entry_id, current.document);
     return drafts;
   }
+  // The design was saved somewhere else (an automation): it is no longer
+  // unsaved work, here or in the browser's stored drafts.
+  markSavedElsewhere() {
+    if (this.tag) this.drafts.delete(this.tag.entry_id);
+    this.dirty = false;
+    this.persistDrafts();
+    this.render();
+  }
   hasDraft(entryId) {
     return this.draftDocuments().has(entryId);
   }

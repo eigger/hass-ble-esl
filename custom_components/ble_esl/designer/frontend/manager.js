@@ -1306,8 +1306,9 @@ class EslManager extends HTMLElement {
     return { action, path: selected.path };
   }
   // Automations that could take this design: those linked to the ESL whose
-  // ble_esl.write actions target it. The action being edited is not offered.
-  async automationTargets(entryId, exclude) {
+  // ble_esl.write actions target it. The automation being edited is not
+  // offered at all: none of its actions is "another automation".
+  async automationTargets(entryId, excludeConfigId = null) {
     const listing = await this.api("automations", { entry_id: entryId });
     const candidates = (listing?.linked || []).filter(
       (item) =>
@@ -1332,17 +1333,11 @@ class EslManager extends HTMLElement {
             !config ||
             Array.isArray(config) ||
             typeof config !== "object" ||
-            config.id !== source.config_id
+            config.id !== source.config_id ||
+            (excludeConfigId !== null && config.id === excludeConfigId)
           )
             return null;
-          const matches = this.findWriteActions(config, source).matches.filter(
-            (match) =>
-              !(
-                exclude &&
-                exclude.configId === source.config_id &&
-                JSON.stringify(exclude.path) === JSON.stringify(match.path)
-              ),
-          );
+          const { matches } = this.findWriteActions(config, source);
           if (!matches.length) return null;
           return {
             name:
@@ -1393,9 +1388,7 @@ class EslManager extends HTMLElement {
     try {
       const targets = await this.automationTargets(
         entryId,
-        source
-          ? { configId: source.configId, path: source.selectedPath }
-          : null,
+        source ? source.configId : null,
       );
       if (!current()) return;
       if (!targets.length)
@@ -1445,8 +1438,7 @@ class EslManager extends HTMLElement {
         !session &&
         JSON.stringify(editor.document) === JSON.stringify(snapshot.document)
       ) {
-        editor.dirty = false;
-        editor.render();
+        editor.markSavedElsewhere();
       }
     } catch (error) {
       if (current())
