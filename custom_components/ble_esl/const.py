@@ -23,6 +23,7 @@ CONF_MODEL = "model"
 CONF_RETRY_COUNT = "retry_count"
 CONF_PREVENT_DUPLICATE_SEND = "prevent_duplicate_send"
 CONF_DEBOUNCE_MS = "debounce_ms"
+CONF_DISPLAY_ROTATION = "display_rotation"
 
 # Defaults
 DEFAULT_PROTOCOL = "wolink"

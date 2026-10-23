@@ -56,6 +56,7 @@ import voluptuous as vol
 
 from .const import (
     CONF_DEBOUNCE_MS,
+    CONF_DISPLAY_ROTATION,
     CONF_MODEL,
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_RETRY_COUNT,
@@ -73,7 +74,7 @@ from .device import resolve_preset
 from .esl_ble import WriteResult
 from .esl_ble.base import ATTEMPT_TIMEOUT_S, RETRY_BACKOFF_S, STAGE_MAP, DevicePreset
 from .esl_ble.wolink.const import ERROR_UNLOCK_FAILED
-from .renderer import encode_png, render_image
+from .renderer import encode_png, oriented_preset, render_image
 from .types import BleEslConfigEntry
 from .yaml11 import repair_yaml11_keys
 
@@ -350,7 +351,10 @@ async def build_write_job_from_data(
 
         designer = hass.data[KEY]
         try:
-            document = validate(decode_design(service_data["design"]), preset)
+            document = validate(
+                decode_design(service_data["design"]),
+                oriented_preset(preset, options.get(CONF_DISPLAY_ROTATION, 0)),
+            )
             # HA rendered these with the automation's own variables (trigger, this, ...).
             rendered_specs = service_data.get("design_specs") or {}
             for element in document["elements"]:
@@ -383,7 +387,8 @@ async def build_write_job_from_data(
                     hass,
                     preset,
                     repair_yaml11_keys(service_data.get("payload", "")),
-                    rotate=service_data.get("rotate", 0),
+                    rotate=(service_data.get("rotate", 0) + options.get(CONF_DISPLAY_ROTATION, 0))
+                    % 360,
                     background=service_data.get("background", "white"),
                 )
             )

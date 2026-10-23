@@ -19,10 +19,10 @@ from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 import voluptuous as vol
 
-from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
+from ..const import CONF_DISPLAY_ROTATION, CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
-from ..renderer import encode_png, render_image
+from ..renderer import encode_png, oriented_preset, prepare_payload, render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from ..yaml11 import repair_yaml11_keys
 from .design_templates import (
@@ -185,12 +185,13 @@ class Designer:
     def preset(self, entry):
         """The preset a write would use now, refined by the last advertisement."""
         options = {**entry.data, **entry.options}
-        return resolve_preset(
+        preset = resolve_preset(
             self.hass,
             entry.runtime_data.protocol,
             entry.runtime_data.address,
             options.get(CONF_MODEL, DEFAULT_MODEL),
         ).preset
+        return oriented_preset(preset, options.get(CONF_DISPLAY_ROTATION, 0))
 
     async def render(self, preset, document, payload, snapshots):
         # Font/image allocation is expensive on small HA hosts. Keep all designer
@@ -269,6 +270,14 @@ class Designer:
             for element in document["elements"]
             if element["type"] == "imagespec" and templates_in(element["spec"])
         }
+        # Free-angle groups become native imagespec data images in exported YAML.
+        # The attached source still re-evaluates every binding at execution time.
+        portable = await self.hass.async_add_executor_job(
+            prepare_payload, self.hass, preset, payload
+        )
+        if portable != payload:
+            payload = portable
+            automation_payload = portable
         result = export_yaml(
             payload,
             document["background"],
@@ -617,6 +626,11 @@ class Designer:
             preset = self.preset(entry)
             if (preset.width, preset.height) != image.size:
                 raise HomeAssistantError("The tag's display size changed; reload the designer")
+            orientation = entry.options.get(CONF_DISPLAY_ROTATION, 0)
+            if orientation:
+                image = await self.hass.async_add_executor_job(
+                    lambda: image.rotate(-orientation, expand=True)
+                )
             service_data = {"payload": payload, "background": document["background"]}
             job = await build_write_job_from_data(self.hass, entry, service_data, image=image)
             # Explicit sends also restore a tag that was reset externally.
@@ -634,6 +648,7 @@ class Designer:
                 "list",
                 "specs",
                 "save",
+                "orientation",
                 "preview",
                 "export",
                 "automation",
@@ -655,6 +670,7 @@ class Designer:
             )
         ),
         vol.Optional("entry_id"): str,
+        vol.Optional("rotation"): vol.In((0, 90, 180, 270)),
         vol.Optional("document"): dict,
         vol.Optional("preview_variables"): dict,
         vol.Optional("automation_edit"): bool,
@@ -722,6 +738,14 @@ async def websocket_designer(hass, connection, msg):
         result = await designer.save_template(msg["key"], msg["template"])
     elif action == "preview_template":
         result = await designer.preview_template(msg["template"], msg["entity_id"])
+    elif action == "orientation":
+        entry = designer.entry(msg["entry_id"])
+        hass.config_entries.async_update_entry(
+            entry, options={**entry.options, CONF_DISPLAY_ROTATION: msg["rotation"]}
+        )
+        cancel_pending_write(entry.runtime_data)
+        preset = designer.preset(entry)
+        result = {"rotation": msg["rotation"], "width": preset.width, "height": preset.height}
     elif action == "list":
         result = [
             {
@@ -731,6 +755,7 @@ async def websocket_designer(hass, connection, msg):
                 "width": (preset := designer.preset(entry)).width,
                 "height": preset.height,
                 "colors": preset.colors,
+                "rotation": entry.options.get(CONF_DISPLAY_ROTATION, 0),
                 "writable": getattr(entry.runtime_data.protocol, "writable", True),
                 "document": designer.documents.get(entry.entry_id),
             }

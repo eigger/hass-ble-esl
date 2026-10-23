@@ -11,6 +11,7 @@ from homeassistant.util import dt as dt_util
 import imagespec
 import voluptuous as vol
 
+from ..renderer import rotated_size
 from .specs import (
     GEOMETRY,
     frozen_corners,
@@ -74,7 +75,7 @@ ELEMENT = vol.Schema(
             ("black", "white", "red", "yellow", "transparent")
         ),
         vol.Optional("visible", default=True): bool,
-        vol.Optional("rotation"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
+        vol.Optional("rotation"): vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)),
         vol.Optional("font_size", default=24): vol.All(int, vol.Range(min=8, max=200)),
         vol.Optional("text", default="Text"): str,
         vol.Optional("image", default=""): str,
@@ -524,6 +525,8 @@ def resolve_fields(hass, element, state):
     }
     values = {field: info.result() for field, info in rendered.items()}
     dependencies = sorted({entity for info in rendered.values() for entity in info.entities})
+    if "icon" in values and values["icon"] is None:
+        values["icon"] = ""
     plain = {key: value for key, value in element.items() if not key.startswith("_")}
     plain.update(values)
     plain["field_templates"] = {}
@@ -639,7 +642,7 @@ def compile_payload(
         element, _bound_state = resolve_component(hass, element)
         if not element["visible"]:
             continue
-        if rotation := element.get("rotation", 0):
+        if rotation := element.get("rotation", 0) % 360:
             # Keep the original component and resolve it on every render. The
             # group transforms all of its drawing primitives as one element.
             local = deepcopy(element)
@@ -655,9 +658,9 @@ def compile_payload(
             if children:
                 x, y = element["x"], element["y"]
                 width, height = element["width"], element["height"]
-                if rotation in (90, 270):
-                    x += (width - height) // 2
-                    y += (height - width) // 2
+                rotated_width, rotated_height = rotated_size(width, height, rotation)
+                x += (width - rotated_width) // 2
+                y += (height - rotated_height) // 2
                 payload.append(
                     {
                         "type": "group",

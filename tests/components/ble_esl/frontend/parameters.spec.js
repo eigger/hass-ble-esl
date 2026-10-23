@@ -330,7 +330,7 @@ test("automation save stays a visible text action on mobile and normal save rema
   const save = page.locator('[data-action="save"]');
   await expect(save).toHaveText("Save to automation");
   await expect(save).toHaveAttribute("aria-label", "Save to automation");
-  await expect(save.locator("svg")).toHaveCount(0);
+  await expect(save.locator("ha-icon")).toHaveCount(0);
   await page.evaluate(() => window.panel.markDirty());
   await expect(save).toHaveText("Save to automation");
   await expect(save).toHaveAttribute("aria-label", "Save to automation");
@@ -343,7 +343,7 @@ test("automation save stays a visible text action on mobile and normal save rema
     window.panel.render();
   });
   await expect(save).not.toContainText("Save to automation");
-  await expect(save.locator("svg")).toHaveCount(1);
+  await expect(save.locator("ha-icon")).toHaveCount(1);
 });
 
 test("imagespec common fields come first and advanced settings stay open after render", async ({

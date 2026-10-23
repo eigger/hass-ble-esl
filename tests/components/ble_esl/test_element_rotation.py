@@ -257,3 +257,82 @@ async def test_invalid_design_specs_raise_a_service_error(hass, wolink_entry):
             await build_write_job_from_data(
                 hass, wolink_entry, {**data, "design_specs": {"native": bad}}
             )
+
+
+async def test_field_hidden_icon_with_null_glyph_still_has_an_editing_ghost(hass, wolink_entry):
+    hass.states.async_set("binary_sensor.laundry", "on")
+    source = icon_document(rotation=0)
+    source["elements"][0]["field_templates"] = {"visible": "{{ false }}", "icon": "{{ none }}"}
+    result = await hass.data[KEY].preview(wolink_entry, source)
+    assert result["payload"] == []
+    assert result["layers"]["_ghost_bounds"]["laundry"]
+
+
+async def test_free_angle_rotation_changes_pixels_and_preserves_source(hass, wolink_entry):
+    source = icon_document(rotation=37.5)
+    hass.states.async_set("binary_sensor.laundry", "on")
+    result = await hass.data[KEY].preview(wolink_entry, source)
+    unrotated = await hass.data[KEY].preview(wolink_entry, icon_document(rotation=0))
+    assert result["png"] != unrotated["png"]
+    exported = await hass.data[KEY].export(wolink_entry, source)
+    assert exported["validation_errors"] == []
+    assert exported["payload_data"][0]["type"] == "dlimg"
+    actual = await hass.async_add_executor_job(
+        lambda: render_image(hass, wolink_entry.runtime_data.preset, exported["payload_data"])
+    )
+    preview_image = Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))).convert(
+        "RGB"
+    )
+    assert ImageChops.difference(actual, preview_image).getbbox() is None
+    from custom_components.ble_esl.designer.automation_source import decode_design
+
+    assert decode_design(exported["design_source"])["elements"][0]["rotation"] == 37.5
+
+
+@pytest.mark.parametrize("width,height", [(40, 30), (31, 22), (60, 40)])
+def test_rotated_size_matches_pillow_for_free_angles(width, height):
+    from custom_components.ble_esl.renderer import rotated_size
+
+    for angle in (0, 17, 37.5, 90, 123, 180, 270, 359, -35):
+        expected = Image.new("RGBA", (width, height)).rotate(-angle, expand=True).size
+        assert rotated_size(width, height, angle) == expected
+
+
+async def test_tag_orientation_changes_editor_size_and_written_output(hass, wolink_entry):
+    from custom_components.ble_esl.services import build_write_job_from_data
+
+    hass.config_entries.async_update_entry(
+        wolink_entry, options={**wolink_entry.options, "display_rotation": 90}
+    )
+    designer = hass.data[KEY]
+    physical = wolink_entry.runtime_data.preset
+    logical = designer.preset(wolink_entry)
+    assert (logical.width, logical.height) == (physical.height, physical.width)
+    source = icon_document(rotation=0)
+    preview = await designer.preview(wolink_entry, source)
+    data = {"design": source, "payload": preview["payload"]}
+    job = await build_write_job_from_data(hass, wolink_entry, data)
+    assert job.image.size == (physical.width, physical.height)
+    editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(
+        "RGB"
+    )
+    assert ImageChops.difference(job.image, editor_image.rotate(-90, expand=True)).getbbox() is None
+
+
+async def test_orientation_setting_is_persisted_through_editor_api(
+    hass, wolink_entry, hass_ws_client
+):
+    client = await hass_ws_client(hass)
+    await client.send_json(
+        {
+            "id": 1,
+            "type": "ble_esl/designer",
+            "action": "orientation",
+            "entry_id": wolink_entry.entry_id,
+            "rotation": 270,
+        }
+    )
+    response = await client.receive_json()
+    assert response["success"]
+    assert response["result"]["rotation"] == 270
+    assert wolink_entry.options["display_rotation"] == 270

@@ -1,3 +1,4 @@
+import { materialIcon } from "./material-icons.js";
 // Present editor status in the inline live region and, when appropriate, as
 // a floating notice. The panel retains status state and notice timing.
 export function sendButtonHint({ tag, busy, status, translate }) {
@@ -13,7 +14,7 @@ export function appendStatusDismiss(panel, node) {
   const dismiss = document.createElement("button");
   dismiss.dataset.action = "dismiss-status";
   dismiss.setAttribute("aria-label", panel.translate("Dismiss message"));
-  dismiss.textContent = "×";
+  dismiss.innerHTML = materialIcon("close");
   node.append(dismiss);
 }
 

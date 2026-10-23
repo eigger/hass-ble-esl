@@ -1,4 +1,8 @@
-import { renderElementRotation } from "./editor/rotation-control.js";
+import { materialIcon } from "./editor/material-icons.js";
+import {
+  renderElementRotation,
+  syncRotationInputs,
+} from "./editor/rotation-control.js";
 import { t, language, rerenderWithDialogs } from "./i18n.js";
 import "./dynamic-fields.js";
 import { clone, newElement } from "./model.js";
@@ -109,7 +113,7 @@ export class ComponentEditor extends HTMLElement {
     const numeric = ["gauge", "progress_bar"].includes(d.type);
     const conditional = d.type === "conditional_icon";
     this.shadowRoot.innerHTML = `<style>:host{font-family:var(--primary-font-family,Roboto,Arial);color:var(--primary-text-color)}dialog{width:min(960px,calc(100vw - 40px));max-height:90vh;padding:0;border:0;border-radius:16px;background:var(--card-background-color,white);color:inherit;box-shadow:0 12px 70px #0005}dialog::backdrop{background:#0006}header,footer{display:flex;align-items:center;gap:12px;padding:16px 24px}header h2{margin:0;flex:1}button,input,select,textarea{font:inherit}button{padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;background:var(--card-background-color,white);color:inherit;cursor:pointer}button.active,.primary{border-color:var(--primary-color,#16838b);color:var(--primary-color,#16838b)}.content{padding:0 24px 20px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(180px,1fr);gap:24px}[hidden]{display:none!important}.types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;grid-column:1/-1}.types button{display:flex;gap:6px;align-items:center;justify-content:center}.controls{display:flex;flex-direction:column;gap:14px}label{display:flex;flex-direction:column;gap:6px}input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--divider-color,#ccd4dc);border-radius:6px;background:inherit;color:inherit}.pair{display:flex;gap:8px}.pair>*{flex:1;min-width:0}.preview{position:sticky;top:0;align-self:start;min-height:220px;display:flex;flex-direction:column;gap:12px}.pixels{height:240px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e5e9ec 0% 25%,transparent 0% 50%) 0/16px 16px;border-radius:8px}.pixels img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.state{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px;display:flex;gap:10px;align-items:center}.rules{display:flex;flex-direction:column;gap:10px}.rule{padding:12px;border:1px solid var(--divider-color,#ccd4dc);border-radius:8px}.rule .pair{align-items:end}.remove{flex:0!important}.hint{font-size:12px;opacity:.7}.error{color:var(--error-color,#c33)}footer{justify-content:flex-end;border-top:1px solid var(--divider-color,#ddd)}ha-icon-picker,ha-entity-picker{display:block;min-width:0} @media(max-width:650px){.content{grid-template-columns:1fr}.types{grid-template-columns:repeat(2,1fr)}.preview{position:static}.pixels{height:160px}}</style>
-      <dialog aria-label="${t(this.hass, "Component editor")}"><header><h2>${this.original ? (d.type === "sensor" ? t(this.hass, "Edit sensor") : t(this.hass, "Edit component")) : t(this.hass, "Add component")}</h2><button id="close" aria-label="${t(this.hass, "Close component editor")}">×</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" aria-pressed="${d.type === type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${t(this.hass, name)}</button>`).join("")}</div><section class="controls"><button id="dynamic">${t(this.hass, "ƒ Dynamic fields…")}</button><ha-entity-picker id="source"></ha-entity-picker><label>${t(this.hass, "Data")}<select id="field" aria-label="${t(this.hass, "Component data")}"><option value="">${this.panel.mode === "template" ? t(this.hass, "Static / template tokens") : d.type === "sensor" ? t(this.hass, "Sensor tile (value, unit and name)") : t(this.hass, "Static content")}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? t(this.hass, "Entity name") : field === "state" ? t(this.hass, "State value") : field === "attribute" ? t(this.hass, "Attribute") : t(this.hass, field[0].toUpperCase() + field.slice(1))}</option>`).join("")}</select></label>${
+      <dialog aria-label="${t(this.hass, "Component editor")}"><header><h2>${this.original ? (d.type === "sensor" ? t(this.hass, "Edit sensor") : t(this.hass, "Edit component")) : t(this.hass, "Add component")}</h2><button id="close" aria-label="${t(this.hass, "Close component editor")}">${materialIcon("close")}</button></header><div class="content"><div class="types" ${d.type === "sensor" ? "hidden" : ""}>${components.map(([type, name, icon]) => `<button data-type="${type}" aria-pressed="${d.type === type}" class="${d.type === type ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon>${t(this.hass, name)}</button>`).join("")}</div><section class="controls"><button id="dynamic">${t(this.hass, "ƒ Dynamic fields…")}</button><ha-entity-picker id="source"></ha-entity-picker><label>${t(this.hass, "Data")}<select id="field" aria-label="${t(this.hass, "Component data")}"><option value="">${this.panel.mode === "template" ? t(this.hass, "Static / template tokens") : d.type === "sensor" ? t(this.hass, "Sensor tile (value, unit and name)") : t(this.hass, "Static content")}</option>${["state", "name", "unit", "icon", "attribute"].map((field) => `<option value="${field}" ${d.data_field === field ? "selected" : ""}>${field === "name" ? t(this.hass, "Entity name") : field === "state" ? t(this.hass, "State value") : field === "attribute" ? t(this.hass, "Attribute") : t(this.hass, field[0].toUpperCase() + field.slice(1))}</option>`).join("")}</select></label>${
         d.data_field === "attribute"
           ? `<label>${t(this.hass, "Attribute")}<select id="attribute" aria-label="${t(this.hass, "Component attribute")}">${Object.keys(
               this.hass.states[d.entity_id || this.panel.sampleEntity]
@@ -124,7 +128,7 @@ export class ComponentEditor extends HTMLElement {
       }
       ${d.type === "text" ? `<label>${t(this.hass, "Text")}<textarea id="text" aria-label="${t(this.hass, "Component text")}" ${d.data_field ? "disabled" : ""}>${esc(d.text)}</textarea></label><div class="pair"><label>${t(this.hass, "Font size")}<input id="font_size" aria-label="${t(this.hass, "Component font size")}" type="number" value="${d.font_size}"></label><label>${t(this.hass, "Decimals")}<input id="decimals" aria-label="${t(this.hass, "Component decimals")}" type="number" min="0" max="6" placeholder="${t(this.hass, "Automatic")}" value="${d.decimals ?? ""}"></label></div>` : ""}
       ${["icon", "conditional_icon"].includes(d.type) ? '<div id="fallback-icon"></div>' : ""}
-      ${conditional ? `<div class="rules"><strong>${t(this.hass, "State → icon")}</strong><span class="hint">${t(this.hass, "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.")}</span>${d.icon_rules.map((rule, index) => `<div class="rule"><div class="pair">${rule.kind === "range" ? `<label>${t(this.hass, "From ≥")}<input type="number" step="any" data-rule="${index}" data-key="min" aria-label="Range ${index + 1} minimum" value="${rule.min ?? ""}"></label><label>To &lt;<input type="number" step="any" data-rule="${index}" data-key="max" aria-label="Range ${index + 1} maximum" value="${rule.max ?? ""}"></label>` : `<label>${t(this.hass, "State")}<input data-rule="${index}" data-key="state" aria-label="Rule ${index + 1} state" value="${esc(rule.state)}"></label>`}<button class="remove" data-remove="${index}" aria-label="Remove rule ${index + 1}">×</button></div><div data-rule-icon="${index}"></div></div>`).join("")}<div class="pair"><button id="add-state">${t(this.hass, "＋ State")}</button><button id="add-range">${t(this.hass, "＋ Range")}</button></div></div>` : ""}
+      ${conditional ? `<div class="rules"><strong>${t(this.hass, "State → icon")}</strong><span class="hint">${t(this.hass, "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.")}</span>${d.icon_rules.map((rule, index) => `<div class="rule"><div class="pair">${rule.kind === "range" ? `<label>${t(this.hass, "From ≥")}<input type="number" step="any" data-rule="${index}" data-key="min" aria-label="Range ${index + 1} minimum" value="${rule.min ?? ""}"></label><label>To &lt;<input type="number" step="any" data-rule="${index}" data-key="max" aria-label="Range ${index + 1} maximum" value="${rule.max ?? ""}"></label>` : `<label>${t(this.hass, "State")}<input data-rule="${index}" data-key="state" aria-label="Rule ${index + 1} state" value="${esc(rule.state)}"></label>`}<button class="remove" data-remove="${index}" aria-label="Remove rule ${index + 1}">${materialIcon("close")}</button></div><div data-rule-icon="${index}"></div></div>`).join("")}<div class="pair"><button id="add-state">${t(this.hass, "＋ State")}</button><button id="add-range">${t(this.hass, "＋ Range")}</button></div></div>` : ""}
       ${numeric ? `<div class="pair"><label>${t(this.hass, "Minimum")}<input id="min_value" aria-label="${t(this.hass, "Component minimum")}" type="number" value="${d.min_value ?? 0}"></label><label>${t(this.hass, "Maximum")}<input id="max_value" aria-label="${t(this.hass, "Component maximum")}" type="number" value="${d.max_value ?? 100}"></label></div>${!d.data_field ? `<label>${t(this.hass, "Value")}<input id="value" type="number" value="${d.value ?? 0}"></label>` : ""}` : ""}
       ${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].includes(d.type) ? `<label>${t(this.hass, "Shape")}<select id="shape" aria-label="${t(this.hass, "Component shape")}">${["rectangle", "rounded_rectangle", "ellipse", "triangle", "line"].map((type) => `<option value="${type}" ${type === d.type ? "selected" : ""}>${type.replaceAll("_", " ")}</option>`).join("")}</select></label>` : ""}
       ${d.type === "image" ? `<label>${t(this.hass, "Image")}<input id="upload" type="file" accept="image/*"></label>` : ""}
@@ -161,10 +165,14 @@ export class ComponentEditor extends HTMLElement {
       d.type = event.target.value;
       this.redraw();
     });
-    root.querySelector('[data-property="rotation"]').onchange = (event) => {
-      d.rotation = Number(event.target.value);
-      this.queuePreview();
-    };
+    root.querySelectorAll('[data-property="rotation"]').forEach((input) => {
+      input.oninput = (event) => {
+        if (!event.target.validity.valid) return;
+        d.rotation = Number(event.target.value);
+        syncRotationInputs(root, d.rotation);
+        this.queuePreview();
+      };
+    });
     root.querySelector("#field").onchange = (event) => {
       d.data_field = event.target.value;
       if (d.data_field === "attribute")
@@ -180,7 +188,12 @@ export class ComponentEditor extends HTMLElement {
       this.queuePreview();
     });
     root.querySelectorAll("input,textarea").forEach((input) => {
-      if (input.type === "file" || input.dataset.rule) return;
+      if (
+        input.type === "file" ||
+        input.dataset.rule ||
+        input.dataset.property === "rotation"
+      )
+        return;
       input.oninput = () => {
         if (input.id === "decimals" && input.value === "") delete d.decimals;
         else

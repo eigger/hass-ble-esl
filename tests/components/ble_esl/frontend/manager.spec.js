@@ -1745,7 +1745,7 @@ test("card information aligns and battery stays at the right edge", async ({
   expect(metrics.map((metric) => metric.productRight)).toEqual([0, 0]);
   expect(metrics.map((metric) => metric.aligned)).toEqual([true, true]);
   expect(metrics.map((metric) => metric.border)).toEqual(["0px", "0px"]);
-  await expect(page.locator(".battery svg")).toHaveCount(2);
+  await expect(page.locator(".battery ha-icon")).toHaveCount(2);
 });
 
 test("thumbnail survives rerenders and waits for the next bitmap to load", async ({
@@ -1919,4 +1919,23 @@ test("automation editing keeps component rules and writes the source back", asyn
     JSON.parse(saved.actions[0].data.design.slice(3, -15)),
   );
   expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+});
+
+test("open tag is remembered in the URL across reload and browser navigation", async ({
+  page,
+}) => {
+  await page.locator("[data-action=edit][data-entry=demo-writable]").click();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await page.reload();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
+  await page
+    .getByRole("combobox", { name: "Tag", exact: true })
+    .selectOption("demo-discovery");
+  await expect(page).toHaveURL(/tag=demo-discovery/);
+  await page.goBack();
+  await expect(
+    page.getByRole("combobox", { name: "Tag", exact: true }),
+  ).toHaveValue("demo-writable");
 });
