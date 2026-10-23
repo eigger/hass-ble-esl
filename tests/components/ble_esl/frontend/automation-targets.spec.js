@@ -4,24 +4,6 @@ import { test, expect } from "@playwright/test";
 // design is loaded into it, and the design can be saved into any automation
 // whose ble_esl.write action targets the tag.
 
-const savedDocument = {
-  version: 1,
-  background: "white",
-  elements: [
-    {
-      id: "server-saved",
-      type: "text",
-      x: 8,
-      y: 8,
-      width: 120,
-      height: 32,
-      text: "Stored on the server",
-      font_size: 18,
-      color: "black",
-    },
-  ],
-};
-
 const automation = async (request, id) =>
   (await request.get(`/api/config/automation/config/${id}`)).json();
 
@@ -39,27 +21,20 @@ test.beforeEach(async ({ page, request }) => {
   await expect(page.locator(".card")).toHaveCount(2);
 });
 
-test("a tag opens blank even with a stored design; its browser draft survives a reload", async ({
+test("a tag opens blank, offers no server Save, and keeps its browser draft across a reload", async ({
   page,
   request,
 }) => {
-  await request.post("/api/designer", {
-    data: {
-      action: "save",
-      entry_id: "demo-writable",
-      document: savedDocument,
-    },
+  // Per-tag designs are no longer stored on the server.
+  const save = await request.post("/api/designer", {
+    data: { action: "save", entry_id: "demo-writable", document: {} },
   });
-  // The list the editor boots from now carries the stored design.
-  await page.reload();
-  await expect(page.locator(".card")).toHaveCount(2);
+  expect(save.ok()).toBe(false);
   expect(
-    await page.evaluate(
-      () =>
-        window.manager.tags.find((tag) => tag.entry_id === "demo-writable")
-          .document?.elements?.length,
+    await page.evaluate(() =>
+      window.manager.tags.some((tag) => Object.hasOwn(tag, "document")),
     ),
-  ).toBe(1);
+  ).toBe(false);
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
@@ -72,17 +47,28 @@ test("a tag opens blank even with a stored design; its browser draft survives a 
 
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   await expect(page.locator(".el")).toHaveCount(1);
+  // Unsaved work goes into an automation; there is no Save or Restore of its own.
+  await expect(
+    page.locator('ble-esl-designer [data-action="save"]'),
+  ).toBeHidden();
+  await expect(
+    page.locator('ble-esl-designer [data-action="restore"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", {
+      name: "Save to existing automation…",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create automation", exact: true }),
+  ).toBeVisible();
   // Navigating inside HA removes the panel without beforeunload.
   await page.evaluate(() => window.manager.remove());
   await page.reload();
   await expect(page).toHaveURL(/tag=demo-writable/);
   await expect(page.locator(".el")).toHaveCount(1);
   await expect(page.locator("#dirty-badge")).toBeVisible();
-  expect(
-    await page.evaluate(() =>
-      window.manager.editor.document.elements.map((element) => element.id),
-    ),
-  ).not.toContain("server-saved");
 });
 
 test("a loaded automation's design saves into a different matching automation only", async ({
@@ -334,4 +320,74 @@ test("no action of the automation being edited is offered as another automation"
   ).toHaveCount(1);
   await chooser.getByRole("button", { name: "Cancel" }).click();
   expect(await automation(request, "morning")).toEqual(config);
+});
+
+const openCreateAutomation = async (page) => {
+  await page
+    .locator('ble-esl-designer [data-action="create-automation"]')
+    .click();
+  const dialog = page.locator("ble-esl-yaml-dialog");
+  await expect(
+    dialog.getByRole("button", { name: "Create automation", exact: true }),
+  ).toBeVisible();
+  return dialog;
+};
+
+test("creating an automation keeps the design there: it is no longer unsaved", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  const dialog = await openCreateAutomation(page);
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(await page.evaluate(() => window.manager.editor.dirty)).toBe(false);
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+
+  await page.evaluate(() => window.manager.remove());
+  await page.reload();
+  await expect(page).toHaveURL(/tag=demo-writable/);
+  await expect(page.locator("ble-esl-designer .toolbar")).toBeVisible();
+  await expect(page.locator(".el")).toHaveCount(0);
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("ble_esl_designer_drafts"),
+    ),
+  ).toBeNull();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card).toBeVisible();
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+});
+
+test("a design changed after its automation export stays unsaved", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const dialog = await openCreateAutomation(page);
+  // The dialog is modal; a change can only come from the page itself here.
+  await page.evaluate(() => {
+    window.manager.editor.document.elements[0].x += 4;
+  });
+  await dialog
+    .getByRole("button", { name: "Create automation", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("link", { name: "Edit automation", exact: true }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => window.manager.editor.dirty)).toBe(true);
+  await expect(page.locator("#dirty-badge")).toBeVisible();
 });

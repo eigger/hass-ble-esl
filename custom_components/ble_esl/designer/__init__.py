@@ -95,13 +95,15 @@ def _preview_variable_map(value):
 
 
 class Designer:
-    """Persist layouts and render them for preview or explicit transmission."""
+    """Render layouts for preview, export or explicit transmission.
+
+    Layouts live in automations (``ble_esl.write`` ``design``); unsaved work
+    stays in the browser. Per-tag layouts are not stored here.
+    """
 
     def __init__(self, hass):
         self.hass = hass
         self.automation_links = AutomationLinks(hass)
-        self.store = Store(hass, 1, f"{DOMAIN}.designer")
-        self.documents = {}
         self.template_store = Store(hass, 1, f"{DOMAIN}.sensor_templates")
         self.templates = {}
         self.design_templates = {}
@@ -149,13 +151,6 @@ class Designer:
             return
         self.panel_registered = False
         frontend.async_remove_panel(self.hass, PANEL)
-
-    async def save(self, entry, document):
-        document = validate(document, self.preset(entry))
-        self.documents[entry.entry_id] = document
-        await self.store.async_save(self.documents)
-        cancel_pending_write(entry.runtime_data)
-        return document
 
     async def forecasts(self, document):
         needed = {
@@ -659,7 +654,6 @@ class Designer:
             (
                 "list",
                 "specs",
-                "save",
                 "preview",
                 "export",
                 "automation",
@@ -765,7 +759,6 @@ async def websocket_designer(hass, connection, msg):
                 "height": preset.height,
                 "colors": preset.colors,
                 "writable": getattr(entry.runtime_data.protocol, "writable", True),
-                "document": designer.documents.get(entry.entry_id),
             }
             for entry in hass.config_entries.async_loaded_entries(DOMAIN)
         ]
@@ -823,25 +816,15 @@ async def websocket_designer(hass, connection, msg):
             msg["document"],
             msg.get("preview_variables"),
         )
-    else:
-        entry = designer.entry(msg["entry_id"])
-        result = await getattr(designer, action)(entry, msg["document"])
+    else:  # send
+        result = await designer.send(designer.entry(msg["entry_id"]), msg["document"])
     connection.send_result(msg["id"], result)
 
 
 async def async_setup_designer(hass):
     designer = hass.data[KEY] = Designer(hass)
-    designer.documents = await designer.store.async_load() or {}
-    # Old designs may have opted into automatic writes. Discard those options
-    # durably without validating against a possibly unavailable tag preset.
-    migrated = False
-    for document in designer.documents.values():
-        for key in ("auto_update", "interval"):
-            if key in document:
-                document.pop(key)
-                migrated = True
-    if migrated:
-        await designer.store.async_save(designer.documents)
+    # Earlier versions kept one layout per tag in ".storage/ble_esl.designer".
+    # It is no longer read or written; the file is left as it is.
     await designer.reload_design_templates()
     designer.templates = await designer.template_store.async_load() or {}
     await designer.automation_links.load()

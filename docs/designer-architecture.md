@@ -171,7 +171,9 @@ frontend specs after runtime changes:
   is pending. Fit/zoom, mobile layout, and manager-embedded layout remain
   usable.
 - **Explicit side effects:** preview and editing do not transmit to a device.
-  Save persists a design; Send to tag is the explicit transmission action.
+  Designs are persisted only in automations (Create automation, Save to
+  automation, Save to existing/another automation); unsaved work is a browser
+  draft. Send to tag is the explicit transmission action.
   Automation save changes only the validated matching action payload and does
   not send over Bluetooth.
 - **Recoverable failures:** loading and operation failures are surfaced with

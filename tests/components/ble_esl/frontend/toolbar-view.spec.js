@@ -35,6 +35,9 @@ test("toolbar view preserves editor actions and accessible disabled hints", asyn
   expect(result.markup).toContain('aria-label="Tag"');
   expect(result.markup).toContain('data-action="save"');
   expect(result.markup).toContain('aria-label="Save (unsaved changes)"');
+  // A tag design is saved into automations, not by a Save of its own.
+  expect(result.markup).toContain('data-action="save" hidden');
+  expect(result.markup).not.toContain('data-action="restore"');
   expect(result.markup).toContain(
     'aria-description="Read only &amp; unavailable"',
   );

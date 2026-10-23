@@ -133,7 +133,6 @@ export default {
     "검색만 지원: 미리보기는 가능하지만 전송은 아직 지원하지 않습니다.",
   "Dismiss message": "메시지 닫기",
   "Display canvas": "화면 캔버스",
-  "Display saved": "화면 저장됨",
   "Dynamic field pixel preview": "동적 필드 픽셀 미리보기",
   "Dynamic fields": "동적 필드",
   "ESL Designer": "ESL 디자이너",
@@ -572,10 +571,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
   Continue: "계속",
-  Restore: "복원",
-  "Restore saved design": "복원",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "마지막으로 저장한 디자인을 복원할까요? 저장하지 않은 변경 사항은 사라집니다.",
   selected: "개 선택됨",
   "Changes apply to all selected components. Mixed values are blank.":
     "변경 사항은 선택한 모든 구성요소에 적용됩니다. 값이 다른 항목은 비어 있습니다.",

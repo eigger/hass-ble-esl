@@ -137,7 +137,6 @@ export default {
     "Découverte uniquement : l'aperçu est disponible ; l'envoi n'est pas encore pris en charge.",
   "Dismiss message": "Ignorer le message",
   "Display canvas": "Toile d'affichage",
-  "Display saved": "Affichage enregistré",
   "Dynamic field pixel preview": "Aperçu des pixels du champ dynamique",
   "Dynamic fields": "Champs dynamiques",
   "ESL Designer": "Concepteur ESL",
@@ -587,10 +586,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Dissocier {name} de cet ESL ? L'automatisation elle-même n'est pas modifiée.",
   Continue: "Continuer",
-  Restore: "Restaurer",
-  "Restore saved design": "Restaurer",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Restaurer le dernier design enregistré ? Les modifications non enregistrées seront abandonnées.",
   selected: "sélectionnés",
   "Changes apply to all selected components. Mixed values are blank.":
     "Les modifications s’appliquent à tous les composants sélectionnés. Les valeurs différentes restent vides.",

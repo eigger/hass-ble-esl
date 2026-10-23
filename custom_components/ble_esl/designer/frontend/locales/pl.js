@@ -138,7 +138,6 @@ export default {
     "Tylko wykrywanie: dostępny jest podgląd; wysyłanie nie jest jeszcze obsługiwane.",
   "Dismiss message": "Odrzuć wiadomość",
   "Display canvas": "Wyświetl płótno",
-  "Display saved": "Wyświetlacz zapisany",
   "Dynamic field pixel preview": "Podgląd pikseli pola dynamicznego",
   "Dynamic fields": "Pola dynamiczne",
   "ESL Designer": "Projektant ESL",
@@ -582,10 +581,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Odłączyć {name} od tego ESL? Sama automatyzacja nie zostanie zmieniona.",
   Continue: "Dalej",
-  Restore: "Przywróć",
-  "Restore saved design": "Przywróć",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Przywrócić ostatnio zapisany projekt? Niezapisane zmiany zostaną odrzucone.",
   selected: "zaznaczone",
   "Changes apply to all selected components. Mixed values are blank.":
     "Zmiany dotyczą wszystkich zaznaczonych komponentów. Różne wartości pozostają puste.",

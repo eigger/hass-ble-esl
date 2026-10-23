@@ -254,20 +254,22 @@ test("locale catalogs match component languages and preserve interpolation token
   );
 });
 
+// A tag design is saved into an automation, so that is the designer's save
+// control outside an automation (there is no per-tag Save any more).
 const localizedControls = [
-  ["de", "Speichern"],
-  ["es", "Guardar"],
-  ["fr", "Enregistrer"],
-  ["it", "Salva"],
-  ["ja", "保存"],
-  ["nl", "Opslaan"],
-  ["pl", "Zapisz"],
-  ["pt-BR", "Salvar"],
-  ["ru", "Сохранить"],
-  ["zh-Hans", "保存"],
-  ["zh-Hant", "儲存"],
+  "de",
+  "es",
+  "fr",
+  "it",
+  "ja",
+  "nl",
+  "pl",
+  "pt-BR",
+  "ru",
+  "zh-Hans",
+  "zh-Hant",
 ];
-for (const [code, save] of localizedControls) {
+for (const code of localizedControls) {
   test(`dashboard, automation dialog and designer use ${code} UI copy`, async ({
     page,
   }) => {
@@ -294,7 +296,10 @@ for (const [code, save] of localizedControls) {
     await expect(
       page
         .locator("ble-esl-designer")
-        .getByRole("button", { name: save, exact: true }),
+        .getByRole("button", {
+          name: copy["Save to existing automation…"],
+          exact: true,
+        }),
     ).toBeVisible();
     await page.locator('ble-esl-designer [data-add="text"]').click();
     await page

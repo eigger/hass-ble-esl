@@ -12,15 +12,7 @@ export function syncDocumentHistoryControls(
 
 export function markDocumentDirty(
   root,
-  {
-    undoCount,
-    redoCount,
-    busy,
-    automationSaveMode,
-    mode,
-    translate,
-    saveIcon,
-  },
+  { undoCount, redoCount, busy, automationSaveMode, translate, saveIcon },
 ) {
   syncDocumentHistoryControls(root, { undoCount, redoCount, busy });
   const save = root.querySelector('[data-action="save"]');
@@ -38,8 +30,6 @@ export function markDocumentDirty(
   }
   const badge = root.querySelector("#dirty-badge");
   if (badge) badge.hidden = false;
-  const restore = root.querySelector('[data-action="restore"]');
-  if (restore) restore.hidden = automationSaveMode || mode === "template";
   const title = root
     .querySelector(".canvas-wrap")
     ?.previousElementSibling?.querySelector("span");

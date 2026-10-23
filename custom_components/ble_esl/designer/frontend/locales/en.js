@@ -134,7 +134,6 @@ export default {
     "Discovery only: preview is available; sending is not supported yet.",
   "Dismiss message": "Dismiss message",
   "Display canvas": "Display canvas",
-  "Display saved": "Display saved",
   "Dynamic field pixel preview": "Dynamic field pixel preview",
   "Dynamic fields": "Dynamic fields",
   "ESL Designer": "ESL Designer",
@@ -574,10 +573,6 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Unlink {name} from this ESL? The automation itself is not changed.",
   Continue: "Continue",
-  Restore: "Restore",
-  "Restore saved design": "Restore",
-  "Restore the last saved design? Unsaved changes will be discarded.":
-    "Restore the last saved design? Unsaved changes will be discarded.",
   selected: "selected",
   "Changes apply to all selected components. Mixed values are blank.":
     "Changes apply to all selected components. Mixed values are blank.",
