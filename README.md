@@ -16,7 +16,7 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
-The Downloads badge counts GitHub release asset downloads across all releases, not active installations. HACS source-file installations are not counted; ZIP release distribution is not used.
+The Downloads badge counts GitHub release asset downloads across all releases, not active installations.
 
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.**
 
