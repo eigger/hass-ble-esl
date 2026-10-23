@@ -587,7 +587,17 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Scollegare {name} da questo ESL? L'automazione stessa non viene modificata.",
   Continue: "Continua",
-  "Restore": "Ripristina",
+  Restore: "Ripristina",
   "Restore saved design": "Ripristina",
-  "Restore the last saved design? Unsaved changes will be discarded.": "Ripristinare l’ultimo design salvato? Le modifiche non salvate verranno scartate.",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "Ripristinare l’ultimo design salvato? Le modifiche non salvate verranno scartate.",
+  selected: "selezionati",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "Le modifiche si applicano a tutti i componenti selezionati. I valori diversi restano vuoti.",
+  Mixed: "Misto",
+  "Rotation value (°)": "Valore di rotazione (°)",
+  "Show hidden icons": "Mostra icone nascoste",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "Mostra in modo tenue le icone invisibili per la modifica; non cambia l’immagine dell’etichetta",
+  "Tag orientation": "Orientamento dell’etichetta",
 };

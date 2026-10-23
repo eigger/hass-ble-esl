@@ -584,7 +584,17 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
   Continue: "続行",
-  "Restore": "復元",
+  Restore: "復元",
   "Restore saved design": "復元",
-  "Restore the last saved design? Unsaved changes will be discarded.": "最後に保存したデザインに戻しますか？未保存の変更は破棄されます。",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "最後に保存したデザインに戻しますか？未保存の変更は破棄されます。",
+  selected: "件選択中",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "変更は選択したすべてのコンポーネントに適用されます。値が異なる項目は空欄です。",
+  Mixed: "混在",
+  "Rotation value (°)": "回転値 (°)",
+  "Show hidden icons": "非表示アイコンを表示",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "編集用に非表示のアイコンを薄く表示します。ラベル画像は変わりません",
+  "Tag orientation": "タグの向き",
 };

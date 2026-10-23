@@ -10,7 +10,13 @@ export function renderOrientation(tag, mode, busy, translate) {
       const label = translate(value ? "Portrait" : "Landscape");
       // Dimensions describe the current logical canvas, not the physical panel.
       const physicalPortrait = (tag.rotation || 0) % 180 ? !portrait : portrait;
-      const rotation = value === physicalPortrait ? 0 : 90;
+      // The pressed button keeps the design's own angle (e.g. 180 or 270).
+      const rotation =
+        portrait === value
+          ? tag.rotation || 0
+          : value === physicalPortrait
+            ? 0
+            : 90;
       return `<button class="icon-button" data-action="tag-orientation" data-rotation="${rotation}" aria-label="${label}" title="${label}" aria-pressed="${portrait === value}" ${busy ? "disabled" : ""}>${materialIcon(value ? "mdi:crop-portrait" : "mdi:crop-landscape")}</button>`;
     })
     .join("")}</span>`;

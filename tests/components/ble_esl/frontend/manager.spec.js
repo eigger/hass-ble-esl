@@ -1921,6 +1921,92 @@ test("automation editing keeps component rules and writes the source back", asyn
   expect(decoded.elements[0]).toMatchObject(source.elements[0]);
 });
 
+for (const [name, action] of [
+  ["the action's rotate", { rotate: 90 }],
+  ["the design's rotate", { design: true }],
+]) {
+  test(`automation editing follows ${name} and writes it back`, async ({
+    page,
+    request,
+  }) => {
+    const source = {
+      version: 1,
+      background: "white",
+      rotate: 90,
+      elements: [
+        {
+          id: "portrait-text",
+          type: "text",
+          x: 4,
+          y: 4,
+          width: 60,
+          height: 24,
+          text: "Hi",
+        },
+      ],
+    };
+    const data = { background: "white", payload: [] };
+    if (action.rotate) data.rotate = action.rotate;
+    if (action.design)
+      data.design =
+        "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
+    else
+      data.design =
+        "{{ " +
+        JSON.stringify(JSON.stringify({ ...source, rotate: undefined })) +
+        " | from_json }}";
+    await request.post("/api/config/automation/config/morning", {
+      data: {
+        id: "morning",
+        alias: "Morning",
+        triggers: [],
+        conditions: [],
+        actions: [
+          {
+            action: "ble_esl.write",
+            target: { device_id: "demo-device-0" },
+            data,
+          },
+        ],
+        mode: "single",
+      },
+    });
+    const physical = await page.evaluate(() => {
+      const tag = window.manager.tags.find(
+        (t) => t.entry_id === "demo-writable",
+      );
+      return [tag.width, tag.height];
+    });
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    await page
+      .getByRole("dialog", { name: "Connected automations" })
+      .getByRole("button", { name: "Edit automation design", exact: true })
+      .first()
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Save to automation" }),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => [
+          window.manager.editor.document.rotate,
+          window.manager.editor.tag.width,
+          window.manager.editor.tag.height,
+        ]),
+      )
+      .toEqual([90, physical[1], physical[0]]);
+    await page.evaluate(() => window.manager.editor.setTagOrientation(0));
+    await page.getByRole("button", { name: "Save to automation" }).click();
+    await expect(page.locator(".message")).toContainText("Automation saved.");
+    const saved = await (
+      await request.get("/api/config/automation/config/morning")
+    ).json();
+    expect(saved.actions[0].data.rotate).toBeUndefined();
+  });
+}
+
 test("open tag is remembered in the URL across reload and browser navigation", async ({
   page,
 }) => {

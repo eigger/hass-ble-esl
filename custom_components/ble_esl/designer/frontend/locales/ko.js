@@ -572,7 +572,17 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
   Continue: "계속",
-  "Restore": "복원",
+  Restore: "복원",
   "Restore saved design": "복원",
-  "Restore the last saved design? Unsaved changes will be discarded.": "마지막으로 저장한 디자인을 복원할까요? 저장하지 않은 변경 사항은 사라집니다.",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "마지막으로 저장한 디자인을 복원할까요? 저장하지 않은 변경 사항은 사라집니다.",
+  selected: "개 선택됨",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "변경 사항은 선택한 모든 구성요소에 적용됩니다. 값이 다른 항목은 비어 있습니다.",
+  Mixed: "혼합",
+  "Rotation value (°)": "회전 값 (°)",
+  "Show hidden icons": "숨겨진 아이콘 표시",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "편집용으로 보이지 않는 아이콘을 흐리게 표시합니다. 라벨 이미지는 바뀌지 않습니다.",
+  "Tag orientation": "태그 방향",
 };

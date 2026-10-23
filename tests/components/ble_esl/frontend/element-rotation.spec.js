@@ -170,6 +170,21 @@ test("orientation belongs to the design: it turns the canvas, undoes, and is exp
   ).toEqual([dimensions[0], dimensions[1], 0]);
 });
 
+test("the pressed orientation button keeps the design's own angle", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.panel.document.rotate = 270;
+    window.panel.render();
+  });
+  const pressed = page.locator(
+    '[data-action="tag-orientation"][aria-pressed="true"]',
+  );
+  await expect(pressed).toHaveAttribute("data-rotation", "270");
+  await pressed.click();
+  expect(await page.evaluate(() => window.panel.document.rotate)).toBe(270);
+});
+
 test("square tags have no portrait or landscape controls", async ({ page }) => {
   await page.evaluate(() => {
     window.panel.tag.baseWidth = window.panel.tag.width = 200;

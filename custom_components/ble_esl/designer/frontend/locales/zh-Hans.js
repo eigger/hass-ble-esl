@@ -551,7 +551,17 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要将 {name} 与此 ESL 取消关联吗？自动化本身不会更改。",
   Continue: "继续",
-  "Restore": "恢复",
+  Restore: "恢复",
   "Restore saved design": "恢复",
-  "Restore the last saved design? Unsaved changes will be discarded.": "恢复上次保存的设计？未保存的更改将被丢弃。",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "恢复上次保存的设计？未保存的更改将被丢弃。",
+  selected: "已选择",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "更改将应用于所有选中的组件。不同的值显示为空白。",
+  Mixed: "混合",
+  "Rotation value (°)": "旋转值(°)",
+  "Show hidden icons": "显示隐藏的图标",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "编辑时淡淡显示不可见的图标;不会改变标签图像",
+  "Tag orientation": "标签方向",
 };

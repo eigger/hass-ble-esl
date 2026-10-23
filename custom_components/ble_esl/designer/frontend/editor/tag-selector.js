@@ -11,7 +11,7 @@ export function renderTagOptions(tags, selectedTag, { tagName, escapeHtml }) {
   return tags
     .map(
       (tag) =>
-        `<option value="${escapeHtml(tag.entry_id)}" ${tag === selectedTag ? "selected" : ""}>${escapeHtml(tagName(tag))} · ${tag.width}×${tag.height}</option>`,
+        `<option value="${escapeHtml(tag.entry_id)}" ${tag === selectedTag ? "selected" : ""}>${escapeHtml(tagName(tag))} · ${tag.baseWidth ?? tag.width}×${tag.baseHeight ?? tag.height}</option>`,
     )
     .join("");
 }

@@ -585,7 +585,17 @@ export default {
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
   Continue: "Doorgaan",
-  "Restore": "Herstellen",
+  Restore: "Herstellen",
   "Restore saved design": "Herstellen",
-  "Restore the last saved design? Unsaved changes will be discarded.": "Het laatst opgeslagen ontwerp herstellen? Niet-opgeslagen wijzigingen worden verwijderd.",
+  "Restore the last saved design? Unsaved changes will be discarded.":
+    "Het laatst opgeslagen ontwerp herstellen? Niet-opgeslagen wijzigingen worden verwijderd.",
+  selected: "geselecteerd",
+  "Changes apply to all selected components. Mixed values are blank.":
+    "Wijzigingen gelden voor alle geselecteerde onderdelen. Afwijkende waarden blijven leeg.",
+  Mixed: "Gemengd",
+  "Rotation value (°)": "Draaiwaarde (°)",
+  "Show hidden icons": "Verborgen pictogrammen tonen",
+  "Show invisible icons faintly for editing; does not change the label image":
+    "Toont onzichtbare pictogrammen vaag om te bewerken; het labelbeeld verandert niet",
+  "Tag orientation": "Labeloriëntatie",
 };
