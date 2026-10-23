@@ -9,6 +9,11 @@
 - Home Assistant Material icons are used throughout the manager and editor, and hidden or null icons show a selectable preview-only ghost.
 - The selected tag is kept in the URL, so reload and browser back/forward restore the open editor.
 - Multiple elements can be selected with a marquee or Shift/Ctrl/Cmd-click, moved together by drag or keyboard, edited through shared properties, and duplicated or deleted as a group with undo.
+- The designer can save the current design into an existing automation of the tag: *Save to existing automation…* from a blank start, or *Save to another automation…* while editing a loaded automation. Only automations with a `ble_esl.write` action targeting this tag are offered; when one has several, the action to replace is chosen. Only that action's `payload`, `design`, `design_specs`, `rotate` (and a non-default background) change.
+
+### Changed
+
+- The designer opens a tag with a blank design (or the unsaved browser draft) instead of a design stored on the server for the tag; designs are loaded from and saved to automations.
 
 ## 1.5.1
 

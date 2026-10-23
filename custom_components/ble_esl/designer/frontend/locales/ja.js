@@ -599,4 +599,13 @@ export default {
   "Tag orientation": "タグの向き",
   Portrait: "縦向き",
   Landscape: "横向き",
+  "Save to existing automation…": "既存のオートメーションに保存…",
+  "Save to another automation…": "別のオートメーションに保存…",
+  "Choose the automation to save to:":
+    "保存先のオートメーションを選んでください:",
+  "Choose the write action to replace:":
+    "置き換える書き込みアクションを選んでください:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "このESL用の ble_esl.write アクションを含むオートメーションが見つかりませんでした。",
+  "Saved to {name}.": "{name} に保存しました。",
 };

@@ -491,6 +491,7 @@ async def handle(request):
             issues,
             live,
             design=document,
+            rotate=document.get("rotate", 0),
         )
         if msg["action"] == "automation":
             if not tag["writable"]:

@@ -567,4 +567,11 @@ export default {
   "Tag orientation": "標籤方向",
   Portrait: "直向",
   Landscape: "橫向",
+  "Save to existing automation…": "儲存到現有自動化…",
+  "Save to another automation…": "儲存到其他自動化…",
+  "Choose the automation to save to:": "選擇要儲存到的自動化：",
+  "Choose the write action to replace:": "選擇要取代的寫入動作：",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "找不到包含此 ESL 的 ble_esl.write 動作的自動化。",
+  "Saved to {name}.": "已儲存到 {name}。",
 };

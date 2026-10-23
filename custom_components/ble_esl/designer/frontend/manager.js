@@ -61,6 +61,9 @@ class EslManager extends HTMLElement {
     this.addEventListener("automation-save-request", (event) =>
       this.saveAutomation(event.detail),
     );
+    this.addEventListener("automation-save-as-request", (event) =>
+      this.saveToOtherAutomation(event.detail),
+    );
     this.shadowRoot.addEventListener("click", (event) => this.click(event));
     this.editorNav.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -129,7 +132,8 @@ class EslManager extends HTMLElement {
     this._hass = value;
     localize(this.shadowRoot, value);
     this._updateVersionTag();
-    if (this.messageKey) this.message(this.messageKey, this.messageKind);
+    if (this.messageKey)
+      this.message(this.messageKey, this.messageKind, this.messageValues);
     if (this.editor) this.editor.hass = value;
     this.automationDialog.updateHass(value);
     const menu = this.shadowRoot.querySelector("ha-menu-button");
@@ -206,11 +210,12 @@ class EslManager extends HTMLElement {
       wrap.hidden ? "0px" : `${wrap.offsetHeight + 8}px`,
     );
   }
-  message(message = "", kind = "error") {
+  message(message = "", kind = "error", values = undefined) {
     const node = this.shadowRoot.querySelector(".message");
     this.messageKey = message;
     this.messageKind = kind;
-    node.textContent = t(this.hass, message);
+    this.messageValues = values;
+    node.textContent = t(this.hass, message, values);
     const wrap = node.parentElement;
     wrap.hidden = !message;
     wrap.classList.toggle("error", !!message && kind === "error");
@@ -1149,86 +1154,21 @@ class EslManager extends HTMLElement {
             "Background is not part of the automation payload. Restore the imported background before saving.",
           ),
         );
-      const exported = await session.editor.api("export", {
-        entry_id: source.entry_id,
-        document: snapshot.document,
-        preview_variables: snapshot.preview_variables || {},
-        automation_edit: true,
+      const exported = await this.exportForAutomation(
+        session.editor,
+        source.entry_id,
+        snapshot,
+      );
+      if (!current()) return;
+      const written = await this.replaceWriteAction({
+        configId: source.configId,
+        matchSource: source,
+        expectedAction: source.originalAction,
+        exported,
+        current,
       });
-      if (!current()) return;
-      if (
-        exported.writable !== true ||
-        !Array.isArray(exported.validation_errors) ||
-        exported.validation_errors.length > 0 ||
-        !Array.isArray(exported.payload_data)
-      )
-        throw new Error(
-          t(this.hass, "The current design cannot be saved as a payload."),
-        );
-      const latest = await this.hass.callApi(
-        "GET",
-        `config/automation/config/${encodeURIComponent(source.configId)}`,
-      );
-      if (!current()) return;
-      if (
-        !latest ||
-        Array.isArray(latest) ||
-        typeof latest !== "object" ||
-        latest.id !== source.configId ||
-        !(Array.isArray(latest.actions) || Array.isArray(latest.action))
-      )
-        throw new Error(
-          t(this.hass, "The latest automation configuration is malformed."),
-        );
-      const expected = this.configSignature(source.originalAction);
-      const { matches, unsupported } = this.findWriteActions(latest, source);
-      if (unsupported.length && !matches.length)
-        throw new Error(
-          t(
-            this.hass,
-            "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
-          ),
-        );
-      const unchanged = matches.filter(
-        (candidate) =>
-          this.configSignature(this.actionAt(latest, candidate.path)) ===
-          expected,
-      );
-      // A duplicate of the imported action makes path-based selection unsafe,
-      // even if the old path still points at an unchanged copy.
-      const selected = unchanged.length === 1 ? unchanged[0] : null;
-      if (!selected)
-        throw new Error(
-          t(
-            this.hass,
-            "The selected write action changed since import. Reopen the automation before saving.",
-          ),
-        );
-      const updated = structuredClone(latest);
-      const action = this.actionAt(updated, selected.path);
-      const data = action?.data || action?.service_data;
-      if (
-        !action ||
-        (action.action || action.service) !== "ble_esl.write" ||
-        !data ||
-        !Array.isArray(data.payload)
-      )
-        throw new Error(
-          t(this.hass, "The selected write action is no longer available."),
-        );
-      data.payload = exported.payload_data;
-      if (exported.rotate) data.rotate = exported.rotate;
-      else delete data.rotate;
-      if (exported.design_source !== undefined)
-        data.design = exported.design_source;
-      else delete data.design;
-      if (exported.design_specs) data.design_specs = exported.design_specs;
-      else delete data.design_specs;
-      await this.hass.callApi(
-        "POST",
-        `config/automation/config/${encodeURIComponent(source.configId)}`,
-        updated,
-      );
+      if (!written) return;
+      const { action, path } = written;
       if (!current()) return;
       this.message("Automation saved.", "success");
       if (
@@ -1239,7 +1179,275 @@ class EslManager extends HTMLElement {
         session.editor.render();
       }
       source.originalAction = structuredClone(action);
-      source.selectedPath = selected.path;
+      source.selectedPath = path;
+    } catch (error) {
+      if (current())
+        this.message(
+          errorText(this.hass, "Could not save to the automation", error),
+        );
+    } finally {
+      if (run === this.automationSaveRun) this.automationSaving = false;
+    }
+  }
+  // The design as ble_esl.write data, refusing anything a payload cannot hold.
+  async exportForAutomation(editor, entryId, snapshot) {
+    const exported = await editor.api("export", {
+      entry_id: entryId,
+      document: snapshot.document,
+      preview_variables: snapshot.preview_variables || {},
+      automation_edit: true,
+    });
+    if (
+      exported.writable !== true ||
+      !Array.isArray(exported.validation_errors) ||
+      exported.validation_errors.length > 0 ||
+      !Array.isArray(exported.payload_data)
+    )
+      throw new Error(
+        t(this.hass, "The current design cannot be saved as a payload."),
+      );
+    return exported;
+  }
+  // Replace the design data of one ble_esl.write action in the latest saved
+  // automation: the one that still equals `expectedAction`, at `path` when
+  // given. Everything else in the automation stays as it is. Resolves with the
+  // written action, or null when `current()` says the request is obsolete.
+  async replaceWriteAction({
+    configId,
+    matchSource,
+    expectedAction,
+    exported,
+    current,
+    path = null,
+    background,
+  }) {
+    const latest = await this.hass.callApi(
+      "GET",
+      `config/automation/config/${encodeURIComponent(configId)}`,
+    );
+    if (!current()) return null;
+    if (
+      !latest ||
+      Array.isArray(latest) ||
+      typeof latest !== "object" ||
+      latest.id !== configId ||
+      !(Array.isArray(latest.actions) || Array.isArray(latest.action))
+    )
+      throw new Error(
+        t(this.hass, "The latest automation configuration is malformed."),
+      );
+    const expected = this.configSignature(expectedAction);
+    const { matches, unsupported } = this.findWriteActions(latest, matchSource);
+    if (unsupported.length && !matches.length)
+      throw new Error(
+        t(
+          this.hass,
+          "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
+        ),
+      );
+    const unchanged = matches.filter(
+      (candidate) =>
+        this.configSignature(this.actionAt(latest, candidate.path)) ===
+        expected,
+    );
+    let selected;
+    if (path) {
+      // A target picked moments ago: it must still be at that place, unchanged.
+      selected = unchanged.find(
+        (candidate) => JSON.stringify(candidate.path) === JSON.stringify(path),
+      );
+      if (!selected)
+        throw new Error(
+          t(this.hass, "The selected write action is no longer available."),
+        );
+    } else {
+      // A duplicate of the imported action makes path-based selection unsafe,
+      // even if the old path still points at an unchanged copy.
+      selected = unchanged.length === 1 ? unchanged[0] : null;
+      if (!selected)
+        throw new Error(
+          t(
+            this.hass,
+            "The selected write action changed since import. Reopen the automation before saving.",
+          ),
+        );
+    }
+    const updated = structuredClone(latest);
+    const action = this.actionAt(updated, selected.path);
+    const data = action?.data || action?.service_data;
+    if (
+      !action ||
+      (action.action || action.service) !== "ble_esl.write" ||
+      !data ||
+      !Array.isArray(data.payload)
+    )
+      throw new Error(
+        t(this.hass, "The selected write action is no longer available."),
+      );
+    data.payload = exported.payload_data;
+    if (exported.rotate) data.rotate = exported.rotate;
+    else delete data.rotate;
+    if (exported.design_source !== undefined)
+      data.design = exported.design_source;
+    else delete data.design;
+    if (exported.design_specs) data.design_specs = exported.design_specs;
+    else delete data.design_specs;
+    // White is what the action draws on when it names no background.
+    if (
+      background !== undefined &&
+      (data.background !== undefined || background !== "white")
+    )
+      data.background = background;
+    await this.hass.callApi(
+      "POST",
+      `config/automation/config/${encodeURIComponent(configId)}`,
+      updated,
+    );
+    return { action, path: selected.path };
+  }
+  // Automations that could take this design: those linked to the ESL whose
+  // ble_esl.write actions target it. The action being edited is not offered.
+  async automationTargets(entryId, exclude) {
+    const listing = await this.api("automations", { entry_id: entryId });
+    const candidates = (listing?.linked || []).filter(
+      (item) =>
+        !item.missing &&
+        item.id &&
+        ["on", "off"].includes(this.hass.states[item.entity_id]?.state),
+    );
+    const targets = await Promise.all(
+      candidates.map(async (item) => {
+        try {
+          const source = await this.api("automation_edit_source", {
+            entry_id: entryId,
+            entity_id: item.entity_id,
+          });
+          if (!source?.config_id || source.entity_id !== item.entity_id)
+            return null;
+          const config = await this.hass.callApi(
+            "GET",
+            `config/automation/config/${encodeURIComponent(source.config_id)}`,
+          );
+          if (
+            !config ||
+            Array.isArray(config) ||
+            typeof config !== "object" ||
+            config.id !== source.config_id
+          )
+            return null;
+          const matches = this.findWriteActions(config, source).matches.filter(
+            (match) =>
+              !(
+                exclude &&
+                exclude.configId === source.config_id &&
+                JSON.stringify(exclude.path) === JSON.stringify(match.path)
+              ),
+          );
+          if (!matches.length) return null;
+          return {
+            name:
+              this.hass.states[item.entity_id]?.attributes.friendly_name ||
+              config.alias ||
+              item.name ||
+              item.entity_id,
+            source,
+            config,
+            matches,
+          };
+        } catch {
+          // An automation that cannot be read safely is simply not offered.
+          return null;
+        }
+      }),
+    );
+    return targets.filter(Boolean);
+  }
+  // Save the design being edited into an existing automation of this ESL,
+  // chosen now: from a blank start, or a copy of a loaded automation's design.
+  async saveToOtherAutomation(snapshot) {
+    const editor = this.editor;
+    const session = this.automationEditSession;
+    const source = this.automationEditSource;
+    const entryId = snapshot?.entry_id;
+    const token = snapshot?.session_token || null;
+    if (
+      !editor ||
+      this.automationSaving ||
+      this.view !== "editor" ||
+      editor.mode !== "display" ||
+      editor.tag?.entry_id !== entryId ||
+      (session ? session.token : null) !== token ||
+      (session && (!source || source.session_token !== token))
+    )
+      return;
+    this.automationSaving = true;
+    const run = (this.automationSaveRun = (this.automationSaveRun || 0) + 1);
+    const current = () =>
+      run === this.automationSaveRun &&
+      this.view === "editor" &&
+      this.editor === editor &&
+      this.automationEditSession === session &&
+      editor.mode === "display" &&
+      editor.tag?.entry_id === entryId &&
+      (editor._automationSessionToken || null) === token;
+    try {
+      const targets = await this.automationTargets(
+        entryId,
+        source
+          ? { configId: source.configId, path: source.selectedPath }
+          : null,
+      );
+      if (!current()) return;
+      if (!targets.length)
+        throw new Error(
+          t(
+            this.hass,
+            "No automation with a ble_esl.write action for this ESL was found.",
+          ),
+        );
+      const choice = await chooseOne(
+        this.hass,
+        t(this.hass, "Choose the automation to save to:"),
+        targets.map((target) => target.name),
+      );
+      if (!current() || choice === null) return;
+      const target = targets[choice];
+      let match = target.matches[0];
+      if (target.matches.length > 1) {
+        const index = await chooseOne(
+          this.hass,
+          t(this.hass, "Choose the write action to replace:"),
+          target.matches.map((item) => item.label),
+        );
+        if (!current() || index === null) return;
+        match = target.matches[index];
+      }
+      const exported = await this.exportForAutomation(
+        editor,
+        entryId,
+        snapshot,
+      );
+      if (!current()) return;
+      const written = await this.replaceWriteAction({
+        configId: target.source.config_id,
+        matchSource: target.source,
+        expectedAction: this.actionAt(target.config, match.path),
+        exported,
+        current,
+        path: match.path,
+        background: snapshot.document?.background,
+      });
+      if (!written || !current()) return;
+      this.message("Saved to {name}.", "success", { name: target.name });
+      // A loaded automation keeps its own unsaved state; a design started here
+      // is now kept in the automation it was saved to.
+      if (
+        !session &&
+        JSON.stringify(editor.document) === JSON.stringify(snapshot.document)
+      ) {
+        editor.dirty = false;
+        editor.render();
+      }
     } catch (error) {
       if (current())
         this.message(

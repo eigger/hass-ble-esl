@@ -845,8 +845,10 @@ export class BleEslDesigner extends HTMLElement {
       this.templateAutomation = null;
     this.tag = tag;
     this.automationImportRun = (this.automationImportRun || 0) + 1;
+    // Designs live in automations: a tag opens blank (or with the browser
+    // draft left unsaved here), never with a design stored on the server.
     this.session.reset(
-      clone(this.drafts.get(tag.entry_id) || tag.document || emptyDocument()),
+      clone(this.drafts.get(tag.entry_id) || emptyDocument()),
       { dirty: this.drafts.has(tag.entry_id) },
     );
     this.preview = null;
@@ -1339,6 +1341,8 @@ export class BleEslDesigner extends HTMLElement {
         dirty: this.dirty,
         automationSessionPending: this._automationSessionPending,
         automationSaveMode: this._automationSaveMode,
+        // Saving into automations is the manager's job; a bare panel has none.
+        automationTargets: this.hasAttribute("managed"),
         showHiddenIcons: Boolean(this.showHiddenIcons),
         undoAvailable: this.undoStack.length > 0,
         redoAvailable: this.redoStack.length > 0,
@@ -2398,6 +2402,40 @@ export class BleEslDesigner extends HTMLElement {
     }
     if (action === "preview-variables") {
       this.editAutomationPreviewVariables();
+      return;
+    }
+    if (action === "save-to-other-automation") {
+      const sessionToken = this._automationSessionToken || null;
+      const entryId = this.tag?.entry_id;
+      const ready = () =>
+        entryId &&
+        this.mode === "display" &&
+        !this._automationSessionPending &&
+        (this._automationSessionToken || null) === sessionToken &&
+        this.tag?.entry_id === entryId;
+      if (!ready()) return;
+      try {
+        this.gestureFinish?.(false);
+        if (this.pendingUploads.size)
+          await Promise.all([...this.pendingUploads]);
+        if (!ready()) return;
+        this.dispatchEvent(
+          new CustomEvent("automation-save-as-request", {
+            detail: {
+              session_token: sessionToken,
+              entry_id: entryId,
+              document: clone(this.document),
+              preview_variables: this._automationSaveMode
+                ? clone(this._automationPreviewVariables || {})
+                : {},
+            },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      } catch (error) {
+        if (ready()) this.report(error);
+      }
       return;
     }
     if (action === "save" && this._automationSaveMode) {

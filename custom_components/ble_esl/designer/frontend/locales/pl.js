@@ -597,4 +597,12 @@ export default {
   "Tag orientation": "Orientacja etykiety",
   Portrait: "Pionowo",
   Landscape: "Poziomo",
+  "Save to existing automation…": "Zapisz w istniejącej automatyzacji…",
+  "Save to another automation…": "Zapisz w innej automatyzacji…",
+  "Choose the automation to save to:":
+    "Wybierz automatyzację, w której zapisać:",
+  "Choose the write action to replace:": "Wybierz akcję zapisu do zastąpienia:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "Nie znaleziono automatyzacji z akcją ble_esl.write dla tego ESL.",
+  "Saved to {name}.": "Zapisano w {name}.",
 };

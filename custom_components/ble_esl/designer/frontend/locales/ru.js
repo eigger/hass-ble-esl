@@ -599,4 +599,11 @@ export default {
   "Tag orientation": "Ориентация этикетки",
   Portrait: "Книжная",
   Landscape: "Альбомная",
+  "Save to existing automation…": "Сохранить в существующую автоматизацию…",
+  "Save to another automation…": "Сохранить в другую автоматизацию…",
+  "Choose the automation to save to:": "Выберите автоматизацию для сохранения:",
+  "Choose the write action to replace:": "Выберите действие записи для замены:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "Автоматизация с действием ble_esl.write для этого ESL не найдена.",
+  "Saved to {name}.": "Сохранено в {name}.",
 };

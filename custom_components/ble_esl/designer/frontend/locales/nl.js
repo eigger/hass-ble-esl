@@ -600,4 +600,13 @@ export default {
   "Tag orientation": "Labeloriëntatie",
   Portrait: "Staand",
   Landscape: "Liggend",
+  "Save to existing automation…": "Opslaan in bestaande automatisering…",
+  "Save to another automation…": "Opslaan in andere automatisering…",
+  "Choose the automation to save to:":
+    "Kies de automatisering om in op te slaan:",
+  "Choose the write action to replace:":
+    "Kies de schrijfactie om te vervangen:",
+  "No automation with a ble_esl.write action for this ESL was found.":
+    "Geen automatisering met een ble_esl.write-actie voor deze ESL gevonden.",
+  "Saved to {name}.": "Opgeslagen in {name}.",
 };
