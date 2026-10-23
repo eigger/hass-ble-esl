@@ -131,42 +131,49 @@ test("configure modal keeps rotation slider and numeric value in sync", async ({
   ).toHaveValue("73");
 });
 
-test("tag orientation changes the canvas without discarding the current design", async ({
+test("orientation belongs to the design: it turns the canvas, undoes, and is exported as rotate", async ({
   page,
 }) => {
-  const before = await page.evaluate(() =>
-    JSON.stringify(window.panel.document),
-  );
   const dimensions = await page.evaluate(() => [
     window.panel.tag.width,
     window.panel.tag.height,
   ]);
-  await page.route("**/api/designer", async (route) => {
-    if (route.request().postDataJSON().action === "orientation")
-      return route.fulfill({
-        json: { rotation: 90, width: dimensions[1], height: dimensions[0] },
-      });
-    return route.continue();
-  });
+  const elements = await page.evaluate(() =>
+    JSON.stringify(window.panel.document.elements),
+  );
   await page.getByRole("button", { name: "Portrait", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Portrait", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  const turned = await page.evaluate(() => [
+    window.panel.tag.width,
+    window.panel.tag.height,
+    window.panel.document.rotate,
+    JSON.stringify(window.panel.document.elements),
+  ]);
+  expect(turned.slice(0, 3)).toEqual([dimensions[1], dimensions[0], 90]);
+  expect(turned[3]).toBe(elements);
+  await page.getByRole("button", { name: "Payload YAML" }).click();
+  await expect(
+    page.locator("ble-esl-yaml-dialog dialog").getByLabel("YAML", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
   expect(
     await page.evaluate(() => [
       window.panel.tag.width,
       window.panel.tag.height,
+      window.panel.document.rotate ?? 0,
     ]),
-  ).toEqual(dimensions.toReversed());
-  expect(await page.evaluate(() => JSON.stringify(window.panel.document))).toBe(
-    before,
-  );
+  ).toEqual([dimensions[0], dimensions[1], 0]);
 });
 
 test("square tags have no portrait or landscape controls", async ({ page }) => {
   await page.evaluate(() => {
-    window.panel.tag.width = 200;
-    window.panel.tag.height = 200;
+    window.panel.tag.baseWidth = window.panel.tag.width = 200;
+    window.panel.tag.baseHeight = window.panel.tag.height = 200;
     window.panel.render();
   });
   await expect(

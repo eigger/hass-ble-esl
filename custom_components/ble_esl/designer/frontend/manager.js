@@ -480,7 +480,7 @@ class EslManager extends HTMLElement {
       automationData.linked.length > 0 ||
       this.automationErrors.has(tag.entry_id);
     const automationLabel = this.automationLabel(tag);
-    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.width} × ${tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd>${showAutomationDialog ? `<button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(automationLabel)}">${e(automationLabel)}</button>` : e(automationLabel)}</dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
+    return `<article class="card" data-entry="${e(tag.entry_id)}"><div class="card-heading"><div class="top"><h2>${this.entityButton(tag, "alias", alias, `class="alias" title="${t(this.hass, "Edit alias")}"`)}</h2><div class="battery">${this.batteryHtml(tag, battery)}</div></div><div class="muted product" title="${e(tag.title)}">${e(tag.title)}</div><div class="muted dimensions">${tag.baseWidth ?? tag.width} × ${tag.baseHeight ?? tag.height} · ${e(tag.colors)}</div></div><div class="image">${url ? `<button data-entity="${e(tag.entities.last_updated_content)}" aria-label="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"><img src="${e(url)}" alt="${e(t(this.hass, "Last successful image for {alias}", { alias }))}"></button>` : `<span class="muted">${t(this.hass, "No successful image")}</span>`}</div><div class="image-caption">${url ? t(this.hass, "Last successful image") : ""}</div><div class="badges">${this.hasDraft(tag) ? `<span class="badge draft">${t(this.hass, "Unsaved changes")}</span>` : ""}${tag.writable === false ? `<span class="badge read-only">${t(this.hass, "Read only")}</span>` : ""}${this.lowBattery(tag) ? this.entityButton(tag, tag.entities?.battery_low ? "battery_low" : "battery", t(this.hass, "Low battery"), `class="badge low-battery" title="${t(this.hass, "Low battery")}"`) : ""}${this.entityButton(tag, "display_in_sync", syncLabel, `class="badge ${synced ? "good" : ""}"`)}${this.entityButton(tag, "write_duration", error ? t(this.hass, "Transmission error") : !valid(duration) || (!duration.attributes.success && !duration.attributes.skipped && !duration.attributes.error) ? t(this.hass, "No transmission result") : duration.attributes.skipped ? t(this.hass, "Skipped: {reason}", { reason: duration.attributes.skipped }) : t(this.hass, "No error"), `class="badge ${error ? "bad" : ""}"`)}</div><dl class="facts"><dt>${t(this.hass, "Last successful send")}</dt><dd>${this.entityButton(tag, "last_updated_content", this.relative(at), `title="${e(at ? new Date(at).toLocaleString(this.hass?.locale?.language || navigator.language) : t(this.hass, "No successful send"))}"`)}</dd><dt>${t(this.hass, "Transmission duration")}</dt><dd>${this.entityButton(tag, "write_duration", durationValue)}</dd><dt>${t(this.hass, "Automations")}</dt><dd>${showAutomationDialog ? `<button data-action="automations" data-entry="${e(tag.entry_id)}" title="${e(automationLabel)}">${e(automationLabel)}</button>` : e(automationLabel)}</dd></dl><div class="actions">${this.cardActions(tag)}</div></article>`;
   }
   renderCards() {
     this.updateEditorContext();
@@ -891,6 +891,12 @@ class EslManager extends HTMLElement {
       const prompted = new Set();
       const design =
         data.design === undefined ? null : decodeAutomationDesign(data.design);
+      // The action's own `rotate` wins, as it does when the automation runs.
+      const rotate = [0, 90, 180, 270].includes(
+        Number(data.rotate ?? design?.rotate ?? 0),
+      )
+        ? Number(data.rotate ?? design?.rotate ?? 0)
+        : 0;
       let imported;
       for (let attempt = 0; attempt < 64; attempt++) {
         imported = await editor.prepareAutomationPayload(
@@ -898,6 +904,7 @@ class EslManager extends HTMLElement {
           data.background,
           entryId,
           previewVariables,
+          rotate,
         );
         if (!current()) return;
         const missing = imported.missing_parameters || [];
@@ -950,6 +957,7 @@ class EslManager extends HTMLElement {
           entryId,
           token,
           previewVariables,
+          rotate,
         )
       ) {
         if (!current()) return;
@@ -1209,6 +1217,8 @@ class EslManager extends HTMLElement {
           t(this.hass, "The selected write action is no longer available."),
         );
       data.payload = exported.payload_data;
+      if (exported.rotate) data.rotate = exported.rotate;
+      else delete data.rotate;
       if (exported.design_source !== undefined)
         data.design = exported.design_source;
       else delete data.design;

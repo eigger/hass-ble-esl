@@ -298,41 +298,57 @@ def test_rotated_size_matches_pillow_for_free_angles(width, height):
         assert rotated_size(width, height, angle) == expected
 
 
-async def test_tag_orientation_changes_editor_size_and_written_output(hass, wolink_entry):
+async def test_design_orientation_sets_canvas_export_and_written_output(hass, wolink_entry):
     from custom_components.ble_esl.services import build_write_job_from_data
 
-    hass.config_entries.async_update_entry(
-        wolink_entry, options={**wolink_entry.options, "display_rotation": 90}
-    )
     designer = hass.data[KEY]
     physical = wolink_entry.runtime_data.preset
-    logical = designer.preset(wolink_entry)
+    source = {**icon_document(rotation=0), "rotate": 90}
+    logical = designer.preset(wolink_entry, source["rotate"])
     assert (logical.width, logical.height) == (physical.height, physical.width)
-    source = icon_document(rotation=0)
+    assert "display_rotation" not in wolink_entry.options
+
     preview = await designer.preview(wolink_entry, source)
-    data = {"design": source, "payload": preview["payload"]}
-    job = await build_write_job_from_data(hass, wolink_entry, data)
+    exported = await designer.export(wolink_entry, source)
+    assert exported["rotate"] == 90
+    assert "rotate: 90" in exported["service"]
+    upright = await designer.export(wolink_entry, icon_document(rotation=0))
+    assert upright["rotate"] == 0
+    assert "rotate:" not in upright["service"].split("design:")[0]
+
+    # The action's design carries the orientation; an explicit `rotate` overrides it.
+    job = await build_write_job_from_data(
+        hass, wolink_entry, {"design": exported["design_source"], "payload": []}
+    )
     assert job.image.size == (physical.width, physical.height)
     editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(
         "RGB"
     )
     assert ImageChops.difference(job.image, editor_image.rotate(-90, expand=True)).getbbox() is None
+    plain_job = await build_write_job_from_data(
+        hass,
+        wolink_entry,
+        {"payload": exported["payload_data"], "rotate": 90, "background": "white"},
+    )
+    assert ImageChops.difference(plain_job.image, job.image).getbbox() is None
 
 
-async def test_orientation_setting_is_persisted_through_editor_api(
-    hass, wolink_entry, hass_ws_client
-):
+async def test_import_payload_uses_the_automation_orientation(hass, wolink_entry, hass_ws_client):
+    designer = hass.data[KEY]
+    physical = wolink_entry.runtime_data.preset
     client = await hass_ws_client(hass)
     await client.send_json(
         {
             "id": 1,
             "type": "ble_esl/designer",
-            "action": "orientation",
+            "action": "import_payload",
             "entry_id": wolink_entry.entry_id,
-            "rotation": 270,
+            "payload": [{"type": "text", "value": "Hi", "x": 2, "y": 2, "size": 12}],
+            "rotation": 90,
         }
     )
     response = await client.receive_json()
     assert response["success"]
-    assert response["result"]["rotation"] == 270
-    assert wolink_entry.options["display_rotation"] == 270
+    assert response["result"]["issues"] == []
+    assert response["result"]["different_pixels"] == 0
+    assert designer.preset(wolink_entry).width == physical.width

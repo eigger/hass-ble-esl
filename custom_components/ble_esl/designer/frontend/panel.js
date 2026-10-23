@@ -423,11 +423,13 @@ export class BleEslDesigner extends HTMLElement {
     background,
     entryId,
     previewVariables = {},
+    rotate = 0,
   ) {
     return this.api("import_payload", {
       entry_id: entryId,
       payload,
       background,
+      rotation: rotate,
       existing: 0,
       preview_variables: previewVariables,
     });
@@ -440,6 +442,7 @@ export class BleEslDesigner extends HTMLElement {
     entryId,
     token,
     previewVariables = {},
+    rotate = 0,
   ) {
     if (
       token !== this._automationSessionToken ||
@@ -454,6 +457,8 @@ export class BleEslDesigner extends HTMLElement {
     document.background = palette(this.tag.colors).includes(background)
       ? background
       : "white";
+    if (rotate) document.rotate = rotate;
+    else delete document.rotate;
     this.session.reset(document, {
       selected: result.elements.at(-1)?.id || null,
     });
@@ -808,7 +813,25 @@ export class BleEslDesigner extends HTMLElement {
     this.shadowRoot.querySelector(".loading button")?.focus();
   }
   api(action, extra = {}) {
-    return this.hass.callWS({ type: "ble_esl/designer", action, ...extra });
+    // The canvas the server draws on follows the design's orientation.
+    return this.hass.callWS({
+      type: "ble_esl/designer",
+      action,
+      rotation: this.session?.document?.rotate || 0,
+      ...extra,
+    });
+  }
+  // The design owns its orientation (the write action's `rotate`); the tag keeps
+  // its physical size and the editor canvas is that size turned accordingly.
+  syncOrientation() {
+    const tag = this.tag;
+    if (!tag || this.mode === "template") return;
+    tag.baseWidth ??= tag.width;
+    tag.baseHeight ??= tag.height;
+    const turned = ((this.session?.document?.rotate || 0) / 90) % 2 === 1;
+    tag.width = turned ? tag.baseHeight : tag.baseWidth;
+    tag.height = turned ? tag.baseWidth : tag.baseHeight;
+    tag.rotation = this.session?.document?.rotate || 0;
   }
   load(tag) {
     if (
@@ -1212,6 +1235,7 @@ export class BleEslDesigner extends HTMLElement {
       this.renderLoading();
       return;
     }
+    this.syncOrientation();
     this.finishTextEdit();
     const activeControl = this.shadowRoot.activeElement;
     let focusSelector = null;
@@ -1451,6 +1475,7 @@ export class BleEslDesigner extends HTMLElement {
     this.style.scrollPaddingTop = offsets.scrollPaddingTop;
   }
   fitPreview() {
+    this.syncOrientation();
     if (this.zoomMode !== "fit" || !this.tag) return;
     const previewWindow = this.shadowRoot.querySelector(".canvas-wrap");
     if (!previewWindow) return;
@@ -2362,7 +2387,7 @@ export class BleEslDesigner extends HTMLElement {
     if (handleLayerListClick(this, button)) return;
     const action = button.dataset.action;
     if (action === "tag-orientation") {
-      await this.setTagOrientation(Number(button.dataset.rotation));
+      this.setTagOrientation(Number(button.dataset.rotation));
       return;
     }
     if (action === "show-hidden-icons") {
@@ -2857,19 +2882,13 @@ export class BleEslDesigner extends HTMLElement {
     // Typed geometry is kept to the label when the field is committed.
     clampBox(this.element, this.tag, false);
   }
-  async setTagOrientation(rotation) {
-    try {
-      const result = await this.api("orientation", {
-        entry_id: this.tag.entry_id,
-        rotation,
-      });
-      Object.assign(this.tag, result);
-      this.render();
-      this.fitPreview();
-      this.queuePreview();
-    } catch (error) {
-      this.report(error);
-    }
+  setTagOrientation(rotation) {
+    if ((this.document.rotate || 0) === rotation) return;
+    this.pushUndo(clone(this.document));
+    if (rotation) this.document.rotate = rotation;
+    else delete this.document.rotate;
+    this.edited();
+    this.fitPreview();
   }
   async change(event) {
     if (this.busy) return;

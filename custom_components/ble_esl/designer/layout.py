@@ -149,6 +149,8 @@ DOCUMENT = vol.Schema(
         vol.Required("version"): 1,
         vol.Required("elements"): vol.All([ELEMENT], vol.Length(max=100)),
         vol.Optional("background", default="white"): COLOR,
+        # The tag is mounted turned: the canvas is drawn upright, then rotated.
+        vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
     }
 )
 
