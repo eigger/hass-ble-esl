@@ -15,7 +15,7 @@ jobs:
   # Current Home Assistant (requirements_test.txt), plus the exact minimum
   # imagespec/blesession versions declared in manifest.json.
   current:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.1
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.2
     with:
       domain: ble_esl
       python-versions: '["3.14"]'
@@ -29,7 +29,7 @@ jobs:
   # Exact minimum Home Assistant declared in hacs.json (2025.12.0). Its
   # plugin/Python pair is separate from current and is not raised with it.
   minimum-ha:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.1
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.2
     with:
       domain: ble_esl
       python-versions: '["3.13"]'
@@ -50,7 +50,7 @@ jobs:
         persist-credentials: false
     # The demo server renders with the integration's own code, which imports
     # the same Home Assistant components the Python tests need.
-    - uses: eigger/hass-repo-standards/actions/python-environment@v1.1.1 # validated environment implementation
+    - uses: eigger/hass-repo-standards/actions/python-environment@v1.1.2 # validated environment implementation
       with:
         domain: ble_esl
         python-version: '3.14'
