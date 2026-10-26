@@ -15,7 +15,7 @@ jobs:
   # Current Home Assistant (requirements_test.txt), plus the exact minimum
   # imagespec/blesession versions declared in manifest.json.
   current:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.2
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.3
     with:
       domain: ble_esl
       python-versions: '["3.14"]'
@@ -23,13 +23,13 @@ jobs:
       dependency-modes: '["current", "minimum"]'
       minimum-packages: '["imagespec", "blesession"]'
       ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
-      expected-ha-version: '2026.10.1'
+      # Current HA is checked against the installed test plugin's exact pin.
       test-profile: ha
       pytest-args: tests/components/ble_esl/ -v --timeout 120
   # Exact minimum Home Assistant declared in hacs.json (2025.12.0). Its
   # plugin/Python pair is separate from current and is not raised with it.
   minimum-ha:
-    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.2
+    uses: eigger/hass-repo-standards/.github/workflows/python-tests.yml@v1.1.3
     with:
       domain: ble_esl
       python-versions: '["3.13"]'
@@ -50,13 +50,13 @@ jobs:
         persist-credentials: false
     # The demo server renders with the integration's own code, which imports
     # the same Home Assistant components the Python tests need.
-    - uses: eigger/hass-repo-standards/actions/python-environment@v1.1.2 # validated environment implementation
+    - uses: eigger/hass-repo-standards/actions/python-environment@v1.1.3 # validated environment implementation
       with:
         domain: ble_esl
         python-version: '3.14'
         requirements: requirements_test.txt
         ha-components: 'bluetooth usb recorder diagnostics frontend panel_custom websocket_api'
-        expected-ha-version: '2026.10.1'
+        # Follow the same installed test plugin pin as the current HA tests.
         test-profile: ha
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
