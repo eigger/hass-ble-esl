@@ -130,3 +130,10 @@
 - Scope: central `uses`, reusable-workflow `standards-ref`, `.hass-standards.json`, and the current STANDARDS header only. Historical refs (ca740d88b32fa5dcbc94c41fce2908450c76ed50) remain as evidence; runtime code, dependencies, support minimum, manifest, integration version and tests are unchanged.
 - Verification: Python 3.14 central checker before/after, published immutable release attestation, focused reference/ZIP checks, actionlint and diff check. PR CI and merge remain pending.
 - Review: generated reference change self-review under GOV-05; no device or HA runtime test is claimed for this refs-only PR.
+
+## 2026-10-27 HA 기대값 자동 모드 부분 적용
+
+- 기준: immutable [v1.1.3](https://github.com/eigger/hass-repo-standards/releases/tag/v1.1.3), resolved SHA `c8c2771a2de68769af40f56e19e958e374e6e091`; 대상 시작 `5137b9d`, 구현 `8330f91` 이후 본 PR의 문서 기록. 기존 전체 채택 판정·예외와 과거 검증은 유지합니다.
+- 계획/범위: 중앙 참조·메타데이터를 중앙 bootstrap 렌더러로 동기화하고 current/editor의 고정 기대값만 제거합니다. 플러그인 0.13.373/HA 2026.10.2 조합을 검증하며 minimum-ha의 2025.12.0·최소 requirements/constraints·지원 메타데이터·통합 runtime은 보존합니다.
+- 구현 root / GOV-05 독립 리뷰 review_pr36. 실제 로컬 명령·설치 버전·초기 CRLF 실패와 재검증, 독립 리뷰 결과·최종 대상 SHA·각 원격 CI/설치 버전은 [PR #277](https://github.com/eigger/hass-ble-esl/pull/277)에 한 번 기록합니다. 필수 CI 실패·대기는 성공으로 처리하지 않습니다. 실제 기기·HA UI는 미검증입니다.
+- 기존 Dependabot은 중앙 참조 PR과 same-major 자동 병합을 계속 담당하며 updater는 고정 expected-ha-version 입력을 제거하지 않습니다. 이번 수동 입력 전환은 이후 플러그인 갱신에서 기대 버전을 중복 수정하지 않기 위한 일회성 변경입니다.
