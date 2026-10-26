@@ -2,6 +2,6 @@
 # The integration's own requirements come from manifest.json and the Home
 # Assistant component requirements are installed by the shared python-environment
 # action (see .github/workflows/tests.yml).
-pytest-homeassistant-custom-component==0.13.372
+pytest-homeassistant-custom-component==0.13.373
 bluetooth-sensor-state-data==1.9.0
 sensor-state-data==2.20.0
