@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..base import AdvertisementInfo, Capabilities, EslProtocol
 from . import writer
 from .devices import PRESETS, preset_for_advertisement
-from .parser import EtagParser, is_etag_advertisement
+from .parser import EtagParser, battery_percentage, is_etag_advertisement
 
 if TYPE_CHECKING:
     from home_assistant_bluetooth import BluetoothServiceInfoBleak
@@ -20,7 +20,7 @@ class EtagProtocol(EslProtocol):
     label = "ETAG"
     name = "Hipoink / ETAG (FFE0)"
     capabilities = Capabilities(
-        passive_battery=False,
+        passive_battery=True,
         session_battery=False,
         session_temperature=False,
         palettes=("BWR",),
@@ -33,11 +33,15 @@ class EtagProtocol(EslProtocol):
     def parse_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> AdvertisementInfo | None:
-        """ETAG advertisements carry no readings, only the model."""
+        """ETAG model and the advertised battery percentage, when available."""
         preset = preset_for_advertisement(service_info)
         if preset is None:
             return None
-        return AdvertisementInfo(model_key=preset.key)
+        percent = battery_percentage(service_info)
+        return AdvertisementInfo(
+            model_key=preset.key,
+            raw={} if percent is None else {"battery_percent": percent},
+        )
 
 
 __all__ = [
