@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0-beta.2
+
+### Added
+
+- ETAG tags now report battery percentage and a low-battery indicator (≤10%) from the raw advertisement; requires a scanner and Home Assistant version that expose raw advertisements.
+
 ## 1.7.0-beta.1
 
 ### Added
