@@ -1,15 +1,10 @@
 # Changelog
 
-## 1.7.0-beta.2
+## 1.7.0
 
 ### Added
 
 - ETAG tags now report battery percentage and a low-battery indicator (≤10%) from the raw advertisement; requires a scanner and Home Assistant version that expose raw advertisements.
-
-## 1.7.0-beta.1
-
-### Added
-
 - Designer elements can be rotated to any angle with a slider or numeric entry; free-angle groups are exported as portable imagespec images.
 - Rectangular tags can be switched between portrait and landscape from the editor toolbar.
 - Home Assistant Material icons are used throughout the manager and editor, and hidden or null icons show a selectable preview-only ghost.
