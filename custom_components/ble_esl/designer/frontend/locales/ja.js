@@ -603,8 +603,6 @@ export default {
   "Saved to {name}.": "{name} に保存しました。",
   "Restore the unsaved changes you made to this automation design?":
     "このオートメーションデザインの未保存の変更を復元しますか？",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "このアクションのペイロードはデザインと異なります。オートメーション実行時にはデザインが使われ、保存するとペイロードが置き換えられます。",
   "This automation rotation is not supported.":
     "このオートメーションの回転はサポートされていません。",
 };

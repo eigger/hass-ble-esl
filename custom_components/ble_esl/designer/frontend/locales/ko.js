@@ -589,8 +589,6 @@ export default {
   "Saved to {name}.": "{name}에 저장했습니다.",
   "Restore the unsaved changes you made to this automation design?":
     "이 자동화 디자인의 저장하지 않은 변경 사항을 복원할까요?",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "이 동작의 페이로드가 디자인과 다릅니다. 자동화가 실행될 때는 디자인이 사용되며, 저장하면 페이로드가 교체됩니다.",
   "This automation rotation is not supported.":
     "이 자동화의 회전 값은 지원되지 않습니다.",
 };

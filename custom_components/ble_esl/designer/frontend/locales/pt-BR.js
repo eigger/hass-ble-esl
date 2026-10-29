@@ -606,8 +606,6 @@ export default {
   "Saved to {name}.": "Salvo em {name}.",
   "Restore the unsaved changes you made to this automation design?":
     "Restaurar as alterações não salvas feitas neste design de automação?",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "O payload desta ação difere do seu design. O design é usado quando a automação é executada, e salvar substitui o payload.",
   "This automation rotation is not supported.":
     "A rotação desta automação não é compatível.",
 };

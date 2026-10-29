@@ -613,18 +613,7 @@ class EslManager extends HTMLElement {
     ) {
       // Switching ESLs (the browser's Back included) hands the editor back to
       // the tag design: ask before dropping unsaved automation changes.
-      if (
-        this.editor?.dirty &&
-        !window.confirm(
-          t(
-            this.hass,
-            "Discard the unsaved changes to this automation design?",
-          ),
-        )
-      ) {
-        this.rememberTag(this.automationEditSession.entry_id);
-        return false;
-      }
+      if (!this.confirmDiscardAutomationEdit()) return false;
       this.automationEditRun = (this.automationEditRun || 0) + 1;
       this.clearAutomationEdit(this.automationEditSession);
     }
@@ -665,11 +654,28 @@ class EslManager extends HTMLElement {
     this.updateEditorContext();
     return this.editor?.tag?.entry_id === tag.entry_id || !this.editor?.ready;
   }
+  // Leaving an automation design hands the editor back to the tag design. Until
+  // the import is done the editor still holds that tag design, which is kept.
+  // Declining puts the URL back, as the browser's Back may already have left it.
+  confirmDiscardAutomationEdit() {
+    if (
+      !this.automationEditSession ||
+      !this.automationEditSource ||
+      !this.editor?.dirty ||
+      window.confirm(
+        t(this.hass, "Discard the unsaved changes to this automation design?"),
+      )
+    )
+      return true;
+    this.rememberTag(this.automationEditSession.entry_id);
+    return false;
+  }
   clearAutomationEdit(session = this.automationEditSession) {
     if (!session || this.automationEditSession !== session) return;
+    const source = this.automationEditSource;
     this.automationEditSession = null;
     this.automationEditSource = null;
-    this.clearAutomationDraft();
+    this.clearAutomationDraft(source);
     this.automationSaveRun = (this.automationSaveRun || 0) + 1;
     this.updateEditorContext();
     this.automationSaving = false;
@@ -1023,8 +1029,6 @@ class EslManager extends HTMLElement {
       );
       if (this.restoreAutomationDraft(editor, this.automationEditSource))
         return;
-      if (design)
-        this.checkPayloadDrift(editor, data.payload, previewVariables, current);
     } catch (error) {
       if (!current()) return;
       this.clearAutomationEdit(session);
@@ -1041,17 +1045,18 @@ class EslManager extends HTMLElement {
     if (
       !source ||
       this.automationEditSession?.editor !== editor ||
-      !editor?.dirty ||
       editor.mode !== "display"
     )
       return;
+    if (!editor.dirty) {
+      this.clearAutomationDraft(source);
+      return;
+    }
     try {
       window.sessionStorage.setItem(
         AUTOMATION_DRAFT_KEY,
         JSON.stringify({
-          config_id: source.configId,
-          entry_id: source.entry_id,
-          entity_id: source.entity_id,
+          ...this.automationDraftIdentity(source),
           document: editor.document,
         }),
       );
@@ -1059,30 +1064,46 @@ class EslManager extends HTMLElement {
       // Storage may be full or blocked; the draft is then simply not kept.
     }
   }
-  clearAutomationDraft() {
+  // Which write action of which automation a draft belongs to: an edited or
+  // different action must not get another one's unsaved design.
+  automationDraftIdentity(source) {
+    return {
+      config_id: source.configId,
+      entry_id: source.entry_id,
+      entity_id: source.entity_id,
+      path: JSON.stringify(source.selectedPath),
+      signature: this.configSignature(source.originalAction),
+    };
+  }
+  readAutomationDraft(source) {
+    try {
+      const draft = JSON.parse(
+        window.sessionStorage.getItem(AUTOMATION_DRAFT_KEY) || "null",
+      );
+      const identity = this.automationDraftIdentity(source);
+      return draft &&
+        Object.keys(identity).every((key) => draft[key] === identity[key])
+        ? draft
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  // Removes the stored draft only when it belongs to `source`: the end of an
+  // unrelated session must not discard another automation's unsaved work.
+  clearAutomationDraft(source) {
+    if (!source || !this.readAutomationDraft(source)) return;
     try {
       window.sessionStorage.removeItem(AUTOMATION_DRAFT_KEY);
     } catch {
       // Nothing to clean up.
     }
   }
-  // True when an unsaved draft of this very automation was put back.
+  // True when an unsaved draft of this very automation action was put back.
   restoreAutomationDraft(editor, source) {
-    let draft = null;
-    try {
-      draft = JSON.parse(
-        window.sessionStorage.getItem(AUTOMATION_DRAFT_KEY) || "null",
-      );
-    } catch {
-      return false;
-    }
-    if (
-      draft?.config_id !== source.configId ||
-      draft.entry_id !== source.entry_id ||
-      draft.entity_id !== source.entity_id
-    )
-      return false;
-    this.clearAutomationDraft();
+    const draft = this.readAutomationDraft(source);
+    if (!draft) return false;
+    this.clearAutomationDraft(source);
     if (
       !Array.isArray(draft.document?.elements) ||
       !window.confirm(
@@ -1094,30 +1115,6 @@ class EslManager extends HTMLElement {
     )
       return false;
     return editor.restoreAutomationDraft(draft.document, source.session_token);
-  }
-  // Shown once after opening a design whose stored payload no longer matches
-  // it, e.g. after the payload was edited in Home Assistant's own editor.
-  async checkPayloadDrift(editor, payload, previewVariables, current) {
-    try {
-      const exported = await editor.api("export", {
-        entry_id: editor.tag.entry_id,
-        document: editor.document,
-        preview_variables: previewVariables,
-        automation_edit: true,
-      });
-      if (
-        current() &&
-        Array.isArray(exported.payload_data) &&
-        this.configSignature(exported.payload_data) !==
-          this.configSignature(payload)
-      )
-        this.message(
-          "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.",
-          "info",
-        );
-    } catch {
-      // Only a hint: the design itself opened fine.
-    }
   }
   configSignature(value) {
     if (Array.isArray(value))
@@ -1290,7 +1287,7 @@ class EslManager extends HTMLElement {
       if (!written) return;
       const { action, path } = written;
       if (!current()) return;
-      this.clearAutomationDraft();
+      this.clearAutomationDraft(source);
       this.message("Automation saved.", "success");
       if (
         JSON.stringify(session.editor.document) ===
@@ -1620,17 +1617,7 @@ class EslManager extends HTMLElement {
     if (button.dataset.action === "dashboard") {
       // Leaving an automation design hands the editor back to the tag design,
       // so its unsaved changes would be lost; the tag design's own draft is kept.
-      if (
-        this.automationEditSession &&
-        this.editor?.dirty &&
-        !window.confirm(
-          t(
-            this.hass,
-            "Discard the unsaved changes to this automation design?",
-          ),
-        )
-      )
-        return;
+      if (!this.confirmDiscardAutomationEdit()) return;
       this.rememberTag(null);
       this.view = "dashboard";
       this.automationEditRun = (this.automationEditRun || 0) + 1;

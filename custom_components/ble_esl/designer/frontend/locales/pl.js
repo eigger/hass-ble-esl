@@ -600,8 +600,6 @@ export default {
   "Saved to {name}.": "Zapisano w {name}.",
   "Restore the unsaved changes you made to this automation design?":
     "Przywrócić niezapisane zmiany w projekcie tej automatyzacji?",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "Ładunek tej akcji różni się od jej projektu. Podczas działania automatyzacji używany jest projekt, a zapis zastępuje ładunek.",
   "This automation rotation is not supported.":
     "Obrót w tej automatyzacji nie jest obsługiwany.",
 };

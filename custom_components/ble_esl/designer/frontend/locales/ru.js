@@ -601,8 +601,6 @@ export default {
   "Saved to {name}.": "Сохранено в {name}.",
   "Restore the unsaved changes you made to this automation design?":
     "Восстановить несохранённые изменения в дизайне этой автоматизации?",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "Payload этого действия отличается от дизайна. При запуске автоматизации используется дизайн, а сохранение заменит payload.",
   "This automation rotation is not supported.":
     "Поворот в этой автоматизации не поддерживается.",
 };

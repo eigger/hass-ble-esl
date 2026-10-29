@@ -568,8 +568,6 @@ export default {
   "Saved to {name}.": "已保存到 {name}。",
   "Restore the unsaved changes you made to this automation design?":
     "要恢复此自动化设计中未保存的更改吗？",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "此操作的 payload 与其设计不一致。自动化运行时使用设计，保存会替换 payload。",
   "This automation rotation is not supported.":
     "不支持此自动化的旋转设置。",
 };

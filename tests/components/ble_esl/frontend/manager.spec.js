@@ -1244,6 +1244,97 @@ test("the create automation dialog refuses a design with validation errors", asy
   expect(state).toEqual({ disabled: true, calls: 0 });
 });
 
+test("declining to discard an edited automation design keeps it and its URL", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const prompts = [];
+  page.on("dialog", async (dialog) => {
+    prompts.push(dialog.message());
+    await dialog.dismiss();
+  });
+  await page.getByRole("button", { name: "Dashboard" }).click();
+  await expect.poll(() => prompts.length).toBe(1);
+  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  expect(page.url()).toContain("tag=demo-writable");
+});
+
+test("disabled write steps are not offered for editing", async ({ page }) => {
+  const matches = await page.evaluate(() => {
+    const step = (extra = {}) => ({
+      action: "ble_esl.write",
+      target: { device_id: "dev" },
+      data: { payload: [] },
+      ...extra,
+    });
+    const config = {
+      id: "x",
+      actions: [
+        step({ enabled: false }),
+        { enabled: false, sequence: [step()] },
+        step({ alias: "live" }),
+      ],
+    };
+    return window.manager
+      .findWriteActions(config, { device_id: "dev", entity_ids: [] })
+      .matches.map((item) => item.label);
+  });
+  expect(matches).toEqual(["live"]);
+});
+
+test("a stored draft of another write action is not offered back", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.evaluate(() => {
+    window.manager.persistAutomationDraft();
+    const key = "ble_esl_designer_automation_draft";
+    const draft = JSON.parse(sessionStorage.getItem(key));
+    draft.path = JSON.stringify(["actions", 99]);
+    sessionStorage.setItem(key, JSON.stringify(draft));
+  });
+  await page.goto("/?manager");
+  await expect(page.locator(".card")).toHaveCount(2);
+  const prompts = [];
+  page.on("dialog", async (dialog) => {
+    prompts.push(dialog.message());
+    await dialog.accept();
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  expect(prompts).toEqual([]);
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("ble_esl_designer_automation_draft"),
+    ),
+  ).not.toBeNull();
+});
+
 test("unsaved automation design changes are offered back after leaving the panel", async ({
   page,
 }) => {

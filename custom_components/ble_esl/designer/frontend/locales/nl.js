@@ -604,8 +604,6 @@ export default {
   "Saved to {name}.": "Opgeslagen in {name}.",
   "Restore the unsaved changes you made to this automation design?":
     "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen?",
-  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
-    "De payload van deze actie wijkt af van het ontwerp. Bij het uitvoeren van de automatisering wordt het ontwerp gebruikt en opslaan vervangt de payload.",
   "This automation rotation is not supported.":
     "De rotatie van deze automatisering wordt niet ondersteund.",
 };
