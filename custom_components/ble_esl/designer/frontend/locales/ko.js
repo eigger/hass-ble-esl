@@ -525,8 +525,6 @@ export default {
     "이 자동화는 ESL 하나를 안전하게 식별할 수 없는 구역·층·레이블 또는 템플릿 대상을 사용합니다.",
   "The automation import is no longer current.":
     "자동화 가져오기 요청이 더 이상 유효하지 않습니다.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "배경은 자동화 payload에 포함되지 않습니다. 저장하기 전에 가져온 배경으로 되돌리세요.",
   "Design gallery": "디자인 갤러리",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "완성된 디자인을 선택하세요. 편집할 수 있는 일반 요소로 추가됩니다.",
@@ -589,4 +587,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "이 ESL용 ble_esl.write 동작이 있는 자동화를 찾지 못했습니다.",
   "Saved to {name}.": "{name}에 저장했습니다.",
+  "Restore the unsaved changes you made to this automation design?":
+    "이 자동화 디자인의 저장하지 않은 변경 사항을 복원할까요?",
+  "This automation rotation is not supported.":
+    "이 자동화의 회전 값은 지원되지 않습니다.",
 };

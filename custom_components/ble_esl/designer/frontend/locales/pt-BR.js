@@ -459,8 +459,6 @@ export default {
     "Esta automação usa destinos de área, andar, etiqueta ou modelo que não podem ser associados com segurança a um único ESL.",
   "The automation import is no longer current.":
     "A importação da automação não está mais atualizada.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "O plano de fundo não faz parte do payload da automação. Restaure o plano de fundo importado antes de salvar.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Informe um valor JSON de pré-visualização para {name}. Use uma string entre aspas, um número, true/false, uma matriz ou um objeto. Esses valores não são salvos.",
   "This preview parameter is still undefined: {name}":
@@ -606,4 +604,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Nenhuma automação com uma ação ble_esl.write para este ESL foi encontrada.",
   "Saved to {name}.": "Salvo em {name}.",
+  "Restore the unsaved changes you made to this automation design?":
+    "Restaurar as alterações não salvas feitas neste design de automação?",
+  "This automation rotation is not supported.":
+    "A rotação desta automação não é compatível.",
 };

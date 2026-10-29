@@ -24,6 +24,7 @@ const css = `
 @media(max-width:650px){header,.editor-nav{padding:0 12px}.editor-nav{flex-wrap:wrap;height:auto;min-height:var(--header-height,56px);padding-top:6px;padding-bottom:6px;row-gap:6px}.editor-nav .editor-context{order:3;flex:1 1 100%}.controls{padding:16px 12px 12px}.summary{padding:0 12px 16px}.grid{padding:0 12px 16px;grid-template-columns:minmax(0,1fr);gap:12px}.message{margin:0}.card{padding:16px}}
 `;
 
+const AUTOMATION_DRAFT_KEY = "ble_esl_designer_automation_draft";
 class EslManager extends HTMLElement {
   constructor() {
     super();
@@ -190,6 +191,7 @@ class EslManager extends HTMLElement {
     }, 60000);
   }
   disconnectedCallback() {
+    this.persistAutomationDraft();
     window.removeEventListener("popstate", this.onHistory);
     this.removeEventListener("tag-changed", this.onTagChanged);
     clearInterval(this.clockTimer);
@@ -590,12 +592,16 @@ class EslManager extends HTMLElement {
         )
         ?.focus();
   }
-  rememberTag(entryId) {
+  rememberTag(entryId, replace = false) {
     const url = new URL(window.location.href);
     if ((url.searchParams.get("tag") || null) === (entryId || null)) return;
     if (entryId) url.searchParams.set("tag", entryId);
     else url.searchParams.delete("tag");
-    window.history.pushState({ ...window.history.state }, "", url);
+    window.history[replace ? "replaceState" : "pushState"](
+      { ...window.history.state },
+      "",
+      url,
+    );
   }
   restoreLocation() {
     const entryId = new URL(window.location.href).searchParams.get("tag");
@@ -609,6 +615,9 @@ class EslManager extends HTMLElement {
       this.automationEditSession &&
       this.automationEditSession.entry_id !== tag.entry_id
     ) {
+      // Switching ESLs (the browser's Back included) hands the editor back to
+      // the tag design: ask before dropping unsaved automation changes.
+      if (!this.confirmDiscardAutomationEdit()) return false;
       this.automationEditRun = (this.automationEditRun || 0) + 1;
       this.clearAutomationEdit(this.automationEditSession);
     }
@@ -649,10 +658,28 @@ class EslManager extends HTMLElement {
     this.updateEditorContext();
     return this.editor?.tag?.entry_id === tag.entry_id || !this.editor?.ready;
   }
+  // Leaving an automation design hands the editor back to the tag design. Until
+  // the import is done the editor still holds that tag design, which is kept.
+  // Declining puts the URL back, as the browser's Back may already have left it.
+  confirmDiscardAutomationEdit() {
+    if (
+      !this.automationEditSession ||
+      !this.automationEditSource ||
+      !this.editor?.dirty ||
+      window.confirm(
+        t(this.hass, "Discard the unsaved changes to this automation design?"),
+      )
+    )
+      return true;
+    this.rememberTag(this.automationEditSession.entry_id, true);
+    return false;
+  }
   clearAutomationEdit(session = this.automationEditSession) {
     if (!session || this.automationEditSession !== session) return;
+    const source = this.automationEditSource;
     this.automationEditSession = null;
     this.automationEditSource = null;
+    this.clearAutomationDraft(source);
     this.automationSaveRun = (this.automationSaveRun || 0) + 1;
     this.updateEditorContext();
     this.automationSaving = false;
@@ -897,52 +924,69 @@ class EslManager extends HTMLElement {
       const design =
         data.design === undefined ? null : decodeAutomationDesign(data.design);
       // The action's own `rotate` wins, as it does when the automation runs.
-      const rotate = [0, 90, 180, 270].includes(
-        Number(data.rotate ?? design?.rotate ?? 0),
-      )
-        ? Number(data.rotate ?? design?.rotate ?? 0)
-        : 0;
-      let imported;
-      for (let attempt = 0; attempt < 64; attempt++) {
-        imported = await editor.prepareAutomationPayload(
-          data.payload,
-          data.background,
-          entryId,
-          previewVariables,
-          rotate,
-        );
-        if (!current()) return;
-        const missing = imported.missing_parameters || [];
-        if (!missing.length) break;
-        const unresolved = missing.filter((name) => !prompted.has(name));
-        if (!unresolved.length)
-          throw new Error(
-            t(this.hass, "This preview parameter is still undefined: {name}", {
-              name: missing[0],
-            }),
-          );
-        unresolved.forEach((name) => prompted.add(name));
-        const values = await editor.requestPreviewVariables(
-          previewVariables,
-          unresolved,
-        );
-        if (!current()) return;
-        if (values === null) {
-          this.clearAutomationEdit(session);
-          return;
-        }
-        previewVariables = values;
-      }
-      if (imported?.missing_parameters?.length)
+      const rotate = Number(data.rotate ?? design?.rotate ?? 0);
+      if (![0, 90, 180, 270].includes(rotate))
         throw new Error(
-          t(this.hass, "Too many preview parameters are missing."),
+          t(this.hass, "This automation rotation is not supported."),
         );
-      if (design)
+      const importPayload = async () => {
+        let result;
+        for (let attempt = 0; attempt < 64; attempt++) {
+          result = await editor.prepareAutomationPayload(
+            data.payload,
+            data.background,
+            entryId,
+            previewVariables,
+            rotate,
+          );
+          if (!current()) return null;
+          const missing = result.missing_parameters || [];
+          if (!missing.length) break;
+          const unresolved = missing.filter((name) => !prompted.has(name));
+          if (!unresolved.length)
+            throw new Error(
+              t(this.hass, "This preview parameter is still undefined: {name}", {
+                name: missing[0],
+              }),
+            );
+          unresolved.forEach((name) => prompted.add(name));
+          const values = await editor.requestPreviewVariables(
+            previewVariables,
+            unresolved,
+          );
+          if (!current()) return null;
+          if (values === null) {
+            this.clearAutomationEdit(session);
+            return null;
+          }
+          previewVariables = values;
+        }
+        if (result?.missing_parameters?.length)
+          throw new Error(
+            t(this.hass, "Too many preview parameters are missing."),
+          );
+        return result;
+      };
+      let imported = null;
+      if (design) {
+        // The design is what runs; the stored payload only helps to ask for the
+        // preview parameters, so a payload that cannot be imported is no reason
+        // to refuse a design that opens fine.
+        try {
+          await importPayload();
+        } catch {
+          if (!current()) return;
+        }
+        if (!current()) return;
         imported = {
           elements: design.elements,
           issues: [],
           different_pixels: 0,
         };
+      } else {
+        imported = await importPayload();
+        if (!imported) return;
+      }
       if (
         imported.issues.length ||
         (data.payload.length && imported.different_pixels !== 0)
@@ -987,6 +1031,8 @@ class EslManager extends HTMLElement {
         "Automation payload imported. Edit the design, then save it to this automation.",
         "info",
       );
+      if (this.restoreAutomationDraft(editor, this.automationEditSource))
+        return;
     } catch (error) {
       if (!current()) return;
       this.clearAutomationEdit(session);
@@ -994,6 +1040,85 @@ class EslManager extends HTMLElement {
         errorText(this.hass, "Could not open the automation design", error),
       );
     }
+  }
+  // Unsaved automation changes outlive a navigation inside Home Assistant, which
+  // fires no beforeunload: they are set aside per automation and offered back.
+  persistAutomationDraft() {
+    const source = this.automationEditSource;
+    const editor = this.editor;
+    if (
+      !source ||
+      this.automationEditSession?.editor !== editor ||
+      editor.mode !== "display"
+    )
+      return;
+    if (!editor.dirty) {
+      this.clearAutomationDraft(source);
+      return;
+    }
+    try {
+      window.sessionStorage.setItem(
+        AUTOMATION_DRAFT_KEY,
+        JSON.stringify({
+          ...this.automationDraftIdentity(source),
+          document: editor.document,
+        }),
+      );
+    } catch {
+      // Storage may be full or blocked; the draft is then simply not kept.
+    }
+  }
+  // Which write action of which automation a draft belongs to: an edited or
+  // different action must not get another one's unsaved design.
+  automationDraftIdentity(source) {
+    return {
+      config_id: source.configId,
+      entry_id: source.entry_id,
+      entity_id: source.entity_id,
+      path: JSON.stringify(source.selectedPath),
+      signature: this.configSignature(source.originalAction),
+    };
+  }
+  readAutomationDraft(source) {
+    try {
+      const draft = JSON.parse(
+        window.sessionStorage.getItem(AUTOMATION_DRAFT_KEY) || "null",
+      );
+      const identity = this.automationDraftIdentity(source);
+      return draft &&
+        Object.keys(identity).every((key) => draft[key] === identity[key])
+        ? draft
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  // Removes the stored draft only when it belongs to `source`: the end of an
+  // unrelated session must not discard another automation's unsaved work.
+  clearAutomationDraft(source) {
+    if (!source || !this.readAutomationDraft(source)) return;
+    try {
+      window.sessionStorage.removeItem(AUTOMATION_DRAFT_KEY);
+    } catch {
+      // Nothing to clean up.
+    }
+  }
+  // True when an unsaved draft of this very automation action was put back.
+  restoreAutomationDraft(editor, source) {
+    const draft = this.readAutomationDraft(source);
+    if (!draft) return false;
+    this.clearAutomationDraft(source);
+    if (
+      !Array.isArray(draft.document?.elements) ||
+      !window.confirm(
+        t(
+          this.hass,
+          "Restore the unsaved changes you made to this automation design?",
+        ),
+      )
+    )
+      return false;
+    return editor.restoreAutomationDraft(draft.document, source.session_token);
   }
   configSignature(value) {
     if (Array.isArray(value))
@@ -1073,6 +1198,8 @@ class EslManager extends HTMLElement {
         return;
       }
       if (!value || typeof value !== "object") return;
+      // A disabled step never runs, and neither do the steps inside it.
+      if (value.enabled === false) return;
       const service = value.action || value.service;
       if (service === "ble_esl.write") {
         const target = targetMatch(value);
@@ -1147,13 +1274,6 @@ class EslManager extends HTMLElement {
         throw new Error(
           t(this.hass, "Switch to Display mode before saving this automation."),
         );
-      if (snapshot.document?.background !== source.background)
-        throw new Error(
-          t(
-            this.hass,
-            "Background is not part of the automation payload. Restore the imported background before saving.",
-          ),
-        );
       const exported = await this.exportForAutomation(
         session.editor,
         source.entry_id,
@@ -1166,20 +1286,26 @@ class EslManager extends HTMLElement {
         expectedAction: source.originalAction,
         exported,
         current,
+        background: snapshot.document?.background,
       });
       if (!written) return;
       const { action, path } = written;
       if (!current()) return;
+      // A draft left by leaving the panel mid-save holds edits newer than what
+      // was saved: it moves to the saved action's identity; otherwise it goes.
+      const newer =
+        JSON.stringify(session.editor.document) !==
+        JSON.stringify(snapshot.document);
+      const draft = this.readAutomationDraft(source);
+      this.clearAutomationDraft(source);
       this.message("Automation saved.", "success");
-      if (
-        JSON.stringify(session.editor.document) ===
-        JSON.stringify(snapshot.document)
-      ) {
+      if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
       }
       source.originalAction = structuredClone(action);
       source.selectedPath = path;
+      if (draft && newer) this.persistAutomationDraft();
     } catch (error) {
       if (current())
         this.message(
@@ -1202,10 +1328,18 @@ class EslManager extends HTMLElement {
       !Array.isArray(exported.validation_errors) ||
       exported.validation_errors.length > 0 ||
       !Array.isArray(exported.payload_data)
-    )
+    ) {
+      const issues = (exported.validation_errors || []).slice(0, 3).join("; ");
       throw new Error(
-        t(this.hass, "The current design cannot be saved as a payload."),
+        issues
+          ? errorText(
+              this.hass,
+              "The current design cannot be saved as a payload.",
+              new Error(issues),
+            )
+          : t(this.hass, "The current design cannot be saved as a payload."),
       );
+    }
     return exported;
   }
   // Replace the design data of one ble_esl.write action in the latest saved
@@ -1491,17 +1625,7 @@ class EslManager extends HTMLElement {
     if (button.dataset.action === "dashboard") {
       // Leaving an automation design hands the editor back to the tag design,
       // so its unsaved changes would be lost; the tag design's own draft is kept.
-      if (
-        this.automationEditSession &&
-        this.editor?.dirty &&
-        !window.confirm(
-          t(
-            this.hass,
-            "Discard the unsaved changes to this automation design?",
-          ),
-        )
-      )
-        return;
+      if (!this.confirmDiscardAutomationEdit()) return;
       this.rememberTag(null);
       this.view = "dashboard";
       this.automationEditRun = (this.automationEditRun || 0) + 1;

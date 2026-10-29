@@ -457,8 +457,6 @@ export default {
     "Эта автоматизация использует цели по области, этажу, метке или шаблону, которые нельзя безопасно сопоставить с одним ESL.",
   "The automation import is no longer current.":
     "Импорт автоматизации больше не актуален.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Фон не входит в payload автоматизации. Верните импортированный фон перед сохранением.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Введите значение JSON для предпросмотра {name}. Используйте строку в кавычках, число, true/false, массив или объект. Эти значения не сохраняются.",
   "This preview parameter is still undefined: {name}":
@@ -601,4 +599,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Автоматизация с действием ble_esl.write для этого ESL не найдена.",
   "Saved to {name}.": "Сохранено в {name}.",
+  "Restore the unsaved changes you made to this automation design?":
+    "Восстановить несохранённые изменения в дизайне этой автоматизации?",
+  "This automation rotation is not supported.":
+    "Поворот в этой автоматизации не поддерживается.",
 };

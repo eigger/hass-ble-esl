@@ -526,8 +526,6 @@ export default {
     "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.",
   "The automation import is no longer current.":
     "The automation import is no longer current.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "Background is not part of the automation payload. Restore the imported background before saving.",
   "Design gallery": "Design gallery",
   "Choose a ready-made design. It is added as ordinary elements you can edit.":
     "Choose a ready-made design. It is added as ordinary elements you can edit.",
@@ -591,4 +589,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "No automation with a ble_esl.write action for this ESL was found.",
   "Saved to {name}.": "Saved to {name}.",
+  "Restore the unsaved changes you made to this automation design?":
+    "Restore the unsaved changes you made to this automation design?",
+  "This automation rotation is not supported.":
+    "This automation rotation is not supported.",
 };

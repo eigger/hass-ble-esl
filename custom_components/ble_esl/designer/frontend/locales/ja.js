@@ -457,8 +457,6 @@ export default {
     "このオートメーションはエリア、フロア、ラベル、またはテンプレートの対象を使用しており、1つのESLに安全に対応付けられません。",
   "The automation import is no longer current.":
     "オートメーションのインポートは最新ではありません。",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "背景はオートメーションのペイロードに含まれません。保存する前にインポートした背景に戻してください。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "{name} のプレビュー用 JSON 値を入力してください。引用符付きの文字列、数値、true/false、配列、またはオブジェクトを使用できます。これらの値は保存されません。",
   "This preview parameter is still undefined: {name}":
@@ -603,4 +601,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "このESL用の ble_esl.write アクションを含むオートメーションが見つかりませんでした。",
   "Saved to {name}.": "{name} に保存しました。",
+  "Restore the unsaved changes you made to this automation design?":
+    "このオートメーションデザインの未保存の変更を復元しますか？",
+  "This automation rotation is not supported.":
+    "このオートメーションの回転はサポートされていません。",
 };

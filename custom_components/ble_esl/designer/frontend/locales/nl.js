@@ -459,8 +459,6 @@ export default {
     "Deze automatisering gebruikt doelen op basis van gebied, verdieping, label of sjabloon die niet veilig aan één ESL te koppelen zijn.",
   "The automation import is no longer current.":
     "De import van de automatisering is niet meer actueel.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "De achtergrond maakt geen deel uit van de payload van de automatisering. Herstel de geïmporteerde achtergrond voordat je opslaat.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Voer een JSON-voorbeeldwaarde in voor {name}. Gebruik een tekenreeks tussen aanhalingstekens, een getal, true/false, een array of een object. Deze waarden worden niet opgeslagen.",
   "This preview parameter is still undefined: {name}":
@@ -604,4 +602,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Geen automatisering met een ble_esl.write-actie voor deze ESL gevonden.",
   "Saved to {name}.": "Opgeslagen in {name}.",
+  "Restore the unsaved changes you made to this automation design?":
+    "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen?",
+  "This automation rotation is not supported.":
+    "De rotatie van deze automatisering wordt niet ondersteund.",
 };
