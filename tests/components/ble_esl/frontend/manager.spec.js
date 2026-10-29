@@ -2185,3 +2185,14 @@ test("undoing an automation edit back to the loaded design clears the unsaved ba
   await page.getByRole("button", { name: "Redo" }).click();
   await expect(page.locator("#dirty-badge")).toBeVisible();
 });
+
+test("an empty search result offers to clear the search and filter", async ({
+  page,
+}) => {
+  await page.getByLabel("Search ESLs").fill("no such tag");
+  await expect(page.locator(".card")).toHaveCount(0);
+  await page.getByRole("button", { name: "Clear search and filter" }).click();
+  await expect(page.locator(".card")).toHaveCount(2);
+  await expect(page.getByLabel("Search ESLs")).toHaveValue("");
+  await expect(page.getByLabel("Search ESLs")).toBeFocused();
+});
