@@ -457,8 +457,6 @@ export default {
     "Cette automatisation utilise des cibles de zone, d'étage, de label ou de modèle qui ne peuvent pas être associées sans risque à un seul ESL.",
   "The automation import is no longer current.":
     "L'import de l'automatisation n'est plus à jour.",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "L'arrière-plan ne fait pas partie du payload de l'automatisation. Rétablissez l'arrière-plan importé avant d'enregistrer.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "Saisissez une valeur JSON d'aperçu pour {name}. Utilisez une chaîne entre guillemets, un nombre, true/false, un tableau ou un objet. Ces valeurs ne sont pas enregistrées.",
   "This preview parameter is still undefined: {name}":
@@ -607,4 +605,10 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Aucune automatisation avec une action ble_esl.write pour cet ESL n'a été trouvée.",
   "Saved to {name}.": "Enregistré dans {name}.",
+  "Restore the unsaved changes you made to this automation design?":
+    "Restaurer les modifications non enregistrées de ce design d'automatisation ?",
+  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
+    "Le payload de cette action diffère de son design. Le design est utilisé à l'exécution de l'automatisation, et l'enregistrement remplace le payload.",
+  "This automation rotation is not supported.":
+    "La rotation de cette automatisation n'est pas prise en charge.",
 };

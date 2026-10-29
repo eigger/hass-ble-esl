@@ -603,12 +603,13 @@ test("does not import an unsupported automation background", async ({
   expect(posts).toBe(0);
 });
 
-test("does not report a background-only edit as saved to an automation", async ({
+test("saves a background-only edit to the automation", async ({
   page,
 }) => {
-  let posts = 0;
+  const posted = [];
   await page.route("**/api/config/automation/config/*", async (route) => {
-    if (route.request().method() === "POST") posts++;
+    if (route.request().method() === "POST")
+      posted.push(route.request().postDataJSON());
     await route.continue();
   });
   await page
@@ -628,10 +629,9 @@ test("does not report a background-only edit as saved to an automation", async (
     editor.edited(false);
   });
   await page.getByRole("button", { name: "Save to automation" }).click();
-  await expect(page.getByRole("alert")).toContainText(
-    "Background is not part of the automation payload",
-  );
-  expect(posts).toBe(0);
+  await expect(page.getByText("Automation saved.")).toBeVisible();
+  expect(posted).toHaveLength(1);
+  expect(JSON.stringify(posted[0])).toContain('"background":"black"');
 });
 
 test("does not import a delayed automation response after leaving its ESL", async ({
@@ -1207,7 +1207,76 @@ test("does not POST when export reports a blocking validation error", async ({
   await expect(page.getByRole("alert")).toContainText(
     "cannot be saved as a payload",
   );
+  await expect(page.getByRole("alert")).toContainText(
+    "payload[0].width: invalid numeric value",
+  );
   expect(posts).toBe(0);
+});
+
+test("the create automation dialog refuses a design with validation errors", async ({
+  page,
+}) => {
+  const state = await page.evaluate(async () => {
+    await import("/custom_components/ble_esl/designer/frontend/yaml-dialog.js").catch(
+      () => {},
+    );
+    const dialog = document.createElement("ble-esl-yaml-dialog");
+    document.body.append(dialog);
+    let calls = 0;
+    dialog.open(
+      {
+        payload: "- type: text",
+        writable: true,
+        automation: { alias: "Room", triggers: [], actions: [] },
+        validation_errors: ["payload[0].width: invalid numeric value"],
+      },
+      null,
+      { language: "en", callApi: async () => calls++ },
+    );
+    const button = dialog.shadowRoot.querySelector("[data-create]");
+    const disabled = button.disabled;
+    dialog.name = "Room";
+    await dialog.click({ composedPath: () => [button] });
+    const result = { disabled, calls };
+    dialog.remove();
+    return result;
+  });
+  expect(state).toEqual({ disabled: true, calls: 0 });
+});
+
+test("unsaved automation design changes are offered back after leaving the panel", async ({
+  page,
+}) => {
+  const open = async () => {
+    await page
+      .locator('[data-action="automations"][data-entry="demo-writable"]')
+      .click();
+    await page
+      .getByRole("dialog", { name: "Connected automations" })
+      .getByRole("button", { name: "Edit automation design", exact: true })
+      .first()
+      .click();
+    await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  };
+  await open();
+  const before = await page.evaluate(
+    () => window.manager.editor.document.elements.length,
+  );
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator(".el")).toHaveCount(before + 1);
+  // Home Assistant's own navigation removes the panel without a page unload.
+  await page.evaluate(() => window.manager.persistAutomationDraft());
+  await page.goto("/?manager");
+  await expect(page.locator(".card")).toHaveCount(2);
+  const prompts = [];
+  page.on("dialog", async (dialog) => {
+    prompts.push(dialog.message());
+    await dialog.accept();
+  });
+  await open();
+  await expect(page.locator(".el")).toHaveCount(before + 1);
+  expect(prompts.join()).toContain("Restore the unsaved changes");
+  await expect(page.locator("#dirty-badge")).toBeVisible();
 });
 
 test("does not POST a malformed latest automation configuration", async ({

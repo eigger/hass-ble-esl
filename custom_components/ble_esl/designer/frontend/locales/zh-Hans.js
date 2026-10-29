@@ -435,8 +435,6 @@ export default {
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
     "此自动化使用了区域、楼层、标签或模板目标，无法安全地对应到单个 ESL。",
   "The automation import is no longer current.": "自动化导入已不是最新的。",
-  "Background is not part of the automation payload. Restore the imported background before saving.":
-    "背景不属于自动化的 payload。保存前请恢复已导入的背景。",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
     "请输入 {name} 的 JSON 预览值。可使用带引号的字符串、数字、true/false、数组或对象。这些值不会被保存。",
   "This preview parameter is still undefined: {name}":
@@ -568,4 +566,10 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "未找到包含此 ESL 的 ble_esl.write 操作的自动化。",
   "Saved to {name}.": "已保存到 {name}。",
+  "Restore the unsaved changes you made to this automation design?":
+    "要恢复此自动化设计中未保存的更改吗？",
+  "The payload in this action differs from its design. The design is used when the automation runs, and saving replaces the payload.":
+    "此操作的 payload 与其设计不一致。自动化运行时使用设计，保存会替换 payload。",
+  "This automation rotation is not supported.":
+    "不支持此自动化的旋转设置。",
 };

@@ -478,6 +478,33 @@ export class BleEslDesigner extends HTMLElement {
     this.queuePreview();
     return true;
   }
+  // Put unsaved edits of this automation back over the freshly imported design.
+  restoreAutomationDraft(draft, token) {
+    if (
+      token !== this._automationSessionToken ||
+      !this._automationSaveMode ||
+      this.mode !== "display"
+    )
+      return false;
+    const document = clone(draft);
+    if (!palette(this.tag.colors).includes(document.background))
+      document.background = this.document.background;
+    this.session.reset(document, {
+      selected: document.elements.at(-1)?.id || null,
+      dirty: true,
+    });
+    this._automationBackground = document.background;
+    this.preview = null;
+    this.layerPreviews = {};
+    this.layerBounds = {};
+    this.layerOffsets = {};
+    this.layerRecords = [];
+    this.templateEntities = [];
+    this.invalidatePreview();
+    this.render();
+    this.queuePreview();
+    return true;
+  }
   restoreEditorSession(state, token) {
     if (token !== this._automationSessionToken) return false;
     this._previewParametersDialog?.close(null);
@@ -1765,7 +1792,7 @@ export class BleEslDesigner extends HTMLElement {
     if (this.selectedElements.length > 1)
       return sharedProperties(this, (message) => t(this.hass, message), esc);
     if (!element)
-      return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" && !this._automationSaveMode ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
+      return `<p class="muted wide">${t(this.hass, "Click a block to move, resize, or bind it to an entity.")}</p>${this.mode === "display" ? `<h3 class="wide group-title">${t(this.hass, "Display")}</h3>${this.colorPicker("display-background", this.document.background, t(this.hass, "Background"))}` : ""}`;
     if (element.type === "imagespec") {
       const field = (key, label, type = "text") =>
         `<label class="">${label}<input data-property="${key}" type="${type}" value="${esc(element[key] ?? "")}" ${type === "number" ? 'step="1"' : ""}></label>`;
@@ -2618,6 +2645,13 @@ export class BleEslDesigner extends HTMLElement {
           {
             entry_id: this.tag.entry_id,
             document: this.document,
+            ...(this._automationSaveMode
+              ? {
+                  preview_variables: clone(
+                    this._automationPreviewVariables || {},
+                  ),
+                }
+              : {}),
             ...(action === "create-automation" &&
             this.templateAutomation?.entryId === this.tag.entry_id &&
             this.templateAutomation.elementIds.every((id) =>

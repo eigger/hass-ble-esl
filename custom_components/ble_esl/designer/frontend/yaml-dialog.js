@@ -120,7 +120,7 @@ export class YamlDialog extends HTMLElement {
       }
       <textarea readonly aria-label="YAML" spellcheck="false">${esc(this.text)}</textarea>
       <p role="status">${esc(this.creationError)}</p>
-      <div class="actions">${this.result.automation ? (this.createdId ? `<a href="/config/automation/edit/${encodeURIComponent(this.createdId)}">${t(this.hass, "Edit automation")}</a>` : `<button type="button" data-create class="primary" ${this.creating ? "disabled" : ""}>${t(this.hass, this.creating ? "Working…" : "Create automation")}</button>`) : ""}<button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
+      <div class="actions">${this.result.automation ? (this.createdId ? `<a href="/config/automation/edit/${encodeURIComponent(this.createdId)}">${t(this.hass, "Edit automation")}</a>` : `<button type="button" data-create class="primary" ${this.creating || this.result.validation_errors?.length ? "disabled" : ""}>${t(this.hass, this.creating ? "Working…" : "Create automation")}</button>`) : ""}<button type="button" data-copy class="primary">${t(this.hass, "Copy")}</button><button type="button" data-close>${t(this.hass, "Close")}</button></div>
     </form></dialog>`;
     const dialog = this.shadowRoot.querySelector("dialog");
     dialog.addEventListener("cancel", (event) => {
@@ -145,7 +145,13 @@ export class YamlDialog extends HTMLElement {
       .find((node) => node.tagName === "BUTTON");
     if (!button) return;
     if (button.hasAttribute("data-create")) {
-      if (this.creating || this.createdId || !this.name.trim()) {
+      if (
+        this.creating ||
+        this.createdId ||
+        this.result.validation_errors?.length
+      )
+        return;
+      if (!this.name.trim()) {
         this.shadowRoot.querySelector("#automation-name")?.focus();
         return;
       }
