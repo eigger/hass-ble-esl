@@ -1291,23 +1291,21 @@ class EslManager extends HTMLElement {
       if (!written) return;
       const { action, path } = written;
       if (!current()) return;
-      // Edits made while the save ran are newer than what was saved: their
-      // draft, if the panel was left meanwhile, stays.
-      if (
-        JSON.stringify(session.editor.document) ===
-        JSON.stringify(snapshot.document)
-      )
-        this.clearAutomationDraft(source);
+      // A draft left by leaving the panel mid-save holds edits newer than what
+      // was saved: it moves to the saved action's identity; otherwise it goes.
+      const newer =
+        JSON.stringify(session.editor.document) !==
+        JSON.stringify(snapshot.document);
+      const draft = this.readAutomationDraft(source);
+      this.clearAutomationDraft(source);
       this.message("Automation saved.", "success");
-      if (
-        JSON.stringify(session.editor.document) ===
-        JSON.stringify(snapshot.document)
-      ) {
+      if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
       }
       source.originalAction = structuredClone(action);
       source.selectedPath = path;
+      if (draft && newer) this.persistAutomationDraft();
     } catch (error) {
       if (current())
         this.message(
