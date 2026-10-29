@@ -9,6 +9,9 @@ export class EditorSession {
     this.undoStack = [];
     this.redoStack = [];
     this.dirty = false;
+    // The document as last known saved (or loaded), so that undoing back to
+    // it is no longer "unsaved". Unknown (null) for a restored draft.
+    this.cleanSignature = JSON.stringify(document);
   }
 
   capture() {
@@ -18,6 +21,7 @@ export class EditorSession {
       undoStack: this.undoStack,
       redoStack: this.redoStack,
       dirty: this.dirty,
+      cleanSignature: this.cleanSignature,
     };
   }
 
@@ -27,12 +31,14 @@ export class EditorSession {
     this.undoStack = state.undoStack;
     this.redoStack = state.redoStack;
     this.dirty = state.dirty;
+    this.cleanSignature = state.cleanSignature ?? null;
   }
 
   reset(document, { selected = null, dirty = false } = {}) {
     this.document = document;
     this.selected = selected;
     this.dirty = dirty;
+    this.cleanSignature = dirty ? null : JSON.stringify(document);
     this.clearHistory();
   }
 
@@ -54,6 +60,20 @@ export class EditorSession {
 
   markDirty(value = true) {
     this.dirty = value;
+    this.cleanSignature = value ? this.cleanSignature : JSON.stringify(this.document);
+  }
+
+  // `document` is what a save just stored; later edits are measured against it.
+  markSaved(document) {
+    this.cleanSignature = JSON.stringify(document);
+  }
+
+  // True when the document is exactly what was last saved or loaded.
+  isClean() {
+    return (
+      this.cleanSignature !== null &&
+      JSON.stringify(this.document) === this.cleanSignature
+    );
   }
 
   stepHistory(direction) {

@@ -7,6 +7,7 @@
 - Designer: leaving an automation design (browser Back to another ESL, or navigating elsewhere in Home Assistant) no longer drops unsaved changes silently; Back asks first and an unsaved design is offered back when the automation is opened again.
 - Designer: *Create automation* is disabled while the design has validation errors, the YAML export works for automation designs that use preview parameters, and a failed save names the validation errors.
 - Designer: the background of an opened automation design can be changed and is saved; disabled `ble_esl.write` steps are no longer offered; an unsupported `rotate` value is reported instead of being treated as 0; an unimportable payload no longer prevents opening the design.
+- Designer: undoing back to the loaded or saved design no longer leaves the editor marked as having unsaved changes.
 
 ## 1.7.0
 

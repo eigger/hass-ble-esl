@@ -1302,6 +1302,14 @@ class EslManager extends HTMLElement {
       if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
+      } else {
+        // What is shown differs from what was saved, even if an undo during
+        // the save had made it look like the loaded design.
+        session.editor.session.markSaved(snapshot.document);
+        if (!session.editor.dirty) {
+          session.editor.dirty = true;
+          session.editor.render();
+        }
       }
       source.originalAction = structuredClone(action);
       source.selectedPath = path;

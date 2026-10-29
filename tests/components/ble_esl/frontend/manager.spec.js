@@ -2164,3 +2164,24 @@ test("open tag is remembered in the URL across reload and browser navigation", a
     page.getByRole("combobox", { name: "Tag", exact: true }),
   ).toHaveValue("demo-writable");
 });
+
+test("undoing an automation edit back to the loaded design clears the unsaved badge", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  await page.getByRole("button", { name: "Redo" }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+});
