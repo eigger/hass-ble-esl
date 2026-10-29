@@ -1302,7 +1302,7 @@ class EslManager extends HTMLElement {
       if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
-      }
+      } else session.editor.session.markSaved(snapshot.document);
       source.originalAction = structuredClone(action);
       source.selectedPath = path;
       if (draft && newer) this.persistAutomationDraft();

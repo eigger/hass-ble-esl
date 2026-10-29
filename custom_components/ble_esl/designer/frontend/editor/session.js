@@ -63,6 +63,11 @@ export class EditorSession {
     this.cleanSignature = value ? this.cleanSignature : JSON.stringify(this.document);
   }
 
+  // `document` is what a save just stored; later edits are measured against it.
+  markSaved(document) {
+    this.cleanSignature = JSON.stringify(document);
+  }
+
   // True when the document is exactly what was last saved or loaded.
   isClean() {
     return (

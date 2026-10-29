@@ -361,6 +361,7 @@ export class BleEslDesigner extends HTMLElement {
       document: clone(this.document),
       selected: this.selected,
       dirty: this.dirty,
+      cleanSignature: this.session.cleanSignature,
       undoStack: clone(this.undoStack),
       redoStack: clone(this.redoStack),
       drafts: copyMap(this.drafts),
@@ -542,6 +543,7 @@ export class BleEslDesigner extends HTMLElement {
       document: clone(state.document),
       selected: state.selected,
       dirty: state.dirty,
+      cleanSignature: state.cleanSignature,
       undoStack: clone(state.undoStack),
       redoStack: clone(state.redoStack),
     });
@@ -1061,6 +1063,7 @@ export class BleEslDesigner extends HTMLElement {
         document: active.document,
         selected: active.selected,
         dirty: active.dirty,
+        cleanSignature: active.cleanSignature,
         undo: active.undoStack,
         redo: active.redoStack,
       };
@@ -1075,6 +1078,7 @@ export class BleEslDesigner extends HTMLElement {
         document: session.document,
         selected: session.selected,
         dirty: session.dirty,
+        cleanSignature: session.cleanSignature,
         undoStack: session.undo,
         redoStack: session.redo,
       });
@@ -2584,6 +2588,8 @@ export class BleEslDesigner extends HTMLElement {
               (el) => el.id === this.createdForElement,
             ).template = this.templateKey;
             session.dirty = true;
+            // Changed outside the session's own edit path: never "clean".
+            session.cleanSignature = null;
             this.createdForElement = null;
           }
           this.status = "Style saved";
@@ -2625,7 +2631,12 @@ export class BleEslDesigner extends HTMLElement {
         if (this.session.stepHistory(action)) {
           if (!this.element) this.selected = null;
           // Back at the saved state is not an unsaved change.
-          this.edited(true, !this.session.isClean());
+          // A sensor style also has a name, size and sample outside the
+          // document, which history does not cover.
+          this.edited(
+            true,
+            !(this.mode === "display" && this.session.isClean()),
+          );
         }
       } else if (["yaml", "create-automation"].includes(action)) {
         this.busy = true;

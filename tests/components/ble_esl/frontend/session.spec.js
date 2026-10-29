@@ -75,3 +75,18 @@ test("undoing back to the saved state is clean, a restored draft never is", () =
   session.restore(state);
   expect(session.isClean()).toBe(false);
 });
+
+test("a save of an older snapshot becomes the clean reference", () => {
+  const session = new EditorSession(documentWith(1));
+  session.checkpoint();
+  session.document = documentWith(2);
+  session.markDirty();
+  session.checkpoint();
+  session.document = documentWith(3);
+  session.markSaved(documentWith(2));
+  expect(session.isClean()).toBe(false);
+  session.stepHistory("undo");
+  expect(session.isClean()).toBe(true);
+  session.stepHistory("undo");
+  expect(session.isClean()).toBe(false);
+});
