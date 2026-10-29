@@ -610,8 +610,7 @@ export default {
     "Die Drehung dieser Automatisierung wird nicht unterstützt.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "Die nicht gespeicherten Änderungen an diesem Automatisierungsdesign wiederherstellen? „Abbrechen“ verwirft sie.",
-  "Clear search and filter":
-    "Suche und Filter zurücksetzen",
+  "Clear search and filter": "Suche und Filter zurücksetzen",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus",
   "Kept as a draft for this browser session until you create an automation or save into one.":

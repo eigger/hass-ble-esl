@@ -609,8 +609,7 @@ export default {
     "La rotación de esta automatización no es compatible.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "¿Restaurar los cambios sin guardar que hiciste en el diseño de esta automatización? Cancelar los descarta.",
-  "Clear search and filter":
-    "Borrar búsqueda y filtro",
+  "Clear search and filter": "Borrar búsqueda y filtro",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
   "Kept as a draft for this browser session until you create an automation or save into one.":

@@ -605,8 +605,7 @@ export default {
     "このオートメーションの回転はサポートされていません。",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "このオートメーションデザインの未保存の変更を復元しますか？キャンセルすると破棄されます。",
-  "Clear search and filter":
-    "検索とフィルターをクリア",
+  "Clear search and filter": "検索とフィルターをクリア",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
