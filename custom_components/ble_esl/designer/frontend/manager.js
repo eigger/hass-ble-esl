@@ -592,12 +592,16 @@ class EslManager extends HTMLElement {
         )
         ?.focus();
   }
-  rememberTag(entryId) {
+  rememberTag(entryId, replace = false) {
     const url = new URL(window.location.href);
     if ((url.searchParams.get("tag") || null) === (entryId || null)) return;
     if (entryId) url.searchParams.set("tag", entryId);
     else url.searchParams.delete("tag");
-    window.history.pushState({ ...window.history.state }, "", url);
+    window.history[replace ? "replaceState" : "pushState"](
+      { ...window.history.state },
+      "",
+      url,
+    );
   }
   restoreLocation() {
     const entryId = new URL(window.location.href).searchParams.get("tag");
@@ -667,7 +671,7 @@ class EslManager extends HTMLElement {
       )
     )
       return true;
-    this.rememberTag(this.automationEditSession.entry_id);
+    this.rememberTag(this.automationEditSession.entry_id, true);
     return false;
   }
   clearAutomationEdit(session = this.automationEditSession) {
@@ -1287,7 +1291,13 @@ class EslManager extends HTMLElement {
       if (!written) return;
       const { action, path } = written;
       if (!current()) return;
-      this.clearAutomationDraft(source);
+      // Edits made while the save ran are newer than what was saved: their
+      // draft, if the panel was left meanwhile, stays.
+      if (
+        JSON.stringify(session.editor.document) ===
+        JSON.stringify(snapshot.document)
+      )
+        this.clearAutomationDraft(source);
       this.message("Automation saved.", "success");
       if (
         JSON.stringify(session.editor.document) ===
