@@ -53,3 +53,25 @@ test("pushUndo adopts detached snapshots while checkpoint clones live state", ()
   expect(session.undoStack[1]).not.toBe(session.document);
   expect(session.undoStack[1]).toEqual(session.document);
 });
+
+test("undoing back to the saved state is clean, a restored draft never is", () => {
+  const session = new EditorSession(documentWith(1));
+  session.checkpoint();
+  session.document = documentWith(2);
+  session.markDirty();
+  expect(session.isClean()).toBe(false);
+  session.stepHistory("undo");
+  expect(session.isClean()).toBe(true);
+  session.stepHistory("redo");
+  expect(session.isClean()).toBe(false);
+  // Saving makes the current document the clean one.
+  session.markDirty(false);
+  expect(session.isClean()).toBe(true);
+
+  session.reset(documentWith(3), { dirty: true });
+  expect(session.isClean()).toBe(false);
+  const state = session.capture();
+  session.reset(documentWith(4));
+  session.restore(state);
+  expect(session.isClean()).toBe(false);
+});

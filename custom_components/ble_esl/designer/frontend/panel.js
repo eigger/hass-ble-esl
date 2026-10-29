@@ -935,8 +935,8 @@ export class BleEslDesigner extends HTMLElement {
       saveIcon: toolIcon("save"),
     });
   }
-  edited(render = true) {
-    this.session.markDirty();
+  edited(render = true, dirty = true) {
+    this.session.markDirty(dirty);
     this.preview = null;
     this.invalidatePreview();
     if (render) this.render();
@@ -2624,7 +2624,8 @@ export class BleEslDesigner extends HTMLElement {
       } else if (action === "undo" || action === "redo") {
         if (this.session.stepHistory(action)) {
           if (!this.element) this.selected = null;
-          this.edited();
+          // Back at the saved state is not an unsaved change.
+          this.edited(true, !this.session.isClean());
         }
       } else if (["yaml", "create-automation"].includes(action)) {
         this.busy = true;
