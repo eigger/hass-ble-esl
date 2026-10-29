@@ -611,8 +611,8 @@ export default {
     "Restaurer les modifications non enregistrées de ce design d'automatisation ? Annuler les abandonne.",
   "Clear search and filter":
     "Effacer la recherche et le filtre",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "Conservé comme brouillon dans ce navigateur jusqu'à ce que vous créiez une automatisation ou enregistriez dans une.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Maj / Ctrl / ⌘ + clic sélectionne plusieurs éléments · Glisser sur une zone vide du canevas sélectionne une zone",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Conservé comme brouillon pour cette session du navigateur jusqu'à ce que vous créiez une automatisation ou enregistriez dans une.",
 };

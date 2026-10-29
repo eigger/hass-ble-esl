@@ -611,8 +611,8 @@ export default {
     "¿Restaurar los cambios sin guardar que hiciste en el diseño de esta automatización? Cancelar los descarta.",
   "Clear search and filter":
     "Borrar búsqueda y filtro",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "Se conserva como borrador en este navegador hasta que crees una automatización o guardes en una.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
 };

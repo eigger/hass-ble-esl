@@ -612,8 +612,8 @@ export default {
     "Die nicht gespeicherten Änderungen an diesem Automatisierungsdesign wiederherstellen? „Abbrechen“ verwirft sie.",
   "Clear search and filter":
     "Suche und Filter zurücksetzen",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "Wird als Entwurf in diesem Browser aufbewahrt, bis Sie eine Automatisierung erstellen oder darin speichern.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Wird für diese Browsersitzung als Entwurf aufbewahrt, bis Sie eine Automatisierung erstellen oder darin speichern.",
 };

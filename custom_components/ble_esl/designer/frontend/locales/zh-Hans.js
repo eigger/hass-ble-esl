@@ -572,8 +572,8 @@ export default {
     "要恢复此自动化设计中未保存的更改吗？取消将丢弃这些更改。",
   "Clear search and filter":
     "清除搜索和筛选",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "在创建自动化或保存到自动化之前，会作为草稿保留在此浏览器中。",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + 点击可选择多个元素 · 在画布空白处拖动可框选区域",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "在创建自动化或保存到自动化之前，会在此浏览器会话期间作为草稿保留。",
 };

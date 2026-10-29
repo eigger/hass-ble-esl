@@ -84,7 +84,7 @@ test("workspace view composes responsive panels, preview shell, and accessible c
   expect(workspace.hasProperties).toBe(true);
   expect(workspace.hasLayers).toBe(true);
   expect(workspace.tipsOpen).toBe(true);
-  expect(output.markup).toContain('aria-describedby="canvas-tips"');
+  expect(output.markup).toContain('aria-describedby="canvas-tips canvas-tips-select"');
   expect(output.style).toContain(".workspace.library-closed");
   expect(output.style).toContain("@media(max-width:650px)");
 });

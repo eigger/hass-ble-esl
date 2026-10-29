@@ -585,6 +585,8 @@ class EslManager extends HTMLElement {
     if (cards.length) grid.replaceChildren(...cards);
     else
       grid.innerHTML = `<div class="empty">${this.tags.length ? `${t(this.hass, "No ESLs match your search or filter.")} <button type="button" data-action="clear-filters">${t(this.hass, "Clear search and filter")}</button>` : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
+    if (!cards.length && focused?.dataset.action === "clear-filters")
+      grid.querySelector('[data-action="clear-filters"]')?.focus();
     if (entry && (entity || action))
       grid
         .querySelector(

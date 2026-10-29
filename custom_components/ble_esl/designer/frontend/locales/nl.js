@@ -608,8 +608,8 @@ export default {
     "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen? Annuleren gooit ze weg.",
   "Clear search and filter":
     "Zoekopdracht en filter wissen",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "Wordt in deze browser als concept bewaard tot u een automatisering maakt of erin opslaat.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
 };

@@ -605,8 +605,8 @@ export default {
     "Восстановить несохранённые изменения в дизайне этой автоматизации? При отмене они будут удалены.",
   "Clear search and filter":
     "Сбросить поиск и фильтр",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "Хранится как черновик в этом браузере, пока вы не создадите автоматизацию или не сохраните в неё.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Хранится как черновик в рамках этого сеанса браузера, пока вы не создадите автоматизацию или не сохраните в неё.",
 };

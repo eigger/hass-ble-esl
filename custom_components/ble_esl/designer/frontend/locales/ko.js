@@ -593,8 +593,8 @@ export default {
     "이 자동화 디자인의 저장하지 않은 변경 사항을 복원할까요? 취소하면 변경 사항이 폐기됩니다.",
   "Clear search and filter":
     "검색 및 필터 지우기",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "자동화를 만들거나 자동화에 저장하기 전까지 이 브라우저에 초안으로 보관됩니다.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + 클릭으로 여러 요소 선택 · 캔버스의 빈 곳을 드래그하면 영역 선택",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "자동화를 만들거나 자동화에 저장하기 전까지 이 브라우저 세션 동안 초안으로 보관됩니다.",
 };

@@ -607,8 +607,8 @@ export default {
     "このオートメーションデザインの未保存の変更を復元しますか？キャンセルすると破棄されます。",
   "Clear search and filter":
     "検索とフィルターをクリア",
-  "Kept as a draft in this browser until you create an automation or save into one.":
-    "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーに下書きとして保持されます。",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
 };
