@@ -39,7 +39,7 @@ A layout is a list of [imagespec](https://github.com/eigger/imagespec) elements 
 
 **ESL Manager** is the dashboard of every tag: its alias, battery, last successfully sent image, whether the display is in sync, the latest transmission result and duration, and its automations — with search, filters and sorting. From a card you open the designer or the automation that draws the tag.
 
-Open **ESL Manager** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send sends only when requested and stores nothing: designs are kept in automations, unsaved work only as a browser draft. The designer does not automatically transmit on sensor changes; schedule updates with Home Assistant automations using the exported action.
+Open **ESL Manager** in the HA sidebar to build the payload visually: drag, resize and layer elements, add any of the thirty [imagespec elements](https://github.com/eigger/imagespec/blob/v1.1.0/docs/elements.md) (shapes, text, QR / bar codes, charts, tables, …) and edit every field of each, with Jinja templates allowed. The preview, the image sent to the tag and the **Payload YAML** it gives you (the payload, or a complete `ble_esl.write` action with templates kept as written, so an automation follows your sensors) are the same payload drawn by the same renderer. **Import YAML** brings the payload of an action you already have into the designer, and **Convert to elements** turns a sensor or any older component into plain elements. Bluetooth Send sends only when requested and stores nothing: designs are kept in automations, unsaved work only as a browser draft. The designer does not automatically transmit on sensor changes; schedule updates with Home Assistant automations using the exported action.
 
 From the connected-automations list, **Edit automation design** opens an existing `ble_esl.write` payload in a separate editing session and **Save to automation** stores it. The save rereads the latest automation configuration and replaces only the selected action's `data.payload`. It is blocked when the selected action changed or is ambiguous, or the design is invalid, and saving does not send anything over Bluetooth. Leaving the session restores the original design and undo history.
 
@@ -56,7 +56,7 @@ Both actions take a standard `target:` (a tag device, one of its entities, or an
 
 | Parameter | Default | Description |
 |---|---|---|
-| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
+| `payload` | — | List of [imagespec elements](https://github.com/eigger/imagespec/blob/v1.1.0/docs/elements.md) (required); use `[]` for an intentional blank screen |
 | `rotate` | `0` | `0`, `90`, `180`, `270` |
 | `background` | `white` | `white`, `black`, `red`, `yellow` |
 | `dry_run` | `false` | Render to **Preview Content** only |
@@ -86,8 +86,8 @@ Layouts are rendered by **[imagespec](https://github.com/eigger/imagespec)**; it
 
 | Topic | Link |
 |-------|------|
-| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v1.0.0/docs/elements.md) |
-| All element fields & defaults | [imagespec README — Element Reference](https://github.com/eigger/imagespec#elements-reference) |
+| Element examples with preview images | [imagespec/docs/elements.md](https://github.com/eigger/imagespec/blob/v1.1.0/docs/elements.md) |
+| All element fields & defaults | [imagespec README — Element Reference](https://github.com/eigger/imagespec#element-reference--json-schema) |
 | Layout, palette, LLM authoring guide | [imagespec/docs/authoring.md](https://github.com/eigger/imagespec/blob/main/docs/authoring.md) |
 | Dithering (per-element only) | [imagespec/docs/dithering.md](https://github.com/eigger/imagespec/blob/main/docs/dithering.md) |
 
