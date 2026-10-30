@@ -78,6 +78,8 @@ from .types import BleEslConfigEntry
 from .yaml11 import repair_yaml11_keys
 
 _LOGGER = logging.getLogger(__name__)
+# Entries already told that an automation still carries an older designer source.
+_LEGACY_DESIGN_WARNED: set[str] = set()
 
 # imagespec's one-letter color shorthands, on top of the names and #RGB /
 # #RRGGBB that PIL understands.
@@ -349,6 +351,17 @@ async def build_write_job_from_data(
         from .designer.specs import templates_in
 
         designer = hass.data[KEY]
+        # Saved by an older designer; saving the design again from the designer
+        # replaces it with a plain payload.
+        if entry.entry_id not in _LEGACY_DESIGN_WARNED:
+            _LEGACY_DESIGN_WARNED.add(entry.entry_id)
+            _LOGGER.warning(
+                "ble_esl.write for %s runs from a saved designer source (design): "
+                "open its automation in the ESL Manager and save it again to keep only the payload "
+                "(a forecast or an angle that is not a multiple of 90° needs a template or a "
+                "quarter turn first)",
+                entry.title,
+            )
         try:
             document = validate(decode_design(service_data["design"]), preset)
             # HA rendered these with the automation's own variables (trigger, this, ...).
