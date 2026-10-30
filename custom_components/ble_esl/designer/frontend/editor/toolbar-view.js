@@ -1,7 +1,7 @@
 import { renderOrientation } from "./orientation-control.js";
 export const TOOLBAR_STYLE = `
 .stage.exact-mode .el.ghost .layer-preview{display:block}.el.ghost.hidden-el{opacity:1}.el.ghost .layer-preview{opacity:.25;filter:grayscale(1)}
-.toolbar [data-tag-orientation] button[aria-pressed="true"],.toolbar button[data-action="show-hidden-icons"][aria-pressed="true"]{background:#16838c22;border-color:#16838c}
+.toolbar [data-tag-orientation] button[aria-pressed="true"],.toolbar button[data-action="show-hidden-icons"][aria-pressed="true"]{background:#16838c22;border-color:var(--primary-color,#16838c)}
 .toolbar button.labeled{width:auto;min-width:max-content;gap:6px;padding:7px 12px;white-space:nowrap}.toolbar button.labeled ha-icon{flex:none}.toolbar .automation-save{width:auto;min-width:max-content;height:auto;min-height:38px;padding:7px 12px;white-space:nowrap}
 header{position:sticky;top:0;z-index:30}.toolbar{position:sticky;top:var(--bar-top,var(--header-height,56px));z-index:29;background:var(--primary-background-color,#f5f7fa);border-bottom:1px solid var(--divider-color,#e0e5eb);margin-bottom:12px;padding-top:8px;padding-bottom:8px}
 @media(max-width:650px){header,.toolbar{position:static}:host([managed]) header,:host([managed]) .toolbar{position:sticky}}

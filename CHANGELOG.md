@@ -8,6 +8,7 @@
 - Designer: *Create automation* is disabled while the design has validation errors, the YAML export works for automation designs that use preview parameters, and a failed save names the validation errors.
 - Designer: the background of an opened automation design can be changed and is saved; disabled `ble_esl.write` steps are no longer offered; an unsupported `rotate` value is reported instead of being treated as 0; an unimportable payload no longer prevents opening the design.
 - Designer: undoing back to the loaded or saved design no longer leaves the editor marked as having unsaved changes.
+- Designer: accent, error and warning colours follow the Home Assistant theme, touch targets reach 44 px on touch screens, and animations stop with the "reduce motion" setting.
 
 ## 1.7.0
 

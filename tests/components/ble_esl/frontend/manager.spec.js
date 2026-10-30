@@ -603,9 +603,7 @@ test("does not import an unsupported automation background", async ({
   expect(posts).toBe(0);
 });
 
-test("saves a background-only edit to the automation", async ({
-  page,
-}) => {
+test("saves a background-only edit to the automation", async ({ page }) => {
   const posted = [];
   await page.route("**/api/config/automation/config/*", async (route) => {
     if (route.request().method() === "POST")
@@ -1255,7 +1253,9 @@ test("declining to discard an edited automation design keeps it and its URL", as
     .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
-  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   const prompts = [];
   page.on("dialog", async (dialog) => {
@@ -1264,7 +1264,9 @@ test("declining to discard an edited automation design keeps it and its URL", as
   });
   await page.getByRole("button", { name: "Dashboard" }).click();
   await expect.poll(() => prompts.length).toBe(1);
-  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   expect(page.url()).toContain("tag=demo-writable");
 });
 
@@ -1302,7 +1304,9 @@ test("a stored draft of another write action is not offered back", async ({
     .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
-  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   await page.evaluate(() => {
     window.manager.persistAutomationDraft();
@@ -1326,7 +1330,9 @@ test("a stored draft of another write action is not offered back", async ({
     .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
-  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   expect(prompts).toEqual([]);
   expect(
     await page.evaluate(() =>
@@ -1347,7 +1353,9 @@ test("unsaved automation design changes are offered back after leaving the panel
       .getByRole("button", { name: "Edit automation design", exact: true })
       .first()
       .click();
-    await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Save to automation" }),
+    ).toBeVisible();
   };
   await open();
   const before = await page.evaluate(
@@ -2176,7 +2184,9 @@ test("undoing an automation edit back to the loaded design clears the unsaved ba
     .getByRole("button", { name: "Edit automation design", exact: true })
     .first()
     .click();
-  await expect(page.getByRole("button", { name: "Save to automation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
   await expect(page.locator("#dirty-badge")).toBeHidden();
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   await expect(page.locator("#dirty-badge")).toBeVisible();
@@ -2184,4 +2194,35 @@ test("undoing an automation edit back to the loaded design clears the unsaved ba
   await expect(page.locator("#dirty-badge")).toBeHidden();
   await page.getByRole("button", { name: "Redo" }).click();
   await expect(page.locator("#dirty-badge")).toBeVisible();
+});
+
+test("designer accent colours follow the Home Assistant theme and respect reduced motion", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  const send = page.locator("ble-esl-designer").getByRole("button", {
+    name: "Send to tag",
+  });
+  await expect(send).toBeVisible();
+  const color = () =>
+    send.evaluate((node) => getComputedStyle(node).backgroundColor);
+  const fallback = await color();
+  await page.evaluate(() =>
+    document.documentElement.style.setProperty(
+      "--primary-color",
+      "rgb(200, 10, 20)",
+    ),
+  );
+  expect(await color()).toBe("rgb(200, 10, 20)");
+  expect(fallback).not.toBe("rgb(200, 10, 20)");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const motion = await page.evaluate(() => {
+    const host = window.manager.editor;
+    const probe = host.shadowRoot.querySelector(".toolbar button");
+    probe.style.animation = "spin 2s linear infinite";
+    return getComputedStyle(probe).animationDuration;
+  });
+  expect(motion).toBe("1e-05s");
 });
