@@ -3,9 +3,11 @@
 The component is drawn from the entity's state as it is now. Here the pieces
 that come straight from the state (a sensor's value, a data field, the icon a
 rule picks, a bar's progress) are replaced by a template that gives the same
-thing now and follows the entity later. A piece is only replaced when its
-template renders exactly what was drawn; anything else stays as drawn, and the
-component is then reported as not live.
+thing now and follows the entity later, in the states the designer handles
+specially too (unavailable, rounded numbers). A piece is only replaced when its
+template renders, as Home Assistant renders action data, exactly what was
+drawn; anything else stays as drawn, and the component is then reported as
+not live.
 """
 
 import json
@@ -14,35 +16,61 @@ import math
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.template import Template
 
+_UNAVAILABLE = "['unavailable', 'unknown']"
+
 
 def _literal(value):
     return json.dumps(str(value), ensure_ascii=False)
 
 
-def source_expression(element):
-    """The template expression for the value a component shows, or None."""
+def shown_value(element):
+    """(prelude, expression) for the value a data field shows, as the designer shows it.
+
+    Mirrors ``layout.sensor_values``: an unavailable state is capitalised and a
+    number is rounded to the element's decimals; the unit is blank without a state.
+    """
     entity = _literal(element["entity_id"])
     field = element.get("data_field")
     if field == "state":
-        return f"states({entity})"
+        prelude = f"{{% set v = states({entity}) %}}"
+        expression = f"v | capitalize if v in {_UNAVAILABLE} else v"
+        decimals = element.get("decimals")
+        if decimals is not None:
+            expression = (
+                f"v | capitalize if v in {_UNAVAILABLE} else "
+                f"(('%.{decimals}f' | format(v | float)) if v | float(none) is not none else v)"
+            )
+        return prelude, expression
     if field == "attribute":
-        return f"state_attr({entity}, {_literal(element['attribute'])})"
+        attribute = _literal(element["attribute"])
+        value = f"state_attr({entity}, {attribute})"
+        return "", f"({value} if {value} is not none else '')"
     if field == "name":
-        return f"(state_attr({entity}, 'friendly_name') or {entity})"
-    if field == "unit":
-        return f"(state_attr({entity}, 'unit_of_measurement') or '')"
+        return "", f"(state_attr({entity}, 'friendly_name') or {entity})"
+    if field == "unit" and element.get("show_unit", True):
+        return (
+            f"{{% set v = states({entity}) %}}",
+            f"'' if v in {_UNAVAILABLE} else (state_attr({entity}, 'unit_of_measurement') or '')",
+        )
     return None
 
 
 def render(hass, template):
-    """What Home Assistant renders the template to, as text; None when it cannot."""
+    """What Home Assistant renders the template to in action data (a number stays one)."""
     try:
-        return str(Template(template, hass).async_render(parse_result=False))
+        return Template(template, hass).async_render(parse_result=True)
     except HomeAssistantError:
         return None
 
 
-def icon_chain(element, expression, fallback):
+def renders_as(hass, template, drawn):
+    """Whether the template renders to exactly the text that was drawn."""
+    rendered = render(hass, template)
+    # A number comes out as its own text, as it is drawn: 21.3 stays, 21.50 would not.
+    return isinstance(rendered, str | int | float) and str(rendered) == str(drawn)
+
+
+def icon_chain(element, prelude, expression, fallback):
     """A template giving the icon the element's rules pick for a value.
 
     Rules are tried in order, then the per-state icons, as the designer does.
@@ -68,17 +96,16 @@ def icon_chain(element, expression, fallback):
         f"{{% {'if' if not index else 'elif'} {test} %}}{icon}"
         for index, (test, icon) in enumerate(branches)
     )
-    if branches:
-        body += f"{{% else %}}{fallback}{{% endif %}}"
-    else:
-        body = fallback
-    return f"{{% set v = {expression} %}}{{% set n = v | float(none) %}}{body}"
+    body = body + f"{{% else %}}{fallback}{{% endif %}}" if branches else fallback
+    # The rules read the value as shown: ``w``, then ``v`` as text and ``n`` as a number.
+    return f"{prelude}{{% set w = {expression} %}}{{% set v = w %}}{{% set n = w | float(none) %}}{body}"
 
 
 def live_items(hass, element, state, items):
     """Template the items an entity-bound component drew; True when it now follows the entity.
 
-    ``items`` is the payload the component produced, changed in place.
+    ``element`` is the component as designed, ``items`` the payload it drew,
+    changed in place.
     """
     from .importer import value_template  # Imported here: importer needs layout.
 
@@ -94,14 +121,11 @@ def live_items(hass, element, state, items):
         ]
         if not changed:
             return False
-        for index, new in changed:
-            if render(hass, new["value"]) != str(items[index]["value"]):
-                return False
+        if not all(renders_as(hass, new["value"], items[index]["value"]) for index, new in changed):
+            return False
         for index, new in changed:
             items[index] = new
         return True
-    if state is None:
-        return False
     if kind in ("icon", "conditional_icon") and len(items) == 1 and items[0].get("type") == "icon":
         from .layout import sensor_icon
 
@@ -109,45 +133,47 @@ def live_items(hass, element, state, items):
         if state.entity_id.startswith(("binary_sensor.", "weather.")):
             return False
         if kind == "icon":
-            # The rules read the state; what shows without a match is the data field.
+            # The rules read the raw state; what shows without a match is the data field.
             if element["data_field"] != "icon":
                 return False
-            expression = f"states({_literal(element['entity_id'])})"
+            prelude, expression = "", f"states({_literal(element['entity_id'])})"
             fallback = sensor_icon(state)
         else:
-            expression = source_expression(element)
-            if expression is None:
+            source = shown_value(element)
+            if source is None:
                 return False
+            prelude, expression = source
             fallback = sensor_icon(state) if element["icon"] == "{{icon}}" else element["icon"]
-        template = icon_chain(element, expression, fallback)
-        if render(hass, template) != str(items[0]["value"]):
+        template = icon_chain(element, prelude, expression, fallback)
+        if not renders_as(hass, template, items[0]["value"]):
             return False
         items[0]["value"] = template
         return True
-    expression = source_expression(element)
-    if expression is None or state is None:
+    source = shown_value(element)
+    if source is None:
         return False
+    prelude, expression = source
     if kind == "text":
         # One line of text: a value spread over several lines is split when drawn.
         texts = [item for item in items if item.get("type") == "text_fit"]
-        if len(texts) != 1 or render(hass, "{{ " + expression + " }}") != str(texts[0]["value"]):
+        template = f"{prelude}{{{{ {expression} }}}}"
+        if len(texts) != 1 or not renders_as(hass, template, texts[0]["value"]):
             return False
-        texts[0]["value"] = "{{ " + expression + " }}"
+        texts[0]["value"] = template
         return True
     if kind in ("progress_bar", "gauge") and len(items) == 1:
         low, high = element["min_value"], element["max_value"]
-        number = f"({expression}) | float(none)"
         scaled = f"(x - {low!r}) / {high - low!r} * 100" if kind == "progress_bar" else "x"
-        progress = f"{{% set x = {number} %}}{{{{ {scaled} if x is not none else 0 }}}}"
-        shown = render(hass, progress)
+        number = f"{prelude}{{% set x = ({expression}) | float(none) %}}"
+        progress = f"{number}{{{{ {scaled} if x is not none else 0 }}}}"
         try:
-            same = math.isclose(float(shown), float(items[0]["progress"]), abs_tol=1e-9)
+            same = math.isclose(float(render(hass, progress)), float(items[0]["progress"]))
         except (TypeError, ValueError):
             return False
         if not same:
             return False
         items[0]["progress"] = progress
         # No reading draws nothing, as the designer does without a number.
-        items[0]["visible"] = f"{{{{ ({number}) is not none }}}}"
+        items[0]["visible"] = f"{number}{{{{ x is not none }}}}"
         return True
     return False

@@ -119,12 +119,12 @@ async def test_a_bar_and_a_gauge_follow_a_number_and_hide_without_one(hass, woli
     assert [item["visible"] for item in drawn(hass, result)] == [False, False]
 
 
-async def test_what_a_template_cannot_reproduce_exactly_stays_as_drawn_and_is_reported(
-    hass, wolink_entry
-):
-    # Rounded text is not what the state says, so the data field is not followed.
-    hass.states.async_set("sensor.temp", "21.26")
-    rounded = element("text", "rounded", entity_id="sensor.temp", data_field="state", decimals=1)
+async def test_what_a_template_cannot_reproduce_stays_as_drawn_and_is_reported(hass, wolink_entry):
+    hass.states.async_set("sensor.temp", "21.26", {"unit_of_measurement": "W"})
+    # A unit that is hidden has no template; a field template is not followed.
+    hidden_unit = element(
+        "text", "unit", entity_id="sensor.temp", data_field="unit", show_unit=False
+    )
     templated = element(
         "text",
         "templated",
@@ -132,9 +132,9 @@ async def test_what_a_template_cannot_reproduce_exactly_stays_as_drawn_and_is_re
         data_field="state",
         field_templates={"color": "{{ 'red' if value | float > 20 else 'black' }}"},
     )
-    result = await export(hass, wolink_entry, rounded, templated)
-    assert [item.split(":")[0] for item in result["frozen"]] == ["rounded", "templated"]
-    assert [item["value"] for item in result["payload_data"]] == ["21.3", "21.26"]
+    result = await export(hass, wolink_entry, hidden_unit, templated)
+    assert [item.split(":")[0] for item in result["frozen"]] == ["unit", "templated"]
+    assert [item["value"] for item in result["payload_data"]] == ["21.26"]
 
 
 async def test_a_hidden_component_is_kept_as_hidden_and_comes_back(hass, wolink_entry):
@@ -164,4 +164,118 @@ async def test_a_turned_component_stays_live_inside_its_group(hass, wolink_entry
     assert result["frozen"] == []
     group = result["payload_data"][0]
     assert group["type"] == "group" and group["rotate"] == 90
-    assert group["elements"][0]["value"] == '{{ states("sensor.mode") }}'
+    assert "states(" in group["elements"][0]["value"]
+
+
+async def test_an_entity_that_goes_unavailable_is_drawn_as_the_designer_draws_it(
+    hass, wolink_entry
+):
+    hass.states.async_set("sensor.mode", "eco", {"level": "low", "unit_of_measurement": "W"})
+    result = await export(
+        hass,
+        wolink_entry,
+        element("text", "state", entity_id="sensor.mode", data_field="state"),
+        element("text", "attr", entity_id="sensor.mode", data_field="attribute", attribute="level"),
+        element("text", "unit", entity_id="sensor.mode", data_field="unit"),
+    )
+    assert result["frozen"] == []
+    # An unavailable entity has lost its attributes: the text is empty, never missing.
+    hass.states.async_set("sensor.mode", "unavailable")
+    values = [item.get("value") for item in drawn(hass, result)]
+    assert values == ["Unavailable", "", ""]
+
+
+async def test_text_that_looks_like_a_number_is_not_followed_as_one(hass, wolink_entry):
+    hass.states.async_set("sensor.temp", "21.50")
+    result = await export(
+        hass, wolink_entry, element("text", entity_id="sensor.temp", data_field="state")
+    )
+    # Home Assistant would turn the rendered 21.50 into the number 21.5.
+    assert len(result["frozen"]) == 1
+    assert result["payload_data"][0]["value"] == "21.50"
+
+
+async def test_rounding_and_unavailable_are_followed_as_the_designer_does(hass, wolink_entry):
+    hass.states.async_set("sensor.temp", "21.3")
+    result = await export(
+        hass,
+        wolink_entry,
+        element("text", entity_id="sensor.temp", data_field="state", decimals=1),
+    )
+    assert result["frozen"] == []
+    hass.states.async_set("sensor.temp", "21.26")
+    assert str(drawn(hass, result)[0]["value"]) == "21.3"
+    hass.states.async_set("sensor.temp", "unavailable")
+    assert drawn(hass, result)[0]["value"] == "Unavailable"
+    hass.states.async_set("sensor.temp", "text")
+    assert drawn(hass, result)[0]["value"] == "text"
+
+
+async def test_rules_read_the_value_as_shown(hass, wolink_entry):
+    hass.states.async_set("sensor.level", "20.4")
+    rules = [
+        {"kind": "range", "min": 20, "icon": "mdi:battery"},
+        {"kind": "state", "state": "Unavailable", "icon": "mdi:close"},
+    ]
+    result = await export(
+        hass,
+        wolink_entry,
+        element(
+            "conditional_icon",
+            entity_id="sensor.level",
+            data_field="state",
+            decimals=0,
+            icon="mdi:help",
+            icon_rules=rules,
+        ),
+    )
+    assert result["frozen"] == []
+    hass.states.async_set("sensor.level", "19.6")
+    assert drawn(hass, result)[0]["value"] == "mdi:battery"
+    hass.states.async_set("sensor.level", "unavailable")
+    assert drawn(hass, result)[0]["value"] == "mdi:close"
+
+
+async def test_a_bar_reads_the_rounded_value(hass, wolink_entry):
+    hass.states.async_set("sensor.fill", "40")
+    result = await export(
+        hass,
+        wolink_entry,
+        element("progress_bar", entity_id="sensor.fill", data_field="state", decimals=0),
+    )
+    assert result["frozen"] == []
+    hass.states.async_set("sensor.fill", "40.6")
+    assert drawn(hass, result)[0]["progress"] == 41
+
+
+async def test_a_sensor_drawn_through_a_sensor_template_is_as_of_now(hass, wolink_entry):
+    hass.states.async_set(
+        "sensor.temp", "21", {"unit_of_measurement": "°C", "device_class": "temperature"}
+    )
+    designer = hass.data[KEY]
+    from custom_components.ble_esl.designer.layout import validate_template
+
+    designer.templates = {
+        "output:numeric": validate_template(
+            {
+                "width": 100,
+                "height": 40,
+                "document": {
+                    "version": 1,
+                    "elements": [
+                        {
+                            "id": "t",
+                            "type": "text",
+                            "text": "{{state}} {{unit}}",
+                            "x": 0,
+                            "y": 0,
+                            "width": 100,
+                            "height": 40,
+                        }
+                    ],
+                },
+            }
+        )
+    }
+    result = await export(hass, wolink_entry, element("sensor", entity_id="sensor.temp"))
+    assert len(result["frozen"]) == 1

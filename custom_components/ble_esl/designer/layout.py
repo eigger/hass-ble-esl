@@ -697,10 +697,10 @@ def _set_dither(payload, start, dither):
 
 def _finish(hass, payload, pending, keep_templates, report):
     """Close the element drawn since ``pending``: its dither, its hiding, what follows its entity."""
-    start, dither, original, hidden = pending
+    start, dither, original, hidden, follow = pending
     _set_dither(payload, start, dither)
     items = payload[start:]
-    if keep_templates and _bound(original):
+    if keep_templates and follow and _bound(original):
         state = hass.states.get(original["entity_id"]) if original["entity_id"] else None
         if (
             state is not None
@@ -785,7 +785,7 @@ def compile_payload(
                 )
                 report.changed = report.changed or hidden
             continue
-        pending = (len(payload), element.get("dither"), original, hidden)
+        pending = [len(payload), element.get("dither"), original, hidden, True]
         x, y, width, height = (element[key] for key in ("x", "y", "width", "height"))
         color = element["color"]
         state = hass.states.get(element["entity_id"]) if element["type"] == "sensor" else None
@@ -818,6 +818,8 @@ def compile_payload(
                         if child.get(key) is not None:
                             child[key] = max(minimum, round(child[key] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested, preview_variables=preview_variables))
+                # Drawn through a sensor template: only as of now.
+                pending[4] = False
                 continue
         if element["type"] == "imagespec":
             spec = (
