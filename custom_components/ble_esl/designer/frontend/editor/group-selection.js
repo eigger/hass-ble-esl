@@ -9,8 +9,8 @@ export function sharedProperties(panel, translate, escape) {
     items.every((e) => read(e, key) === read(items[0], key))
       ? read(items[0], key)
       : "";
-  const number = (key, label, value = common(key)) =>
-    `<label>${translate(label)}<input data-property="${key}" type="number" ${["width", "height", "font_size"].includes(key) ? 'min="1"' : ""} value="${escape(value ?? "")}" placeholder="${translate("Mixed")}" step="1"></label>`;
+  const number = (key, label, value = common(key), literal = false) =>
+    `<label>${literal ? escape(label) : translate(label)}<input data-property="${key}" type="number" ${["width", "height", "font_size"].includes(key) ? 'min="1"' : ""} value="${escape(value ?? "")}" placeholder="${translate("Mixed")}" step="1"></label>`;
   const x = Math.min(...items.map((e) => e.x)),
     y = Math.min(...items.map((e) => e.y));
   const text = items.every((e) => ["text", "sensor"].includes(e.type));
@@ -28,9 +28,16 @@ export function sharedProperties(panel, translate, escape) {
                 ),
             ),
         )
-        .map((field) =>
-          number(`spec.${field.name}`, field.name.replaceAll("_", " ")),
-        )
+        .map((field) => {
+          // Field names are the imagespec YAML keys: shown as they are.
+          const name = field.name.replaceAll("_", " ");
+          return number(
+            `spec.${field.name}`,
+            name[0].toUpperCase() + name.slice(1),
+            undefined,
+            true,
+          );
+        })
         .join("")
     : "";
   return `<p class="wide">${items.length} ${translate("selected")}. ${translate("Changes apply to all selected components. Mixed values are blank.")}</p>${number("x", "X", x)}${number("y", "Y", y)}${number("width", "Width")}${number("height", "Height")}${renderElementRotation({ rotation: common("rotation"), rotationMixed: common("rotation") === "" }, translate)}${panel.colorPicker("color", common("color"), translate("Colour"))}${text ? renderTextAlignmentControls({ font_size: common("font_size"), align: common("align") }, { translate, escapeHtml: escape }) : ""}${nativeFields}<label class="check wide"><input type="checkbox" data-property="visible" ${common("visible") !== false ? "checked" : ""}>${translate("Visible")}${common("visible") === "" ? ` (${translate("Mixed")})` : ""}</label>${items.every((e) => e.type === "text") ? `<label class="wide">${translate("Text")}<textarea data-property="text" placeholder="${translate("Mixed")}">${escape(common("text"))}</textarea></label>` : ""}`;
@@ -76,7 +83,8 @@ export function beginMarquee(panel, event) {
   Object.assign(box.style, {
     position: "absolute",
     border: "1px solid var(--primary-color,#16838c)",
-    background: "color-mix(in srgb,var(--primary-color,#16838c) 13%,transparent)",
+    background:
+      "color-mix(in srgb,var(--primary-color,#16838c) 13%,transparent)",
     pointerEvents: "none",
     zIndex: 10000,
   });
