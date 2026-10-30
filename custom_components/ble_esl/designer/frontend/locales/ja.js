@@ -587,8 +587,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "このオートメーションデザインの未保存の変更を復元しますか？キャンセルすると破棄されます。",
   "Clear search and filter": "検索とフィルターをクリア",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
   "Send to ESL": "ESLに送信",
@@ -657,4 +655,6 @@ export default {
   "Select the association to unlink":
     "リンクを解除する関連付けを選択してください",
   "Automation has no stable ID": "オートメーションに安定した ID がありません",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択 · ? ですべてのショートカットを表示",
 };

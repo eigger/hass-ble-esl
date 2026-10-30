@@ -591,8 +591,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "¿Restaurar los cambios sin guardar que hiciste en el diseño de esta automatización? Cancelar los descarta.",
   "Clear search and filter": "Borrar búsqueda y filtro",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
   "Send to ESL": "Enviar al ESL",
@@ -661,4 +659,6 @@ export default {
   "Select the association to unlink":
     "Selecciona la asociación que quieres desvincular",
   "Automation has no stable ID": "La automatización no tiene un ID estable",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área · ? muestra todos los atajos",
 };

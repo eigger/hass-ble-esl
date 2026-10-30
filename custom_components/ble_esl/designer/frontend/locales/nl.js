@@ -588,8 +588,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen? Annuleren gooit ze weg.",
   "Clear search and filter": "Zoekopdracht en filter wissen",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
   "Send to ESL": "Naar ESL verzenden",
@@ -657,4 +655,6 @@ export default {
   "Select the association to unlink":
     "Selecteer de koppeling die u wilt ontkoppelen",
   "Automation has no stable ID": "De automatisering heeft geen stabiele id",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied · ? toont alle sneltoetsen",
 };

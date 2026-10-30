@@ -1,5 +1,21 @@
 import { clampBox, clone, onLabel } from "../../model.js";
 import { t } from "../../i18n.js";
+import { openShortcutsDialog } from "../shortcuts-dialog.js";
+import { clampGroupMove } from "./geometry.js";
+
+// Absolute frames of the selected elements, from what was last rendered.
+const groupBoxes = (panel, elements) =>
+  elements
+    .filter((element) => element.visible !== false)
+    .map((element) => {
+      const [l, tp, r, b] = panel.visibleBounds(element) || [
+        0,
+        0,
+        element.width,
+        element.height,
+      ];
+      return [element.x + l, element.y + tp, element.x + r, element.y + b];
+    });
 
 export function beginTextEdit(panel) {
   if (panel.element?.type !== "text") return;
@@ -84,8 +100,12 @@ export function handleKey(panel, event) {
     panel.focusElement();
     return;
   }
+  // The real origin, also inside the shadow DOM of a dialog hosted in the panel
+  // (event.target is retargeted to the dialog element there).
+  const origin = event.composedPath()[0] || event.target;
   const editing =
-    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName) ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(origin.tagName) ||
+    origin.isContentEditable ||
     event.target.isContentEditable;
   // The browser's own "Save page" must not open from inside a field.
   if (
@@ -98,6 +118,16 @@ export function handleKey(panel, event) {
     return;
   }
   if (editing) return;
+  if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    event.preventDefault();
+    // Close the menu first, and take its focus back, so the dialog returns
+    // focus to a live element rather than the removed menu button.
+    const menuOpen = !!panel.shadowRoot.querySelector(".context-menu");
+    panel.closeContextMenu();
+    if (menuOpen) panel.focusElement();
+    openShortcutsDialog(panel.hass);
+    return;
+  }
   const interactiveControl = event.target.closest(
       "button, a, input, select, textarea, [contenteditable=true]",
     ),
@@ -151,12 +181,18 @@ export function handleKey(panel, event) {
   if (inCanvas && panel.element && directions[event.key]) {
     event.preventDefault();
     if (panel.selectedElements.length > 1) {
-      panel.checkpoint();
       const step = event.shiftKey ? 10 : 1;
-      const [dx, dy] = directions[event.key];
+      const [dx, dy] = clampGroupMove(
+        groupBoxes(panel, panel.selectedElements),
+        panel.tag,
+        directions[event.key][0] * step,
+        directions[event.key][1] * step,
+      );
+      if (!dx && !dy) return;
+      panel.pushNudgeUndo(clone(panel.document));
       for (const element of panel.selectedElements) {
-        element.x += dx * step;
-        element.y += dy * step;
+        element.x += dx;
+        element.y += dy;
       }
       panel.edited();
       panel.focusElement();
@@ -171,7 +207,7 @@ export function handleKey(panel, event) {
     panel.element.y += y * step;
     panel.clampMoved(panel.element, panel.moveBound(before, visible), visible);
     if (panel.element.x === before.x && panel.element.y === before.y) return;
-    panel.pushUndo(snapshot);
+    panel.pushNudgeUndo(snapshot);
     panel.edited();
     panel.focusElement();
   }
@@ -217,7 +253,11 @@ export function handlePointer(panel, event) {
     // An element that hangs off the label (an imported frame) is not pulled
     // back by the first move.
     bound = onLabel(start, panel.tag),
-    startVisible = panel.visibleBounds(start);
+    startVisible = panel.visibleBounds(start),
+    startBoxes = groupBoxes(
+      panel,
+      group.map((item) => item.start),
+    );
   let moved = false,
     pendingMove = null,
     gestureFrame = 0;
@@ -262,9 +302,10 @@ export function handlePointer(panel, event) {
       );
     } else {
       if (group.length > 1) {
+        const [gx, gy] = clampGroupMove(startBoxes, panel.tag, dx, dy);
         for (const item of group) {
-          item.element.x = item.start.x + dx;
-          item.element.y = item.start.y + dy;
+          item.element.x = item.start.x + gx;
+          item.element.y = item.start.y + gy;
         }
         panel.snapGuides = [];
         panel.drawStage();

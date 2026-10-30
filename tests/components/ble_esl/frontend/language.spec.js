@@ -429,3 +429,23 @@ test("dialogs without their own hass translate server messages through the panel
     expect(source, file).not.toContain("serverMessage(this.hass");
   }
 });
+
+// The shortcut dialog splits these sentences on " · ": every translation must
+// keep the same number of items as the English one.
+test("canvas tip sentences keep their ' · ' separated items in every language", async () => {
+  const { messages } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
+  const { CANVAS_TIPS, SELECTION_TIPS } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/editor/shortcuts-dialog.js");
+  for (const key of [CANVAS_TIPS, SELECTION_TIPS]) {
+    const expected = key.split(" · ").length;
+    for (const [code, catalog] of Object.entries(messages)) {
+      const parts = catalog[key].split(" · ");
+      expect(parts.length, code).toBe(expected);
+      expect(
+        parts.every((part) => part.trim()),
+        code,
+      ).toBe(true);
+    }
+  }
+});

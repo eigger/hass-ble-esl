@@ -585,8 +585,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "Восстановить несохранённые изменения в дизайне этой автоматизации? При отмене они будут удалены.",
   "Clear search and filter": "Сбросить поиск и фильтр",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Хранится как черновик в рамках этого сеанса браузера, пока вы не создадите автоматизацию или не сохраните в неё.",
   "Send to ESL": "Отправить на ESL",
@@ -652,4 +650,6 @@ export default {
   "Select an automation entity": "Выберите объект автоматизации",
   "Select the association to unlink": "Выберите связь, которую нужно отвязать",
   "Automation has no stable ID": "У автоматизации нет стабильного ID",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область · ? показывает все сочетания клавиш",
 };

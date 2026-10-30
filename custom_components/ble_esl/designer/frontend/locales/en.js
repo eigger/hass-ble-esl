@@ -575,8 +575,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "Restore the unsaved changes you made to this automation design? Cancel discards them.",
   "Clear search and filter": "Clear search and filter",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Kept as a draft for this browser session until you create an automation or save into one.",
   "Send to ESL": "Send to ESL",
@@ -642,4 +640,6 @@ export default {
   "Select an automation entity": "Select an automation entity",
   "Select the association to unlink": "Select the association to unlink",
   "Automation has no stable ID": "Automation has no stable ID",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts",
 };
