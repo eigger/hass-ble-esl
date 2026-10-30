@@ -1,5 +1,6 @@
 import { clampBox, clone, onLabel } from "../../model.js";
 import { t } from "../../i18n.js";
+import { openShortcutsDialog } from "../shortcuts-dialog.js";
 import { clampGroupMove } from "./geometry.js";
 
 // Absolute frames of the selected elements, from what was last rendered.
@@ -99,8 +100,12 @@ export function handleKey(panel, event) {
     panel.focusElement();
     return;
   }
+  // The real origin, also inside the shadow DOM of a dialog hosted in the panel
+  // (event.target is retargeted to the dialog element there).
+  const origin = event.composedPath()[0] || event.target;
   const editing =
-    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName) ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(origin.tagName) ||
+    origin.isContentEditable ||
     event.target.isContentEditable;
   // The browser's own "Save page" must not open from inside a field.
   if (
@@ -113,6 +118,16 @@ export function handleKey(panel, event) {
     return;
   }
   if (editing) return;
+  if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    event.preventDefault();
+    // Close the menu first, and take its focus back, so the dialog returns
+    // focus to a live element rather than the removed menu button.
+    const menuOpen = !!panel.shadowRoot.querySelector(".context-menu");
+    panel.closeContextMenu();
+    if (menuOpen) panel.focusElement();
+    openShortcutsDialog(panel.hass);
+    return;
+  }
   const interactiveControl = event.target.closest(
       "button, a, input, select, textarea, [contenteditable=true]",
     ),

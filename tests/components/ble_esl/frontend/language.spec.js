@@ -208,7 +208,10 @@ test("locale catalogs match component languages and preserve interpolation token
   const { language, supportedLanguages, t } =
     await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
   const componentLanguages = readdirSync(
-    new URL("../../../../custom_components/ble_esl/translations/", import.meta.url),
+    new URL(
+      "../../../../custom_components/ble_esl/translations/",
+      import.meta.url,
+    ),
   )
     .filter((name) => name.endsWith(".json"))
     .map((name) => name.slice(0, -5))
@@ -294,12 +297,10 @@ for (const code of localizedControls) {
     await dialog.locator(".close").click();
     await card.locator('[data-action="edit"]').click();
     await expect(
-      page
-        .locator("ble-esl-designer")
-        .getByRole("button", {
-          name: copy["Save to existing automation…"],
-          exact: true,
-        }),
+      page.locator("ble-esl-designer").getByRole("button", {
+        name: copy["Save to existing automation…"],
+        exact: true,
+      }),
     ).toBeVisible();
     await page.locator('ble-esl-designer [data-add="text"]').click();
     await page
@@ -392,5 +393,25 @@ test("non-English locales leave no untranslated copy beyond shared words", async
         !(shared[code] || []).includes(key),
     );
     expect(untranslated, code).toEqual([]);
+  }
+});
+
+// The shortcut dialog splits these sentences on " · ": every translation must
+// keep the same number of items as the English one.
+test("canvas tip sentences keep their ' · ' separated items in every language", async () => {
+  const { messages } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
+  const { CANVAS_TIPS, SELECTION_TIPS } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/editor/shortcuts-dialog.js");
+  for (const key of [CANVAS_TIPS, SELECTION_TIPS]) {
+    const expected = key.split(" · ").length;
+    for (const [code, catalog] of Object.entries(messages)) {
+      const parts = catalog[key].split(" · ");
+      expect(parts.length, code).toBe(expected);
+      expect(
+        parts.every((part) => part.trim()),
+        code,
+      ).toBe(true);
+    }
   }
 });

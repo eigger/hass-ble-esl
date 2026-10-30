@@ -2481,3 +2481,75 @@ test("selection actions float clear of the handles, stay reachable and duplicate
   await bar.getByRole("button", { name: "Delete selected element" }).click();
   await expect(page.locator(".el")).toHaveCount(1);
 });
+
+test("? opens a list of every shortcut, Escape closes it, typing ? in a field does not", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("group", { name: "Display canvas" }).focus();
+  await page.keyboard.press("?");
+  const dialog = page.getByRole("dialog", { name: "Keyboard & mouse tips" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("listitem")).toContainText([
+    "Click an element to select it",
+    "⌘/Ctrl + Shift + Z redoes",
+    "Shift / Ctrl / ⌘ + click selects several elements",
+    "? shows all shortcuts",
+  ]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  // Back where it was opened from.
+  await expect(
+    page.getByRole("group", { name: "Display canvas" }),
+  ).toBeFocused();
+  // A "?" typed into a text field is just text.
+  await page.locator('[data-property="text"]').fill("");
+  await page.locator('[data-property="text"]').press("?");
+  await expect(dialog).toHaveCount(0);
+});
+
+test("? typed inside a dialog hosted by the panel is not a shortcut", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const opened = await page.evaluate(() => {
+    const host = document.createElement("div");
+    host.attachShadow({ mode: "open" }).innerHTML = "<input>";
+    window.panel.shadowRoot.append(host);
+    const input = host.shadowRoot.querySelector("input");
+    const event = new KeyboardEvent("keydown", {
+      key: "?",
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    input.dispatchEvent(event);
+    host.remove();
+    return { prevented: event.defaultPrevented };
+  });
+  // Not handled by the canvas: the character is left to the field.
+  expect(opened.prevented).toBe(false);
+  await expect(
+    page.getByRole("dialog", { name: "Keyboard & mouse tips" }),
+  ).toHaveCount(0);
+});
+
+test("? from the context menu closes it and focus returns to the canvas afterwards", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.locator(".el").first().click({ button: "right" });
+  await expect(page.locator(".context-menu")).toBeVisible();
+  await page.locator(".context-menu button").first().focus();
+  await page.keyboard.press("?");
+  const dialog = page.getByRole("dialog", { name: "Keyboard & mouse tips" });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator(".context-menu")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  // Not lost on <body>: the canvas element has focus again.
+  await expect(page.locator(".el.selected")).toBeFocused();
+});

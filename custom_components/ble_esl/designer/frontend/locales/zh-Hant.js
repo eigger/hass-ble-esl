@@ -94,8 +94,6 @@ export default {
   "Choose icon": "選擇圖標",
   "Click a block to move, resize, or bind it to an entity.":
     "按一下區塊以將其移動、調整其大小或將其綁定到實體。",
-  "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "按一下元素以選擇它 · 點選文字進行編輯 · 拖曳以移動 · 拖曳角落控制把手以調整大小 · 對齊參考線出現在邊緣和中心附近 · 箭頭鍵移動 1 像素 · Shift + 箭頭移動 10 像素 · 100 鍵刪除文字 · 1 像素⌘/Ctrl + S 儲存 · ⌘/Ctrl + Z 撤銷 · ⌘/Ctrl + Shift + Z 重做",
   "Close automations": "關閉自動化",
   "Close component editor": "關閉元件編輯器",
   "Close dynamic fields": "關閉動態字段",
@@ -555,8 +553,6 @@ export default {
     "要還原此自動化設計中未儲存的變更嗎？取消會捨棄這些變更。",
   "Clear search and filter":
     "清除搜尋與篩選",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "在建立自動化或儲存到自動化之前，會在此瀏覽器工作階段期間以草稿形式保留。",
   "Send to ESL": "發送至 ESL",
@@ -581,4 +577,8 @@ export default {
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域 · 按 ? 查看所有快速鍵",
+  "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
+    "按一下元素以選擇它 · 點選文字進行編輯 · 拖曳以移動 · 拖曳角落控制點以調整大小 · 對齊參考線會出現在邊緣和中心附近 · 方向鍵移動 1 像素 · Shift + 方向鍵移動 10 像素 · Enter 編輯所選文字 · Delete / Backspace 刪除 · 按一下滑鼠右鍵開啟動作 · ⌘/Ctrl + D 複製 · ⌘/Ctrl + S 儲存 · ⌘/Ctrl + Z 復原 · ⌘/Ctrl + Shift + Z 重做",
 };

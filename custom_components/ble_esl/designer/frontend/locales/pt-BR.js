@@ -590,8 +590,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "Restaurar as alterações não salvas feitas neste design de automação? Cancelar as descarta.",
   "Clear search and filter": "Limpar busca e filtro",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + clique seleciona vários elementos · Arrastar em uma área vazia da tela seleciona uma região",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Mantido como rascunho nesta sessão do navegador até você criar uma automação ou salvar em uma.",
   "Send to ESL": "Enviar para o ESL",
@@ -618,4 +616,6 @@ export default {
     "Os componentes e as regras condicionais são preservados e usam os estados atuais das entidades a cada execução da automação.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Mudanças de estado das entradas disparam atualizações da tela. Você pode ajustar os gatilhos no Home Assistant.",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + clique seleciona vários elementos · Arrastar em uma área vazia da tela seleciona uma região · ? mostra todos os atalhos",
 };
