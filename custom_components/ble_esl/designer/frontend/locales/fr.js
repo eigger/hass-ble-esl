@@ -10,7 +10,7 @@ export default {
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESL · {errors} erreurs · {unsynced} non synchronisés",
   "{count} automations · {active} active":
-    "{count} automatismes · {active} actif",
+    "{count} automatisations · {active} actives",
   "Battery {value}": "Batterie {value}",
   "Last successful image for {alias}": "Dernière image réussie pour {alias}",
   "Skipped: {reason}": "Sauté : {reason}",
@@ -37,7 +37,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "Les champs de texte acceptent les modèles Jinja, par ex.",
   "Not valid JSON: check the brackets and quotes":
-    "Non valide JSON : vérifiez les parenthèses et les guillemets",
+    "JSON non valide : vérifiez les crochets et les guillemets",
   "Enter a number, or a {{ template }}":
     "Saisissez un nombre ou un {{ template }}",
   "Toggle {label} panel": "Basculer le panneau {label}",
@@ -46,9 +46,9 @@ export default {
   "Delete {label}": "Supprimer {label}",
   "Resize {corner}": "Redimensionner {corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Converti en éléments {count}, dessinés exactement comme avant{skipped}",
+    "Converti en {count} éléments, dessinés exactement comme avant{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Converti en éléments {count} ; {pixels} pixels diffèrent d'avant{skipped}",
+    "Converti en {count} éléments ; {pixels} pixels diffèrent d'avant{skipped}",
   "; {count} not converted": "; {count} non converti",
   "{count} placed, {skipped} skipped.": "{count} placé, {skipped} ignoré.",
   "Font size": "Taille de la police",
@@ -94,7 +94,7 @@ export default {
   "Checking display…": "Vérification de l'affichage…",
   "Choose a sample sensor above to preview this tile style.":
     "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce style de tuile.",
-  "Choose an automation…": "Choisissez un automatisme…",
+  "Choose an automation…": "Choisissez une automatisation…",
   "Choose an entity for the sensor tile.":
     "Choisissez une entité pour la vignette du capteur.",
   "Choose an existing automation.": "Choisissez une automatisation existante.",
@@ -102,8 +102,8 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "Cliquez sur un bloc pour le déplacer, le redimensionner ou le lier à une entité.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "Cliquez sur un élément pour le sélectionner · Cliquez sur le texte pour le modifier · Faites glisser pour déplacer · Faites glisser les poignées de coin pour redimensionner · Les guides d'alignement apparaissent près des bords et des centres · Les touches fléchées se déplacent de 1 px · Maj + flèches se déplacent de 10 px · Entrer modifie le texte sélectionné · Supprimer / Retour arrière supprime · Clic droit pour les actions · ⌘/Ctrl + D doublons · ⌘/Ctrl + S enregistre · ⌘/Ctrl + Z annule · ⌘/Ctrl + Shift + Z rétablit",
-  "Close automations": "Fermer les automatismes",
+    "Cliquez sur un élément pour le sélectionner · Cliquez sur le texte pour le modifier · Glissez pour déplacer · Glissez les poignées d'angle pour redimensionner · Des repères d'alignement apparaissent près des bords et des centres · Les flèches déplacent de 1 px · Maj + flèches déplacent de 10 px · Entrée modifie le texte sélectionné · Suppr / Retour arrière supprime · Clic droit pour les actions · ⌘/Ctrl + D duplique · ⌘/Ctrl + S enregistre · ⌘/Ctrl + Z annule · ⌘/Ctrl + Maj + Z rétablit",
+  "Close automations": "Fermer les automatisations",
   "Close component editor": "Fermer l'éditeur de composants",
   "Close dynamic fields": "Fermer les champs dynamiques",
   "Component attribute": "Attribut de composant",
@@ -145,11 +145,11 @@ export default {
   "Element actions": "Actions des éléments",
   "Element properties": "Propriétés des éléments",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "Les modèles d'éléments restent tels qu'écrits : Home Assistant les restitue à chaque exécution de l'automatisation. Les composants du capteur et les modèles de champ sont disponibles dès maintenant.",
+    "Les modèles d'élément restent tels qu'écrits : Home Assistant les rend à chaque exécution de l'automatisation. Les composants de capteur et les modèles de champ reflètent les valeurs actuelles.",
   "Entity name": "Nom de l'entité",
   "Existing automation": "Automatisation existante",
   "Export JSON": "Exporter JSON",
-  "Exporting payload…": "Exportation de la charge utile…",
+  "Exporting payload…": "Exportation du payload…",
   "Fallback icon (blank = HA)": "Icône de secours (vide = HA)",
   "Field template": "Modèle de champ",
   "Filter ESLs": "Filtre ESL",
@@ -164,7 +164,7 @@ export default {
   "HA state icon": "HA icône d'état",
   "HA tile": "Tuile HA",
   "Hidden: click to show": "Masqué : cliquez pour afficher",
-  "Icon (blank = HA)": "(vide = HA)",
+  "Icon (blank = HA)": "Icône (vide = HA)",
   "Icon name": "Nom de l'icône",
   "Image URL": "URL de l'image",
   "Image added": "Image ajoutée",
@@ -181,7 +181,7 @@ export default {
   "Last successful send": "Dernier envoi réussi",
   "Later today": "Plus tard dans la journée",
   "Line spacing": "Espacement des lignes",
-  "Link automation": "Automatisation des liens",
+  "Link automation": "Lier une automatisation",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Les liens associent les automatisations existantes à cet ESL. Ils ne modifient pas les actions d'automatisation et n'appliquent pas cette conception.",
   "Live Home Assistant data on e-paper":
@@ -199,7 +199,7 @@ export default {
   "New icon state": "Nouvel état de l'icône",
   "No ESLs match your search or filter.":
     "Aucun ESL ne correspond à votre recherche ou filtre.",
-  "No connected automations": "Aucun automatisme connecté",
+  "No connected automations": "Aucune automatisation liée",
   "No error": "Aucune erreur",
   "No matching automations": "Aucune automatisation correspondante",
   "No successful image": "Aucune image réussie",
@@ -213,14 +213,14 @@ export default {
   "Outline width": "Largeur du contour",
   "Paste a URL, or upload below": "Collez une URL ou téléchargez ci-dessous",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "Collez une charge utile (une liste d'éléments imagespec) ou une action ble_esl.write entière. Les éléments placés par un modèle ou une disposition de flux ne peuvent pas être placés dans le concepteur et sont répertoriés.",
-  "Payload YAML": "Charge utile YAML",
-  "Payload exported": "Charge utile exportée",
+    "Collez un payload (une liste d'éléments imagespec) ou une action ble_esl.write entière. Les éléments placés par un modèle ou une disposition de flux ne peuvent pas être placés dans le concepteur et sont répertoriés.",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload exporté",
   "Position & size (px)": "Position et taille (px)",
   "Press Ctrl+C to copy": "Appuyez sur Ctrl+C pour copier",
   "Preview updating": "Mise à jour de l'aperçu",
   "Preview updating…": "Mise à jour de l'aperçu…",
-  "Preview zoom": "Aperçu du zoom",
+  "Preview zoom": "Zoom de l'aperçu",
   "Rain / snow": "Pluie / neige",
   "Rain chance": "Risque de pluie",
   "Redo (⌘/Ctrl Shift Z)": "Rétablir (⌘/Ctrl Maj Z)",
@@ -235,10 +235,10 @@ export default {
     "Enregistrer (modifications non enregistrées) (⌘/Ctrl S)",
   "Search ESLs": "Rechercher ESL",
   "Search aliases or devices": "Rechercher des alias ou des appareils",
-  "Search automations": "Automatisations de recherche",
+  "Search automations": "Rechercher des automatisations",
   "Search by name": "Recherche par nom",
-  "Search icons": "Icônes de recherche",
-  "Search sensors": "Capteurs de recherche",
+  "Search icons": "Rechercher des icônes",
+  "Search sensors": "Rechercher des capteurs",
   "Select an element": "Sélectionnez un élément",
   "Send back": "Mettre à l’arrière-plan",
   "Send backward": "Reculer d’un plan",
@@ -304,7 +304,7 @@ export default {
   Attribute: "Attribut",
   Automatic: "Automatique",
   Automations: "Automatisations",
-  Background: "Contexte",
+  Background: "Arrière-plan",
   Cancel: "Annuler",
   Close: "Fermer",
   Colour: "Couleur",
@@ -337,7 +337,7 @@ export default {
   Minimum: "Minimum",
   Name: "Nom",
   Now: "Maintenant",
-  Padding: "Rembourrage",
+  Padding: "Marge intérieure",
   Ready: "Prêt",
   Redo: "Refaire",
   Refresh: "Actualiser",
@@ -359,11 +359,11 @@ export default {
   Visible: "Visible",
   When: "Moment",
   Width: "Largeur",
-  Payload: "Charge utile",
+  Payload: "Payload",
   Gauge: "Jauge",
   Unit: "Unité",
   designer: "concepteur",
-  fonts: "Icônes",
+  fonts: "polices",
   icons: "icônes",
   default: "par défaut",
   none: "aucun",
@@ -391,7 +391,7 @@ export default {
   transparent: "transparent",
   yes: "oui",
   no: "non",
-  entities: "Propriétés",
+  entities: "entités",
   properties: "propriétés",
   Color: "Couleur",
   Label: "Étiquette",
@@ -627,9 +627,9 @@ export default {
     "Cet ESL ne prend pas en charge l'écriture",
   "This ESL has no registered device": "Cet ESL n'a aucun appareil enregistré",
   "The automation payload must be a list of objects":
-    "La charge utile de l'automatisation doit être une liste d'objets",
+    "Le payload de l'automatisation doit être une liste d'objets",
   "The automation payload is too large to import (5 MiB maximum)":
-    "La charge utile de l'automatisation est trop volumineuse pour être importée (5 Mio maximum)",
+    "Le payload de l'automatisation est trop volumineux pour être importé (5 Mio maximum)",
   "That element is not in the display":
     "Cet élément ne figure pas dans l'affichage",
   "That is an imagespec element already": "C'est déjà un élément imagespec",
@@ -651,7 +651,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Ce YAML est inutilisable : il est imbriqué trop profondément",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Collez une charge utile (une liste d'éléments) ou une action ble_esl.write avec une charge utile",
+    "Collez un payload (une liste d'éléments) ou une action ble_esl.write avec un payload",
   "Automation is not available": "L'automatisation n'est pas disponible",
   "This automation has no editable configuration":
     "Cette automatisation n'a pas de configuration modifiable",

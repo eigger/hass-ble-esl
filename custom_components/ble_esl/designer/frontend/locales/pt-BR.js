@@ -39,7 +39,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "Os campos de texto aceitam modelos Jinja, por exemplo.",
   "Not valid JSON: check the brackets and quotes":
-    "Inválido JSON: verifique os colchetes e aspas",
+    "JSON inválido: verifique os colchetes e as aspas",
   "Enter a number, or a {{ template }}":
     "Digite um número ou um {{ template }}",
   "Toggle {label} panel": "Alternar painel {label}",
@@ -48,9 +48,9 @@ export default {
   "Delete {label}": "Excluir {label}",
   "Resize {corner}": "Redimensionar {corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Convertido em elementos {count}, desenhados exatamente como antes{skipped}",
+    "Convertido em {count} elementos, desenhados exatamente como antes{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Convertido em elementos {count}; {pixels} pixels diferem de antes{skipped}",
+    "Convertido em {count} elementos; {pixels} pixels diferem de antes{skipped}",
   "; {count} not converted": "; {count} não convertido",
   "{count} placed, {skipped} skipped.": "{count} colocado, {skipped} ignorado.",
   "Font size": "Tamanho da fonte",
@@ -104,19 +104,19 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "Clique em um bloco para movê-lo, redimensioná-lo ou vinculá-lo a uma entidade.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "Clique em um elemento para selecioná-lo · Clique no texto para editar · Arraste para mover · Arraste as alças dos cantos para redimensionar · As guias de alinhamento aparecem perto das bordas e centros · As teclas de seta movem 1 px · Shift + setas movem 10 px · Insira edita o texto selecionado · Excluir / Backspace remove · Clique com o botão direito para ações · ⌘/Ctrl + D duplicatas · ⌘/Ctrl + S salva · ⌘/Ctrl + Z desfaz · ⌘/Ctrl + Shift + Z refaz",
+    "Clique em um elemento para selecioná-lo · Clique no texto para editar · Arraste para mover · Arraste as alças dos cantos para redimensionar · As guias de alinhamento aparecem perto das bordas e dos centros · As setas movem 1 px · Shift + setas movem 10 px · Enter edita o texto selecionado · Delete / Backspace remove · Clique com o botão direito para ver ações · ⌘/Ctrl + D duplica · ⌘/Ctrl + S salva · ⌘/Ctrl + Z desfaz · ⌘/Ctrl + Shift + Z refaz",
   "Close automations": "Fechar automações",
   "Close component editor": "Fechar editor de componentes",
   "Close dynamic fields": "Fechar campos dinâmicos",
   "Component attribute": "Atributo do componente",
   "Component data": "Dados do componente",
-  "Component decimals": "Componentes decimais",
+  "Component decimals": "Casas decimais do componente",
   "Component editor": "Editor de componentes",
   "Component font size": "Tamanho da fonte do componente",
   "Component height": "Altura do componente",
   "Component maximum": "Componente máximo",
   "Component minimum": "Componente mínimo",
-  "Component pixel preview": "Visualização de pixel do componente",
+  "Component pixel preview": "Pré-visualização de pixel do componente",
   "Component shape": "Formato do componente",
   "Component text": "Texto do componente",
   "Component width": "Largura do componente",
@@ -133,10 +133,10 @@ export default {
   "Delete selected element": "Excluir elemento selecionado",
   "Designer mode": "Modo designer",
   "Discovery only: preview is available; sending is not supported yet.":
-    "Apenas descoberta: a visualização está disponível; o envio ainda não é suportado.",
+    "Apenas descoberta: a pré-visualização está disponível; o envio ainda não é suportado.",
   "Dismiss message": "Dispensar mensagem",
   "Display canvas": "Tela de exibição",
-  "Dynamic field pixel preview": "Visualização de pixel de campo dinâmico",
+  "Dynamic field pixel preview": "Pré-visualização de pixel de campo dinâmico",
   "Dynamic fields": "Campos dinâmicos",
   "ESL Designer": "Designer ESL",
   "ESL Manager": "Gerenciador ESL",
@@ -147,11 +147,11 @@ export default {
   "Element actions": "Ações do elemento",
   "Element properties": "Propriedades do elemento",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "Os modelos de elemento permanecem como estão escritos: Home Assistant os renderiza cada vez que a automação é executada. Os componentes do sensor e os modelos de campo são a partir de agora.",
+    "Os modelos de elemento permanecem como escritos: o Home Assistant os renderiza a cada execução da automação. Os componentes de sensor e os modelos de campo refletem os valores atuais.",
   "Entity name": "Nome da entidade",
   "Existing automation": "Automação existente",
   "Export JSON": "Exportar JSON",
-  "Exporting payload…": "Exportando carga…",
+  "Exporting payload…": "Exportando payload…",
   "Fallback icon (blank = HA)": "Ícone substituto (em branco = HA)",
   "Field template": "Modelo de campo",
   "Filter ESLs": "Filtro ESLs",
@@ -166,7 +166,7 @@ export default {
   "HA state icon": "HA ícone de estado",
   "HA tile": "Bloco do HA",
   "Hidden: click to show": "Oculto: clique para mostrar",
-  "Icon (blank = HA)": "(em branco = HA)",
+  "Icon (blank = HA)": "Ícone (em branco = HA)",
   "Icon name": "Nome do ícone",
   "Image URL": "URL da imagem",
   "Image added": "Imagem adicionada",
@@ -183,12 +183,12 @@ export default {
   "Last successful send": "Último envio bem-sucedido",
   "Later today": "Hoje mais tarde",
   "Line spacing": "Espaçamento entre linhas",
-  "Link automation": "Automação de links",
+  "Link automation": "Vincular automação",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Links associam automações existentes a este ESL. Eles não alteram as ações de automação nem aplicam esse design.",
   "Live Home Assistant data on e-paper":
     "Dados Home Assistant ao vivo em papel eletrônico",
-  "Live preview": "Visualização ao vivo",
+  "Live preview": "Pré-visualização ao vivo",
   "Loading ESLs…": "Carregando ESLs…",
   "Loading automations…": "Carregando automações…",
   "Loading designer": "Carregando designer",
@@ -201,7 +201,7 @@ export default {
   "New icon state": "Novo estado do ícone",
   "No ESLs match your search or filter.":
     "Nenhum ESLs corresponde à sua pesquisa ou filtro.",
-  "No connected automations": "Nenhuma automação conectada",
+  "No connected automations": "Nenhuma automação vinculada",
   "No error": "Nenhum erro",
   "No matching automations": "Nenhuma automação correspondente",
   "No successful image": "Nenhuma imagem bem-sucedida",
@@ -215,17 +215,17 @@ export default {
   "Outline width": "Largura do contorno",
   "Paste a URL, or upload below": "Cole um URL ou faça upload abaixo",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "Cole uma carga útil (uma lista de elementos imagespec) ou uma ação ble_esl.write inteira. Os elementos colocados por um modelo ou layout de fluxo não podem ser colocados no designer e são listados.",
-  "Payload YAML": "Carga útil YAML",
-  "Payload exported": "Carga útil exportada",
+    "Cole um payload (uma lista de elementos imagespec) ou uma ação ble_esl.write inteira. Os elementos colocados por um modelo ou layout de fluxo não podem ser colocados no designer e são listados.",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload exportado",
   "Position & size (px)": "Posição e tamanho (px)",
   "Press Ctrl+C to copy": "Pressione Ctrl+C para copiar",
-  "Preview updating": "Atualização de visualização",
-  "Preview updating…": "Atualização de visualização…",
-  "Preview zoom": "Zoom de visualização",
+  "Preview updating": "Atualização da pré-visualização",
+  "Preview updating…": "Atualização da pré-visualização…",
+  "Preview zoom": "Zoom da pré-visualização",
   "Rain / snow": "Chuva/neve",
   "Rain chance": "Chance de chuva",
-  "Redo (⌘/Ctrl Shift Z)": "Refazer (⌘/Ctrl Mudança Z)",
+  "Redo (⌘/Ctrl Shift Z)": "Refazer (⌘/Ctrl Shift Z)",
   "Remove manual link": "Remover link manual",
   "Replace display": "Substituir conteúdo da tela",
   "Resolved value": "Valor resolvido",
@@ -237,10 +237,10 @@ export default {
     "Salvar (alterações não salvas) (⌘/Ctrl S)",
   "Search ESLs": "Pesquisar ESLs",
   "Search aliases or devices": "Pesquise aliases ou dispositivos",
-  "Search automations": "Automações de pesquisa",
+  "Search automations": "Pesquisar automações",
   "Search by name": "Pesquisa por nome",
-  "Search icons": "Ícones de pesquisa",
-  "Search sensors": "Sensores de pesquisa",
+  "Search icons": "Pesquisar ícones",
+  "Search sensors": "Pesquisar sensores",
   "Select an element": "Selecione um elemento",
   "Send back": "Enviar para o fundo",
   "Send backward": "Enviar para trás",
@@ -267,7 +267,7 @@ export default {
   "The element changed; nothing was converted":
     "O elemento foi alterado; nada foi convertido",
   "This element needs a renderer preview to show its current appearance":
-    "Este elemento precisa de uma visualização do renderizador para mostrar sua aparência atual",
+    "Este elemento precisa de uma pré-visualização do renderizador para mostrar sua aparência atual",
   "Transmission duration": "Duração da transmissão",
   "Transmission error": "Erro de transmissão",
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
@@ -340,7 +340,7 @@ export default {
   Minimum: "Mínimo",
   Name: "Nome",
   Now: "Agora",
-  Padding: "Preenchimento",
+  Padding: "Espaçamento interno",
   Ready: "Pronto",
   Redo: "Refazer",
   Refresh: "Atualizar",
@@ -362,7 +362,7 @@ export default {
   Visible: "Visível",
   When: "Momento",
   Width: "Largura",
-  Payload: "Carga útil",
+  Payload: "Payload",
   Gauge: "Medidor",
   Unit: "Unidade",
   designer: "designer",
@@ -603,8 +603,8 @@ export default {
     "Não enviado: o bloqueio de gravação do ESL está ativado",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
     "Os valores são de agora. Use a ação de automação para agendar atualizações dos ESLs no Home Assistant.",
-  "Rendered view": "Visualização renderizada",
-  "Edit view": "Visualização de edição",
+  "Rendered view": "Modo renderizado",
+  "Edit view": "Modo de edição",
   "Show hidden icons faintly for editing; does not change the ESL image":
     "Mostra de leve os ícones ocultos para edição; não altera a imagem do ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":
@@ -627,9 +627,9 @@ export default {
   "This ESL has no registered device":
     "Este ESL não tem um dispositivo registrado",
   "The automation payload must be a list of objects":
-    "A carga útil da automação deve ser uma lista de objetos",
+    "O payload da automação deve ser uma lista de objetos",
   "The automation payload is too large to import (5 MiB maximum)":
-    "A carga útil da automação é grande demais para importar (máximo de 5 MiB)",
+    "O payload da automação é grande demais para importar (máximo de 5 MiB)",
   "That element is not in the display": "Esse elemento não está na exibição",
   "That is an imagespec element already": "Esse já é um elemento imagespec",
   "Choose a sensor type": "Escolha um tipo de sensor",
@@ -650,7 +650,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Este YAML não é utilizável: está aninhado profundamente demais",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Cole uma carga útil (uma lista de elementos) ou uma ação ble_esl.write com carga útil",
+    "Cole um payload (uma lista de elementos) ou uma ação ble_esl.write com payload",
   "Automation is not available": "A automação não está disponível",
   "This automation has no editable configuration":
     "Esta automação não tem uma configuração editável",

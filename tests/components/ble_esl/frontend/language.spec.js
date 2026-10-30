@@ -384,6 +384,10 @@ test("non-English locales leave no untranslated copy beyond shared words", async
     nl: ["← Dashboard", "Boolean", "Sensor", "Type"],
     "pt-BR": ["Designer", "Sensor", "String", "designer"],
   };
+  // `payload` is the YAML key and stays the Latin word outside ja/ko.
+  for (const code of Object.keys(messages))
+    if (!["en", "ja", "ko"].includes(code))
+      shared[code] = [...(shared[code] || []), "Payload", "Payload YAML"];
   for (const [code, catalog] of Object.entries(messages)) {
     if (code === "en") continue;
     const untranslated = Object.keys(catalog).filter(
@@ -446,6 +450,91 @@ test("canvas tip sentences keep their ' · ' separated items in every language",
         parts.every((part) => part.trim()),
         code,
       ).toBe(true);
+    }
+  }
+});
+
+// One word per concept and language (docs/translation-glossary.md). Each entry
+// lists a variant that used to appear next to the chosen term; the catalog must
+// not bring it back. Add the loser here when a term is settled.
+const FORBIDDEN_TERMS = {
+  de: [
+    [/Nutzlast/, "Payload"],
+    [/\bAutomation\b/, "Automatisierung"],
+    [/Template-Ziele/, "Vorlage"],
+    [/Staat|Staaten|Polsterung|Lichtbogen/, "Zustand / Innenabstand / Bogen"],
+  ],
+  es: [
+    [/carga útil/i, "payload"],
+    [/automatismo/i, "automatización"],
+    [/(?:Automatizaciones|Iconos|Sensores) de búsqueda/i, "Buscar …"],
+  ],
+  fr: [
+    [/automatisme/i, "automatisation"],
+    [/charge utile/i, "payload"],
+  ],
+  it: [
+    [/o template che/, "modello"],
+    [/carico utile/i, "payload"],
+  ],
+  ja: [
+    [/州/, "状態"],
+    [/自動化/, "オートメーション"],
+    [/イメージ/, "画像"],
+  ],
+  ko: [[/구성요소/, "컴포넌트"]],
+  nl: [
+    [/loskoppel/i, "ontkoppelen"],
+    [/nuttige lading|belading/i, "payload"],
+    [/staat/i, "status"],
+  ],
+  pl: [
+    [/ładun/i, "payload"],
+    [/automatyka/i, "automatyzacja"],
+  ],
+  "pt-BR": [
+    [/(?<!pré-)visualização/i, "pré-visualização (preview) / Modo … (view)"],
+    [/carga/i, "payload"],
+  ],
+  ru: [
+    [/Отсоедин/i, "Отвязать"],
+    [/предварительн\S* просмотр/i, "предпросмотр"],
+    [/сущност/i, "объект"],
+    [/полезн\S* нагрузк/i, "payload"],
+    [/Наконечник|Предыстория/, "Советы / Фон"],
+  ],
+  "zh-Hans": [
+    [/取消链接/, "取消关联"],
+    [/图片/, "图像"],
+    [/元件/, "组件"],
+    [/有效负载/, "payload"],
+    [/示范|价值|电弧/, "示例 / 数值 / 圆弧"],
+    [/动态场|样品|传感器块/, "动态字段 / 示例 / 传感器磁贴"],
+  ],
+  "zh-Hant": [
+    [/元件/, "組件"],
+    [/模板/, "範本"],
+    [/圖像|圖片/, "影像"],
+    [/取消鏈接/, "取消關聯"],
+    [/有效負載/, "payload"],
+    [/示範|價值|電弧|發送|刷新/, "範例 / 數值 / 圓弧 / 傳送 / 重新整理"],
+    [
+      /圖標|感應器|傳感器|導入|導出|數據|動態場|樣品/,
+      "圖示 / 感測器 / 匯入 / 匯出 / 資料 / 動態欄位 / 範例",
+    ],
+  ],
+};
+test("locale catalogs use the glossary term, not a variant that was retired", async () => {
+  const { messages } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/locales/index.js");
+  for (const [code, rules] of Object.entries(FORBIDDEN_TERMS)) {
+    for (const [pattern, use] of rules) {
+      const offenders = Object.entries(messages[code])
+        .filter(([, value]) => pattern.test(value))
+        .map(([key]) => key);
+      expect(offenders, `${code}: use "${use}" instead of ${pattern}`).toEqual(
+        [],
+      );
     }
   }
 });

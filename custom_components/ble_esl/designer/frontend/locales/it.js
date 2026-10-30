@@ -39,7 +39,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "I campi di testo accettano modelli Jinja, ad es.",
   "Not valid JSON: check the brackets and quotes":
-    "Non valido JSON: controllare parentesi e virgolette",
+    "JSON non valido: controlla le parentesi e le virgolette",
   "Enter a number, or a {{ template }}":
     "Inserisci un numero o un {{ template }}",
   "Toggle {label} panel": "Attiva/disattiva il pannello {label}",
@@ -135,7 +135,7 @@ export default {
   "Discovery only: preview is available; sending is not supported yet.":
     "Solo Discovery: l'anteprima è disponibile; l'invio non è ancora supportato.",
   "Dismiss message": "Ignora messaggio",
-  "Display canvas": "Visualizza tela",
+  "Display canvas": "Area di visualizzazione",
   "Dynamic field pixel preview": "Anteprima pixel campo dinamico",
   "Dynamic fields": "Campi dinamici",
   "ESL Designer": "Designer ESL",
@@ -147,11 +147,11 @@ export default {
   "Element actions": "Azioni elemento",
   "Element properties": "Proprietà elemento",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "I modelli di elementi rimangono come scritti: Home Assistant li esegue il rendering ogni volta che viene eseguita l'automazione. I componenti del sensore e i modelli di campo sono disponibili adesso.",
+    "I modelli degli elementi restano come scritti: Home Assistant li elabora a ogni esecuzione dell'automazione. I componenti sensore e i modelli dei campi riflettono i valori attuali.",
   "Entity name": "Nome dell'entità",
   "Existing automation": "Automazione esistente",
   "Export JSON": "Esporta JSON",
-  "Exporting payload…": "Esportazione carico utile...",
+  "Exporting payload…": "Esportazione payload...",
   "Fallback icon (blank = HA)": "Icona fallback (vuoto = HA)",
   "Field template": "Modello di campo",
   "Filter ESLs": "Filtro ESL",
@@ -183,7 +183,7 @@ export default {
   "Last successful send": "Ultimo invio riuscito",
   "Later today": "Più tardi oggi",
   "Line spacing": "Interlinea",
-  "Link automation": "Automazione dei collegamenti",
+  "Link automation": "Collega automazione",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "I link associano le automazioni esistenti a questo ESL. Non modificano le azioni di automazione né applicano questo design.",
   "Live Home Assistant data on e-paper":
@@ -216,8 +216,8 @@ export default {
   "Paste a URL, or upload below": "Incolla un URL o caricalo di seguito",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
     "Incolla un payload (un elenco di elementi imagespec) o un'intera azione ble_esl.write. Gli elementi inseriti da un modello o da un layout di flusso non possono essere inseriti nella finestra di progettazione e vengono elencati.",
-  "Payload YAML": "Carico utile YAML",
-  "Payload exported": "Carico utile esportato",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload esportato",
   "Position & size (px)": "Posizione e dimensione (px)",
   "Press Ctrl+C to copy": "Premere Ctrl+C per copiare",
   "Preview updating": "Aggiornamento anteprima",
@@ -239,8 +239,8 @@ export default {
   "Search aliases or devices": "Cerca alias o dispositivi",
   "Search automations": "Cerca automazioni",
   "Search by name": "Cerca per nome",
-  "Search icons": "Icone di ricerca",
-  "Search sensors": "Ricerca sensori",
+  "Search icons": "Cerca icone",
+  "Search sensors": "Cerca sensori",
   "Select an element": "Seleziona un elemento",
   "Send back": "Porta in fondo",
   "Send backward": "Porta indietro",
@@ -340,7 +340,7 @@ export default {
   Minimum: "Minimo",
   Name: "Nome",
   Now: "Adesso",
-  Padding: "Imbottitura",
+  Padding: "Spaziatura interna",
   Ready: "Pronto",
   Redo: "Ripeti",
   Refresh: "Aggiorna",
@@ -362,7 +362,7 @@ export default {
   Visible: "Visibile",
   When: "Momento",
   Width: "Larghezza",
-  Payload: "Carico utile",
+  Payload: "Payload",
   Gauge: "Indicatore",
   Unit: "Unità",
   designer: "designer",
@@ -404,7 +404,7 @@ export default {
     "Modifica design dell'automazione selezionata",
   "Save automation": "Salva automazione",
   "Switch to Display mode before saving this automation.":
-    "Passa alla modalità Visualizza prima di salvare questa automazione.",
+    "Passa alla modalità Display prima di salvare questa automazione.",
   "Automation configuration ID is missing.":
     "ID della configurazione dell'automazione mancante.",
   "Automation configuration could not be loaded.":
@@ -442,7 +442,7 @@ export default {
     "Non è stato possibile caricare in sicurezza la configurazione dell'automazione.",
   "The designer could not be loaded.": "Impossibile caricare il designer.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "Questa automazione usa destinazioni di area, piano, etichetta o template che non possono essere associate in sicurezza a un solo ESL.",
+    "Questa automazione usa destinazioni di area, piano, etichetta o modello che non possono essere associate in sicurezza a un solo ESL.",
   "The automation import is no longer current.":
     "L'importazione dell'automazione non è più aggiornata.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":
@@ -625,9 +625,9 @@ export default {
   "This ESL has no registered device":
     "Questo ESL non ha un dispositivo registrato",
   "The automation payload must be a list of objects":
-    "Il carico utile dell'automazione deve essere un elenco di oggetti",
+    "Il payload dell'automazione deve essere un elenco di oggetti",
   "The automation payload is too large to import (5 MiB maximum)":
-    "Il carico utile dell'automazione è troppo grande per essere importato (massimo 5 MiB)",
+    "Il payload dell'automazione è troppo grande per essere importato (massimo 5 MiB)",
   "That element is not in the display": "Questo elemento non è nel display",
   "That is an imagespec element already": "È già un elemento imagespec",
   "Choose a sensor type": "Scegli un tipo di sensore",
@@ -647,7 +647,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Questo YAML non è utilizzabile: è annidato troppo in profondità",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Incolla un carico utile (un elenco di elementi) o un'azione ble_esl.write con un carico utile",
+    "Incolla un payload (un elenco di elementi) o un'azione ble_esl.write con un payload",
   "Automation is not available": "L'automazione non è disponibile",
   "This automation has no editable configuration":
     "Questa automazione non ha una configurazione modificabile",

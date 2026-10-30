@@ -10,7 +10,7 @@ export default {
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESL · {errors} エラー · {unsynced} が同期していません",
   "{count} automations · {active} active":
-    "{count} 自動化 · {active} アクティブ",
+    "{count} オートメーション · {active} アクティブ",
   "Battery {value}": "バッテリー {value}",
   "Last successful image for {alias}": "{alias} の最後に送信に成功した画像",
   "Skipped: {reason}": "スキップされました: {reason}",
@@ -37,7 +37,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "テキスト フィールドは Jinja テンプレートを受け入れます。",
   "Not valid JSON: check the brackets and quotes":
-    "無効です JSON: 括弧と引用符を確認してください",
+    "JSON が無効です: 括弧と引用符を確認してください",
   "Enter a number, or a {{ template }}":
     "数値または {{ template }} を入力してください",
   "Toggle {label} panel": "{label} パネルの切り替え",
@@ -77,7 +77,7 @@ export default {
   "Add to display": "表示に追加",
   "All ESLs": "すべての ESL",
   "All elements": "すべての要素",
-  "All states": "すべての州",
+  "All states": "すべての状態",
   "Another HA entity": "別の HA エンティティ",
   "Another state": "別の状態",
   "Apply templates": "テンプレートを適用する",
@@ -95,7 +95,7 @@ export default {
   "Checking display…": "表示を確認しています…",
   "Choose a sample sensor above to preview this tile style.":
     "このタイルスタイルをプレビューするには、上のサンプル センサーを選択してください。",
-  "Choose an automation…": "自動化を選択してください…",
+  "Choose an automation…": "オートメーションを選択してください…",
   "Choose an entity for the sensor tile.":
     "センサー タイルのエンティティを選択します。",
   "Choose an existing automation.": "既存のオートメーションを選択します。",
@@ -103,7 +103,7 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "ブロックをクリックして、移動、サイズ変更、またはエンティティにバインドします。",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "要素をクリックして選択します · テキストをクリックして編集します · ドラッグして移動します · コーナーハンドルをドラッグしてサイズを変更します · 端と中心の近くに位置合わせガイドが表示されます · 矢印キーで 1 ピクセル移動 · Shift + 矢印で 10 ピクセル移動 · Enter で選択したテキストを編集 · 削除 / Backspace で削除 · 右クリックで操作 · ⌘/Ctrl + D 複製 · ⌘/Ctrl + S 保存 · ⌘/Ctrl + Z で元に戻す · ⌘/Ctrl + Shift + Z でやり直し",
+    "要素をクリックして選択します · テキストをクリックして編集します · ドラッグして移動します · コーナーハンドルをドラッグしてサイズを変更します · 端と中心の近くに位置合わせガイドが表示されます · 矢印キーで 1 ピクセル移動 · Shift + 矢印で 10 ピクセル移動 · Enter で選択したテキストを編集 · Delete / Backspace で削除 · 右クリックで操作 · ⌘/Ctrl + D 複製 · ⌘/Ctrl + S 保存 · ⌘/Ctrl + Z で元に戻す · ⌘/Ctrl + Shift + Z でやり直し",
   "Close automations": "オートメーションを閉じる",
   "Close component editor": "コンポーネントエディタを閉じる",
   "Close dynamic fields": "動的フィールドを閉じる",
@@ -119,7 +119,7 @@ export default {
   "Component shape": "コンポーネントの形状",
   "Component text": "コンポーネントのテキスト",
   "Component width": "コンポーネントの幅",
-  "Connected automations": "関連付けられた自動化",
+  "Connected automations": "関連付けられたオートメーション",
   "Convert to elements": "要素に変換",
   "Converting…": "変換中…",
   "Corner radius": "コーナー半径",
@@ -148,7 +148,7 @@ export default {
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "要素テンプレートは書かれたままになります: Home Assistant はオートメーションが実行されるたびにレンダリングされます。センサー コンポーネントとフィールド テンプレートは現時点のものです。",
   "Entity name": "エンティティ名",
-  "Existing automation": "既存の自動化",
+  "Existing automation": "既存のオートメーション",
   "Export JSON": "エクスポート JSON",
   "Exporting payload…": "ペイロードをエクスポートしています…",
   "Fallback icon (blank = HA)": "フォールバック アイコン (空白 = HA)",
@@ -182,9 +182,9 @@ export default {
   "Last successful send": "最後に成功した送信",
   "Later today": "今日遅く",
   "Line spacing": "行間隔",
-  "Link automation": "リンクの自動化",
+  "Link automation": "オートメーションをリンク",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
-    "リンクは、既存のオートメーションをこの ESL に関連付けます。自動化アクションを変更したり、この設計を適用したりすることはありません。",
+    "リンクは、既存のオートメーションをこの ESL に関連付けます。オートメーションアクションを変更したり、この設計を適用したりすることはありません。",
   "Live Home Assistant data on e-paper":
     "電子ペーパー上のライブ Home Assistant データ",
   "Live preview": "ライブ プレビュー",
@@ -200,10 +200,10 @@ export default {
   "New icon state": "新しいアイコンの状態",
   "No ESLs match your search or filter.":
     "検索またはフィルターに一致する ESL はありません。",
-  "No connected automations": "接続されたオートメーションがありません",
+  "No connected automations": "関連付けられたオートメーションがありません",
   "No error": "エラーなし",
   "No matching automations": "一致するオートメーションがありません",
-  "No successful image": "成功したイメージがありません",
+  "No successful image": "成功した画像がありません",
   "No successful send": "送信が成功しませんでした",
   "No transmission result": "送信結果がありません",
   "Not in sync": "同期していません",
@@ -225,7 +225,7 @@ export default {
   "Preview zoom": "プレビューズーム",
   "Rain / snow": "雨/雪",
   "Rain chance": "降水確率",
-  "Redo (⌘/Ctrl Shift Z)": "やり直し (⌘/Ctrl シフト Z)",
+  "Redo (⌘/Ctrl Shift Z)": "やり直し (⌘/Ctrl Shift Z)",
   "Remove manual link": "手動リンクを削除",
   "Replace display": "表示内容を置き換える",
   "Resolved value": "解決された値",
@@ -236,9 +236,9 @@ export default {
   "Save (unsaved changes) (⌘/Ctrl S)": "保存 (未保存の変更) (⌘/Ctrl S)",
   "Search ESLs": "ESL を検索",
   "Search aliases or devices": "エイリアスまたはデバイスの検索",
-  "Search automations": "検索の自動化",
+  "Search automations": "オートメーションを検索",
   "Search by name": "名前で検索",
-  "Search icons": "検索アイコン",
+  "Search icons": "アイコンを検索",
   "Search sensors": "センサーの検索",
   "Select an element": "要素を選択してください",
   "Send back": "最背面へ移動",
@@ -290,7 +290,7 @@ export default {
   "＋ Insert template…": "＋ テンプレートを挿入…",
   "＋ Range": "＋ 範囲",
   "＋ State": "＋ 状態",
-  "Automation action": "自動化アクション",
+  "Automation action": "オートメーションアクション",
   "Paste under `payload:` of a ble_esl.write action.":
     "ble_esl.write アクションの `payload:` の下に貼り付けます。",
   "A complete action for a script or automation.":
@@ -304,13 +304,13 @@ export default {
   Apply: "適用",
   Attribute: "属性",
   Automatic: "自動",
-  Automations: "自動化",
+  Automations: "オートメーション",
   Background: "背景",
   Cancel: "キャンセル",
   Close: "閉じる",
   Colour: "色",
   Components: "コンポーネント",
-  Condition: "状態",
+  Condition: "条件",
   Configure: "構成",
   Content: "コンテンツ",
   Copied: "コピーされました",
@@ -322,10 +322,10 @@ export default {
   Direction: "方向",
   Display: "ディスプレイ",
   Dither: "ディザリング",
-  Duplicate: "重複",
+  Duplicate: "複製",
   Entities: "エンティティ",
   Errors: "エラー",
-  Filled: "記入済み",
+  Filled: "塗りつぶし",
   Fit: "表示領域に合わせる",
   Height: "高さ",
   Hide: "隠す",
@@ -384,7 +384,7 @@ export default {
   rectangle: "長方形",
   ellipse: "楕円",
   triangle: "三角形",
-  line: "行",
+  line: "線",
   black: "ブラック",
   white: "ホワイト",
   red: "赤",
@@ -563,7 +563,7 @@ export default {
   "Replace the current design with the imported file? You can undo this.":
     "現在のデザインをインポートしたファイルで置き換えますか？元に戻すことができます。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
-    "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
+    "{name} とこの ESL のリンクを解除しますか？オートメーション自体は変更されません。",
   Continue: "続行",
   selected: "件選択中",
   "Changes apply to all selected components. Mixed values are blank.":
@@ -599,7 +599,7 @@ export default {
   "Not sent: the ESL's write lock is on":
     "未送信: ESLの書き込みロックがオンになっています",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "値は現時点のものです。自動化アクションを使用して、Home Assistant で ESLの更新をスケジュールします。",
+    "値は現時点のものです。オートメーションアクションを使用して、Home Assistant で ESLの更新をスケジュールします。",
   "Rendered view": "レンダリング表示",
   "Edit view": "編集表示",
   "Show hidden icons faintly for editing; does not change the ESL image":
