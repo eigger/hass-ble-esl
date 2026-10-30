@@ -9,6 +9,7 @@
 - Designer: the background of an opened automation design can be changed and is saved; disabled `ble_esl.write` steps are no longer offered; an unsupported `rotate` value is reported instead of being treated as 0; an unimportable payload no longer prevents opening the design.
 - Designer: undoing back to the loaded or saved design no longer leaves the editor marked as having unsaved changes.
 - Designer: accent, error and warning colours follow the Home Assistant theme, touch targets reach 44 px on touch screens, and animations stop with the "reduce motion" setting.
+- Designer: the toolbar groups tag, edit and zoom controls apart from the output actions (Save, Send to tag, Create automation, Save to automation…), which sit together on the right (on their own row on narrow screens).
 - Designer: restoring a kept automation draft says that Cancel discards it, the draft badge explains where the design is kept, the tips mention multi-select, zoom buttons have tooltips, and an empty search result offers to clear the search and filter.
 
 
