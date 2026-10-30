@@ -8,9 +8,9 @@ export default {
   "Sending failed{error}": "Invio non riuscito{error}",
   "component specs": "specifiche dei componenti",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESLs · {errors} errori · {unsynced} non sincronizzato",
+    "{count} ESL · {errors} errori · {unsynced} non sincronizzati",
   "{count} automations · {active} active":
-    "{count} automazioni · {active} attivo",
+    "{count} automazioni · {active} attive",
   "Battery {value}": "Batteria {value}",
   "Last successful image for {alias}": "Ultima immagine riuscita per {alias}",
   "Skipped: {reason}": "Saltato: {reason}",
@@ -48,12 +48,12 @@ export default {
   "Delete {label}": "Elimina {label}",
   "Resize {corner}": "Ridimensiona {corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Convertito in elementi {count}, disegnati esattamente come prima{skipped}",
+    "Convertito in {count} elementi, disegnati esattamente come prima{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Convertito in elementi {count}; {pixels} i pixel differiscono da prima{skipped}",
-  "; {count} not converted": "; {count} non convertito",
+    "Convertito in {count} elementi; {pixels} pixel differiscono da prima{skipped}",
+  "; {count} not converted": "; {count} non convertiti",
   "{count} placed, {skipped} skipped.":
-    "{count} posizionato, {skipped} saltato.",
+    "{count} posizionati, {skipped} saltati.",
   "Font size": "Dimensione carattere",
   "Min value": "Valore minimo",
   "Max value": "Valore massimo",
@@ -77,7 +77,7 @@ export default {
   "Add state mapping": "Aggiungi mappatura dello stato",
   "Add text": "Aggiungi testo",
   "Add to display": "Aggiungi alla visualizzazione",
-  "All ESLs": "Tutti ESLs",
+  "All ESLs": "Tutti gli ESL",
   "All elements": "Tutti gli elementi",
   "All states": "Tutti gli stati",
   "Another HA entity": "Un'altra entità HA",
@@ -154,9 +154,9 @@ export default {
   "Exporting payload…": "Esportazione carico utile...",
   "Fallback icon (blank = HA)": "Icona fallback (vuoto = HA)",
   "Field template": "Modello di campo",
-  "Filter ESLs": "Filtro ESLs",
+  "Filter ESLs": "Filtro ESL",
   "Finish the current editor operation before switching ESLs.":
-    "Termina l'operazione corrente dell'editor prima di cambiare ESLs.",
+    "Termina l'operazione corrente dell'editor prima di cambiare ESL.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "Viene applicata la prima regola corrispondente. L’intervallo include il limite inferiore ed esclude quello superiore. Un limite vuoto indica nessun limite.",
   "Font file": "File di caratteri",
@@ -189,7 +189,7 @@ export default {
   "Live Home Assistant data on e-paper":
     "Dati in tempo reale Home Assistant su e-paper",
   "Live preview": "Anteprima dal vivo",
-  "Loading ESLs…": "Caricamento in corso ESLs…",
+  "Loading ESLs…": "Caricamento degli ESL…",
   "Loading automations…": "Caricamento automazioni…",
   "Loading designer": "Caricamento progettista",
   "Loading image…": "Caricamento immagine…",
@@ -235,7 +235,7 @@ export default {
   "Save (unsaved changes)": "Salva (modifiche non salvate)",
   "Save (unsaved changes) (⌘/Ctrl S)":
     "Salva (modifiche non salvate) (⌘/Ctrl S)",
-  "Search ESLs": "Cerca ESLs",
+  "Search ESLs": "Cerca ESL",
   "Search aliases or devices": "Cerca alias o dispositivi",
   "Search automations": "Cerca automazioni",
   "Search by name": "Cerca per nome",
@@ -596,14 +596,14 @@ export default {
   "Send to ESL": "Invia all'ESL",
   ESL: "ESL",
   "ESL orientation": "Orientamento dell'ESL",
-  "Refresh ESLs": "Aggiorna gli ESLs",
-  "Refreshing ESLs…": "Aggiornamento degli ESLs…",
+  "Refresh ESLs": "Aggiorna gli ESL",
+  "Refreshing ESLs…": "Aggiornamento degli ESL…",
   "Edit ESL design": "Modifica design dell'ESL",
   "ESL design": "Design dell'ESL",
   "Not sent: the ESL's write lock is on":
     "Non inviato: il blocco in scrittura dell'ESL è attivo",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "I valori sono aggiornati al momento. Utilizza l'azione di automazione per pianificare gli aggiornamenti degli ESLs in Home Assistant.",
+    "I valori sono aggiornati al momento. Utilizza l'azione di automazione per pianificare gli aggiornamenti degli ESL in Home Assistant.",
   "Rendered view": "Vista renderizzata",
   "Edit view": "Vista di modifica",
   "Show hidden icons faintly for editing; does not change the ESL image":
@@ -612,4 +612,9 @@ export default {
     "Ogni tipo di elemento che l'ESL può disegnare, imposta campo per campo: scegline uno, quindi premi",
   "Selected element actions": "Azioni dell'elemento selezionato",
   "Duplicate selected element": "Duplica l'elemento selezionato",
+  "Image rotation (°)": "Rotazione dell'immagine (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "I componenti e le regole condizionali vengono mantenuti e usano gli stati attuali delle entità a ogni esecuzione dell'automazione.",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "Le modifiche di stato degli ingressi attivano gli aggiornamenti del display. Puoi regolare i trigger in Home Assistant.",
 };

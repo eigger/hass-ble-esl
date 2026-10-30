@@ -8,7 +8,7 @@ export default {
   "Sending failed{error}": "傳送失敗{error}",
   "component specs": "組件規格",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESLs · {errors} 錯誤 · {unsynced} 不同步",
+    "{count} ESL · {errors} 錯誤 · {unsynced} 不同步",
   "{count} automations · {active} active": "{count}自動化·{active}主動",
   "Battery {value}": "電池{value}",
   "Last successful image for {alias}": "{alias} 的最後一個成功影像",
@@ -56,9 +56,9 @@ export default {
   "Align center": "居中對齊",
   "Align right": "右對齊",
   "Add a BLE ESL device in Settings → Devices & services first.":
-    "首先在設定→設備和服務中加入BLEESL設備。",
+    "首先在設定→設備和服務中加入BLE ESL設備。",
   "Add a BLE ESL device in Settings → Devices & services.":
-    "在設定→設備和服務中新增BLEESL設備。",
+    "在設定→設備和服務中新增BLE ESL設備。",
   "Add component": "新增組件",
   "Add element": "新增元素",
   "Add element…": "加入元素…",
@@ -69,7 +69,7 @@ export default {
   "Add state mapping": "新增狀態映射",
   "Add text": "新增文本",
   "Add to display": "新增至顯示",
-  "All ESLs": "所有ESLs",
+  "All ESLs": "所有ESL",
   "All elements": "所有元素",
   "All states": "所有狀態",
   "Another HA entity": "另一個HA實體",
@@ -77,7 +77,7 @@ export default {
   "Apply templates": "套用模板",
   "Arc thickness": "電弧厚度",
   "Automations unavailable · Retry": "自動化不可用·重試",
-  "BLE ESL integration version": "BLEESL整合版本",
+  "BLE ESL integration version": "BLE ESL整合版本",
   "Battery —": "電池 —",
   "Binary condition": "二元條件",
   "Bound entity": "綁定實體",
@@ -144,9 +144,9 @@ export default {
   "Exporting payload…": "正在導出有效負載…",
   "Fallback icon (blank = HA)": "後備圖示（空白 = HA）",
   "Field template": "欄位模板",
-  "Filter ESLs": "過濾器ESLs",
+  "Filter ESLs": "過濾器ESL",
   "Finish the current editor operation before switching ESLs.":
-    "在切換ESLs之前完成目前編輯器操作。",
+    "在切換ESL之前完成目前編輯器操作。",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "套用第一條符合的規則。範圍包含下限，不包含上限。邊界留空表示不限制。",
   "Font file": "字型文件",
@@ -177,7 +177,7 @@ export default {
     "將現有自動化與此ESL相關聯的連結。他們不會更改自動化操作或應用此設計。",
   "Live Home Assistant data on e-paper": "電子紙上的即時Home Assistant數據",
   "Live preview": "即時預覽",
-  "Loading ESLs…": "正在載入ESLs…",
+  "Loading ESLs…": "正在載入ESL…",
   "Loading automations…": "載入自動化…",
   "Loading designer": "載入設計器",
   "Loading image…": "正在載入圖片…",
@@ -221,7 +221,7 @@ export default {
   "Sample sensor": "樣品感測器",
   "Save (unsaved changes)": "儲存（未儲存的變更）",
   "Save (unsaved changes) (⌘/Ctrl S)": "儲存（未儲存的變更）(⌘/Ctrl S)",
-  "Search ESLs": "搜尋ESLs",
+  "Search ESLs": "搜尋ESL",
   "Search aliases or devices": "搜尋別名或設備",
   "Search automations": "搜尋自動化",
   "Search by name": "依名稱搜尋",
@@ -576,4 +576,9 @@ export default {
     "所選元素的操作",
   "Duplicate selected element":
     "複製所選元素",
+  "Image rotation (°)":
+    "影像旋轉(°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
 };

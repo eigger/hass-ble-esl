@@ -607,4 +607,9 @@ export default {
     "Każdy typ elementu, który może narysować ESL, ustawiaj pole po polu: wybierz jeden, a następnie naciśnij",
   "Selected element actions": "Akcje dla zaznaczonego elementu",
   "Duplicate selected element": "Duplikuj zaznaczony element",
+  "Image rotation (°)": "Obrót obrazu (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "Komponenty i reguły warunkowe są zachowywane i przy każdym uruchomieniu automatyzacji korzystają z bieżących stanów encji.",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "Zmiany stanu wejść wywołują aktualizacje wyświetlacza. Wyzwalacze można dostosować w Home Assistant.",
 };
