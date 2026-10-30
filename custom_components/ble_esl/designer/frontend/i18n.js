@@ -26,11 +26,18 @@ export function t(hass, key, values = {}) {
       : match,
   );
 }
-// A translated context line in front of the server's own detail, which stays untranslated.
+// The server's wording of an error. The fixed messages it raises are in the
+// catalog under their exact English text and come back translated; anything
+// with values in it, or from Home Assistant itself, stays as it was sent.
+export function serverMessage(hass, error) {
+  const message = error?.message || String(error);
+  return Object.hasOwn(messages.en, message) ? t(hass, message) : message;
+}
+// A translated context line in front of the server's own detail.
 export function errorText(hass, context, error) {
   return t(hass, "{context}: {detail}", {
     context: t(hass, context),
-    detail: error?.message || String(error),
+    detail: serverMessage(hass, error),
   });
 }
 // These bindings are captured only from constructor markup, before user data is inserted.

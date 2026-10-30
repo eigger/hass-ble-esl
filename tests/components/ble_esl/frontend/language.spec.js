@@ -208,7 +208,10 @@ test("locale catalogs match component languages and preserve interpolation token
   const { language, supportedLanguages, t } =
     await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
   const componentLanguages = readdirSync(
-    new URL("../../../../custom_components/ble_esl/translations/", import.meta.url),
+    new URL(
+      "../../../../custom_components/ble_esl/translations/",
+      import.meta.url,
+    ),
   )
     .filter((name) => name.endsWith(".json"))
     .map((name) => name.slice(0, -5))
@@ -294,12 +297,10 @@ for (const code of localizedControls) {
     await dialog.locator(".close").click();
     await card.locator('[data-action="edit"]').click();
     await expect(
-      page
-        .locator("ble-esl-designer")
-        .getByRole("button", {
-          name: copy["Save to existing automation…"],
-          exact: true,
-        }),
+      page.locator("ble-esl-designer").getByRole("button", {
+        name: copy["Save to existing automation…"],
+        exact: true,
+      }),
     ).toBeVisible();
     await page.locator('ble-esl-designer [data-add="text"]').click();
     await page
@@ -393,4 +394,21 @@ test("non-English locales leave no untranslated copy beyond shared words", async
     );
     expect(untranslated, code).toEqual([]);
   }
+});
+
+test("fixed server messages are translated, other server text is left as sent", async () => {
+  const { serverMessage } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
+  const ko = { language: "ko" };
+  expect(serverMessage(ko, new Error("Select an automation entity"))).toBe(
+    "자동화 엔티티를 선택하세요",
+  );
+  expect(
+    serverMessage({ language: "en" }, new Error("Choose a sensor type")),
+  ).toBe("Choose a sensor type");
+  // Text with values in it, or from Home Assistant, is shown as it was sent.
+  expect(serverMessage(ko, new Error("Entity not found: sensor.x"))).toBe(
+    "Entity not found: sensor.x",
+  );
+  expect(serverMessage(ko, "plain failure")).toBe("plain failure");
 });

@@ -612,4 +612,43 @@ export default {
     "Komponenty i reguły warunkowe są zachowywane i przy każdym uruchomieniu automatyzacji korzystają z bieżących stanów encji.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Zmiany stanu wejść wywołują aktualizacje wyświetlacza. Wyzwalacze można dostosować w Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Parametry podglądu muszą być obiektem JSON",
+  "Preview parameters must contain finite JSON values":
+    "Parametry podglądu muszą zawierać skończone wartości JSON",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Parametry podglądu są zbyt duże (maksymalnie 64 KiB)",
+  "This ESL does not support writing": "Ten ESL nie obsługuje zapisu",
+  "This ESL has no registered device":
+    "Ten ESL nie ma zarejestrowanego urządzenia",
+  "The automation payload must be a list of objects":
+    "Ładunek automatyzacji musi być listą obiektów",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "Ładunek automatyzacji jest zbyt duży do zaimportowania (maksymalnie 5 MiB)",
+  "That element is not in the display": "Tego elementu nie ma na wyświetlaczu",
+  "That is an imagespec element already": "To już jest element imagespec",
+  "Choose a sensor type": "Wybierz typ czujnika",
+  "Choose an available sample entity": "Wybierz dostępną przykładową encję",
+  "This ESL protocol does not support image writes":
+    "Protokół tego ESL nie obsługuje zapisu obrazów",
+  "The ESL's display size changed; reload the designer":
+    "Rozmiar wyświetlacza ESL się zmienił; załaduj projektanta ponownie",
+  "template_id is required": "template_id jest wymagany",
+  "Give the template a name of up to 80 characters":
+    "Nadaj szablonowi nazwę o długości do 80 znaków",
+  "A template id is lowercase letters, digits and underscores":
+    "Identyfikator szablonu składa się z małych liter, cyfr i podkreśleń",
+  "Too many templates share that name": "Zbyt wiele szablonów ma tę samą nazwę",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "Ten szablon nie ma układu dla wyświetlacza, a jego wielokąta nie można skalować",
+  "This is not usable YAML: it is nested too deeply":
+    "To nie jest użyteczny YAML: jest zagnieżdżony zbyt głęboko",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Wklej ładunek (listę elementów) lub akcję ble_esl.write z ładunkiem",
+  "Automation is not available": "Automatyzacja jest niedostępna",
+  "This automation has no editable configuration":
+    "Ta automatyzacja nie ma konfiguracji do edycji",
+  "Select an automation entity": "Wybierz encję automatyzacji",
+  "Select the association to unlink": "Wybierz powiązanie do odłączenia",
+  "Automation has no stable ID": "Automatyzacja nie ma stałego identyfikatora",
 };

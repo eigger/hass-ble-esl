@@ -619,4 +619,46 @@ export default {
     "Les composants et les règles conditionnelles sont conservés et utilisent les états actuels des entités à chaque exécution de l'automatisation.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Les changements d’état des entrées déclenchent la mise à jour de l’affichage. Vous pouvez ajuster les déclencheurs dans Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Les paramètres d'aperçu doivent être un objet JSON",
+  "Preview parameters must contain finite JSON values":
+    "Les paramètres d'aperçu doivent contenir des valeurs JSON finies",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Les paramètres d'aperçu sont trop volumineux (64 Kio maximum)",
+  "This ESL does not support writing":
+    "Cet ESL ne prend pas en charge l'écriture",
+  "This ESL has no registered device": "Cet ESL n'a aucun appareil enregistré",
+  "The automation payload must be a list of objects":
+    "La charge utile de l'automatisation doit être une liste d'objets",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "La charge utile de l'automatisation est trop volumineuse pour être importée (5 Mio maximum)",
+  "That element is not in the display":
+    "Cet élément ne figure pas dans l'affichage",
+  "That is an imagespec element already": "C'est déjà un élément imagespec",
+  "Choose a sensor type": "Choisissez un type de capteur",
+  "Choose an available sample entity":
+    "Choisissez une entité d'exemple disponible",
+  "This ESL protocol does not support image writes":
+    "Le protocole de cet ESL ne prend pas en charge l'écriture d'images",
+  "The ESL's display size changed; reload the designer":
+    "La taille d'affichage de l'ESL a changé ; rechargez le concepteur",
+  "template_id is required": "template_id est obligatoire",
+  "Give the template a name of up to 80 characters":
+    "Donnez au modèle un nom de 80 caractères au plus",
+  "A template id is lowercase letters, digits and underscores":
+    "Un identifiant de modèle est composé de lettres minuscules, de chiffres et de tirets bas",
+  "Too many templates share that name": "Trop de modèles portent ce nom",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "Ce modèle n'a pas de mise en page pour l'affichage et son polygone ne peut pas être redimensionné",
+  "This is not usable YAML: it is nested too deeply":
+    "Ce YAML est inutilisable : il est imbriqué trop profondément",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Collez une charge utile (une liste d'éléments) ou une action ble_esl.write avec une charge utile",
+  "Automation is not available": "L'automatisation n'est pas disponible",
+  "This automation has no editable configuration":
+    "Cette automatisation n'a pas de configuration modifiable",
+  "Select an automation entity": "Sélectionnez une entité d'automatisation",
+  "Select the association to unlink": "Sélectionnez l'association à supprimer",
+  "Automation has no stable ID":
+    "L'automatisation n'a pas d'identifiant stable",
 };

@@ -615,4 +615,46 @@ export default {
     "コンポーネントと条件付きルールは保持され、オートメーションが実行されるたびに現在のエンティティの状態が使用されます。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "入力の状態が変化すると表示が更新されます。トリガーは Home Assistant で調整できます。",
+  "Preview parameters must be a JSON object":
+    "プレビューパラメーターは JSON オブジェクトである必要があります",
+  "Preview parameters must contain finite JSON values":
+    "プレビューパラメーターには有限の JSON 値のみを含めてください",
+  "Preview parameters are too large (64 KiB maximum)":
+    "プレビューパラメーターが大きすぎます (最大 64 KiB)",
+  "This ESL does not support writing": "このESLは書き込みに対応していません",
+  "This ESL has no registered device":
+    "このESLには登録済みのデバイスがありません",
+  "The automation payload must be a list of objects":
+    "オートメーションのペイロードはオブジェクトのリストである必要があります",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "オートメーションのペイロードが大きすぎてインポートできません (最大 5 MiB)",
+  "That element is not in the display": "その要素はディスプレイにありません",
+  "That is an imagespec element already": "それはすでに imagespec 要素です",
+  "Choose a sensor type": "センサーの種類を選択してください",
+  "Choose an available sample entity":
+    "利用可能なサンプルエンティティを選択してください",
+  "This ESL protocol does not support image writes":
+    "このESLのプロトコルは画像の書き込みに対応していません",
+  "The ESL's display size changed; reload the designer":
+    "ESLのディスプレイサイズが変更されました。デザイナーを再読み込みしてください",
+  "template_id is required": "template_id は必須です",
+  "Give the template a name of up to 80 characters":
+    "テンプレートに80文字以内の名前を付けてください",
+  "A template id is lowercase letters, digits and underscores":
+    "テンプレート ID は小文字の英字、数字、アンダースコアで構成します",
+  "Too many templates share that name": "同じ名前のテンプレートが多すぎます",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "このテンプレートにはディスプレイ用のレイアウトがなく、ポリゴンを拡大縮小できません",
+  "This is not usable YAML: it is nested too deeply":
+    "使用できない YAML です: ネストが深すぎます",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "ペイロード (要素のリスト) またはペイロード付きの ble_esl.write アクションを貼り付けてください",
+  "Automation is not available": "オートメーションを利用できません",
+  "This automation has no editable configuration":
+    "このオートメーションには編集可能な設定がありません",
+  "Select an automation entity":
+    "オートメーションのエンティティを選択してください",
+  "Select the association to unlink":
+    "リンクを解除する関連付けを選択してください",
+  "Automation has no stable ID": "オートメーションに安定した ID がありません",
 };

@@ -619,4 +619,46 @@ export default {
     "Los componentes y las reglas condicionales se conservan y usan los estados actuales de las entidades cada vez que se ejecuta la automatización.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Los cambios de estado de las entradas activan actualizaciones de la pantalla. Puede ajustar los disparadores en Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Los parámetros de vista previa deben ser un objeto JSON",
+  "Preview parameters must contain finite JSON values":
+    "Los parámetros de vista previa deben contener valores JSON finitos",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Los parámetros de vista previa son demasiado grandes (máximo 64 KiB)",
+  "This ESL does not support writing": "Este ESL no admite escritura",
+  "This ESL has no registered device":
+    "Este ESL no tiene un dispositivo registrado",
+  "The automation payload must be a list of objects":
+    "La carga útil de la automatización debe ser una lista de objetos",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "La carga útil de la automatización es demasiado grande para importarla (máximo 5 MiB)",
+  "That element is not in the display": "Ese elemento no está en la pantalla",
+  "That is an imagespec element already": "Ese ya es un elemento imagespec",
+  "Choose a sensor type": "Elige un tipo de sensor",
+  "Choose an available sample entity":
+    "Elige una entidad de muestra disponible",
+  "This ESL protocol does not support image writes":
+    "El protocolo de este ESL no admite la escritura de imágenes",
+  "The ESL's display size changed; reload the designer":
+    "El tamaño de la pantalla del ESL ha cambiado; recarga el diseñador",
+  "template_id is required": "template_id es obligatorio",
+  "Give the template a name of up to 80 characters":
+    "Pon a la plantilla un nombre de hasta 80 caracteres",
+  "A template id is lowercase letters, digits and underscores":
+    "El id de una plantilla son letras minúsculas, dígitos y guiones bajos",
+  "Too many templates share that name":
+    "Demasiadas plantillas comparten ese nombre",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "Esta plantilla no tiene diseño para la pantalla y su polígono no se puede escalar",
+  "This is not usable YAML: it is nested too deeply":
+    "Esto no es YAML utilizable: está anidado a demasiada profundidad",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Pega una carga útil (una lista de elementos) o una acción ble_esl.write con carga útil",
+  "Automation is not available": "La automatización no está disponible",
+  "This automation has no editable configuration":
+    "Esta automatización no tiene una configuración editable",
+  "Select an automation entity": "Selecciona una entidad de automatización",
+  "Select the association to unlink":
+    "Selecciona la asociación que quieres desvincular",
+  "Automation has no stable ID": "La automatización no tiene un ID estable",
 };

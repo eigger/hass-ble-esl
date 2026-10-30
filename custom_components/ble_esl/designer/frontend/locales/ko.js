@@ -601,4 +601,43 @@ export default {
     "컴포넌트와 조건부 규칙은 그대로 유지되며, 자동화가 실행될 때마다 현재 엔티티 상태를 사용합니다.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "입력 상태가 바뀌면 화면이 업데이트됩니다. 실행 조건은 Home Assistant에서 조정할 수 있습니다.",
+  "Preview parameters must be a JSON object":
+    "미리보기 매개변수는 JSON 객체여야 합니다",
+  "Preview parameters must contain finite JSON values":
+    "미리보기 매개변수에는 유한한 JSON 값만 넣을 수 있습니다",
+  "Preview parameters are too large (64 KiB maximum)":
+    "미리보기 매개변수가 너무 큽니다 (최대 64 KiB)",
+  "This ESL does not support writing": "이 ESL은 쓰기를 지원하지 않습니다",
+  "This ESL has no registered device": "이 ESL에는 등록된 기기가 없습니다",
+  "The automation payload must be a list of objects":
+    "자동화 페이로드는 객체 목록이어야 합니다",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "자동화 페이로드가 너무 커서 가져올 수 없습니다 (최대 5 MiB)",
+  "That element is not in the display": "그 요소는 화면에 없습니다",
+  "That is an imagespec element already": "이미 imagespec 요소입니다",
+  "Choose a sensor type": "센서 유형을 선택하세요",
+  "Choose an available sample entity":
+    "사용할 수 있는 샘플 엔티티를 선택하세요",
+  "This ESL protocol does not support image writes":
+    "이 ESL의 프로토콜은 이미지 쓰기를 지원하지 않습니다",
+  "The ESL's display size changed; reload the designer":
+    "ESL의 화면 크기가 바뀌었습니다. 디자이너를 다시 불러오세요",
+  "template_id is required": "template_id가 필요합니다",
+  "Give the template a name of up to 80 characters":
+    "템플릿 이름은 80자 이하로 지정하세요",
+  "A template id is lowercase letters, digits and underscores":
+    "템플릿 ID는 소문자, 숫자, 밑줄로 구성합니다",
+  "Too many templates share that name": "같은 이름의 템플릿이 너무 많습니다",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "이 템플릿에는 화면용 레이아웃이 없고 다각형의 크기를 조정할 수 없습니다",
+  "This is not usable YAML: it is nested too deeply":
+    "사용할 수 없는 YAML입니다: 중첩이 너무 깊습니다",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "페이로드(요소 목록) 또는 페이로드가 있는 ble_esl.write 동작을 붙여 넣으세요",
+  "Automation is not available": "자동화를 사용할 수 없습니다",
+  "This automation has no editable configuration":
+    "이 자동화에는 편집할 수 있는 설정이 없습니다",
+  "Select an automation entity": "자동화 엔티티를 선택하세요",
+  "Select the association to unlink": "연결을 해제할 연결 항목을 선택하세요",
+  "Automation has no stable ID": "자동화에 고정 ID가 없습니다",
 };

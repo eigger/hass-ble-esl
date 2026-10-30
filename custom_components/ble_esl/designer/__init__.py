@@ -622,7 +622,7 @@ class Designer:
 
     async def send(self, entry, document):
         if not getattr(entry.runtime_data.protocol, "writable", True):
-            raise HomeAssistantError("This tag protocol does not support image writes")
+            raise HomeAssistantError("This ESL protocol does not support image writes")
         generation = entry.runtime_data.write_generation
         async with self.locks.setdefault(entry.entry_id, asyncio.Lock()):
             document, image, payload, _ = await self.draw(entry, document)
@@ -633,7 +633,7 @@ class Designer:
             orientation = document.get("rotate", 0)
             preset = self.preset(entry, orientation)
             if (preset.width, preset.height) != image.size:
-                raise HomeAssistantError("The tag's display size changed; reload the designer")
+                raise HomeAssistantError("The ESL's display size changed; reload the designer")
             if orientation:
                 image = await self.hass.async_add_executor_job(
                     lambda: image.rotate(-orientation, expand=True)

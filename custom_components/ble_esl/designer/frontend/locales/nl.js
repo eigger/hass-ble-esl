@@ -616,4 +616,45 @@ export default {
     "Componenten en voorwaardelijke regels blijven behouden en gebruiken bij elke uitvoering van de automatisering de huidige entiteitsstatussen.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Statuswijzigingen van de invoer starten weergave-updates. U kunt de triggers aanpassen in Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Voorbeeldparameters moeten een JSON-object zijn",
+  "Preview parameters must contain finite JSON values":
+    "Voorbeeldparameters moeten eindige JSON-waarden bevatten",
+  "Preview parameters are too large (64 KiB maximum)":
+    "De voorbeeldparameters zijn te groot (maximaal 64 KiB)",
+  "This ESL does not support writing": "Deze ESL ondersteunt schrijven niet",
+  "This ESL has no registered device":
+    "Deze ESL heeft geen geregistreerd apparaat",
+  "The automation payload must be a list of objects":
+    "De payload van de automatisering moet een lijst met objecten zijn",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "De payload van de automatisering is te groot om te importeren (maximaal 5 MiB)",
+  "That element is not in the display": "Dat element staat niet op het scherm",
+  "That is an imagespec element already": "Dat is al een imagespec-element",
+  "Choose a sensor type": "Kies een sensortype",
+  "Choose an available sample entity": "Kies een beschikbare voorbeeldentiteit",
+  "This ESL protocol does not support image writes":
+    "Het protocol van deze ESL ondersteunt het schrijven van afbeeldingen niet",
+  "The ESL's display size changed; reload the designer":
+    "De schermgrootte van de ESL is gewijzigd; laad de ontwerper opnieuw",
+  "template_id is required": "template_id is vereist",
+  "Give the template a name of up to 80 characters":
+    "Geef het sjabloon een naam van maximaal 80 tekens",
+  "A template id is lowercase letters, digits and underscores":
+    "Een sjabloon-id bestaat uit kleine letters, cijfers en underscores",
+  "Too many templates share that name":
+    "Te veel sjablonen hebben dezelfde naam",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "Dit sjabloon heeft geen indeling voor het scherm en de polygoon kan niet worden geschaald",
+  "This is not usable YAML: it is nested too deeply":
+    "Dit is geen bruikbare YAML: de nesting is te diep",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Plak een payload (een lijst met elementen) of een ble_esl.write-actie met een payload",
+  "Automation is not available": "De automatisering is niet beschikbaar",
+  "This automation has no editable configuration":
+    "Deze automatisering heeft geen bewerkbare configuratie",
+  "Select an automation entity": "Selecteer een automatiseringsentiteit",
+  "Select the association to unlink":
+    "Selecteer de koppeling die u wilt verwijderen",
+  "Automation has no stable ID": "De automatisering heeft geen stabiele id",
 };

@@ -8,7 +8,13 @@ import {
   renderElementRotation,
   syncRotationInputs,
 } from "./editor/rotation-control.js";
-import { t, language, rerenderWithDialogs, errorText } from "./i18n.js";
+import {
+  t,
+  language,
+  rerenderWithDialogs,
+  errorText,
+  serverMessage,
+} from "./i18n.js";
 import "./component-editor.js";
 import "./yaml-dialog.js";
 import "./import-dialog.js";
@@ -820,7 +826,7 @@ export class BleEslDesigner extends HTMLElement {
       }
     } catch (error) {
       if (this.loading) {
-        this.loading.error = error.message || String(error);
+        this.loading.error = serverMessage(this.hass, error);
         this.resolveReady();
         this.render();
       } else {

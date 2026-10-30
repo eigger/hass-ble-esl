@@ -580,4 +580,54 @@ export default {
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "组件和条件规则会被保留，并在每次运行自动化时使用实体的当前状态。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "输入状态变化会触发显示更新。您可以在 Home Assistant 中调整触发条件。",
+  "Preview parameters must be a JSON object":
+    "预览参数必须是 JSON 对象",
+  "Preview parameters must contain finite JSON values":
+    "预览参数必须包含有限的 JSON 值",
+  "Preview parameters are too large (64 KiB maximum)":
+    "预览参数过大（最大 64 KiB）",
+  "This ESL does not support writing":
+    "此 ESL 不支持写入",
+  "This ESL has no registered device":
+    "此 ESL 没有已注册的设备",
+  "The automation payload must be a list of objects":
+    "自动化的有效负载必须是对象列表",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "自动化的有效负载过大，无法导入（最大 5 MiB）",
+  "That element is not in the display":
+    "该元素不在显示中",
+  "That is an imagespec element already":
+    "那已经是 imagespec 元素",
+  "Choose a sensor type":
+    "请选择传感器类型",
+  "Choose an available sample entity":
+    "请选择一个可用的样品实体",
+  "This ESL protocol does not support image writes":
+    "此 ESL 的协议不支持写入图像",
+  "The ESL's display size changed; reload the designer":
+    "ESL 的显示尺寸已更改；请重新加载设计器",
+  "template_id is required":
+    "需要 template_id",
+  "Give the template a name of up to 80 characters":
+    "请为模板指定不超过 80 个字符的名称",
+  "A template id is lowercase letters, digits and underscores":
+    "模板 ID 由小写字母、数字和下划线组成",
+  "Too many templates share that name":
+    "使用该名称的模板太多",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "此模板没有适用于该显示的布局，其多边形无法缩放",
+  "This is not usable YAML: it is nested too deeply":
+    "这不是可用的 YAML：嵌套太深",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "请粘贴有效负载（元素列表）或带有有效负载的 ble_esl.write 操作",
+  "Automation is not available":
+    "自动化不可用",
+  "This automation has no editable configuration":
+    "此自动化没有可编辑的配置",
+  "Select an automation entity":
+    "请选择自动化实体",
+  "Select the association to unlink":
+    "请选择要取消关联的关联项",
+  "Automation has no stable ID":
+    "自动化没有稳定的 ID",
 };
