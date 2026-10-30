@@ -406,11 +406,12 @@ async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
     payload = (await manager.draw(wolink_entry, document()))[2]
     result = await manager.export(wolink_entry, document())
     assert yaml.safe_load(result["payload"]) == payload
-    # The sensor component is saved as of now: the payload holds no design source.
     assert result["validation_errors"] == []
-    assert result["issues"] == result["warnings"]
-    assert len(result["warnings"]) == 1
-    assert "as of now in the payload" in result["warnings"][0]
+    # The sensor's value follows the entity in what an automation saves.
+    assert result["frozen"] == []
+    saved = [item["value"] for item in result["payload_data"] if item["type"] == "text_fit"]
+    assert any("states(" in value and "sensor.room_temperature" in value for value in saved)
+    assert not any("as of now" in warning for warning in result["warnings"])
     service = yaml.safe_load(result["service"])
     assert service["action"] == "ble_esl.write"
     assert service["data"] == {"background": "white", "payload": payload}
@@ -1245,9 +1246,10 @@ async def test_export_reports_what_the_payload_cannot_keep_live(hass, wolink_ent
     }
     result = await hass.data[KEY].export(wolink_entry, doc)
     assert [item.split(":")[0] for item in result["frozen"]] == ["native"]
-    assert any(w.startswith("gone: hidden") for w in result["warnings"])
     assert set(result["frozen"]) <= set(result["warnings"])
     assert not result["validation_errors"]
+    # A hidden element stays in the payload as hidden, so it comes back when reopened.
+    assert result["payload_data"][0]["visible"] is False
     # A template that stays live is not reported as frozen.
     assert result["payload_data"][-1]["value"] == "{{ states('sensor.x') }}"
 

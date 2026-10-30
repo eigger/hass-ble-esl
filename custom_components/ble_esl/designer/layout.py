@@ -12,6 +12,7 @@ import imagespec
 import voluptuous as vol
 
 from ..renderer import rotated_size
+from .live import live_items
 from .specs import (
     GEOMETRY,
     frozen_corners,
@@ -573,33 +574,33 @@ def resolve_component(hass, element):
     return element, state
 
 
-def live_payload(hass, document, templates=None, forecasts=None, preview_variables=None):
-    """The payload with imagespec templates left as written, for an automation.
+class LiveReport:
+    """What a payload compiled with its templates kept follows the entities of."""
 
-    None when no element has one: the payload as it is then already is it.
+    def __init__(self):
+        self.live = set()  # components whose entity values are templates now
+        self.changed = False  # anything differs from a payload of today's values
+
+
+def live_payload(
+    hass, document, templates=None, forecasts=None, preview_variables=None, report=None
+):
+    """The payload with templates kept, hidden elements kept, for an automation.
+
+    None when that is what the payload as drawn already is.
     """
-    if not any(
-        element["type"] == "imagespec" and templates_in(element["spec"])
-        for element in document["elements"]
-    ):
-        return None
-    return compile_payload(
+    report = report if report is not None else LiveReport()
+    payload = compile_payload(
         hass,
         document,
         templates,
         forecasts,
         keep_templates=True,
         preview_variables=preview_variables,
+        keep_hidden=True,
+        report=report,
     )
-
-
-def hidden_items(document):
-    """Elements left out of a payload: it holds nothing for them to come back from."""
-    return [
-        f"{element['id']}: hidden, so it is not in the payload"
-        for element in document["elements"]
-        if not element["visible"] and "visible" not in element["field_templates"]
-    ]
+    return payload if report.changed else None
 
 
 def free_angles(payload):
@@ -631,7 +632,18 @@ def unsupported_items(document, payload):
     return items
 
 
-def frozen_items(document):
+def _bound(element):
+    """A component whose look depends on an entity the payload would have to follow."""
+    return (
+        element["type"] != "imagespec"
+        and bool(
+            (element["type"] == "sensor" and element["entity_id"])
+            or (element["entity_id"] and element["data_field"])
+        )
+    ) or bool(element["field_templates"])
+
+
+def frozen_items(document, live=()):
     """What a saved payload keeps as of now, because it cannot follow an entity."""
     frozen = []
     for element in document["elements"]:
@@ -639,9 +651,7 @@ def frozen_items(document):
             continue
         if element["type"] == "imagespec" and frozen_corners(element["spec"]):
             frozen.append(f"{element['id']}: the polygon's corners are as of now in the payload")
-        elif element["field_templates"] or (
-            element["type"] != "imagespec" and (element["entity_id"] or element["data_field"])
-        ):
+        elif _bound(element) and element["id"] not in live:
             frozen.append(
                 f"{element['id']}: the {element['type']} is as of now in the payload; "
                 "converting it to elements keeps what can follow its entity"
@@ -685,26 +695,67 @@ def _set_dither(payload, start, dither):
             item.setdefault("dither", dither)
 
 
+def _finish(hass, payload, pending, keep_templates, report):
+    """Close the element drawn since ``pending``: its dither, its hiding, what follows its entity."""
+    start, dither, original, hidden, follow = pending
+    _set_dither(payload, start, dither)
+    items = payload[start:]
+    if keep_templates and follow and _bound(original):
+        state = hass.states.get(original["entity_id"]) if original["entity_id"] else None
+        if (
+            state is not None
+            and original.get("weather_when", "now") == "now"
+            and live_items(hass, original, state, items)
+        ):
+            report.live.add(original["id"])
+            report.changed = True
+            payload[start:] = items
+    if hidden:
+        for item in items:
+            item["visible"] = False
+        report.changed = True
+
+
 def compile_payload(
-    hass, document, templates=None, forecasts=None, keep_templates=False, preview_variables=None
+    hass,
+    document,
+    templates=None,
+    forecasts=None,
+    keep_templates=False,
+    preview_variables=None,
+    keep_hidden=False,
+    report=None,
 ):
-    """Snapshot HA values on its event loop; render them later in the executor."""
+    """Snapshot HA values on its event loop; render them later in the executor.
+
+    With ``keep_templates`` the values an entity-bound component draws are
+    templates where Home Assistant can follow the entity, and ``keep_hidden``
+    keeps a hidden element as ``visible: false``; ``report`` says what changed.
+    """
+    report = report if report is not None else LiveReport()
     payload = []
     pending = None
-    for element in document["elements"]:
+    for original in document["elements"]:
         if pending:
-            _set_dither(payload, *pending)
+            _finish(hass, payload, pending, keep_templates, report)
             pending = None
         # Preview-only automation parameters apply to raw imagespec templates;
         # legacy component template context remains its normal sensor context.
-        element, _bound_state = resolve_component(hass, element)
-        if not element["visible"]:
+        element, _bound_state = resolve_component(hass, original)
+        hidden = not element["visible"]
+        if hidden and not keep_hidden:
             continue
         if rotation := element.get("rotation", 0) % 360:
             # Keep the original component and resolve it on every render. The
             # group transforms all of its drawing primitives as one element.
-            local = deepcopy(element)
-            local.update(x=0, y=0, rotation=0)
+            local = deepcopy(original)
+            local.update(x=0, y=0, rotation=0, visible=True)
+            # Placed, turned and shown by the group: a template for these is done with.
+            local["field_templates"] = {
+                field: source
+                for field, source in local["field_templates"].items()
+                if field not in ("x", "y", "rotation", "visible")
+            }
             children = compile_payload(
                 hass,
                 {"elements": [local]},
@@ -712,6 +763,7 @@ def compile_payload(
                 forecasts,
                 keep_templates=keep_templates,
                 preview_variables=preview_variables,
+                report=report,
             )
             if children:
                 x, y = element["x"], element["y"]
@@ -728,10 +780,12 @@ def compile_payload(
                         "height": height,
                         "rotate": rotation,
                         "elements": children,
+                        **({"visible": False} if hidden else {}),
                     }
                 )
+                report.changed = report.changed or hidden
             continue
-        pending = (len(payload), element.get("dither"))
+        pending = [len(payload), element.get("dither"), original, hidden, True]
         x, y, width, height = (element[key] for key in ("x", "y", "width", "height"))
         color = element["color"]
         state = hass.states.get(element["entity_id"]) if element["type"] == "sensor" else None
@@ -764,6 +818,8 @@ def compile_payload(
                         if child.get(key) is not None:
                             child[key] = max(minimum, round(child[key] * min(sx, sy)))
                 payload.extend(compile_payload(hass, nested, preview_variables=preview_variables))
+                # Drawn through a sensor template: only as of now.
+                pending[4] = False
                 continue
         if element["type"] == "imagespec":
             spec = (
@@ -778,6 +834,8 @@ def compile_payload(
                     **spec,
                     "points": resolve_templates(hass, spec["points"], set(), preview_variables),
                 }
+            if keep_templates and templates_in(element["spec"]):
+                report.changed = True
             payload.append(spec_payload(spec, x, y, width, height))
             continue
         if element["type"] in ("progress_bar", "gauge"):
@@ -989,5 +1047,5 @@ def compile_payload(
             )
 
     if pending:
-        _set_dither(payload, *pending)
+        _finish(hass, payload, pending, keep_templates, report)
     return payload

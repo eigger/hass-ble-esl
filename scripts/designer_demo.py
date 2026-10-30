@@ -40,9 +40,9 @@ from custom_components.ble_esl.designer.importer import (
     payloads,
 )
 from custom_components.ble_esl.designer.layout import (
+    LiveReport,
     compile_payload,
     frozen_items,
-    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -465,9 +465,10 @@ async def handle(request):
         forecasts = await demo_forecasts()
         variables = _preview_variable_map(msg.get("preview_variables"))
         payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
-        frozen = frozen_items(document)
-        issues = [*hidden_items(document), *frozen]
-        live = live_payload(HASS, document, TEMPLATES, forecasts)
+        report = LiveReport()
+        live = live_payload(HASS, document, TEMPLATES, forecasts, report=report)
+        frozen = frozen_items(document, report.live)
+        issues = list(frozen)
         result = export_yaml(
             payload,
             document["background"],

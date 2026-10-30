@@ -36,9 +36,9 @@ from .design_templates import (
 from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
+    LiveReport,
     compile_payload,
     frozen_items,
-    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -254,13 +254,13 @@ class Designer:
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
         # Only the payload is saved: what a payload cannot keep live is as of now.
-        frozen = frozen_items(document)
-        issues.extend(f"blocking: {item}" for item in unsupported_items(document, payload))
-        issues.extend(hidden_items(document))
-        issues.extend(frozen)
+        report = LiveReport()
         automation_payload = live_payload(
-            self.hass, document, self.templates, forecasts, preview_variables
+            self.hass, document, self.templates, forecasts, preview_variables, report
         )
+        frozen = frozen_items(document, report.live)
+        issues.extend(f"blocking: {item}" for item in unsupported_items(document, payload))
+        issues.extend(frozen)
         result = export_yaml(
             payload,
             document["background"],
