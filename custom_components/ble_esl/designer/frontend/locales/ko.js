@@ -25,7 +25,6 @@ export default {
   "Sending failed": "전송 실패",
   "Loading {step}… ({done}/{count})": "{step} 불러오는 중… ({done}/{count})",
   "element types": "요소 유형",
-  "tags and displays": "ESL 및 화면",
   "default (shrink ellipsis)": "기본값 (축소 및 말줄임)",
   "default (right)": "기본값 (오른쪽)",
   "default (floyd)": "기본값 (floyd)",

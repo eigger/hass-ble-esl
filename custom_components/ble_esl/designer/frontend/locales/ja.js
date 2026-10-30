@@ -26,7 +26,6 @@ export default {
   "Sending failed": "送信に失敗しました",
   "Loading {step}… ({done}/{count})": "{step} をロード中… ({done}/{count})",
   "element types": "要素タイプ",
-  "tags and displays": "タグと表示内容",
   "default (shrink ellipsis)": "デフォルト (省略記号を縮小)",
   "default (right)": "デフォルト (右)",
   "default (floyd)": "デフォルト (フロイド)",
@@ -592,21 +591,21 @@ export default {
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
-  "Send to ESL": "ESL に送信",
+  "Send to ESL": "ESLに送信",
   ESL: "ESL",
-  "ESL orientation": "ESL の向き",
-  "Refresh ESLs": "ESL を更新",
-  "Refreshing ESLs…": "ESL を更新中…",
-  "Edit ESL design": "ESL のデザインを編集",
-  "ESL design": "ESL のデザイン",
+  "ESL orientation": "ESLの向き",
+  "Refresh ESLs": "ESLを更新",
+  "Refreshing ESLs…": "ESLを更新中…",
+  "Edit ESL design": "ESLのデザインを編集",
+  "ESL design": "ESLのデザイン",
   "Not sent: the ESL's write lock is on":
-    "未送信: ESL の書き込みロックがオンになっています",
+    "未送信: ESLの書き込みロックがオンになっています",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "値は現時点のものです。自動化アクションを使用して、Home Assistant で ESL の更新をスケジュールします。",
+    "値は現時点のものです。自動化アクションを使用して、Home Assistant で ESLの更新をスケジュールします。",
   "Rendered view": "レンダリング表示",
   "Edit view": "編集表示",
   "Show hidden icons faintly for editing; does not change the ESL image":
-    "編集用に非表示のアイコンを薄く表示します。ESL の画像は変わりません",
+    "編集用に非表示のアイコンを薄く表示します。ESLの画像は変わりません",
   "Every element type the ESL can draw, set field by field: choose one, then press":
-    "ESL が描画できるすべての要素タイプ、フィールドごとに設定: 1 つ選択して、 を押します",
+    "ESLが描画できるすべての要素タイプ、フィールドごとに設定: 1 つ選択して、 を押します",
 };

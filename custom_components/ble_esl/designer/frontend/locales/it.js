@@ -28,7 +28,6 @@ export default {
   "Loading {step}… ({done}/{count})":
     "Caricamento in corso {step}… ({done}/{count})",
   "element types": "tipi di elemento",
-  "tags and displays": "tag e display",
   "default (shrink ellipsis)": "predefinito (riduci i puntini di sospensione)",
   "default (right)": "predefinito (a destra)",
   "default (floyd)": "predefinito (floyd)",
@@ -597,14 +596,14 @@ export default {
   "Send to ESL": "Invia all'ESL",
   ESL: "ESL",
   "ESL orientation": "Orientamento dell'ESL",
-  "Refresh ESLs": "Aggiorna le ESL",
-  "Refreshing ESLs…": "Aggiornamento delle ESL…",
+  "Refresh ESLs": "Aggiorna gli ESLs",
+  "Refreshing ESLs…": "Aggiornamento degli ESLs…",
   "Edit ESL design": "Modifica design dell'ESL",
   "ESL design": "Design dell'ESL",
   "Not sent: the ESL's write lock is on":
     "Non inviato: il blocco in scrittura dell'ESL è attivo",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "I valori sono aggiornati al momento. Utilizza l'azione di automazione per pianificare gli aggiornamenti delle ESL in Home Assistant.",
+    "I valori sono aggiornati al momento. Utilizza l'azione di automazione per pianificare gli aggiornamenti degli ESLs in Home Assistant.",
   "Rendered view": "Vista renderizzata",
   "Edit view": "Vista di modifica",
   "Show hidden icons faintly for editing; does not change the ESL image":

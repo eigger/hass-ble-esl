@@ -28,7 +28,6 @@ export default {
   "Sending failed": "Verzenden mislukt",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
   "element types": "elementtypen",
-  "tags and displays": "tags en displays",
   "default (shrink ellipsis)": "standaard (verkleind weglatingsteken)",
   "default (right)": "standaard (rechts)",
   "default (floyd)": "standaard (floyd)",
@@ -596,8 +595,8 @@ export default {
   "Send to ESL": "Naar ESL verzenden",
   ESL: "ESL",
   "ESL orientation": "ESL-oriëntatie",
-  "Refresh ESLs": "ESL's vernieuwen",
-  "Refreshing ESLs…": "ESL's worden vernieuwd…",
+  "Refresh ESLs": "ESLs vernieuwen",
+  "Refreshing ESLs…": "ESLs worden vernieuwd…",
   "Edit ESL design": "ESL-ontwerp bewerken",
   "ESL design": "ESL-ontwerp",
   "Not sent: the ESL's write lock is on":

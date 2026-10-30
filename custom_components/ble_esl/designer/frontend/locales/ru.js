@@ -27,7 +27,6 @@ export default {
   "Sending failed": "Отправка не удалась",
   "Loading {step}… ({done}/{count})": "Загрузка {step}… ({done}/{count})",
   "element types": "Типы элементов",
-  "tags and displays": "Теги и дисплеи",
   "default (shrink ellipsis)": "по умолчанию (сократить многоточие)",
   "default (right)": "по умолчанию (справа)",
   "default (floyd)": "по умолчанию (флойд)",
@@ -593,8 +592,8 @@ export default {
   "Send to ESL": "Отправить на ESL",
   ESL: "ESL",
   "ESL orientation": "Ориентация ESL",
-  "Refresh ESLs": "Обновить ESL",
-  "Refreshing ESLs…": "Обновление ESL…",
+  "Refresh ESLs": "Обновить ESLs",
+  "Refreshing ESLs…": "Обновление ESLs…",
   "Edit ESL design": "Изменить дизайн ESL",
   "ESL design": "Дизайн ESL",
   "Not sent: the ESL's write lock is on":

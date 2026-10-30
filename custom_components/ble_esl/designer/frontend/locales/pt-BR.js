@@ -28,7 +28,6 @@ export default {
   "Sending failed": "Falha no envio",
   "Loading {step}… ({done}/{count})": "Carregando {step}… ({done}/{count})",
   "element types": "tipos de elementos",
-  "tags and displays": "etiquetas e telas",
   "default (shrink ellipsis)": "padrão (reduzir reticências)",
   "default (right)": "padrão (direita)",
   "default (floyd)": "padrão (Floyd)",
@@ -595,21 +594,21 @@ export default {
     "Shift / Ctrl / ⌘ + clique seleciona vários elementos · Arrastar em uma área vazia da tela seleciona uma região",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Mantido como rascunho nesta sessão do navegador até você criar uma automação ou salvar em uma.",
-  "Send to ESL": "Enviar para a ESL",
+  "Send to ESL": "Enviar para o ESL",
   ESL: "ESL",
-  "ESL orientation": "Orientação da ESL",
+  "ESL orientation": "Orientação do ESL",
   "Refresh ESLs": "Atualizar ESLs",
   "Refreshing ESLs…": "Atualizando ESLs…",
   "Edit ESL design": "Editar design da ESL",
-  "ESL design": "Design da ESL",
+  "ESL design": "Design do ESL",
   "Not sent: the ESL's write lock is on":
-    "Não enviado: o bloqueio de gravação da ESL está ativado",
+    "Não enviado: o bloqueio de gravação do ESL está ativado",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "Os valores são de agora. Use a ação de automação para agendar atualizações das ESLs no Home Assistant.",
+    "Os valores são de agora. Use a ação de automação para agendar atualizações dos ESLs no Home Assistant.",
   "Rendered view": "Visualização renderizada",
   "Edit view": "Visualização de edição",
   "Show hidden icons faintly for editing; does not change the ESL image":
-    "Mostra de leve os ícones ocultos para edição; não altera a imagem da ESL",
+    "Mostra de leve os ícones ocultos para edição; não altera a imagem do ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":
-    "Cada tipo de elemento que a ESL pode desenhar, defina campo por campo: escolha um e pressione",
+    "Cada tipo de elemento que o ESL pode desenhar, defina campo por campo: escolha um e pressione",
 };

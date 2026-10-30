@@ -27,7 +27,6 @@ export default {
   "Sending failed": "Error al enviar",
   "Loading {step}… ({done}/{count})": "Cargando {step}… ({done}/{count})",
   "element types": "tipos de elementos",
-  "tags and displays": "etiquetas y visualizaciones",
   "default (shrink ellipsis)": "predeterminado (reducir puntos suspensivos)",
   "default (right)": "predeterminado (derecha)",
   "default (floyd)": "predeterminado (floyd)",
@@ -596,21 +595,21 @@ export default {
     "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
-  "Send to ESL": "Enviar a la ESL",
+  "Send to ESL": "Enviar al ESL",
   ESL: "ESL",
-  "ESL orientation": "Orientación de la ESL",
-  "Refresh ESLs": "Actualizar ESL",
-  "Refreshing ESLs…": "Actualizando ESL…",
-  "Edit ESL design": "Editar diseño de la ESL",
-  "ESL design": "Diseño de la ESL",
+  "ESL orientation": "Orientación del ESL",
+  "Refresh ESLs": "Actualizar ESLs",
+  "Refreshing ESLs…": "Actualizando ESLs…",
+  "Edit ESL design": "Editar diseño del ESL",
+  "ESL design": "Diseño del ESL",
   "Not sent: the ESL's write lock is on":
-    "No enviado: el bloqueo de escritura de la ESL está activado",
+    "No enviado: el bloqueo de escritura del ESL está activado",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "Los valores son los actuales. Utiliza la acción de automatización para programar actualizaciones de las ESL en Home Assistant.",
+    "Los valores son los actuales. Utiliza la acción de automatización para programar actualizaciones de los ESLs en Home Assistant.",
   "Rendered view": "Vista renderizada",
   "Edit view": "Vista de edición",
   "Show hidden icons faintly for editing; does not change the ESL image":
-    "Muestra tenuemente los iconos ocultos para editarlos; no cambia la imagen de la ESL",
+    "Muestra tenuemente los iconos ocultos para editarlos; no cambia la imagen del ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":
-    "Cada tipo de elemento que la ESL puede dibujar, establécelo campo por campo: elige uno y luego pulsa",
+    "Cada tipo de elemento que el ESL puede dibujar, establécelo campo por campo: elige uno y luego pulsa",
 };

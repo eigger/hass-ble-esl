@@ -24,7 +24,6 @@ export default {
   "Sending failed": "發送失敗",
   "Loading {step}… ({done}/{count})": "正在載入{step}…({done}/{count})",
   "element types": "元素類型",
-  "tags and displays": "標籤和顯示",
   "default (shrink ellipsis)": "預設（縮小省略號）",
   "default (right)": "預設(右)",
   "default (floyd)": "預設(佛洛伊德)",

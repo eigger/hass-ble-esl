@@ -26,7 +26,6 @@ export default {
   "Sending failed": "Sending failed",
   "Loading {step}… ({done}/{count})": "Loading {step}… ({done}/{count})",
   "element types": "element types",
-  "tags and displays": "tags and displays",
   "default (shrink ellipsis)": "default (shrink ellipsis)",
   "default (right)": "default (right)",
   "default (floyd)": "default (floyd)",

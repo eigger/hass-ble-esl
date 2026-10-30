@@ -26,7 +26,6 @@ export default {
   "Sending failed": "Échec de l'envoi",
   "Loading {step}… ({done}/{count})": "Chargement {step}… ({done}/{count})",
   "element types": "types d'éléments",
-  "tags and displays": "étiquettes et écrans",
   "default (shrink ellipsis)": "par défaut (réduire les points de suspension)",
   "default (right)": "par défaut (à droite)",
   "default (floyd)": "par défaut (Floyd)",
@@ -599,14 +598,14 @@ export default {
   "Send to ESL": "Envoyer à l'ESL",
   ESL: "ESL",
   "ESL orientation": "Orientation de l'ESL",
-  "Refresh ESLs": "Actualiser les ESL",
-  "Refreshing ESLs…": "Actualisation des ESL…",
+  "Refresh ESLs": "Actualiser les ESLs",
+  "Refreshing ESLs…": "Actualisation des ESLs…",
   "Edit ESL design": "Modifier le design de l'ESL",
   "ESL design": "Design de l'ESL",
   "Not sent: the ESL's write lock is on":
     "Non envoyé : le verrouillage en écriture de l'ESL est activé",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESL dans Home Assistant.",
+    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESLs dans Home Assistant.",
   "Rendered view": "Vue rendue",
   "Edit view": "Vue d'édition",
   "Show hidden icons faintly for editing; does not change the ESL image":

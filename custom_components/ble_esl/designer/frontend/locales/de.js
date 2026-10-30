@@ -27,7 +27,6 @@ export default {
   "Sending failed": "Senden fehlgeschlagen",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
   "element types": "Elementtypen",
-  "tags and displays": "Tags und Anzeigen",
   "default (shrink ellipsis)": "Standard (Auslassungspunkte verkleinern)",
   "default (right)": "Standard (rechts)",
   "default (floyd)": "Standard (Floyd)",

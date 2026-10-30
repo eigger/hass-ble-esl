@@ -27,7 +27,6 @@ export default {
   "Sending failed": "Wysyłanie nie powiodło się",
   "Loading {step}… ({done}/{count})": "Ładowanie {step}… ({done}/{count})",
   "element types": "typy elementów",
-  "tags and displays": "znaczniki i wyświetlacze",
   "default (shrink ellipsis)": "domyślnie (zmniejszenie wielokropka)",
   "default (right)": "domyślny (po prawej)",
   "default (floyd)": "domyślny (floyd)",
