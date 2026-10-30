@@ -1762,13 +1762,18 @@ export class BleEslDesigner extends HTMLElement {
     this.session.pushUndo(snapshot);
     this.syncHistoryControls();
   }
-  // Arrow-key nudges within half a second of each other are one undo step.
+  // Arrow-key nudges of the same selection within half a second of each other
+  // are one undo step; anything else in between (another edit, a redo left
+  // over, a different selection) starts a new one.
   pushNudgeUndo(snapshot) {
     const stack = this.session.undoStack;
     const now = Date.now();
+    const selection = [...this.selectedIds].sort().join();
     if (
       this._nudgeUndo &&
       stack[stack.length - 1] === this._nudgeUndo &&
+      !this.session.redoStack.length &&
+      selection === this._nudgeSelection &&
       now - this._nudgeAt < 500
     ) {
       this._nudgeAt = now;
@@ -1776,6 +1781,7 @@ export class BleEslDesigner extends HTMLElement {
     }
     this.pushUndo(snapshot);
     this._nudgeUndo = snapshot;
+    this._nudgeSelection = selection;
     this._nudgeAt = now;
   }
   specInput(input) {

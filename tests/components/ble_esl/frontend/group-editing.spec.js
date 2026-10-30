@@ -161,6 +161,8 @@ test("keyboard moves of a group stay on the label and repeated nudges are one un
   for (let i = 0; i < 4; i++) await page.keyboard.press("Shift+ArrowLeft");
   expect(await xs()).toEqual([0, 45, 150]);
   const depth = await undoDepth();
+  // Outside the merge window, so only the clamp can explain "no new step".
+  await page.evaluate(() => (window.panel._nudgeAt = 0));
   await page.keyboard.press("ArrowLeft");
   expect(await xs()).toEqual([0, 45, 150]);
   expect(await undoDepth()).toBe(depth);
@@ -198,4 +200,29 @@ test("dragging a group far past the label edge stops it at the edge", async ({
     [45, 0],
     [150, 65],
   ]);
+});
+
+test("a nudge after an undo or on another selection starts its own undo step", async ({
+  page,
+}) => {
+  const hit = page.locator(".el .hit-area");
+  const ys = () =>
+    page.evaluate(() => window.panel.document.elements.map((e) => e.y));
+  const canvas = page.getByRole("group", { name: "Display canvas" });
+  await hit.nth(0).click();
+  await canvas.focus();
+  await page.keyboard.press("ArrowDown");
+  // Another element right away: not merged into the first one's step.
+  await hit.nth(1).click();
+  await canvas.focus();
+  await page.keyboard.press("ArrowDown");
+  expect(await ys()).toEqual([11, 11, 65]);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  expect(await ys()).toEqual([11, 10, 65]);
+  // After an undo a new nudge clears what could be redone.
+  await canvas.focus();
+  await page.keyboard.press("ArrowDown");
+  expect(await page.evaluate(() => window.panel.session.redoStack.length)).toBe(
+    0,
+  );
 });

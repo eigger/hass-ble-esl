@@ -4,15 +4,17 @@ import { clampGroupMove } from "./geometry.js";
 
 // Absolute frames of the selected elements, from what was last rendered.
 const groupBoxes = (panel, elements) =>
-  elements.map((element) => {
-    const [l, tp, r, b] = panel.visibleBounds(element) || [
-      0,
-      0,
-      element.width,
-      element.height,
-    ];
-    return [element.x + l, element.y + tp, element.x + r, element.y + b];
-  });
+  elements
+    .filter((element) => element.visible !== false)
+    .map((element) => {
+      const [l, tp, r, b] = panel.visibleBounds(element) || [
+        0,
+        0,
+        element.width,
+        element.height,
+      ];
+      return [element.x + l, element.y + tp, element.x + r, element.y + b];
+    });
 
 export function beginTextEdit(panel) {
   if (panel.element?.type !== "text") return;

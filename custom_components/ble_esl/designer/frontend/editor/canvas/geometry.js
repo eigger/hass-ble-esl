@@ -240,6 +240,7 @@ export function moveBound(element, tag, visible) {
 // [left, top, right, bottom] frames. A side that already hangs off the label
 // is not pulled back: the group just cannot go further that way.
 export function clampGroupMove(boxes, tag, dx, dy) {
+  if (!boxes.length) return [dx, dy];
   const left = Math.min(...boxes.map((box) => box[0])),
     top = Math.min(...boxes.map((box) => box[1])),
     right = Math.max(...boxes.map((box) => box[2])),

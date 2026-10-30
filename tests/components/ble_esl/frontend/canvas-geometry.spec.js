@@ -311,6 +311,8 @@ test("a group stops at the label edges and is not pulled back from an overhang",
   expect(clampGroupMove(boxes, label, 0, -9)).toEqual([0, -5]);
   expect(clampGroupMove(boxes, label, 0, 9)).toEqual([0, 5]);
   expect(clampGroupMove(boxes, label, 4, -2)).toEqual([4, -2]);
+  // Nothing visible to keep on the label: no limit.
+  expect(clampGroupMove([], label, -9, 9)).toEqual([-9, 9]);
   // Already hanging off the left: it cannot go further left, but can come back.
   const overhang = [[-6, 5, 20, 20]];
   expect(clampGroupMove(overhang, label, -4, 0)).toEqual([0, 0]);
