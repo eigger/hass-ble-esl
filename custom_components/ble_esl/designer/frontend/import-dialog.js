@@ -41,7 +41,7 @@ export class ImportDialog extends HTMLElement {
       form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:90vh;box-sizing:border-box}
       h2{margin:0;font-size:16px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button.primary{background:#166d75;color:white;border-color:#166d75}
+      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}
       button:disabled{opacity:.5;cursor:default}
       textarea{min-height:260px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical;padding:10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}

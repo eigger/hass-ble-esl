@@ -73,7 +73,7 @@ export class YamlDialog extends HTMLElement {
       input{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}
       a{color:var(--primary-color,#166d75);align-self:center}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button[aria-selected="true"],button.primary{background:#166d75;color:white;border-color:#166d75}
+      button[aria-selected="true"],button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}
       textarea{flex:1;min-height:280px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical;padding:10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .check{display:flex;gap:6px;align-items:center;font-size:13px}

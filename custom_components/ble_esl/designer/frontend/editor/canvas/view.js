@@ -80,8 +80,8 @@ export function renderAlignmentGuides(guides) {
   return (guides || [])
     .map((guide) =>
       guide.axis === "x"
-        ? `<span aria-hidden="true" style="position:absolute;left:${guide.position}px;top:0;height:100%;border-left:1px dashed #e53935;pointer-events:none;z-index:9998"></span>`
-        : `<span aria-hidden="true" style="position:absolute;left:0;top:${guide.position}px;width:100%;border-top:1px dashed #e53935;pointer-events:none;z-index:9998"></span>`,
+        ? `<span aria-hidden="true" style="position:absolute;left:${guide.position}px;top:0;height:100%;border-left:1px dashed var(--error-color,#e53935);pointer-events:none;z-index:9998"></span>`
+        : `<span aria-hidden="true" style="position:absolute;left:0;top:${guide.position}px;width:100%;border-top:1px dashed var(--error-color,#e53935);pointer-events:none;z-index:9998"></span>`,
     )
     .join("");
 }

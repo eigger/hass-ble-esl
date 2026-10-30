@@ -32,7 +32,7 @@ export function chooseOne(hass, title, labels) {
       label{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;cursor:pointer;overflow-wrap:anywhere}
       input{margin-top:2px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button.primary{background:#166d75;color:white;border-color:#166d75}
+      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}
       .actions{display:flex;gap:6px;justify-content:flex-end}
     </style><dialog aria-label="${esc(title)}"><form method="dialog"><fieldset><legend>${esc(title)}</legend>${labels
       .map(

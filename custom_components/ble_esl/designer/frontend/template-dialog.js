@@ -248,7 +248,7 @@ export class TemplateDialog extends HTMLElement {
       form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:90vh;box-sizing:border-box;overflow:auto}
       h2,h3{margin:0;font-size:16px} h3{font-size:14px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button.primary{background:#166d75;color:white;border-color:#166d75}
+      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}
       button:disabled{opacity:.5;cursor:default}
       .list{display:grid;gap:8px}
       .card{display:flex;flex-direction:column;gap:2px;text-align:left}
