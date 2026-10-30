@@ -567,8 +567,14 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "找不到包含此 ESL 的 ble_esl.write 動作的自動化。",
   "Saved to {name}.": "已儲存到 {name}。",
-  "Restore the unsaved changes you made to this automation design?":
-    "要還原此自動化設計中未儲存的變更嗎？",
   "This automation rotation is not supported.":
     "不支援此自動化的旋轉設定。",
+  "Restore the unsaved changes you made to this automation design? Cancel discards them.":
+    "要還原此自動化設計中未儲存的變更嗎？取消會捨棄這些變更。",
+  "Clear search and filter":
+    "清除搜尋與篩選",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
+    "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "在建立自動化或儲存到自動化之前，會在此瀏覽器工作階段期間以草稿形式保留。",
 };

@@ -602,8 +602,13 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Geen automatisering met een ble_esl.write-actie voor deze ESL gevonden.",
   "Saved to {name}.": "Opgeslagen in {name}.",
-  "Restore the unsaved changes you made to this automation design?":
-    "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen?",
   "This automation rotation is not supported.":
     "De rotatie van deze automatisering wordt niet ondersteund.",
+  "Restore the unsaved changes you made to this automation design? Cancel discards them.":
+    "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen? Annuleren gooit ze weg.",
+  "Clear search and filter": "Zoekopdracht en filter wissen",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
+    "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
 };

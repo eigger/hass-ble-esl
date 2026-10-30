@@ -601,8 +601,13 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "このESL用の ble_esl.write アクションを含むオートメーションが見つかりませんでした。",
   "Saved to {name}.": "{name} に保存しました。",
-  "Restore the unsaved changes you made to this automation design?":
-    "このオートメーションデザインの未保存の変更を復元しますか？",
   "This automation rotation is not supported.":
     "このオートメーションの回転はサポートされていません。",
+  "Restore the unsaved changes you made to this automation design? Cancel discards them.":
+    "このオートメーションデザインの未保存の変更を復元しますか？キャンセルすると破棄されます。",
+  "Clear search and filter": "検索とフィルターをクリア",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
+    "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
 };

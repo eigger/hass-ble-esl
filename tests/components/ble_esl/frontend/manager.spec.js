@@ -2226,3 +2226,20 @@ test("designer accent colours follow the Home Assistant theme and respect reduce
   });
   expect(motion).toBe("1e-05s");
 });
+
+test("an empty search result offers to clear the search and filter", async ({
+  page,
+}) => {
+  await page.getByLabel("Search ESLs").fill("no such tag");
+  await expect(page.locator(".card")).toHaveCount(0);
+  // A background refresh redraws the empty state; keyboard focus must survive.
+  await page.getByRole("button", { name: "Clear search and filter" }).focus();
+  await page.evaluate(() => window.manager.renderCards());
+  await expect(
+    page.getByRole("button", { name: "Clear search and filter" }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Clear search and filter" }).click();
+  await expect(page.locator(".card")).toHaveCount(2);
+  await expect(page.getByLabel("Search ESLs")).toHaveValue("");
+  await expect(page.getByLabel("Search ESLs")).toBeFocused();
+});
