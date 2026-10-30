@@ -1244,7 +1244,8 @@ async def test_export_reports_what_the_payload_cannot_keep_live(hass, wolink_ent
         ],
     }
     result = await hass.data[KEY].export(wolink_entry, doc)
-    assert [item.split(":")[0] for item in result["frozen"]] == ["gone", "native"]
+    assert [item.split(":")[0] for item in result["frozen"]] == ["native"]
+    assert any(w.startswith("gone: hidden") for w in result["warnings"])
     assert set(result["frozen"]) <= set(result["warnings"])
     assert not result["validation_errors"]
     # A template that stays live is not reported as frozen.

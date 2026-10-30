@@ -37,6 +37,8 @@ from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
     compile_payload,
+    frozen_items,
+    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -48,7 +50,6 @@ from .rendering import render_document, snapshot_layers
 from .specs import (
     MissingTemplateParameter,
     describe,
-    frozen_corners,
     missing_template_parameters,
     resolve_templates,
 )
@@ -251,21 +252,8 @@ class Designer:
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
         # Only the payload is saved: what a payload cannot keep live is as of now.
-        frozen = []
-        for element in document["elements"]:
-            if not element["visible"]:
-                frozen.append(f"{element['id']}: hidden, so it is not in the payload")
-            elif element["type"] == "imagespec" and frozen_corners(element["spec"]):
-                frozen.append(
-                    f"{element['id']}: the polygon's corners are as of now in the payload"
-                )
-            elif element["field_templates"] or (
-                element["type"] != "imagespec" and (element["entity_id"] or element["data_field"])
-            ):
-                frozen.append(
-                    f"{element['id']}: the {element['type']} is as of now in the payload; "
-                    "converting it to elements keeps what can follow its entity"
-                )
+        frozen = frozen_items(document)
+        issues.extend(hidden_items(document))
         issues.extend(frozen)
         automation_payload = live_payload(
             self.hass, document, self.templates, forecasts, preview_variables

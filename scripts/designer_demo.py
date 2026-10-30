@@ -41,6 +41,8 @@ from custom_components.ble_esl.designer.importer import (
 )
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
+    frozen_items,
+    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -463,7 +465,8 @@ async def handle(request):
         forecasts = await demo_forecasts()
         variables = _preview_variable_map(msg.get("preview_variables"))
         payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
-        issues = []
+        frozen = frozen_items(document)
+        issues = [*hidden_items(document), *frozen]
         live = live_payload(HASS, document, TEMPLATES, forecasts)
         result = export_yaml(
             payload,
@@ -486,6 +489,7 @@ async def handle(request):
                 if result["validation_errors"]
                 else (live if live is not None else payload),
                 "writable": tag["writable"],
+                "frozen": frozen,
             }
         )
     if msg["action"] != "preview":
