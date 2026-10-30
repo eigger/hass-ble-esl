@@ -224,7 +224,7 @@ export default {
   "Preview zoom": "Vorschauzoom",
   "Rain / snow": "Regen / Schnee",
   "Rain chance": "Regenwahrscheinlichkeit",
-  "Redo (⌘/Ctrl Shift Z)": "Wiederherstellen (⌘/Ctrl Z-Verschiebung)",
+  "Redo (⌘/Ctrl Shift Z)": "Wiederherstellen (⌘/Ctrl Umschalt Z)",
   "Remove manual link": "Manuellen Link entfernen",
   "Replace display": "Anzeigeinhalt ersetzen",
   "Resolved value": "Aufgelöster Wert",
@@ -617,7 +617,7 @@ export default {
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Änderungen des Eingabezustands lösen Anzeigeaktualisierungen aus. Sie können die Auslöser in Home Assistant anpassen.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
-    "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",
+    "Umschalt / Ctrl / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
     "Klicken Sie auf ein Element, um es auszuwählen · Klicken Sie auf Text, um ihn zu bearbeiten · Ziehen zum Verschieben · Eckgriffe ziehen, um die Größe zu ändern · Ausrichtungshilfen erscheinen in der Nähe von Kanten und Mitten · Pfeiltasten verschieben um 1 px · Umschalt + Pfeiltasten verschieben um 10 px · Eingabetaste bearbeitet den ausgewählten Text · Entf / Rücktaste löscht · Rechtsklick für Aktionen · ⌘/Ctrl + D dupliziert · ⌘/Ctrl + S speichert · ⌘/Ctrl + Z macht rückgängig · ⌘/Ctrl + Umschalt + Z stellt wieder her",
 };

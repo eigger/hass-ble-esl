@@ -105,7 +105,10 @@ export function handleKey(panel, event) {
   if (editing) return;
   if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
     event.preventDefault();
+    // Close the menu first, and take its focus back, so the dialog returns
+    // focus to a live element rather than the removed menu button.
     panel.closeContextMenu();
+    panel.focusElement();
     openShortcutsDialog(panel.hass);
     return;
   }
