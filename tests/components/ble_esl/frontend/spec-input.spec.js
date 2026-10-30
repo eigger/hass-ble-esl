@@ -119,3 +119,19 @@ test("renders quarter-turn rotation as an enum and stores it as a number", () =>
   expect(applySpecInput(input("rotate", "90"), spec, definition)).toBe(true);
   expect(spec.rotate).toBe(90);
 });
+
+test("imagespec field names stay as the YAML keys in every language", () => {
+  const definition = {
+    type: "text",
+    fields: [
+      { name: "text", kind: "string", required: true },
+      { name: "font_size", kind: "number" },
+    ],
+  };
+  const html = specEditorHtml(definition, {}, "BW", ["none"], {
+    language: "ko",
+  });
+  expect(html).toContain(">Text *<");
+  expect(html).toContain(">Font size<");
+  expect(html).not.toContain("텍스트 *");
+});

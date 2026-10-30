@@ -15,10 +15,12 @@ const LONG = new Set(["value", "text", "data", "values", "items", "points"]);
 const getPath = (spec, path) =>
   path.split(".").reduce((node, key) => node?.[key], spec);
 
-// "x_start" reads as "X start"; a required field is starred.
-const label = (field, hass) => {
+// "x_start" reads as "X start"; a required field is starred. The names are the
+// imagespec YAML keys, so they stay as they appear in the payload and docs
+// instead of being translated one by one (which would mix languages).
+const label = (field) => {
   const name = field.name.replaceAll("_", " ");
-  return `${esc(t(hass, name[0].toUpperCase() + name.slice(1)))}${field.required ? " *" : ""}`;
+  return `${esc(name[0].toUpperCase() + name.slice(1))}${field.required ? " *" : ""}`;
 };
 const hint = (field) => (field.doc ? ` title="${esc(field.doc)}"` : "");
 const placeholder = (field) =>
@@ -92,8 +94,8 @@ function fieldsHtml(fields, spec, colors, prefix = "", hass) {
     .map((field) => {
       const path = prefix + field.name;
       if (field.kind === "object" && field.fields?.length)
-        return `<fieldset class="wide spec-group"><legend${hint(field)}>${label(field, hass)}</legend><div class="props">${fieldsHtml(field.fields, spec, colors, `${path}.`, hass)}</div></fieldset>`;
-      return `<label class="${["array", "elements", "object"].includes(field.kind) || LONG.has(field.name) ? "wide" : ""}"${hint(field)}>${label(field, hass)}${control(field, getPath(spec, path), path, colors, hass)}</label>`;
+        return `<fieldset class="wide spec-group"><legend${hint(field)}>${label(field)}</legend><div class="props">${fieldsHtml(field.fields, spec, colors, `${path}.`, hass)}</div></fieldset>`;
+      return `<label class="${["array", "elements", "object"].includes(field.kind) || LONG.has(field.name) ? "wide" : ""}"${hint(field)}>${label(field)}${control(field, getPath(spec, path), path, colors, hass)}</label>`;
     })
     .join("");
 }
