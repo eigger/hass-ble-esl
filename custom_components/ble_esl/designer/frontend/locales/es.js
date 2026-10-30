@@ -614,4 +614,7 @@ export default {
     "Cada tipo de elemento que el ESL puede dibujar, establécelo campo por campo: elige uno y luego pulsa",
   "Selected element actions": "Acciones del elemento seleccionado",
   "Duplicate selected element": "Duplicar el elemento seleccionado",
+  "Image rotation (°)": "Rotación de la imagen (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "Los componentes y las reglas condicionales se conservan y usan los estados actuales de las entidades cada vez que se ejecuta la automatización.",
 };

@@ -56,9 +56,9 @@ export default {
   "Align center": "居中對齊",
   "Align right": "右對齊",
   "Add a BLE ESL device in Settings → Devices & services first.":
-    "首先在設定→設備和服務中加入BLEESL設備。",
+    "首先在設定→設備和服務中加入BLE ESL設備。",
   "Add a BLE ESL device in Settings → Devices & services.":
-    "在設定→設備和服務中新增BLEESL設備。",
+    "在設定→設備和服務中新增BLE ESL設備。",
   "Add component": "新增組件",
   "Add element": "新增元素",
   "Add element…": "加入元素…",
@@ -77,7 +77,7 @@ export default {
   "Apply templates": "套用模板",
   "Arc thickness": "電弧厚度",
   "Automations unavailable · Retry": "自動化不可用·重試",
-  "BLE ESL integration version": "BLEESL整合版本",
+  "BLE ESL integration version": "BLE ESL整合版本",
   "Battery —": "電池 —",
   "Binary condition": "二元條件",
   "Bound entity": "綁定實體",
@@ -576,4 +576,8 @@ export default {
     "所選元素的操作",
   "Duplicate selected element":
     "複製所選元素",
+  "Image rotation (°)":
+    "圖像旋轉 (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "元件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
 };

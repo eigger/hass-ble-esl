@@ -615,4 +615,7 @@ export default {
     "Jeder Elementtyp, den die ESL zeichnen kann, Feld für Feld festlegen: Wählen Sie einen aus und drücken Sie dann",
   "Selected element actions": "Aktionen für das ausgewählte Element",
   "Duplicate selected element": "Ausgewähltes Element duplizieren",
+  "Image rotation (°)": "Bilddrehung (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "Komponenten und bedingte Regeln bleiben erhalten und verwenden bei jeder Ausführung der Automatisierung die aktuellen Entitätszustände.",
 };

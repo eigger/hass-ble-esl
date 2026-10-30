@@ -596,4 +596,7 @@ export default {
     "ESL이 표시할 수 있는 요소를 필드별로 설정합니다. 유형을 선택한 후 누르세요:",
   "Selected element actions": "선택한 요소 작업",
   "Duplicate selected element": "선택한 요소 복제",
+  "Image rotation (°)": "이미지 회전 (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "구성요소와 조건부 규칙은 그대로 유지되며, 자동화가 실행될 때마다 현재 엔티티 상태를 사용합니다.",
 };

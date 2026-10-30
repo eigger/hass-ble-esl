@@ -183,7 +183,7 @@ export default {
   "Line spacing": "Espacement des lignes",
   "Link automation": "Automatisation des liens",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
-    "Les liens associent les automatismes existants à ce ESL. Ils ne modifient pas les actions d'automatisation et n'appliquent pas cette conception.",
+    "Les liens associent les automatismes existants à cet ESL. Ils ne modifient pas les actions d'automatisation et n'appliquent pas cette conception.",
   "Live Home Assistant data on e-paper":
     "Données Home Assistant en direct sur papier électronique",
   "Live preview": "Aperçu en direct",
@@ -294,7 +294,7 @@ export default {
     "Coller sous `payload:` d'une action ble_esl.write.",
   "A complete action for a script or automation.":
     "Une action complète pour un script ou une automatisation.",
-  " · References this ESL": "· Fait référence à ce ESL",
+  " · References this ESL": "· Fait référence à cet ESL",
   " · Linked manually": "· Lié manuellement",
   Active: "Active",
   Add: "Ajouter",
@@ -614,4 +614,7 @@ export default {
     "Chaque type d'élément que l'ESL peut dessiner, défini champ par champ : choisissez-en un, puis appuyez sur",
   "Selected element actions": "Actions de l'élément sélectionné",
   "Duplicate selected element": "Dupliquer l'élément sélectionné",
+  "Image rotation (°)": "Rotation de l'image (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "Les composants et les règles conditionnelles sont conservés et utilisent les états actuels des entités à chaque exécution de l'automatisation.",
 };

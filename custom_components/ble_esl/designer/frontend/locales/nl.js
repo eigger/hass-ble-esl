@@ -611,4 +611,7 @@ export default {
     "Elk elementtype dat de ESL kan tekenen, stel veld voor veld in: kies er één en druk vervolgens op",
   "Selected element actions": "Acties voor het geselecteerde element",
   "Duplicate selected element": "Geselecteerd element dupliceren",
+  "Image rotation (°)": "Beeldrotatie (°)",
+  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
+    "Componenten en voorwaardelijke regels blijven behouden en gebruiken bij elke uitvoering van de automatisering de huidige entiteitsstatussen.",
 };
