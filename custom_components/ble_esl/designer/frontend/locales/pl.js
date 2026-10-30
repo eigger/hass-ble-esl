@@ -607,4 +607,6 @@ export default {
     "Shift / Ctrl / ⌘ + kliknięcie zaznacza kilka elementów · Przeciągnięcie po pustym miejscu płótna zaznacza obszar",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Przechowywane jako szkic na czas tej sesji przeglądarki, dopóki nie utworzysz automatyzacji lub nie zapiszesz w niej projektu.",
+  "Selected element actions": "Akcje dla zaznaczonego elementu",
+  "Duplicate selected element": "Duplikuj zaznaczony element",
 };

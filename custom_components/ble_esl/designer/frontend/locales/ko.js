@@ -596,4 +596,6 @@ export default {
     "Shift / Ctrl / ⌘ + 클릭으로 여러 요소 선택 · 캔버스의 빈 곳을 드래그하면 영역 선택",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "자동화를 만들거나 자동화에 저장하기 전까지 이 브라우저 세션 동안 초안으로 보관됩니다.",
+  "Selected element actions": "선택한 요소 작업",
+  "Duplicate selected element": "선택한 요소 복제",
 };

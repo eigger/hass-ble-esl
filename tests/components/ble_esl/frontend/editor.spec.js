@@ -2347,7 +2347,10 @@ test("selected elements get an action bar that matches the right-click menu", as
 }) => {
   await expect(page.locator(".element-actions")).toHaveCount(0);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  const bar = page.getByRole("toolbar", { name: "Element actions" });
+  const bar = page.getByRole("toolbar", {
+    name: "Element actions",
+    exact: true,
+  });
   await expect(bar).toBeVisible();
   const count = () =>
     page.evaluate(() => window.panel.document.elements.length);
@@ -2413,4 +2416,68 @@ test("on a phone the canvas comes first and nothing scrolls sideways", async ({
   const box = await page.locator("#library").boundingBox();
   const canvas = await page.locator(".preview-card").boundingBox();
   expect(box.x).toBeLessThan(canvas.x);
+});
+
+test("selection actions float clear of the handles, stay reachable and duplicate or delete", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  const measure = () =>
+    page.evaluate(() => {
+      const root = window.panel.shadowRoot;
+      const rect = (node) => {
+        const r = node.getBoundingClientRect();
+        return { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      };
+      return {
+        bar: rect(root.querySelector(".selection-actions")),
+        handles: [...root.querySelectorAll(".handle")].map(rect),
+        box: rect(root.querySelector(".selection-box")),
+        wrap: rect(root.querySelector(".canvas-wrap")),
+      };
+    });
+  const overlaps = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  await page.evaluate(() => {
+    window.panel.element.y = 60;
+    window.panel.edited();
+  });
+  let boxes = await measure();
+  for (const handle of boxes.handles)
+    expect(overlaps(boxes.bar, handle)).toBe(false);
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.box.t);
+  // Flush with the top edge there is no room above: the bar moves below.
+  await page.evaluate(() => {
+    window.panel.element.y = 0;
+    window.panel.edited();
+  });
+  boxes = await measure();
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.wrap.t);
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.box.b);
+  for (const handle of boxes.handles)
+    expect(overlaps(boxes.bar, handle)).toBe(false);
+  // Filling the whole height leaves no room above or below: it goes inside.
+  await page.evaluate(() => {
+    window.panel.element.height = window.panel.tag.height;
+    window.panel.edited();
+  });
+  boxes = await measure();
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.box.t);
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.box.b);
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.wrap.b);
+  // Only the buttons catch the pointer, not the gap between them.
+  expect(
+    await page.evaluate(
+      () =>
+        getComputedStyle(
+          window.panel.shadowRoot.querySelector(".selection-actions"),
+        ).pointerEvents,
+    ),
+  ).toBe("none");
+  const bar = page.getByRole("toolbar", { name: "Selected element actions" });
+  await bar.getByRole("button", { name: "Duplicate selected element" }).click();
+  await expect(page.locator(".el")).toHaveCount(2);
+  await bar.getByRole("button", { name: "Delete selected element" }).click();
+  await expect(page.locator(".el")).toHaveCount(1);
 });

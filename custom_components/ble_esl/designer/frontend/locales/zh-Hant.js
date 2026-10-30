@@ -577,4 +577,8 @@ export default {
     "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "在建立自動化或儲存到自動化之前，會在此瀏覽器工作階段期間以草稿形式保留。",
+  "Selected element actions":
+    "所選元素的操作",
+  "Duplicate selected element":
+    "複製所選元素",
 };

@@ -610,4 +610,6 @@ export default {
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
+  "Selected element actions": "選択した要素の操作",
+  "Duplicate selected element": "選択した要素を複製",
 };

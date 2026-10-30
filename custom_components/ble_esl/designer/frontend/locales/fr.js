@@ -614,4 +614,6 @@ export default {
     "Maj / Ctrl / ⌘ + clic sélectionne plusieurs éléments · Glisser sur une zone vide du canevas sélectionne une zone",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Conservé comme brouillon pour cette session du navigateur jusqu'à ce que vous créiez une automatisation ou enregistriez dans une.",
+  "Selected element actions": "Actions de l'élément sélectionné",
+  "Duplicate selected element": "Dupliquer l'élément sélectionné",
 };
