@@ -574,8 +574,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "이 자동화 디자인의 저장하지 않은 변경 사항을 복원할까요? 취소하면 변경 사항이 폐기됩니다.",
   "Clear search and filter": "검색 및 필터 지우기",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + 클릭으로 여러 요소 선택 · 캔버스의 빈 곳을 드래그하면 영역 선택",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "자동화를 만들거나 자동화에 저장하기 전까지 이 브라우저 세션 동안 초안으로 보관됩니다.",
   "Send to ESL": "ESL에 전송",
@@ -601,4 +599,6 @@ export default {
     "컴포넌트와 조건부 규칙은 그대로 유지되며, 자동화가 실행될 때마다 현재 엔티티 상태를 사용합니다.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "입력 상태가 바뀌면 화면이 업데이트됩니다. 실행 조건은 Home Assistant에서 조정할 수 있습니다.",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + 클릭으로 여러 요소 선택 · 캔버스의 빈 곳을 드래그하면 영역 선택 · ? 키로 모든 단축키 표시",
 };

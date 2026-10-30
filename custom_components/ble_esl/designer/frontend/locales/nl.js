@@ -588,8 +588,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp herstellen? Annuleren gooit ze weg.",
   "Clear search and filter": "Zoekopdracht en filter wissen",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
   "Send to ESL": "Naar ESL verzenden",
@@ -616,4 +614,6 @@ export default {
     "Componenten en voorwaardelijke regels blijven behouden en gebruiken bij elke uitvoering van de automatisering de huidige entiteitsstatussen.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Statuswijzigingen van de invoer starten weergave-updates. U kunt de triggers aanpassen in Home Assistant.",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied · ? toont alle sneltoetsen",
 };

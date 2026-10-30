@@ -555,8 +555,6 @@ export default {
     "要還原此自動化設計中未儲存的變更嗎？取消會捨棄這些變更。",
   "Clear search and filter":
     "清除搜尋與篩選",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "在建立自動化或儲存到自動化之前，會在此瀏覽器工作階段期間以草稿形式保留。",
   "Send to ESL": "發送至 ESL",
@@ -581,4 +579,6 @@ export default {
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域 · 按 ? 查看所有快速鍵",
 };

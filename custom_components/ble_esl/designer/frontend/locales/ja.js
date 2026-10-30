@@ -587,8 +587,6 @@ export default {
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "このオートメーションデザインの未保存の変更を復元しますか？キャンセルすると破棄されます。",
   "Clear search and filter": "検索とフィルターをクリア",
-  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
-    "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
   "Send to ESL": "ESLに送信",
@@ -615,4 +613,6 @@ export default {
     "コンポーネントと条件付きルールは保持され、オートメーションが実行されるたびに現在のエンティティの状態が使用されます。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "入力の状態が変化すると表示が更新されます。トリガーは Home Assistant で調整できます。",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
+    "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択 · ? ですべてのショートカットを表示",
 };

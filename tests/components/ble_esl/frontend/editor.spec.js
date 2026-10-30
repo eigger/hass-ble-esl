@@ -2481,3 +2481,30 @@ test("selection actions float clear of the handles, stay reachable and duplicate
   await bar.getByRole("button", { name: "Delete selected element" }).click();
   await expect(page.locator(".el")).toHaveCount(1);
 });
+
+test("? opens a list of every shortcut, Escape closes it, typing ? in a field does not", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.getByRole("group", { name: "Display canvas" }).focus();
+  await page.keyboard.press("?");
+  const dialog = page.getByRole("dialog", { name: "Keyboard & mouse tips" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("listitem")).toContainText([
+    "Click an element to select it",
+    "⌘/Ctrl + Shift + Z redoes",
+    "Shift / Ctrl / ⌘ + click selects several elements",
+    "? shows all shortcuts",
+  ]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  // Back where it was opened from.
+  await expect(
+    page.getByRole("group", { name: "Display canvas" }),
+  ).toBeFocused();
+  // A "?" typed into a text field is just text.
+  await page.locator('[data-property="text"]').fill("");
+  await page.locator('[data-property="text"]').press("?");
+  await expect(dialog).toHaveCount(0);
+});

@@ -1,5 +1,6 @@
 import { clampBox, clone, onLabel } from "../../model.js";
 import { t } from "../../i18n.js";
+import { openShortcutsDialog } from "../shortcuts-dialog.js";
 
 export function beginTextEdit(panel) {
   if (panel.element?.type !== "text") return;
@@ -98,6 +99,11 @@ export function handleKey(panel, event) {
     return;
   }
   if (editing) return;
+  if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    event.preventDefault();
+    openShortcutsDialog(panel.hass);
+    return;
+  }
   const interactiveControl = event.target.closest(
       "button, a, input, select, textarea, [contenteditable=true]",
     ),
