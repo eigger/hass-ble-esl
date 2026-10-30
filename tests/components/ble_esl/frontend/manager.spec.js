@@ -2216,7 +2216,7 @@ test("designer accent colours follow the Home Assistant theme and respect reduce
     ),
   );
   expect(await color()).toBe("rgb(200, 10, 20)");
-  expect(fallback).not.toBe("rgb(200, 10, 20)");
+  expect(fallback).toBe("rgb(22, 109, 117)");
   await page.emulateMedia({ reducedMotion: "reduce" });
   const motion = await page.evaluate(() => {
     const host = window.manager.editor;

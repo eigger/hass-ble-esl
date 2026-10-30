@@ -76,7 +76,7 @@ export function beginMarquee(panel, event) {
   Object.assign(box.style, {
     position: "absolute",
     border: "1px solid var(--primary-color,#16838c)",
-    background: "#16838c22",
+    background: "color-mix(in srgb,var(--primary-color,#16838c) 13%,transparent)",
     pointerEvents: "none",
     zIndex: 10000,
   });
