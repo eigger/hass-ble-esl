@@ -1,6 +1,21 @@
 import { clampBox, clone, onLabel } from "../../model.js";
 import { t } from "../../i18n.js";
 import { openShortcutsDialog } from "../shortcuts-dialog.js";
+import { clampGroupMove } from "./geometry.js";
+
+// Absolute frames of the selected elements, from what was last rendered.
+const groupBoxes = (panel, elements) =>
+  elements
+    .filter((element) => element.visible !== false)
+    .map((element) => {
+      const [l, tp, r, b] = panel.visibleBounds(element) || [
+        0,
+        0,
+        element.width,
+        element.height,
+      ];
+      return [element.x + l, element.y + tp, element.x + r, element.y + b];
+    });
 
 export function beginTextEdit(panel) {
   if (panel.element?.type !== "text") return;
@@ -166,12 +181,18 @@ export function handleKey(panel, event) {
   if (inCanvas && panel.element && directions[event.key]) {
     event.preventDefault();
     if (panel.selectedElements.length > 1) {
-      panel.checkpoint();
       const step = event.shiftKey ? 10 : 1;
-      const [dx, dy] = directions[event.key];
+      const [dx, dy] = clampGroupMove(
+        groupBoxes(panel, panel.selectedElements),
+        panel.tag,
+        directions[event.key][0] * step,
+        directions[event.key][1] * step,
+      );
+      if (!dx && !dy) return;
+      panel.pushNudgeUndo(clone(panel.document));
       for (const element of panel.selectedElements) {
-        element.x += dx * step;
-        element.y += dy * step;
+        element.x += dx;
+        element.y += dy;
       }
       panel.edited();
       panel.focusElement();
@@ -186,7 +207,7 @@ export function handleKey(panel, event) {
     panel.element.y += y * step;
     panel.clampMoved(panel.element, panel.moveBound(before, visible), visible);
     if (panel.element.x === before.x && panel.element.y === before.y) return;
-    panel.pushUndo(snapshot);
+    panel.pushNudgeUndo(snapshot);
     panel.edited();
     panel.focusElement();
   }
@@ -232,7 +253,11 @@ export function handlePointer(panel, event) {
     // An element that hangs off the label (an imported frame) is not pulled
     // back by the first move.
     bound = onLabel(start, panel.tag),
-    startVisible = panel.visibleBounds(start);
+    startVisible = panel.visibleBounds(start),
+    startBoxes = groupBoxes(
+      panel,
+      group.map((item) => item.start),
+    );
   let moved = false,
     pendingMove = null,
     gestureFrame = 0;
@@ -277,9 +302,10 @@ export function handlePointer(panel, event) {
       );
     } else {
       if (group.length > 1) {
+        const [gx, gy] = clampGroupMove(startBoxes, panel.tag, dx, dy);
         for (const item of group) {
-          item.element.x = item.start.x + dx;
-          item.element.y = item.start.y + dy;
+          item.element.x = item.start.x + gx;
+          item.element.y = item.start.y + gy;
         }
         panel.snapGuides = [];
         panel.drawStage();
