@@ -27,7 +27,7 @@ export default {
   "element types": "元素类型",
   "default (shrink ellipsis)": "默认（缩小省略号）",
   "default (right)": "默认(右)",
-  "default (floyd)": "默认(弗洛伊德)",
+  "default (floyd)": "默认(floyd)",
   "off (default)": "关闭（默认）",
   "shrink ellipsis": "收缩省略号",
   "rounded rectangle": "圆角矩形",
@@ -42,17 +42,19 @@ export default {
   "Delete {label}": "删除{label}",
   "Resize {corner}": "调整大小{corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "转换为{count}元素，完全按照之前的方式绘制{skipped}",
+    "已转换为 {count} 个元素，绘制效果与之前完全一致{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "转换为{count}元素； {pixels} 像素与之前不同{skipped}",
+    "已转换为 {count} 个元素；有 {pixels} 个像素与之前不同{skipped}",
   "; {count} not converted": "; {count} 未转换",
   "{count} placed, {skipped} skipped.": "放置{count}，跳过{skipped}。",
   "Font size": "字体大小",
   "Min value": "最小值",
   "Max value": "最大值",
-  "Image fit": "图像拟合",
+  "Image fit":
+    "图像适应方式",
   "Show label": "显示标签",
-  "Show unit": "示范单位",
+  "Show unit":
+    "显示单位",
   "Align left": "左对齐",
   "Align center": "居中对齐",
   "Align right": "右对齐",
@@ -76,7 +78,8 @@ export default {
   "Another HA entity": "另一个HA实体",
   "Another state": "另一种状态",
   "Apply templates": "应用模板",
-  "Arc thickness": "电弧厚度",
+  "Arc thickness":
+    "圆弧粗细",
   "Automations unavailable · Retry": "自动化不可用·重试",
   "BLE ESL integration version": "BLE ESL集成版本",
   "Battery —": "电池 —",
@@ -96,7 +99,7 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "单击块以将其移动、调整其大小或将其绑定到实体。",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "单击元素以选择它 · 单击文本进行编辑 · 拖动以移动 · 拖动角控柄以调整大小 · 对齐参考线出现在边缘和中心附近 · 箭头键移动 1 像素 · Shift + 箭头移动 10 像素 · 输入编辑所选文本 · 删除/退格删除 · 右键单击执行操作 · ⌘/Ctrl + D 重复项 · ⌘/Ctrl + S 保存 · ⌘/Ctrl + Z 撤消 · ⌘/Ctrl + Shift + Z 重做",
+    "单击元素以选择 · 单击文本进行编辑 · 拖动以移动 · 拖动角控柄以调整大小 · 对齐参考线出现在边缘和中心附近 · 方向键移动 1 像素 · Shift + 方向键移动 10 像素 · Enter 编辑所选文本 · Delete / Backspace 删除 · 右键单击打开操作 · ⌘/Ctrl + D 创建副本 · ⌘/Ctrl + S 保存 · ⌘/Ctrl + Z 撤消 · ⌘/Ctrl + Shift + Z 重做",
   "Close automations": "关闭自动化",
   "Close component editor": "关闭组件编辑器",
   "Close dynamic fields": "关闭动态字段",
@@ -126,7 +129,8 @@ export default {
   "Designer mode": "设计者模式",
   "Discovery only: preview is available; sending is not supported yet.":
     "仅发现：预览可用；尚不支持发送。",
-  "Dismiss message": "驳回消息",
+  "Dismiss message":
+    "关闭消息",
   "Display canvas": "显示画布",
   "Dynamic field pixel preview": "动态字段像素预览",
   "Dynamic fields": "动态字段",
@@ -139,14 +143,14 @@ export default {
   "Element actions": "元素动作",
   "Element properties": "元素属性",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "元素模板保持如所写的：Home Assistant在每次自动化运行时呈现它们。传感器组件和字段模板现已完成。",
+    "元素模板保持原样：Home Assistant 会在每次运行自动化时渲染它们。传感器组件和字段模板使用当前值。",
   "Entity name": "实体名称",
   "Existing automation": "现有的自动化",
   "Export JSON": "导出JSON",
   "Exporting payload…": "正在导出payload……",
   "Fallback icon (blank = HA)": "后备图标（空白 = HA）",
   "Field template": "字段模板",
-  "Filter ESLs": "过滤器ESL",
+  "Filter ESLs": "筛选 ESL",
   "Finish the current editor operation before switching ESLs.":
     "在切换ESL之前完成当前编辑器操作。",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
@@ -177,7 +181,7 @@ export default {
   "Link automation":
     "关联自动化",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
-    "将现有自动化与该ESL相关联的链接。他们不会更改自动化操作或应用此设计。",
+    "关联会将现有自动化与此 ESL 绑定。它们不会更改自动化动作，也不会应用此设计。",
   "Live Home Assistant data on e-paper": "电子纸上的实时Home Assistant数据",
   "Live preview": "实时预览",
   "Loading ESLs…": "正在加载ESL…",
@@ -186,7 +190,8 @@ export default {
   "Loading image…": "正在加载图像…",
   "Loading…": "加载中……",
   "Low temperature": "低温",
-  "Max lines": "最大线数",
+  "Max lines":
+    "最大行数",
   "Min font size": "最小字体大小",
   "Move selected element": "移动所选元素",
   "New icon state": "新图标状态",
@@ -207,16 +212,20 @@ export default {
   "Paste a URL, or upload below": "粘贴 URL，或在下面上传",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
     "粘贴payload（imagespec元素的列表）或整个ble_esl.write动作。由模板或流布局放置的元素无法放置在设计器中并列出。",
-  "Payload YAML": "payloadYAML",
-  "Payload exported": "导出的payload",
+  "Payload YAML":
+    "Payload YAML",
+  "Payload exported":
+    "已导出 payload",
   "Position & size (px)": "位置和尺寸（像素）",
   "Press Ctrl+C to copy": "按Ctrl+C复制",
   "Preview updating": "预览更新",
   "Preview updating…": "预览更新……",
   "Preview zoom": "预览缩放",
   "Rain / snow": "雨/雪",
-  "Rain chance": "下雨的机会",
-  "Redo (⌘/Ctrl Shift Z)": "重做（⌘/Ctrl 移动 Z）",
+  "Rain chance":
+    "降雨概率",
+  "Redo (⌘/Ctrl Shift Z)":
+    "重做 (⌘/Ctrl Shift Z)",
   "Remove manual link": "删除手动关联",
   "Replace display": "替换显示内容",
   "Resolved value": "解析值",
@@ -240,7 +249,8 @@ export default {
   "Sensor tile (value, unit and name)": "传感器磁贴（值、单位和名称）",
   "Show for state": "显示状态",
   "Show percentage": "显示百分比",
-  "Show value": "显示价值",
+  "Show value":
+    "显示数值",
   "State icon": "状态图标",
   "State value": "状态值",
   "State → icon": "状态 → 图标",
@@ -261,7 +271,7 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "将其转换成普通的imagespec元素以逐个字段地编辑；传感器的值成为模板",
   "Undo (⌘/Ctrl Z)": "撤消 (⌘/Ctrl Z)",
-  "Unsaved changes": "未保存的改变",
+  "Unsaved changes": "未保存的更改",
   "Upload image": "上传图像",
   "Use static value": "使用静态值",
   "Vertical align": "垂直对齐",
@@ -299,7 +309,8 @@ export default {
   Close: "关闭",
   Colour: "颜色",
   Components: "组件",
-  Condition: "状况",
+  "Condition":
+    "条件",
   Configure: "配置",
   Content: "内容",
   Copied: "已复制",
@@ -311,10 +322,12 @@ export default {
   Direction: "方向",
   Display: "显示",
   Dither: "抖色",
-  Duplicate: "重复",
+  "Duplicate":
+    "创建副本",
   Entities: "实体",
   Errors: "错误",
-  Filled: "已满",
+  "Filled":
+    "填充",
   Fit: "适应窗口",
   Height: "高度",
   Hide: "隐藏",
@@ -327,7 +340,8 @@ export default {
   Minimum: "最小值",
   Name: "名称",
   Now: "现在",
-  Padding: "衬垫",
+  "Padding":
+    "内边距",
   Ready: "准备好了",
   Redo: "重做",
   Refresh: "刷新",
@@ -337,7 +351,8 @@ export default {
   Shape: "形状",
   Show: "显示",
   State: "状态",
-  Style: "风格",
+  "Style":
+    "样式",
   Temperature: "温度",
   "Tile style": "磁贴样式",
   Text: "文本",
@@ -349,7 +364,8 @@ export default {
   Visible: "可见",
   When: "时间",
   Width: "宽度",
-  Payload: "payload",
+  "Payload":
+    "Payload",
   Gauge: "仪表",
   Unit: "单位",
   designer: "设计器",
@@ -395,11 +411,11 @@ export default {
   "Automation configuration could not be loaded.": "无法加载自动化配置。",
   "No ble_esl.write action targeting this ESL was found.":
     "未找到针对此 ESL 的 ble_esl.write 操作。",
-  "Choose the write action to import:": "选择要导入的写入操作：",
+  "Choose the write action to import:": "选择要导入的写入动作：",
   "The matching write action changed. Reopen the automation and try again.":
-    "匹配的写入操作已更改。请重新打开自动化后再试。",
+    "匹配的写入动作已更改。请重新打开自动化后再试。",
   "This write action has no editable payload list.":
-    "此写入操作没有可编辑的 payload 列表。",
+    "此写入动作没有可编辑的 payload 列表。",
   "This automation background is not supported by the selected ESL.":
     "所选 ESL 不支持此自动化的背景。",
   "This payload cannot be represented exactly in the designer. Nothing was imported.":
@@ -413,10 +429,10 @@ export default {
   "This automation changed since it was imported. Reopen it before saving.":
     "此自动化在导入后已更改。保存前请重新打开。",
   "The selected write action changed since import. Reopen the automation before saving.":
-    "所选写入操作在导入后已更改。保存前请重新打开自动化。",
+    "所选写入动作在导入后已更改。保存前请重新打开自动化。",
   "The latest automation configuration is malformed.":
     "最新的自动化配置格式不正确。",
-  "The selected write action is no longer available.": "所选写入操作已不可用。",
+  "The selected write action is no longer available.": "所选写入动作已不可用。",
   "Automation saved.": "自动化已保存。",
   "Automation configuration identity is missing.": "缺少自动化配置标识。",
   "Automation configuration could not be loaded safely.":
@@ -548,7 +564,7 @@ export default {
   "Save to existing automation…": "保存到现有自动化…",
   "Save to another automation…": "保存到其他自动化…",
   "Choose the automation to save to:": "选择要保存到的自动化：",
-  "Choose the write action to replace:": "选择要替换的写入操作：",
+  "Choose the write action to replace:": "选择要替换的写入动作：",
   "No automation with a ble_esl.write action for this ESL was found.":
     "未找到包含此 ESL 的 ble_esl.write 操作的自动化。",
   "Saved to {name}.": "已保存到 {name}。",

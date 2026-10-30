@@ -36,9 +36,9 @@ export default {
   "default ({value})": "predeterminado ({value})",
   " (required)": "(obligatorio)",
   "Text fields accept Jinja templates, e.g.":
-    "Los campos de texto aceptan plantillas Jinja, p.",
+    "Los campos de texto aceptan plantillas Jinja, p. ej.",
   "Not valid JSON: check the brackets and quotes":
-    "No válido JSON: consultar paréntesis y comillas",
+    "JSON no válido: revisa los corchetes y las comillas",
   "Enter a number, or a {{ template }}":
     "Introduce un número o una {{ template }}",
   "Toggle {label} panel": "Alternar panel {label}",
@@ -47,9 +47,9 @@ export default {
   "Delete {label}": "Eliminar {label}",
   "Resize {corner}": "Cambiar tamaño {corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Convertido a elementos {count}, dibujado exactamente como antes{skipped}",
+    "Convertido en {count} elementos, dibujados exactamente como antes{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Convertido a elementos {count}; {pixels} los píxeles difieren de antes{skipped}",
+    "Convertido en {count} elementos; {pixels} píxeles difieren de antes{skipped}",
   "; {count} not converted": "; {count} no convertido",
   "{count} placed, {skipped} skipped.": "{count} colocado, {skipped} omitido.",
   "Font size": "Tamaño de fuente",
@@ -103,7 +103,7 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "Haga clic en un bloque para moverlo, cambiar su tamaño o vincularlo a una entidad.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "Haga clic en un elemento para seleccionarlo · Haga clic en el texto para editarlo · Arrastre para mover · Arrastre los controles de las esquinas para cambiar el tamaño · Aparecen guías de alineación cerca de los bordes y centros · Las teclas de flecha se mueven 1 px · Mayús + flechas se mueven 10 px · Ingresa las ediciones del texto seleccionado · Eliminar / Retroceso elimina · Haga clic derecho para realizar acciones · ⌘/Ctrl + D duplicados · ⌘/Ctrl + S guardados · ⌘/Ctrl + Z deshace · ⌘/Ctrl + Shift + Z rehace",
+    "Haz clic en un elemento para seleccionarlo · Haz clic en el texto para editarlo · Arrastra para mover · Arrastra las esquinas para cambiar el tamaño · Las guías de alineación aparecen cerca de los bordes y los centros · Las flechas mueven 1 px · Mayús + flechas mueven 10 px · Intro edita el texto seleccionado · Supr / Retroceso elimina · Clic derecho para ver acciones · ⌘/Ctrl + D duplica · ⌘/Ctrl + S guarda · ⌘/Ctrl + Z deshace · ⌘/Ctrl + Mayús + Z rehace",
   "Close automations": "Cerrar automatizaciones",
   "Close component editor": "Cerrar editor de componentes",
   "Close dynamic fields": "Cerrar campos dinámicos",
@@ -146,7 +146,7 @@ export default {
   "Element actions": "Acciones de elementos",
   "Element properties": "Propiedades del elemento",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "Las plantillas de elementos permanecen tal como están escritas: Home Assistant las representa cada vez que se ejecuta la automatización. Los componentes del sensor y las plantillas de campo están disponibles a partir de ahora.",
+    "Las plantillas de elementos se mantienen tal como están escritas: Home Assistant las renderiza cada vez que se ejecuta la automatización. Los componentes de sensor y las plantillas de campo reflejan los valores actuales.",
   "Entity name": "Nombre de la entidad",
   "Existing automation": "Automatización existente",
   "Export JSON": "Exportar JSON",
@@ -224,7 +224,7 @@ export default {
   "Preview zoom": "Zoom de vista previa",
   "Rain / snow": "Lluvia / nieve",
   "Rain chance": "Probabilidad de lluvia",
-  "Redo (⌘/Ctrl Shift Z)": "Rehacer (⌘/Ctrl Cambio Z)",
+  "Redo (⌘/Ctrl Shift Z)": "Rehacer (⌘/Ctrl Mayús Z)",
   "Remove manual link": "Eliminar enlace manual",
   "Replace display": "Reemplazar contenido de pantalla",
   "Resolved value": "Valor resuelto",
@@ -236,10 +236,10 @@ export default {
     "Guardar (cambios no guardados) (⌘/Ctrl S)",
   "Search ESLs": "Buscar ESLs",
   "Search aliases or devices": "Buscar alias o dispositivos",
-  "Search automations": "Automatizaciones de búsqueda",
+  "Search automations": "Buscar automatizaciones",
   "Search by name": "Buscar por nombre",
-  "Search icons": "Iconos de búsqueda",
-  "Search sensors": "Sensores de búsqueda",
+  "Search icons": "Buscar iconos",
+  "Search sensors": "Buscar sensores",
   "Select an element": "Seleccione un elemento",
   "Send back": "Enviar al fondo",
   "Send backward": "Enviar hacia atrás",
@@ -306,7 +306,7 @@ export default {
   Attribute: "Atributo",
   Automatic: "Automático",
   Automations: "Automatizaciones",
-  Background: "Antecedentes",
+  Background: "Fondo",
   Cancel: "Cancelar",
   Close: "Cerrar",
   Colour: "Color",
@@ -339,7 +339,7 @@ export default {
   Minimum: "Mínimo",
   Name: "Nombre",
   Now: "Ahora",
-  Padding: "Relleno",
+  Padding: "Margen interior",
   Ready: "Listo",
   Redo: "Rehacer",
   Refresh: "Actualizar",

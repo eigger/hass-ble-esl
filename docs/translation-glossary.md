@@ -31,9 +31,21 @@ one word per concept:
 | zh-Hans | 自动化 | 实体 | 组件 | 模板 | 图像 | 预览 | 取消关联 |
 | zh-Hant | 自動化 | 實體 | 組件 | 範本 | 影像 | 預覽 | 取消關聯 |
 
-Words that look like a variant but are not: a JSON *object* (de Objekt, pl obiekt)
-is not an entity; `{{ template }}` / `template_id` / "Jinja templates" keep the
-technical word; *remove*/*delete* are different actions from *unlink*.
+**payload** stays the Latin word *payload* in every Latin-script and Chinese
+language (it is the YAML key `payload:`); Japanese and Korean use the
+transliteration (ペイロード, 페이로드).
+
+**Link / unlink** are verbs on the same root in each language: de verknüpfen /
+Verknüpfung aufheben, es vincular / desvincular, fr lier / dissocier, it
+collega / scollega, ja リンク / リンクを解除, ko 연결 / 연결 해제, nl koppelen /
+ontkoppelen, pl powiąż / odłącz, pt-BR vincular / desvincular, ru привязать /
+отвязать, zh 关联 / 取消关联 (zh-Hant 關聯 / 取消關聯). *Link automation* is a verb
+phrase, never a noun ("Automação de links").
+
+Words that look like a variant but are not: a JSON *object* (de Objekt, pl obiekt,
+ru объект) is not an entity; the tokens `{{ template }}` and `template_id` stay
+as they are (the word *Jinja templates* itself is translated); *remove*/*delete*
+are different actions from *unlink*.
 
 The server's fixed error messages are translated by exact English text (see
 `serverMessage` in `i18n.js`); `tests/components/ble_esl/test_designer_messages.py`

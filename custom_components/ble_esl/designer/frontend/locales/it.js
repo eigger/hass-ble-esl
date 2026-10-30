@@ -39,7 +39,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "I campi di testo accettano modelli Jinja, ad es.",
   "Not valid JSON: check the brackets and quotes":
-    "Non valido JSON: controllare parentesi e virgolette",
+    "JSON non valido: controlla le parentesi e le virgolette",
   "Enter a number, or a {{ template }}":
     "Inserisci un numero o un {{ template }}",
   "Toggle {label} panel": "Attiva/disattiva il pannello {label}",
@@ -135,7 +135,7 @@ export default {
   "Discovery only: preview is available; sending is not supported yet.":
     "Solo Discovery: l'anteprima è disponibile; l'invio non è ancora supportato.",
   "Dismiss message": "Ignora messaggio",
-  "Display canvas": "Visualizza tela",
+  "Display canvas": "Area di visualizzazione",
   "Dynamic field pixel preview": "Anteprima pixel campo dinamico",
   "Dynamic fields": "Campi dinamici",
   "ESL Designer": "Designer ESL",
@@ -147,7 +147,7 @@ export default {
   "Element actions": "Azioni elemento",
   "Element properties": "Proprietà elemento",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "I modelli di elementi rimangono come scritti: Home Assistant li esegue il rendering ogni volta che viene eseguita l'automazione. I componenti del sensore e i modelli di campo sono disponibili adesso.",
+    "I modelli degli elementi restano come scritti: Home Assistant li elabora a ogni esecuzione dell'automazione. I componenti sensore e i modelli dei campi riflettono i valori attuali.",
   "Entity name": "Nome dell'entità",
   "Existing automation": "Automazione esistente",
   "Export JSON": "Esporta JSON",
@@ -239,8 +239,8 @@ export default {
   "Search aliases or devices": "Cerca alias o dispositivi",
   "Search automations": "Cerca automazioni",
   "Search by name": "Cerca per nome",
-  "Search icons": "Icone di ricerca",
-  "Search sensors": "Ricerca sensori",
+  "Search icons": "Cerca icone",
+  "Search sensors": "Cerca sensori",
   "Select an element": "Seleziona un elemento",
   "Send back": "Porta in fondo",
   "Send backward": "Porta indietro",
@@ -340,7 +340,7 @@ export default {
   Minimum: "Minimo",
   Name: "Nome",
   Now: "Adesso",
-  Padding: "Imbottitura",
+  Padding: "Spaziatura interna",
   Ready: "Pronto",
   Redo: "Ripeti",
   Refresh: "Aggiorna",
@@ -404,7 +404,7 @@ export default {
     "Modifica design dell'automazione selezionata",
   "Save automation": "Salva automazione",
   "Switch to Display mode before saving this automation.":
-    "Passa alla modalità Visualizza prima di salvare questa automazione.",
+    "Passa alla modalità Display prima di salvare questa automazione.",
   "Automation configuration ID is missing.":
     "ID della configurazione dell'automazione mancante.",
   "Automation configuration could not be loaded.":

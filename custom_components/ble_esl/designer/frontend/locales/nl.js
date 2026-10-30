@@ -24,7 +24,7 @@ export default {
   "Not sent: the display is unchanged":
     "Niet verzonden: de weergave is ongewijzigd",
   "Not sent: a newer write replaced this one":
-    "Niet verzonden: een nieuwere schrijfwijze heeft deze vervangen",
+    "Niet verzonden: een nieuwere schrijfopdracht heeft deze vervangen",
   "Sending failed": "Verzenden mislukt",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
   "element types": "elementtypen",
@@ -39,7 +39,7 @@ export default {
   "Text fields accept Jinja templates, e.g.":
     "Tekstvelden accepteren Jinja-sjablonen, b.v.",
   "Not valid JSON: check the brackets and quotes":
-    "Niet geldig JSON: controleer de haakjes en aanhalingstekens",
+    "Geen geldige JSON: controleer de haakjes en aanhalingstekens",
   "Enter a number, or a {{ template }}":
     "Voer een getal of een {{ template }} in",
   "Toggle {label} panel": "Schakel {label} paneel in of uit",
@@ -79,7 +79,7 @@ export default {
   "Add to display": "Toevoegen aan weergave",
   "All ESLs": "Alle ESLs",
   "All elements": "Alle elementen",
-  "All states": "Alle staten",
+  "All states": "Alle statussen",
   "Another HA entity": "Een andere HA entiteit",
   "Another state": "Een andere status",
   "Apply templates": "Sjablonen toepassen",
@@ -105,7 +105,7 @@ export default {
   "Click a block to move, resize, or bind it to an entity.":
     "Klik op een blok om het te verplaatsen, van grootte te veranderen of aan een entiteit te binden.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "Klik op een element om het te selecteren · Klik op tekst om te bewerken · Sleep om te verplaatsen · Sleep hoekgrepen om de grootte te wijzigen · Uitlijningshulplijnen verschijnen nabij randen en middelpunten · Pijltoetsen verplaatsen 1 px · Shift + pijlen verplaatsen 10 px · Enter bewerkt geselecteerde tekst · Verwijderen/Backspace verwijdert · Klik met de rechtermuisknop voor acties · ⌘/Ctrl + D duplicaten · ⌘/Ctrl + S slaat op · ⌘/Ctrl + Z maakt ongedaan · ⌘/Ctrl + Shift + Z maakt opnieuw",
+    "Klik op een element om het te selecteren · Klik op tekst om te bewerken · Sleep om te verplaatsen · Sleep de hoekgrepen om het formaat te wijzigen · Uitlijnhulpen verschijnen bij randen en middens · Pijltjestoetsen verplaatsen 1 px · Shift + pijltjes verplaatsen 10 px · Enter bewerkt de geselecteerde tekst · Delete / Backspace verwijdert · Rechtsklik voor acties · ⌘/Ctrl + D dupliceert · ⌘/Ctrl + S slaat op · ⌘/Ctrl + Z maakt ongedaan · ⌘/Ctrl + Shift + Z herstelt",
   "Close automations": "Automatiseringen sluiten",
   "Close component editor": "Componenteditor sluiten",
   "Close dynamic fields": "Sluit dynamische velden",
@@ -147,7 +147,7 @@ export default {
   "Element actions": "Elementacties",
   "Element properties": "Elementeigenschappen",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
-    "Elementsjablonen blijven zoals geschreven: Home Assistant geeft ze elke keer weer als de automatisering wordt uitgevoerd. Sensorcomponenten en veldsjablonen zijn vanaf nu beschikbaar.",
+    "Elementsjablonen blijven zoals geschreven: Home Assistant rendert ze elke keer dat de automatisering wordt uitgevoerd. Sensorcomponenten en veldsjablonen geven de huidige waarden weer.",
   "Entity name": "Naam van de entiteit",
   "Existing automation": "Bestaande automatisering",
   "Export JSON": "Exporteren JSON",
@@ -179,7 +179,7 @@ export default {
   "Insert template": "Sjabloon invoegen",
   "Keep templates (values follow the sensors)":
     "Sjablonen behouden (waarden volgen de sensoren)",
-  "Label override": "Label negeren",
+  "Label override": "Label overschrijven",
   "Last successful send": "Laatste succesvolle verzending",
   "Later today": "Later vandaag",
   "Line spacing": "Regelafstand",
@@ -237,10 +237,10 @@ export default {
     "Opslaan (niet-opgeslagen wijzigingen) (⌘/Ctrl S)",
   "Search ESLs": "Zoek ESLs",
   "Search aliases or devices": "Zoek aliassen of apparaten",
-  "Search automations": "Zoekautomatiseringen",
+  "Search automations": "Automatiseringen zoeken",
   "Search by name": "Zoeken op naam",
-  "Search icons": "Zoekpictogrammen",
-  "Search sensors": "Zoeksensoren",
+  "Search icons": "Pictogrammen zoeken",
+  "Search sensors": "Sensoren zoeken",
   "Select an element": "Selecteer een element",
   "Send back": "Helemaal naar achteren",
   "Send backward": "Een laag naar achteren",
@@ -290,7 +290,7 @@ export default {
   "＋ Create tile style…": "＋ Tegelstijl maken…",
   "＋ Insert template…": "＋ Sjabloon invoegen…",
   "＋ Range": "＋ Bereik",
-  "＋ State": "＋ Staat",
+  "＋ State": "＋ Status",
   "Automation action": "Automatiseringsactie",
   "Paste under `payload:` of a ble_esl.write action.":
     "Plak onder `payload:` van een ble_esl.write actie.",
@@ -339,7 +339,7 @@ export default {
   Minimum: "Minimaal",
   Name: "Naam",
   Now: "Nu",
-  Padding: "Vulling",
+  Padding: "Binnenmarge",
   Ready: "Klaar",
   Redo: "Opnieuw uitvoeren",
   Refresh: "Vernieuwen",
@@ -600,7 +600,7 @@ export default {
   "Not sent: the ESL's write lock is on":
     "Niet verzonden: de schrijfvergrendeling van de ESL is ingeschakeld",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "Waarden zijn vanaf nu. Gebruik de automatiseringsactie om ESL-updates in Home Assistant te plannen.",
+    "Waarden zijn een momentopname van nu. Gebruik de automatiseringsactie om ESL-updates in Home Assistant te plannen.",
   "Rendered view": "Gerenderde weergave",
   "Edit view": "Bewerkweergave",
   "Show hidden icons faintly for editing; does not change the ESL image":

@@ -462,10 +462,12 @@ const FORBIDDEN_TERMS = {
     [/Nutzlast/, "Payload"],
     [/\bAutomation\b/, "Automatisierung"],
     [/Template-Ziele/, "Vorlage"],
+    [/Staat|Staaten|Polsterung|Lichtbogen/, "Zustand / Innenabstand / Bogen"],
   ],
   es: [
     [/carga útil/i, "payload"],
     [/automatismo/i, "automatización"],
+    [/(?:Automatizaciones|Iconos|Sensores) de búsqueda/i, "Buscar …"],
   ],
   fr: [
     [/automatisme/i, "automatisation"],
@@ -476,6 +478,7 @@ const FORBIDDEN_TERMS = {
     [/carico utile/i, "payload"],
   ],
   ja: [
+    [/州/, "状態"],
     [/自動化/, "オートメーション"],
     [/イメージ/, "画像"],
   ],
@@ -483,6 +486,7 @@ const FORBIDDEN_TERMS = {
   nl: [
     [/loskoppel/i, "ontkoppelen"],
     [/nuttige lading|belading/i, "payload"],
+    [/staat/i, "status"],
   ],
   pl: [
     [/ładun/i, "payload"],
@@ -490,19 +494,21 @@ const FORBIDDEN_TERMS = {
   ],
   "pt-BR": [
     [/(?<!pré-)visualização/i, "pré-visualização (preview) / Modo … (view)"],
-    [/carga útil/i, "payload"],
+    [/carga/i, "payload"],
   ],
   ru: [
     [/Отсоедин/i, "Отвязать"],
     [/предварительн\S* просмотр/i, "предпросмотр"],
     [/сущност/i, "объект"],
     [/полезн\S* нагрузк/i, "payload"],
+    [/Наконечник|Предыстория/, "Советы / Фон"],
   ],
   "zh-Hans": [
     [/取消链接/, "取消关联"],
     [/图片/, "图像"],
     [/元件/, "组件"],
     [/有效负载/, "payload"],
+    [/示范|价值|电弧/, "示例 / 数值 / 圆弧"],
     [/动态场|样品|传感器块/, "动态字段 / 示例 / 传感器磁贴"],
   ],
   "zh-Hant": [
@@ -511,6 +517,7 @@ const FORBIDDEN_TERMS = {
     [/圖像|圖片/, "影像"],
     [/取消鏈接/, "取消關聯"],
     [/有效負載/, "payload"],
+    [/示範|價值|電弧|發送|刷新/, "範例 / 數值 / 圓弧 / 傳送 / 重新整理"],
     [
       /圖標|感應器|傳感器|導入|導出|數據|動態場|樣品/,
       "圖示 / 感測器 / 匯入 / 匯出 / 資料 / 動態欄位 / 範例",
