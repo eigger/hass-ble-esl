@@ -24,6 +24,7 @@ from custom_components.ble_esl.designer.importer import (
     elements_from,
     payloads,
 )
+from custom_components.ble_esl.designer.specs import resolve_templates
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.renderer import render_image
 
@@ -94,7 +95,10 @@ async def test_bundled_automation_is_a_valid_home_assistant_automation(hass, tem
     config = {
         **built["automation"],
         "alias": built["automation"].get("alias", "x"),
-        "actions": [{"action": "ble_esl.write", "data": {"payload": built["payload"]}}],
+        "actions": [
+            *built["automation"].get("actions", []),
+            {"action": "ble_esl.write", "data": {"payload": built["payload"]}},
+        ],
     }
     assert await async_validate_config_item(hass, "x", config)
 
@@ -749,3 +753,46 @@ async def test_preview_refuses_what_apply_would_refuse(hass, wolink_entry):
         await designer.preview_design_template(
             wolink_entry, "weather_now", {"weather": "weather.nowhere"}
         )
+
+
+def _values(rendered):
+    return [item["value"] for item in rendered if "value" in item]
+
+
+async def test_forecast_template_reads_the_forecast_its_automation_fetches(hass):
+    built = build(TEMPLATES["weather_forecast"], 400, 300, "BWR")
+    day = {"datetime": "2026-11-02T12:00:00+00:00", "condition": "rainy"}
+    fc = {
+        "weather.home": {
+            "forecast": [
+                {**day, "condition": "sunny"},
+                {**day, "temperature": 18.4, "templow": 9},
+                {**day, "condition": "cloudy", "temperature": 20, "templow": 11},
+                {**day, "condition": "snowy", "temperature": 2, "templow": -3},
+            ]
+        }
+    }
+    values = _values(resolve_templates(hass, built["payload"], set(), {"fc": fc}))
+    assert {"18°", "9°", "20°", "-3°", "weather-rainy", "weather-snowy"} <= set(values)
+    # Without the fetched forecast the template still draws, with placeholders.
+    blank = _values(resolve_templates(hass, built["payload"], set(), None))
+    assert "--°" in blank
+    # The first step of the automation fetches the forecast the write reads as `fc`.
+    first = built["automation"]["actions"][0]
+    assert first["action"] == "weather.get_forecasts"
+    assert first["response_variable"] == "fc"
+    assert first["target"] == {"entity_id": "weather.home"}
+
+
+async def test_template_steps_come_before_the_write_in_a_new_automation(hass, wolink_entry):
+    built = build(TEMPLATES["weather_forecast"], 296, 128, "BWR")
+    preset = DevicePreset("test", "test", 296, 128, "BWR")
+    elements, _, issues = elements_from(built["payload"], preset)
+    assert issues == []
+    result = await hass.data[KEY].automation(
+        wolink_entry,
+        {"version": 1, "elements": elements, "background": "white"},
+        defaults=built["automation"],
+    )
+    actions = result["automation"]["actions"]
+    assert [step["action"] for step in actions] == ["weather.get_forecasts", "ble_esl.write"]

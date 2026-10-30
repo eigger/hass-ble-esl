@@ -26,8 +26,9 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 | `message` | Large centred text that shrinks to fit (one line by default) | 250×128 (scaled) | none |
 | `color_check` | Black, white, red and yellow swatches | 250×128, 400×300 | none |
 | `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | 250×128, 400×300 | Every 10, 15 or 30 minutes |
+| `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | 250×128, 400×300 | Every 1, 3 or 6 hours |
 
-Examples that need a service response (forecasts, calendars) or build their elements with a loop (presence) are not templates: a template carries a fixed payload. A single entity can be a parameter, as `weather_now` does.
+The designer saves a plain payload, so a service response is read by the payload's own templates: `weather_forecast` reads `fc`, the `response_variable` of the `weather.get_forecasts` step in its `automation.actions`. Examples that build their elements with a loop (presence) are not templates: a template carries a fixed payload. A single entity can be a parameter, as `weather_now` does.
 
 ## Your own templates
 
@@ -99,7 +100,7 @@ Every parameter needs a `default`, so a template can be applied without asking a
 
 ### Automation
 
-`automation` provides the defaults for a new automation (the alias if given, otherwise the tag title): its alias, `triggers` (at least one), `conditions`, `mode` and `description`. The `ble_esl.write` action is added from the current design as usual, so it is not part of the template. Home Assistant validates the automation when it is saved.
+`automation` provides the defaults for a new automation (the alias if given, otherwise the tag title): its alias, `triggers` (at least one), `conditions`, `mode` and `description`, and optionally `actions`: steps that run before the write, for example one that fetches a forecast into a `response_variable` the payload reads. The `ble_esl.write` action is added from the current design after them, so it is not part of the template. Home Assistant validates the automation when it is saved.
 
 A daily update at noon:
 

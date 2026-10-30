@@ -100,6 +100,8 @@ _AUTOMATION = vol.Schema(
         vol.Optional("description", default=""): str,
         vol.Required("triggers"): vol.All([dict], vol.Length(min=1)),
         vol.Optional("conditions", default=list): [dict],
+        # Steps that run before the write, e.g. one that fetches a forecast.
+        vol.Optional("actions", default=list): [dict],
         vol.Optional("mode", default="single"): vol.In(("single", "restart", "queued", "parallel")),
     }
 )

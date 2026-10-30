@@ -81,7 +81,7 @@ test("show hidden icons reveals editable ghosts without changing the design or o
   await expect(page.locator(".el.ghost")).toHaveCount(0);
 });
 
-test("rotation slider and numeric box update each other live at arbitrary angles", async ({
+test("rotation slider and numeric box update each other live in steps of 90°", async ({
   page,
 }) => {
   const slider = page.getByRole("slider", { name: "Rotate (°)", exact: true });
@@ -90,12 +90,12 @@ test("rotation slider and numeric box update each other live at arbitrary angles
     exact: true,
   });
   await expect(slider).toBeVisible();
-  await slider.fill("37.5");
-  await expect(number).toHaveValue("37.5");
-  expect(await page.evaluate(() => window.panel.element.rotation)).toBe(37.5);
-  await number.fill("123");
-  await expect(slider).toHaveValue("123");
-  expect(await page.evaluate(() => window.panel.element.rotation)).toBe(123);
+  await slider.fill("180");
+  await expect(number).toHaveValue("180");
+  expect(await page.evaluate(() => window.panel.element.rotation)).toBe(180);
+  await number.fill("270");
+  await expect(slider).toHaveValue("270");
+  expect(await page.evaluate(() => window.panel.element.rotation)).toBe(270);
 });
 
 test("editor toolbar uses HA material icons, including refresh", async ({
@@ -118,17 +118,17 @@ test("configure modal keeps rotation slider and numeric value in sync", async ({
   const modal = page.locator("ble-esl-component-editor");
   await modal
     .getByRole("slider", { name: "Rotate (°)", exact: true })
-    .fill("42.5");
+    .fill("90");
   await expect(
     modal.getByRole("spinbutton", { name: "Rotation value (°)", exact: true }),
-  ).toHaveValue("42.5");
-  expect(await modal.evaluate((m) => m.draft.rotation)).toBe(42.5);
+  ).toHaveValue("90");
+  expect(await modal.evaluate((m) => m.draft.rotation)).toBe(90);
   await modal
     .getByRole("spinbutton", { name: "Rotation value (°)", exact: true })
-    .fill("73");
+    .fill("180");
   await expect(
     modal.getByRole("slider", { name: "Rotate (°)", exact: true }),
-  ).toHaveValue("73");
+  ).toHaveValue("180");
 });
 
 test("orientation belongs to the design: it turns the canvas, undoes, and is exported as rotate", async ({

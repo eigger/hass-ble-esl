@@ -602,6 +602,35 @@ def hidden_items(document):
     ]
 
 
+def free_angles(payload):
+    """The angles in a compiled payload that are not quarter turns."""
+    angles = []
+    for item in payload:
+        if item.get("type") == "group":
+            rotate = as_number(item.get("rotate")) or 0
+            if rotate % 90:
+                angles.append(rotate)
+            angles.extend(free_angles(item.get("elements", [])))
+    return angles
+
+
+def unsupported_items(document, payload):
+    """What a payload cannot hold at all, so it cannot be saved into an automation."""
+    items = [
+        f"a payload turns elements in steps of 90°, not {angle:g}°"
+        for angle in free_angles(payload)
+    ]
+    for element in document["elements"]:
+        if not element["visible"] and "visible" not in element["field_templates"]:
+            continue
+        if element["entity_id"].startswith("weather.") and element["weather_when"] != "now":
+            items.append(
+                f"{element['id']}: a payload has no weather forecast; use a template over "
+                "the response of a Weather: Get forecasts action"
+            )
+    return items
+
+
 def frozen_items(document):
     """What a saved payload keeps as of now, because it cannot follow an entity."""
     frozen = []

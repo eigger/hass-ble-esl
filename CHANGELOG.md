@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- Design template `weather_forecast`: the next three days of a weather entity's daily forecast. Its automation carries the `weather.get_forecasts` step that fills it in; templates can now bring `actions` that run before the write.
+
 ### Changed
 
+- Designer: a payload cannot hold a weather forecast or an element turned by an angle that is not a multiple of 90°, so the forecast time selector is gone (an older design's forecast can be set back to now), rotation moves in steps of 90°, and such an element cannot be saved into an automation. Use a template over a *Weather: Get forecasts* response instead.
 - Designer: saving into an automation keeps only the `payload` (element templates stay live); it no longer writes `design` / `design_specs`. Actions saved by earlier releases still run and open in the designer, and saving them again drops those fields. What a payload cannot follow live (sensor components, field templates, templated polygon corners, free-angle rotation, hidden elements) is saved as of now, and the save message says so.
 
 ## 1.8.0

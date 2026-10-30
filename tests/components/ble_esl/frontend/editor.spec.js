@@ -367,20 +367,16 @@ test("sensor type template designer saves, previews and preserves the display dr
   expect(errors).toEqual([]);
 });
 
-test("weather uses an icon and offers forecast time and value selectors", async ({
+test("weather uses an icon and offers a value selector but no forecast time", async ({
   page,
 }) => {
   await pickSensor(page, "weather.home");
   await expect(page.locator(".el.selected .value")).toHaveText("");
-  await page
-    .getByLabel("Weather time", { exact: true })
-    .selectOption("tomorrow");
+  // A payload holds no forecast: the time selector is only for older designs.
+  await expect(page.getByLabel("Weather time", { exact: true })).toHaveCount(0);
   await page
     .getByLabel("Weather value", { exact: true })
     .selectOption("temperature");
-  await expect(page.getByLabel("Weather time", { exact: true })).toHaveValue(
-    "tomorrow",
-  );
   await expect(page.locator("img.exact")).toBeVisible();
 });
 

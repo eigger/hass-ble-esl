@@ -7,7 +7,6 @@ from types import SimpleNamespace
 
 from PIL import Image, ImageChops
 import pytest
-import yaml
 
 from custom_components.ble_esl.designer import KEY
 from custom_components.ble_esl.designer.layout import compile_payload, validate
@@ -241,23 +240,29 @@ async def test_field_hidden_icon_with_null_glyph_still_has_an_editing_ghost(hass
     assert result["layers"]["_ghost_bounds"]["laundry"]
 
 
-async def test_free_angle_rotation_changes_pixels_and_exports_an_image(hass, wolink_entry):
+async def test_free_angle_rotation_previews_but_a_payload_cannot_hold_it(hass, wolink_entry):
+    """An older design may turn an element by any angle: it still draws, but cannot be saved."""
     source = icon_document(rotation=37.5)
     hass.states.async_set("binary_sensor.laundry", "on")
     result = await hass.data[KEY].preview(wolink_entry, source)
     unrotated = await hass.data[KEY].preview(wolink_entry, icon_document(rotation=0))
     assert result["png"] != unrotated["png"]
     exported = await hass.data[KEY].export(wolink_entry, source)
-    assert exported["validation_errors"] == []
-    assert exported["payload_data"][0]["type"] == "dlimg"
-    actual = await hass.async_add_executor_job(
-        lambda: render_image(hass, wolink_entry.runtime_data.preset, exported["payload_data"])
-    )
-    preview_image = Image.open(BytesIO(base64.b64decode(result["png"].split(",")[1]))).convert(
-        "RGB"
-    )
-    assert ImageChops.difference(actual, preview_image).getbbox() is None
-    assert set(yaml.safe_load(exported["service"])["data"]) == {"background", "payload"}
+    assert exported["payload_data"] is None
+    assert exported["validation_errors"] == ["a payload turns elements in steps of 90°, not 37.5°"]
+    assert not any("90°" in warning for warning in exported["warnings"])
+    # A rotation a field template works out is caught as well, and a hidden one is not.
+    templated = icon_document(rotation=0)
+    templated["elements"][0]["field_templates"] = {"rotation": "{{ 45 }}"}
+    assert (await hass.data[KEY].export(wolink_entry, templated))["validation_errors"] == [
+        "a payload turns elements in steps of 90°, not 45°"
+    ]
+    hidden = icon_document(rotation=37.5, visible=False)
+    assert (await hass.data[KEY].export(wolink_entry, hidden))["validation_errors"] == []
+    # Steps of 90° are payload data.
+    turned = await hass.data[KEY].export(wolink_entry, icon_document(rotation=270))
+    assert turned["validation_errors"] == []
+    assert turned["payload_data"][0]["rotate"] == 270
 
 
 @pytest.mark.parametrize("width,height", [(40, 30), (31, 22), (60, 40)])

@@ -22,7 +22,7 @@ import voluptuous as vol
 from ..const import CONF_MODEL, DEFAULT_MODEL, DOMAIN
 from ..device import resolve_preset
 from ..esl_ble.base import DevicePreset
-from ..renderer import encode_png, oriented_preset, prepare_payload, render_image
+from ..renderer import encode_png, oriented_preset, render_image
 from ..services import build_write_job_from_data, cancel_pending_write, run_ble_write
 from ..yaml11 import repair_yaml11_keys
 from .design_templates import (
@@ -42,6 +42,7 @@ from .layout import (
     live_payload,
     sensor_values,
     substitute,
+    unsupported_items,
     validate,
     validate_template,
 )
@@ -232,7 +233,8 @@ class Designer:
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
         preview_variables = _preview_variable_map(preview_variables)
-        forecasts = await self.forecasts(document)
+        # A payload has no forecast: an element that wants one is refused below.
+        forecasts = {}
         payload = compile_payload(
             self.hass,
             document,
@@ -253,22 +255,12 @@ class Designer:
             issues.append(f"render: {err}")
         # Only the payload is saved: what a payload cannot keep live is as of now.
         frozen = frozen_items(document)
+        issues.extend(f"blocking: {item}" for item in unsupported_items(document, payload))
         issues.extend(hidden_items(document))
         issues.extend(frozen)
         automation_payload = live_payload(
             self.hass, document, self.templates, forecasts, preview_variables
         )
-        # Free-angle groups become native imagespec data images in exported YAML.
-        portable = await self.hass.async_add_executor_job(
-            prepare_payload, self.hass, preset, payload
-        )
-        if portable != payload:
-            payload = portable
-            automation_payload = portable
-            frozen.append(
-                "A free-angle rotation turns the display into images: all values are as of now"
-            )
-            issues.append(frozen[-1])
         result = export_yaml(
             payload,
             document["background"],
@@ -301,7 +293,7 @@ class Designer:
                 self.hass,
                 validated,
                 self.templates,
-                await self.forecasts(validated),
+                {},
                 preview_variables=preview_variables,
             )
             entities = sorted(
@@ -689,6 +681,7 @@ class Designer:
                 vol.Optional("description"): str,
                 vol.Optional("triggers"): [dict],
                 vol.Optional("conditions"): [dict],
+                vol.Optional("actions"): [dict],
                 vol.Optional("mode"): vol.In(("single", "restart", "queued", "parallel")),
             }
         ),
