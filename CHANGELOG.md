@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Designer: components bound to an entity are saved into the payload as templates where Home Assistant can follow the entity: a sensor's value, a data field's text, the icon a rule picks, a bar's or gauge's progress. A piece is templated only when its template renders exactly what was drawn; anything else (rounded data-field text, field templates, binary and weather icons) is saved as of now and reported. Hidden elements are saved as `visible: false` and come back when the automation is reopened.
+
 ### Added
 
 - Designer and ESL Manager: **Discard changes** drops a tag's unsaved design (a button next to the "Unsaved changes" badge on the card and in the editor bar), and editing a design back to how it started no longer leaves it marked as unsaved.
