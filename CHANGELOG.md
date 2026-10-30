@@ -8,7 +8,7 @@
 
 ### Changed
 
-- `ble_esl.write` logs once per tag when an automation still runs from a saved designer source (`design`); saving it again from the ESL Manager replaces that with a plain payload.
+- `ble_esl.write` logs once per tag and Home Assistant run when an automation still runs from a saved designer source (`design`); saving it again from the ESL Manager replaces that with a plain payload (a weather forecast or an angle that is not a multiple of 90° must first become a template or a quarter turn).
 - Designer: a payload cannot hold a weather forecast or an element turned by an angle that is not a multiple of 90°, so the forecast time selector is gone (an older design's forecast can be set back to now), rotation moves in steps of 90°, and such an element cannot be saved into an automation. Use a template over a *Weather: Get forecasts* response instead.
 - Designer: saving into an automation keeps only the `payload` (element templates stay live); it no longer writes `design` / `design_specs`. Actions saved by earlier releases still run and open in the designer, and saving them again drops those fields. What a payload cannot follow live (sensor components, field templates, templated polygon corners, free-angle rotation, hidden elements) is saved as of now, and the save message says so.
 

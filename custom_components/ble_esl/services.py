@@ -357,7 +357,9 @@ async def build_write_job_from_data(
             _LEGACY_DESIGN_WARNED.add(entry.entry_id)
             _LOGGER.warning(
                 "ble_esl.write for %s runs from a saved designer source (design): "
-                "open its automation in the ESL Manager and save it again to keep only the payload",
+                "open its automation in the ESL Manager and save it again to keep only the payload "
+                "(a forecast or an angle that is not a multiple of 90° needs a template or a "
+                "quarter turn first)",
                 entry.title,
             )
         try:
