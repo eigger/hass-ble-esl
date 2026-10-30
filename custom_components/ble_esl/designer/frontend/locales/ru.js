@@ -608,4 +608,6 @@ export default {
     "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Хранится как черновик в рамках этого сеанса браузера, пока вы не создадите автоматизацию или не сохраните в неё.",
+  "Selected element actions": "Действия с выбранным элементом",
+  "Duplicate selected element": "Дублировать выбранный элемент",
 };

@@ -615,4 +615,6 @@ export default {
     "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wird für diese Browsersitzung als Entwurf aufbewahrt, bis Sie eine Automatisierung erstellen oder darin speichern.",
+  "Selected element actions": "Aktionen für das ausgewählte Element",
+  "Duplicate selected element": "Ausgewähltes Element duplizieren",
 };

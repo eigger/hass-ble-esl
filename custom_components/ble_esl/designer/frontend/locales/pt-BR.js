@@ -613,4 +613,6 @@ export default {
     "Shift / Ctrl / ⌘ + clique seleciona vários elementos · Arrastar em uma área vazia da tela seleciona uma região",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Mantido como rascunho nesta sessão do navegador até você criar uma automação ou salvar em uma.",
+  "Selected element actions": "Ações do elemento selecionado",
+  "Duplicate selected element": "Duplicar o elemento selecionado",
 };

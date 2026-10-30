@@ -611,4 +611,6 @@ export default {
     "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
+  "Selected element actions": "Acties voor het geselecteerde element",
+  "Duplicate selected element": "Geselecteerd element dupliceren",
 };

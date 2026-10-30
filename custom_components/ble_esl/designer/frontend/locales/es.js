@@ -614,4 +614,6 @@ export default {
     "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
+  "Selected element actions": "Acciones del elemento seleccionado",
+  "Duplicate selected element": "Duplicar el elemento seleccionado",
 };

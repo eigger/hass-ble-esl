@@ -576,4 +576,8 @@ export default {
     "Shift / Ctrl / ⌘ + 点击可选择多个元素 · 在画布空白处拖动可框选区域",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "在创建自动化或保存到自动化之前，会在此浏览器会话期间作为草稿保留。",
+  "Selected element actions":
+    "所选元素的操作",
+  "Duplicate selected element":
+    "复制所选元素",
 };

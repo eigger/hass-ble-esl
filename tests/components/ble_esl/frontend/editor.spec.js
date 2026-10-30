@@ -2347,7 +2347,10 @@ test("selected elements get an action bar that matches the right-click menu", as
 }) => {
   await expect(page.locator(".element-actions")).toHaveCount(0);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
-  const bar = page.getByRole("toolbar", { name: "Element actions" });
+  const bar = page.getByRole("toolbar", {
+    name: "Element actions",
+    exact: true,
+  });
   await expect(bar).toBeVisible();
   const count = () =>
     page.evaluate(() => window.panel.document.elements.length);
@@ -2413,4 +2416,38 @@ test("on a phone the canvas comes first and nothing scrolls sideways", async ({
   const box = await page.locator("#library").boundingBox();
   const canvas = await page.locator(".preview-card").boundingBox();
   expect(box.x).toBeLessThan(canvas.x);
+});
+
+test("selection actions float clear of the resize handles and duplicate or delete", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator(".el")).toHaveCount(1);
+  const boxes = await page.evaluate(() => {
+    const root = window.panel.shadowRoot;
+    const rect = (node) => {
+      const r = node.getBoundingClientRect();
+      return { l: r.left, t: r.top, r: r.right, b: r.bottom };
+    };
+    return {
+      bar: rect(root.querySelector(".selection-actions")),
+      handles: [...root.querySelectorAll(".handle")].map(rect),
+      box: rect(root.querySelector(".selection-box")),
+    };
+  });
+  const overlaps = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  for (const handle of boxes.handles)
+    expect(overlaps(boxes.bar, handle)).toBe(false);
+  // The bar sits above the element and never covers it.
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.box.t);
+  await page
+    .getByRole("button", { name: "Duplicate", exact: true })
+    .first()
+    .click();
+  await expect(page.locator(".el")).toHaveCount(2);
+  await page
+    .getByRole("button", { name: "Delete selected element", exact: true })
+    .click();
+  await expect(page.locator(".el")).toHaveCount(1);
 });

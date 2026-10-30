@@ -612,4 +612,6 @@ export default {
     "Maiusc / Ctrl / ⌘ + clic seleziona più elementi · Trascinare su una zona vuota della tela seleziona un'area",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Conservato come bozza per questa sessione del browser finché non crei un'automazione o salvi in una.",
+  "Selected element actions": "Azioni dell'elemento selezionato",
+  "Duplicate selected element": "Duplica l'elemento selezionato",
 };

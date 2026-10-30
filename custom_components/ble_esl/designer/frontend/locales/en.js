@@ -598,4 +598,6 @@ export default {
     "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Kept as a draft for this browser session until you create an automation or save into one.",
+  "Selected element actions": "Selected element actions",
+  "Duplicate selected element": "Duplicate selected element",
 };
