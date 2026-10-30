@@ -97,3 +97,26 @@ test("toolbar groups edit controls apart from the output actions", async ({
     "save-to-other-automation",
   ]);
 });
+
+test("toolbar shows no divider in sensor style mode", async ({ page }) => {
+  await page.goto("/");
+  const dividers = await page.evaluate(async () => {
+    const { renderToolbar } = await import("/frontend/editor/toolbar-view.js");
+    const host = document.createElement("div");
+    host.innerHTML = renderToolbar({
+      tag: { writable: true },
+      mode: "template",
+      tags: [],
+      zoomMode: "fit",
+      zoom: 1,
+      translate: (key) => key,
+      escapeHtml: (value) => String(value),
+      icon: () => "",
+      tagName: () => "",
+      renderTagOptions: () => "",
+      sendHint: () => "",
+    });
+    return host.querySelectorAll('[role="separator"]').length;
+  });
+  expect(dividers).toBe(0);
+});
