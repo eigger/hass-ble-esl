@@ -7,7 +7,6 @@ from imagespec import validate as validate_payload
 import yaml
 
 from ..yaml11 import Yaml11SafeDumper
-from .automation_source import encode_design
 
 
 class _PlainDumper(Yaml11SafeDumper):
@@ -80,8 +79,6 @@ def export_yaml(
     device_id,
     issues=(),
     live=None,
-    design=None,
-    design_specs=None,
     rotate=0,
 ):
     """YAML for ``ble_esl.write``, plus what imagespec or an automation would trip on.
@@ -107,10 +104,6 @@ def export_yaml(
     }
     if rotate:
         service["data"]["rotate"] = rotate
-    if design is not None:
-        service["data"]["design"] = encode_design(plain(design))
-    if design_specs:
-        service["data"]["design_specs"] = plain(design_specs)
     payload_errors = [f"{issue.path}: {issue.message}" for issue in validate_payload(payload)]
     scalar_errors = _json_value_errors(payload)
     if live is not None:
@@ -139,10 +132,6 @@ def export_yaml(
         "warnings": [*warnings, *template_warnings],
         "rotate": rotate,
     }
-    if design is not None:
-        result["design_source"] = service["data"]["design"]
-    if design_specs:
-        result["design_specs"] = service["data"]["design_specs"]
     if live is not None:
         result["live_payload"] = dump(live)
         result["live_service"] = dump(

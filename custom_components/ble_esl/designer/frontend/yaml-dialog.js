@@ -89,20 +89,15 @@ export class YamlDialog extends HTMLElement {
         )
         .join("")}</div>
       <p class="muted">${esc(t(this.hass, hint))} ${
-        this.result.design_source && this.view === "service"
+        this.live
           ? t(
               this.hass,
-              "Components and conditional rules are preserved and use current entity states each time the automation runs.",
+              "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
             )
-          : this.live
-            ? t(
-                this.hass,
-                "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
-              )
-            : t(
-                this.hass,
-                "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.",
-              )
+          : t(
+              this.hass,
+              "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.",
+            )
       }</p>
       ${"live_payload" in this.result && !this.result.automation ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}
       ${this.result.validation_errors?.length ? `<ul class="issues">${this.result.validation_errors.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}

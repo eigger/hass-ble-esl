@@ -610,8 +610,6 @@ export default {
   "Selected element actions": "Acties voor het geselecteerde element",
   "Duplicate selected element": "Geselecteerd element dupliceren",
   "Image rotation (°)": "Afbeeldingsrotatie (°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "Componenten en voorwaardelijke regels blijven behouden en gebruiken bij elke uitvoering van de automatisering de huidige entiteitsstatussen.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Statuswijzigingen van de invoer starten weergave-updates. U kunt de triggers aanpassen in Home Assistant.",
   "Preview parameters must be a JSON object":

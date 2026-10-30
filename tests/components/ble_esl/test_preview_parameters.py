@@ -38,7 +38,7 @@ def test_reported_variable_templates_require_typed_preview_values(hass, caplog):
     assert not any("Template variable warning" in record.message for record in caplog.records)
 
 
-async def test_automation_export_keeps_polygon_coordinates_live(hass, wolink_entry):
+async def test_automation_export_freezes_polygon_corners_and_says_so(hass, wolink_entry):
     document = {
         "version": 1,
         "elements": [
@@ -57,9 +57,10 @@ async def test_automation_export_keeps_polygon_coordinates_live(hass, wolink_ent
         wolink_entry,
         document,
         preview_variables={"corners": "0,0;100,0;50,100"},
-        automation_edit=True,
     )
-    # The action carries the design, so the corners are rendered live at each run.
+    # Only the payload is saved, and a payload cannot follow a template's corners.
     assert not result["validation_errors"]
-    assert result["design_specs"] == {"polygon": document["elements"][0]["spec"]}
+    assert any("polygon: the polygon's corners are as of now" in w for w in result["warnings"])
+    assert "design_specs" not in result
+    assert "design_source" not in result
     assert document["elements"][0]["spec"]["points"] == "{{ corners }}"

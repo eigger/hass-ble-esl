@@ -594,8 +594,6 @@ export default {
     "複製所選元素",
   "Image rotation (°)":
     "影像旋轉(°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
   "Preview parameters must be a JSON object":
     "預覽參數必須是 JSON 物件",

@@ -609,8 +609,6 @@ export default {
   "Selected element actions": "選択した要素の操作",
   "Duplicate selected element": "選択した要素を複製",
   "Image rotation (°)": "画像の回転 (°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "コンポーネントと条件付きルールは保持され、オートメーションが実行されるたびに現在のエンティティの状態が使用されます。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "入力の状態が変化すると表示が更新されます。トリガーは Home Assistant で調整できます。",
   "Preview parameters must be a JSON object":

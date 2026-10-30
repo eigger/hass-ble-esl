@@ -2,15 +2,22 @@
 
 import base64
 from io import BytesIO
+import json
 from types import SimpleNamespace
 
 from PIL import Image, ImageChops
 import pytest
+import yaml
 
 from custom_components.ble_esl.designer import KEY
 from custom_components.ble_esl.designer.layout import compile_payload, validate
 from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.renderer import render_image
+
+
+def legacy_design(document):
+    """The ``design`` an older release saved in an action: still accepted when it runs."""
+    return "{{ " + json.dumps(json.dumps(document)) + " | from_json }}"
 
 
 def icon_document(rotation=90, visible=True):
@@ -93,17 +100,16 @@ async def test_hidden_icon_ghosts_are_editing_metadata_only(hass, wolink_entry):
     assert result["layers"]["_ghost_bounds"]["laundry"] is not None
 
 
-async def test_automation_keeps_original_component_configuration(hass, wolink_entry):
+async def test_automation_keeps_only_the_payload(hass, wolink_entry):
     hass.states.async_set("binary_sensor.laundry", "on")
     source = icon_document(rotation=0)
     source["elements"][0]["field_templates"] = {
         "color": "{{ 'red' if value == 'on' else 'black' }}"
     }
     result = await hass.data[KEY].automation(wolink_entry, source)
-    action = result["automation"]["actions"][0]
-    assert "design" in action["data"], (
-        "Automation must carry the source design, not just today's pixels"
-    )
+    data = result["automation"]["actions"][0]["data"]
+    assert set(data) == {"background", "payload"}
+    assert "as of now" in " ".join(result["warnings"])
 
 
 async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
@@ -118,12 +124,9 @@ async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
     ]
 
 
-async def test_automation_write_resolves_current_rules_after_ha_renders_action_data(
-    hass, wolink_entry
-):
+async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(hass, wolink_entry):
     from homeassistant.helpers.template import Template
 
-    from custom_components.ble_esl.designer.automation_source import decode_design
     from custom_components.ble_esl.services import build_write_job_from_data
 
     hass.states.async_set("binary_sensor.laundry", "on")
@@ -131,13 +134,8 @@ async def test_automation_write_resolves_current_rules_after_ha_renders_action_d
     source["elements"][0]["field_templates"] = {
         "color": "{{ 'red' if value == 'on' else 'black' }}"
     }
-    exported = await hass.data[KEY].automation(wolink_entry, source)
-    action = exported["automation"]["actions"][0]
-    data = {**action["data"], "design": Template(action["data"]["design"], hass).async_render()}
-    assert (
-        decode_design(data["design"])["elements"][0]["field_templates"]
-        == source["elements"][0]["field_templates"]
-    )
+    design = legacy_design(source)
+    data = {"design": Template(design, hass).async_render(), "payload": []}
     first = await build_write_job_from_data(hass, wolink_entry, data)
     hass.states.async_set("binary_sensor.laundry", "off")
     second = await build_write_job_from_data(hass, wolink_entry, data)
@@ -160,12 +158,8 @@ async def test_input_state_change_runs_the_exported_automation(hass, wolink_entr
     assert tag_writer.write_prepared.await_count == 2
 
 
-async def test_automation_passes_script_variables_to_native_templates(hass, wolink_entry):
-    from homeassistant.helpers.template import Template
-
-    from custom_components.ble_esl.services import build_write_job_from_data
-
-    source = {
+def native_text(value):
+    return {
         "version": 1,
         "elements": [
             {
@@ -175,24 +169,30 @@ async def test_automation_passes_script_variables_to_native_templates(hass, woli
                 "y": 0,
                 "width": 100,
                 "height": 40,
-                "spec": {"type": "text", "value": "{{ message }}", "size": 24},
+                "spec": {"type": "text", "value": value, "size": 24},
             }
         ],
     }
+
+
+async def test_automation_passes_script_variables_to_native_templates(hass, wolink_entry):
+    from homeassistant.helpers.template import Template
+
+    from custom_components.ble_esl.services import build_write_job_from_data
+
     result = await hass.data[KEY].automation(
-        wolink_entry, source, preview_variables={"message": "preview only"}
+        wolink_entry, native_text("{{ message }}"), preview_variables={"message": "preview only"}
     )
     data = result["automation"]["actions"][0]["data"]
-    assert "preview only" not in data["design"]
-    assert data["design_specs"] == {"native": source["elements"][0]["spec"]}
-    data["design_specs"] = {
-        key: {
-            **spec,
-            "value": Template(spec["value"], hass).async_render({"message": "Actual run"}),
-        }
-        for key, spec in data["design_specs"].items()
-    }
-    job = await build_write_job_from_data(hass, wolink_entry, data)
+    assert set(data) == {"background", "payload"}
+    assert "preview only" not in json.dumps(data)
+    assert data["payload"][0]["value"] == "{{ message }}"
+    # Home Assistant renders the action data with the automation's variables.
+    rendered = [
+        {**item, "value": Template(item["value"], hass).async_render({"message": "Actual run"})}
+        for item in data["payload"]
+    ]
+    job = await build_write_job_from_data(hass, wolink_entry, {**data, "payload": rendered})
     assert job.image_png
 
 
@@ -201,57 +201,30 @@ async def test_automation_templates_can_read_trigger_objects(hass, wolink_entry)
 
     from custom_components.ble_esl.services import build_write_job_from_data
 
-    source = {
-        "version": 1,
-        "elements": [
-            {
-                "id": "native",
-                "type": "imagespec",
-                "x": 0,
-                "y": 0,
-                "width": 100,
-                "height": 40,
-                "spec": {"type": "text", "value": "{{ trigger.to_state.state }}", "size": 24},
-            }
-        ],
-    }
     result = await hass.data[KEY].automation(
-        wolink_entry, source, preview_variables={"trigger": {"to_state": {"state": "off"}}}
+        wolink_entry,
+        native_text("{{ trigger.to_state.state }}"),
+        preview_variables={"trigger": {"to_state": {"state": "off"}}},
     )
     data = result["automation"]["actions"][0]["data"]
-    assert "design_variables" not in data
-    state = SimpleNamespace(state="on")
-    variables = {"trigger": SimpleNamespace(to_state=state)}
-    data["design_specs"] = {
-        key: {**spec, "value": Template(spec["value"], hass).async_render(variables)}
-        for key, spec in data["design_specs"].items()
-    }
-    assert (await build_write_job_from_data(hass, wolink_entry, data)).image_png
+    assert data["payload"][0]["value"] == "{{ trigger.to_state.state }}"
+    variables = {"trigger": SimpleNamespace(to_state=SimpleNamespace(state="on"))}
+    rendered = [
+        {**item, "value": Template(item["value"], hass).async_render(variables)}
+        for item in data["payload"]
+    ]
+    assert (
+        await build_write_job_from_data(hass, wolink_entry, {**data, "payload": rendered})
+    ).image_png
 
 
 async def test_invalid_design_specs_raise_a_service_error(hass, wolink_entry):
+    """The ``design_specs`` an older release saved are still checked when they run."""
     from homeassistant.exceptions import ServiceValidationError
 
     from custom_components.ble_esl.services import build_write_job_from_data
 
-    source = {
-        "version": 1,
-        "elements": [
-            {
-                "id": "native",
-                "type": "imagespec",
-                "x": 0,
-                "y": 0,
-                "width": 100,
-                "height": 40,
-                "spec": {"type": "text", "value": "{{ message }}", "size": 24},
-            }
-        ],
-    }
-    result = await hass.data[KEY].automation(
-        wolink_entry, source, preview_variables={"message": "x"}
-    )
-    data = result["automation"]["actions"][0]["data"]
+    data = {"design": legacy_design(native_text("{{ message }}")), "payload": []}
     for bad in ("oops", {"type": "row"}, {"value": "x"}):
         with pytest.raises(ServiceValidationError):
             await build_write_job_from_data(
@@ -268,7 +241,7 @@ async def test_field_hidden_icon_with_null_glyph_still_has_an_editing_ghost(hass
     assert result["layers"]["_ghost_bounds"]["laundry"]
 
 
-async def test_free_angle_rotation_changes_pixels_and_preserves_source(hass, wolink_entry):
+async def test_free_angle_rotation_changes_pixels_and_exports_an_image(hass, wolink_entry):
     source = icon_document(rotation=37.5)
     hass.states.async_set("binary_sensor.laundry", "on")
     result = await hass.data[KEY].preview(wolink_entry, source)
@@ -284,9 +257,7 @@ async def test_free_angle_rotation_changes_pixels_and_preserves_source(hass, wol
         "RGB"
     )
     assert ImageChops.difference(actual, preview_image).getbbox() is None
-    from custom_components.ble_esl.designer.automation_source import decode_design
-
-    assert decode_design(exported["design_source"])["elements"][0]["rotation"] == 37.5
+    assert set(yaml.safe_load(exported["service"])["data"]) == {"background", "payload"}
 
 
 @pytest.mark.parametrize("width,height", [(40, 30), (31, 22), (60, 40)])
@@ -314,11 +285,11 @@ async def test_design_orientation_sets_canvas_export_and_written_output(hass, wo
     assert "rotate: 90" in exported["service"]
     upright = await designer.export(wolink_entry, icon_document(rotation=0))
     assert upright["rotate"] == 0
-    assert "rotate:" not in upright["service"].split("design:")[0]
+    assert "rotate:" not in upright["service"]
 
-    # The action's design carries the orientation; an explicit `rotate` overrides it.
+    # A design an older release saved carries the orientation; an explicit `rotate` overrides it.
     job = await build_write_job_from_data(
-        hass, wolink_entry, {"design": exported["design_source"], "payload": []}
+        hass, wolink_entry, {"design": legacy_design(source), "payload": []}
     )
     assert job.image.size == (physical.width, physical.height)
     editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(

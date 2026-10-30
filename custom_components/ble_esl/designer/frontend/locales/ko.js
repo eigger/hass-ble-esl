@@ -595,8 +595,6 @@ export default {
   "Selected element actions": "선택한 요소 작업",
   "Duplicate selected element": "선택한 요소 복제",
   "Image rotation (°)": "이미지 회전 (°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "컴포넌트와 조건부 규칙은 그대로 유지되며, 자동화가 실행될 때마다 현재 엔티티 상태를 사용합니다.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "입력 상태가 바뀌면 화면이 업데이트됩니다. 실행 조건은 Home Assistant에서 조정할 수 있습니다.",
   "Preview parameters must be a JSON object":
