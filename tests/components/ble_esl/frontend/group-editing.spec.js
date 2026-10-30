@@ -219,10 +219,27 @@ test("a nudge after an undo or on another selection starts its own undo step", a
   expect(await ys()).toEqual([11, 11, 65]);
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   expect(await ys()).toEqual([11, 10, 65]);
-  // After an undo a new nudge clears what could be redone.
+  // After nudge -> other edit -> undo, the nudge step is on top again and a
+  // redo is pending: a new nudge must be a new step that clears the redo.
+  await canvas.focus();
+  await page.keyboard.press("ArrowDown");
+  await page.evaluate(() => {
+    window.panel.checkpoint();
+    window.panel.element.width = 31;
+    window.panel.edited();
+  });
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  expect(await page.evaluate(() => window.panel.session.redoStack.length)).toBe(
+    1,
+  );
+  const depth = await page.evaluate(() => window.panel.undoStack.length);
+  await page.evaluate(() => (window.panel._nudgeAt = Date.now()));
   await canvas.focus();
   await page.keyboard.press("ArrowDown");
   expect(await page.evaluate(() => window.panel.session.redoStack.length)).toBe(
     0,
+  );
+  expect(await page.evaluate(() => window.panel.undoStack.length)).toBe(
+    depth + 1,
   );
 });
