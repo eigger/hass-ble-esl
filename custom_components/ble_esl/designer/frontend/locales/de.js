@@ -36,7 +36,7 @@ export default {
   "default ({value})": "Standard ({value})",
   " (required)": "(erforderlich)",
   "Text fields accept Jinja templates, e.g.":
-    "Textfelder akzeptieren Jinja Vorlagen, z. B.",
+    "Textfelder akzeptieren Jinja-Vorlagen, z. B.",
   "Not valid JSON: check the brackets and quotes":
     "Nicht gültig JSON: Überprüfen Sie die Klammern und Anführungszeichen",
   "Enter a number, or a {{ template }}":
@@ -133,7 +133,7 @@ export default {
   "Discovery only: preview is available; sending is not supported yet.":
     "Nur Discovery: Vorschau ist verfügbar; Das Senden wird noch nicht unterstützt.",
   "Dismiss message": "Nachricht verwerfen",
-  "Display canvas": "Leinwand anzeigen",
+  "Display canvas": "Anzeigefläche",
   "Dynamic field pixel preview": "Dynamische Feldpixelvorschau",
   "Dynamic fields": "Dynamische Felder",
   "ESL Designer": "ESL Designer",
@@ -149,7 +149,7 @@ export default {
   "Entity name": "Entitätsname",
   "Existing automation": "Vorhandene Automatisierung",
   "Export JSON": "Exportieren JSON",
-  "Exporting payload…": "Nutzlast wird exportiert…",
+  "Exporting payload…": "Payload wird exportiert…",
   "Fallback icon (blank = HA)": "Fallback-Symbol (leer = HA)",
   "Field template": "Feldvorlage",
   "Filter ESLs": "ESLs filtern",
@@ -181,7 +181,7 @@ export default {
   "Last successful send": "Letzter erfolgreicher Versand",
   "Later today": "Später heute",
   "Line spacing": "Zeilenabstand",
-  "Link automation": "Link-Automatisierung",
+  "Link automation": "Automatisierung verknüpfen",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Links verknüpfen vorhandene Automatisierungen mit diesem ESL. Sie ändern keine Automatisierungsaktionen und wenden dieses Design nicht an.",
   "Live Home Assistant data on e-paper":
@@ -199,7 +199,7 @@ export default {
   "New icon state": "Neuer Symbolstatus",
   "No ESLs match your search or filter.":
     "Keine ESLs entsprechen Ihrer Suche oder Ihrem Filter.",
-  "No connected automations": "Keine verbundenen Automatisierungen",
+  "No connected automations": "Keine verknüpften Automatisierungen",
   "No error": "Kein Fehler",
   "No matching automations": "Keine passenden Automatisierungen",
   "No successful image": "Kein erfolgreiches Bild",
@@ -214,12 +214,12 @@ export default {
   "Paste a URL, or upload below":
     "Fügen Sie eine URL ein oder laden Sie sie unten hoch",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "Fügen Sie eine Nutzlast (eine Liste von imagespec-Elementen) oder eine ganze ble_esl.write-Aktion ein. Von einer Vorlage oder einem Flow-Layout platzierte Elemente können nicht im Designer platziert werden und werden aufgelistet.",
-  "Payload YAML": "Nutzlast YAML",
-  "Payload exported": "Nutzlast exportiert",
+    "Fügen Sie eine Payload (eine Liste von imagespec-Elementen) oder eine ganze ble_esl.write-Aktion ein. Von einer Vorlage oder einem Flow-Layout platzierte Elemente können nicht im Designer platziert werden und werden aufgelistet.",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload exportiert",
   "Position & size (px)": "Position und Größe (px)",
   "Press Ctrl+C to copy": "Drücken Sie zum Kopieren Ctrl+C",
-  "Preview updating": "Vorschau der Aktualisierung",
+  "Preview updating": "Vorschau wird aktualisiert",
   "Preview updating…": "Vorschau wird aktualisiert…",
   "Preview zoom": "Vorschauzoom",
   "Rain / snow": "Regen / Schnee",
@@ -247,7 +247,7 @@ export default {
   "Sensor tile style": "Sensor-Kachelstil",
   "Sensor tile styles": "Sensor-Kachelstile",
   "Sensor tile (value, unit and name)": "Sensorkachel (Wert, Einheit und Name)",
-  "Show for state": "Für Bundesstaat anzeigen",
+  "Show for state": "Für Zustand anzeigen",
   "Show percentage": "Prozentsatz anzeigen",
   "Show value": "Wert anzeigen",
   "State icon": "Statussymbol",
@@ -360,12 +360,12 @@ export default {
   Visible: "Sichtbar",
   When: "Zeitpunkt",
   Width: "Breite",
-  Payload: "Nutzlast",
-  Gauge: "Anzeige",
+  Payload: "Payload",
+  Gauge: "Messanzeige",
   Unit: "Einheit",
   designer: "Designer",
   fonts: "Schriftarten",
-  icons: "-Symbole",
+  icons: "Symbole",
   default: "Standard",
   none: "keine",
   left: "links",
@@ -566,7 +566,7 @@ export default {
   "Replace the current design with the imported file? You can undo this.":
     "Das aktuelle Design durch die importierte Datei ersetzen? Sie können dies rückgängig machen.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
-    "{name} von diesem ESL trennen? Die Automatisierung selbst wird nicht geändert.",
+    "Verknüpfung von {name} mit dieser ESL aufheben? Die Automatisierung selbst wird nicht geändert.",
   Continue: "Weiter",
   selected: "ausgewählt",
   "Changes apply to all selected components. Mixed values are blank.":
@@ -625,9 +625,9 @@ export default {
   "This ESL does not support writing": "Diese ESL unterstützt kein Schreiben",
   "This ESL has no registered device": "Diese ESL hat kein registriertes Gerät",
   "The automation payload must be a list of objects":
-    "Die Nutzlast der Automatisierung muss eine Liste von Objekten sein",
+    "Die Payload der Automatisierung muss eine Liste von Objekten sein",
   "The automation payload is too large to import (5 MiB maximum)":
-    "Die Nutzlast der Automatisierung ist zu groß für den Import (maximal 5 MiB)",
+    "Die Payload der Automatisierung ist zu groß für den Import (maximal 5 MiB)",
   "That element is not in the display":
     "Dieses Element befindet sich nicht in der Anzeige",
   "That is an imagespec element already":
@@ -650,13 +650,13 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Das ist kein verwendbares YAML: Es ist zu tief verschachtelt",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Fügen Sie eine Nutzlast (eine Liste von Elementen) oder eine ble_esl.write-Aktion mit Nutzlast ein",
+    "Fügen Sie eine Payload (eine Liste von Elementen) oder eine ble_esl.write-Aktion mit Payload ein",
   "Automation is not available": "Die Automatisierung ist nicht verfügbar",
   "This automation has no editable configuration":
     "Diese Automatisierung hat keine bearbeitbare Konfiguration",
   "Select an automation entity": "Wählen Sie eine Automatisierungs-Entität",
   "Select the association to unlink":
-    "Wählen Sie die Zuordnung aus, die getrennt werden soll",
+    "Wählen Sie die Zuordnung aus, deren Verknüpfung aufgehoben werden soll",
   "Automation has no stable ID": "Die Automatisierung hat keine stabile ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Umschalt / Ctrl / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",

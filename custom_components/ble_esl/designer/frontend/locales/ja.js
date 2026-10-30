@@ -182,7 +182,7 @@ export default {
   "Last successful send": "最後に成功した送信",
   "Later today": "今日遅く",
   "Line spacing": "行間隔",
-  "Link automation": "リンクのオートメーション",
+  "Link automation": "オートメーションをリンク",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "リンクは、既存のオートメーションをこの ESL に関連付けます。オートメーションアクションを変更したり、この設計を適用したりすることはありません。",
   "Live Home Assistant data on e-paper":
@@ -200,7 +200,7 @@ export default {
   "New icon state": "新しいアイコンの状態",
   "No ESLs match your search or filter.":
     "検索またはフィルターに一致する ESL はありません。",
-  "No connected automations": "接続されたオートメーションがありません",
+  "No connected automations": "関連付けられたオートメーションがありません",
   "No error": "エラーなし",
   "No matching automations": "一致するオートメーションがありません",
   "No successful image": "成功した画像がありません",
@@ -236,9 +236,9 @@ export default {
   "Save (unsaved changes) (⌘/Ctrl S)": "保存 (未保存の変更) (⌘/Ctrl S)",
   "Search ESLs": "ESL を検索",
   "Search aliases or devices": "エイリアスまたはデバイスの検索",
-  "Search automations": "検索のオートメーション",
+  "Search automations": "オートメーションを検索",
   "Search by name": "名前で検索",
-  "Search icons": "検索アイコン",
+  "Search icons": "アイコンを検索",
   "Search sensors": "センサーの検索",
   "Select an element": "要素を選択してください",
   "Send back": "最背面へ移動",
@@ -563,7 +563,7 @@ export default {
   "Replace the current design with the imported file? You can undo this.":
     "現在のデザインをインポートしたファイルで置き換えますか？元に戻すことができます。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
-    "{name} をこの ESL から切り離しますか？オートメーション自体は変更されません。",
+    "{name} とこの ESL のリンクを解除しますか？オートメーション自体は変更されません。",
   Continue: "続行",
   selected: "件選択中",
   "Changes apply to all selected components. Mixed values are blank.":

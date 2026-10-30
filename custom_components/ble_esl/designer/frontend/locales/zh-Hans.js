@@ -9,7 +9,8 @@ export default {
   "component specs": "组件规格",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESL · {errors} 错误 · {unsynced} 不同步",
-  "{count} automations · {active} active": "{count}自动化·{active}主动",
+  "{count} automations · {active} active":
+    "{count} 个自动化 · {active} 个已启用",
   "Battery {value}": "电池{value}",
   "Last successful image for {alias}": "{alias} 的最后一个成功图像",
   "Skipped: {reason}": "跳过：{reason}",
@@ -89,7 +90,7 @@ export default {
   "Choose a sample sensor above to preview this tile style.":
     "选择上面的示例传感器来预览该磁贴样式。",
   "Choose an automation…": "选择自动化……",
-  "Choose an entity for the sensor tile.": "选择传感器块的实体。",
+  "Choose an entity for the sensor tile.": "选择传感器磁贴的实体。",
   "Choose an existing automation.": "选择现有的自动化。",
   "Choose icon": "选择图标",
   "Click a block to move, resize, or bind it to an entity.":
@@ -101,14 +102,15 @@ export default {
   "Close dynamic fields": "关闭动态字段",
   "Component attribute": "组件属性",
   "Component data": "组件数据",
-  "Component decimals": "分量小数",
+  "Component decimals": "组件小数位数",
   "Component editor": "组件编辑器",
   "Component font size": "组件字体大小",
   "Component height": "组件高度",
   "Component maximum": "组件最大值",
   "Component minimum": "组件最小值",
   "Component pixel preview": "组件像素预览",
-  "Component shape": "部件形状",
+  "Component shape":
+    "组件形状",
   "Component text": "组件文本",
   "Component width": "组件宽度",
   "Connected automations": "已关联的自动化",
@@ -117,7 +119,7 @@ export default {
   "Corner radius": "拐角半径",
   "Crop to circle": "裁剪为圆形",
   "Data source": "数据来源",
-  "Data source (blank = sample sensor)": "数据源（空白=样品传感器）",
+  "Data source (blank = sample sensor)": "数据源（空白=示例传感器）",
   "Decimals (auto when blank)": "小数（空白时自动）",
   "Default font": "默认字体",
   "Delete selected element": "删除所选元素",
@@ -126,7 +128,7 @@ export default {
     "仅发现：预览可用；尚不支持发送。",
   "Dismiss message": "驳回消息",
   "Display canvas": "显示画布",
-  "Dynamic field pixel preview": "动态场像素预览",
+  "Dynamic field pixel preview": "动态字段像素预览",
   "Dynamic fields": "动态字段",
   "ESL Designer": "ESL 设计器",
   "ESL Manager": "ESL 管理器",
@@ -141,7 +143,7 @@ export default {
   "Entity name": "实体名称",
   "Existing automation": "现有的自动化",
   "Export JSON": "导出JSON",
-  "Exporting payload…": "正在导出有效负载……",
+  "Exporting payload…": "正在导出payload……",
   "Fallback icon (blank = HA)": "后备图标（空白 = HA）",
   "Field template": "字段模板",
   "Filter ESLs": "过滤器ESL",
@@ -172,7 +174,8 @@ export default {
   "Last successful send": "上次成功发送",
   "Later today": "今天晚些时候",
   "Line spacing": "行距",
-  "Link automation": "链接自动化",
+  "Link automation":
+    "关联自动化",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "将现有自动化与该ESL相关联的链接。他们不会更改自动化操作或应用此设计。",
   "Live Home Assistant data on e-paper": "电子纸上的实时Home Assistant数据",
@@ -188,7 +191,8 @@ export default {
   "Move selected element": "移动所选元素",
   "New icon state": "新图标状态",
   "No ESLs match your search or filter.": "没有ESL匹配您的搜索或过滤器。",
-  "No connected automations": "没有连接的自动化",
+  "No connected automations":
+    "没有已关联的自动化",
   "No error": "没有错误",
   "No matching automations": "没有匹配的自动化",
   "No successful image": "没有成功的图像",
@@ -202,9 +206,9 @@ export default {
   "Outline width": "轮廓宽度",
   "Paste a URL, or upload below": "粘贴 URL，或在下面上传",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "粘贴有效负载（imagespec元素的列表）或整个ble_esl.write动作。由模板或流布局放置的元素无法放置在设计器中并列出。",
-  "Payload YAML": "有效负载YAML",
-  "Payload exported": "导出的有效负载",
+    "粘贴payload（imagespec元素的列表）或整个ble_esl.write动作。由模板或流布局放置的元素无法放置在设计器中并列出。",
+  "Payload YAML": "payloadYAML",
+  "Payload exported": "导出的payload",
   "Position & size (px)": "位置和尺寸（像素）",
   "Press Ctrl+C to copy": "按Ctrl+C复制",
   "Preview updating": "预览更新",
@@ -213,12 +217,12 @@ export default {
   "Rain / snow": "雨/雪",
   "Rain chance": "下雨的机会",
   "Redo (⌘/Ctrl Shift Z)": "重做（⌘/Ctrl 移动 Z）",
-  "Remove manual link": "删除手动链接",
+  "Remove manual link": "删除手动关联",
   "Replace display": "替换显示内容",
   "Resolved value": "解析值",
   "Rotate (°)": "旋转(°)",
   "Rule icon": "规则图标",
-  "Sample sensor": "样品传感器",
+  "Sample sensor": "示例传感器",
   "Save (unsaved changes)": "保存（未保存的更改）",
   "Save (unsaved changes) (⌘/Ctrl S)": "保存（未保存的更改）(⌘/Ctrl S)",
   "Search ESLs": "搜索ESL",
@@ -269,7 +273,7 @@ export default {
   "YAML to import": "YAML 导入",
   "Zoom in": "放大",
   "Zoom out": "缩小",
-  "ƒ Dynamic fields…": "动态场……",
+  "ƒ Dynamic fields…": "动态字段……",
   "← Dashboard": "← 仪表板",
   "＋ Add component": "＋ 添加组件",
   "＋ Create tile style…": "＋ 创建磁贴样式…",
@@ -281,7 +285,7 @@ export default {
     "粘贴在ble_esl.write动作的`payload:`下。",
   "A complete action for a script or automation.": "脚本或自动化的完整动作。",
   " · References this ESL": "· 引用此ESL",
-  " · Linked manually": "·手动链接",
+  " · Linked manually": "·手动关联",
   Active: "已启用",
   Add: "添加",
   Advanced: "高级",
@@ -345,7 +349,7 @@ export default {
   Visible: "可见",
   When: "时间",
   Width: "宽度",
-  Payload: "有效负载",
+  Payload: "payload",
   Gauge: "仪表",
   Unit: "单位",
   designer: "设计器",
@@ -378,7 +382,7 @@ export default {
   yes: "是",
   no: "否",
   entities: "实体",
-  properties: "性质",
+  properties: "属性",
   Color: "颜色",
   Label: "标签",
   "tile styles": "磁贴样式",
@@ -589,9 +593,9 @@ export default {
   "This ESL has no registered device":
     "此 ESL 没有已注册的设备",
   "The automation payload must be a list of objects":
-    "自动化的有效负载必须是对象列表",
+    "自动化的payload必须是对象列表",
   "The automation payload is too large to import (5 MiB maximum)":
-    "自动化的有效负载过大，无法导入（最大 5 MiB）",
+    "自动化的payload过大，无法导入（最大 5 MiB）",
   "That element is not in the display":
     "该元素不在显示中",
   "That is an imagespec element already":
@@ -599,7 +603,7 @@ export default {
   "Choose a sensor type":
     "请选择传感器类型",
   "Choose an available sample entity":
-    "请选择一个可用的样品实体",
+    "请选择一个可用的示例实体",
   "This ESL protocol does not support image writes":
     "此 ESL 的协议不支持写入图像",
   "The ESL's display size changed; reload the designer":
@@ -617,7 +621,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "这不是可用的 YAML：嵌套太深",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "请粘贴有效负载（元素列表）或带有有效负载的 ble_esl.write 操作",
+    "请粘贴payload（元素列表）或带有payload的 ble_esl.write 操作",
   "Automation is not available":
     "自动化不可用",
   "This automation has no editable configuration":

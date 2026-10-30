@@ -10,7 +10,7 @@ export default {
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESLs · {errors} ошибки · {unsynced} не синхронизированы",
   "{count} automations · {active} active":
-    "{count} автоматизация · {active} активен",
+    "Автоматизаций: {count} · активных: {active}",
   "Battery {value}": "Батарея {value}",
   "Last successful image for {alias}": "Последний успешный образ для {alias}",
   "Skipped: {reason}": "Пропущено: {reason}",
@@ -103,7 +103,7 @@ export default {
     "Щелкните блок, чтобы переместить, изменить размер или привязать его к объекту.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
     "Щелкните элемент, чтобы выбрать его · Щелкните текст для редактирования · Перетащите, чтобы переместить · Перетащите угловые маркеры для изменения размера · Направляющие выравнивания появляются возле краев и центров · Клавиши со стрелками перемещаются на 1 пиксель · Shift + стрелки перемещаются на 10 пикселей · Ввод редактирует выделенный текст · Удалить / Backspace удаляет · Щелкните правой кнопкой мыши для действий · ⌘/Ctrl + D дубликаты · ⌘/Ctrl + S сохраняет · ⌘/Ctrl + Z отменяет действие · ⌘/Ctrl + Shift + Z возвращает действие",
-  "Close automations": "Закрытие средств автоматизации",
+  "Close automations": "Закрыть автоматизации",
   "Close component editor": "Закрытие редактора компонентов",
   "Close dynamic fields": "Закрытие динамических полей",
   "Component attribute": "Атрибут компонента",
@@ -149,7 +149,7 @@ export default {
   "Entity name": "Имя объекта",
   "Existing automation": "Существующая автоматизация",
   "Export JSON": "Экспорт JSON",
-  "Exporting payload…": "Экспорт полезной нагрузки…",
+  "Exporting payload…": "Экспорт payload…",
   "Fallback icon (blank = HA)": "Значок резервного режима (пустой = HA)",
   "Field template": "Шаблон поля",
   "Filter ESLs": "Фильтр ESLs",
@@ -181,14 +181,14 @@ export default {
   "Last successful send": "Последняя успешная отправка",
   "Later today": "Позже сегодня",
   "Line spacing": "Межстрочный интервал",
-  "Link automation": "Автоматизация ссылок",
+  "Link automation": "Привязать автоматизацию",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Ссылки связывают существующие средства автоматизации с этим ESL. Они не меняют действия автоматизации и не применяют эту конструкцию.",
   "Live Home Assistant data on e-paper":
     "Прямые данные Home Assistant на электронной бумаге",
   "Live preview": "Предпросмотр в реальном времени",
   "Loading ESLs…": "Загрузка ESLs…",
-  "Loading automations…": "Загрузка средств автоматизации…",
+  "Loading automations…": "Загрузка автоматизаций…",
   "Loading designer": "Загрузка конструктора",
   "Loading image…": "Загрузка изображения…",
   "Loading…": "Загрузка…",
@@ -199,9 +199,9 @@ export default {
   "New icon state": "Новое состояние значка",
   "No ESLs match your search or filter.":
     "Никакие ESL не соответствуют вашему запросу или фильтру.",
-  "No connected automations": "Нет подключенных средств автоматизации",
+  "No connected automations": "Нет связанных автоматизаций",
   "No error": "Нет ошибок",
-  "No matching automations": "Нет соответствующих средств автоматизации",
+  "No matching automations": "Нет подходящих автоматизаций",
   "No successful image": "Нет успешного изображения",
   "No successful send": "Неудачная отправка",
   "No transmission result": "Нет результата передачи",
@@ -213,13 +213,13 @@ export default {
   "Outline width": "Ширина контура",
   "Paste a URL, or upload below": "Вставьте URL-адрес или загрузите ниже.",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "Вставьте полезную нагрузку (список элементов imagespec) или целое действие ble_esl.write. Элементы, размещенные с помощью шаблона или потокового макета, не могут быть размещены в дизайнере и отображаются в списке.",
-  "Payload YAML": "Полезная нагрузка YAML",
-  "Payload exported": "Полезная нагрузка экспортирована",
+    "Вставьте payload (список элементов imagespec) или целое действие ble_esl.write. Элементы, размещенные с помощью шаблона или потокового макета, не могут быть размещены в дизайнере и отображаются в списке.",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload экспортирован",
   "Position & size (px)": "Положение и размер (пикселей)",
   "Press Ctrl+C to copy": "Нажмите Ctrl+C для копирования.",
   "Preview updating": "Обновление предпросмотра",
-  "Preview updating…": "Предпросмотр обновления…",
+  "Preview updating…": "Обновление предпросмотра…",
   "Preview zoom": "Масштаб предпросмотра",
   "Rain / snow": "Дождь/снег",
   "Rain chance": "Вероятность дождя",
@@ -360,7 +360,7 @@ export default {
   Visible: "Видимый",
   When: "Когда",
   Width: "Ширина",
-  Payload: "Полезная нагрузка",
+  Payload: "Payload",
   Gauge: "Индикатор",
   Unit: "Единица",
   designer: "дизайнер",
@@ -620,9 +620,9 @@ export default {
   "This ESL has no registered device":
     "У этого ESL нет зарегистрированного устройства",
   "The automation payload must be a list of objects":
-    "Полезная нагрузка автоматизации должна быть списком объектов",
+    "Payload автоматизации должен быть списком объектов",
   "The automation payload is too large to import (5 MiB maximum)":
-    "Полезная нагрузка автоматизации слишком велика для импорта (максимум 5 МиБ)",
+    "Payload автоматизации слишком велик для импорта (максимум 5 МиБ)",
   "That element is not in the display": "Этого элемента нет на дисплее",
   "That is an imagespec element already": "Это уже элемент imagespec",
   "Choose a sensor type": "Выберите тип датчика",
@@ -642,7 +642,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Этот YAML непригоден: он слишком глубоко вложен",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Вставьте полезную нагрузку (список элементов) или действие ble_esl.write с полезной нагрузкой",
+    "Вставьте payload (список элементов) или действие ble_esl.write с payload",
   "Automation is not available": "Автоматизация недоступна",
   "This automation has no editable configuration":
     "У этой автоматизации нет редактируемой конфигурации",

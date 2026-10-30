@@ -151,7 +151,7 @@ export default {
   "Entity name": "Nome dell'entità",
   "Existing automation": "Automazione esistente",
   "Export JSON": "Esporta JSON",
-  "Exporting payload…": "Esportazione carico utile...",
+  "Exporting payload…": "Esportazione payload...",
   "Fallback icon (blank = HA)": "Icona fallback (vuoto = HA)",
   "Field template": "Modello di campo",
   "Filter ESLs": "Filtro ESL",
@@ -183,7 +183,7 @@ export default {
   "Last successful send": "Ultimo invio riuscito",
   "Later today": "Più tardi oggi",
   "Line spacing": "Interlinea",
-  "Link automation": "Automazione dei collegamenti",
+  "Link automation": "Collega automazione",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "I link associano le automazioni esistenti a questo ESL. Non modificano le azioni di automazione né applicano questo design.",
   "Live Home Assistant data on e-paper":
@@ -216,8 +216,8 @@ export default {
   "Paste a URL, or upload below": "Incolla un URL o caricalo di seguito",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
     "Incolla un payload (un elenco di elementi imagespec) o un'intera azione ble_esl.write. Gli elementi inseriti da un modello o da un layout di flusso non possono essere inseriti nella finestra di progettazione e vengono elencati.",
-  "Payload YAML": "Carico utile YAML",
-  "Payload exported": "Carico utile esportato",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload esportato",
   "Position & size (px)": "Posizione e dimensione (px)",
   "Press Ctrl+C to copy": "Premere Ctrl+C per copiare",
   "Preview updating": "Aggiornamento anteprima",
@@ -362,7 +362,7 @@ export default {
   Visible: "Visibile",
   When: "Momento",
   Width: "Larghezza",
-  Payload: "Carico utile",
+  Payload: "Payload",
   Gauge: "Indicatore",
   Unit: "Unità",
   designer: "designer",
@@ -625,9 +625,9 @@ export default {
   "This ESL has no registered device":
     "Questo ESL non ha un dispositivo registrato",
   "The automation payload must be a list of objects":
-    "Il carico utile dell'automazione deve essere un elenco di oggetti",
+    "Il payload dell'automazione deve essere un elenco di oggetti",
   "The automation payload is too large to import (5 MiB maximum)":
-    "Il carico utile dell'automazione è troppo grande per essere importato (massimo 5 MiB)",
+    "Il payload dell'automazione è troppo grande per essere importato (massimo 5 MiB)",
   "That element is not in the display": "Questo elemento non è nel display",
   "That is an imagespec element already": "È già un elemento imagespec",
   "Choose a sensor type": "Scegli un tipo di sensore",
@@ -647,7 +647,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Questo YAML non è utilizzabile: è annidato troppo in profondità",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Incolla un carico utile (un elenco di elementi) o un'azione ble_esl.write con un carico utile",
+    "Incolla un payload (un elenco di elementi) o un'azione ble_esl.write con un payload",
   "Automation is not available": "L'automazione non è disponibile",
   "This automation has no editable configuration":
     "Questa automazione non ha una configurazione modificabile",

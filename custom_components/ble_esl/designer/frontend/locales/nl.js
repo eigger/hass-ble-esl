@@ -151,7 +151,7 @@ export default {
   "Entity name": "Naam van de entiteit",
   "Existing automation": "Bestaande automatisering",
   "Export JSON": "Exporteren JSON",
-  "Exporting payload…": "Belading exporteren…",
+  "Exporting payload…": "Payload exporteren…",
   "Fallback icon (blank = HA)": "Terugvalpictogram (leeg = HA)",
   "Field template": "Veldsjabloon",
   "Filter ESLs": "ESLs filteren",
@@ -183,7 +183,7 @@ export default {
   "Last successful send": "Laatste succesvolle verzending",
   "Later today": "Later vandaag",
   "Line spacing": "Regelafstand",
-  "Link automation": "Linkautomatisering",
+  "Link automation": "Automatisering koppelen",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Links koppelen bestaande automatiseringen aan deze ESL. Ze veranderen de automatiseringsacties niet en passen dit ontwerp niet toe.",
   "Live Home Assistant data on e-paper":
@@ -201,7 +201,7 @@ export default {
   "New icon state": "Nieuwe pictogramstatus",
   "No ESLs match your search or filter.":
     "Geen enkele ESLs komt overeen met uw zoekopdracht of filter.",
-  "No connected automations": "Geen aangesloten automatiseringen",
+  "No connected automations": "Geen gekoppelde automatiseringen",
   "No error": "Geen fout",
   "No matching automations": "Geen overeenkomende automatiseringen",
   "No successful image": "Geen succesvolle afbeelding",
@@ -216,7 +216,7 @@ export default {
   "Paste a URL, or upload below": "Plak een URL of upload deze hieronder",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
     "Plak een payload (een lijst met imagespec elementen) of een volledige ble_esl.write actie. Elementen die door een sjabloon of een flow-indeling worden geplaatst, kunnen niet in de ontwerper worden geplaatst en worden vermeld.",
-  "Payload YAML": "Nuttige lading YAML",
+  "Payload YAML": "Payload YAML",
   "Payload exported": "Payload geëxporteerd",
   "Position & size (px)": "Positie en grootte (px)",
   "Press Ctrl+C to copy": "Druk op Ctrl+C om te kopiëren",
@@ -361,7 +361,7 @@ export default {
   Visible: "Zichtbaar",
   When: "Tijdstip",
   Width: "Breedte",
-  Payload: "Nuttige lading",
+  Payload: "Payload",
   Gauge: "Meter",
   Unit: "Eenheid",
   designer: "ontwerper",

@@ -171,7 +171,7 @@ export default {
   "Edit selected automation design": "선택한 자동화 디자인 편집",
   "Save automation": "자동화 저장",
   "Switch to Display mode before saving this automation.":
-    "이 자동화를 저장하려면 디스플레이 모드로 전환하세요.",
+    "이 자동화를 저장하려면 화면 모드로 전환하세요.",
   "Automation configuration ID is missing.": "자동화 구성 ID가 없습니다.",
   "Automation configuration could not be loaded.":
     "자동화 구성을 불러오지 못했습니다.",
@@ -231,8 +231,8 @@ export default {
   Boolean: "참/거짓",
   "Object, array or null": "객체, 배열 또는 null",
   "Object or array": "객체 또는 배열",
-  "Remove parameter {name}": "변수 {name} 삭제",
-  Remove: "삭제",
+  "Remove parameter {name}": "변수 {name} 제거",
+  Remove: "제거",
   "Enter a preview value for {name}.":
     "미리보기 변수 {name}의 값을 입력하세요.",
   "No preview parameters yet. Add one for a variable used by a template.":

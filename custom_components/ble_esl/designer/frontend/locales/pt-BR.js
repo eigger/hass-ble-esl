@@ -183,7 +183,7 @@ export default {
   "Last successful send": "Último envio bem-sucedido",
   "Later today": "Hoje mais tarde",
   "Line spacing": "Espaçamento entre linhas",
-  "Link automation": "Automação de links",
+  "Link automation": "Vincular automação",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "Links associam automações existentes a este ESL. Eles não alteram as ações de automação nem aplicam esse design.",
   "Live Home Assistant data on e-paper":
@@ -201,7 +201,7 @@ export default {
   "New icon state": "Novo estado do ícone",
   "No ESLs match your search or filter.":
     "Nenhum ESLs corresponde à sua pesquisa ou filtro.",
-  "No connected automations": "Nenhuma automação conectada",
+  "No connected automations": "Nenhuma automação vinculada",
   "No error": "Nenhum erro",
   "No matching automations": "Nenhuma automação correspondente",
   "No successful image": "Nenhuma imagem bem-sucedida",
@@ -215,9 +215,9 @@ export default {
   "Outline width": "Largura do contorno",
   "Paste a URL, or upload below": "Cole um URL ou faça upload abaixo",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
-    "Cole uma carga útil (uma lista de elementos imagespec) ou uma ação ble_esl.write inteira. Os elementos colocados por um modelo ou layout de fluxo não podem ser colocados no designer e são listados.",
-  "Payload YAML": "Carga útil YAML",
-  "Payload exported": "Carga útil exportada",
+    "Cole um payload (uma lista de elementos imagespec) ou uma ação ble_esl.write inteira. Os elementos colocados por um modelo ou layout de fluxo não podem ser colocados no designer e são listados.",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "Payload exportado",
   "Position & size (px)": "Posição e tamanho (px)",
   "Press Ctrl+C to copy": "Pressione Ctrl+C para copiar",
   "Preview updating": "Atualização da pré-visualização",
@@ -362,7 +362,7 @@ export default {
   Visible: "Visível",
   When: "Momento",
   Width: "Largura",
-  Payload: "Carga útil",
+  Payload: "Payload",
   Gauge: "Medidor",
   Unit: "Unidade",
   designer: "designer",
@@ -627,9 +627,9 @@ export default {
   "This ESL has no registered device":
     "Este ESL não tem um dispositivo registrado",
   "The automation payload must be a list of objects":
-    "A carga útil da automação deve ser uma lista de objetos",
+    "O payload da automação deve ser uma lista de objetos",
   "The automation payload is too large to import (5 MiB maximum)":
-    "A carga útil da automação é grande demais para importar (máximo de 5 MiB)",
+    "O payload da automação é grande demais para importar (máximo de 5 MiB)",
   "That element is not in the display": "Esse elemento não está na exibição",
   "That is an imagespec element already": "Esse já é um elemento imagespec",
   "Choose a sensor type": "Escolha um tipo de sensor",
@@ -650,7 +650,7 @@ export default {
   "This is not usable YAML: it is nested too deeply":
     "Este YAML não é utilizável: está aninhado profundamente demais",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
-    "Cole uma carga útil (uma lista de elementos) ou uma ação ble_esl.write com carga útil",
+    "Cole um payload (uma lista de elementos) ou uma ação ble_esl.write com payload",
   "Automation is not available": "A automação não está disponível",
   "This automation has no editable configuration":
     "Esta automação não tem uma configuração editável",
