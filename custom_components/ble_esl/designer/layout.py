@@ -602,6 +602,23 @@ def hidden_items(document):
     ]
 
 
+def unsupported_items(document):
+    """What a payload cannot hold at all, so it cannot be saved into an automation."""
+    items = []
+    for element in document["elements"]:
+        if (element.get("rotation") or 0) % 90:
+            items.append(
+                f"{element['id']}: a payload turns elements in steps of 90°, "
+                f"not {element['rotation']}°"
+            )
+        if element["entity_id"].startswith("weather.") and element["weather_when"] != "now":
+            items.append(
+                f"{element['id']}: a payload has no weather forecast; use a template over "
+                "the response of a Weather: Get forecasts action"
+            )
+    return items
+
+
 def frozen_items(document):
     """What a saved payload keeps as of now, because it cannot follow an entity."""
     frozen = []

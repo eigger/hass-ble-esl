@@ -41,12 +41,12 @@ test("shift selection shares properties and keyboard movement with one undo", as
   ).toEqual(["red", "red", "black"]);
   await page
     .getByRole("spinbutton", { name: "Rotation value (°)", exact: true })
-    .fill("33.3");
+    .fill("90");
   expect(
     await page.evaluate(() =>
       window.panel.document.elements.map((e) => e.rotation || 0),
     ),
-  ).toEqual([33.3, 33.3, 0]);
+  ).toEqual([90, 90, 0]);
   await page.getByRole("group", { name: "Display canvas" }).focus();
   await page.keyboard.press("ArrowDown");
   expect(

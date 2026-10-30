@@ -3,17 +3,13 @@ import { renderWeatherControls } from "../../../../custom_components/ble_esl/des
 
 const translate = (message) => message;
 
-test("weather inspector offers its time and field options with HA labels", () => {
+test("weather inspector offers its field options with HA labels and no forecast time", () => {
   const controls = renderWeatherControls(
     { entity_id: "weather.home" },
     { translate },
   );
 
-  expect(controls).toContain(
-    '<select data-property="weather_when" aria-label="Weather time">',
-  );
-  expect(controls).toContain('<option value="now" selected>Now</option>');
-  expect(controls).toContain('<option value="in_3_days" >In 3 days</option>');
+  expect(controls).not.toContain("weather_when");
   expect(controls).toContain(
     '<select data-property="weather_field" aria-label="Weather value">',
   );
@@ -26,7 +22,7 @@ test("weather inspector offers its time and field options with HA labels", () =>
   expect(controls).toContain('<option value="humidity" >Humidity</option>');
 });
 
-test("weather inspector retains authored time and field selections", () => {
+test("weather inspector keeps the time of an older design so it can be set back to now", () => {
   const controls = renderWeatherControls(
     {
       weather_when: "tomorrow",
@@ -41,6 +37,7 @@ test("weather inspector retains authored time and field selections", () => {
   expect(controls).toContain(
     '<option value="wind_speed" selected>Wind speed</option>',
   );
+  expect(controls).toContain('<option value="now" >Now</option>');
   expect(controls).not.toContain('<option value="now" selected>');
   expect(controls).not.toContain('<option value="condition" selected>');
 });

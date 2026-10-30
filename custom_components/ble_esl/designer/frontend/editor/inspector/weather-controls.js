@@ -30,5 +30,11 @@ export function renderWeatherControls(element, { translate }) {
     )
     .join("");
 
-  return `<label>${translate("When")}<select data-property="weather_when" aria-label="${translate("Weather time")}">${timeOptions}</select></label><label>${translate("Show")}<select data-property="weather_field" aria-label="${translate("Weather value")}">${fieldOptions}</select></label>`;
+  // A payload holds no forecast: the time is offered only to turn an older
+  // design's forecast back into the weather now.
+  const when =
+    (element.weather_when || "now") === "now"
+      ? ""
+      : `<label>${translate("When")}<select data-property="weather_when" aria-label="${translate("Weather time")}">${timeOptions}</select></label>`;
+  return `${when}<label>${translate("Show")}<select data-property="weather_field" aria-label="${translate("Weather value")}">${fieldOptions}</select></label>`;
 }
