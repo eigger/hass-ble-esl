@@ -2457,6 +2457,15 @@ test("selection actions float clear of the handles, stay reachable and duplicate
   expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.box.b);
   for (const handle of boxes.handles)
     expect(overlaps(boxes.bar, handle)).toBe(false);
+  // Filling the whole height leaves no room above or below: it goes inside.
+  await page.evaluate(() => {
+    window.panel.element.height = window.panel.tag.height;
+    window.panel.edited();
+  });
+  boxes = await measure();
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.box.t);
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.box.b);
+  expect(boxes.bar.b).toBeLessThanOrEqual(boxes.wrap.b);
   // Only the buttons catch the pointer, not the gap between them.
   expect(
     await page.evaluate(

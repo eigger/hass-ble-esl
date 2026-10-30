@@ -62,16 +62,29 @@ export function renderStageMarkup({
   return `${preview ? `<img class="exact" src="${preview}" alt="${previewLabel}">` : ""}${layers.join("")}${guides}${selection}`;
 }
 
-// The action bar sits above the element, past the corner handles. An element
-// hugging the top edge has no room there (the canvas only pads 30px), so the
-// bar goes below it instead. Sizes are screen pixels; the bar is counter-scaled.
-export function selectionActionsPlacement({ top, zoom, handleSize }) {
+// The action bar sits above the element, past the corner handles. Where there
+// is no room above (the canvas only pads 30px) it goes below, and for an
+// element that fills the height it goes inside, under the top edge. Sizes are
+// screen pixels; the bar is counter-scaled.
+export function selectionActionsPlacement({
+  top,
+  height,
+  zoom,
+  handleSize,
+  stageHeight = Infinity,
+}) {
   const barHeight = handleSize * zoom >= 32 ? 44 : 28;
-  const gap = handleSize + 8 / zoom;
-  const flip = top * zoom + 30 < handleSize * zoom + 8 + barHeight;
-  return flip
-    ? { side: "top", gap: `calc(100% + ${gap}px)`, origin: "top center" }
-    : { side: "bottom", gap: `calc(100% + ${gap}px)`, origin: "bottom center" };
+  const gap = `calc(100% + ${handleSize + 8 / zoom}px)`;
+  const need = handleSize * zoom + 8 + barHeight;
+  if (top * zoom + 30 >= need)
+    return { side: "bottom", gap, origin: "bottom center" };
+  if ((stageHeight - (top + height)) * zoom + 30 >= need)
+    return { side: "top", gap, origin: "top center" };
+  return {
+    side: "top",
+    gap: `${handleSize + 8 / zoom}px`,
+    origin: "top center",
+  };
 }
 
 export function renderSelectionMarkup({

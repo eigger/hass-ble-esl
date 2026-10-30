@@ -2132,12 +2132,15 @@ export class BleEslDesigner extends HTMLElement {
           multiple: this.selectedElements.length > 1,
           // One bar for a group: on the element that was selected last.
           showActions: element.id === this.element?.id,
-          geometry: calculateSelectionOverlayGeometry({
-            element,
-            visible: this.visibleBounds(element),
-            zoom: this.zoom,
-            coarsePointer,
-          }),
+          geometry: {
+            ...calculateSelectionOverlayGeometry({
+              element,
+              visible: this.visibleBounds(element),
+              zoom: this.zoom,
+              coarsePointer,
+            }),
+            stageHeight: this.tag.height,
+          },
           translate: (key, values) => t(this.hass, key, values),
           escape: esc,
           deleteIcon: icon("delete"),
@@ -2200,7 +2203,10 @@ export class BleEslDesigner extends HTMLElement {
       const actions = overlay.querySelector(".selection-actions");
       if (actions) {
         actions.style.transform = `translateX(-50%) scale(${1 / this.zoom})`;
-        const placement = selectionActionsPlacement(geometry);
+        const placement = selectionActionsPlacement({
+          ...geometry,
+          stageHeight: this.tag.height,
+        });
         actions.style.top = placement.side === "top" ? placement.gap : "";
         actions.style.bottom = placement.side === "bottom" ? placement.gap : "";
         actions.style.transformOrigin = placement.origin;
