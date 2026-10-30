@@ -107,8 +107,9 @@ export function handleKey(panel, event) {
     event.preventDefault();
     // Close the menu first, and take its focus back, so the dialog returns
     // focus to a live element rather than the removed menu button.
+    const menuOpen = !!panel.shadowRoot.querySelector(".context-menu");
     panel.closeContextMenu();
-    panel.focusElement();
+    if (menuOpen) panel.focusElement();
     openShortcutsDialog(panel.hass);
     return;
   }

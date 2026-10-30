@@ -2535,3 +2535,21 @@ test("? typed inside a dialog hosted by the panel is not a shortcut", async ({
     page.getByRole("dialog", { name: "Keyboard & mouse tips" }),
   ).toHaveCount(0);
 });
+
+test("? from the context menu closes it and focus returns to the canvas afterwards", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.locator(".el").first().click({ button: "right" });
+  await expect(page.locator(".context-menu")).toBeVisible();
+  await page.locator(".context-menu button").first().focus();
+  await page.keyboard.press("?");
+  const dialog = page.getByRole("dialog", { name: "Keyboard & mouse tips" });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator(".context-menu")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  // Not lost on <body>: the canvas element has focus again.
+  await expect(page.locator(".el.selected")).toBeFocused();
+});
