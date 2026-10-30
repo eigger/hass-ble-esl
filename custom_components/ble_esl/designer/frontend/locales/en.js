@@ -596,4 +596,6 @@ export default {
     "Show hidden icons faintly for editing; does not change the ESL image",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Every element type the ESL can draw, set field by field: choose one, then press",
+  "Selected element actions": "Selected element actions",
+  "Duplicate selected element": "Duplicate selected element",
 };

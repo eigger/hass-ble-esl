@@ -145,7 +145,7 @@ test("selection view scales handles with zoom and guides match their axis", () =
   expect(markup).toContain("left:12px;top:21px;width:12px;height:10px");
   expect(markup).toContain("width:16px;height:16px");
   expect(markup).toContain('aria-label="Resize nw"');
-  expect(markup).toContain("transform:scale(0.5)");
+  expect(markup).toContain("translateX(-50%) scale(0.5)");
   expect(markup).toContain("delete-icon");
 
   const guides = renderAlignmentGuides([

@@ -610,4 +610,6 @@ export default {
     "Mostra in modo tenue le icone nascoste per la modifica; non cambia l'immagine dell'ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Ogni tipo di elemento che l'ESL può disegnare, imposta campo per campo: scegline uno, quindi premi",
+  "Selected element actions": "Azioni dell'elemento selezionato",
+  "Duplicate selected element": "Duplica l'elemento selezionato",
 };

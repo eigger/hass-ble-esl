@@ -594,4 +594,6 @@ export default {
     "편집용으로 숨겨진 아이콘을 흐리게 표시합니다. ESL 이미지는 바뀌지 않습니다.",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "ESL이 표시할 수 있는 요소를 필드별로 설정합니다. 유형을 선택한 후 누르세요:",
+  "Selected element actions": "선택한 요소 작업",
+  "Duplicate selected element": "선택한 요소 복제",
 };

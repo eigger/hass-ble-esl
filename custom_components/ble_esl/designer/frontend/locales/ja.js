@@ -608,4 +608,6 @@ export default {
     "編集用に非表示のアイコンを薄く表示します。ESLの画像は変わりません",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "ESLが描画できるすべての要素タイプ、フィールドごとに設定: 1 つ選択して、 を押します",
+  "Selected element actions": "選択した要素の操作",
+  "Duplicate selected element": "選択した要素を複製",
 };

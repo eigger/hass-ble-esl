@@ -572,4 +572,8 @@ export default {
   "Edit view": "編輯檢視",
   "Show hidden icons faintly for editing; does not change the ESL image": "編輯時淡淡顯示隱藏的圖示;不會改變 ESL 影像",
   "Every element type the ESL can draw, set field by field: choose one, then press": "ESL 可以繪製的每個元素類型，逐一欄位設定：選擇一個，然後按",
+  "Selected element actions":
+    "所選元素的操作",
+  "Duplicate selected element":
+    "複製所選元素",
 };

@@ -609,4 +609,6 @@ export default {
     "Toont verborgen pictogrammen vaag om te bewerken; het ESL-beeld verandert niet",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Elk elementtype dat de ESL kan tekenen, stel veld voor veld in: kies er één en druk vervolgens op",
+  "Selected element actions": "Acties voor het geselecteerde element",
+  "Duplicate selected element": "Geselecteerd element dupliceren",
 };

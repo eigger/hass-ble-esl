@@ -605,4 +605,6 @@ export default {
     "Słabo pokazuje ukryte ikony na potrzeby edycji; nie zmienia obrazu ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Każdy typ elementu, który może narysować ESL, ustawiaj pole po polu: wybierz jeden, a następnie naciśnij",
+  "Selected element actions": "Akcje dla zaznaczonego elementu",
+  "Duplicate selected element": "Duplikuj zaznaczony element",
 };

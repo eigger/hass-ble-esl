@@ -62,18 +62,46 @@ export function renderStageMarkup({
   return `${preview ? `<img class="exact" src="${preview}" alt="${previewLabel}">` : ""}${layers.join("")}${guides}${selection}`;
 }
 
+// The action bar sits above the element, past the corner handles. Where there
+// is no room above (the canvas only pads 30px) it goes below, and for an
+// element that fills the height it goes inside, under the top edge. Sizes are
+// screen pixels; the bar is counter-scaled.
+export function selectionActionsPlacement({
+  top,
+  height,
+  zoom,
+  handleSize,
+  stageHeight = Infinity,
+}) {
+  const barHeight = handleSize * zoom >= 32 ? 44 : 28;
+  const gap = `calc(100% + ${handleSize + 8 / zoom}px)`;
+  const need = handleSize * zoom + 8 + barHeight;
+  if (top * zoom + 30 >= need)
+    return { side: "bottom", gap, origin: "bottom center" };
+  if ((stageHeight - (top + height)) * zoom + 30 >= need)
+    return { side: "top", gap, origin: "top center" };
+  return {
+    side: "top",
+    gap: `${handleSize + 8 / zoom}px`,
+    origin: "top center",
+  };
+}
+
 export function renderSelectionMarkup({
   element,
   geometry,
   translate,
   escape,
   deleteIcon,
+  duplicateIcon = "",
   multiple = false,
+  showActions = true,
 }) {
   if (!element) return "";
   const { left, top, width, height, zoom, handleSize } = geometry;
+  const placement = selectionActionsPlacement(geometry);
   const moveTarget = `<span class="move-handle" aria-label="${translate("Move selected element")}" style="position:absolute;left:${width / 2 - handleSize / 2}px;top:${height / 2 - handleSize / 2}px;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);background:var(--primary-color,#16838b);color:white;display:${Math.max(width, height) * zoom < 36 ? "grid" : "none"};place-items:center;pointer-events:auto;cursor:move">${materialIcon("move", 14)}</span>`;
-  return `<div class="selection-box" data-id="${escape(element.id)}" style="position:absolute;left:${left}px;top:${top}px;width:${width}px;height:${height}px;outline:${1.5 / zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${(multiple ? [] : ["nw", "ne", "sw", "se"]).map((corner) => `<span class="handle" data-corner="${corner}" aria-label="${translate("Resize {corner}", { corner })}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}<button class="delete-handle" data-action="delete" aria-label="${translate("Delete selected element")}" title="${translate("Delete")}" style="pointer-events:auto;transform:scale(${1 / zoom});transform-origin:bottom right">${deleteIcon}</button></div>`;
+  return `<div class="selection-box" data-id="${escape(element.id)}" style="position:absolute;left:${left}px;top:${top}px;width:${width}px;height:${height}px;outline:${1.5 / zoom}px solid var(--primary-color,#16838b);z-index:9999;pointer-events:none;overflow:visible">${(multiple ? [] : ["nw", "ne", "sw", "se"]).map((corner) => `<span class="handle" data-corner="${corner}" aria-label="${translate("Resize {corner}", { corner })}" style="position:absolute;left:${corner.endsWith("w") ? -handleSize : width}px;top:${corner.startsWith("n") ? -handleSize : height}px;right:auto;bottom:auto;width:${handleSize}px;height:${handleSize}px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px var(--primary-color,#16838b);pointer-events:auto;cursor:${corner === "nw" || corner === "se" ? "nwse" : "nesw"}-resize"></span>`).join("")}${moveTarget}${showActions ? `<div class="selection-actions" role="toolbar" aria-label="${translate("Selected element actions")}" style="position:absolute;left:50%;${placement.side}:${placement.gap};display:flex;gap:6px;pointer-events:none;transform:translateX(-50%) scale(${1 / zoom});transform-origin:${placement.origin}"><button class="selection-action" style="pointer-events:auto" data-action="duplicate" aria-label="${translate("Duplicate selected element")}" title="${translate("Duplicate")}">${duplicateIcon}</button><button class="selection-action delete-handle" style="pointer-events:auto" data-action="delete" aria-label="${translate("Delete selected element")}" title="${translate("Delete")}">${deleteIcon}</button></div>` : ""}</div>`;
 }
 
 export function renderAlignmentGuides(guides) {

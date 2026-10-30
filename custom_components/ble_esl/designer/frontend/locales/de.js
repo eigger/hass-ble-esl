@@ -613,4 +613,6 @@ export default {
     "Ausgeblendete Symbole zum Bearbeiten blass anzeigen; das ESL-Bild bleibt unverändert",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Jeder Elementtyp, den die ESL zeichnen kann, Feld für Feld festlegen: Wählen Sie einen aus und drücken Sie dann",
+  "Selected element actions": "Aktionen für das ausgewählte Element",
+  "Duplicate selected element": "Ausgewähltes Element duplizieren",
 };

@@ -606,4 +606,6 @@ export default {
     "Бледно показывает скрытые значки для редактирования; изображение ESL не меняется",
   "Every element type the ESL can draw, set field by field: choose one, then press":
     "Каждый тип элемента, который может отображать ESL, задайте поле за полем: выберите один, затем нажмите",
+  "Selected element actions": "Действия с выбранным элементом",
+  "Duplicate selected element": "Дублировать выбранный элемент",
 };
