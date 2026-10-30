@@ -20,15 +20,12 @@ export default {
   "Keyboard &amp; mouse tips": "Conseils pour le clavier et la souris",
   "Keyboard & mouse tips": "Conseils pour le clavier et la souris",
   "Display sent and acknowledged": "Affichage envoyé et accusé de réception",
-  "Not sent: the tag's write lock is on":
-    "Non envoyé : le verrouillage en écriture du tag est activé",
   "Not sent: the display is unchanged": "Non envoyé : l'affichage est inchangé",
   "Not sent: a newer write replaced this one":
     "Non envoyé : une écriture plus récente a remplacé celle-ci",
   "Sending failed": "Échec de l'envoi",
   "Loading {step}… ({done}/{count})": "Chargement {step}… ({done}/{count})",
   "element types": "types d'éléments",
-  "tags and displays": "étiquettes et écrans",
   "default (shrink ellipsis)": "par défaut (réduire les points de suspension)",
   "default (right)": "par défaut (à droite)",
   "default (floyd)": "par défaut (Floyd)",
@@ -143,19 +140,13 @@ export default {
   "ESL Manager": "Gestionnaire ESL",
   "Edit alias": "Modifier l'alias",
   "Edit component": "Modifier le composant",
-  "Edit tag design": "Modifier le design de l'étiquette",
   "Edit display text": "Modifier le texte affiché",
   "Edit sensor": "Modifier le capteur",
-  "Editing preview": "Aperçu de la modification",
   "Element actions": "Actions des éléments",
   "Element properties": "Propriétés des éléments",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Les modèles d'éléments restent tels qu'écrits : Home Assistant les restitue à chaque exécution de l'automatisation. Les composants du capteur et les modèles de champ sont disponibles dès maintenant.",
   "Entity name": "Nom de l'entité",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Chaque type d'élément que l'étiquette peut dessiner, définissez champ par champ : choisissez-en un, puis appuyez sur",
-  "Exact rendered display": "Affichage rendu exact",
-  "Exact rendered preview": "Aperçu exact du rendu",
   "Existing automation": "Automatisation existante",
   "Export JSON": "Exporter JSON",
   "Exporting payload…": "Exportation de la charge utile…",
@@ -233,8 +224,6 @@ export default {
   "Rain / snow": "Pluie / neige",
   "Rain chance": "Risque de pluie",
   "Redo (⌘/Ctrl Shift Z)": "Rétablir (⌘/Ctrl Maj Z)",
-  "Refresh tags": "Actualiser les étiquettes",
-  "Refreshing tags…": "Actualisation des étiquettes…",
   "Remove manual link": "Supprimer le lien manuel",
   "Replace display": "Remplacer le contenu de l’écran",
   "Resolved value": "Valeur résolue",
@@ -253,7 +242,6 @@ export default {
   "Select an element": "Sélectionnez un élément",
   "Send back": "Mettre à l’arrière-plan",
   "Send backward": "Reculer d’un plan",
-  "Send to tag": "Envoyer à l'étiquette",
   "Sending display…": "Envoi de l'affichage…",
   "Sensor tile style": "Style de tuile de capteur",
   "Sensor tile styles": "Styles de tuile de capteur",
@@ -285,8 +273,6 @@ export default {
   "Unsaved changes": "Modifications non enregistrées",
   "Upload image": "Télécharger l'image",
   "Use static value": "Utiliser une valeur statique",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des étiquettes dans Home Assistant.",
   "Vertical align": "Alignement vertical",
   "Visible state": "État visible",
   "Weather time": "Heure météo",
@@ -362,7 +348,6 @@ export default {
   Show: "Afficher",
   State: "État",
   Style: "Style",
-  Tag: "Étiquette",
   Temperature: "Température",
   "Tile style": "Style de tuile",
   Text: "Texte",
@@ -480,7 +465,6 @@ export default {
   "Last successful image": "Dernière image envoyée avec succès",
   "Edit automation design": "Modifier le design de l'automatisation",
   "Automation design": "Design de l'automatisation",
-  "Tag design": "Design de l'étiquette",
   "Importing automation…": "Importation de l'automatisation…",
   "Save to automation": "Enregistrer dans l'automatisation",
   True: "Vrai",
@@ -590,9 +574,6 @@ export default {
   Mixed: "Mixte",
   "Rotation value (°)": "Valeur de rotation (°)",
   "Show hidden icons": "Afficher les icônes masquées",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Affiche faiblement les icônes invisibles pour l’édition ; l’image de l’étiquette ne change pas",
-  "Tag orientation": "Orientation de l’étiquette",
   Portrait: "Portrait",
   Landscape: "Paysage",
   "Save to existing automation…":
@@ -614,6 +595,23 @@ export default {
     "Maj / Ctrl / ⌘ + clic sélectionne plusieurs éléments · Glisser sur une zone vide du canevas sélectionne une zone",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Conservé comme brouillon pour cette session du navigateur jusqu'à ce que vous créiez une automatisation ou enregistriez dans une.",
+  "Send to ESL": "Envoyer à l'ESL",
+  ESL: "ESL",
+  "ESL orientation": "Orientation de l'ESL",
+  "Refresh ESLs": "Actualiser les ESLs",
+  "Refreshing ESLs…": "Actualisation des ESLs…",
+  "Edit ESL design": "Modifier le design de l'ESL",
+  "ESL design": "Design de l'ESL",
+  "Not sent: the ESL's write lock is on":
+    "Non envoyé : le verrouillage en écriture de l'ESL est activé",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESLs dans Home Assistant.",
+  "Rendered view": "Vue rendue",
+  "Edit view": "Vue d'édition",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Affiche faiblement les icônes masquées pour l'édition ; l'image de l'ESL ne change pas",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Chaque type d'élément que l'ESL peut dessiner, défini champ par champ : choisissez-en un, puis appuyez sur",
   "Selected element actions": "Actions de l'élément sélectionné",
   "Duplicate selected element": "Dupliquer l'élément sélectionné",
 };

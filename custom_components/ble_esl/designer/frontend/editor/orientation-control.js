@@ -2,7 +2,7 @@ import { materialIcon } from "./material-icons.js";
 export function renderOrientation(tag, mode, busy, translate) {
   if (!tag || mode === "template" || tag.width === tag.height) return "";
   const portrait = tag.height > tag.width;
-  return `<span role="group" aria-label="${translate("Tag orientation")}" data-tag-orientation>${[
+  return `<span role="group" aria-label="${translate("ESL orientation")}" data-tag-orientation>${[
     false,
     true,
   ]

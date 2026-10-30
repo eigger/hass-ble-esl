@@ -173,7 +173,7 @@ frontend specs after runtime changes:
 - **Explicit side effects:** preview and editing do not transmit to a device.
   Designs are persisted only in automations (Create automation, Save to
   automation, Save to existing/another automation); unsaved work is a browser
-  draft. Send to tag is the explicit transmission action.
+  draft. Send to ESL is the explicit transmission action.
   Automation save changes only the validated matching action payload and does
   not send over Bluetooth.
 - **Recoverable failures:** loading and operation failures are surfaced with

@@ -20,8 +20,6 @@ export default {
   "Keyboard &amp; mouse tips": "Consejos para teclado y ratón",
   "Keyboard & mouse tips": "Consejos para teclado y ratón",
   "Display sent and acknowledged": "Pantalla enviada y confirmada",
-  "Not sent: the tag's write lock is on":
-    "No enviado: el bloqueo de escritura de la etiqueta está activado",
   "Not sent: the display is unchanged":
     "No enviado: la visualización no cambia",
   "Not sent: a newer write replaced this one":
@@ -29,7 +27,6 @@ export default {
   "Sending failed": "Error al enviar",
   "Loading {step}… ({done}/{count})": "Cargando {step}… ({done}/{count})",
   "element types": "tipos de elementos",
-  "tags and displays": "etiquetas y visualizaciones",
   "default (shrink ellipsis)": "predeterminado (reducir puntos suspensivos)",
   "default (right)": "predeterminado (derecha)",
   "default (floyd)": "predeterminado (floyd)",
@@ -144,19 +141,13 @@ export default {
   "ESL Manager": "Gestor ESL",
   "Edit alias": "Editar alias",
   "Edit component": "Editar componente",
-  "Edit tag design": "Editar diseño de la etiqueta",
   "Edit display text": "Editar texto para mostrar",
   "Edit sensor": "Editar sensor",
-  "Editing preview": "Vista previa de edición",
   "Element actions": "Acciones de elementos",
   "Element properties": "Propiedades del elemento",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Las plantillas de elementos permanecen tal como están escritas: Home Assistant las representa cada vez que se ejecuta la automatización. Los componentes del sensor y las plantillas de campo están disponibles a partir de ahora.",
   "Entity name": "Nombre de la entidad",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Cada tipo de elemento que la etiqueta puede dibujar, establezca campo por campo: elija uno, luego presione",
-  "Exact rendered display": "Visualización renderizada exacta",
-  "Exact rendered preview": "Vista previa renderizada exacta",
   "Existing automation": "Automatización existente",
   "Export JSON": "Exportar JSON",
   "Exporting payload…": "Exportando carga útil…",
@@ -234,8 +225,6 @@ export default {
   "Rain / snow": "Lluvia / nieve",
   "Rain chance": "Probabilidad de lluvia",
   "Redo (⌘/Ctrl Shift Z)": "Rehacer (⌘/Ctrl Cambio Z)",
-  "Refresh tags": "Actualizar etiquetas",
-  "Refreshing tags…": "Actualizando etiquetas...",
   "Remove manual link": "Eliminar enlace manual",
   "Replace display": "Reemplazar contenido de pantalla",
   "Resolved value": "Valor resuelto",
@@ -254,7 +243,6 @@ export default {
   "Select an element": "Seleccione un elemento",
   "Send back": "Enviar al fondo",
   "Send backward": "Enviar hacia atrás",
-  "Send to tag": "Enviar a etiqueta",
   "Sending display…": "Enviando visualización…",
   "Sensor tile style": "Estilo de mosaico del sensor",
   "Sensor tile styles": "Estilos de mosaico del sensor",
@@ -287,8 +275,6 @@ export default {
   "Unsaved changes": "Cambios no guardados",
   "Upload image": "Subir imagen",
   "Use static value": "Usar valor estático",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Los valores son los actuales. Utilice la acción de automatización para programar actualizaciones de etiquetas en Home Assistant.",
   "Vertical align": "Alineación vertical",
   "Visible state": "Estado visible",
   "Weather time": "Hora meteorológica",
@@ -364,7 +350,6 @@ export default {
   Show: "Mostrar",
   State: "Estado",
   Style: "Estilo",
-  Tag: "Etiqueta",
   Temperature: "Temperatura",
   "Tile style": "Estilo de mosaico",
   Text: "Texto",
@@ -482,7 +467,6 @@ export default {
   "Last successful image": "Última imagen enviada correctamente",
   "Edit automation design": "Editar diseño de la automatización",
   "Automation design": "Diseño de la automatización",
-  "Tag design": "Diseño de la etiqueta",
   "Importing automation…": "Importando automatización…",
   "Save to automation": "Guardar en la automatización",
   True: "Verdadero",
@@ -591,9 +575,6 @@ export default {
   Mixed: "Mixto",
   "Rotation value (°)": "Valor de giro (°)",
   "Show hidden icons": "Mostrar iconos ocultos",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Muestra tenuemente los iconos invisibles para editarlos; no cambia la imagen de la etiqueta",
-  "Tag orientation": "Orientación de la etiqueta",
   Portrait: "Vertical",
   Landscape: "Horizontal",
   "Save to existing automation…": "Guardar en una automatización existente…",
@@ -614,6 +595,23 @@ export default {
     "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
+  "Send to ESL": "Enviar al ESL",
+  ESL: "ESL",
+  "ESL orientation": "Orientación del ESL",
+  "Refresh ESLs": "Actualizar ESLs",
+  "Refreshing ESLs…": "Actualizando ESLs…",
+  "Edit ESL design": "Editar diseño del ESL",
+  "ESL design": "Diseño del ESL",
+  "Not sent: the ESL's write lock is on":
+    "No enviado: el bloqueo de escritura del ESL está activado",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Los valores son los actuales. Utiliza la acción de automatización para programar actualizaciones de los ESLs en Home Assistant.",
+  "Rendered view": "Vista renderizada",
+  "Edit view": "Vista de edición",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Muestra tenuemente los iconos ocultos para editarlos; no cambia la imagen del ESL",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Cada tipo de elemento que el ESL puede dibujar, establécelo campo por campo: elige uno y luego pulsa",
   "Selected element actions": "Acciones del elemento seleccionado",
   "Duplicate selected element": "Duplicar el elemento seleccionado",
 };

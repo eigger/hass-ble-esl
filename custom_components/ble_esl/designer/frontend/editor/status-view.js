@@ -7,7 +7,7 @@ export function sendButtonHint({ tag, busy, status, translate }) {
       "Discovery only: preview is available; sending is not supported yet.",
     );
   if (busy && status) return translate(status);
-  return translate("Send to tag");
+  return translate("Send to ESL");
 }
 
 export function appendStatusDismiss(panel, node) {

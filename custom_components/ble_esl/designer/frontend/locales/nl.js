@@ -21,8 +21,6 @@ export default {
   "Keyboard &amp; mouse tips": "Toetsenbord- en muistips",
   "Keyboard & mouse tips": "Toetsenbord- en muistips",
   "Display sent and acknowledged": "Weergave verzonden en bevestigd",
-  "Not sent: the tag's write lock is on":
-    "Niet verzonden: de schrijfvergrendeling van de tag is ingeschakeld",
   "Not sent: the display is unchanged":
     "Niet verzonden: de weergave is ongewijzigd",
   "Not sent: a newer write replaced this one":
@@ -30,7 +28,6 @@ export default {
   "Sending failed": "Verzenden mislukt",
   "Loading {step}… ({done}/{count})": "Laden {step}… ({done}/{count})",
   "element types": "elementtypen",
-  "tags and displays": "tags en displays",
   "default (shrink ellipsis)": "standaard (verkleind weglatingsteken)",
   "default (right)": "standaard (rechts)",
   "default (floyd)": "standaard (floyd)",
@@ -145,19 +142,13 @@ export default {
   "ESL Manager": "ESL-beheerder",
   "Edit alias": "Alias bewerken",
   "Edit component": "Component bewerken",
-  "Edit tag design": "Labelontwerp bewerken",
   "Edit display text": "Weergavetekst bewerken",
   "Edit sensor": "Sensor bewerken",
-  "Editing preview": "Voorbeeld van bewerken",
   "Element actions": "Elementacties",
   "Element properties": "Elementeigenschappen",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Elementsjablonen blijven zoals geschreven: Home Assistant geeft ze elke keer weer als de automatisering wordt uitgevoerd. Sensorcomponenten en veldsjablonen zijn vanaf nu beschikbaar.",
   "Entity name": "Naam van de entiteit",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Elk elementtype dat de tag kan tekenen, stel veld voor veld in: kies er één en druk vervolgens op",
-  "Exact rendered display": "Exacte weergave",
-  "Exact rendered preview": "Exact weergegeven voorbeeld",
   "Existing automation": "Bestaande automatisering",
   "Export JSON": "Exporteren JSON",
   "Exporting payload…": "Belading exporteren…",
@@ -235,8 +226,6 @@ export default {
   "Rain / snow": "Regen/sneeuw",
   "Rain chance": "Regenkans",
   "Redo (⌘/Ctrl Shift Z)": "Opnieuw (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Labels vernieuwen",
-  "Refreshing tags…": "Tags vernieuwen…",
   "Remove manual link": "Handmatige link verwijderen",
   "Replace display": "Scherminhoud vervangen",
   "Resolved value": "Opgeloste waarde",
@@ -255,7 +244,6 @@ export default {
   "Select an element": "Selecteer een element",
   "Send back": "Helemaal naar achteren",
   "Send backward": "Een laag naar achteren",
-  "Send to tag": "Naar label verzenden",
   "Sending display…": "Weergave verzenden…",
   "Sensor tile style": "Sensortegelstijl",
   "Sensor tile styles": "Sensortegelstijlen",
@@ -287,8 +275,6 @@ export default {
   "Unsaved changes": "Niet-opgeslagen wijzigingen",
   "Upload image": "Afbeelding uploaden",
   "Use static value": "Gebruik statische waarde",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Waarden zijn vanaf nu. Gebruik de automatiseringsactie om tagupdates in Home Assistant te plannen.",
   "Vertical align": "Verticaal uitlijnen",
   "Visible state": "Zichtbare staat",
   "Weather time": "Weertijd",
@@ -364,7 +350,6 @@ export default {
   Show: "Tonen",
   State: "Status",
   Style: "Stijl",
-  Tag: "Label",
   Temperature: "Temperatuur",
   "Tile style": "Tegelstijl",
   Text: "Tekst",
@@ -482,7 +467,6 @@ export default {
   "Last successful image": "Laatst succesvol verzonden afbeelding",
   "Edit automation design": "Automatiseringsontwerp bewerken",
   "Automation design": "Automatiseringsontwerp",
-  "Tag design": "Labelontwerp",
   "Importing automation…": "Automatisering importeren…",
   "Save to automation": "Opslaan in automatisering",
   True: "Waar",
@@ -588,9 +572,6 @@ export default {
   Mixed: "Gemengd",
   "Rotation value (°)": "Draaiwaarde (°)",
   "Show hidden icons": "Verborgen pictogrammen tonen",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Toont onzichtbare pictogrammen vaag om te bewerken; het labelbeeld verandert niet",
-  "Tag orientation": "Labeloriëntatie",
   Portrait: "Staand",
   Landscape: "Liggend",
   "Save to existing automation…": "Opslaan in bestaande automatisering…",
@@ -611,6 +592,23 @@ export default {
     "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wordt voor deze browsersessie als concept bewaard tot u een automatisering maakt of erin opslaat.",
+  "Send to ESL": "Naar ESL verzenden",
+  ESL: "ESL",
+  "ESL orientation": "ESL-oriëntatie",
+  "Refresh ESLs": "ESLs vernieuwen",
+  "Refreshing ESLs…": "ESLs worden vernieuwd…",
+  "Edit ESL design": "ESL-ontwerp bewerken",
+  "ESL design": "ESL-ontwerp",
+  "Not sent: the ESL's write lock is on":
+    "Niet verzonden: de schrijfvergrendeling van de ESL is ingeschakeld",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Waarden zijn vanaf nu. Gebruik de automatiseringsactie om ESL-updates in Home Assistant te plannen.",
+  "Rendered view": "Gerenderde weergave",
+  "Edit view": "Bewerkweergave",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Toont verborgen pictogrammen vaag om te bewerken; het ESL-beeld verandert niet",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Elk elementtype dat de ESL kan tekenen, stel veld voor veld in: kies er één en druk vervolgens op",
   "Selected element actions": "Acties voor het geselecteerde element",
   "Duplicate selected element": "Geselecteerd element dupliceren",
 };

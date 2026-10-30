@@ -6,7 +6,7 @@ ESL Manager and the Designer follow your Home Assistant profile language. All 13
 
 The designer is a visual way to make the **payload** of a [`ble_esl.write`](actions.md) action. What it shows, what it sends to the tag and the YAML it gives you are the same payload, drawn by the same [imagespec](https://github.com/eigger/imagespec) renderer, so a design you finish here is one you can paste into an automation and get the same picture.
 
-Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit tag design** on a tag card: the canvas has its size and colours.
+Open **ESL Manager** in the Home Assistant sidebar (it appears once a tag is configured; admins only). Choose **Edit ESL design** on a tag card: the canvas has its size and colours.
 
 ## ESL dashboard
 
@@ -14,11 +14,11 @@ ESL Manager opens a card dashboard showing each tag's alias from its existing te
 
 The image and **Last successful send** come from `last_updated_content`: the last successfully transmitted image and its timestamp. A failed transmission preserves these values while updating the latest error and duration. Synchronization comes from `display_in_sync`, comparing the successful image with the preview image. Missing/unavailable values show `—` or an unknown state.
 
-Choose **Edit tag design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
+Choose **Edit ESL design** to open the Designer and **Dashboard** to return without losing the current draft. Designer sends only on an explicit manual request; sensor changes do not transmit to tags.
 
-Designs live in automations. **Edit tag design** starts from a blank design, or from the unsaved draft this browser tab still holds for the tag; a linked automation's design is opened with **Edit automation design**. To keep a design, save it into an automation: **Create automation** makes a new one, **Save to existing automation…** writes it into an automation whose `ble_esl.write` action targets this tag, and **Save to automation** updates the automation being edited (**Save to another automation…** writes a copy into a different one). Work in progress is kept only as a draft in this browser tab's session storage; nothing is stored per tag on the server.
+Designs live in automations. **Edit ESL design** starts from a blank design, or from the unsaved draft this browser tab still holds for the tag; a linked automation's design is opened with **Edit automation design**. To keep a design, save it into an automation: **Create automation** makes a new one, **Save to existing automation…** writes it into an automation whose `ble_esl.write` action targets this tag, and **Save to automation** updates the automation being edited (**Save to another automation…** writes a copy into a different one). Work in progress is kept only as a draft in this browser tab's session storage; nothing is stored per tag on the server.
 
-Each tag card shows one **Edit tag design** button, whether or not automations
+Each tag card shows one **Edit ESL design** button, whether or not automations
 are linked. To edit a linked automation's design, open **Connected automations**
 and choose that automation. The editor header shows the tag and automation being
 edited, and **Save to automation** remains labelled on narrow screens.
@@ -83,7 +83,7 @@ the remaining element options; values in the collapsed section are preserved.
 
 Where an element sits comes from its **frame** (X, Y, Width, Height), not from keys you type. A rectangle fills its frame, a circle is centred in it, a QR code, barcode or icon takes its size from it, a polygon's corners are percentages of it. That is why every element moves and resizes the same way, and why the exported payload has ordinary absolute coordinates. `text_fit` and `new_multiline` fit the frame, `rich_text` sits on the frame's middle line, and a line runs through the middle of the frame (vertical when the frame is taller than it is wide). Text, tables and the like are drawn from the frame's top left at their own size.
 
-Any value can be a [Jinja template](https://www.home-assistant.io/docs/configuration/templating/): `{{ states('sensor.room') }} °C`, `{{ [1, 2, 3] }}` for a list. The preview renders it with the current state and redraws when an entity it reads changes. The designer never automatically transmits when sensor values change. Schedule tag updates with Home Assistant automations using the exported action. **Send to tag** writes the current design now; it does not store the design anywhere.
+Any value can be a [Jinja template](https://www.home-assistant.io/docs/configuration/templating/): `{{ states('sensor.room') }} °C`, `{{ [1, 2, 3] }}` for a list. The preview renders it with the current state and redraws when an entity it reads changes. The designer never automatically transmits when sensor values change. Schedule ESL updates with Home Assistant automations using the exported action. **Send to ESL** writes the current design now; it does not store the design anywhere.
 
 > `plot` reads the recorder, so it needs one that records the entity. A colour an imagespec element asks for that the tag cannot show is drawn as the nearest one it can; the older components only offer the tag's colours.
 

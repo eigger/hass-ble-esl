@@ -116,7 +116,7 @@ test("sensor defaults, keyboard, dragging, resize, undo, save and preview", asyn
     path: "artifacts/designer-desktop.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Send to tag", exact: true }).click();
+  await page.getByRole("button", { name: "Send to ESL", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("demo_only");
   expect(errors).toEqual([]);
 });
@@ -142,9 +142,9 @@ test("entity drag and drop, discovery-only tag and narrow screen", async ({
     targetPosition: { x: 35, y: 35 },
   });
   await expect(page.locator(".el")).toHaveCount(1);
-  await page.getByLabel("Tag", { exact: true }).selectOption("demo-discovery");
+  await page.getByLabel("ESL", { exact: true }).selectOption("demo-discovery");
   await expect(
-    page.getByRole("button", { name: "Send to tag" }),
+    page.getByRole("button", { name: "Send to ESL" }),
   ).toBeDisabled();
   await expect(page.getByRole("status")).toContainText("Discovery only");
   await pickSensor(page, "sensor.office_temperature");
@@ -501,7 +501,7 @@ test("template mode has no send or preview button and offers every sensor", asyn
     .getByRole("button", { name: "Sensor tile styles", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Send to tag", exact: true }),
+    page.getByRole("button", { name: "Send to ESL", exact: true }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Preview", exact: true }),
@@ -854,7 +854,7 @@ test("Bluetooth send transfers the design without storing it on the server", asy
       actions.push(request.postDataJSON().action);
   });
   await page.locator('[data-add="text"]').click();
-  await page.getByRole("button", { name: "Send to tag", exact: true }).click();
+  await page.getByRole("button", { name: "Send to ESL", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("demo_only");
   expect(actions).toContain("send");
   expect(actions).not.toContain("save");
@@ -2311,8 +2311,8 @@ test("preview errors stay inline and toasts use the full width on a phone", asyn
 test("the Send button explains why it is off and shows progress while sending", async ({
   page,
 }) => {
-  const send = page.getByRole("button", { name: "Send to tag", exact: true });
-  await expect(send).toHaveAttribute("title", "Send to tag");
+  const send = page.getByRole("button", { name: "Send to ESL", exact: true });
+  await expect(send).toHaveAttribute("title", "Send to ESL");
   await page.evaluate(() => {
     window.panel.tag = { ...window.panel.tag, writable: false };
     window.panel.render();
