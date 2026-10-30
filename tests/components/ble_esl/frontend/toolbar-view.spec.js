@@ -52,3 +52,71 @@ test("toolbar view preserves editor actions and accessible disabled hints", asyn
   expect(result.style).toContain(".toolbar{position:sticky");
   expect(result.style).toContain(":host([managed]) .toolbar{position:sticky}");
 });
+
+test("toolbar groups edit controls apart from the output actions", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const order = await page.evaluate(async () => {
+    const { renderToolbar } = await import("/frontend/editor/toolbar-view.js");
+    const host = document.createElement("div");
+    host.innerHTML = renderToolbar({
+      tag: { writable: true },
+      mode: "display",
+      dirty: false,
+      automationTargets: true,
+      undoAvailable: true,
+      redoAvailable: true,
+      zoomMode: "fit",
+      zoom: 1,
+      tags: [],
+      translate: (key) => key,
+      escapeHtml: (value) => String(value),
+      icon: () => "",
+      tagName: () => "",
+      renderTagOptions: () => "",
+      sendHint: () => "",
+    });
+    const toolbar = host.firstElementChild;
+    const end = toolbar.querySelector(".tool-end");
+    return {
+      separator: !!toolbar.querySelector('[role="separator"]'),
+      outside: [...toolbar.children]
+        .map((node) => node.dataset.action)
+        .filter(Boolean),
+      output: [...end.children].map((node) => node.dataset.action || node.id),
+    };
+  });
+  expect(order.separator).toBe(true);
+  expect(order.outside.slice(0, 3)).toEqual(["reload", "undo", "redo"]);
+  expect(order.output).toEqual([
+    "dirty-badge",
+    "save",
+    "send",
+    "create-automation",
+    "save-to-other-automation",
+  ]);
+});
+
+test("toolbar shows no divider in sensor style mode", async ({ page }) => {
+  await page.goto("/");
+  const dividers = await page.evaluate(async () => {
+    const { renderToolbar } = await import("/frontend/editor/toolbar-view.js");
+    const host = document.createElement("div");
+    host.innerHTML = renderToolbar({
+      tag: { writable: true },
+      mode: "template",
+      tags: [],
+      zoomMode: "fit",
+      zoom: 1,
+      translate: (key) => key,
+      escapeHtml: (value) => String(value),
+      icon: () => "",
+      tagName: () => "",
+      renderTagOptions: () => "",
+      sendHint: () => "",
+    });
+    return host.querySelectorAll('[role="separator"]').length;
+  });
+  expect(dividers).toBe(0);
+});
