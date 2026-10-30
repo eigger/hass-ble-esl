@@ -120,6 +120,10 @@ test("native elements share compatible spec properties", async ({ page }) => {
     p.selectIds(p.document.elements.map((e) => e.id));
     p.render();
   });
+  // Field names are the YAML keys, capitalised like in the single-element panel.
+  await expect(
+    page.locator('label:has([data-property="spec.size"])'),
+  ).toHaveText(/^Size/);
   await page.locator('[data-property="spec.size"]').fill("32");
   expect(
     await page.evaluate(() =>
