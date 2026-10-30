@@ -1260,6 +1260,10 @@ async def test_forecast_values_cannot_be_saved_into_a_payload(hass, wolink_entry
     assert result["payload_data"] is None
     assert len(result["validation_errors"]) == 1
     assert "no weather forecast" in result["validation_errors"][0]
+    # A hidden element is not in the payload, so it does not stop the save.
+    doc["elements"][0]["visible"] = False
+    assert not (await hass.data[KEY].export(wolink_entry, doc))["validation_errors"]
+    doc["elements"][0]["visible"] = True
     # The weather now is a plain state.
     doc["elements"][0]["weather_when"] = "now"
     assert not (await hass.data[KEY].export(wolink_entry, doc))["validation_errors"]

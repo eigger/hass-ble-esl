@@ -44,7 +44,7 @@ layouts:
       size: 26
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[1] if f | length > 1 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[1] if f | length > 1 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 70
       y: 90
@@ -75,7 +75,7 @@ layouts:
       size: 26
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[2] if f | length > 2 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[2] if f | length > 2 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 200
       y: 90
@@ -106,7 +106,7 @@ layouts:
       size: 26
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[3] if f | length > 3 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[3] if f | length > 3 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 330
       y: 90
@@ -138,7 +138,7 @@ layouts:
       size: 16
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[1] if f | length > 1 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[1] if f | length > 1 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 45
       y: 26
@@ -169,7 +169,7 @@ layouts:
       size: 16
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[2] if f | length > 2 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[2] if f | length > 2 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 125
       y: 26
@@ -200,7 +200,7 @@ layouts:
       size: 16
       color: black
     - type: icon
-      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[3] if f | length > 3 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy'), d.condition | default('cloudy')) }}"
+      value: "{% set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else [] %}{% set d = f[3] if f | length > 3 else {} %}weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(d.condition | default('cloudy', true), d.condition | default('cloudy', true)) }}"
       anchor: mt
       x: 205
       y: 26

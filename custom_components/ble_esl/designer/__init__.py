@@ -255,7 +255,7 @@ class Designer:
             issues.append(f"render: {err}")
         # Only the payload is saved: what a payload cannot keep live is as of now.
         frozen = frozen_items(document)
-        issues.extend(f"blocking: {item}" for item in unsupported_items(document))
+        issues.extend(f"blocking: {item}" for item in unsupported_items(document, payload))
         issues.extend(hidden_items(document))
         issues.extend(frozen)
         automation_payload = live_payload(
