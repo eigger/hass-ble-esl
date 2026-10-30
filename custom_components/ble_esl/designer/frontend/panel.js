@@ -1762,6 +1762,22 @@ export class BleEslDesigner extends HTMLElement {
     this.session.pushUndo(snapshot);
     this.syncHistoryControls();
   }
+  // Arrow-key nudges within half a second of each other are one undo step.
+  pushNudgeUndo(snapshot) {
+    const stack = this.session.undoStack;
+    const now = Date.now();
+    if (
+      this._nudgeUndo &&
+      stack[stack.length - 1] === this._nudgeUndo &&
+      now - this._nudgeAt < 500
+    ) {
+      this._nudgeAt = now;
+      return;
+    }
+    this.pushUndo(snapshot);
+    this._nudgeUndo = snapshot;
+    this._nudgeAt = now;
+  }
   specInput(input) {
     const element = this.element;
     if (element?.type !== "imagespec") return;

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   adoptLayerRecords,
   alignmentGuides,
+  clampGroupMove,
   clampMoved,
   clampResized,
   contextMenuPosition,
@@ -296,4 +297,22 @@ test("resize clamping keeps renderer measured content inside tag dimensions", ()
   });
   expect(result).toMatchObject({ x: 4, y: 2, width: 14, height: 17 });
   expect(item).toMatchObject({ x: -2, y: -1, width: 20, height: 20 });
+});
+
+test("a group stops at the label edges and is not pulled back from an overhang", () => {
+  const label = { width: 100, height: 50 };
+  const boxes = [
+    [10, 5, 30, 20],
+    [60, 10, 90, 45],
+  ];
+  // 10 px of room on the right, 5 above, 5 below.
+  expect(clampGroupMove(boxes, label, 30, 0)).toEqual([10, 0]);
+  expect(clampGroupMove(boxes, label, -30, 0)).toEqual([-10, 0]);
+  expect(clampGroupMove(boxes, label, 0, -9)).toEqual([0, -5]);
+  expect(clampGroupMove(boxes, label, 0, 9)).toEqual([0, 5]);
+  expect(clampGroupMove(boxes, label, 4, -2)).toEqual([4, -2]);
+  // Already hanging off the left: it cannot go further left, but can come back.
+  const overhang = [[-6, 5, 20, 20]];
+  expect(clampGroupMove(overhang, label, -4, 0)).toEqual([0, 0]);
+  expect(clampGroupMove(overhang, label, 8, 0)).toEqual([8, 0]);
 });

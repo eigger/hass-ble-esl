@@ -236,6 +236,20 @@ export function moveBound(element, tag, visible) {
   );
 }
 
+// How far a group may move without leaving the label. `boxes` are absolute
+// [left, top, right, bottom] frames. A side that already hangs off the label
+// is not pulled back: the group just cannot go further that way.
+export function clampGroupMove(boxes, tag, dx, dy) {
+  const left = Math.min(...boxes.map((box) => box[0])),
+    top = Math.min(...boxes.map((box) => box[1])),
+    right = Math.max(...boxes.map((box) => box[2])),
+    bottom = Math.max(...boxes.map((box) => box[3]));
+  return [
+    Math.min(Math.max(dx, Math.min(0, -left)), Math.max(0, tag.width - right)),
+    Math.min(Math.max(dy, Math.min(0, -top)), Math.max(0, tag.height - bottom)),
+  ];
+}
+
 // Return a changed copy so callers retain ownership of document mutation and
 // history. `bound` preserves the existing rule for imported off-label frames.
 export function clampMoved(element, tag, bound, visible) {
