@@ -1300,7 +1300,12 @@ class EslManager extends HTMLElement {
         JSON.stringify(snapshot.document);
       const draft = this.readAutomationDraft(source);
       this.clearAutomationDraft(source);
-      this.message("Automation saved.", "success");
+      this.message(
+        exported.frozen?.length
+          ? "Automation saved. Some values are as of now, not live."
+          : "Automation saved.",
+        "success",
+      );
       if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
@@ -1331,7 +1336,6 @@ class EslManager extends HTMLElement {
       entry_id: entryId,
       document: snapshot.document,
       preview_variables: snapshot.preview_variables || {},
-      automation_edit: true,
     });
     if (
       exported.writable !== true ||
@@ -1431,11 +1435,9 @@ class EslManager extends HTMLElement {
     data.payload = exported.payload_data;
     if (exported.rotate) data.rotate = exported.rotate;
     else delete data.rotate;
-    if (exported.design_source !== undefined)
-      data.design = exported.design_source;
-    else delete data.design;
-    if (exported.design_specs) data.design_specs = exported.design_specs;
-    else delete data.design_specs;
+    // The payload is all that is kept: drop the source an older save left.
+    delete data.design;
+    delete data.design_specs;
     // White is what the action draws on when it names no background.
     if (
       background !== undefined &&
@@ -1575,7 +1577,13 @@ class EslManager extends HTMLElement {
         background: snapshot.document?.background,
       });
       if (!written || !current()) return;
-      this.message("Saved to {name}.", "success", { name: target.name });
+      this.message(
+        exported.frozen?.length
+          ? "Saved to {name}. Some values are as of now, not live."
+          : "Saved to {name}.",
+        "success",
+        { name: target.name },
+      );
       // A loaded automation keeps its own unsaved state; a design started here
       // is now kept in the automation it was saved to.
       if (

@@ -1,21 +1,12 @@
-"""Keep component templates intact while HA renders an automation's action data."""
+"""Read the ``design`` an older release saved in an automation's action data.
+
+New saves keep only the payload; actions saved earlier still run from their design.
+"""
 
 import json
 
 PREFIX = "{{ "
 SUFFIX = " | from_json }}"
-
-
-def encode_design(document):
-    """Return one constant expression; nested component Jinja stays literal.
-
-    HA renders action data recursively, but does not render a template's result
-    again. Decode the JSON only once HA reaches the write action, leaving the
-    component renderer to supply its own value/entity context.
-    """
-    return (
-        PREFIX + json.dumps(json.dumps(document, ensure_ascii=False), ensure_ascii=False) + SUFFIX
-    )
 
 
 def decode_design(value):

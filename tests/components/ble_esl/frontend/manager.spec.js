@@ -1991,7 +1991,7 @@ test("manager header fits narrow mobile widths without clipping controls", async
   expect(bounds.childrenFit).toBe(true);
 });
 
-test("automation editing keeps component rules and writes the source back", async ({
+test("an automation saved with an older design opens from it and is saved as a payload only", async ({
   page,
   request,
 }) => {
@@ -2062,10 +2062,9 @@ test("automation editing keeps component rules and writes the source back", asyn
   await expect(page.locator(".message")).toContainText("Automation saved.");
   const response = await request.get("/api/config/automation/config/morning");
   const saved = await response.json();
-  const decoded = JSON.parse(
-    JSON.parse(saved.actions[0].data.design.slice(3, -15)),
-  );
-  expect(decoded.elements[0]).toMatchObject(source.elements[0]);
+  // An older save's design opened fine; saving keeps the payload alone.
+  expect(saved.actions[0].data.design).toBeUndefined();
+  expect(saved.actions[0].data.payload.length).toBeGreaterThan(0);
 });
 
 for (const [name, action] of [

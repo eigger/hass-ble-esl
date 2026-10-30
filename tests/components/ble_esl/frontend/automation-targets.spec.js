@@ -117,10 +117,10 @@ test("a loaded automation's design saves into a different matching automation on
   const saved = await automation(request, "temperature");
   const data = saved.actions[1].data;
   expect(data.payload).toHaveLength(2);
-  expect(data.design).toEqual(expect.any(String));
+  expect(data.design).toBeUndefined();
   expect(data.background).toBe("white");
   expect(data.rotate).toBeUndefined();
-  // Only the write action's design data changed.
+  // Only the write action's payload data changed.
   expect(withoutWriteData(saved, 1)).toEqual(withoutWriteData(temperature, 1));
   expect(await automation(request, "morning")).toEqual(morning);
   expect(await automation(request, "night")).toEqual(night);
@@ -202,7 +202,7 @@ test("a blank design saves into an existing automation and picks its write actio
   const saved = await automation(request, "morning");
   expect(saved.actions[1]).toEqual(config.actions[1]);
   expect(saved.actions[2].data.payload).toHaveLength(1);
-  expect(saved.actions[2].data.design).toEqual(expect.any(String));
+  expect(saved.actions[2].data.design).toBeUndefined();
   expect(withoutWriteData(saved, 2)).toEqual(withoutWriteData(config, 2));
   expect(await automation(request, "temperature")).toEqual(temperature);
   // The design now lives in that automation: nothing is left unsaved.

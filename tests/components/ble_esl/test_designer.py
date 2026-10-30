@@ -106,7 +106,7 @@ async def test_legacy_auto_update_options_are_dropped(hass, wolink_entry):
     )
     exported = await hass.data[KEY].export(wolink_entry, legacy)
     assert exported["validation_errors"] == []
-    for text in (exported["design_source"], exported["service"]):
+    for text in (exported["payload"], exported["service"]):
         assert "auto_update" not in text
         assert "interval" not in text
 
@@ -406,16 +406,14 @@ async def test_export_yaml_is_a_ready_to_use_write_action(hass, wolink_entry):
     payload = (await manager.draw(wolink_entry, document()))[2]
     result = await manager.export(wolink_entry, document())
     assert yaml.safe_load(result["payload"]) == payload
-    assert result["issues"] == []
+    # The sensor component is saved as of now: the payload holds no design source.
     assert result["validation_errors"] == []
-    assert result["warnings"] == []
+    assert result["issues"] == result["warnings"]
+    assert len(result["warnings"]) == 1
+    assert "as of now in the payload" in result["warnings"][0]
     service = yaml.safe_load(result["service"])
     assert service["action"] == "ble_esl.write"
-    assert service["data"] == {
-        "background": "white",
-        "payload": payload,
-        "design": result["design_source"],
-    }
+    assert service["data"] == {"background": "white", "payload": payload}
     assert service["target"] == {"device_id": wolink_entry.runtime_data.device_id}
     assert result["writable"] is True
     assert "&id" not in result["service"]
@@ -463,7 +461,7 @@ async def test_websocket_export(hass, wolink_entry, hass_ws_client):
         "service",
         "issues",
         "payload_data",
-        "design_source",
+        "frozen",
         "rotate",
         "validation_errors",
         "warnings",
@@ -1222,3 +1220,33 @@ def test_automation_draft_preserves_jinja_instead_of_exported_snapshot():
     exported = export_yaml([{**live[0], "value": "21"}], "white", "current-device", live=live)
     config = automation_draft(exported, "Room")
     assert config["actions"][0]["data"]["payload"] == live
+
+
+async def test_export_reports_what_the_payload_cannot_keep_live(hass, wolink_entry):
+    base = {"x": 0, "y": 0, "width": 60, "height": 30}
+    doc = {
+        "version": 1,
+        "elements": [
+            {"id": "gone", "type": "rectangle", "visible": False, **base},
+            {
+                "id": "native",
+                "type": "imagespec",
+                "spec": {"type": "text", "value": "x", "size": 12},
+                "field_templates": {"color": "{{ 'red' }}"},
+                **base,
+            },
+            {
+                "id": "live",
+                "type": "imagespec",
+                "spec": {"type": "text", "value": "{{ states('sensor.x') }}", "size": 12},
+                **base,
+            },
+        ],
+    }
+    result = await hass.data[KEY].export(wolink_entry, doc)
+    assert [item.split(":")[0] for item in result["frozen"]] == ["native"]
+    assert any(w.startswith("gone: hidden") for w in result["warnings"])
+    assert set(result["frozen"]) <= set(result["warnings"])
+    assert not result["validation_errors"]
+    # A template that stays live is not reported as frozen.
+    assert result["payload_data"][-1]["value"] == "{{ states('sensor.x') }}"

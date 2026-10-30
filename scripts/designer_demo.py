@@ -41,6 +41,8 @@ from custom_components.ble_esl.designer.importer import (
 )
 from custom_components.ble_esl.designer.layout import (
     compile_payload,
+    frozen_items,
+    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -51,7 +53,6 @@ from custom_components.ble_esl.designer.rendering import render_document, snapsh
 from custom_components.ble_esl.designer.specs import (
     MissingTemplateParameter,
     describe,
-    frozen_corners,
     missing_template_parameters,
     resolve_templates,
 )
@@ -464,28 +465,15 @@ async def handle(request):
         forecasts = await demo_forecasts()
         variables = _preview_variable_map(msg.get("preview_variables"))
         payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
-        dynamic_geometry = [
-            element
-            for element in document["elements"]
-            if element["type"] == "imagespec" and frozen_corners(element.get("spec", {}))
-        ]
-        automation_edit = msg.get("automation_edit", False)
-        issues = []
-        if automation_edit and dynamic_geometry:
-            issues.extend(
-                f"blocking: {element['id']}: templated polygon corners cannot be safely saved"
-                for element in dynamic_geometry
-            )
-            live = None
-        else:
-            live = live_payload(HASS, document, TEMPLATES, forecasts)
+        frozen = frozen_items(document)
+        issues = [*hidden_items(document), *frozen]
+        live = live_payload(HASS, document, TEMPLATES, forecasts)
         result = export_yaml(
             payload,
             document["background"],
             tag["device_id"] if msg["action"] == "automation" else None,
             issues,
             live,
-            design=document,
             rotate=document.get("rotate", 0),
         )
         if msg["action"] == "automation":
@@ -501,6 +489,7 @@ async def handle(request):
                 if result["validation_errors"]
                 else (live if live is not None else payload),
                 "writable": tag["writable"],
+                "frozen": frozen,
             }
         )
     if msg["action"] != "preview":

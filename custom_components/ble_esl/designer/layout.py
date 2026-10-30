@@ -593,6 +593,33 @@ def live_payload(hass, document, templates=None, forecasts=None, preview_variabl
     )
 
 
+def hidden_items(document):
+    """Elements left out of a payload: it holds nothing for them to come back from."""
+    return [
+        f"{element['id']}: hidden, so it is not in the payload"
+        for element in document["elements"]
+        if not element["visible"] and "visible" not in element["field_templates"]
+    ]
+
+
+def frozen_items(document):
+    """What a saved payload keeps as of now, because it cannot follow an entity."""
+    frozen = []
+    for element in document["elements"]:
+        if not element["visible"] and "visible" not in element["field_templates"]:
+            continue
+        if element["type"] == "imagespec" and frozen_corners(element["spec"]):
+            frozen.append(f"{element['id']}: the polygon's corners are as of now in the payload")
+        elif element["field_templates"] or (
+            element["type"] != "imagespec" and (element["entity_id"] or element["data_field"])
+        ):
+            frozen.append(
+                f"{element['id']}: the {element['type']} is as of now in the payload; "
+                "converting it to elements keeps what can follow its entity"
+            )
+    return frozen
+
+
 # Pixel settings that shrink with a sensor template drawn smaller than designed.
 _SCALED_PIXELS = {
     "min_font_size": 1,

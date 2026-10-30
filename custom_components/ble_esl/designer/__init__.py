@@ -37,6 +37,8 @@ from .export import automation_draft, export_yaml, plain
 from .importer import convert, different_pixels, elements_from, parse, payloads
 from .layout import (
     compile_payload,
+    frozen_items,
+    hidden_items,
     live_payload,
     sensor_values,
     substitute,
@@ -48,10 +50,8 @@ from .rendering import render_document, snapshot_layers
 from .specs import (
     MissingTemplateParameter,
     describe,
-    frozen_corners,
     missing_template_parameters,
     resolve_templates,
-    templates_in,
 )
 
 KEY = f"{DOMAIN}_designer"
@@ -97,7 +97,7 @@ def _preview_variable_map(value):
 class Designer:
     """Render layouts for preview, export or explicit transmission.
 
-    Layouts live in automations (``ble_esl.write`` ``design``); unsaved work
+    Layouts live in automations (the ``ble_esl.write`` payload); unsaved work
     stays in the browser. Per-tag layouts are not stored here.
     """
 
@@ -227,7 +227,7 @@ class Designer:
             "layers": layers,
         }
 
-    async def export(self, entry, document, preview_variables=None, automation_edit=False):
+    async def export(self, entry, document, preview_variables=None):
         """The display as YAML for an automation: what the preview shows, as a payload."""
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
@@ -251,41 +251,33 @@ class Designer:
                 )
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
-        # The action carries the design, so a templated polygon is rendered live by
-        # the automation; the payload beside it is only a readable snapshot.
-        if not automation_edit:
-            # The design keeps polygon corners live; a copied payload alone cannot.
-            issues.extend(
-                f"{element['id']}: the polygon's corners are as of now in the payload without the design"
-                for element in document["elements"]
-                if element["type"] == "imagespec" and frozen_corners(element["spec"])
-            )
+        # Only the payload is saved: what a payload cannot keep live is as of now.
+        frozen = frozen_items(document)
+        issues.extend(hidden_items(document))
+        issues.extend(frozen)
         automation_payload = live_payload(
             self.hass, document, self.templates, forecasts, preview_variables
         )
-        design_specs = {
-            element["id"]: element["spec"]
-            for element in document["elements"]
-            if element["type"] == "imagespec" and templates_in(element["spec"])
-        }
         # Free-angle groups become native imagespec data images in exported YAML.
-        # The attached source still re-evaluates every binding at execution time.
         portable = await self.hass.async_add_executor_job(
             prepare_payload, self.hass, preset, payload
         )
         if portable != payload:
             payload = portable
             automation_payload = portable
+            frozen.append(
+                "A free-angle rotation turns the display into images: all values are as of now"
+            )
+            issues.append(frozen[-1])
         result = export_yaml(
             payload,
             document["background"],
             entry.runtime_data.device_id,
             issues,
             automation_payload,
-            design=document,
             rotate=document.get("rotate", 0),
-            design_specs=design_specs,
         )
+        result["frozen"] = frozen
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
         result["payload_data"] = (
@@ -678,7 +670,6 @@ class Designer:
         vol.Optional("rotation"): vol.In((0, 90, 180, 270)),
         vol.Optional("document"): dict,
         vol.Optional("preview_variables"): dict,
-        vol.Optional("automation_edit"): bool,
         vol.Optional("text"): str,
         vol.Optional("payload"): [dict],
         vol.Optional("background"): str,
@@ -801,7 +792,6 @@ async def websocket_designer(hass, connection, msg):
             designer.entry(msg["entry_id"]),
             msg["document"],
             msg.get("preview_variables"),
-            msg.get("automation_edit", False),
         )
     elif action == "automation":
         result = await designer.automation(

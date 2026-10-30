@@ -433,6 +433,7 @@ export default {
   "The selected write action is no longer available.":
     "所選寫入動作已無法使用。",
   "Automation saved.": "自動化已儲存。",
+  "Automation saved. Some values are as of now, not live.": "自動化已儲存。部分值為儲存時的值，不會即時更新。",
   "Automation configuration identity is missing.": "缺少自動化設定識別。",
   "Automation configuration could not be loaded safely.":
     "無法安全載入自動化設定。",
@@ -567,6 +568,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "找不到包含此 ESL 的 ble_esl.write 動作的自動化。",
   "Saved to {name}.": "已儲存到 {name}。",
+  "Saved to {name}. Some values are as of now, not live.": "已儲存到 {name}。部分值為儲存時的值，不會即時更新。",
   "This automation rotation is not supported.":
     "不支援此自動化的旋轉設定。",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
@@ -594,8 +596,6 @@ export default {
     "複製所選元素",
   "Image rotation (°)":
     "影像旋轉(°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
   "Preview parameters must be a JSON object":
     "預覽參數必須是 JSON 物件",

@@ -21,12 +21,12 @@ write:
         object:
     design_specs:
       required: false
-      description: imagespec element templates from the designer source, rendered by Home Assistant with the automation variables.
+      description: Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables.
       selector:
         object:
     design:
       required: false
-      description: Original designer document; renders entity bindings and conditional rules at each write.
+      description: Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload.
       selector:
         object:
     rotate:
@@ -75,12 +75,12 @@ write_guarded:
         object:
     design_specs:
       required: false
-      description: imagespec element templates from the designer source, rendered by Home Assistant with the automation variables.
+      description: Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables.
       selector:
         object:
     design:
       required: false
-      description: Original designer document; renders entity bindings and conditional rules at each write.
+      description: Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload.
       selector:
         object:
     rotate:

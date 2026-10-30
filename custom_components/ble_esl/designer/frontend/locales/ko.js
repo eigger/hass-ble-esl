@@ -276,6 +276,7 @@ export default {
   "The selected write action is no longer available.":
     "선택한 쓰기 동작을 더 이상 사용할 수 없습니다.",
   "Automation saved.": "자동화를 저장했습니다.",
+  "Automation saved. Some values are as of now, not live.": "자동화를 저장했습니다. 일부 값은 저장 시점의 값이며 실시간으로 따라가지 않습니다.",
   "In 2 days": "모레",
   "In 3 days": "3일 후",
   "In sync": "동기화됨",
@@ -569,6 +570,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "이 ESL용 ble_esl.write 동작이 있는 자동화를 찾지 못했습니다.",
   "Saved to {name}.": "{name}에 저장했습니다.",
+  "Saved to {name}. Some values are as of now, not live.": "{name}에 저장했습니다. 일부 값은 저장 시점의 값이며 실시간으로 따라가지 않습니다.",
   "This automation rotation is not supported.":
     "이 자동화의 회전 값은 지원되지 않습니다.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
@@ -595,8 +597,6 @@ export default {
   "Selected element actions": "선택한 요소 작업",
   "Duplicate selected element": "선택한 요소 복제",
   "Image rotation (°)": "이미지 회전 (°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "컴포넌트와 조건부 규칙은 그대로 유지되며, 자동화가 실행될 때마다 현재 엔티티 상태를 사용합니다.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "입력 상태가 바뀌면 화면이 업데이트됩니다. 실행 조건은 Home Assistant에서 조정할 수 있습니다.",
   "Preview parameters must be a JSON object":

@@ -471,7 +471,6 @@ async def test_export_uses_preview_parameters_but_keeps_original_jinja(hass, wol
         wolink_entry,
         document,
         preview_variables={"font_bold": "sample.ttf"},
-        automation_edit=True,
     )
     assert result["validation_errors"] == []
     assert result["payload_data"][0]["value"] == "{{ font_bold }}"

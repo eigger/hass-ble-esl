@@ -22,11 +22,11 @@
         },
         "design": {
           "name": "Designer source",
-          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+          "description": "Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload."
         },
         "design_specs": {
           "name": "Designer templates",
-          "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
+          "description": "Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables."
         }
       }
     },
@@ -56,11 +56,11 @@
         },
         "design": {
           "name": "Designer source",
-          "description": "Original editable components and conditional rules, evaluated using current entity states at each write."
+          "description": "Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload."
         },
         "design_specs": {
           "name": "Designer templates",
-          "description": "imagespec element templates from the designer source, rendered by Home Assistant with the automation variables."
+          "description": "Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables."
         }
       }
     }

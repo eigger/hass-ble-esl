@@ -436,6 +436,7 @@ export default {
   "The selected write action is no longer available.":
     "L'azione di scrittura selezionata non è più disponibile.",
   "Automation saved.": "Automazione salvata.",
+  "Automation saved. Some values are as of now, not live.": "Automazione salvata. Alcuni valori restano fissi a questo momento e non si aggiornano in tempo reale.",
   "Automation configuration identity is missing.":
     "Manca l'identità della configurazione dell'automazione.",
   "Automation configuration could not be loaded safely.":
@@ -584,6 +585,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Nessuna automazione con un'azione ble_esl.write per questo ESL è stata trovata.",
   "Saved to {name}.": "Salvato in {name}.",
+  "Saved to {name}. Some values are as of now, not live.": "Salvato in {name}. Alcuni valori restano fissi a questo momento e non si aggiornano in tempo reale.",
   "This automation rotation is not supported.":
     "La rotazione di questa automazione non è supportata.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
@@ -611,8 +613,6 @@ export default {
   "Selected element actions": "Azioni dell'elemento selezionato",
   "Duplicate selected element": "Duplica l'elemento selezionato",
   "Image rotation (°)": "Rotazione dell'immagine (°)",
-  "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "I componenti e le regole condizionali vengono mantenuti e usano gli stati attuali delle entità a ogni esecuzione dell'automazione.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Le modifiche di stato degli ingressi attivano gli aggiornamenti del display. Puoi regolare i trigger in Home Assistant.",
   "Preview parameters must be a JSON object":
