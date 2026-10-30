@@ -123,11 +123,15 @@ async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
     ]
 
 
-async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(hass, wolink_entry):
+async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(
+    hass, wolink_entry, caplog
+):
     from homeassistant.helpers.template import Template
 
+    from custom_components.ble_esl import services
     from custom_components.ble_esl.services import build_write_job_from_data
 
+    services._LEGACY_DESIGN_WARNED.clear()
     hass.states.async_set("binary_sensor.laundry", "on")
     source = icon_document()
     source["elements"][0]["field_templates"] = {
@@ -139,6 +143,8 @@ async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(h
     hass.states.async_set("binary_sensor.laundry", "off")
     second = await build_write_job_from_data(hass, wolink_entry, data)
     assert first.image_png != second.image_png
+    # The older source is said to be outdated once per tag, not at every run.
+    assert caplog.text.count("runs from a saved designer source") == 1
 
 
 async def test_input_state_change_runs_the_exported_automation(hass, wolink_entry, tag_writer):
