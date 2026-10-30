@@ -748,12 +748,16 @@ export class BleEslDesigner extends HTMLElement {
       parked.cleanSignature = JSON.stringify(parked.document);
       parked.undo = [];
       parked.redo = [];
+      // The style being created for an element of the dropped design.
+      this.createdForElement = null;
     } else if (this.mode === "display" && this.tag?.entry_id === entryId) {
       this.session.reset(emptyDocument());
       this.preview = null;
       this.layerPreviews = {};
       this.invalidatePreview();
-      this.status = "Ready";
+      this.status = this.tag.writable
+        ? "Ready"
+        : "Discovery only: preview is available; sending is not supported yet.";
       this.error = false;
     }
     this.persistDrafts();
@@ -2929,7 +2933,7 @@ export class BleEslDesigner extends HTMLElement {
         this.typingProperty = input;
       }
       this.element.text = input.innerText;
-      this.dirty = true;
+      this.dirty = !(this.mode === "display" && this.session.isClean());
       const field = this.shadowRoot.querySelector('[data-property="text"]');
       if (field) field.value = this.element.text;
       const layer = this.shadowRoot.querySelector(

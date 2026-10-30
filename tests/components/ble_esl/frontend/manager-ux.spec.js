@@ -5,13 +5,14 @@ test.beforeEach(async ({ page, request }) => {
   await page.goto("/?manager");
   await expect(page.locator(".card")).toHaveCount(2);
   await expect(
-    page.locator('[data-entry="demo-writable"] [data-action="automations"]'),
+    page.locator(
+      '[data-entry="demo-writable"] [data-action="automations"]',
+    ),
   ).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
-        () =>
-          window.manager.automationCache.get("demo-writable")?.linked.length,
+        () => window.manager.automationCache.get("demo-writable")?.linked.length,
       ),
     )
     .toBeGreaterThan(0);
@@ -703,4 +704,45 @@ test("the editor can discard its unsaved design, and editing back to the start i
   await expect(
     page.locator('.card[data-entry="demo-writable"] .badge.draft'),
   ).toHaveCount(0);
+});
+
+test("discarding from a card while a sensor tile style is open drops the parked design", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
+    .click();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  page.once("dialog", (dialog) => dialog.accept());
+  await card.locator('[data-action="discard-draft"]').click();
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+  expect(
+    await page.evaluate(() => window.manager.editor.displaySession.dirty),
+  ).toBe(false);
+  expect(
+    await page.evaluate(() => window.manager.editor.createdForElement),
+  ).toBe(null);
+});
+
+test("typing a text element back to its start leaves nothing unsaved", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.session.markDirty(false);
+    editor.input({
+      target: { dataset: { editText: "1" }, innerText: editor.element.text },
+    });
+  });
+  await expect(page.locator("#dirty-badge")).toBeHidden();
 });
