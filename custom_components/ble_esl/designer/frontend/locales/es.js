@@ -272,6 +272,9 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "Convierta esto en elementos imagespec simples para editar campo por campo; El valor de un sensor se convierte en una plantilla.",
   "Undo (⌘/Ctrl Z)": "Deshacer (⌘/Ctrl Z)",
+  "Discard changes": "Descartar cambios",
+  "Discard the unsaved changes to this design? This cannot be undone.":
+    "¿Descartar los cambios sin guardar de este diseño? No se puede deshacer.",
   "Unsaved changes": "Cambios no guardados",
   "Upload image": "Subir imagen",
   "Use static value": "Usar valor estático",

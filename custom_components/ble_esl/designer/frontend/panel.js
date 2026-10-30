@@ -733,6 +733,38 @@ export class BleEslDesigner extends HTMLElement {
   hasDraft(entryId) {
     return this.draftDocuments().has(entryId);
   }
+  // Drop the unsaved design of a tag and go back to a blank one, here and in
+  // the browser's stored drafts. A design parked while a sensor tile style is
+  // being edited is dropped too.
+  discardDraft(entryId = this.tag?.entry_id) {
+    if (!entryId || this._automationSessionToken || this._automationSaveMode)
+      return false;
+    this.drafts.delete(entryId);
+    const parked = this.displaySession;
+    if (this.mode === "template" && parked?.tag?.entry_id === entryId) {
+      parked.document = emptyDocument();
+      parked.selected = null;
+      parked.dirty = false;
+      parked.cleanSignature = JSON.stringify(parked.document);
+      parked.undo = [];
+      parked.redo = [];
+      // The style being created for an element of the dropped design.
+      this.createdForElement = null;
+    } else if (this.mode === "display" && this.tag?.entry_id === entryId) {
+      this.session.reset(emptyDocument());
+      this.preview = null;
+      this.layerPreviews = {};
+      this.invalidatePreview();
+      this.status = this.tag.writable
+        ? "Ready"
+        : "Discovery only: preview is available; sending is not supported yet.";
+      this.error = false;
+    }
+    this.persistDrafts();
+    this.render();
+    this.queuePreview();
+    return true;
+  }
   persistDrafts() {
     persistStoredDrafts(this.draftDocuments(), this.tags);
   }
@@ -944,10 +976,14 @@ export class BleEslDesigner extends HTMLElement {
       automationSaveMode: this._automationSaveMode,
       translate: (key) => t(this.hass, key),
       saveIcon: toolIcon("save"),
+      dirty: this.dirty,
     });
   }
   edited(render = true, dirty = true) {
-    this.session.markDirty(dirty);
+    // Edited back to the saved or loaded document: nothing is left unsaved.
+    this.session.markDirty(
+      dirty && !(this.mode === "display" && this.session.isClean()),
+    );
     this.preview = null;
     this.invalidatePreview();
     if (render) this.render();
@@ -2676,6 +2712,17 @@ export class BleEslDesigner extends HTMLElement {
           this.notice = this.status;
           this.error = ["locked", "failed"].includes(result.status);
         }
+      } else if (action === "discard") {
+        if (
+          this.dirty &&
+          window.confirm(
+            t(
+              this.hass,
+              "Discard the unsaved changes to this design? This cannot be undone.",
+            ),
+          )
+        )
+          this.discardDraft();
       } else if (action === "reload") {
         // Retry after a failed first load shows the error instead.
         if (this.refreshing || (this.loading && !this.loading.error)) return;
@@ -2886,7 +2933,7 @@ export class BleEslDesigner extends HTMLElement {
         this.typingProperty = input;
       }
       this.element.text = input.innerText;
-      this.dirty = true;
+      this.dirty = !(this.mode === "display" && this.session.isClean());
       const field = this.shadowRoot.querySelector('[data-property="text"]');
       if (field) field.value = this.element.text;
       const layer = this.shadowRoot.querySelector(

@@ -271,6 +271,9 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "Превратите это в простые элементы imagespec для редактирования поле за полем; значение датчика становится шаблоном",
   "Undo (⌘/Ctrl Z)": "Отменить (⌘/Ctrl Z)",
+  "Discard changes": "Отбросить изменения",
+  "Discard the unsaved changes to this design? This cannot be undone.":
+    "Отбросить несохраненные изменения этого дизайна? Это действие нельзя отменить.",
   "Unsaved changes": "Несохраненные изменения",
   "Upload image": "Загрузить изображение",
   "Use static value": "Использовать статическое значение",

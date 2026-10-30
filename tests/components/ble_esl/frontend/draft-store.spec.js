@@ -4,6 +4,7 @@ import {
   hasStoredDraft,
   persistDrafts,
   readStoredDrafts,
+  removeStoredDraft,
   restoreStoredDrafts,
 } from "../../../../custom_components/ble_esl/designer/frontend/editor/draft-store.js";
 
@@ -92,4 +93,16 @@ test("invalid or unavailable storage reads as no drafts and writes fail quietly"
   expect(() =>
     restoreStoredDrafts(new Map(), [], blockedStorage),
   ).not.toThrow();
+});
+
+test("removing one stored draft keeps the others and clears an empty store", () => {
+  const storage = memoryStorage({
+    [DRAFT_KEY]: JSON.stringify({ a: { document: {} }, b: { document: {} } }),
+  });
+  removeStoredDraft("missing", storage);
+  expect(Object.keys(readStoredDrafts(storage))).toEqual(["a", "b"]);
+  removeStoredDraft("a", storage);
+  expect(Object.keys(readStoredDrafts(storage))).toEqual(["b"]);
+  removeStoredDraft("b", storage);
+  expect(storage.getItem(DRAFT_KEY)).toBe(null);
 });

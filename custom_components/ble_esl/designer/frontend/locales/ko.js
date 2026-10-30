@@ -375,6 +375,9 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "필드별 편집을 위해 imagespec 요소로 변환합니다. 센서 값은 템플릿으로 바뀝니다",
   "Undo (⌘/Ctrl Z)": "실행 취소 (⌘/Ctrl Z)",
+  "Discard changes": "변경 폐기",
+  "Discard the unsaved changes to this design? This cannot be undone.":
+    "이 디자인의 저장하지 않은 변경 사항을 폐기하시겠습니까? 되돌릴 수 없습니다.",
   "Unsaved changes": "미저장 변경 사항",
   "Upload image": "이미지 업로드",
   "Use static value": "고정값 사용",

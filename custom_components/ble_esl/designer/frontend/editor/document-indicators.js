@@ -12,7 +12,15 @@ export function syncDocumentHistoryControls(
 
 export function markDocumentDirty(
   root,
-  { undoCount, redoCount, busy, automationSaveMode, translate, saveIcon },
+  {
+    undoCount,
+    redoCount,
+    busy,
+    automationSaveMode,
+    translate,
+    saveIcon,
+    dirty = true,
+  },
 ) {
   syncDocumentHistoryControls(root, { undoCount, redoCount, busy });
   const save = root.querySelector('[data-action="save"]');
@@ -29,7 +37,9 @@ export function markDocumentDirty(
       : translate("Save (unsaved changes) (⌘/Ctrl S)");
   }
   const badge = root.querySelector("#dirty-badge");
-  if (badge) badge.hidden = false;
+  if (badge) badge.hidden = !dirty;
+  const discard = root.querySelector('[data-action="discard"]');
+  if (discard) discard.hidden = !dirty || discard.dataset.unavailable === "1";
   const title = root
     .querySelector(".canvas-wrap")
     ?.previousElementSibling?.querySelector("span");

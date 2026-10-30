@@ -4,6 +4,7 @@
 
 ### Added
 
+- Designer and ESL Manager: **Discard changes** drops a tag's unsaved design (a button next to the "Unsaved changes" badge on the card and in the editor bar), and editing a design back to how it started no longer leaves it marked as unsaved.
 - Design template `weather_forecast`: the next three days of a weather entity's daily forecast. Its automation carries the `weather.get_forecasts` step that fills it in; templates can now bring `actions` that run before the write.
 
 ### Changed

@@ -271,6 +271,9 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "将其转换成普通的imagespec元素以逐个字段地编辑；传感器的值成为模板",
   "Undo (⌘/Ctrl Z)": "撤消 (⌘/Ctrl Z)",
+  "Discard changes": "放弃更改",
+  "Discard the unsaved changes to this design? This cannot be undone.":
+    "放弃此设计中未保存的更改？此操作无法撤销。",
   "Unsaved changes": "未保存的更改",
   "Upload image": "上传图像",
   "Use static value": "使用静态值",

@@ -85,3 +85,29 @@ test("document indicators retain save labels, dirty state, and history availabil
     redoDisabled: true,
   });
 });
+
+test("a clean document hides the unsaved badge and the discard action", () => {
+  const badge = { hidden: false };
+  const discard = { hidden: false, dataset: {} };
+  const root = {
+    querySelector: (selector) =>
+      ({ "#dirty-badge": badge, '[data-action="discard"]': discard })[
+        selector
+      ] ?? null,
+  };
+  const options = {
+    undoCount: 0,
+    redoCount: 0,
+    busy: false,
+    automationSaveMode: false,
+    translate: (key) => key,
+    saveIcon: "",
+  };
+  markDocumentDirty(root, { ...options, dirty: false });
+  expect([badge.hidden, discard.hidden]).toEqual([true, true]);
+  markDocumentDirty(root, { ...options, dirty: true });
+  expect([badge.hidden, discard.hidden]).toEqual([false, false]);
+  discard.dataset.unavailable = "1";
+  markDocumentDirty(root, { ...options, dirty: true });
+  expect(discard.hidden).toBe(true);
+});
