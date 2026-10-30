@@ -584,7 +584,9 @@ class EslManager extends HTMLElement {
     });
     if (cards.length) grid.replaceChildren(...cards);
     else
-      grid.innerHTML = `<div class="empty">${this.tags.length ? t(this.hass, "No ESLs match your search or filter.") : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
+      grid.innerHTML = `<div class="empty">${this.tags.length ? `${t(this.hass, "No ESLs match your search or filter.")} <button type="button" data-action="clear-filters">${t(this.hass, "Clear search and filter")}</button>` : t(this.hass, "Add a BLE ESL device in Settings → Devices & services.")}</div>`;
+    if (!cards.length && focused?.dataset.action === "clear-filters")
+      grid.querySelector('[data-action="clear-filters"]')?.focus();
     if (entry && (entity || action))
       grid
         .querySelector(
@@ -1113,7 +1115,7 @@ class EslManager extends HTMLElement {
       !window.confirm(
         t(
           this.hass,
-          "Restore the unsaved changes you made to this automation design?",
+          "Restore the unsaved changes you made to this automation design? Cancel discards them.",
         ),
       )
     )
@@ -1606,6 +1608,16 @@ class EslManager extends HTMLElement {
     const button = event.target.closest("[data-action]");
     if (!button) return;
     if (button.dataset.action === "refresh") await this.refresh();
+    if (button.dataset.action === "clear-filters") {
+      this.query = "";
+      this.filter = "all";
+      const search = this.shadowRoot.querySelector("#search");
+      search.value = "";
+      this.shadowRoot.querySelector("#filter").value = "all";
+      this.renderCards();
+      search.focus();
+      return;
+    }
     if (button.dataset.action === "automations") {
       const tag = this.tags.find(
         (tag) => tag.entry_id === button.dataset.entry,

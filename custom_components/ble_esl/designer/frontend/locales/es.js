@@ -605,8 +605,13 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "No se encontró ninguna automatización con una acción ble_esl.write para este ESL.",
   "Saved to {name}.": "Guardado en {name}.",
-  "Restore the unsaved changes you made to this automation design?":
-    "¿Restaurar los cambios sin guardar que hiciste en el diseño de esta automatización?",
   "This automation rotation is not supported.":
     "La rotación de esta automatización no es compatible.",
+  "Restore the unsaved changes you made to this automation design? Cancel discards them.":
+    "¿Restaurar los cambios sin guardar que hiciste en el diseño de esta automatización? Cancelar los descarta.",
+  "Clear search and filter": "Borrar búsqueda y filtro",
+  "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area":
+    "Mayús / Ctrl / ⌘ + clic selecciona varios elementos · Arrastrar en una zona vacía del lienzo selecciona un área",
+  "Kept as a draft for this browser session until you create an automation or save into one.":
+    "Se conserva como borrador durante esta sesión del navegador hasta que crees una automatización o guardes en una.",
 };
