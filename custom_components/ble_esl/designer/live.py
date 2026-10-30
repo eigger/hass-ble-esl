@@ -107,25 +107,11 @@ def live_items(hass, element, state, items):
     ``element`` is the component as designed, ``items`` the payload it drew,
     changed in place.
     """
-    from .importer import value_template  # Imported here: importer needs layout.
-
     kind = element["type"]
     if element.get("field_templates"):
         return False
     if kind == "sensor":
-        templated, _ = value_template(element, state, items)
-        changed = [
-            (index, new)
-            for index, (old, new) in enumerate(zip(items, templated, strict=True))
-            if new != old
-        ]
-        if not changed:
-            return False
-        if not all(renders_as(hass, new["value"], items[index]["value"]) for index, new in changed):
-            return False
-        for index, new in changed:
-            items[index] = new
-        return True
+        return _sensor_value(hass, element, state, items)
     if kind in ("icon", "conditional_icon") and len(items) == 1 and items[0].get("type") == "icon":
         from .layout import sensor_icon
 
@@ -154,6 +140,10 @@ def live_items(hass, element, state, items):
         return False
     prelude, expression = source
     if kind == "text":
+        # Home Assistant turns rendered text that is only a number back into one, so
+        # 20.00 would come out as 20.0: more than one decimal cannot be followed.
+        if element.get("data_field") == "state" and (element.get("decimals") or 0) >= 2:
+            return False
         # One line of text: a value spread over several lines is split when drawn.
         texts = [item for item in items if item.get("type") == "text_fit"]
         template = f"{prelude}{{{{ {expression} }}}}"
@@ -177,3 +167,42 @@ def live_items(hass, element, state, items):
         items[0]["visible"] = f"{number}{{{{ x is not none }}}}"
         return True
     return False
+
+
+def _sensor_value(hass, element, state, items):
+    """A sensor's value text with its unit, followed from the entity.
+
+    Only a plain value with a unit: Home Assistant turns rendered text that is
+    only a number back into one (21.50 would come out as 21.5), and the unit
+    keeps it text. The unit is read from the entity, as the designer reads it.
+    """
+    from .layout import format_decimals, normalize_unit  # Imported here: layout imports this.
+
+    if (
+        state.entity_id.startswith(("weather.", "binary_sensor."))
+        or state.state in ("unavailable", "unknown")
+        or element.get("data_field")
+        or not element.get("show_unit", True)
+    ):
+        return False
+    unit = normalize_unit(state.attributes.get("unit_of_measurement", ""))
+    texts = [index for index, item in enumerate(items) if item.get("type") == "text_fit"]
+    if not unit or not texts:
+        return False
+    decimals = element.get("decimals")
+    shown = state.state if decimals is None else format_decimals(state.state, decimals)
+    last = items[texts[-1]]
+    if last["value"] != f"{shown} {unit}":
+        return False
+    entity = _literal(state.entity_id)
+    value = "v" if decimals is None else f"(('%.{decimals}f' | format(n)) if n is not none else v)"
+    template = (
+        f"{{% set v = states({entity}) %}}{{% set n = v | float(none) %}}"
+        f"{{% set u = state_attr({entity}, 'unit_of_measurement') or '' %}}"
+        "{% set u = {'⁰C': '°C', '⁰F': '°F', '℃': '°C', '℉': '°F'}.get(u, u) %}"
+        f"{{{{ v | capitalize if v in {_UNAVAILABLE} else {value} ~ (' ' ~ u if u else '') }}}}"
+    )
+    if not renders_as(hass, template, last["value"]):
+        return False
+    last["value"] = template
+    return True

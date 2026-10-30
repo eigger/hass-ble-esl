@@ -279,3 +279,33 @@ async def test_a_sensor_drawn_through_a_sensor_template_is_as_of_now(hass, wolin
     }
     result = await export(hass, wolink_entry, element("sensor", entity_id="sensor.temp"))
     assert len(result["frozen"]) == 1
+
+
+async def test_a_sensor_reads_its_unit_from_the_entity_and_rounds_whatever_it_shows(
+    hass, wolink_entry
+):
+    hass.states.async_set("sensor.temp", "eco", {"unit_of_measurement": "°C"})
+    result = await export(
+        hass, wolink_entry, element("sensor", entity_id="sensor.temp", decimals=1)
+    )
+    assert result["frozen"] == []
+    hass.states.async_set("sensor.temp", "21.50", {"unit_of_measurement": "°C"})
+    assert drawn(hass, result)[-1]["value"] == "21.5 °C"
+    hass.states.async_set("sensor.temp", "70", {"unit_of_measurement": "°F"})
+    assert drawn(hass, result)[-1]["value"] == "70.0 °F"
+    hass.states.async_set("sensor.temp", "7", {})
+    assert str(drawn(hass, result)[-1]["value"]) == "7.0"
+
+
+async def test_what_home_assistant_would_turn_back_into_a_number_stays_as_drawn(hass, wolink_entry):
+    # No unit: the rendered text could be only a number, and 21.50 would come out as 21.5.
+    hass.states.async_set("sensor.plain", "eco")
+    # Two decimals: 20.00 would come out as 20.0.
+    hass.states.async_set("sensor.fine", "21.26")
+    result = await export(
+        hass,
+        wolink_entry,
+        element("sensor", "plain", entity_id="sensor.plain"),
+        element("text", "fine", entity_id="sensor.fine", data_field="state", decimals=2),
+    )
+    assert [item.split(":")[0] for item in result["frozen"]] == ["plain", "fine"]
