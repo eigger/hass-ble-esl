@@ -5,14 +5,13 @@ test.beforeEach(async ({ page, request }) => {
   await page.goto("/?manager");
   await expect(page.locator(".card")).toHaveCount(2);
   await expect(
-    page.locator(
-      '[data-entry="demo-writable"] [data-action="automations"]',
-    ),
+    page.locator('[data-entry="demo-writable"] [data-action="automations"]'),
   ).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
-        () => window.manager.automationCache.get("demo-writable")?.linked.length,
+        () =>
+          window.manager.automationCache.get("demo-writable")?.linked.length,
       ),
     )
     .toBeGreaterThan(0);
@@ -644,4 +643,64 @@ test("in the manager on a phone the designer drops its duplicate header", async 
   await expect(designer.locator(".template-controls")).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(designer.locator("header h1")).toBeVisible();
+});
+
+test("a card can discard its unsaved draft without opening the editor", async ({
+  page,
+}) => {
+  const card = page.locator('.card[data-entry="demo-writable"]');
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await card.locator('[data-action="discard-draft"]').click();
+  await expect(card.locator(".badge.draft")).toHaveText("Unsaved changes");
+  page.once("dialog", (dialog) => dialog.accept());
+  await card.locator('[data-action="discard-draft"]').click();
+  await expect(card.locator(".badge.draft")).toHaveCount(0);
+  await expect(card.locator('[data-action="discard-draft"]')).toHaveCount(0);
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(0);
+});
+
+test("the editor can discard its unsaved design, and editing back to the start is not unsaved", async ({
+  page,
+}) => {
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  const discard = page.locator('[data-action="discard"]');
+  await expect(discard).toBeHidden();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  await expect(discard).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await discard.click();
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  await expect(discard).toBeHidden();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.elements.length),
+  ).toBe(0);
+  // Removing the element again by hand leaves nothing unsaved.
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator("#dirty-badge")).toBeVisible();
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.checkpoint();
+    editor.document.elements = [];
+    editor.edited();
+  });
+  await expect(page.locator("#dirty-badge")).toBeHidden();
+  await page.locator('[data-action="dashboard"]').click();
+  await expect(
+    page.locator('.card[data-entry="demo-writable"] .badge.draft'),
+  ).toHaveCount(0);
 });

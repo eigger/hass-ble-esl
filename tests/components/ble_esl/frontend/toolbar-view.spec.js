@@ -91,6 +91,7 @@ test("toolbar groups edit controls apart from the output actions", async ({
   expect(order.outside.slice(0, 3)).toEqual(["reload", "undo", "redo"]);
   expect(order.output).toEqual([
     "dirty-badge",
+    "discard",
     "save",
     "send",
     "create-automation",

@@ -272,6 +272,9 @@ export default {
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
     "Verander dit in gewone imagespec-elementen om veld voor veld te bewerken; de waarde van een sensor wordt een sjabloon",
   "Undo (⌘/Ctrl Z)": "Ongedaan maken (⌘/Ctrl Z)",
+  "Discard changes": "Wijzigingen verwerpen",
+  "Discard the unsaved changes to this design? This cannot be undone.":
+    "De niet-opgeslagen wijzigingen aan dit ontwerp verwerpen? Dit kan niet ongedaan worden gemaakt.",
   "Unsaved changes": "Niet-opgeslagen wijzigingen",
   "Upload image": "Afbeelding uploaden",
   "Use static value": "Gebruik statische waarde",

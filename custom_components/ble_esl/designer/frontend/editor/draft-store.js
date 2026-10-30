@@ -17,6 +17,23 @@ export function hasStoredDraft(entryId, storage) {
   return Object.hasOwn(readStoredDrafts(storage), entryId);
 }
 
+// Forget one tag's stored draft without needing the editor.
+export function removeStoredDraft(entryId, storage) {
+  const stored = readStoredDrafts(storage);
+  if (!Object.hasOwn(stored, entryId)) return;
+  delete stored[entryId];
+  try {
+    if (Object.keys(stored).length)
+      (storage ?? globalThis.sessionStorage).setItem(
+        DRAFT_KEY,
+        JSON.stringify(stored),
+      );
+    else (storage ?? globalThis.sessionStorage).removeItem(DRAFT_KEY);
+  } catch {
+    // Storage may be blocked; the draft then stays as it was.
+  }
+}
+
 export function persistDrafts(drafts, tags, storage) {
   const stored = {};
   for (const [entryId, document] of drafts) {
