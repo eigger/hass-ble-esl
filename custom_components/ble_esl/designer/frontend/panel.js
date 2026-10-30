@@ -755,14 +755,14 @@ export class BleEslDesigner extends HTMLElement {
     } else {
       this.refreshing = true;
       this.error = false;
-      this.status = "Refreshing tags…";
+      this.status = "Refreshing ESLs…";
     }
     this.render();
     try {
       // The tag list must not wait for HA's lazily loaded entity picker:
       // in Safari the card helpers that load it may never settle.
       if (!customElements.get("ha-entity-picker") && !this.pickerPending) {
-        // Once per panel: boot() runs again on "Refresh tags".
+        // Once per panel: boot() runs again on "Refresh ESLs".
         this.pickerPending = true;
         loadEntityPicker();
         customElements.whenDefined("ha-entity-picker").then(() => {
@@ -963,7 +963,7 @@ export class BleEslDesigner extends HTMLElement {
     this.errorSource = source;
     this.renderStatus();
   }
-  // Why the Send button is off, or what it is doing; plain "Send to tag" otherwise.
+  // Why the Send button is off, or what it is doing; plain "Send to ESL" otherwise.
   sendHint(tag) {
     return sendButtonHint({
       tag,
@@ -2095,7 +2095,7 @@ export class BleEslDesigner extends HTMLElement {
     });
     stage.innerHTML = renderStageMarkup({
       preview: this.preview,
-      previewLabel: t(this.hass, "Exact rendered display"),
+      previewLabel: t(this.hass, "Rendered view"),
       layers,
       guides: this.alignmentGuidesMarkup(),
       selection: this.selectionMarkup(),
@@ -2604,12 +2604,12 @@ export class BleEslDesigner extends HTMLElement {
           this.templateEntities = [
             ...new Set(Object.values(result.layers._dependencies || {}).flat()),
           ];
-          this.status = "Exact rendered preview";
+          this.status = "Rendered view";
         }
         if (action === "send") {
           const sent = {
             written: "Display sent and acknowledged",
-            locked: "Not sent: the tag's write lock is on",
+            locked: "Not sent: the ESL's write lock is on",
             duplicate: "Not sent: the display is unchanged",
             dropped: "Not sent: a newer write replaced this one",
             failed: {
@@ -3183,12 +3183,12 @@ export class BleEslDesigner extends HTMLElement {
     const title = this.shadowRoot
       .querySelector(".canvas-wrap")
       ?.previousElementSibling?.querySelector("span");
-    if (title) title.textContent = t(this.hass, "Exact rendered preview");
+    if (title) title.textContent = t(this.hass, "Rendered view");
     if (this.error && this.errorSource === "preview") {
       // The render that failed has been fixed.
       this.error = false;
       this.errorSource = null;
-      this.status = "Exact rendered preview";
+      this.status = "Rendered view";
       this.renderStatus();
     }
   }

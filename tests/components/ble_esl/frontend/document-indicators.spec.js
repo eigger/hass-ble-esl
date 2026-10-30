@@ -76,7 +76,7 @@ test("document indicators retain save labels, dirty state, and history availabil
     label: "Save (unsaved changes)",
     title: "Save (unsaved changes) (⌘/Ctrl S)",
     badgeHidden: false,
-    previewTitle: "Editing preview",
+    previewTitle: "Edit view",
     hasIcon: true,
   });
   expect(automation).toEqual({

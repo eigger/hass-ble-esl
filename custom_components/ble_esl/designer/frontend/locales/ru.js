@@ -20,8 +20,6 @@ export default {
   "Keyboard &amp; mouse tips": "Наконечники для клавиатуры и мыши",
   "Keyboard & mouse tips": "Наконечники для клавиатуры и мыши",
   "Display sent and acknowledged": "Отображение отправлено и подтверждено",
-  "Not sent: the tag's write lock is on":
-    "Не отправлено: блокировка записи тега включена.",
   "Not sent: the display is unchanged":
     "Не отправлено: отображение без изменений",
   "Not sent: a newer write replaced this one":
@@ -144,19 +142,13 @@ export default {
   "ESL Manager": "Менеджер ESL",
   "Edit alias": "Редактировать псевдоним",
   "Edit component": "Редактировать компонент",
-  "Edit tag design": "Изменить дизайн тега",
   "Edit display text": "Редактирование отображаемого текста",
   "Edit sensor": "Редактировать датчик",
-  "Editing preview": "Предварительный просмотр редактирования",
   "Element actions": "Действия элемента",
   "Element properties": "Свойства элемента",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Шаблоны элементов остаются такими же, как записаны: Home Assistant отображает их каждый раз, когда запускается автоматизация. Компоненты датчиков и шаблоны полей актуальны на данный момент.",
   "Entity name": "Имя объекта",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Каждый тип элемента, который может отображать тег, задайте поле за полем: выберите один, затем нажмите",
-  "Exact rendered display": "Точное визуализированное отображение",
-  "Exact rendered preview": "Точный предварительный просмотр",
   "Existing automation": "Существующая автоматизация",
   "Export JSON": "Экспорт JSON",
   "Exporting payload…": "Экспорт полезной нагрузки…",
@@ -234,8 +226,6 @@ export default {
   "Rain / snow": "Дождь/снег",
   "Rain chance": "Вероятность дождя",
   "Redo (⌘/Ctrl Shift Z)": "Повторить (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Обновление тегов",
-  "Refreshing tags…": "Обновление тегов…",
   "Remove manual link": "Удаление ручной ссылки",
   "Replace display": "Заменить содержимое экрана",
   "Resolved value": "Разрешенное значение",
@@ -254,7 +244,6 @@ export default {
   "Select an element": "Выберите элемент",
   "Send back": "На задний план",
   "Send backward": "На слой назад",
-  "Send to tag": "Отправить на тег",
   "Sending display…": "Отправка дисплея…",
   "Sensor tile style": "Стиль плитки датчика",
   "Sensor tile styles": "Стили плиток датчиков",
@@ -287,8 +276,6 @@ export default {
   "Unsaved changes": "Несохраненные изменения",
   "Upload image": "Загрузить изображение",
   "Use static value": "Использовать статическое значение",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Значения указаны на текущий момент. Используйте действие автоматизации, чтобы запланировать обновления тегов в Home Assistant.",
   "Vertical align": "Вертикальное выравнивание",
   "Visible state": "Видимое состояние",
   "Weather time": "Время погоды",
@@ -364,7 +351,6 @@ export default {
   Show: "Показать",
   State: "Состояние",
   Style: "Стиль",
-  Tag: "Тег",
   Temperature: "Температура",
   "Tile style": "Стиль плитки",
   Text: "Текст",
@@ -480,7 +466,6 @@ export default {
   "Last successful image": "Последнее успешно отправленное изображение",
   "Edit automation design": "Изменить дизайн автоматизации",
   "Automation design": "Дизайн автоматизации",
-  "Tag design": "Дизайн тега",
   "Importing automation…": "Импорт автоматизации…",
   "Save to automation": "Сохранить в автоматизацию",
   True: "Истина",
@@ -587,9 +572,6 @@ export default {
   Mixed: "Разные",
   "Rotation value (°)": "Значение поворота (°)",
   "Show hidden icons": "Показать скрытые значки",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Бледно показывает невидимые значки для редактирования; изображение этикетки не меняется",
-  "Tag orientation": "Ориентация этикетки",
   Portrait: "Книжная",
   Landscape: "Альбомная",
   "Save to existing automation…": "Сохранить в существующую автоматизацию…",
@@ -608,4 +590,21 @@ export default {
     "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Хранится как черновик в рамках этого сеанса браузера, пока вы не создадите автоматизацию или не сохраните в неё.",
+  "Send to ESL": "Отправить на ESL",
+  ESL: "ESL",
+  "ESL orientation": "Ориентация ESL",
+  "Refresh ESLs": "Обновить ESL",
+  "Refreshing ESLs…": "Обновление ESL…",
+  "Edit ESL design": "Изменить дизайн ESL",
+  "ESL design": "Дизайн ESL",
+  "Not sent: the ESL's write lock is on":
+    "Не отправлено: блокировка записи ESL включена.",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Значения указаны на текущий момент. Используйте действие автоматизации, чтобы запланировать обновления ESL в Home Assistant.",
+  "Rendered view": "Вид с рендерингом",
+  "Edit view": "Вид редактирования",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Бледно показывает скрытые значки для редактирования; изображение ESL не меняется",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Каждый тип элемента, который может отображать ESL, задайте поле за полем: выберите один, затем нажмите",
 };

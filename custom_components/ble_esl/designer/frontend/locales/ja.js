@@ -20,8 +20,6 @@ export default {
   "Keyboard &amp; mouse tips": "キーボードとマウスのヒント",
   "Keyboard & mouse tips": "キーボードとマウスのヒント",
   "Display sent and acknowledged": "表示が送信され、確認されました",
-  "Not sent: the tag's write lock is on":
-    "未送信: タグの書き込みロックがオンになっています",
   "Not sent: the display is unchanged": "未送信: 表示は変更されません",
   "Not sent: a newer write replaced this one":
     "未送信: これは新しい書き込みに置き換えられました",
@@ -144,19 +142,13 @@ export default {
   "ESL Manager": "ESL マネージャー",
   "Edit alias": "エイリアスの編集",
   "Edit component": "コンポーネントの編集",
-  "Edit tag design": "タグのデザインを編集",
   "Edit display text": "表示テキストの編集",
   "Edit sensor": "センサーの編集",
-  "Editing preview": "プレビューの編集",
   "Element actions": "要素のアクション",
   "Element properties": "要素のプロパティ",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "要素テンプレートは書かれたままになります: Home Assistant はオートメーションが実行されるたびにレンダリングされます。センサー コンポーネントとフィールド テンプレートは現時点のものです。",
   "Entity name": "エンティティ名",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "タグが描画できるすべての要素タイプ、フィールドごとに設定: 1 つ選択して、 を押します",
-  "Exact rendered display": "正確にレンダリングされた表示",
-  "Exact rendered preview": "正確なレンダリングされたプレビュー",
   "Existing automation": "既存の自動化",
   "Export JSON": "エクスポート JSON",
   "Exporting payload…": "ペイロードをエクスポートしています…",
@@ -235,8 +227,6 @@ export default {
   "Rain / snow": "雨/雪",
   "Rain chance": "降水確率",
   "Redo (⌘/Ctrl Shift Z)": "やり直し (⌘/Ctrl シフト Z)",
-  "Refresh tags": "タグを更新",
-  "Refreshing tags…": "タグを更新中…",
   "Remove manual link": "手動リンクを削除",
   "Replace display": "表示内容を置き換える",
   "Resolved value": "解決された値",
@@ -254,7 +244,6 @@ export default {
   "Select an element": "要素を選択してください",
   "Send back": "最背面へ移動",
   "Send backward": "背面へ移動",
-  "Send to tag": "タグに送信",
   "Sending display…": "ディスプレイを送信中…",
   "Sensor tile style": "センサータイルスタイル",
   "Sensor tile styles": "センサータイルスタイル",
@@ -286,8 +275,6 @@ export default {
   "Unsaved changes": "未保存の変更",
   "Upload image": "画像をアップロード",
   "Use static value": "静的な値を使用します",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "値は現時点のものです。自動化アクションを使用して、Home Assistant でタグの更新をスケジュールします。",
   "Vertical align": "垂直揃え",
   "Visible state": "表示状態",
   "Weather time": "天気時間",
@@ -363,7 +350,6 @@ export default {
   Show: "表示",
   State: "状態",
   Style: "スタイル",
-  Tag: "タグ",
   Temperature: "温度",
   "Tile style": "タイルスタイル",
   Text: "テキスト",
@@ -480,7 +466,6 @@ export default {
   "Last successful image": "最後に送信に成功した画像",
   "Edit automation design": "オートメーションのデザインを編集",
   "Automation design": "オートメーションのデザイン",
-  "Tag design": "タグのデザイン",
   "Importing automation…": "オートメーションをインポート中…",
   "Save to automation": "オートメーションに保存",
   True: "真",
@@ -587,9 +572,6 @@ export default {
   Mixed: "混在",
   "Rotation value (°)": "回転値 (°)",
   "Show hidden icons": "非表示アイコンを表示",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "編集用に非表示のアイコンを薄く表示します。ラベル画像は変わりません",
-  "Tag orientation": "タグの向き",
   Portrait: "縦向き",
   Landscape: "横向き",
   "Save to existing automation…": "既存のオートメーションに保存…",
@@ -610,4 +592,21 @@ export default {
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "オートメーションを作成するか、オートメーションに保存するまで、このブラウザーセッションの間、下書きとして保持されます。",
+  "Send to ESL": "ESL に送信",
+  ESL: "ESL",
+  "ESL orientation": "ESL の向き",
+  "Refresh ESLs": "ESL を更新",
+  "Refreshing ESLs…": "ESL を更新中…",
+  "Edit ESL design": "ESL のデザインを編集",
+  "ESL design": "ESL のデザイン",
+  "Not sent: the ESL's write lock is on":
+    "未送信: ESL の書き込みロックがオンになっています",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "値は現時点のものです。自動化アクションを使用して、Home Assistant で ESL の更新をスケジュールします。",
+  "Rendered view": "レンダリング表示",
+  "Edit view": "編集表示",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "編集用に非表示のアイコンを薄く表示します。ESL の画像は変わりません",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "ESL が描画できるすべての要素タイプ、フィールドごとに設定: 1 つ選択して、 を押します",
 };

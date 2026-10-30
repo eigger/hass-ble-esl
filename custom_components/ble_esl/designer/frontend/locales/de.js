@@ -20,8 +20,6 @@ export default {
   "Keyboard &amp; mouse tips": "Tastatur- und Maustipps",
   "Keyboard & mouse tips": "Tastatur- und Maustipps",
   "Display sent and acknowledged": "Anzeige gesendet und bestätigt",
-  "Not sent: the tag's write lock is on":
-    "Nicht gesendet: Die Schreibsperre des Tags ist aktiviert",
   "Not sent: the display is unchanged":
     "Nicht gesendet: Die Anzeige bleibt unverändert",
   "Not sent: a newer write replaced this one":
@@ -145,19 +143,13 @@ export default {
   "ESL Manager": "ESL Manager",
   "Edit alias": "Alias bearbeiten",
   "Edit component": "Komponente bearbeiten",
-  "Edit tag design": "Tag-Design bearbeiten",
   "Edit display text": "Anzeigetext bearbeiten",
   "Edit sensor": "Sensor bearbeiten",
-  "Editing preview": "Bearbeitungsvorschau",
   "Element actions": "Elementaktionen",
   "Element properties": "Elementeigenschaften",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Elementvorlagen bleiben wie geschrieben: Home Assistant rendert sie jedes Mal, wenn die Automatisierung ausgeführt wird. Sensorkomponenten und Feldvorlagen sind ab sofort verfügbar.",
   "Entity name": "Entitätsname",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Jeder Elementtyp, den das Tag zeichnen kann, Feld für Feld festlegen: Wählen Sie einen aus und drücken Sie dann",
-  "Exact rendered display": "Exakte gerenderte Anzeige",
-  "Exact rendered preview": "Exakte gerenderte Vorschau",
   "Existing automation": "Vorhandene Automatisierung",
   "Export JSON": "Exportieren JSON",
   "Exporting payload…": "Nutzlast wird exportiert…",
@@ -236,8 +228,6 @@ export default {
   "Rain / snow": "Regen / Schnee",
   "Rain chance": "Regenwahrscheinlichkeit",
   "Redo (⌘/Ctrl Shift Z)": "Wiederherstellen (⌘/Ctrl Z-Verschiebung)",
-  "Refresh tags": "Tags aktualisieren",
-  "Refreshing tags…": "Tags werden aktualisiert…",
   "Remove manual link": "Manuellen Link entfernen",
   "Replace display": "Anzeigeinhalt ersetzen",
   "Resolved value": "Aufgelöster Wert",
@@ -256,7 +246,6 @@ export default {
   "Select an element": "Wählen Sie ein Element aus",
   "Send back": "Ganz nach hinten",
   "Send backward": "Eine Ebene nach hinten",
-  "Send to tag": "An Tag senden",
   "Sending display…": "Anzeige wird gesendet…",
   "Sensor tile style": "Sensor-Kachelstil",
   "Sensor tile styles": "Sensor-Kachelstile",
@@ -288,8 +277,6 @@ export default {
   "Unsaved changes": "Nicht gespeicherte Änderungen",
   "Upload image": "Bild hochladen",
   "Use static value": "Statischen Wert verwenden",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Werte sind aktuell. Verwenden Sie die Automatisierungsaktion, um Tag-Aktualisierungen in Home Assistant zu planen.",
   "Vertical align": "Vertikal ausrichten",
   "Visible state": "Sichtbarer Zustand",
   "Weather time": "Wetterzeit",
@@ -365,7 +352,6 @@ export default {
   Show: "Anzeigen",
   State: "Zustand",
   Style: "Stil",
-  Tag: "Tag",
   Temperature: "Temperatur",
   "Tile style": "Kachelstil",
   Text: "Text",
@@ -484,7 +470,6 @@ export default {
   "Last successful image": "Letztes erfolgreiches Bild",
   "Edit automation design": "Automatisierungs-Design bearbeiten",
   "Automation design": "Automatisierungs-Design",
-  "Tag design": "Tag-Design",
   "Importing automation…": "Automatisierung wird importiert…",
   "Save to automation": "In Automatisierung speichern",
   True: "Wahr",
@@ -592,9 +577,6 @@ export default {
   Mixed: "Gemischt",
   "Rotation value (°)": "Drehwert (°)",
   "Show hidden icons": "Ausgeblendete Symbole anzeigen",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Unsichtbare Symbole zum Bearbeiten blass anzeigen; das Etikettenbild bleibt unverändert",
-  "Tag orientation": "Etikettenausrichtung",
   Portrait: "Hochformat",
   Landscape: "Querformat",
   "Save to existing automation…": "In bestehender Automatisierung speichern…",
@@ -615,4 +597,21 @@ export default {
     "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Wird für diese Browsersitzung als Entwurf aufbewahrt, bis Sie eine Automatisierung erstellen oder darin speichern.",
+  "Send to ESL": "An ESL senden",
+  ESL: "ESL",
+  "ESL orientation": "ESL-Ausrichtung",
+  "Refresh ESLs": "ESLs aktualisieren",
+  "Refreshing ESLs…": "ESLs werden aktualisiert…",
+  "Edit ESL design": "ESL-Design bearbeiten",
+  "ESL design": "ESL-Design",
+  "Not sent: the ESL's write lock is on":
+    "Nicht gesendet: Die Schreibsperre der ESL ist aktiviert",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Werte sind aktuell. Verwenden Sie die Automatisierungsaktion, um ESL-Aktualisierungen in Home Assistant zu planen.",
+  "Rendered view": "Gerenderte Ansicht",
+  "Edit view": "Bearbeitungsansicht",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Ausgeblendete Symbole zum Bearbeiten blass anzeigen; das ESL-Bild bleibt unverändert",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Jeder Elementtyp, den die ESL zeichnen kann, Feld für Feld festlegen: Wählen Sie einen aus und drücken Sie dann",
 };

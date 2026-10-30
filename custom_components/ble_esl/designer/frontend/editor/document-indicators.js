@@ -33,5 +33,5 @@ export function markDocumentDirty(
   const title = root
     .querySelector(".canvas-wrap")
     ?.previousElementSibling?.querySelector("span");
-  if (title) title.textContent = translate("Editing preview");
+  if (title) title.textContent = translate("Edit view");
 }

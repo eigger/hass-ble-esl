@@ -5,7 +5,7 @@ export function renderSpecPalette({ specs, mode, translate, escapeHtml }) {
   const groups = {};
   for (const type of specs.types)
     (groups[type.category] ||= []).push(type.type);
-  return `<p class="hint wide">${translate("Every element type the tag can draw, set field by field: choose one, then press")} <b>${translate("Add")}</b>.</p><label class="wide">${translate("All elements")}<select id="add-spec" aria-label="${translate("Add element")}"><option value="">${translate("Add element…")}</option>${Object.entries(
+  return `<p class="hint wide">${translate("Every element type the ESL can draw, set field by field: choose one, then press")} <b>${translate("Add")}</b>.</p><label class="wide">${translate("All elements")}<select id="add-spec" aria-label="${translate("Add element")}"><option value="">${translate("Add element…")}</option>${Object.entries(
     groups,
   )
     .map(

@@ -374,7 +374,7 @@ class EslManager extends HTMLElement {
   }
   cardActions(tag) {
     const entry = escapeHtml(tag.entry_id);
-    return `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit tag design")}</button>`;
+    return `<button class="primary" data-action="edit" data-entry="${entry}">${t(this.hass, "Edit ESL design")}</button>`;
   }
   updateEditorContext() {
     const node = this.editorContext;
@@ -404,7 +404,7 @@ class EslManager extends HTMLElement {
           this.hass,
           this.editor?.mode === "template"
             ? "Sensor tile styles"
-            : "Tag design",
+            : "ESL design",
         );
     node.textContent = [this.alias(tag), name, context]
       .filter(Boolean)

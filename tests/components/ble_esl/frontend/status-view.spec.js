@@ -23,7 +23,7 @@ test("send button hint reflects tag capability and busy status", () => {
   ).toBe("translated: Sending…");
   expect(
     sendButtonHint({ tag: null, busy: false, status: "Ready", translate }),
-  ).toBe("translated: Send to tag");
+  ).toBe("translated: Send to ESL");
 });
 
 test("status view keeps routine, preview error, and operation toast semantics", async ({

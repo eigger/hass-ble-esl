@@ -101,7 +101,7 @@ export class YamlDialog extends HTMLElement {
               )
             : t(
                 this.hass,
-                "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
+                "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.",
               )
       }</p>
       ${"live_payload" in this.result && !this.result.automation ? `<label class="check"><input type="checkbox" data-live ${this.live ? "checked" : ""}> ${t(this.hass, "Keep templates (values follow the sensors)")}</label>` : ""}

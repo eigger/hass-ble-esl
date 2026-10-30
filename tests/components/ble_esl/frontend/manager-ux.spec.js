@@ -103,10 +103,10 @@ test("one linked automation opens from the connected list and names its save des
   await page.getByRole("button", { name: "← Dashboard", exact: true }).click();
   await page
     .locator('.card[data-entry="demo-writable"]')
-    .getByRole("button", { name: "Edit tag design", exact: true })
+    .getByRole("button", { name: "Edit ESL design", exact: true })
     .click();
   await expect(page.locator(".editor-context")).toHaveText(
-    "Living room › Tag design",
+    "Living room › ESL design",
   );
   await expect(
     page.getByRole("button", { name: "Save to automation", exact: true }),
@@ -120,7 +120,7 @@ test("editor context follows template mode and the selected tag", async ({
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
   await expect(page.locator(".editor-context")).toHaveText(
-    "Living room › Tag design",
+    "Living room › ESL design",
   );
   await page
     .getByRole("button", { name: "Sensor tile styles", exact: true })
@@ -130,10 +130,10 @@ test("editor context follows template mode and the selected tag", async ({
   );
   await page.getByRole("button", { name: "Display", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "Tag", exact: true })
+    .getByRole("combobox", { name: "ESL", exact: true })
     .selectOption("demo-discovery");
   await expect(page.locator(".editor-context")).toHaveText(
-    "Desk display › Tag design",
+    "Desk display › ESL design",
   );
 });
 
@@ -155,7 +155,7 @@ test("multiple automations open as a list and stale cache errors never pick one"
   await expect(card.locator('[data-action="edit-automation"]')).toHaveCount(0);
   await expect(card.locator('[data-action="automations"]')).toBeVisible();
   await expect(
-    card.getByRole("button", { name: "Edit tag design", exact: true }),
+    card.getByRole("button", { name: "Edit ESL design", exact: true }),
   ).toBeVisible();
 });
 

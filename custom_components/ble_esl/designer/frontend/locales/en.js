@@ -20,8 +20,6 @@ export default {
   "Keyboard &amp; mouse tips": "Keyboard &amp; mouse tips",
   "Keyboard & mouse tips": "Keyboard & mouse tips",
   "Display sent and acknowledged": "Display sent and acknowledged",
-  "Not sent: the tag's write lock is on":
-    "Not sent: the tag's write lock is on",
   "Not sent: the display is unchanged": "Not sent: the display is unchanged",
   "Not sent: a newer write replaced this one":
     "Not sent: a newer write replaced this one",
@@ -140,19 +138,13 @@ export default {
   "ESL Manager": "ESL Manager",
   "Edit alias": "Edit alias",
   "Edit component": "Edit component",
-  "Edit tag design": "Edit tag design",
   "Edit display text": "Edit display text",
   "Edit sensor": "Edit sensor",
-  "Editing preview": "Editing preview",
   "Element actions": "Element actions",
   "Element properties": "Element properties",
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.",
   "Entity name": "Entity name",
-  "Every element type the tag can draw, set field by field: choose one, then press":
-    "Every element type the tag can draw, set field by field: choose one, then press",
-  "Exact rendered display": "Exact rendered display",
-  "Exact rendered preview": "Exact rendered preview",
   "Existing automation": "Existing automation",
   "Export JSON": "Export JSON",
   "Exporting payload…": "Exporting payload…",
@@ -229,7 +221,6 @@ export default {
   "Last successful image": "Last successful image",
   "Edit automation design": "Edit automation design",
   "Automation design": "Automation design",
-  "Tag design": "Tag design",
   "Importing automation…": "Importing automation…",
   "Save to automation": "Save to automation",
   True: "True",
@@ -339,8 +330,6 @@ export default {
   "Rain / snow": "Rain / snow",
   "Rain chance": "Rain chance",
   "Redo (⌘/Ctrl Shift Z)": "Redo (⌘/Ctrl Shift Z)",
-  "Refresh tags": "Refresh tags",
-  "Refreshing tags…": "Refreshing tags…",
   "Remove manual link": "Remove manual link",
   "Replace display": "Replace display",
   "Resolved value": "Resolved value",
@@ -358,7 +347,6 @@ export default {
   "Select an element": "Select an element",
   "Send back": "Send back",
   "Send backward": "Send backward",
-  "Send to tag": "Send to tag",
   "Sending display…": "Sending display…",
   "Sensor tile style": "Sensor tile style",
   "Sensor tile styles": "Sensor tile styles",
@@ -390,8 +378,6 @@ export default {
   "Unsaved changes": "Unsaved changes",
   "Upload image": "Upload image",
   "Use static value": "Use static value",
-  "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.":
-    "Values are as of now. Use the automation action to schedule tag updates in Home Assistant.",
   "Vertical align": "Vertical align",
   "Visible state": "Visible state",
   "Weather time": "Weather time",
@@ -467,7 +453,6 @@ export default {
   Show: "Show",
   State: "State",
   Style: "Style",
-  Tag: "Tag",
   Temperature: "Temperature",
   "Tile style": "Tile style",
   Text: "Text",
@@ -577,9 +562,6 @@ export default {
   Mixed: "Mixed",
   "Rotation value (°)": "Rotation value (°)",
   "Show hidden icons": "Show hidden icons",
-  "Show invisible icons faintly for editing; does not change the label image":
-    "Show invisible icons faintly for editing; does not change the label image",
-  "Tag orientation": "Tag orientation",
   Portrait: "Portrait",
   Landscape: "Landscape",
   "Save to existing automation…": "Save to existing automation…",
@@ -598,4 +580,21 @@ export default {
     "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "Kept as a draft for this browser session until you create an automation or save into one.",
+  "Send to ESL": "Send to ESL",
+  ESL: "ESL",
+  "ESL orientation": "ESL orientation",
+  "Refresh ESLs": "Refresh ESLs",
+  "Refreshing ESLs…": "Refreshing ESLs…",
+  "Edit ESL design": "Edit ESL design",
+  "ESL design": "ESL design",
+  "Not sent: the ESL's write lock is on":
+    "Not sent: the ESL's write lock is on",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.",
+  "Rendered view": "Rendered view",
+  "Edit view": "Edit view",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "Show hidden icons faintly for editing; does not change the ESL image",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "Every element type the ESL can draw, set field by field: choose one, then press",
 };

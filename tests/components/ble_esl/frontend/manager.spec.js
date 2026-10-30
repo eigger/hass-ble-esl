@@ -330,12 +330,12 @@ test("imports and repeatedly saves only the selected automation payload", async 
   await expect(
     page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Tag", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("ESL", { exact: true })).toBeDisabled();
   await expect(
     page.getByRole("button", { name: "Sensor tile styles", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Send to tag", exact: true }),
+    page.getByRole("button", { name: "Send to ESL", exact: true }),
   ).toHaveCount(0);
   await expect(page.locator(".el")).toHaveCount(1);
   await page.getByRole("button", { name: "Add text", exact: true }).click();
@@ -658,7 +658,7 @@ test("does not import a delayed automation response after leaving its ESL", asyn
     .locator('[data-action="edit"][data-entry="demo-discovery"]')
     .click();
   release();
-  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("ESL", { exact: true })).toHaveValue(
     "demo-discovery",
   );
   await expect(page.locator(".el")).toHaveCount(0);
@@ -702,7 +702,7 @@ test("does not apply a delayed import after returning to the same ESL normally",
     const pending = window.pendingImports[0];
     pending.prepare(...pending.args).then(pending.resolve, pending.reject);
   });
-  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("ESL", { exact: true })).toHaveValue(
     "demo-writable",
   );
   await expect
@@ -995,7 +995,7 @@ test("leaving automation edit before cold boot unlocks the editor", async ({
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
-  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("ESL", { exact: true })).toHaveValue(
     "demo-writable",
   );
   // Back to the ordinary tag design: blank, as a tag always opens, not the
@@ -1485,14 +1485,14 @@ test("card navigation leaves template mode and retains template drafts", async (
   await page
     .locator('[data-action="edit"][data-entry="demo-discovery"]')
     .click();
-  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("ESL", { exact: true })).toHaveValue(
     "demo-discovery",
   );
   await expect(
     page.getByRole("button", { name: "Display", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("button", { name: "Send to tag", exact: true }),
+    page.getByRole("button", { name: "Send to ESL", exact: true }),
   ).toBeDisabled();
   await page
     .getByRole("button", { name: "Sensor tile styles", exact: true })
@@ -1514,11 +1514,11 @@ test("choosing another card during editor boot honors latest selection", async (
   await page
     .locator('[data-action="edit"][data-entry="demo-discovery"]')
     .click();
-  await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("ESL", { exact: true })).toHaveValue(
     "demo-discovery",
   );
   await expect(
-    page.getByRole("button", { name: "Send to tag", exact: true }),
+    page.getByRole("button", { name: "Send to ESL", exact: true }),
   ).toBeDisabled();
 });
 
@@ -1549,7 +1549,7 @@ test("multiple automations show count, state, editor links and per-row design ac
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
   await expect(card).toContainText("3 automations · 2 active");
-  await card.getByRole("button", { name: "Edit tag design" }).click();
+  await card.getByRole("button", { name: "Edit ESL design" }).click();
   await page
     .getByRole("button", { name: "Connected automations", exact: true })
     .click();
@@ -1564,7 +1564,7 @@ test("unlinked tags show an empty state without association controls", async ({
   await expect(card).toContainText("No connected automations");
   await expect(card.locator('[data-action="automations"]')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
-  await card.getByRole("button", { name: "Edit tag design" }).click();
+  await card.getByRole("button", { name: "Edit ESL design" }).click();
   await page
     .getByRole("button", { name: "Connected automations", exact: true })
     .click();
@@ -1804,7 +1804,7 @@ test("manager headers and embedded designer toolbar remain visible in real scrol
       .locator('[data-action="edit"][data-entry="demo-writable"]')
       .click();
     await expect(
-      page.getByRole("button", { name: "Send to tag", exact: true }),
+      page.getByRole("button", { name: "Send to ESL", exact: true }),
     ).toBeVisible();
     await page
       .locator(".editor-content")
@@ -2161,15 +2161,15 @@ test("open tag is remembered in the URL across reload and browser navigation", a
   await expect(page).toHaveURL(/tag=demo-writable/);
   await page.reload();
   await expect(
-    page.getByRole("combobox", { name: "Tag", exact: true }),
+    page.getByRole("combobox", { name: "ESL", exact: true }),
   ).toHaveValue("demo-writable");
   await page
-    .getByRole("combobox", { name: "Tag", exact: true })
+    .getByRole("combobox", { name: "ESL", exact: true })
     .selectOption("demo-discovery");
   await expect(page).toHaveURL(/tag=demo-discovery/);
   await page.goBack();
   await expect(
-    page.getByRole("combobox", { name: "Tag", exact: true }),
+    page.getByRole("combobox", { name: "ESL", exact: true }),
   ).toHaveValue("demo-writable");
 });
 
@@ -2203,7 +2203,7 @@ test("designer accent colours follow the Home Assistant theme and respect reduce
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
   const send = page.locator("ble-esl-designer").getByRole("button", {
-    name: "Send to tag",
+    name: "Send to ESL",
   });
   await expect(send).toBeVisible();
   const color = () =>
