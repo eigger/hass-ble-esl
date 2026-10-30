@@ -599,7 +599,7 @@ export default {
   "ESL orientation": "Orientação do ESL",
   "Refresh ESLs": "Atualizar ESLs",
   "Refreshing ESLs…": "Atualizando ESLs…",
-  "Edit ESL design": "Editar design da ESL",
+  "Edit ESL design": "Editar design do ESL",
   "ESL design": "Design do ESL",
   "Not sent: the ESL's write lock is on":
     "Não enviado: o bloqueio de gravação do ESL está ativado",
