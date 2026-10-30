@@ -3,7 +3,7 @@ import {
   renderElementRotation,
   syncRotationInputs,
 } from "./editor/rotation-control.js";
-import { t, language, rerenderWithDialogs } from "./i18n.js";
+import { t, language, rerenderWithDialogs, serverMessage } from "./i18n.js";
 import "./dynamic-fields.js";
 import { clone, newElement } from "./model.js";
 const esc = (value) =>
@@ -379,7 +379,7 @@ export class ComponentEditor extends HTMLElement {
         // An older request failing must not overwrite a newer one's result.
         if (seq === this.sequence && this.isConnected)
           this.shadowRoot.querySelector("[role=status]").textContent =
-            error.message;
+            serverMessage(this.hass, error);
       } finally {
         this.pending = false;
         if (this.queued) {

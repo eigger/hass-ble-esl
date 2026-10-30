@@ -1,4 +1,4 @@
-import { t } from "./i18n.js";
+import { t, serverMessage } from "./i18n.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -100,7 +100,7 @@ export class ImportDialog extends HTMLElement {
       );
     } catch (error) {
       if (this.panel.isDocumentSessionCurrent(this.context))
-        this.render(error.message || String(error));
+        this.render(serverMessage(this.panel.hass, error));
       else this.close();
     } finally {
       this.pending = false;

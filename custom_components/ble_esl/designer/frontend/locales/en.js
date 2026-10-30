@@ -601,6 +601,45 @@ export default {
     "Components and conditional rules are preserved and use current entity states each time the automation runs.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Preview parameters must be a JSON object",
+  "Preview parameters must contain finite JSON values":
+    "Preview parameters must contain finite JSON values",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Preview parameters are too large (64 KiB maximum)",
+  "This ESL does not support writing": "This ESL does not support writing",
+  "This ESL has no registered device": "This ESL has no registered device",
+  "The automation payload must be a list of objects":
+    "The automation payload must be a list of objects",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "The automation payload is too large to import (5 MiB maximum)",
+  "That element is not in the display": "That element is not in the display",
+  "That is an imagespec element already":
+    "That is an imagespec element already",
+  "Choose a sensor type": "Choose a sensor type",
+  "Choose an available sample entity": "Choose an available sample entity",
+  "This ESL protocol does not support image writes":
+    "This ESL protocol does not support image writes",
+  "The ESL's display size changed; reload the designer":
+    "The ESL's display size changed; reload the designer",
+  "template_id is required": "template_id is required",
+  "Give the template a name of up to 80 characters":
+    "Give the template a name of up to 80 characters",
+  "A template id is lowercase letters, digits and underscores":
+    "A template id is lowercase letters, digits and underscores",
+  "Too many templates share that name": "Too many templates share that name",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "This template has no layout for the display and its polygon cannot be scaled",
+  "This is not usable YAML: it is nested too deeply":
+    "This is not usable YAML: it is nested too deeply",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Paste a payload (a list of elements) or a ble_esl.write action with a payload",
+  "Automation is not available": "Automation is not available",
+  "This automation has no editable configuration":
+    "This automation has no editable configuration",
+  "Select an automation entity": "Select an automation entity",
+  "Select the association to unlink": "Select the association to unlink",
+  "Automation has no stable ID": "Automation has no stable ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts",
 };

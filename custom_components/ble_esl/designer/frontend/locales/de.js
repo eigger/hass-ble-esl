@@ -616,6 +616,48 @@ export default {
     "Komponenten und bedingte Regeln bleiben erhalten und verwenden bei jeder Ausführung der Automatisierung die aktuellen Entitätszustände.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Änderungen des Eingabezustands lösen Anzeigeaktualisierungen aus. Sie können die Auslöser in Home Assistant anpassen.",
+  "Preview parameters must be a JSON object":
+    "Vorschauparameter müssen ein JSON-Objekt sein",
+  "Preview parameters must contain finite JSON values":
+    "Vorschauparameter müssen endliche JSON-Werte enthalten",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Die Vorschauparameter sind zu groß (maximal 64 KiB)",
+  "This ESL does not support writing": "Diese ESL unterstützt kein Schreiben",
+  "This ESL has no registered device": "Diese ESL hat kein registriertes Gerät",
+  "The automation payload must be a list of objects":
+    "Die Nutzlast der Automatisierung muss eine Liste von Objekten sein",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "Die Nutzlast der Automatisierung ist zu groß für den Import (maximal 5 MiB)",
+  "That element is not in the display":
+    "Dieses Element befindet sich nicht in der Anzeige",
+  "That is an imagespec element already":
+    "Das ist bereits ein imagespec-Element",
+  "Choose a sensor type": "Wählen Sie einen Sensortyp",
+  "Choose an available sample entity":
+    "Wählen Sie eine verfügbare Beispiel-Entität",
+  "This ESL protocol does not support image writes":
+    "Das Protokoll dieser ESL unterstützt kein Schreiben von Bildern",
+  "The ESL's display size changed; reload the designer":
+    "Die Anzeigegröße der ESL hat sich geändert; laden Sie den Designer neu",
+  "template_id is required": "template_id ist erforderlich",
+  "Give the template a name of up to 80 characters":
+    "Geben Sie der Vorlage einen Namen mit bis zu 80 Zeichen",
+  "A template id is lowercase letters, digits and underscores":
+    "Eine Vorlagen-ID besteht aus Kleinbuchstaben, Ziffern und Unterstrichen",
+  "Too many templates share that name": "Zu viele Vorlagen haben diesen Namen",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "Diese Vorlage hat kein Layout für die Anzeige, und ihr Polygon lässt sich nicht skalieren",
+  "This is not usable YAML: it is nested too deeply":
+    "Das ist kein verwendbares YAML: Es ist zu tief verschachtelt",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Fügen Sie eine Nutzlast (eine Liste von Elementen) oder eine ble_esl.write-Aktion mit Nutzlast ein",
+  "Automation is not available": "Die Automatisierung ist nicht verfügbar",
+  "This automation has no editable configuration":
+    "Diese Automatisierung hat keine bearbeitbare Konfiguration",
+  "Select an automation entity": "Wählen Sie eine Automatisierungs-Entität",
+  "Select the association to unlink":
+    "Wählen Sie die Zuordnung aus, die getrennt werden soll",
+  "Automation has no stable ID": "Die Automatisierung hat keine stabile ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Umschalt / Ctrl / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":

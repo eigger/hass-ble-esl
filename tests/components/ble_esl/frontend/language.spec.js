@@ -396,6 +396,40 @@ test("non-English locales leave no untranslated copy beyond shared words", async
   }
 });
 
+test("fixed server messages are translated, other server text is left as sent", async () => {
+  const { serverMessage } =
+    await import("../../../../custom_components/ble_esl/designer/frontend/i18n.js");
+  const ko = { language: "ko" };
+  expect(serverMessage(ko, new Error("Select an automation entity"))).toBe(
+    "자동화 엔티티를 선택하세요",
+  );
+  expect(
+    serverMessage({ language: "en" }, new Error("Choose a sensor type")),
+  ).toBe("Choose a sensor type");
+  // Text with values in it, or from Home Assistant, is shown as it was sent.
+  expect(serverMessage(ko, new Error("Entity not found: sensor.x"))).toBe(
+    "Entity not found: sensor.x",
+  );
+  expect(serverMessage(ko, "plain failure")).toBe("plain failure");
+});
+
+// These dialogs get their language from the panel; `this.hass` is not set on
+// them, so serverMessage(this.hass, …) would silently stay English.
+test("dialogs without their own hass translate server messages through the panel", async () => {
+  const fs = await import("node:fs");
+  for (const file of ["template-dialog.js", "import-dialog.js"]) {
+    const source = fs.readFileSync(
+      new URL(
+        `../../../../custom_components/ble_esl/designer/frontend/${file}`,
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(source, file).toContain("serverMessage(this.panel.hass, error)");
+    expect(source, file).not.toContain("serverMessage(this.hass");
+  }
+});
+
 // The shortcut dialog splits these sentences on " · ": every translation must
 // keep the same number of items as the English one.
 test("canvas tip sentences keep their ' · ' separated items in every language", async () => {

@@ -1,4 +1,4 @@
-import { language, t } from "./i18n.js";
+import { language, t, serverMessage } from "./i18n.js";
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -92,7 +92,7 @@ export class TemplateDialog extends HTMLElement {
         entry_id: context.entryId,
       });
     } catch (error) {
-      this.note = error.message || String(error);
+      this.note = serverMessage(this.panel.hass, error);
     }
     if (!this.closed) this.render();
     this.loadThumbnails();
@@ -148,7 +148,7 @@ export class TemplateDialog extends HTMLElement {
       if (this.closed || token !== this.previewToken) return;
       this.formPreview = null;
       this.formPreviewNote = "";
-      this.showFormPreview(null, error.message || String(error));
+      this.showFormPreview(null, serverMessage(this.panel.hass, error));
       return;
     }
     if (this.closed || token !== this.previewToken) return;
@@ -324,7 +324,7 @@ export class TemplateDialog extends HTMLElement {
         };
         this.issues = [];
       } catch (error) {
-        this.note = error.message || String(error);
+        this.note = serverMessage(this.panel.hass, error);
       } finally {
         this.pending = false;
       }
@@ -380,7 +380,7 @@ export class TemplateDialog extends HTMLElement {
       this.render();
     } catch (error) {
       if (this.panel.isDocumentSessionCurrent(this.context)) {
-        this.note = error.message || String(error);
+        this.note = serverMessage(this.panel.hass, error);
         this.render();
       } else this.close();
     } finally {

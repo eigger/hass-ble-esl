@@ -611,6 +611,45 @@ export default {
     "Компоненты и условные правила сохраняются и при каждом запуске автоматизации используют текущие состояния объектов.",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Изменения состояния входных данных запускают обновление дисплея. Триггеры можно настроить в Home Assistant.",
+  "Preview parameters must be a JSON object":
+    "Параметры предпросмотра должны быть объектом JSON",
+  "Preview parameters must contain finite JSON values":
+    "Параметры предпросмотра должны содержать конечные значения JSON",
+  "Preview parameters are too large (64 KiB maximum)":
+    "Параметры предпросмотра слишком велики (максимум 64 КиБ)",
+  "This ESL does not support writing": "Этот ESL не поддерживает запись",
+  "This ESL has no registered device":
+    "У этого ESL нет зарегистрированного устройства",
+  "The automation payload must be a list of objects":
+    "Полезная нагрузка автоматизации должна быть списком объектов",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "Полезная нагрузка автоматизации слишком велика для импорта (максимум 5 МиБ)",
+  "That element is not in the display": "Этого элемента нет на дисплее",
+  "That is an imagespec element already": "Это уже элемент imagespec",
+  "Choose a sensor type": "Выберите тип датчика",
+  "Choose an available sample entity": "Выберите доступный объект-образец",
+  "This ESL protocol does not support image writes":
+    "Протокол этого ESL не поддерживает запись изображений",
+  "The ESL's display size changed; reload the designer":
+    "Размер дисплея ESL изменился; перезагрузите дизайнер",
+  "template_id is required": "Требуется template_id",
+  "Give the template a name of up to 80 characters":
+    "Дайте шаблону имя длиной до 80 символов",
+  "A template id is lowercase letters, digits and underscores":
+    "Идентификатор шаблона состоит из строчных букв, цифр и подчёркиваний",
+  "Too many templates share that name": "Слишком много шаблонов с таким именем",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "У этого шаблона нет макета для дисплея, а его многоугольник нельзя масштабировать",
+  "This is not usable YAML: it is nested too deeply":
+    "Этот YAML непригоден: он слишком глубоко вложен",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "Вставьте полезную нагрузку (список элементов) или действие ble_esl.write с полезной нагрузкой",
+  "Automation is not available": "Автоматизация недоступна",
+  "This automation has no editable configuration":
+    "У этой автоматизации нет редактируемой конфигурации",
+  "Select an automation entity": "Выберите объект автоматизации",
+  "Select the association to unlink": "Выберите связь, которую нужно отвязать",
+  "Automation has no stable ID": "У автоматизации нет стабильного ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область · ? показывает все сочетания клавиш",
 };

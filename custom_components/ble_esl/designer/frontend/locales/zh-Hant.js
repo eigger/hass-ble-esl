@@ -577,6 +577,56 @@ export default {
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "組件與條件規則會被保留，並在每次執行自動化時使用實體的目前狀態。",
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
+  "Preview parameters must be a JSON object":
+    "預覽參數必須是 JSON 物件",
+  "Preview parameters must contain finite JSON values":
+    "預覽參數必須包含有限的 JSON 值",
+  "Preview parameters are too large (64 KiB maximum)":
+    "預覽參數過大（最大 64 KiB）",
+  "This ESL does not support writing":
+    "此 ESL 不支援寫入",
+  "This ESL has no registered device":
+    "此 ESL 沒有已註冊的裝置",
+  "The automation payload must be a list of objects":
+    "自動化的有效負載必須是物件清單",
+  "The automation payload is too large to import (5 MiB maximum)":
+    "自動化的有效負載過大，無法匯入（最大 5 MiB）",
+  "That element is not in the display":
+    "該元素不在顯示中",
+  "That is an imagespec element already":
+    "那已經是 imagespec 元素",
+  "Choose a sensor type":
+    "請選擇感測器類型",
+  "Choose an available sample entity":
+    "請選擇一個可用的樣品實體",
+  "This ESL protocol does not support image writes":
+    "此 ESL 的通訊協定不支援寫入影像",
+  "The ESL's display size changed; reload the designer":
+    "ESL 的顯示尺寸已變更；請重新載入設計器",
+  "template_id is required":
+    "需要 template_id",
+  "Give the template a name of up to 80 characters":
+    "請為範本指定不超過 80 個字元的名稱",
+  "A template id is lowercase letters, digits and underscores":
+    "範本 ID 由小寫字母、數字和底線組成",
+  "Too many templates share that name":
+    "使用該名稱的範本太多",
+  "This template has no layout for the display and its polygon cannot be scaled":
+    "此範本沒有適用於該顯示的版面，其多邊形無法縮放",
+  "This is not usable YAML: it is nested too deeply":
+    "這不是可用的 YAML：巢狀太深",
+  "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
+    "請貼上有效負載（元素清單）或帶有有效負載的 ble_esl.write 動作",
+  "Automation is not available":
+    "自動化無法使用",
+  "This automation has no editable configuration":
+    "此自動化沒有可編輯的設定",
+  "Select an automation entity":
+    "請選擇自動化實體",
+  "Select the association to unlink":
+    "請選擇要取消關聯的關聯項",
+  "Automation has no stable ID":
+    "自動化沒有穩定的 ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域 · 按 ? 查看所有快速鍵",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":

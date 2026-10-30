@@ -12,6 +12,7 @@
 - Designer: the device is called "ESL" throughout (Send to ESL, Edit ESL design, ESL orientation…) instead of a mix of tag and label, and the two preview modes are named "Edit view" and "Rendered view"; all 13 languages follow the same terms.
 - Designer: *Image rotation (°)* and the note about components and conditional rules are translated instead of showing in English, and the note shown when creating an automation with input triggers is translated, and several translation slips (BLE ESL spacing in Chinese, French and Japanese phrasing, Italian agreement, ESL plurals) are corrected.
 - Designer: imagespec field names in the element inspector are named after their YAML keys (e.g. "Font size" for `font_size`) in every language, also when several elements are selected, instead of a mix of translated and English labels.
+- Designer: the fixed error messages the server raises (e.g. "Select an automation entity", "This ESL does not support writing") are shown in the Home Assistant language; messages with values in them and Home Assistant's own errors still appear as sent.
 - Designer: pressing `?` on the canvas opens a list of all keyboard and mouse shortcuts (built from the same translated tips shown under the canvas).
 - Designer: moving several selected elements by keyboard or drag stops at the label edges (like a single element), and repeated arrow-key nudges count as one undo step.
 - Designer: the selected element gets a floating action bar above it (duplicate, delete), clear of the resize handles, instead of a trash button beside the corner handle.

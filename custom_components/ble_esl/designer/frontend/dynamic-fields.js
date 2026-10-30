@@ -1,5 +1,5 @@
 import { materialIcon } from "./editor/material-icons.js";
-import { t, language } from "./i18n.js";
+import { t, language, serverMessage } from "./i18n.js";
 import { clone } from "./model.js";
 const fields = [
   "rotation",
@@ -197,7 +197,7 @@ export class DynamicFields extends HTMLElement {
         // An older request failing must not overwrite a newer one's result.
         if (seq === this.sequence && this.isConnected)
           this.shadowRoot.querySelector("[role=status]").textContent =
-            error.message;
+            serverMessage(this.hass, error);
       } finally {
         this.pending = false;
         if (this.queued) {
