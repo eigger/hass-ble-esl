@@ -2508,3 +2508,30 @@ test("? opens a list of every shortcut, Escape closes it, typing ? in a field do
   await page.locator('[data-property="text"]').press("?");
   await expect(dialog).toHaveCount(0);
 });
+
+test("? typed inside a dialog hosted by the panel is not a shortcut", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  const opened = await page.evaluate(() => {
+    const host = document.createElement("div");
+    host.attachShadow({ mode: "open" }).innerHTML = "<input>";
+    window.panel.shadowRoot.append(host);
+    const input = host.shadowRoot.querySelector("input");
+    const event = new KeyboardEvent("keydown", {
+      key: "?",
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    input.dispatchEvent(event);
+    host.remove();
+    return { prevented: event.defaultPrevented };
+  });
+  // Not handled by the canvas: the character is left to the field.
+  expect(opened.prevented).toBe(false);
+  await expect(
+    page.getByRole("dialog", { name: "Keyboard & mouse tips" }),
+  ).toHaveCount(0);
+});

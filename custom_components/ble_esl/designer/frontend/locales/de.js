@@ -104,8 +104,6 @@ export default {
   "Choose icon": "Symbol auswählen",
   "Click a block to move, resize, or bind it to an entity.":
     "Klicken Sie auf einen Block, um ihn zu verschieben, seine Größe zu ändern oder ihn an eine Entität zu binden.",
-  "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
-    "Klicken Sie auf ein Element, um es auszuwählen. Klicken Sie auf den Text, um ihn zu bearbeiten. Ziehen Sie ihn zum Verschieben. Ziehen Sie die Eckgriffe, um die Größe zu ändern. Ausrichtungshilfen werden in der Nähe von Kanten und Mitten angezeigt. Pfeiltasten bewegen sich um 1 Pixel. Umschalt + Pfeile bewegen sich um 10 Pixel. Eingabe bearbeitet ausgewählten Text. Löschen/Rücktaste entfernt · Rechtsklick für Aktionen · ⌘/Ctrl + D dupliziert · ⌘/Ctrl + S speichert · ⌘/Ctrl + Z macht den Vorgang rückgängig · ⌘/Ctrl + Umschalt + Z stellt den Vorgang wieder her",
   "Close automations": "Automatisierungen schließen",
   "Close component editor": "Komponenteneditor schließen",
   "Close dynamic fields": "Dynamische Felder schließen",
@@ -620,4 +618,6 @@ export default {
     "Änderungen des Eingabezustands lösen Anzeigeaktualisierungen aus. Sie können die Auslöser in Home Assistant anpassen.",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Umschalt / Strg / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",
+  "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
+    "Klicken Sie auf ein Element, um es auszuwählen · Klicken Sie auf Text, um ihn zu bearbeiten · Ziehen zum Verschieben · Eckgriffe ziehen, um die Größe zu ändern · Ausrichtungshilfen erscheinen in der Nähe von Kanten und Mitten · Pfeiltasten verschieben um 1 px · Umschalt + Pfeiltasten verschieben um 10 px · Eingabetaste bearbeitet den ausgewählten Text · Entf / Rücktaste löscht · Rechtsklick für Aktionen · ⌘/Ctrl + D dupliziert · ⌘/Ctrl + S speichert · ⌘/Ctrl + Z macht rückgängig · ⌘/Ctrl + Umschalt + Z stellt wieder her",
 };

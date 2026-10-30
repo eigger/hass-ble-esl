@@ -85,8 +85,12 @@ export function handleKey(panel, event) {
     panel.focusElement();
     return;
   }
+  // The real origin, also inside the shadow DOM of a dialog hosted in the panel
+  // (event.target is retargeted to the dialog element there).
+  const origin = event.composedPath()[0] || event.target;
   const editing =
-    ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName) ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(origin.tagName) ||
+    origin.isContentEditable ||
     event.target.isContentEditable;
   // The browser's own "Save page" must not open from inside a field.
   if (
@@ -101,6 +105,7 @@ export function handleKey(panel, event) {
   if (editing) return;
   if (event.key === "?" && !event.metaKey && !event.ctrlKey && !event.altKey) {
     event.preventDefault();
+    panel.closeContextMenu();
     openShortcutsDialog(panel.hass);
     return;
   }
