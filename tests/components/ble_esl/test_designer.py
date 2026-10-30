@@ -461,6 +461,7 @@ async def test_websocket_export(hass, wolink_entry, hass_ws_client):
         "service",
         "issues",
         "payload_data",
+        "frozen",
         "rotate",
         "validation_errors",
         "warnings",
@@ -1219,3 +1220,32 @@ def test_automation_draft_preserves_jinja_instead_of_exported_snapshot():
     exported = export_yaml([{**live[0], "value": "21"}], "white", "current-device", live=live)
     config = automation_draft(exported, "Room")
     assert config["actions"][0]["data"]["payload"] == live
+
+
+async def test_export_reports_what_the_payload_cannot_keep_live(hass, wolink_entry):
+    base = {"x": 0, "y": 0, "width": 60, "height": 30}
+    doc = {
+        "version": 1,
+        "elements": [
+            {"id": "gone", "type": "rectangle", "visible": False, **base},
+            {
+                "id": "native",
+                "type": "imagespec",
+                "spec": {"type": "text", "value": "x", "size": 12},
+                "field_templates": {"color": "{{ 'red' }}"},
+                **base,
+            },
+            {
+                "id": "live",
+                "type": "imagespec",
+                "spec": {"type": "text", "value": "{{ states('sensor.x') }}", "size": 12},
+                **base,
+            },
+        ],
+    }
+    result = await hass.data[KEY].export(wolink_entry, doc)
+    assert [item.split(":")[0] for item in result["frozen"]] == ["gone", "native"]
+    assert set(result["frozen"]) <= set(result["warnings"])
+    assert not result["validation_errors"]
+    # A template that stays live is not reported as frozen.
+    assert result["payload_data"][-1]["value"] == "{{ states('sensor.x') }}"

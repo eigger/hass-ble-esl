@@ -435,6 +435,7 @@ export default {
   "The selected write action is no longer available.":
     "A ação de gravação selecionada não está mais disponível.",
   "Automation saved.": "Automação salva.",
+  "Automation saved. Some values are as of now, not live.": "Automação salva. Alguns valores ficam fixos neste momento e não acompanham ao vivo.",
   "Automation configuration identity is missing.":
     "A identidade da configuração da automação está ausente.",
   "Automation configuration could not be loaded safely.":
@@ -585,6 +586,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Nenhuma automação com uma ação ble_esl.write para este ESL foi encontrada.",
   "Saved to {name}.": "Salvo em {name}.",
+  "Saved to {name}. Some values are as of now, not live.": "Salvo em {name}. Alguns valores ficam fixos neste momento e não acompanham ao vivo.",
   "This automation rotation is not supported.":
     "A rotação desta automação não é compatível.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

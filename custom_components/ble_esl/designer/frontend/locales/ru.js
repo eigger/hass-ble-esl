@@ -432,6 +432,7 @@ export default {
   "The selected write action is no longer available.":
     "Выбранное действие записи больше недоступно.",
   "Automation saved.": "Автоматизация сохранена.",
+  "Automation saved. Some values are as of now, not live.": "Автоматизация сохранена. Некоторые значения зафиксированы на текущий момент и не обновляются.",
   "Automation configuration identity is missing.":
     "Отсутствует идентификатор конфигурации автоматизации.",
   "Automation configuration could not be loaded safely.":
@@ -579,6 +580,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Автоматизация с действием ble_esl.write для этого ESL не найдена.",
   "Saved to {name}.": "Сохранено в {name}.",
+  "Saved to {name}. Some values are as of now, not live.": "Сохранено в {name}. Некоторые значения зафиксированы на текущий момент и не обновляются.",
   "This automation rotation is not supported.":
     "Поворот в этой автоматизации не поддерживается.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

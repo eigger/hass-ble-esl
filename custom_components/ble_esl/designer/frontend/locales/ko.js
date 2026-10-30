@@ -276,6 +276,7 @@ export default {
   "The selected write action is no longer available.":
     "선택한 쓰기 동작을 더 이상 사용할 수 없습니다.",
   "Automation saved.": "자동화를 저장했습니다.",
+  "Automation saved. Some values are as of now, not live.": "자동화를 저장했습니다. 일부 값은 저장 시점의 값이며 실시간으로 따라가지 않습니다.",
   "In 2 days": "모레",
   "In 3 days": "3일 후",
   "In sync": "동기화됨",
@@ -569,6 +570,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "이 ESL용 ble_esl.write 동작이 있는 자동화를 찾지 못했습니다.",
   "Saved to {name}.": "{name}에 저장했습니다.",
+  "Saved to {name}. Some values are as of now, not live.": "{name}에 저장했습니다. 일부 값은 저장 시점의 값이며 실시간으로 따라가지 않습니다.",
   "This automation rotation is not supported.":
     "이 자동화의 회전 값은 지원되지 않습니다.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

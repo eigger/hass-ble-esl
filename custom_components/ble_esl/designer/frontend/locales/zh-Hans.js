@@ -434,6 +434,7 @@ export default {
     "最新的自动化配置格式不正确。",
   "The selected write action is no longer available.": "所选写入动作已不可用。",
   "Automation saved.": "自动化已保存。",
+  "Automation saved. Some values are as of now, not live.": "自动化已保存。部分值为保存时的值，不会实时更新。",
   "Automation configuration identity is missing.": "缺少自动化配置标识。",
   "Automation configuration could not be loaded safely.":
     "无法安全加载自动化配置。",
@@ -568,6 +569,7 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "未找到包含此 ESL 的 ble_esl.write 操作的自动化。",
   "Saved to {name}.": "已保存到 {name}。",
+  "Saved to {name}. Some values are as of now, not live.": "已保存到 {name}。部分值为保存时的值，不会实时更新。",
   "This automation rotation is not supported.":
     "不支持此自动化的旋转设置。",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

@@ -1300,7 +1300,12 @@ class EslManager extends HTMLElement {
         JSON.stringify(snapshot.document);
       const draft = this.readAutomationDraft(source);
       this.clearAutomationDraft(source);
-      this.message("Automation saved.", "success");
+      this.message(
+        exported.frozen?.length
+          ? "Automation saved. Some values are as of now, not live."
+          : "Automation saved.",
+        "success",
+      );
       if (!newer) {
         session.editor.dirty = false;
         session.editor.render();
@@ -1572,7 +1577,13 @@ class EslManager extends HTMLElement {
         background: snapshot.document?.background,
       });
       if (!written || !current()) return;
-      this.message("Saved to {name}.", "success", { name: target.name });
+      this.message(
+        exported.frozen?.length
+          ? "Saved to {name}. Some values are as of now, not live."
+          : "Saved to {name}.",
+        "success",
+        { name: target.name },
+      );
       // A loaded automation keeps its own unsaved state; a design started here
       // is now kept in the automation it was saved to.
       if (

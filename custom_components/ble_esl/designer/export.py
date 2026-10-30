@@ -109,7 +109,6 @@ def export_yaml(
     if live is not None:
         scalar_errors.extend(_json_value_errors(live))
     render_errors = [issue for issue in issues if issue.startswith("render:")]
-    blocking_errors = [issue for issue in issues if issue.startswith("blocking:")]
     warnings = [issue for issue in issues if not issue.startswith("render:")]
     template_paths = dict.fromkeys(
         [*template_syntax(payload), *(template_syntax(live) if live is not None else [])]
@@ -126,9 +125,7 @@ def export_yaml(
             *payload_errors,
             *template_warnings,
         ],
-        "validation_errors": list(
-            dict.fromkeys([*render_errors, *blocking_errors, *payload_errors, *scalar_errors])
-        ),
+        "validation_errors": list(dict.fromkeys([*render_errors, *payload_errors, *scalar_errors])),
         "warnings": [*warnings, *template_warnings],
         "rotate": rotate,
     }

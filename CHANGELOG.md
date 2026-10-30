@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Designer: saving into an automation keeps only the `payload` (element templates stay live); it no longer writes `design` / `design_specs`. Actions saved by earlier releases still run and open in the designer, and saving them again drops those fields. What a payload cannot follow live (sensor components, field templates, templated polygon corners, free-angle rotation, hidden elements) is saved as of now, and the save message says so.
+
 ## 1.8.0
 
 ### Added

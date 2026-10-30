@@ -251,18 +251,22 @@ class Designer:
         except HomeAssistantError as err:
             issues.append(f"render: {err}")
         # Only the payload is saved: what a payload cannot keep live is as of now.
-        issues.extend(
-            f"{element['id']}: the polygon's corners are as of now in the payload"
-            for element in document["elements"]
-            if element["type"] == "imagespec" and frozen_corners(element["spec"])
-        )
-        issues.extend(
-            f"{element['id']}: the {element['type']} is as of now in the payload; "
-            "Convert to elements keeps what can follow its entity"
-            for element in document["elements"]
-            if element["type"] != "imagespec"
-            and (element["entity_id"] or element["field_templates"] or element["data_field"])
-        )
+        frozen = []
+        for element in document["elements"]:
+            if not element["visible"]:
+                frozen.append(f"{element['id']}: hidden, so it is not in the payload")
+            elif element["type"] == "imagespec" and frozen_corners(element["spec"]):
+                frozen.append(
+                    f"{element['id']}: the polygon's corners are as of now in the payload"
+                )
+            elif element["field_templates"] or (
+                element["type"] != "imagespec" and (element["entity_id"] or element["data_field"])
+            ):
+                frozen.append(
+                    f"{element['id']}: the {element['type']} is as of now in the payload; "
+                    "converting it to elements keeps what can follow its entity"
+                )
+        issues.extend(frozen)
         automation_payload = live_payload(
             self.hass, document, self.templates, forecasts, preview_variables
         )
@@ -273,6 +277,10 @@ class Designer:
         if portable != payload:
             payload = portable
             automation_payload = portable
+            frozen.append(
+                "A free-angle rotation turns the display into images: all values are as of now"
+            )
+            issues.append(frozen[-1])
         result = export_yaml(
             payload,
             document["background"],
@@ -281,6 +289,7 @@ class Designer:
             automation_payload,
             rotate=document.get("rotate", 0),
         )
+        result["frozen"] = frozen
         # The designer needs the typed value when applying an edit to an existing
         # action; the YAML strings remain the public export representation.
         result["payload_data"] = (
