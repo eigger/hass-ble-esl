@@ -10,7 +10,7 @@ export default {
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESL · {errors} erreurs · {unsynced} non synchronisés",
   "{count} automations · {active} active":
-    "{count} automatismes · {active} actif",
+    "{count} automatisations · {active} actives",
   "Battery {value}": "Batterie {value}",
   "Last successful image for {alias}": "Dernière image réussie pour {alias}",
   "Skipped: {reason}": "Sauté : {reason}",
@@ -94,7 +94,7 @@ export default {
   "Checking display…": "Vérification de l'affichage…",
   "Choose a sample sensor above to preview this tile style.":
     "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce style de tuile.",
-  "Choose an automation…": "Choisissez un automatisme…",
+  "Choose an automation…": "Choisissez une automatisation…",
   "Choose an entity for the sensor tile.":
     "Choisissez une entité pour la vignette du capteur.",
   "Choose an existing automation.": "Choisissez une automatisation existante.",
@@ -103,7 +103,7 @@ export default {
     "Cliquez sur un bloc pour le déplacer, le redimensionner ou le lier à une entité.",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
     "Cliquez sur un élément pour le sélectionner · Cliquez sur le texte pour le modifier · Faites glisser pour déplacer · Faites glisser les poignées de coin pour redimensionner · Les guides d'alignement apparaissent près des bords et des centres · Les touches fléchées se déplacent de 1 px · Maj + flèches se déplacent de 10 px · Entrer modifie le texte sélectionné · Supprimer / Retour arrière supprime · Clic droit pour les actions · ⌘/Ctrl + D doublons · ⌘/Ctrl + S enregistre · ⌘/Ctrl + Z annule · ⌘/Ctrl + Shift + Z rétablit",
-  "Close automations": "Fermer les automatismes",
+  "Close automations": "Fermer les automatisations",
   "Close component editor": "Fermer l'éditeur de composants",
   "Close dynamic fields": "Fermer les champs dynamiques",
   "Component attribute": "Attribut de composant",
@@ -199,7 +199,7 @@ export default {
   "New icon state": "Nouvel état de l'icône",
   "No ESLs match your search or filter.":
     "Aucun ESL ne correspond à votre recherche ou filtre.",
-  "No connected automations": "Aucun automatisme connecté",
+  "No connected automations": "Aucune automatisation connectée",
   "No error": "Aucune erreur",
   "No matching automations": "Aucune automatisation correspondante",
   "No successful image": "Aucune image réussie",

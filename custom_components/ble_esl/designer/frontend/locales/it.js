@@ -442,7 +442,7 @@ export default {
     "Non è stato possibile caricare in sicurezza la configurazione dell'automazione.",
   "The designer could not be loaded.": "Impossibile caricare il designer.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "Questa automazione usa destinazioni di area, piano, etichetta o template che non possono essere associate in sicurezza a un solo ESL.",
+    "Questa automazione usa destinazioni di area, piano, etichetta o modello che non possono essere associate in sicurezza a un solo ESL.",
   "The automation import is no longer current.":
     "L'importazione dell'automazione non è più aggiornata.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":

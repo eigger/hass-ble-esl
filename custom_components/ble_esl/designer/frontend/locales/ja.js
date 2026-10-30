@@ -10,7 +10,7 @@ export default {
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
     "{count} ESL · {errors} エラー · {unsynced} が同期していません",
   "{count} automations · {active} active":
-    "{count} 自動化 · {active} アクティブ",
+    "{count} オートメーション · {active} アクティブ",
   "Battery {value}": "バッテリー {value}",
   "Last successful image for {alias}": "{alias} の最後に送信に成功した画像",
   "Skipped: {reason}": "スキップされました: {reason}",
@@ -95,7 +95,7 @@ export default {
   "Checking display…": "表示を確認しています…",
   "Choose a sample sensor above to preview this tile style.":
     "このタイルスタイルをプレビューするには、上のサンプル センサーを選択してください。",
-  "Choose an automation…": "自動化を選択してください…",
+  "Choose an automation…": "オートメーションを選択してください…",
   "Choose an entity for the sensor tile.":
     "センサー タイルのエンティティを選択します。",
   "Choose an existing automation.": "既存のオートメーションを選択します。",
@@ -119,7 +119,7 @@ export default {
   "Component shape": "コンポーネントの形状",
   "Component text": "コンポーネントのテキスト",
   "Component width": "コンポーネントの幅",
-  "Connected automations": "関連付けられた自動化",
+  "Connected automations": "関連付けられたオートメーション",
   "Convert to elements": "要素に変換",
   "Converting…": "変換中…",
   "Corner radius": "コーナー半径",
@@ -148,7 +148,7 @@ export default {
   "Element templates stay as written: Home Assistant renders them each time the automation runs. Sensor components and field templates are as of now.":
     "要素テンプレートは書かれたままになります: Home Assistant はオートメーションが実行されるたびにレンダリングされます。センサー コンポーネントとフィールド テンプレートは現時点のものです。",
   "Entity name": "エンティティ名",
-  "Existing automation": "既存の自動化",
+  "Existing automation": "既存のオートメーション",
   "Export JSON": "エクスポート JSON",
   "Exporting payload…": "ペイロードをエクスポートしています…",
   "Fallback icon (blank = HA)": "フォールバック アイコン (空白 = HA)",
@@ -182,9 +182,9 @@ export default {
   "Last successful send": "最後に成功した送信",
   "Later today": "今日遅く",
   "Line spacing": "行間隔",
-  "Link automation": "リンクの自動化",
+  "Link automation": "リンクのオートメーション",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
-    "リンクは、既存のオートメーションをこの ESL に関連付けます。自動化アクションを変更したり、この設計を適用したりすることはありません。",
+    "リンクは、既存のオートメーションをこの ESL に関連付けます。オートメーションアクションを変更したり、この設計を適用したりすることはありません。",
   "Live Home Assistant data on e-paper":
     "電子ペーパー上のライブ Home Assistant データ",
   "Live preview": "ライブ プレビュー",
@@ -203,7 +203,7 @@ export default {
   "No connected automations": "接続されたオートメーションがありません",
   "No error": "エラーなし",
   "No matching automations": "一致するオートメーションがありません",
-  "No successful image": "成功したイメージがありません",
+  "No successful image": "成功した画像がありません",
   "No successful send": "送信が成功しませんでした",
   "No transmission result": "送信結果がありません",
   "Not in sync": "同期していません",
@@ -236,7 +236,7 @@ export default {
   "Save (unsaved changes) (⌘/Ctrl S)": "保存 (未保存の変更) (⌘/Ctrl S)",
   "Search ESLs": "ESL を検索",
   "Search aliases or devices": "エイリアスまたはデバイスの検索",
-  "Search automations": "検索の自動化",
+  "Search automations": "検索のオートメーション",
   "Search by name": "名前で検索",
   "Search icons": "検索アイコン",
   "Search sensors": "センサーの検索",
@@ -290,7 +290,7 @@ export default {
   "＋ Insert template…": "＋ テンプレートを挿入…",
   "＋ Range": "＋ 範囲",
   "＋ State": "＋ 状態",
-  "Automation action": "自動化アクション",
+  "Automation action": "オートメーションアクション",
   "Paste under `payload:` of a ble_esl.write action.":
     "ble_esl.write アクションの `payload:` の下に貼り付けます。",
   "A complete action for a script or automation.":
@@ -304,7 +304,7 @@ export default {
   Apply: "適用",
   Attribute: "属性",
   Automatic: "自動",
-  Automations: "自動化",
+  Automations: "オートメーション",
   Background: "背景",
   Cancel: "キャンセル",
   Close: "閉じる",
@@ -599,7 +599,7 @@ export default {
   "Not sent: the ESL's write lock is on":
     "未送信: ESLの書き込みロックがオンになっています",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "値は現時点のものです。自動化アクションを使用して、Home Assistant で ESLの更新をスケジュールします。",
+    "値は現時点のものです。オートメーションアクションを使用して、Home Assistant で ESLの更新をスケジュールします。",
   "Rendered view": "レンダリング表示",
   "Edit view": "編集表示",
   "Show hidden icons faintly for editing; does not change the ESL image":

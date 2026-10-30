@@ -116,7 +116,7 @@ export default {
   "Component height": "Altura do componente",
   "Component maximum": "Componente máximo",
   "Component minimum": "Componente mínimo",
-  "Component pixel preview": "Visualização de pixel do componente",
+  "Component pixel preview": "Pré-visualização de pixel do componente",
   "Component shape": "Formato do componente",
   "Component text": "Texto do componente",
   "Component width": "Largura do componente",
@@ -133,10 +133,10 @@ export default {
   "Delete selected element": "Excluir elemento selecionado",
   "Designer mode": "Modo designer",
   "Discovery only: preview is available; sending is not supported yet.":
-    "Apenas descoberta: a visualização está disponível; o envio ainda não é suportado.",
+    "Apenas descoberta: a pré-visualização está disponível; o envio ainda não é suportado.",
   "Dismiss message": "Dispensar mensagem",
   "Display canvas": "Tela de exibição",
-  "Dynamic field pixel preview": "Visualização de pixel de campo dinâmico",
+  "Dynamic field pixel preview": "Pré-visualização de pixel de campo dinâmico",
   "Dynamic fields": "Campos dinâmicos",
   "ESL Designer": "Designer ESL",
   "ESL Manager": "Gerenciador ESL",
@@ -188,7 +188,7 @@ export default {
     "Links associam automações existentes a este ESL. Eles não alteram as ações de automação nem aplicam esse design.",
   "Live Home Assistant data on e-paper":
     "Dados Home Assistant ao vivo em papel eletrônico",
-  "Live preview": "Visualização ao vivo",
+  "Live preview": "Pré-visualização ao vivo",
   "Loading ESLs…": "Carregando ESLs…",
   "Loading automations…": "Carregando automações…",
   "Loading designer": "Carregando designer",
@@ -220,9 +220,9 @@ export default {
   "Payload exported": "Carga útil exportada",
   "Position & size (px)": "Posição e tamanho (px)",
   "Press Ctrl+C to copy": "Pressione Ctrl+C para copiar",
-  "Preview updating": "Atualização de visualização",
-  "Preview updating…": "Atualização de visualização…",
-  "Preview zoom": "Zoom de visualização",
+  "Preview updating": "Atualização da pré-visualização",
+  "Preview updating…": "Atualização da pré-visualização…",
+  "Preview zoom": "Zoom da pré-visualização",
   "Rain / snow": "Chuva/neve",
   "Rain chance": "Chance de chuva",
   "Redo (⌘/Ctrl Shift Z)": "Refazer (⌘/Ctrl Mudança Z)",
@@ -267,7 +267,7 @@ export default {
   "The element changed; nothing was converted":
     "O elemento foi alterado; nada foi convertido",
   "This element needs a renderer preview to show its current appearance":
-    "Este elemento precisa de uma visualização do renderizador para mostrar sua aparência atual",
+    "Este elemento precisa de uma pré-visualização do renderizador para mostrar sua aparência atual",
   "Transmission duration": "Duração da transmissão",
   "Transmission error": "Erro de transmissão",
   "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template":
@@ -603,8 +603,8 @@ export default {
     "Não enviado: o bloqueio de gravação do ESL está ativado",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
     "Os valores são de agora. Use a ação de automação para agendar atualizações dos ESLs no Home Assistant.",
-  "Rendered view": "Visualização renderizada",
-  "Edit view": "Visualização de edição",
+  "Rendered view": "Modo renderizado",
+  "Edit view": "Modo de edição",
   "Show hidden icons faintly for editing; does not change the ESL image":
     "Mostra de leve os ícones ocultos para edição; não altera a imagem do ESL",
   "Every element type the ESL can draw, set field by field: choose one, then press":

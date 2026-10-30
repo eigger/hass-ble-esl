@@ -1,7 +1,7 @@
 // UI copy only; keep interpolation placeholders and technical tokens unchanged.
 export default {
-  "Create automation": "Automation erstellen",
-  "Edit automation": "Automation bearbeiten",
+  "Create automation": "Automatisierung erstellen",
+  "Edit automation": "Automatisierung bearbeiten",
   "No triggers are configured. Set them in Home Assistant after creating the automation.":
     "Es sind keine Auslöser eingerichtet. Legen Sie diese nach dem Erstellen in Home Assistant fest.",
 
@@ -441,7 +441,7 @@ export default {
   "The designer could not be loaded.":
     "Der Designer konnte nicht geladen werden.",
   "This automation uses area, floor, label, or templated targets that cannot be safely matched to one ESL.":
-    "Diese Automatisierung verwendet Bereichs-, Etagen-, Label- oder Template-Ziele, die sich nicht sicher einer ESL zuordnen lassen.",
+    "Diese Automatisierung verwendet Bereichs-, Etagen-, Label- oder Vorlagen-Ziele, die sich nicht sicher einer ESL zuordnen lassen.",
   "The automation import is no longer current.":
     "Der Import der Automatisierung ist nicht mehr aktuell.",
   "Enter a JSON preview value for {name}. Use a quoted string, number, true/false, array, or object. These values are not saved.":

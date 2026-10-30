@@ -564,7 +564,7 @@ export default {
   "Replace the current design with the imported file? You can undo this.":
     "Het huidige ontwerp vervangen door het geïmporteerde bestand? U kunt dit ongedaan maken.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
-    "{name} loskoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
+    "{name} ontkoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
   Continue: "Doorgaan",
   selected: "geselecteerd",
   "Changes apply to all selected components. Mixed values are blank.":

@@ -556,7 +556,7 @@ export default {
   Continue: "계속",
   selected: "개 선택됨",
   "Changes apply to all selected components. Mixed values are blank.":
-    "변경 사항은 선택한 모든 구성요소에 적용됩니다. 값이 다른 항목은 비어 있습니다.",
+    "변경 사항은 선택한 모든 컴포넌트에 적용됩니다. 값이 다른 항목은 비어 있습니다.",
   Mixed: "혼합",
   "Rotation value (°)": "회전 값 (°)",
   "Show hidden icons": "숨겨진 아이콘 표시",
