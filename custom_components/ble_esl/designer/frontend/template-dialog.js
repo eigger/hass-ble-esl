@@ -92,7 +92,7 @@ export class TemplateDialog extends HTMLElement {
         entry_id: context.entryId,
       });
     } catch (error) {
-      this.note = serverMessage(this.hass, error);
+      this.note = serverMessage(this.panel.hass, error);
     }
     if (!this.closed) this.render();
     this.loadThumbnails();
@@ -148,7 +148,7 @@ export class TemplateDialog extends HTMLElement {
       if (this.closed || token !== this.previewToken) return;
       this.formPreview = null;
       this.formPreviewNote = "";
-      this.showFormPreview(null, serverMessage(this.hass, error));
+      this.showFormPreview(null, serverMessage(this.panel.hass, error));
       return;
     }
     if (this.closed || token !== this.previewToken) return;
@@ -324,7 +324,7 @@ export class TemplateDialog extends HTMLElement {
         };
         this.issues = [];
       } catch (error) {
-        this.note = serverMessage(this.hass, error);
+        this.note = serverMessage(this.panel.hass, error);
       } finally {
         this.pending = false;
       }
@@ -380,7 +380,7 @@ export class TemplateDialog extends HTMLElement {
       this.render();
     } catch (error) {
       if (this.panel.isDocumentSessionCurrent(this.context)) {
-        this.note = serverMessage(this.hass, error);
+        this.note = serverMessage(this.panel.hass, error);
         this.render();
       } else this.close();
     } finally {

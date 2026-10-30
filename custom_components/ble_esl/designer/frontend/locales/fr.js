@@ -658,7 +658,7 @@ export default {
   "This automation has no editable configuration":
     "Cette automatisation n'a pas de configuration modifiable",
   "Select an automation entity": "Sélectionnez une entité d'automatisation",
-  "Select the association to unlink": "Sélectionnez l'association à supprimer",
+  "Select the association to unlink": "Sélectionnez l'association à dissocier",
   "Automation has no stable ID":
     "L'automatisation n'a pas d'identifiant stable",
 };

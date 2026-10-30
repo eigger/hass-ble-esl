@@ -655,6 +655,6 @@ export default {
     "Deze automatisering heeft geen bewerkbare configuratie",
   "Select an automation entity": "Selecteer een automatiseringsentiteit",
   "Select the association to unlink":
-    "Selecteer de koppeling die u wilt verwijderen",
+    "Selecteer de koppeling die u wilt ontkoppelen",
   "Automation has no stable ID": "De automatisering heeft geen stabiele id",
 };

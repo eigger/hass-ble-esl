@@ -619,11 +619,11 @@ export default {
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "Mudanças de estado das entradas disparam atualizações da tela. Você pode ajustar os gatilhos no Home Assistant.",
   "Preview parameters must be a JSON object":
-    "Os parâmetros de visualização devem ser um objeto JSON",
+    "Os parâmetros de pré-visualização devem ser um objeto JSON",
   "Preview parameters must contain finite JSON values":
-    "Os parâmetros de visualização devem conter valores JSON finitos",
+    "Os parâmetros de pré-visualização devem conter valores JSON finitos",
   "Preview parameters are too large (64 KiB maximum)":
-    "Os parâmetros de visualização são grandes demais (máximo de 64 KiB)",
+    "Os parâmetros de pré-visualização são grandes demais (máximo de 64 KiB)",
   "This ESL does not support writing":
     "Este ESL não oferece suporte à gravação",
   "This ESL has no registered device":

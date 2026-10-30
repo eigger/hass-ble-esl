@@ -650,6 +650,6 @@ export default {
   "This automation has no editable configuration":
     "У этой автоматизации нет редактируемой конфигурации",
   "Select an automation entity": "Выберите объект автоматизации",
-  "Select the association to unlink": "Выберите связь, которую нужно отключить",
+  "Select the association to unlink": "Выберите связь, которую нужно отвязать",
   "Automation has no stable ID": "У автоматизации нет стабильного ID",
 };

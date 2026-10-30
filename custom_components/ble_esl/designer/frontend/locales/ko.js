@@ -602,11 +602,11 @@ export default {
   "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
     "입력 상태가 바뀌면 화면이 업데이트됩니다. 실행 조건은 Home Assistant에서 조정할 수 있습니다.",
   "Preview parameters must be a JSON object":
-    "미리보기 매개변수는 JSON 객체여야 합니다",
+    "미리보기 변수는 JSON 객체여야 합니다",
   "Preview parameters must contain finite JSON values":
-    "미리보기 매개변수에는 유한한 JSON 값만 넣을 수 있습니다",
+    "미리보기 변수에는 유한한 JSON 값만 넣을 수 있습니다",
   "Preview parameters are too large (64 KiB maximum)":
-    "미리보기 매개변수가 너무 큽니다 (최대 64 KiB)",
+    "미리보기 변수가 너무 큽니다 (최대 64 KiB)",
   "This ESL does not support writing": "이 ESL은 쓰기를 지원하지 않습니다",
   "This ESL has no registered device": "이 ESL에는 등록된 기기가 없습니다",
   "The automation payload must be a list of objects":
@@ -638,6 +638,6 @@ export default {
   "This automation has no editable configuration":
     "이 자동화에는 편집할 수 있는 설정이 없습니다",
   "Select an automation entity": "자동화 엔티티를 선택하세요",
-  "Select the association to unlink": "연결을 해제할 연결 항목을 선택하세요",
+  "Select the association to unlink": "연결 해제할 항목을 선택하세요",
   "Automation has no stable ID": "자동화에 고정 ID가 없습니다",
 };

@@ -100,7 +100,7 @@ export class ImportDialog extends HTMLElement {
       );
     } catch (error) {
       if (this.panel.isDocumentSessionCurrent(this.context))
-        this.render(serverMessage(this.hass, error));
+        this.render(serverMessage(this.panel.hass, error));
       else this.close();
     } finally {
       this.pending = false;

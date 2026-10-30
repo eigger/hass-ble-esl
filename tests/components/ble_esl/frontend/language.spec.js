@@ -412,3 +412,20 @@ test("fixed server messages are translated, other server text is left as sent", 
   );
   expect(serverMessage(ko, "plain failure")).toBe("plain failure");
 });
+
+// These dialogs get their language from the panel; `this.hass` is not set on
+// them, so serverMessage(this.hass, …) would silently stay English.
+test("dialogs without their own hass translate server messages through the panel", async () => {
+  const fs = await import("node:fs");
+  for (const file of ["template-dialog.js", "import-dialog.js"]) {
+    const source = fs.readFileSync(
+      new URL(
+        `../../../../custom_components/ble_esl/designer/frontend/${file}`,
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(source, file).toContain("serverMessage(this.panel.hass, error)");
+    expect(source, file).not.toContain("serverMessage(this.hass");
+  }
+});
