@@ -2418,36 +2418,57 @@ test("on a phone the canvas comes first and nothing scrolls sideways", async ({
   expect(box.x).toBeLessThan(canvas.x);
 });
 
-test("selection actions float clear of the resize handles and duplicate or delete", async ({
+test("selection actions float clear of the handles, stay reachable and duplicate or delete", async ({
   page,
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Add text", exact: true }).click();
   await expect(page.locator(".el")).toHaveCount(1);
-  const boxes = await page.evaluate(() => {
-    const root = window.panel.shadowRoot;
-    const rect = (node) => {
-      const r = node.getBoundingClientRect();
-      return { l: r.left, t: r.top, r: r.right, b: r.bottom };
-    };
-    return {
-      bar: rect(root.querySelector(".selection-actions")),
-      handles: [...root.querySelectorAll(".handle")].map(rect),
-      box: rect(root.querySelector(".selection-box")),
-    };
-  });
+  const measure = () =>
+    page.evaluate(() => {
+      const root = window.panel.shadowRoot;
+      const rect = (node) => {
+        const r = node.getBoundingClientRect();
+        return { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      };
+      return {
+        bar: rect(root.querySelector(".selection-actions")),
+        handles: [...root.querySelectorAll(".handle")].map(rect),
+        box: rect(root.querySelector(".selection-box")),
+        wrap: rect(root.querySelector(".canvas-wrap")),
+      };
+    });
   const overlaps = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  await page.evaluate(() => {
+    window.panel.element.y = 60;
+    window.panel.edited();
+  });
+  let boxes = await measure();
   for (const handle of boxes.handles)
     expect(overlaps(boxes.bar, handle)).toBe(false);
-  // The bar sits above the element and never covers it.
   expect(boxes.bar.b).toBeLessThanOrEqual(boxes.box.t);
-  await page
-    .getByRole("button", { name: "Duplicate", exact: true })
-    .first()
-    .click();
+  // Flush with the top edge there is no room above: the bar moves below.
+  await page.evaluate(() => {
+    window.panel.element.y = 0;
+    window.panel.edited();
+  });
+  boxes = await measure();
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.wrap.t);
+  expect(boxes.bar.t).toBeGreaterThanOrEqual(boxes.box.b);
+  for (const handle of boxes.handles)
+    expect(overlaps(boxes.bar, handle)).toBe(false);
+  // Only the buttons catch the pointer, not the gap between them.
+  expect(
+    await page.evaluate(
+      () =>
+        getComputedStyle(
+          window.panel.shadowRoot.querySelector(".selection-actions"),
+        ).pointerEvents,
+    ),
+  ).toBe("none");
+  const bar = page.getByRole("toolbar", { name: "Selected element actions" });
+  await bar.getByRole("button", { name: "Duplicate selected element" }).click();
   await expect(page.locator(".el")).toHaveCount(2);
-  await page
-    .getByRole("button", { name: "Delete selected element", exact: true })
-    .click();
+  await bar.getByRole("button", { name: "Delete selected element" }).click();
   await expect(page.locator(".el")).toHaveCount(1);
 });

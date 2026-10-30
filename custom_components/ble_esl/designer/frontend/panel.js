@@ -112,6 +112,7 @@ import {
   renderLayerMarkup,
   renderSelectionMarkup,
   renderStageMarkup,
+  selectionActionsPlacement,
 } from "./editor/canvas/view.js";
 import {
   alignmentGuides as calculateAlignmentGuides,
@@ -2018,7 +2019,10 @@ export class BleEslDesigner extends HTMLElement {
     if (!stage || this.editingTextId) return;
     const focused = this.shadowRoot.activeElement,
       focusedId = focused?.dataset.id,
-      focusedStage = focused?.classList?.contains("stage");
+      focusedStage = focused?.classList?.contains("stage"),
+      focusedAction = focused?.closest?.(".selection-actions")
+        ? focused.dataset.action
+        : null;
     stage.classList.toggle("exact-mode", !!this.preview);
     const layers = this.document.elements.map((element, index) => {
       const state = this.hass?.states[element.entity_id];
@@ -2105,6 +2109,12 @@ export class BleEslDesigner extends HTMLElement {
         .querySelector(`.el[data-id="${CSS.escape(focusedId)}"]`)
         ?.focus({ preventScroll: true });
     else if (focusedStage) stage.focus({ preventScroll: true });
+    else if (focusedAction)
+      stage
+        .querySelector(
+          `.selection-actions [data-action="${CSS.escape(focusedAction)}"]`,
+        )
+        ?.focus({ preventScroll: true });
     stage.querySelectorAll("ha-state-icon").forEach((icon) => {
       const element = this.document.elements.find(
         (el) => el.id === icon.closest("[data-id]").dataset.id,
@@ -2190,7 +2200,10 @@ export class BleEslDesigner extends HTMLElement {
       const actions = overlay.querySelector(".selection-actions");
       if (actions) {
         actions.style.transform = `translateX(-50%) scale(${1 / this.zoom})`;
-        actions.style.bottom = `calc(100% + ${geometry.handleSize + 8 / this.zoom}px)`;
+        const placement = selectionActionsPlacement(geometry);
+        actions.style.top = placement.side === "top" ? placement.gap : "";
+        actions.style.bottom = placement.side === "bottom" ? placement.gap : "";
+        actions.style.transformOrigin = placement.origin;
       }
     }
   }
