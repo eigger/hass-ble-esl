@@ -8,7 +8,7 @@ export default {
   "Sending failed{error}": "送信失敗{error}",
   "component specs": "コンポーネントの仕様",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESLs · {errors} エラー · {unsynced} が同期していません",
+    "{count} ESL · {errors} エラー · {unsynced} が同期していません",
   "{count} automations · {active} active":
     "{count} 自動化 · {active} アクティブ",
   "Battery {value}": "バッテリー {value}",
@@ -153,7 +153,7 @@ export default {
   "Exporting payload…": "ペイロードをエクスポートしています…",
   "Fallback icon (blank = HA)": "フォールバック アイコン (空白 = HA)",
   "Field template": "フィールド テンプレート",
-  "Filter ESLs": "フィルター ESLs",
+  "Filter ESLs": "フィルター ESL",
   "Finish the current editor operation before switching ESLs.":
     "ESL を切り替える前に、現在のエディターの操作を終了してください。",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
@@ -613,4 +613,6 @@ export default {
   "Image rotation (°)": "画像の回転 (°)",
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "コンポーネントと条件付きルールは保持され、オートメーションが実行されるたびに現在のエンティティの状態が使用されます。",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "入力の状態が変化すると表示が更新されます。トリガーは Home Assistant で調整できます。",
 };

@@ -610,5 +610,7 @@ export default {
   "Duplicate selected element": "Дублировать выбранный элемент",
   "Image rotation (°)": "Поворот изображения (°)",
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
-    "Компоненты и условные правила сохраняются и при каждом запуске автоматизации используют текущие состояния сущностей.",
+    "Компоненты и условные правила сохраняются и при каждом запуске автоматизации используют текущие состояния объектов.",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "Изменения состояния входных данных запускают обновление дисплея. Триггеры можно настроить в Home Assistant.",
 };

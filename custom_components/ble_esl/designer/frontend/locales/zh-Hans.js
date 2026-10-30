@@ -8,7 +8,7 @@ export default {
   "Sending failed{error}": "发送失败{error}",
   "component specs": "组件规格",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESLs · {errors} 错误 · {unsynced} 不同步",
+    "{count} ESL · {errors} 错误 · {unsynced} 不同步",
   "{count} automations · {active} active": "{count}自动化·{active}主动",
   "Battery {value}": "电池{value}",
   "Last successful image for {alias}": "{alias} 的最后一个成功图像",
@@ -69,7 +69,7 @@ export default {
   "Add state mapping": "添加状态映射",
   "Add text": "添加文本",
   "Add to display": "添加至显示",
-  "All ESLs": "所有ESLs",
+  "All ESLs": "所有ESL",
   "All elements": "所有元素",
   "All states": "所有状态",
   "Another HA entity": "另一个HA实体",
@@ -144,9 +144,9 @@ export default {
   "Exporting payload…": "正在导出有效负载……",
   "Fallback icon (blank = HA)": "后备图标（空白 = HA）",
   "Field template": "字段模板",
-  "Filter ESLs": "过滤器ESLs",
+  "Filter ESLs": "过滤器ESL",
   "Finish the current editor operation before switching ESLs.":
-    "在切换ESLs之前完成当前编辑器操作。",
+    "在切换ESL之前完成当前编辑器操作。",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "应用第一条匹配的规则。范围包含下限，不包含上限。边界留空表示不限制。",
   "Font file": "字体文件",
@@ -177,7 +177,7 @@ export default {
     "将现有自动化与该ESL相关联的链接。他们不会更改自动化操作或应用此设计。",
   "Live Home Assistant data on e-paper": "电子纸上的实时Home Assistant数据",
   "Live preview": "实时预览",
-  "Loading ESLs…": "正在加载ESLs…",
+  "Loading ESLs…": "正在加载ESL…",
   "Loading automations…": "加载自动化……",
   "Loading designer": "加载设计器",
   "Loading image…": "正在加载图像…",
@@ -221,7 +221,7 @@ export default {
   "Sample sensor": "样品传感器",
   "Save (unsaved changes)": "保存（未保存的更改）",
   "Save (unsaved changes) (⌘/Ctrl S)": "保存（未保存的更改）(⌘/Ctrl S)",
-  "Search ESLs": "搜索ESLs",
+  "Search ESLs": "搜索ESL",
   "Search aliases or devices": "搜索别名或设备",
   "Search automations": "搜索自动化",
   "Search by name": "按名称搜索",
@@ -576,7 +576,8 @@ export default {
   "Duplicate selected element":
     "复制所选元素",
   "Image rotation (°)":
-    "图像旋转 (°)",
+    "图像旋转(°)",
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "组件和条件规则会被保留，并在每次运行自动化时使用实体的当前状态。",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "输入状态变化会触发显示更新。您可以在 Home Assistant 中调整触发条件。",
 };

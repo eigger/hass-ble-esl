@@ -8,9 +8,9 @@ export default {
   "Sending failed{error}": "Invio non riuscito{error}",
   "component specs": "specifiche dei componenti",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESL · {errors} errori · {unsynced} non sincronizzato",
+    "{count} ESL · {errors} errori · {unsynced} non sincronizzati",
   "{count} automations · {active} active":
-    "{count} automazioni · {active} attivo",
+    "{count} automazioni · {active} attive",
   "Battery {value}": "Batteria {value}",
   "Last successful image for {alias}": "Ultima immagine riuscita per {alias}",
   "Skipped: {reason}": "Saltato: {reason}",
@@ -48,12 +48,12 @@ export default {
   "Delete {label}": "Elimina {label}",
   "Resize {corner}": "Ridimensiona {corner}",
   "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Convertito in elementi {count}, disegnati esattamente come prima{skipped}",
+    "Convertito in {count} elementi, disegnati esattamente come prima{skipped}",
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Convertito in elementi {count}; {pixels} i pixel differiscono da prima{skipped}",
-  "; {count} not converted": "; {count} non convertito",
+    "Convertito in {count} elementi; {pixels} pixel differiscono da prima{skipped}",
+  "; {count} not converted": "; {count} non convertiti",
   "{count} placed, {skipped} skipped.":
-    "{count} posizionato, {skipped} saltato.",
+    "{count} posizionati, {skipped} saltati.",
   "Font size": "Dimensione carattere",
   "Min value": "Valore minimo",
   "Max value": "Valore massimo",
@@ -615,4 +615,6 @@ export default {
   "Image rotation (°)": "Rotazione dell'immagine (°)",
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "I componenti e le regole condizionali vengono mantenuti e usano gli stati attuali delle entità a ogni esecuzione dell'automazione.",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "Le modifiche di stato degli ingressi attivano gli aggiornamenti del display. Puoi regolare i trigger in Home Assistant.",
 };

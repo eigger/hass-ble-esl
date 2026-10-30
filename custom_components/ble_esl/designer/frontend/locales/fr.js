@@ -8,7 +8,7 @@ export default {
   "Sending failed{error}": "Échec de l'envoi{error}",
   "component specs": "définitions des composants",
   "{count} ESLs · {errors} errors · {unsynced} not in sync":
-    "{count} ESLs · {errors} erreurs · {unsynced} non synchronisé",
+    "{count} ESL · {errors} erreurs · {unsynced} non synchronisés",
   "{count} automations · {active} active":
     "{count} automatismes · {active} actif",
   "Battery {value}": "Batterie {value}",
@@ -152,9 +152,9 @@ export default {
   "Exporting payload…": "Exportation de la charge utile…",
   "Fallback icon (blank = HA)": "Icône de secours (vide = HA)",
   "Field template": "Modèle de champ",
-  "Filter ESLs": "Filtre ESLs",
+  "Filter ESLs": "Filtre ESL",
   "Finish the current editor operation before switching ESLs.":
-    "Terminez l'opération d'édition en cours avant de changer de ESL.",
+    "Terminez l'opération d'édition en cours avant de changer d'ESL.",
   "First match wins. Range includes the lower bound and excludes the upper bound. Blank bound = no limit.":
     "La première règle correspondante s’applique. L’intervalle inclut la borne inférieure et exclut la borne supérieure. Une borne vide signifie aucune limite.",
   "Font file": "Fichier de police",
@@ -183,11 +183,11 @@ export default {
   "Line spacing": "Espacement des lignes",
   "Link automation": "Automatisation des liens",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
-    "Les liens associent les automatismes existants à cet ESL. Ils ne modifient pas les actions d'automatisation et n'appliquent pas cette conception.",
+    "Les liens associent les automatisations existantes à cet ESL. Ils ne modifient pas les actions d'automatisation et n'appliquent pas cette conception.",
   "Live Home Assistant data on e-paper":
     "Données Home Assistant en direct sur papier électronique",
   "Live preview": "Aperçu en direct",
-  "Loading ESLs…": "Chargement des ESLs…",
+  "Loading ESLs…": "Chargement des ESL…",
   "Loading automations…": "Chargement des automatisations…",
   "Loading designer": "Concepteur de chargement",
   "Loading image…": "Chargement de l'image…",
@@ -233,7 +233,7 @@ export default {
   "Save (unsaved changes)": "Enregistrer (modifications non enregistrées)",
   "Save (unsaved changes) (⌘/Ctrl S)":
     "Enregistrer (modifications non enregistrées) (⌘/Ctrl S)",
-  "Search ESLs": "Rechercher ESLs",
+  "Search ESLs": "Rechercher ESL",
   "Search aliases or devices": "Rechercher des alias ou des appareils",
   "Search automations": "Automatisations de recherche",
   "Search by name": "Recherche par nom",
@@ -598,14 +598,14 @@ export default {
   "Send to ESL": "Envoyer à l'ESL",
   ESL: "ESL",
   "ESL orientation": "Orientation de l'ESL",
-  "Refresh ESLs": "Actualiser les ESLs",
-  "Refreshing ESLs…": "Actualisation des ESLs…",
+  "Refresh ESLs": "Actualiser les ESL",
+  "Refreshing ESLs…": "Actualisation des ESL…",
   "Edit ESL design": "Modifier le design de l'ESL",
   "ESL design": "Design de l'ESL",
   "Not sent: the ESL's write lock is on":
     "Non envoyé : le verrouillage en écriture de l'ESL est activé",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
-    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESLs dans Home Assistant.",
+    "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESL dans Home Assistant.",
   "Rendered view": "Vue rendue",
   "Edit view": "Vue d'édition",
   "Show hidden icons faintly for editing; does not change the ESL image":
@@ -617,4 +617,6 @@ export default {
   "Image rotation (°)": "Rotation de l'image (°)",
   "Components and conditional rules are preserved and use current entity states each time the automation runs.":
     "Les composants et les règles conditionnelles sont conservés et utilisent les états actuels des entités à chaque exécution de l'automatisation.",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "Les changements d’état des entrées déclenchent la mise à jour de l’affichage. Vous pouvez ajuster les déclencheurs dans Home Assistant.",
 };
