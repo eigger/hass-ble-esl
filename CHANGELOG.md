@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 1.8.0-beta.1
+
+### Added
+
+- Designer: pressing `?` on the canvas opens a list of all keyboard and mouse shortcuts (built from the same translated tips shown under the canvas).
+- Designer: the selected element gets a floating action bar above it (duplicate, delete), clear of the resize handles, instead of a trash button beside the corner handle.
+- Designer: the fixed error messages the server raises (e.g. "Select an automation entity", "This ESL does not support writing") are shown in the Home Assistant language; messages with values in them and Home Assistant's own errors still appear as sent.
+- A translation glossary (`docs/translation-glossary.md`) and a test that keeps retired term variants out of the catalogs: one word per concept in each language.
+
+### Changed
+
+- Designer: the toolbar groups the ESL, edit and zoom controls apart from the output actions (Save, Send to ESL, Create automation, Save to automation…), which sit together on the right (on their own row on narrow screens).
+- Designer: the device is called "ESL" throughout (Send to ESL, Edit ESL design, ESL orientation…) instead of a mix of tag and label, and the two preview modes are named "Edit view" and "Rendered view"; all 13 languages follow the same terms, and `payload` is the same word everywhere instead of a mix of translation and original.
+- Designer: accent, error and warning colours follow the Home Assistant theme, touch targets reach 44 px on touch screens, and animations stop with the "reduce motion" setting.
+- Designer: imagespec field names in the element inspector are named after their YAML keys (e.g. "Font size" for `font_size`) in every language, also when several elements are selected, instead of a mix of translated and English labels.
+- Designer: restoring a kept automation draft says that Cancel discards it, the draft badge explains where the design is kept, the tips mention multi-select, zoom buttons have tooltips, and an empty search result offers to clear the search and filter.
+- Designer: moving several selected elements by keyboard or drag stops at the label edges (like a single element), and repeated arrow-key nudges count as one undo step.
 
 ### Fixed
 
@@ -8,18 +24,7 @@
 - Designer: *Create automation* is disabled while the design has validation errors, the YAML export works for automation designs that use preview parameters, and a failed save names the validation errors.
 - Designer: the background of an opened automation design can be changed and is saved; disabled `ble_esl.write` steps are no longer offered; an unsupported `rotate` value is reported instead of being treated as 0; an unimportable payload no longer prevents opening the design.
 - Designer: undoing back to the loaded or saved design no longer leaves the editor marked as having unsaved changes.
-- Designer: accent, error and warning colours follow the Home Assistant theme, touch targets reach 44 px on touch screens, and animations stop with the "reduce motion" setting.
-- Designer: the device is called "ESL" throughout (Send to ESL, Edit ESL design, ESL orientation…) instead of a mix of tag and label, and the two preview modes are named "Edit view" and "Rendered view"; all 13 languages follow the same terms.
-- Designer: *Image rotation (°)* and the note about components and conditional rules are translated instead of showing in English, and the note shown when creating an automation with input triggers is translated, and several translation slips (BLE ESL spacing in Chinese, French and Japanese phrasing, Italian agreement, ESL plurals) are corrected.
-- Designer: imagespec field names in the element inspector are named after their YAML keys (e.g. "Font size" for `font_size`) in every language, also when several elements are selected, instead of a mix of translated and English labels.
-- Designer: the fixed error messages the server raises (e.g. "Select an automation entity", "This ESL does not support writing") are shown in the Home Assistant language; messages with values in them and Home Assistant's own errors still appear as sent.
-- Designer: one word per concept in each language (e.g. unlink, preview, entity, component, template, automation, image), with a glossary in `docs/translation-glossary.md` and a test that keeps retired variants out of the catalogs. Also fixed: "Link automation" was translated as a noun phrase, the German "Für Bundesstaat anzeigen" (show for state), the French "Propriétés" label of the entity panel, and `payload` is now the same word everywhere instead of a mix of translation and original.
-- Designer: pressing `?` on the canvas opens a list of all keyboard and mouse shortcuts (built from the same translated tips shown under the canvas).
-- Designer: moving several selected elements by keyboard or drag stops at the label edges (like a single element), and repeated arrow-key nudges count as one undo step.
-- Designer: the selected element gets a floating action bar above it (duplicate, delete), clear of the resize handles, instead of a trash button beside the corner handle.
-- Designer: the toolbar groups tag, edit and zoom controls apart from the output actions (Save, Send to tag, Create automation, Save to automation…), which sit together on the right (on their own row on narrow screens).
-- Designer: restoring a kept automation draft says that Cancel discards it, the draft badge explains where the design is kept, the tips mention multi-select, zoom buttons have tooltips, and an empty search result offers to clear the search and filter.
-
+- Designer: *Image rotation (°)*, the note about components and conditional rules and the note shown when creating an automation with input triggers are translated instead of showing in English; several translation mistakes (for example "Link automation" read as a noun, "show for state" read as a US state, wrong words in Chinese, French, Japanese, Italian and Polish) are corrected.
 
 ## 1.7.0
 
