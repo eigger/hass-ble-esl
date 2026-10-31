@@ -16,6 +16,14 @@ import {
   serverMessage,
 } from "./i18n.js";
 import "./component-editor.js";
+
+// A component of an older design that follows an entity: only these are still configured.
+const isBoundComponent = (element) =>
+  Boolean(
+    (element.type === "sensor" && element.entity_id) ||
+    (element.entity_id && element.data_field) ||
+    Object.keys(element.field_templates || {}).length,
+  );
 import "./yaml-dialog.js";
 import "./import-dialog.js";
 import "./template-dialog.js";
@@ -1415,9 +1423,9 @@ export class BleEslDesigner extends HTMLElement {
               "inspector",
             ),
           },
-          libraryContent: `${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.")}</p><button data-action="add-component">${t(this.hass, "＋ Add component")}</button><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div>`,
+          libraryContent: `${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.")}</p><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div>`,
           elementActions: element ? this.elementActions() : "",
-          propertyContent: `${element && this.selectedElements.length === 1 && element.type !== "imagespec" ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}`,
+          propertyContent: `${element && this.selectedElements.length === 1 && element.type !== "imagespec" ? `${this.mode === "template" || isBoundComponent(element) ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>` : ""}${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}`,
           layerRows: renderLayerRows({
             elements: this.document.elements,
             selected: this.selected,
@@ -2504,14 +2512,8 @@ export class BleEslDesigner extends HTMLElement {
       popover.querySelector("#icon-search").focus();
       return;
     }
-    if (
-      ["add-component", "configure-component", "pick-icon"].includes(
-        button.dataset.action,
-      )
-    ) {
-      this.openComponentEditor(
-        button.dataset.action === "add-component" ? null : this.element,
-      );
+    if (["configure-component", "pick-icon"].includes(button.dataset.action)) {
+      this.openComponentEditor(this.element);
       return;
     }
     if (button.dataset.icon) {

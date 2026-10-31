@@ -79,15 +79,12 @@ export default {
   "All ESLs": "すべての ESL",
   "All elements": "すべての要素",
   "All states": "すべての状態",
-  "Another HA entity": "別の HA エンティティ",
   "Another state": "別の状態",
-  "Apply templates": "テンプレートを適用する",
   "Arc thickness": "アークの厚さ",
   "Automations unavailable · Retry":
     "オートメーションは利用できません · 再試行してください",
   "BLE ESL integration version": "BLE ESL 統合バージョン",
   "Battery —": "バッテリー —",
-  "Binary condition": "バイナリ条件",
   "Bound entity": "バインドされたエンティティ",
   "Bring forward": "前面へ移動",
   "Bring front": "最前面へ移動",
@@ -107,7 +104,6 @@ export default {
     "要素をクリックして選択します · テキストをクリックして編集します · ドラッグして移動します · コーナーハンドルをドラッグしてサイズを変更します · 端と中心の近くに位置合わせガイドが表示されます · 矢印キーで 1 ピクセル移動 · Shift + 矢印で 10 ピクセル移動 · Enter で選択したテキストを編集 · Delete / Backspace で削除 · 右クリックで操作 · ⌘/Ctrl + D 複製 · ⌘/Ctrl + S 保存 · ⌘/Ctrl + Z で元に戻す · ⌘/Ctrl + Shift + Z でやり直し",
   "Close automations": "オートメーションを閉じる",
   "Close component editor": "コンポーネントエディタを閉じる",
-  "Close dynamic fields": "動的フィールドを閉じる",
   "Component attribute": "コンポーネント属性",
   "Component data": "コンポーネントデータ",
   "Component decimals": "コンポーネントの小数点",
@@ -136,8 +132,6 @@ export default {
     "検出のみ: プレビューが利用可能です。送信はまだサポートされていません。",
   "Dismiss message": "メッセージを閉じる",
   "Display canvas": "キャンバスを表示",
-  "Dynamic field pixel preview": "動的フィールドピクセルプレビュー",
-  "Dynamic fields": "動的フィールド",
   "ESL Designer": "ESL デザイナー",
   "ESL Manager": "ESL マネージャー",
   "Edit alias": "エイリアスの編集",
@@ -153,7 +147,6 @@ export default {
   "Export JSON": "エクスポート JSON",
   "Exporting payload…": "ペイロードをエクスポートしています…",
   "Fallback icon (blank = HA)": "フォールバック アイコン (空白 = HA)",
-  "Field template": "フィールド テンプレート",
   "Filter ESLs": "フィルター ESL",
   "Finish the current editor operation before switching ESLs.":
     "ESL を切り替える前に、現在のエディターの操作を終了してください。",
@@ -161,8 +154,6 @@ export default {
     "最初に一致したルールを適用します。範囲は下限を含み、上限を含みません。境界を空欄にすると制限しません。",
   "Font file": "フォント ファイル",
   "From ≥": "≧から",
-  "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
-    "HA の Jinja テンプレート。変数: value, entity, entity_id, attributes。states(), is_state(), state_attr(), now() などの HA テンプレート関数を使用できます。",
   "HA state icon": "HA 状態アイコン",
   "HA tile": "HA タイル",
   "Hidden: click to show": "非表示: クリックして表示",
@@ -176,7 +167,6 @@ export default {
   "In 2 days": "2日後",
   "In 3 days": "3日以内",
   "In sync": "同期中",
-  "Insert template": "テンプレートを挿入",
   "Keep templates (values follow the sensors)":
     "テンプレートを保持します (値はセンサーに従います)",
   "Label override": "ラベルの上書き",
@@ -210,7 +200,6 @@ export default {
   "Not in sync": "同期していません",
   "Nothing could be placed.": "何も配置できませんでした。",
   "Nothing to convert": "変換するものがありません",
-  "Numeric condition": "数値条件",
   "Outline colour": "輪郭の色",
   "Outline width": "アウトライン幅",
   "Paste a URL, or upload below":
@@ -229,7 +218,6 @@ export default {
   "Redo (⌘/Ctrl Shift Z)": "やり直し (⌘/Ctrl Shift Z)",
   "Remove manual link": "手動リンクを削除",
   "Replace display": "表示内容を置き換える",
-  "Resolved value": "解決された値",
   "Rotate (°)": "回転 (°)",
   "Rule icon": "ルールアイコン",
   "Sample sensor": "サンプルセンサー",
@@ -277,7 +265,6 @@ export default {
     "このデザインの未保存の変更を破棄しますか？この操作は元に戻せません。",
   "Unsaved changes": "未保存の変更",
   "Upload image": "画像をアップロード",
-  "Use static value": "静的な値を使用します",
   "Vertical align": "垂直揃え",
   "Visible state": "表示状態",
   "Weather time": "天気時間",
@@ -287,11 +274,8 @@ export default {
   "YAML to import": "YAML をインポートします",
   "Zoom in": "ズームイン",
   "Zoom out": "ズームアウト",
-  "ƒ Dynamic fields…": "ƒ 動的フィールド…",
   "← Dashboard": "← ダッシュボード",
-  "＋ Add component": "＋ コンポーネントを追加",
   "＋ Create tile style…": "＋ タイルスタイルを作成…",
-  "＋ Insert template…": "＋ テンプレートを挿入…",
   "＋ Range": "＋ 範囲",
   "＋ State": "＋ 状態",
   "Automation action": "オートメーションアクション",
@@ -545,8 +529,6 @@ export default {
   "Browse design gallery": "デザインギャラリーを開く",
   "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
     "タイルスタイルは、センサーをタイルとしてどう表示するかを決めます。名前・状態・ユニットのパーツで作ると、同じ種類のすべてのセンサーに使われます。",
-  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
-    "アイコンボタンでテキスト、図形、アイコン、画像を追加できます。「コンポーネントを追加」ではセンサー、バー、ゲージなども選べます。",
   "{type} output": "{type} 出力",
   W: "幅",
   H: "高さ",
@@ -661,4 +643,6 @@ export default {
   "Automation has no stable ID": "オートメーションに安定した ID がありません",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択 · ? ですべてのショートカットを表示",
+  "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
+    "ボタンでテキスト・図形・アイコン・画像を追加できます。エンティティに追従するものは、上でセンサーを選ぶか、下の要素を使います。",
 };

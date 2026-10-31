@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Designer: *Add component* and *Dynamic fields* are gone, and *Configure* is offered only for a component that already follows an entity (an older design's sensor tile, data field or field template). Anything new that follows an entity is a sensor picked above or an imagespec element with a template; *Convert to elements* turns an older component into those.
+
+### Changed
+
 - Designer: an automation saved by an older release opens with its entity-bound components as imagespec elements, where that draws exactly what they did; any other component stays as it was, so opening never changes how a design looks.
 - `ble_esl.write` raises a Repairs notice (once per tag and run) while an automation still runs from a saved designer source (`design`); open it in the ESL Manager and save it again.
 - Designer: a sensor added past the 100-element limit says so instead of being placed.

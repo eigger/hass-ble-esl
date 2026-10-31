@@ -70,24 +70,23 @@ test("locale switches retain designer history, nested modal drafts and templates
     undo: window.manager.editor.undoStack,
     dirty: window.manager.editor.dirty,
   }));
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
+  // An older design's component that follows an entity still opens in its editor.
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.element.field_templates = { color: "{{ 'red' }}" };
+    editor.edited();
+  });
+  const afterBinding = await page.evaluate(() => ({
+    document: window.manager.editor.document,
+    undo: window.manager.editor.undoStack,
+    dirty: window.manager.editor.dirty,
+  }));
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
   const component = page.locator("ble-esl-component-editor");
   await component.locator("#text").fill("Ready");
-  await component.locator("#dynamic").click();
-  const dynamic = page.locator("ble-esl-dynamic-fields");
-  const template = "{{ 'red' if value | float(0) >= 20 else 'black' }}";
-  await dynamic.locator("#template").fill(template);
   await setLanguage(page, "ko");
   await expect(
-    dynamic.getByRole("heading", { name: "동적 필드" }),
-  ).toBeVisible();
-  await expect(dynamic.locator("#template")).toHaveValue(template);
-  await expect(dynamic.locator("#template")).toBeFocused();
-  await dynamic.locator("#apply").click();
-  await expect(
-    component.getByRole("heading", { name: "컴포넌트 추가" }),
+    component.getByRole("heading", { name: "컴포넌트 편집" }),
   ).toBeVisible();
   await expect(component.locator("#text")).toHaveValue("Ready");
   await expect(component.locator('[data-type="rectangle"]')).toContainText(
@@ -95,12 +94,9 @@ test("locale switches retain designer history, nested modal drafts and templates
   );
   await setLanguage(page, "en");
   await expect(
-    component.getByRole("heading", { name: "Add component" }),
+    component.getByRole("heading", { name: "Edit component" }),
   ).toBeVisible();
   await expect(component.locator("#text")).toHaveValue("Ready");
-  expect(await component.evaluate((el) => el.draft.field_templates.color)).toBe(
-    template,
-  );
   await component.locator("#close").click();
   expect(
     await page.evaluate(() => ({
@@ -108,7 +104,7 @@ test("locale switches retain designer history, nested modal drafts and templates
       undo: window.manager.editor.undoStack,
       dirty: window.manager.editor.dirty,
     })),
-  ).toEqual(before);
+  ).toEqual(afterBinding);
   await expect(page.locator('[data-property="text"]')).toHaveValue(
     'Save {{ states("sensor.demo_temperature") }}',
   );
