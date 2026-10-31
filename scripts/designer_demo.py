@@ -422,16 +422,26 @@ async def handle(request):
         element = next((el for el in document["elements"] if el["id"] == msg["element_id"]), None)
         if element is None or element["type"] == "imagespec":
             return web.Response(status=400, text="That element cannot be converted")
-        snapshots = snapshot_layers(
-            HASS, {"elements": [element]}, TEMPLATES, await demo_forecasts()
+        alone = {"elements": [element]}
+        forecasts = await demo_forecasts()
+        items = snapshot_layers(HASS, alone, TEMPLATES, forecasts)[0][1]
+        report = LiveReport()
+        live = compile_payload(
+            HASS, alone, TEMPLATES, forecasts, keep_templates=True, report=report
         )
-        state = HASS.states.get(element["entity_id"]) if element["entity_id"] else None
-        elements, issues, original, rebuilt = convert(HASS, element, state, snapshots[0][1], preset)
+        if len(live) != len(items):
+            live, report = items, LiveReport()
+        elements, issues, original, rebuilt = convert(HASS, items, live, preset)
         different = None
         if elements:
             different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
         return web.json_response(
-            {"elements": elements, "issues": issues, "different_pixels": different}
+            {
+                "elements": elements,
+                "issues": issues,
+                "different_pixels": different,
+                "frozen": frozen_items(alone, report.live),
+            }
         )
     if msg["action"] == "save_design_template":
         try:

@@ -750,12 +750,7 @@ async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, woli
     assert result["issues"] == []
     assert result["different_pixels"] == 0
     values = [e["spec"].get("value") for e in result["elements"]]
-    template = (
-        "{% set v = states('sensor.room') %}{% set n = v|float(none) %}"
-        "{{ v|capitalize if v in ['unavailable', 'unknown'] "
-        "else (('%.1f'|format(n) if n is not none else v)) ~ ' °C' }}"
-    )
-    assert template in values
+    assert any('states("sensor.room")' in str(value) for value in values)
     types = [e["spec"]["type"] for e in result["elements"]]
     assert types.count("icon") == 1
     # The template follows the sensor: it renders to what the display showed.
@@ -772,12 +767,13 @@ async def test_a_numeric_sensor_converts_with_its_value_as_a_template(hass, woli
     assert any(item.get("value") == "error °C" for item in payload)
 
 
-async def test_a_text_sensor_converts_without_rounding(hass, wolink_entry):
+async def test_a_sensor_without_a_unit_converts_as_it_stands(hass, wolink_entry):
+    # Rendered text that is only a number is read back as one: it stays as drawn.
     hass.states.async_set("sensor.mode", "eco")
     document = {"version": 1, "elements": [sensor("s", "sensor.mode")]}
     result = await hass.data[KEY].convert(wolink_entry, document, "s")
     assert result["different_pixels"] == 0
-    assert any("states('sensor.mode')" in str(e["spec"].get("value")) for e in result["elements"])
+    assert not any("{{" in str(e["spec"]) for e in result["elements"])
 
 
 @pytest.mark.parametrize(
@@ -848,23 +844,29 @@ async def test_convert_over_the_websocket(hass, wolink_entry, hass_ws_client):
 
 
 @pytest.mark.parametrize(
-    ("state", "attributes", "fields", "reason"),
+    ("state", "attributes", "fields"),
     [
-        ("21.5", {}, {"decimals": 2}, "bare number"),
-        ("21.50", {}, {}, "bare number"),
-        ("21.5", {"unit_of_measurement": "ft'"}, {}, "misread"),
-        ("21.5", {"unit_of_measurement": 'in"'}, {}, "misread"),
+        ("21.5", {}, {"decimals": 2}),
+        ("21.50", {}, {}),
     ],
 )
 async def test_a_value_that_a_template_would_change_stays_text(
-    hass, wolink_entry, state, attributes, fields, reason
+    hass, wolink_entry, state, attributes, fields
 ):
     hass.states.async_set("sensor.odd", state, attributes)
     document = {"version": 1, "elements": [sensor("s", "sensor.odd", **fields)]}
     result = await hass.data[KEY].convert(wolink_entry, document, "s")
     assert result["different_pixels"] == 0
     assert not any("{" in str(e["spec"].get("value", "")) for e in result["elements"])
-    assert any(reason in issue for issue in result["issues"])
+
+
+@pytest.mark.parametrize("unit", ["ft'", 'in"'])
+async def test_a_unit_with_quotes_is_read_from_the_entity(hass, wolink_entry, unit):
+    hass.states.async_set("sensor.odd", "21.5", {"unit_of_measurement": unit})
+    document = {"version": 1, "elements": [sensor("s", "sensor.odd")]}
+    result = await hass.data[KEY].convert(wolink_entry, document, "s")
+    assert result["different_pixels"] == 0
+    assert any("states(" in str(e["spec"].get("value", "")) for e in result["elements"])
 
 
 async def test_converting_cannot_pass_the_hundred_elements_a_display_holds(hass, wolink_entry):

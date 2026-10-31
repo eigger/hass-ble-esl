@@ -90,8 +90,8 @@ test("locale switches retain designer history, nested modal drafts and templates
     component.getByRole("heading", { name: "컴포넌트 추가" }),
   ).toBeVisible();
   await expect(component.locator("#text")).toHaveValue("Ready");
-  await expect(component.locator('[data-type="progress_bar"]')).toContainText(
-    "진행 막대",
+  await expect(component.locator('[data-type="rectangle"]')).toContainText(
+    "도형",
   );
   await setLanguage(page, "en");
   await expect(

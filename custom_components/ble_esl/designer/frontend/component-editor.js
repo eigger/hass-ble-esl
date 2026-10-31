@@ -26,11 +26,8 @@ const focusSelectorFor = (element) => {
 const components = [
   ["text", "Text / value", "mdi:format-text"],
   ["icon", "Icon", "mdi:star-outline"],
-  ["conditional_icon", "Conditional icon", "mdi:state-machine"],
   ["image", "Image", "mdi:image-outline"],
   ["rectangle", "Shape", "mdi:shape-outline"],
-  ["progress_bar", "Progress bar", "mdi:progress-upload"],
-  ["gauge", "Gauge", "mdi:gauge"],
 ];
 export class ComponentEditor extends HTMLElement {
   constructor() {

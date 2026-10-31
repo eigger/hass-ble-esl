@@ -309,3 +309,37 @@ async def test_what_home_assistant_would_turn_back_into_a_number_stays_as_drawn(
         element("text", "fine", entity_id="sensor.fine", data_field="state", decimals=2),
     )
     assert [item.split(":")[0] for item in result["frozen"]] == ["plain", "fine"]
+
+
+async def test_a_converted_component_saves_the_same_payload_it_would_have_saved(hass, wolink_entry):
+    """Converting and saving are one implementation: reopened, nothing differs."""
+    hass.states.async_set("sensor.temp", "21.26", {"unit_of_measurement": "°C"})
+    tile = element("sensor", "tile", entity_id="sensor.temp", decimals=1)
+    before = await export(hass, wolink_entry, tile)
+    converted = await hass.data[KEY].convert(wolink_entry, document(tile), "tile")
+    assert converted["issues"] == []
+    assert converted["different_pixels"] == 0
+    after = await hass.data[KEY].export(wolink_entry, document(*converted["elements"]))
+    assert after["validation_errors"] == []
+    assert after["frozen"] == []
+    assert after["payload_data"] == before["payload_data"]
+    hass.states.async_set("sensor.temp", "30", {"unit_of_measurement": "°C"})
+    assert drawn(hass, after)[-1]["value"] == "30.0 °C"
+
+
+async def test_converting_says_what_stays_as_of_now(hass, wolink_entry):
+    hass.states.async_set("sensor.mode", "eco")
+    live = await hass.data[KEY].convert(
+        wolink_entry,
+        document(element("sensor", "tile", entity_id="sensor.mode")),
+        "tile",
+    )
+    # No unit: the value could be read back as a number, so it stays as drawn.
+    assert len(live["frozen"]) == 1 and live["frozen"][0].startswith("tile:")
+    hass.states.async_set("sensor.temp", "5", {"unit_of_measurement": "W"})
+    live = await hass.data[KEY].convert(
+        wolink_entry,
+        document(element("sensor", "tile", entity_id="sensor.temp")),
+        "tile",
+    )
+    assert live["frozen"] == []

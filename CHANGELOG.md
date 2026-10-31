@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Designer: a sensor picked, dropped or added from the library becomes imagespec elements at once (its value a template that follows the entity), so what is edited is what the payload holds. *Conditional icon*, *Progress bar* and *Gauge* are no longer offered under *Add component* (the imagespec elements are); designs that have them still open and can be edited. *Convert to elements* and saving into an automation now write the same templates.
+
+### Changed
+
 - Designer: components bound to an entity are saved into the payload as templates where Home Assistant can follow the entity: a sensor's value, a data field's text, the icon a rule picks, a bar's or gauge's progress. A piece is templated only when its template renders exactly what was drawn, and only where Home Assistant cannot turn the rendered text back into a number (a sensor value needs a unit; data-field text with two or more decimals cannot be followed); anything else (field templates, binary and weather icons, sensors drawn through a sensor template) is saved as of now and reported. Hidden elements are saved as `visible: false` and come back when the automation is reopened.
 
 ### Added

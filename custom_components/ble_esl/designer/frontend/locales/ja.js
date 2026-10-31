@@ -45,11 +45,12 @@ export default {
   "Move {label} backward": "{label} を後方に移動",
   "Delete {label}": "{label} を削除",
   "Resize {corner}": "サイズ変更 {corner}",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "{count} 要素に変換され、以前とまったく同じように描画されます{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "{count} 要素に変換されました。 {pixels} ピクセルは以前とは異なります{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "{count} 要素に変換され、以前とまったく同じように描画されます{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "{count} 要素に変換されました。 {pixels} ピクセルは以前とは異なります{skipped}{frozen}",
   "; {count} not converted": "; {count} は変換されませんでした",
+  "; some values are as of now, not live": "; 一部の値は現時点のもので、リアルタイムには追従しません",
   "{count} placed, {skipped} skipped.":
     "{count} が配置され、{skipped} はスキップされました。",
   "Font size": "フォントサイズ",

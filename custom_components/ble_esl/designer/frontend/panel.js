@@ -1714,23 +1714,7 @@ export class BleEslDesigner extends HTMLElement {
     this.selected = result.elements[0].id;
     this.error = false;
     this.errorSource = null;
-    const skipped = result.issues.length
-      ? {
-          key: "; {count} not converted",
-          values: { count: result.issues.length },
-        }
-      : "";
-    this.status = {
-      key:
-        result.different_pixels === 0
-          ? "Converted to {count} elements, drawn exactly as before{skipped}"
-          : "Converted to {count} elements; {pixels} pixels differ from before{skipped}",
-      values: {
-        count: result.elements.length,
-        pixels: result.different_pixels ?? "?",
-        skipped,
-      },
-    };
+    this.status = this.convertStatus(result);
     this.edited();
   }
   // A pasted payload as elements, added to the display or replacing it.
@@ -1966,7 +1950,7 @@ export class BleEslDesigner extends HTMLElement {
           return;
         }
         this.libraryEntity = id;
-        this.add("sensor", this.hass.states[id]);
+        this.addEntity(this.hass.states[id]);
       },
     });
     this.renderEntityPreview();
@@ -2349,18 +2333,92 @@ export class BleEslDesigner extends HTMLElement {
       calculateStaggeredElement(element, this.document.elements, this.tag),
     );
   }
-  add(type, entity, x, y) {
-    this.checkpoint();
+  // A new element, placed beside the others or where it was dropped.
+  placedElement(type, entity, x, y) {
     const element = newElement(type, this.tag, entity);
     if (x !== undefined) {
       element.x = x;
       element.y = y;
       clampBox(element, this.tag);
     } else this.stagger(element);
+    return element;
+  }
+  add(type, entity, x, y) {
+    this.checkpoint();
+    const element = this.placedElement(type, entity, x, y);
     this.document.elements.push(element);
     this.selected = element.id;
     this.edited();
     this.focusElement();
+    return element;
+  }
+  // An entity put on the display becomes imagespec elements at once, so what is
+  // edited is what the payload will hold, templates included. The sensor tile
+  // is converted before it is placed: one undo step, and no moment in which a
+  // tile that is not payload data can be edited.
+  // One at a time, so each lands beside the one before it.
+  addEntity(entity, x, y) {
+    this.entityQueue = (this.entityQueue || Promise.resolve()).then(() =>
+      this.placeEntity(entity, x, y),
+    );
+    return this.entityQueue;
+  }
+  async placeEntity(entity, x, y) {
+    const context = this.documentSessionContext();
+    const tile = this.placedElement("sensor", entity, x, y);
+    const selected = this.selected;
+    this.status = "Converting…";
+    this.renderStatus();
+    try {
+      const result = await this.api("convert", {
+        entry_id: context.entryId,
+        document: {
+          ...context.document,
+          elements: [...context.document.elements, tile],
+        },
+        element_id: tile.id,
+      });
+      if (!this.isDocumentSessionCurrent(context)) return;
+      if (!result.elements.length)
+        throw new Error(result.issues.join("; ") || "Nothing to convert");
+      this.checkpoint();
+      this.document.elements.push(...result.elements);
+      // Another element picked meanwhile stays selected.
+      if (this.selected === selected) this.selected = result.elements[0].id;
+      this.error = false;
+      this.errorSource = null;
+      this.status = this.convertStatus(result);
+      this.edited();
+      this.focusElement();
+    } catch (error) {
+      if (!this.isDocumentSessionCurrent(context)) return;
+      // Placed as the sensor tile it is: older designs can edit one.
+      this.report(error);
+      this.add("sensor", entity, x, y);
+    }
+  }
+  convertStatus(result) {
+    const skipped = result.issues.length
+      ? {
+          key: "; {count} not converted",
+          values: { count: result.issues.length },
+        }
+      : "";
+    const frozen = result.frozen?.length
+      ? { key: "; some values are as of now, not live" }
+      : "";
+    return {
+      key:
+        result.different_pixels === 0
+          ? "Converted to {count} elements, drawn exactly as before{skipped}{frozen}"
+          : "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}",
+      values: {
+        count: result.elements.length,
+        pixels: result.different_pixels ?? "?",
+        skipped,
+        frozen,
+      },
+    };
   }
   focusElement() {
     this.shadowRoot
@@ -2418,7 +2476,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.action === "add-current-entity") {
-      this.add("sensor", this.hass.states[this.libraryEntity]);
+      this.addEntity(this.hass.states[this.libraryEntity]);
       return;
     }
     if (button.dataset.action === "add-icon-state") {
@@ -2521,7 +2579,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.entity) {
-      this.add("sensor", this.hass.states[button.dataset.entity]);
+      this.addEntity(this.hass.states[button.dataset.entity]);
       return;
     }
     if (button.dataset.add) {
@@ -3258,8 +3316,7 @@ export class BleEslDesigner extends HTMLElement {
     this.gestureFinish?.(false);
     const entity = this.hass.states[event.dataTransfer.getData("text/plain")];
     if (!entity) return;
-    this.add(
-      "sensor",
+    this.addEntity(
       entity,
       Math.round((event.clientX - rect.left) / this.zoom),
       Math.round((event.clientY - rect.top) / this.zoom),
