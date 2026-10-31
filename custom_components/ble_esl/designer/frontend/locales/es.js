@@ -51,7 +51,8 @@ export default {
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
     "Convertido en {count} elementos; {pixels} píxeles difieren de antes{skipped}{frozen}",
   "; {count} not converted": "; {count} no convertido",
-  "; some values are as of now, not live": "; algunos valores quedan fijados a este momento, no en vivo",
+  "; some values are as of now, not live":
+    "; algunos valores quedan fijados a este momento, no en vivo",
   "{count} placed, {skipped} skipped.": "{count} colocado, {skipped} omitido.",
   "Font size": "Tamaño de fuente",
   "Min value": "Valor mínimo",
@@ -421,7 +422,8 @@ export default {
   "The selected write action is no longer available.":
     "La acción de escritura seleccionada ya no está disponible.",
   "Automation saved.": "Automatización guardada.",
-  "Automation saved. Some values are as of now, not live.": "Automatización guardada. Algunos valores quedan fijados a este momento y no se actualizan en vivo.",
+  "Automation saved. Some values are as of now, not live.":
+    "Automatización guardada. Algunos valores quedan fijados a este momento y no se actualizan en vivo.",
   "Automation configuration identity is missing.":
     "Falta la identidad de la configuración de la automatización.",
   "Automation configuration could not be loaded safely.":
@@ -569,7 +571,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "No se encontró ninguna automatización con una acción ble_esl.write para este ESL.",
   "Saved to {name}.": "Guardado en {name}.",
-  "Saved to {name}. Some values are as of now, not live.": "Guardado en {name}. Algunos valores quedan fijados a este momento y no se actualizan en vivo.",
+  "Saved to {name}. Some values are as of now, not live.":
+    "Guardado en {name}. Algunos valores quedan fijados a este momento y no se actualizan en vivo.",
   "This automation rotation is not supported.":
     "La rotación de esta automatización no es compatible.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

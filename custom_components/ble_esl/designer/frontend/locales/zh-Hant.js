@@ -46,16 +46,15 @@ export default {
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
     "已轉換為 {count} 個元素；有 {pixels} 個像素與之前不同{skipped}{frozen}",
   "; {count} not converted": "; {count} 未轉換",
-  "; some values are as of now, not live": "; 部分值為目前時刻的值，不會即時更新",
+  "; some values are as of now, not live":
+    "; 部分值為目前時刻的值，不會即時更新",
   "{count} placed, {skipped} skipped.": "放置{count}，跳過{skipped}。",
   "Font size": "字體大小",
   "Min value": "最小值",
   "Max value": "最大值",
-  "Image fit":
-    "影像適應方式",
+  "Image fit": "影像適應方式",
   "Show label": "顯示標籤",
-  "Show unit":
-    "顯示單位",
+  "Show unit": "顯示單位",
   "Align left": "左對齊",
   "Align center": "居中對齊",
   "Align right": "右對齊",
@@ -77,8 +76,7 @@ export default {
   "All elements": "所有元素",
   "All states": "所有狀態",
   "Another state": "另一種狀態",
-  "Arc thickness":
-    "圓弧粗細",
+  "Arc thickness": "圓弧粗細",
   "Automations unavailable · Retry": "自動化不可用·重試",
   "BLE ESL integration version": "BLE ESL整合版本",
   "Battery —": "電池 —",
@@ -106,8 +104,7 @@ export default {
   "Component maximum": "組件最大值",
   "Component minimum": "組件最小值",
   "Component pixel preview": "組件像素預覽",
-  "Component shape":
-    "組件形狀",
+  "Component shape": "組件形狀",
   "Component text": "組件文字",
   "Component width": "組件寬度",
   "Connected automations": "已關聯的自動化",
@@ -123,8 +120,7 @@ export default {
   "Designer mode": "設計者模式",
   "Discovery only: preview is available; sending is not supported yet.":
     "僅發現：預覽可用；尚不支援傳送。",
-  "Dismiss message":
-    "關閉訊息",
+  "Dismiss message": "關閉訊息",
   "Display canvas": "顯示畫布",
   "ESL Designer": "ESL 設計器",
   "ESL Manager": "ESL 管理器",
@@ -165,8 +161,7 @@ export default {
   "Last successful send": "上次成功傳送",
   "Later today": "今天晚些時候",
   "Line spacing": "行距",
-  "Link automation":
-    "關聯自動化",
+  "Link automation": "關聯自動化",
   "Links associate existing automations with this ESL. They do not change automation actions or apply this design.":
     "關聯會將現有自動化與此 ESL 綁定。它們不會更改自動化動作，也不會套用此設計。",
   "Live Home Assistant data on e-paper": "電子紙上的即時Home Assistant資料",
@@ -177,14 +172,12 @@ export default {
   "Loading image…": "正在載入影像…",
   "Loading…": "載入中…",
   "Low temperature": "低溫",
-  "Max lines":
-    "最大行數",
+  "Max lines": "最大行數",
   "Min font size": "最小字體大小",
   "Move selected element": "移動所選元素",
   "New icon state": "新圖示狀態",
   "No ESLs match your search or filter.": "沒有ESL來符合您的搜尋或篩選器。",
-  "No connected automations":
-    "沒有已關聯的自動化",
+  "No connected automations": "沒有已關聯的自動化",
   "No error": "沒有錯誤",
   "No matching automations": "沒有相符的自動化",
   "No successful image": "沒有成功的影像",
@@ -198,20 +191,16 @@ export default {
   "Paste a URL, or upload below": "貼上 URL，或在下面上傳",
   "Paste a payload (a list of imagespec elements) or a whole ble_esl.write action. Elements placed by a template or a flow layout cannot be placed in the designer and are listed.":
     "貼上payload（imagespec元素的清單）或整個ble_esl.write動作。由範本或流佈局放置的元素無法放置在設計器中並列出。",
-  "Payload YAML":
-    "Payload YAML",
-  "Payload exported":
-    "已匯出 payload",
+  "Payload YAML": "Payload YAML",
+  "Payload exported": "已匯出 payload",
   "Position & size (px)": "位置與尺寸（像素）",
   "Press Ctrl+C to copy": "按Ctrl+C複製",
   "Preview updating": "預覽更新",
   "Preview updating…": "預覽更新…",
   "Preview zoom": "預覽縮放",
   "Rain / snow": "雨/雪",
-  "Rain chance":
-    "降雨機率",
-  "Redo (⌘/Ctrl Shift Z)":
-    "重做 (⌘/Ctrl Shift Z)",
+  "Rain chance": "降雨機率",
+  "Redo (⌘/Ctrl Shift Z)": "重做 (⌘/Ctrl Shift Z)",
   "Remove manual link": "刪除手動關聯",
   "Replace display": "取代顯示內容",
   "Rotate (°)": "旋轉(°)",
@@ -234,8 +223,7 @@ export default {
   "Sensor tile (value, unit and name)": "感測器磁貼（值、單位和名稱）",
   "Show for state": "顯示狀態",
   "Show percentage": "顯示百分比",
-  "Show value":
-    "顯示數值",
+  "Show value": "顯示數值",
   "State icon": "狀態圖示",
   "State value": "狀態值",
   "State → icon": "狀態 → 圖示",
@@ -293,8 +281,7 @@ export default {
   Close: "關閉",
   Colour: "顏色",
   Components: "組件",
-  "Condition":
-    "條件",
+  Condition: "條件",
   Configure: "設定",
   Content: "內容",
   Copied: "已複製",
@@ -306,12 +293,10 @@ export default {
   Direction: "方向",
   Display: "顯示",
   Dither: "抖色",
-  "Duplicate":
-    "建立副本",
+  Duplicate: "建立副本",
   Entities: "實體",
   Errors: "錯誤",
-  "Filled":
-    "填滿",
+  Filled: "填滿",
   Fit: "符合視窗",
   Height: "高度",
   Hide: "隱藏",
@@ -324,8 +309,7 @@ export default {
   Minimum: "最小值",
   Name: "名稱",
   Now: "現在",
-  "Padding":
-    "內距",
+  Padding: "內距",
   Ready: "準備好了",
   Redo: "重做",
   Refresh: "重新整理",
@@ -335,8 +319,7 @@ export default {
   Shape: "形狀",
   Show: "顯示",
   State: "狀態",
-  "Style":
-    "樣式",
+  Style: "樣式",
   Temperature: "溫度",
   "Tile style": "磁貼樣式",
   Text: "文字",
@@ -348,8 +331,7 @@ export default {
   Visible: "可見",
   When: "時間",
   Width: "寬度",
-  "Payload":
-    "Payload",
+  Payload: "Payload",
   Gauge: "儀表",
   Unit: "單位",
   designer: "設計器",
@@ -419,7 +401,8 @@ export default {
   "The selected write action is no longer available.":
     "所選寫入動作已無法使用。",
   "Automation saved.": "自動化已儲存。",
-  "Automation saved. Some values are as of now, not live.": "自動化已儲存。部分值為儲存時的值，不會即時更新。",
+  "Automation saved. Some values are as of now, not live.":
+    "自動化已儲存。部分值為儲存時的值，不會即時更新。",
   "Automation configuration identity is missing.": "缺少自動化設定識別。",
   "Automation configuration could not be loaded safely.":
     "無法安全載入自動化設定。",
@@ -550,85 +533,71 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "找不到包含此 ESL 的 ble_esl.write 動作的自動化。",
   "Saved to {name}.": "已儲存到 {name}。",
-  "Saved to {name}. Some values are as of now, not live.": "已儲存到 {name}。部分值為儲存時的值，不會即時更新。",
-  "This automation rotation is not supported.":
-    "不支援此自動化的旋轉設定。",
+  "Saved to {name}. Some values are as of now, not live.":
+    "已儲存到 {name}。部分值為儲存時的值，不會即時更新。",
+  "This automation rotation is not supported.": "不支援此自動化的旋轉設定。",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
     "要還原此自動化設計中未儲存的變更嗎？取消會捨棄這些變更。",
-  "Clear search and filter":
-    "清除搜尋與篩選",
+  "Clear search and filter": "清除搜尋與篩選",
   "Kept as a draft for this browser session until you create an automation or save into one.":
     "在建立自動化或儲存到自動化之前，會在此瀏覽器工作階段期間以草稿形式保留。",
   "Send to ESL": "傳送至 ESL",
-  "ESL": "ESL",
+  ESL: "ESL",
   "ESL orientation": "ESL 方向",
   "Refresh ESLs": "重新整理 ESL",
   "Refreshing ESLs…": "正在重新整理 ESL…",
   "Edit ESL design": "編輯 ESL 設計",
   "ESL design": "ESL 設計",
   "Not sent: the ESL's write lock is on": "未傳送：ESL 的寫入鎖定已開啟",
-  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.": "數值是截至目前為止的。使用自動化操作安排 Home Assistant 中的 ESL 更新。",
+  "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
+    "數值是截至目前為止的。使用自動化操作安排 Home Assistant 中的 ESL 更新。",
   "Rendered view": "渲染檢視",
   "Edit view": "編輯檢視",
-  "Show hidden icons faintly for editing; does not change the ESL image": "編輯時淡淡顯示隱藏的圖示;不會改變 ESL 影像",
-  "Every element type the ESL can draw, set field by field: choose one, then press": "ESL 可以繪製的每個元素類型，逐一欄位設定：選擇一個，然後按",
-  "Selected element actions":
-    "所選元素的操作",
-  "Duplicate selected element":
-    "複製所選元素",
-  "Image rotation (°)":
-    "影像旋轉(°)",
-  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.": "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
-  "Preview parameters must be a JSON object":
-    "預覽參數必須是 JSON 物件",
+  "Show hidden icons faintly for editing; does not change the ESL image":
+    "編輯時淡淡顯示隱藏的圖示;不會改變 ESL 影像",
+  "Every element type the ESL can draw, set field by field: choose one, then press":
+    "ESL 可以繪製的每個元素類型，逐一欄位設定：選擇一個，然後按",
+  "Selected element actions": "所選元素的操作",
+  "Duplicate selected element": "複製所選元素",
+  "Image rotation (°)": "影像旋轉(°)",
+  "Input state changes trigger display updates. You can adjust the triggers in Home Assistant.":
+    "輸入狀態變更會觸發顯示更新。您可以在 Home Assistant 中調整觸發條件。",
+  "Preview parameters must be a JSON object": "預覽參數必須是 JSON 物件",
   "Preview parameters must contain finite JSON values":
     "預覽參數必須包含有限的 JSON 值",
   "Preview parameters are too large (64 KiB maximum)":
     "預覽參數過大（最大 64 KiB）",
-  "This ESL does not support writing":
-    "此 ESL 不支援寫入",
-  "This ESL has no registered device":
-    "此 ESL 沒有已註冊的裝置",
+  "This ESL does not support writing": "此 ESL 不支援寫入",
+  "This ESL has no registered device": "此 ESL 沒有已註冊的裝置",
   "The automation payload must be a list of objects":
     "自動化的payload必須是物件清單",
   "The automation payload is too large to import (5 MiB maximum)":
     "自動化的payload過大，無法匯入（最大 5 MiB）",
-  "That element is not in the display":
-    "該元素不在顯示中",
-  "That is an imagespec element already":
-    "那已經是 imagespec 元素",
-  "Choose a sensor type":
-    "請選擇感測器類型",
-  "Choose an available sample entity":
-    "請選擇一個可用的範例實體",
+  "That element is not in the display": "該元素不在顯示中",
+  "That is an imagespec element already": "那已經是 imagespec 元素",
+  "Choose a sensor type": "請選擇感測器類型",
+  "Choose an available sample entity": "請選擇一個可用的範例實體",
   "This ESL protocol does not support image writes":
     "此 ESL 的通訊協定不支援寫入影像",
   "The ESL's display size changed; reload the designer":
     "ESL 的顯示尺寸已變更；請重新載入設計器",
-  "template_id is required":
-    "需要 template_id",
+  "template_id is required": "需要 template_id",
   "Give the template a name of up to 80 characters":
     "請為範本指定不超過 80 個字元的名稱",
   "A template id is lowercase letters, digits and underscores":
     "範本 ID 由小寫字母、數字和底線組成",
-  "Too many templates share that name":
-    "使用該名稱的範本太多",
+  "Too many templates share that name": "使用該名稱的範本太多",
   "This template has no layout for the display and its polygon cannot be scaled":
     "此範本沒有適用於該顯示的版面，其多邊形無法縮放",
   "This is not usable YAML: it is nested too deeply":
     "這不是可用的 YAML：巢狀太深",
   "Paste a payload (a list of elements) or a ble_esl.write action with a payload":
     "請貼上payload（元素清單）或帶有payload的 ble_esl.write 動作",
-  "Automation is not available":
-    "自動化無法使用",
-  "This automation has no editable configuration":
-    "此自動化沒有可編輯的設定",
-  "Select an automation entity":
-    "請選擇自動化實體",
-  "Select the association to unlink":
-    "請選擇要取消關聯的關聯項",
-  "Automation has no stable ID":
-    "自動化沒有穩定的 ID",
+  "Automation is not available": "自動化無法使用",
+  "This automation has no editable configuration": "此自動化沒有可編輯的設定",
+  "Select an automation entity": "請選擇自動化實體",
+  "Select the association to unlink": "請選擇要取消關聯的關聯項",
+  "Automation has no stable ID": "自動化沒有穩定的 ID",
   "Shift / Ctrl / ⌘ + click selects several elements · Drag on an empty part of the canvas to select an area · ? shows all shortcuts":
     "Shift / Ctrl / ⌘ + 點擊可選取多個元素 · 在畫布空白處拖曳可框選區域 · 按 ? 查看所有快速鍵",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":

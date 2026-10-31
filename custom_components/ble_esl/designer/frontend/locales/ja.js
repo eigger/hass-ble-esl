@@ -50,7 +50,8 @@ export default {
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
     "{count} 要素に変換されました。 {pixels} ピクセルは以前とは異なります{skipped}{frozen}",
   "; {count} not converted": "; {count} は変換されませんでした",
-  "; some values are as of now, not live": "; 一部の値は現時点のもので、リアルタイムには追従しません",
+  "; some values are as of now, not live":
+    "; 一部の値は現時点のもので、リアルタイムには追従しません",
   "{count} placed, {skipped} skipped.":
     "{count} が配置され、{skipped} はスキップされました。",
   "Font size": "フォントサイズ",
@@ -419,7 +420,8 @@ export default {
   "The selected write action is no longer available.":
     "選択した書き込みアクションは利用できなくなりました。",
   "Automation saved.": "オートメーションを保存しました。",
-  "Automation saved. Some values are as of now, not live.": "オートメーションを保存しました。一部の値は現時点のもので、リアルタイムには追従しません。",
+  "Automation saved. Some values are as of now, not live.":
+    "オートメーションを保存しました。一部の値は現時点のもので、リアルタイムには追従しません。",
   "Automation configuration identity is missing.":
     "オートメーション設定の識別情報がありません。",
   "Automation configuration could not be loaded safely.":
@@ -565,7 +567,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "このESL用の ble_esl.write アクションを含むオートメーションが見つかりませんでした。",
   "Saved to {name}.": "{name} に保存しました。",
-  "Saved to {name}. Some values are as of now, not live.": "{name} に保存しました。一部の値は現時点のもので、リアルタイムには追従しません。",
+  "Saved to {name}. Some values are as of now, not live.":
+    "{name} に保存しました。一部の値は現時点のもので、リアルタイムには追従しません。",
   "This automation rotation is not supported.":
     "このオートメーションの回転はサポートされていません。",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
