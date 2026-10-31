@@ -643,4 +643,6 @@ export default {
     "Shift / Ctrl / ⌘ + clique seleciona vários elementos · Arrastar em uma área vazia da tela seleciona uma região · ? mostra todos os atalhos",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Use os botões para adicionar texto, uma forma, um ícone ou uma imagem; para o que acompanha uma entidade, escolha um sensor acima ou um elemento abaixo.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Este design lê a previsão do tempo de {variable}, mas a automação não tem nenhum passo que a defina. Adicionar o passo Clima: obter previsões antes da ação de gravação? Cancelar salva sem ele.",
 };

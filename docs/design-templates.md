@@ -28,7 +28,7 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 | `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | 250×128, 400×300 | Every 10, 15 or 30 minutes |
 | `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | 250×128, 400×300 | Every 1, 3 or 6 hours |
 
-The designer saves a plain payload, so a service response is read by the payload's own templates: `weather_forecast` reads `fc`, the `response_variable` of the `weather.get_forecasts` step in its `automation.actions`. Examples that build their elements with a loop (presence) are not templates: a template carries a fixed payload. A single entity can be a parameter, as `weather_now` does.
+The designer saves a plain payload, so a service response is read by the payload's own templates: `weather_forecast` reads `fc`, the `response_variable` of the `weather.get_forecasts` step in its `automation.actions`. The Designer previews such a design with the real daily forecast of the weather entity it names (fetched for the preview only), and adds that step to a new automation made from it; saving into an existing automation that has no such step asks first whether to add it. Examples that build their elements with a loop (presence) are not templates: a template carries a fixed payload. A single entity can be a parameter, as `weather_now` does.
 
 ## Your own templates
 

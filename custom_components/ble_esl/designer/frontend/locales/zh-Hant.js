@@ -635,4 +635,6 @@ export default {
     "按一下元素以選擇它 · 點選文字進行編輯 · 拖曳以移動 · 拖曳角落控制點以調整大小 · 對齊參考線會出現在邊緣和中心附近 · 方向鍵移動 1 像素 · Shift + 方向鍵移動 10 像素 · Enter 編輯所選文字 · Delete / Backspace 刪除 · 按一下滑鼠右鍵開啟動作 · ⌘/Ctrl + D 複製 · ⌘/Ctrl + S 儲存 · ⌘/Ctrl + Z 復原 · ⌘/Ctrl + Shift + Z 重做",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "用按鈕新增文字、形狀、圖示或影像；需要跟隨實體的內容，請在上方選擇感測器或使用下方的元素。",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "此設計從 {variable} 讀取天氣預報，但自動化中沒有設定它的步驟。要在寫入動作之前新增「天氣：取得預報」步驟嗎？取消則不新增直接儲存。",
 };

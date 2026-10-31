@@ -156,12 +156,31 @@ def automation_draft(exported, name, defaults=None):
     """
     action = yaml.safe_load(exported.get("live_service", exported["service"]))
     defaults = defaults or {}
+    # Steps the template brought, then any the payload needs that it did not.
+    steps = list(defaults.get("actions", []))
+
+    def fetched(step):
+        target = step.get("target") or step.get("data") or {}
+        ids = target.get("entity_id", [])
+        return {ids} if isinstance(ids, str) else set(ids)
+
+    # One that sets the same variable for every entity the payload reads is enough.
+    steps.extend(
+        step
+        for step in exported.get("setup_actions", [])
+        if not any(
+            have.get("response_variable") == step["response_variable"]
+            and (have.get("data") or {}).get("type") == step["data"]["type"]
+            and fetched(step) <= fetched(have)
+            for have in steps
+        )
+    )
     return {
         "alias": defaults.get("alias") or name,
         "description": defaults.get("description", ""),
         "triggers": defaults.get("triggers", []),
         "conditions": defaults.get("conditions", []),
-        "actions": [*defaults.get("actions", []), action],
+        "actions": [*steps, action],
         "mode": defaults.get("mode", "single"),
         **{key: defaults[key] for key in ("max", "max_exceeded") if key in defaults},
     }

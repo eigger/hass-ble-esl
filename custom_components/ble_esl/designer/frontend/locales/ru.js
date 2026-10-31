@@ -635,4 +635,6 @@ export default {
     "Shift / Ctrl / ⌘ + щелчок выделяет несколько элементов · Перетаскивание по пустому месту холста выделяет область · ? показывает все сочетания клавиш",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Кнопки добавляют текст, фигуру, значок или изображение; для всего, что следует за объектом, выберите датчик выше или элемент ниже.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Этот дизайн берёт прогноз погоды из {variable}, но в автоматизации нет шага, который его задаёт. Добавить шаг «Погода: получить прогнозы» перед действием записи? Отмена сохранит без него.",
 };

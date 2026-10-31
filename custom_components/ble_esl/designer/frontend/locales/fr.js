@@ -645,4 +645,6 @@ export default {
     "Maj / Ctrl / ⌘ + clic sélectionne plusieurs éléments · Glisser sur une zone vide du canevas sélectionne une zone · ? affiche tous les raccourcis",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Utilisez les boutons pour ajouter du texte, une forme, une icône ou une image ; pour tout ce qui suit une entité, choisissez un capteur ci-dessus ou un élément ci-dessous.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Ce design lit les prévisions météo dans {variable}, mais l'automatisation n'a aucune étape qui la définit. Ajouter l'étape Météo : obtenir les prévisions avant l'action d'écriture ? Annuler enregistre sans elle.",
 };
