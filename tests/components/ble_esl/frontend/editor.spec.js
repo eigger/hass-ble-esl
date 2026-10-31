@@ -747,39 +747,27 @@ async function modalSource(page, id) {
   await modal.locator(`ha-entity-picker [data-entity="${id}"]`).click();
 }
 
-test("components choose independent data in a modal and cancel leaves the display unchanged", async ({
+test("an older design's sensor tile is configured in a modal and cancel leaves the display unchanged", async ({
   page,
 }) => {
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
-  await modalSource(page, "sensor.office_temperature");
+  // Nothing new is bound there: the tile of an older design still is.
+  await expect(page.locator('[data-action="add-component"]')).toHaveCount(0);
+  await addSensorTile(page, "sensor.office_temperature");
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
+  await modalSource(page, "sensor.office_humidity");
   await expect(
     page.getByRole("img", { name: "Component pixel preview" }),
   ).toHaveAttribute("src", /^data:image/);
-  await page
-    .getByRole("button", { name: "Add to display", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   expect(await page.evaluate(() => window.panel.element.entity_id)).toBe(
     "sensor.office_temperature",
   );
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
   await modalSource(page, "sensor.office_humidity");
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(page.locator(".el")).toHaveCount(1);
-  // Rules and gauges are no longer offered to add: imagespec elements are.
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Conditional icon", exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Gauge", exact: true }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  expect(await page.evaluate(() => window.panel.element.entity_id)).toBe(
+    "sensor.office_humidity",
+  );
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
@@ -787,7 +775,12 @@ test("numeric conditional icons have editable ranges and standard icon pickers",
   page,
 }) => {
   // An older design's rules still open in the component editor.
-  await page.evaluate(() => window.panel.add("conditional_icon"));
+  await page.evaluate(() => {
+    const element = window.panel.add("conditional_icon");
+    element.entity_id = "sensor.office_temperature";
+    element.data_field = "state";
+    window.panel.edited();
+  });
   await page.getByRole("button", { name: "Configure", exact: true }).click();
   await modalSource(page, "sensor.office_temperature");
   await page.getByRole("button", { name: "＋ Range", exact: true }).click();
@@ -856,36 +849,6 @@ test("Bluetooth send transfers the design without storing it on the server", asy
   // browser draft) until it is saved into an automation.
   expect(await page.evaluate(() => window.panel.dirty)).toBe(true);
   await expect(page.locator("#dirty-badge")).toBeVisible();
-});
-
-test("general templates edit individual fields in a separate modal", async ({
-  page,
-}) => {
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
-  await modalSource(page, "sensor.office_temperature");
-  await page
-    .getByRole("button", { name: "ƒ Dynamic fields…", exact: true })
-    .click();
-  const modal = page.getByRole("dialog", {
-    name: "Dynamic fields",
-    exact: true,
-  });
-  await modal
-    .getByLabel("Field template", { exact: true })
-    .fill("{{ 'red' if value | float(0) > 20 else 'black' }}");
-  await expect(modal.locator("#result")).toHaveText('"red"');
-  await modal
-    .getByRole("button", { name: "Apply templates", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Add to display", exact: true })
-    .click();
-  expect(
-    await page.evaluate(() => window.panel.element.field_templates.color),
-  ).toContain("value | float");
-  await expect(page.locator("img.exact")).toBeVisible();
 });
 
 test("inspector and template sample use native HA entity pickers", async ({
@@ -1018,6 +981,20 @@ test("transparent component padding does not capture hover or clicks above anoth
   expect(await page.evaluate(() => window.panel.selected)).toBeNull();
 });
 
+test("an icon's picker opens the editor without any entity binding", async ({
+  page,
+}) => {
+  await page.locator('[data-add="icon"]').click();
+  await expect(page.locator('[data-action="configure-component"]')).toHaveCount(
+    0,
+  );
+  await page.locator('[data-action="pick-icon"]').click();
+  const modal = page.locator("ble-esl-component-editor");
+  await expect(modal.locator("dialog")).toBeVisible();
+  await expect(modal.locator("#source")).toBeHidden();
+  await expect(modal.locator("#field")).toBeHidden();
+});
+
 test("sensor components inside templates can open Configure and render", async ({
   page,
 }) => {
@@ -1112,18 +1089,13 @@ test("the picker arriving late keeps an open component dialog", async ({
 }) => {
   await page.goto("/?lazy-picker");
   await page.waitForFunction(() => window.panel?.tag);
-  await page.locator('[data-action="add-component"]').click();
+  await addSensorTile(page, "sensor.office_temperature");
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
   await expect(page.locator("ble-esl-component-editor dialog")).toBeVisible();
-  const text = page.getByLabel("Component text", { exact: true });
-  await text.fill("abc");
-  await page.getByRole("button", { name: /Dynamic fields/ }).click();
-  const dynamic = page.getByRole("dialog", { name: "Dynamic fields" });
-  await expect(dynamic).toBeVisible();
   await pickerDefined(page);
   await expect(
     page.locator("ble-esl-component-editor dialog").first(),
   ).toBeVisible();
-  await expect(dynamic).toBeVisible();
   // The data source picker was swapped for a working one.
   await expect(
     page.locator("ble-esl-component-editor #source"),

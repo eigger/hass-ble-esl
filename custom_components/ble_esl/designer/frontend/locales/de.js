@@ -80,15 +80,12 @@ export default {
   "All ESLs": "Alle ESLs",
   "All elements": "Alle Elemente",
   "All states": "Alle Zustände",
-  "Another HA entity": "Eine weitere HA-Entität",
   "Another state": "Ein anderer Zustand",
-  "Apply templates": "Vorlagen anwenden",
   "Arc thickness": "Bogenstärke",
   "Automations unavailable · Retry":
     "Automatisierungen nicht verfügbar · Wiederholen Sie den Vorgang",
   "BLE ESL integration version": "BLE ESL Integrationsversion",
   "Battery —": "Batterie —",
-  "Binary condition": "Binäre Bedingung",
   "Bound entity": "Gebundene Entität",
   "Bring forward": "Eine Ebene nach vorne",
   "Bring front": "Ganz nach vorne",
@@ -107,7 +104,6 @@ export default {
     "Klicken Sie auf einen Block, um ihn zu verschieben, seine Größe zu ändern oder ihn an eine Entität zu binden.",
   "Close automations": "Automatisierungen schließen",
   "Close component editor": "Komponenteneditor schließen",
-  "Close dynamic fields": "Dynamische Felder schließen",
   "Component attribute": "Komponentenattribut",
   "Component data": "Komponentendaten",
   "Component decimals": "Komponenten-Dezimalzahlen",
@@ -135,8 +131,6 @@ export default {
     "Nur Discovery: Vorschau ist verfügbar; Das Senden wird noch nicht unterstützt.",
   "Dismiss message": "Nachricht verwerfen",
   "Display canvas": "Anzeigefläche",
-  "Dynamic field pixel preview": "Dynamische Feldpixelvorschau",
-  "Dynamic fields": "Dynamische Felder",
   "ESL Designer": "ESL Designer",
   "ESL Manager": "ESL Manager",
   "Edit alias": "Alias bearbeiten",
@@ -152,7 +146,6 @@ export default {
   "Export JSON": "Exportieren JSON",
   "Exporting payload…": "Payload wird exportiert…",
   "Fallback icon (blank = HA)": "Fallback-Symbol (leer = HA)",
-  "Field template": "Feldvorlage",
   "Filter ESLs": "ESLs filtern",
   "Finish the current editor operation before switching ESLs.":
     "Beenden Sie den aktuellen Editorvorgang, bevor Sie ESLs wechseln.",
@@ -160,8 +153,6 @@ export default {
     "Die erste passende Regel wird angewendet. Der Bereich schließt die untere Grenze ein und die obere Grenze aus. Eine leere Grenze bedeutet keine Begrenzung.",
   "Font file": "Schriftartdatei",
   "From ≥": "Von ≥",
-  "HA Jinja templates. Variables: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() and other HA template helpers are available.":
-    "HA Jinja-Vorlagen. Variablen: value, entity, entity_id, attributes. states(), is_state(), state_attr(), now() und weitere HA-Vorlagenfunktionen sind verfügbar.",
   "HA state icon": "HA Statussymbol",
   "HA tile": "HA-Kachel",
   "Hidden: click to show": "Ausgeblendet: Zum Anzeigen klicken",
@@ -175,7 +166,6 @@ export default {
   "In 2 days": "In 2 Tagen",
   "In 3 days": "In 3 Tagen",
   "In sync": "Synchronisiert",
-  "Insert template": "Vorlage einfügen",
   "Keep templates (values follow the sensors)":
     "Vorlagen beibehalten (Werte folgen den Sensoren)",
   "Label override": "Beschriftungsüberschreibung",
@@ -209,7 +199,6 @@ export default {
   "Not in sync": "Nicht synchron",
   "Nothing could be placed.": "Es konnte nichts platziert werden.",
   "Nothing to convert": "Nichts zum Konvertieren",
-  "Numeric condition": "Numerische Bedingung",
   "Outline colour": "Umrissfarbe",
   "Outline width": "Umrissbreite",
   "Paste a URL, or upload below":
@@ -228,7 +217,6 @@ export default {
   "Redo (⌘/Ctrl Shift Z)": "Wiederherstellen (⌘/Ctrl Umschalt Z)",
   "Remove manual link": "Manuellen Link entfernen",
   "Replace display": "Anzeigeinhalt ersetzen",
-  "Resolved value": "Aufgelöster Wert",
   "Rotate (°)": "Drehen (°)",
   "Rule icon": "Regelsymbol",
   "Sample sensor": "Probensensor",
@@ -277,7 +265,6 @@ export default {
     "Die nicht gespeicherten Änderungen an diesem Design verwerfen? Das kann nicht rückgängig gemacht werden.",
   "Unsaved changes": "Nicht gespeicherte Änderungen",
   "Upload image": "Bild hochladen",
-  "Use static value": "Statischen Wert verwenden",
   "Vertical align": "Vertikal ausrichten",
   "Visible state": "Sichtbarer Zustand",
   "Weather time": "Wetterzeit",
@@ -287,11 +274,8 @@ export default {
   "YAML to import": "YAML zum Importieren",
   "Zoom in": "Vergrößern",
   "Zoom out": "Verkleinern",
-  "ƒ Dynamic fields…": "ƒ Dynamische Felder…",
   "← Dashboard": "← Dashboard",
-  "＋ Add component": "＋ Komponente hinzufügen",
   "＋ Create tile style…": "＋ Kachelstil erstellen…",
-  "＋ Insert template…": "＋ Vorlage einfügen…",
   "＋ Range": "＋ Bereich",
   "＋ State": "＋ Zustand",
   "Automation action": "Automatisierungsaktion",
@@ -546,8 +530,6 @@ export default {
   "Browse design gallery": "Designgalerie öffnen",
   "Tile styles set how a sensor appears as a tile. Build one from Name, State and Unit parts and every sensor of that type uses it.":
     "Kachelstile legen fest, wie ein Sensor als Kachel erscheint. Bauen Sie einen Stil aus den Teilen Name, Zustand und Einheit; jeder Sensor dieses Typs verwendet ihn.",
-  "Use the icon buttons to add text, a shape, an icon or an image. Add component offers sensors, bars, gauges and more.":
-    "Mit den Symbolschaltflächen fügen Sie Text, eine Form, ein Symbol oder ein Bild hinzu. „Komponente hinzufügen“ bietet Sensoren, Balken, Anzeigen und mehr.",
   "{type} output": "{type}-Ausgabe",
   W: "B",
   H: "H",
@@ -666,4 +648,6 @@ export default {
     "Umschalt / Ctrl / ⌘ + Klick wählt mehrere Elemente aus · Ziehen auf einer leeren Stelle der Zeichenfläche wählt einen Bereich aus · ? zeigt alle Tastenkürzel an",
   "Click an element to select it · Click text to edit · Drag to move · Drag corner handles to resize · Alignment guides appear near edges and centres · Arrow keys move 1 px · Shift + arrows move 10 px · Enter edits selected text · Delete / Backspace removes · Right-click for actions · ⌘/Ctrl + D duplicates · ⌘/Ctrl + S saves · ⌘/Ctrl + Z undoes · ⌘/Ctrl + Shift + Z redoes":
     "Klicken Sie auf ein Element, um es auszuwählen · Klicken Sie auf Text, um ihn zu bearbeiten · Ziehen zum Verschieben · Eckgriffe ziehen, um die Größe zu ändern · Ausrichtungshilfen erscheinen in der Nähe von Kanten und Mitten · Pfeiltasten verschieben um 1 px · Umschalt + Pfeiltasten verschieben um 10 px · Eingabetaste bearbeitet den ausgewählten Text · Entf / Rücktaste löscht · Rechtsklick für Aktionen · ⌘/Ctrl + D dupliziert · ⌘/Ctrl + S speichert · ⌘/Ctrl + Z macht rückgängig · ⌘/Ctrl + Umschalt + Z stellt wieder her",
+  "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
+    "Mit den Symbolen fügst du Text, eine Form, ein Symbol oder ein Bild hinzu; für alles, was einer Entität folgt, wähle oben einen Sensor oder unten ein Element.",
 };
