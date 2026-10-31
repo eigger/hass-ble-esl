@@ -1,0 +1,190 @@
+template: 1
+id: print_progress
+name:
+  en: Print progress
+  ko: 출력 진행률
+description:
+  en: Progress bar, status and estimated finish time of a 3D printer from its sensors. Updates on a schedule and when the status changes.
+  ko: 3D 프린터 센서의 진행률 막대, 상태, 예상 종료 시각을 표시합니다. 주기적으로, 그리고 상태가 바뀔 때 갱신합니다.
+background: white
+
+parameters:
+  progress:
+    type: entity
+    domain: sensor
+    default: sensor.print_progress
+    label: { en: Progress sensor (0-100), ko: 진행률 센서 (0-100) }
+  status:
+    type: entity
+    domain: sensor
+    default: sensor.print_status
+    label: { en: Status sensor, ko: 상태 센서 }
+  end_time:
+    type: entity
+    domain: sensor
+    default: sensor.print_end_time
+    label: { en: Finish time sensor, ko: 종료 시각 센서 }
+  title:
+    type: string
+    default: 3D PRINT
+    min_length: 1
+    label: { en: Title, ko: 제목 }
+  eta_label:
+    type: string
+    default: Finish
+    label: { en: Finish time label, ko: 종료 시각 문구 }
+  time_format:
+    type: string
+    default: "%H:%M"
+    label: { en: Finish time format (strftime), ko: 종료 시각 형식 (strftime) }
+  color:
+    type: color
+    default: black
+    label: { en: Bar color, ko: 막대 색상 }
+  font:
+    type: font
+    default: CookieRunBlack.ttf
+    label: { en: Font, ko: 글꼴 }
+  interval:
+    type: select
+    group: automation
+    options: ["1", "5", "10", "15"]
+    default: "5"
+    label: { en: Update every (minutes), ko: 갱신 주기 (분) }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: ${title}
+      font: ${font}
+      x: 8
+      y: 4
+      width: 234
+      height: 26
+      size: 22
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set p = states('${progress}') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%"
+      font: ${font}
+      x: 8
+      y: 32
+      width: 234
+      height: 44
+      size: 40
+      min_size: 12
+      fit: shrink
+      align: center
+      valign: middle
+      color: ${color}
+    - type: progress_bar
+      x_start: 10
+      x_end: 240
+      y_start: 80
+      y_end: 96
+      progress: "{% set p = states('${progress}') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}"
+      fill: ${color}
+      outline: black
+      background: white
+      show_percentage: false
+    - type: text_fit
+      value: "{{ states('${status}') }}"
+      font: ${font}
+      x: 8
+      y: 102
+      width: 100
+      height: 22
+      size: 15
+      min_size: 8
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "${eta_label} {% set d = as_datetime(states('${end_time}'), none) %}{{ as_local(d).strftime('${time_format}') if d else '--' }}"
+      font: ${font}
+      x: 112
+      y: 102
+      width: 130
+      height: 22
+      size: 15
+      min_size: 8
+      fit: shrink
+      align: right
+      valign: middle
+      color: black
+  "400x300":
+    - type: text_fit
+      value: ${title}
+      font: ${font}
+      x: 14
+      y: 10
+      width: 372
+      height: 48
+      size: 36
+      min_size: 14
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set p = states('${progress}') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%"
+      font: ${font}
+      x: 14
+      y: 66
+      width: 372
+      height: 110
+      size: 96
+      min_size: 20
+      fit: shrink
+      align: center
+      valign: middle
+      color: ${color}
+    - type: progress_bar
+      x_start: 20
+      x_end: 380
+      y_start: 190
+      y_end: 224
+      progress: "{% set p = states('${progress}') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}"
+      fill: ${color}
+      outline: black
+      background: white
+      show_percentage: false
+    - type: text_fit
+      value: "{{ states('${status}') }}"
+      font: ${font}
+      x: 14
+      y: 244
+      width: 160
+      height: 40
+      size: 26
+      min_size: 10
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "${eta_label} {% set d = as_datetime(states('${end_time}'), none) %}{{ as_local(d).strftime('${time_format}') if d else '--' }}"
+      font: ${font}
+      x: 180
+      y: 244
+      width: 206
+      height: 40
+      size: 26
+      min_size: 10
+      fit: shrink
+      align: right
+      valign: middle
+      color: black
+
+automation:
+  triggers:
+    - trigger: time_pattern
+      minutes: /${interval}
+    - trigger: state
+      entity_id: ${status}
+      to: ~
+  mode: single

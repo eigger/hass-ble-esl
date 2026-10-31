@@ -961,3 +961,157 @@ async def test_a_failed_preview_fetch_does_not_hide_the_forecast_from_a_write(ha
     assert await designer.forecast_variable({"v": "{{ fc['weather.home'] }}"}, {}) == {}
     # ... and what a write reads is untouched by it.
     assert ("weather.home", "daily") not in designer.forecast_cache
+
+
+def _shown(hass, template_id, width=400, height=300, given=None):
+    """What a template's payload says once Home Assistant has rendered its templates."""
+    built = build(TEMPLATES[template_id], width, height, "BWR", given)
+    return resolve_templates(hass, built["payload"], set())
+
+
+def _texts(rendered):
+    return [str(item["value"]) for item in rendered if item["type"] == "text_fit"]
+
+
+@pytest.mark.parametrize(
+    ("state", "shown"),
+    [
+        ("23.456", "23.5"),
+        ("20.0", "20"),
+        ("100", "100"),
+        ("-0.04", "0"),
+        ("unavailable", "unavailable"),
+        ("nan", "nan"),
+    ],
+)
+async def test_sensor_card_formats_the_value(hass, state, shown):
+    hass.states.async_set(
+        "sensor.temperature", state, {"friendly_name": "Room", "unit_of_measurement": "°C"}
+    )
+    texts = _texts(_shown(hass, "sensor_card"))
+    assert texts == ["Room", shown, "°C"]
+
+
+async def test_sensor_card_title_and_missing_entity(hass):
+    hass.states.async_set("sensor.temperature", "5", {"friendly_name": "Room"})
+    texts = _texts(_shown(hass, "sensor_card", given={"title": "Kitchen"}))
+    assert texts == ["Kitchen", "5", ""]
+    # An entity that does not exist leaves empty text, never "None".
+    texts = _texts(_shown(hass, "sensor_card", given={"sensor": "sensor.nowhere"}))
+    assert texts == ["", "unknown", ""]
+
+
+async def test_calendar_next_shows_the_event_its_times_and_place(hass):
+    event = {
+        "message": "Dentist",
+        "all_day": False,
+        "start_time": "2026-11-02 14:30:00",
+        "location": "Seoul",
+    }
+    hass.states.async_set("calendar.home", "on", event)
+    texts = _texts(_shown(hass, "calendar_next", given={"date_format": "%d.%m."}))
+    assert texts == ["Next event", "Dentist", "02.11. 14:30", "Seoul"]
+    hass.states.async_set("calendar.home", "on", {**event, "all_day": True})
+    assert _texts(_shown(hass, "calendar_next"))[2] == "11/02"
+
+
+async def test_calendar_next_without_an_event_says_so(hass):
+    hass.states.async_set("calendar.home", "off", {"friendly_name": "Home"})
+    texts = _texts(_shown(hass, "calendar_next", given={"empty_text": "Free"}))
+    assert texts == ["Next event", "Free", "", ""]
+    hass.states.async_set("calendar.home", "off", {"message": "x", "start_time": "garbage"})
+    assert _texts(_shown(hass, "calendar_next"))[2] == ""
+
+
+def _progress_bar(rendered):
+    return next(item for item in rendered if item["type"] == "progress_bar")
+
+
+@pytest.mark.parametrize(
+    ("state", "percent"),
+    [("63.4", 63), ("0", 0), ("150", 100), ("-5", 0), ("unavailable", 0), ("nan", 0)],
+)
+async def test_print_progress_stays_between_zero_and_a_hundred(hass, state, percent):
+    hass.states.async_set("sensor.print_progress", state)
+    rendered = _shown(hass, "print_progress")
+    assert _progress_bar(rendered)["progress"] == percent
+    assert f"{percent}%" in _texts(rendered)
+
+
+async def test_print_progress_shows_status_and_finish_time(hass):
+    hass.states.async_set("sensor.print_progress", "10")
+    hass.states.async_set("sensor.print_status", "running")
+    hass.states.async_set("sensor.print_end_time", "2026-11-01T18:45:00+00:00")
+    texts = _texts(_shown(hass, "print_progress", given={"time_format": "%Y"}))
+    assert texts[-2:] == ["running", "Finish 2026"]
+    hass.states.async_set("sensor.print_end_time", "unavailable")
+    assert _texts(_shown(hass, "print_progress"))[-1] == "Finish --"
+
+
+@pytest.mark.parametrize(
+    ("days", "shown", "color"),
+    [
+        (30, "D-30", "black"),
+        (7, "D-7", "red"),
+        (1, "D-1", "red"),
+        (0, "D-Day", "red"),
+        (-3, "D+3", "red"),
+    ],
+)
+async def test_countdown_counts_the_days_and_warns_when_close(hass, days, shown, color):
+    from datetime import date, timedelta
+
+    from homeassistant.util import dt as dt_util
+
+    target = (dt_util.now().date() + timedelta(days=days)).isoformat()
+    assert date.fromisoformat(target)
+    rendered = _shown(hass, "countdown", given={"target": target})
+    assert _texts(rendered)[1] == shown
+    assert rendered[1]["color"] == color
+
+
+@pytest.mark.parametrize("target", ["not a date", "2026-13-45", "01/01/2027"])
+async def test_countdown_with_a_bad_date_shows_dashes(hass, target):
+    rendered = _shown(hass, "countdown", given={"target": target})
+    assert _texts(rendered)[1] == "--"
+    assert rendered[1]["color"] == "black"
+
+
+async def test_date_weather_shows_the_day_and_the_weather(hass):
+    hass.states.async_set("weather.home", "sunny", {"temperature": 21.5, "temperature_unit": "°C"})
+    for size in ((250, 128), (400, 300)):
+        rendered = _shown(hass, "date_weather", *size, given={"weekdays": "a,b,c,d,e,f,g"})
+        values = [str(item["value"]) for item in rendered if "value" in item]
+        assert "21.5°C" in values
+        assert "weather-sunny" in values
+        assert not any("None" in value for value in values)
+    # Too few weekday names leave the weekday empty instead of failing.
+    from homeassistant.util import dt as dt_util
+
+    short = _texts(_shown(hass, "date_weather", given={"weekdays": "a"}))
+    assert short[1] == ("a" if dt_util.now().weekday() == 0 else "")
+    hass.states.async_set("weather.home", "unavailable", {})
+    assert "--" in _texts(_shown(hass, "date_weather"))
+
+
+@pytest.mark.parametrize("template_id", sorted(TEMPLATES))
+async def test_every_automation_option_is_a_valid_home_assistant_automation(hass, template_id):
+    template = TEMPLATES[template_id]
+    seed_entities(hass, template)
+    choices = {
+        name: parameter["options"]
+        for name, parameter in template["parameters"].items()
+        if parameter["type"] == "select" and parameter["group"] == "automation"
+    }
+    for name, options in choices.items():
+        for option in options:
+            built = build(template, 250, 128, "BWR", {name: option})
+            config = {
+                **built["automation"],
+                "alias": "x",
+                "actions": [
+                    *built["automation"].get("actions", []),
+                    {"action": "ble_esl.write", "data": {"payload": built["payload"]}},
+                ],
+            }
+            assert await async_validate_config_item(hass, "x", config), (name, option)
