@@ -1,0 +1,180 @@
+template: 1
+id: date_weather
+name:
+  en: Date and weather
+  ko: 날짜와 날씨
+description:
+  en: Today's date and weekday next to the current condition and temperature of a weather entity. Refreshed every few minutes.
+  ko: 오늘 날짜와 요일, 날씨 엔티티의 현재 상태와 온도를 함께 표시하고 몇 분마다 갱신합니다.
+background: white
+
+parameters:
+  weather:
+    type: entity
+    domain: weather
+    default: weather.home
+    label: { en: Weather entity, ko: 날씨 엔티티 }
+  date_format:
+    type: string
+    default: "%m/%d"
+    label: { en: Date format (strftime), ko: 날짜 형식 (strftime) }
+  weekdays:
+    type: string
+    default: Mon,Tue,Wed,Thu,Fri,Sat,Sun
+    label: { en: "Weekday names, Monday first", ko: "요일 이름 (월요일부터, 쉼표로 구분)" }
+  weekend_color:
+    type: color
+    default: red
+    label: { en: Weekend color, ko: 주말 색상 }
+  font:
+    type: font
+    default: CookieRunBold.ttf
+    label: { en: Font, ko: 글꼴 }
+  interval:
+    type: select
+    group: automation
+    options: ["10", "15", "30"]
+    default: "30"
+    label: { en: Update every (minutes), ko: 갱신 주기 (분) }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      x: 4
+      y: 14
+      width: 117
+      height: 56
+      size: 40
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
+      font: ${font}
+      x: 4
+      y: 74
+      width: 117
+      height: 44
+      size: 30
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
+    - type: line
+      x_start: 125
+      x_end: 125
+      y_start: 10
+      y_end: 118
+      fill: black
+      width: 1
+    - type: icon
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      anchor: mt
+      x: 187
+      y: 8
+      size: 58
+      color: black
+    - type: text_fit
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}{{ state_attr('${weather}', 'temperature_unit') or '' }}"
+      font: ${font}
+      x: 129
+      y: 68
+      width: 116
+      height: 32
+      size: 30
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{{ state_translated('${weather}') }}"
+      font: ${font}
+      x: 129
+      y: 100
+      width: 116
+      height: 22
+      size: 15
+      min_size: 8
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+  "400x300":
+    - type: text_fit
+      value: "{{ now().strftime('${date_format}') }}"
+      font: ${font}
+      x: 14
+      y: 14
+      width: 220
+      height: 84
+      size: 72
+      min_size: 14
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set names = '${weekdays}'.split(',') %}{{ names[now().weekday()] if names|length > now().weekday() else '' }}"
+      font: ${font}
+      x: 240
+      y: 14
+      width: 146
+      height: 84
+      size: 48
+      min_size: 12
+      fit: shrink
+      align: right
+      valign: middle
+      color: "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
+    - type: line
+      x_start: 14
+      x_end: 386
+      y_start: 110
+      y_end: 110
+      fill: black
+      width: 2
+    - type: icon
+      value: "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': 'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}.get(states('${weather}'), states('${weather}')) }}"
+      anchor: mm
+      x: 90
+      y: 205
+      size: 120
+      color: black
+    - type: text_fit
+      value: "{% set t = state_attr('${weather}', 'temperature') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ '--' if r is none else (r | int if r == r | int else r) }}{{ state_attr('${weather}', 'temperature_unit') or '' }}"
+      font: ${font}
+      x: 170
+      y: 130
+      width: 216
+      height: 90
+      size: 72
+      min_size: 14
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{{ state_translated('${weather}') }}"
+      font: ${font}
+      x: 170
+      y: 226
+      width: 216
+      height: 50
+      size: 30
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+
+automation:
+  triggers:
+    - trigger: time_pattern
+      minutes: /${interval}
+  mode: single

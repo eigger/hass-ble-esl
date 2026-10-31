@@ -1,0 +1,157 @@
+template: 1
+id: sensor_card
+name:
+  en: Sensor card
+  ko: 센서 카드
+description:
+  en: An icon, a title and the value with its unit of any sensor. Leave the title empty to use the entity's name.
+  ko: 센서 하나의 아이콘, 제목, 값과 단위를 표시합니다. 제목을 비우면 엔티티 이름을 사용합니다.
+background: white
+
+parameters:
+  sensor:
+    type: entity
+    domain: sensor
+    default: sensor.temperature
+    label: { en: Sensor entity, ko: 센서 엔티티 }
+  title:
+    type: string
+    default: ""
+    label: { en: "Title (empty = entity name)", ko: "제목 (비우면 엔티티 이름)" }
+  icon:
+    type: string
+    default: thermometer
+    min_length: 1
+    label: { en: Icon (Material Design Icons name), ko: 아이콘 (Material Design Icons 이름) }
+  color:
+    type: color
+    default: black
+    label: { en: Value color, ko: 값 색상 }
+  font:
+    type: font
+    default: CookieRunBold.ttf
+    label: { en: Font, ko: 글꼴 }
+  interval:
+    type: select
+    group: automation
+    options: ["5", "10", "15", "30"]
+    default: "15"
+    label: { en: Update every (minutes), ko: 갱신 주기 (분) }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: "{{ '${title}' or state_attr('${sensor}', 'friendly_name') or '' }}"
+      font: ${font}
+      x: 8
+      y: 6
+      width: 234
+      height: 26
+      size: 22
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: line
+      x_start: 8
+      x_end: 242
+      y_start: 36
+      y_end: 36
+      fill: black
+      width: 1
+    - type: icon
+      value: ${icon}
+      anchor: mm
+      x: 40
+      y: 82
+      size: 56
+      color: black
+    - type: text_fit
+      value: "{% set s = states('${sensor}') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace('.0', '')) }}"
+      font: ${font}
+      x: 76
+      y: 44
+      width: 108
+      height: 76
+      size: 60
+      min_size: 14
+      fit: shrink
+      align: right
+      valign: middle
+      color: ${color}
+    - type: text_fit
+      value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
+      font: ${font}
+      x: 190
+      y: 44
+      width: 54
+      height: 76
+      size: 26
+      min_size: 10
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+  "400x300":
+    - type: text_fit
+      value: "{{ '${title}' or state_attr('${sensor}', 'friendly_name') or '' }}"
+      font: ${font}
+      x: 12
+      y: 14
+      width: 376
+      height: 48
+      size: 40
+      min_size: 14
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: line
+      x_start: 12
+      x_end: 388
+      y_start: 72
+      y_end: 72
+      fill: black
+      width: 2
+    - type: icon
+      value: ${icon}
+      anchor: mm
+      x: 70
+      y: 190
+      size: 100
+      color: black
+    - type: text_fit
+      value: "{% set s = states('${sensor}') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace('.0', '')) }}"
+      font: ${font}
+      x: 130
+      y: 90
+      width: 170
+      height: 190
+      size: 110
+      min_size: 20
+      fit: shrink
+      align: right
+      valign: middle
+      color: ${color}
+    - type: text_fit
+      value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
+      font: ${font}
+      x: 306
+      y: 90
+      width: 82
+      height: 190
+      size: 44
+      min_size: 14
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+
+automation:
+  triggers:
+    - trigger: time_pattern
+      minutes: /${interval}
+    - trigger: state
+      entity_id: ${sensor}
+  mode: restart

@@ -1,0 +1,128 @@
+template: 1
+id: countdown
+name:
+  en: D-day countdown
+  ko: 디데이
+description:
+  en: Days left until a date (D-12, D-Day, D+3) with a title. The number turns to the alert color shortly before the date. Refreshed daily.
+  ko: 정해진 날짜까지 남은 일수(D-12, D-Day, D+3)를 제목과 함께 표시합니다. 날짜가 가까워지면 강조색으로 바뀌며 하루에 한 번 갱신합니다.
+background: white
+
+parameters:
+  title:
+    type: string
+    default: D-Day
+    min_length: 1
+    label: { en: Title, ko: 제목 }
+  target:
+    type: string
+    default: "2027-01-01"
+    min_length: 10
+    label: { en: "Date (YYYY-MM-DD)", ko: "날짜 (YYYY-MM-DD)" }
+  alert_days:
+    type: number
+    default: 7
+    min: 0
+    max: 365
+    label: { en: Alert when this many days are left, ko: 강조할 남은 일수 }
+  alert_color:
+    type: color
+    default: red
+    label: { en: Alert color, ko: 강조 색상 }
+  font:
+    type: font
+    default: GmarketSansTTFBold.ttf
+    label: { en: Font, ko: 글꼴 }
+  time:
+    type: time
+    group: automation
+    default: "00:05:00"
+    label: { en: Update time, ko: 갱신 시각 }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: ${title}
+      font: ${font}
+      x: 8
+      y: 6
+      width: 234
+      height: 30
+      size: 24
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set t = strptime('${target}', '%Y-%m-%d', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ '--' if n is none else ('D-Day' if n == 0 else ('D-' ~ n if n > 0 else 'D+' ~ (0 - n))) }}"
+      font: ${font}
+      x: 8
+      y: 38
+      width: 234
+      height: 62
+      size: 56
+      min_size: 14
+      fit: shrink
+      align: center
+      valign: middle
+      color: "{% set t = strptime('${target}', '%Y-%m-%d', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ '${alert_color}' if n is not none and n <= ${alert_days} else 'black' }}"
+    - type: text_fit
+      value: ${target}
+      font: ${font}
+      x: 8
+      y: 102
+      width: 234
+      height: 22
+      size: 16
+      min_size: 8
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+  "400x300":
+    - type: text_fit
+      value: ${title}
+      font: ${font}
+      x: 14
+      y: 14
+      width: 372
+      height: 60
+      size: 44
+      min_size: 14
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+    - type: text_fit
+      value: "{% set t = strptime('${target}', '%Y-%m-%d', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ '--' if n is none else ('D-Day' if n == 0 else ('D-' ~ n if n > 0 else 'D+' ~ (0 - n))) }}"
+      font: ${font}
+      x: 14
+      y: 84
+      width: 372
+      height: 130
+      size: 116
+      min_size: 20
+      fit: shrink
+      align: center
+      valign: middle
+      color: "{% set t = strptime('${target}', '%Y-%m-%d', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ '${alert_color}' if n is not none and n <= ${alert_days} else 'black' }}"
+    - type: text_fit
+      value: ${target}
+      font: ${font}
+      x: 14
+      y: 234
+      width: 372
+      height: 50
+      size: 30
+      min_size: 10
+      fit: shrink
+      align: center
+      valign: middle
+      color: black
+
+automation:
+  triggers:
+    - trigger: time
+      at: ${time}
+  mode: single

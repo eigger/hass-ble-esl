@@ -1,0 +1,207 @@
+template: 1
+id: calendar_next
+name:
+  en: Next calendar event
+  ko: 다음 일정
+description:
+  en: The current or next event of a calendar entity with its date, time and location. Updates when the calendar changes.
+  ko: 캘린더 엔티티의 진행 중이거나 다음 일정을 날짜, 시간, 장소와 함께 표시합니다. 캘린더가 바뀌면 갱신됩니다.
+background: white
+
+parameters:
+  calendar:
+    type: entity
+    domain: calendar
+    default: calendar.home
+    label: { en: Calendar entity, ko: 캘린더 엔티티 }
+  heading:
+    type: string
+    default: Next event
+    label: { en: Heading, ko: 머리글 }
+  empty_text:
+    type: string
+    default: No events
+    label: { en: Text when there is no event, ko: 일정이 없을 때 문구 }
+  date_format:
+    type: string
+    default: "%m/%d"
+    label: { en: Date format (strftime), ko: 날짜 형식 (strftime) }
+  time_format:
+    type: string
+    default: "%H:%M"
+    label: { en: Time format (strftime), ko: 시간 형식 (strftime) }
+  accent:
+    type: color
+    default: red
+    label: { en: Heading color, ko: 머리글 색상 }
+  font:
+    type: font
+    default: NotoSansKR-Bold.ttf
+    label: { en: Font, ko: 글꼴 }
+  interval:
+    type: select
+    group: automation
+    options: ["15", "30", "60"]
+    default: "30"
+    label: { en: Also update every (minutes), ko: 정기 갱신 주기 (분) }
+
+layouts:
+  "250x128":
+    - type: text_fit
+      value: ${heading}
+      font: ${font}
+      x: 8
+      y: 5
+      width: 234
+      height: 22
+      size: 17
+      min_size: 9
+      fit: shrink
+      align: left
+      valign: middle
+      color: ${accent}
+    - type: line
+      x_start: 8
+      x_end: 242
+      y_start: 29
+      y_end: 29
+      fill: black
+      width: 1
+    - type: text_fit
+      value: "{{ state_attr('${calendar}', 'message') or '${empty_text}' }}"
+      font: ${font}
+      x: 8
+      y: 33
+      width: 234
+      height: 52
+      size: 26
+      min_size: 10
+      fit: shrink
+      max_lines: 2
+      align: left
+      valign: middle
+      color: black
+    - type: icon
+      value: clock-outline
+      anchor: lm
+      x: 8
+      y: 95
+      size: 16
+      color: black
+    - type: text_fit
+      value: "{% set a = state_attr('${calendar}', 'start_time') %}{% set d = as_datetime(a, none) if a else none %}{{ '' if d is none else (d.strftime('${date_format}') if state_attr('${calendar}', 'all_day') else d.strftime('${date_format} ${time_format}')) }}"
+      font: ${font}
+      x: 30
+      y: 85
+      width: 212
+      height: 20
+      size: 13
+      min_size: 8
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+    - type: icon
+      value: map-marker-outline
+      anchor: lm
+      x: 8
+      y: 115
+      size: 16
+      color: black
+    - type: text_fit
+      value: "{{ state_attr('${calendar}', 'location') or '' }}"
+      font: ${font}
+      x: 30
+      y: 105
+      width: 212
+      height: 20
+      size: 13
+      min_size: 8
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+  "400x300":
+    - type: text_fit
+      value: ${heading}
+      font: ${font}
+      x: 14
+      y: 12
+      width: 372
+      height: 36
+      size: 28
+      min_size: 12
+      fit: shrink
+      align: left
+      valign: middle
+      color: ${accent}
+    - type: line
+      x_start: 14
+      x_end: 386
+      y_start: 54
+      y_end: 54
+      fill: black
+      width: 2
+    - type: text_fit
+      value: "{{ state_attr('${calendar}', 'message') or '${empty_text}' }}"
+      font: ${font}
+      x: 14
+      y: 66
+      width: 372
+      height: 136
+      size: 54
+      min_size: 14
+      fit: shrink
+      max_lines: 3
+      align: left
+      valign: middle
+      color: black
+    - type: icon
+      value: clock-outline
+      anchor: lm
+      x: 14
+      y: 228
+      size: 30
+      color: black
+    - type: text_fit
+      value: "{% set a = state_attr('${calendar}', 'start_time') %}{% set d = as_datetime(a, none) if a else none %}{{ '' if d is none else (d.strftime('${date_format}') if state_attr('${calendar}', 'all_day') else d.strftime('${date_format} ${time_format}')) }}"
+      font: ${font}
+      x: 54
+      y: 210
+      width: 332
+      height: 36
+      size: 26
+      min_size: 10
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+    - type: icon
+      value: map-marker-outline
+      anchor: lm
+      x: 14
+      y: 270
+      size: 30
+      color: black
+    - type: text_fit
+      value: "{{ state_attr('${calendar}', 'location') or '' }}"
+      font: ${font}
+      x: 54
+      y: 252
+      width: 332
+      height: 36
+      size: 26
+      min_size: 10
+      fit: shrink
+      align: left
+      valign: middle
+      color: black
+
+automation:
+  triggers:
+    - trigger: state
+      entity_id: ${calendar}
+      attribute: message
+    - trigger: time_pattern
+      minutes: /${interval}
+  mode: restart
