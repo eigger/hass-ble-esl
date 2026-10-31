@@ -201,10 +201,6 @@ automation:
   triggers:
     - trigger: state
       entity_id: ${calendar}
-      attribute: message
-    - trigger: state
-      entity_id: ${calendar}
-      attribute: start_time
     - trigger: time_pattern
       minutes: /${interval}
   mode: single

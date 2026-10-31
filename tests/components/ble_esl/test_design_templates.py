@@ -1086,7 +1086,10 @@ async def test_date_weather_shows_the_day_and_the_weather(hass):
         assert "weather-sunny" in values
         assert not any("None" in value for value in values)
     # Too few weekday names leave the weekday empty instead of failing.
-    assert "" in _texts(_shown(hass, "date_weather", given={"weekdays": "a"}))
+    from homeassistant.util import dt as dt_util
+
+    short = _texts(_shown(hass, "date_weather", given={"weekdays": "a"}))
+    assert short[1] == ("a" if dt_util.now().weekday() == 0 else "")
     hass.states.async_set("weather.home", "unavailable", {})
     assert "--" in _texts(_shown(hass, "date_weather"))
 
