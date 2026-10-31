@@ -1,0 +1,17 @@
+# Prettier covers the designer frontend and its tests. The rest is either kept
+# in sync by the shared standards workflows, is data, or is prose whose layout
+# (tables, emphasis) is hand-written.
+.github/
+.hass-standards.json
+STANDARDS.md
+ADOPTION_CHECKLIST.md
+*.md
+docs/
+examples/
+custom_components/ble_esl/manifest.json
+custom_components/ble_esl/services.yaml
+custom_components/ble_esl/designer/templates/
+custom_components/ble_esl/designer/frontend/icons.json
+node_modules/
+test-results/
+artifacts/
