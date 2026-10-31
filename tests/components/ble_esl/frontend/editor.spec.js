@@ -6,6 +6,13 @@ async function pickSensor(page, id) {
     .fill(id);
   await page.locator(`#entity-picker [data-entity="${id}"]`).click();
 }
+// An older design's sensor tile: the picker now turns a sensor into elements.
+async function addSensorTile(page, id) {
+  await page.evaluate(
+    (id) => window.panel.add("sensor", window.panel.hass.states[id]),
+    id,
+  );
+}
 // One demo server serves every browser project; start each from a clean state.
 test.beforeAll(async ({ request }) => {
   await request.post("/reset");
@@ -205,7 +212,7 @@ test("sensor and text can be added when HA is served over plain HTTP", async ({
   });
   await page.locator('[data-add="text"]').click();
   await expect(page.locator(".el")).toHaveCount(1);
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await expect(page.locator(".el")).toHaveCount(2);
   await page.locator(".el.selected").click({ button: "right" });
   await page.getByRole("menuitem", { name: "Duplicate" }).click();
@@ -431,7 +438,7 @@ test("text can be edited directly in the preview", async ({ page }) => {
 test("sensor controls are conditional and canvas settings are independent", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await expect(page.locator('[data-property="label"]')).toBeVisible();
   await page.locator('[data-property="show_label"]').uncheck();
   await expect(page.locator('[data-property="label"]')).toHaveCount(0);
@@ -441,14 +448,14 @@ test("sensor controls are conditional and canvas settings are independent", asyn
   expect(await page.evaluate(() => window.panel.element.background)).toBe(
     "transparent",
   );
-  await pickSensor(page, "binary_sensor.window");
+  await addSensorTile(page, "binary_sensor.window");
   await expect(page.locator('[data-property="decimals"]')).toHaveCount(0);
 });
 
 test("create template starts with the selected sensor and applies the saved style", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   const id = await page.evaluate(() => window.panel.selected);
   await page
     .getByLabel("Sensor tile style", { exact: true })
@@ -753,42 +760,26 @@ test("components choose independent data in a modal and cancel leaves the displa
   await modalSource(page, "sensor.office_humidity");
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.locator(".el")).toHaveCount(1);
+  // Rules and gauges are no longer offered to add: imagespec elements are.
   await page
     .getByRole("button", { name: "＋ Add component", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Conditional icon", exact: true })
-    .click();
-  await modalSource(page, "binary_sensor.window");
-  await page
-    .getByRole("combobox", { name: "Rule icon", exact: true })
-    .first()
-    .fill("mdi:window-open");
-  await page
-    .getByRole("combobox", { name: "Rule icon", exact: true })
-    .last()
-    .fill("mdi:window-closed");
-  await page
-    .getByRole("button", { name: "Add to display", exact: true })
-    .click();
-  await expect(page.locator(".el")).toHaveCount(2);
-  expect(
-    await page.evaluate(() =>
-      window.panel.document.elements.map((e) => e.entity_id),
-    ),
-  ).toEqual(["sensor.office_temperature", "binary_sensor.window"]);
+  await expect(
+    page.getByRole("button", { name: "Conditional icon", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Gauge", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.locator("img.exact")).toBeVisible();
 });
 
 test("numeric conditional icons have editable ranges and standard icon pickers", async ({
   page,
 }) => {
-  await page
-    .getByRole("button", { name: "＋ Add component", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Conditional icon", exact: true })
-    .click();
+  // An older design's rules still open in the component editor.
+  await page.evaluate(() => window.panel.add("conditional_icon"));
+  await page.getByRole("button", { name: "Configure", exact: true }).click();
   await modalSource(page, "sensor.office_temperature");
   await page.getByRole("button", { name: "＋ Range", exact: true }).click();
   await page.getByLabel("Range 1 minimum", { exact: true }).fill("20");
@@ -803,9 +794,7 @@ test("numeric conditional icons have editable ranges and standard icon pickers",
     path: "artifacts/component-modal.png",
     fullPage: true,
   });
-  await page
-    .getByRole("button", { name: "Add to display", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
   expect(await page.evaluate(() => window.panel.element.icon_rules[0])).toEqual(
     { kind: "range", min: 20, max: 30, icon: "mdi:thermometer" },
   );
@@ -814,7 +803,7 @@ test("numeric conditional icons have editable ranges and standard icon pickers",
 test("four corner handles follow visible content and backgrounds have no controls", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await page.locator('[data-property="show_label"]').uncheck();
   await expect(page.locator("img.exact")).toBeVisible();
   await expect(page.locator(".handle")).toHaveCount(4);
@@ -893,7 +882,7 @@ test("general templates edit individual fields in a separate modal", async ({
 test("inspector and template sample use native HA entity pickers", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   const bound = page.locator('ha-entity-picker[data-property="entity_id"]');
   await expect(bound).toHaveCount(1);
   expect(
@@ -1052,7 +1041,7 @@ test("tags load while HA has not defined the entity picker yet", async ({
   await expect(page.locator("#tag option")).not.toHaveCount(0);
   // Once HA defines the picker, the panel upgrades to a working one.
   const before = await page.locator(".el").count();
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await expect(page.locator(".el")).toHaveCount(before + 1);
 });
 
@@ -1652,7 +1641,7 @@ test("pressing Add twice adds the payload once", async ({ page }) => {
   await expect(page.locator(".layer")).toHaveCount(1);
 });
 
-test("a sensor converts to elements whose value is a template", async ({
+test("a picked sensor becomes elements whose value is a template", async ({
   page,
   request,
 }) => {
@@ -1660,17 +1649,20 @@ test("a sensor converts to elements whose value is a template", async ({
   // more elements than the plain one converted here.
   await request.post("/reset");
   await pickSensor(page, "sensor.office_temperature");
-  await expect(page.locator("img.exact")).toBeVisible();
-  await page.getByRole("button", { name: "Convert to elements" }).click();
   await expect(page.locator(".status")).toContainText(
     "drawn exactly as before",
   );
   await expect(page.locator(".layer")).toHaveCount(3);
+  expect(
+    await page.evaluate(() =>
+      window.panel.document.elements.every((e) => e.type === "imagespec"),
+    ),
+  ).toBe(true);
   await page.getByRole("button", { name: "Payload YAML" }).click();
   const yaml = page
     .locator("ble-esl-yaml-dialog dialog")
     .getByLabel("YAML", { exact: true });
-  await expect(yaml).toHaveValue(/states\(''sensor\.office_temperature''\)/);
+  await expect(yaml).toHaveValue(/states\("sensor\.office_temperature"\)/);
   // Undo brings the sensor back as one element.
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Undo", exact: false }).click();
@@ -1679,7 +1671,13 @@ test("a sensor converts to elements whose value is a template", async ({
 
 test("pressing Convert twice converts once", async ({ page, request }) => {
   await request.post("/reset");
-  await pickSensor(page, "sensor.office_temperature");
+  // An older design's sensor tile can still be converted by hand.
+  await page.evaluate(() =>
+    window.panel.add(
+      "sensor",
+      window.panel.hass.states["sensor.office_temperature"],
+    ),
+  );
   await expect(page.locator("img.exact")).toBeVisible();
   await page.getByRole("button", { name: "Convert to elements" }).dblclick();
   await expect(page.locator(".layer")).toHaveCount(3);

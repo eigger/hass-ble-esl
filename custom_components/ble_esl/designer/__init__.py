@@ -566,8 +566,11 @@ class Designer:
                 f"Converting would make {len(document['elements']) - 1 + len(items)} elements; "
                 "a display holds 100"
             )
-        state = self.hass.states.get(element["entity_id"]) if element["entity_id"] else None
-        elements, issues, original, rebuilt = convert(self.hass, element, state, items, preset)
+        # The same items with what follows the entity written as templates.
+        live = compile_payload(self.hass, alone, self.templates, forecasts, keep_templates=True)
+        if len(live) != len(items):
+            live = items
+        elements, issues, original, rebuilt = convert(self.hass, items, live, preset)
         different = None
         if elements:
             try:

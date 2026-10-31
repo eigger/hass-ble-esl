@@ -1966,7 +1966,7 @@ export class BleEslDesigner extends HTMLElement {
           return;
         }
         this.libraryEntity = id;
-        this.add("sensor", this.hass.states[id]);
+        this.addEntity(this.hass.states[id]);
       },
     });
     this.renderEntityPreview();
@@ -2361,6 +2361,18 @@ export class BleEslDesigner extends HTMLElement {
     this.selected = element.id;
     this.edited();
     this.focusElement();
+    return element;
+  }
+  // An entity put on the display becomes imagespec elements at once, so what is
+  // edited is what the payload will hold, templates included.
+  async addEntity(entity, x, y) {
+    const element = this.add("sensor", entity, x, y);
+    const context = this.documentSessionContext();
+    try {
+      await this.convertElement(element, context);
+    } catch (error) {
+      if (this.isDocumentSessionCurrent(context)) this.report(error);
+    }
   }
   focusElement() {
     this.shadowRoot
@@ -2418,7 +2430,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.action === "add-current-entity") {
-      this.add("sensor", this.hass.states[this.libraryEntity]);
+      this.addEntity(this.hass.states[this.libraryEntity]);
       return;
     }
     if (button.dataset.action === "add-icon-state") {
@@ -2521,7 +2533,7 @@ export class BleEslDesigner extends HTMLElement {
       return;
     }
     if (button.dataset.entity) {
-      this.add("sensor", this.hass.states[button.dataset.entity]);
+      this.addEntity(this.hass.states[button.dataset.entity]);
       return;
     }
     if (button.dataset.add) {
@@ -3258,8 +3270,7 @@ export class BleEslDesigner extends HTMLElement {
     this.gestureFinish?.(false);
     const entity = this.hass.states[event.dataTransfer.getData("text/plain")];
     if (!entity) return;
-    this.add(
-      "sensor",
+    this.addEntity(
       entity,
       Math.round((event.clientX - rect.left) / this.zoom),
       Math.round((event.clientY - rect.top) / this.zoom),
