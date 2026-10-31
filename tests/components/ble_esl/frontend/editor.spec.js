@@ -1,10 +1,18 @@
 import { test, expect } from "@playwright/test";
 async function pickSensor(page, id) {
+  const before = await page.evaluate(
+    () => window.panel.document.elements.length,
+  );
   await page
     .locator("#entity-picker")
     .getByRole("combobox", { name: "Search sensors", exact: true })
     .fill(id);
   await page.locator(`#entity-picker [data-entity="${id}"]`).click();
+  // The sensor is converted on the server before it is placed.
+  await page.waitForFunction(
+    (before) => window.panel.document.elements.length > before,
+    before,
+  );
 }
 // An older design's sensor tile: the picker now turns a sensor into elements.
 async function addSensorTile(page, id) {

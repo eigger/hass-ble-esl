@@ -632,7 +632,7 @@ def unsupported_items(document, payload):
     return items
 
 
-def _bound(element):
+def is_bound(element):
     """A component whose look depends on an entity the payload would have to follow."""
     return (
         element["type"] != "imagespec"
@@ -651,7 +651,7 @@ def frozen_items(document, live=()):
             continue
         if element["type"] == "imagespec" and frozen_corners(element["spec"]):
             frozen.append(f"{element['id']}: the polygon's corners are as of now in the payload")
-        elif _bound(element) and element["id"] not in live:
+        elif is_bound(element) and element["id"] not in live:
             frozen.append(
                 f"{element['id']}: the {element['type']} is as of now in the payload; "
                 "converting it to elements keeps what can follow its entity"
@@ -700,7 +700,7 @@ def _finish(hass, payload, pending, keep_templates, report):
     start, dither, original, hidden, follow = pending
     _set_dither(payload, start, dither)
     items = payload[start:]
-    if keep_templates and follow and _bound(original):
+    if keep_templates and follow and is_bound(original):
         state = hass.states.get(original["entity_id"]) if original["entity_id"] else None
         if (
             state is not None

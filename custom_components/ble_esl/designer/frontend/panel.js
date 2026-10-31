@@ -2381,6 +2381,11 @@ export class BleEslDesigner extends HTMLElement {
       if (!this.isDocumentSessionCurrent(context)) return;
       if (!result.elements.length)
         throw new Error(result.issues.join("; ") || "Nothing to convert");
+      if (this.document.elements.length + result.elements.length > 100) {
+        // Placed as the tile it is would only pass the limit as well.
+        this.report(new Error("A display holds at most 100 elements"));
+        return;
+      }
       this.checkpoint();
       this.document.elements.push(...result.elements);
       // Another element picked meanwhile stays selected.

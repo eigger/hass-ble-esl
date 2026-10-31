@@ -164,5 +164,11 @@
     "unknown_protocol": {
       "message": "Protocolo desconocido {protocol}; elimina este dispositivo y añádelo de nuevo."
     }
+  },
+  "issues": {
+    "legacy_design": {
+      "title": "An automation runs from an older designer source",
+      "description": "An automation for {name} still carries the designer source (design) that an older release saved. It keeps working, but the designer now saves only the payload. Open the automation in the ESL Manager and save it again. A weather forecast or an angle that is not a multiple of 90° must first become a template or a quarter turn. This notice goes away when Home Assistant restarts."
+    }
   }
 }

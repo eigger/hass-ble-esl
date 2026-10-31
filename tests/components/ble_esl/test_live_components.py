@@ -343,3 +343,61 @@ async def test_converting_says_what_stays_as_of_now(hass, wolink_entry):
         "tile",
     )
     assert live["frozen"] == []
+
+
+async def test_an_older_design_opens_with_its_components_as_elements_drawn_the_same(
+    hass, wolink_entry
+):
+    hass.states.async_set("sensor.temp", "21.26", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.washer", "run")
+    rules = [{"kind": "state", "state": "run", "icon": "mdi:washing-machine"}]
+    old = document(
+        element("sensor", "tile", entity_id="sensor.temp", decimals=1),
+        element(
+            "conditional_icon",
+            "icon",
+            entity_id="sensor.washer",
+            data_field="state",
+            icon="mdi:help",
+            icon_rules=rules,
+            y=60,
+        ),
+        element("rectangle", "plain", y=100),
+        element("rectangle", "gone", y=100, visible=False),
+    )
+    designer = hass.data[KEY]
+    opened = await designer.convert_document(wolink_entry, old)
+    kinds = {el["id"]: el["type"] for el in opened["document"]["elements"]}
+    assert kinds["plain"] == "rectangle" and kinds["gone"] == "rectangle"
+    assert "tile" not in kinds and "icon" not in kinds
+    assert all(
+        el["type"] == "imagespec" or el["id"] in ("plain", "gone")
+        for el in opened["document"]["elements"]
+    )
+    assert opened["kept"] == []
+    # It looks as it did, and saves the same live payload.
+    before = await designer.preview(wolink_entry, old)
+    after = await designer.preview(wolink_entry, opened["document"])
+    assert before["png"] == after["png"]
+    saved_old = await designer.export(wolink_entry, old)
+    saved_new = await designer.export(wolink_entry, opened["document"])
+    assert saved_old["payload_data"] == saved_new["payload_data"]
+    assert saved_new["frozen"] == []
+
+
+async def test_opening_keeps_a_component_whose_entity_a_payload_cannot_follow(hass, wolink_entry):
+    hass.states.async_set("sensor.temp", "21", {"unit_of_measurement": "°C"})
+    old = document(
+        element(
+            "text",
+            "templated",
+            text="x",
+            field_templates={
+                "color": "{{ 'red' if states('sensor.temp') | float > 20 else 'black' }}"
+            },
+        ),
+        element("sensor", "missing", entity_id="sensor.nope"),
+    )
+    opened = await hass.data[KEY].convert_document(wolink_entry, old)
+    assert opened["kept"] == ["templated", "missing"]
+    assert [el["type"] for el in opened["document"]["elements"]] == ["text", "sensor"]

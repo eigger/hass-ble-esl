@@ -145,6 +145,15 @@ async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(
     assert first.image_png != second.image_png
     # The older source is said to be outdated once per tag, not at every run.
     assert caplog.text.count("runs from a saved designer source") == 1
+    # And a repair the user can see, until Home Assistant restarts or the tag is unloaded.
+    from homeassistant.helpers import issue_registry as ir
+
+    issue = ir.async_get(hass).async_get_issue("ble_esl", f"legacy_design_{wolink_entry.entry_id}")
+    assert issue is not None and issue.translation_key == "legacy_design"
+    from custom_components.ble_esl.services import clear_legacy_design_notice
+
+    clear_legacy_design_notice(hass, wolink_entry.entry_id)
+    assert ir.async_get(hass).async_get_issue("ble_esl", issue.issue_id) is None
 
 
 async def test_input_state_change_runs_the_exported_automation(hass, wolink_entry, tag_writer):
