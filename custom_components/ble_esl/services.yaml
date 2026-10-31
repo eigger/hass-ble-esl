@@ -19,16 +19,6 @@ write:
           size: 40
       selector:
         object:
-    design_specs:
-      required: false
-      description: Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables.
-      selector:
-        object:
-    design:
-      required: false
-      description: Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload.
-      selector:
-        object:
     rotate:
       required: false
       example: '0'
@@ -71,16 +61,6 @@ write_guarded:
           x: 10
           "y": 10
           size: 40
-      selector:
-        object:
-    design_specs:
-      required: false
-      description: Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables.
-      selector:
-        object:
-    design:
-      required: false
-      description: Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload.
       selector:
         object:
     rotate:

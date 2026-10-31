@@ -47,7 +47,6 @@ from custom_components.ble_esl.designer.layout import (
     LiveReport,
     compile_payload,
     frozen_items,
-    is_bound,
     live_payload,
     sensor_values,
     substitute,
@@ -428,24 +427,6 @@ async def handle(request):
         if element is None or element["type"] == "imagespec":
             return web.Response(status=400, text="That element cannot be converted")
         return web.json_response(await demo_convert(element, preset))
-    if msg["action"] == "convert_document":
-        elements, kept = [], []
-        for element in document["elements"]:
-            if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
-                elements.append(element)
-                continue
-            result = await demo_convert(element, preset)
-            if (
-                not result["elements"]
-                or result["issues"]
-                or result["different_pixels"] != 0
-                or result["frozen"]
-            ):
-                elements.append(element)
-                kept.append(element["id"])
-                continue
-            elements.extend(result["elements"])
-        return web.json_response({"document": {**document, "elements": elements}, "kept": kept})
     if msg["action"] == "save_design_template":
         try:
             name = check_name(msg.get("name"))

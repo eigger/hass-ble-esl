@@ -123,35 +123,29 @@ async def test_new_automation_triggers_on_its_input_states(hass, wolink_entry):
     ]
 
 
-async def test_a_design_saved_by_an_older_release_still_resolves_current_rules(
+async def test_an_action_with_an_older_designer_source_runs_from_its_payload(
     hass, wolink_entry, caplog
 ):
-    from homeassistant.helpers.template import Template
-
-    from custom_components.ble_esl import services
-    from custom_components.ble_esl.services import build_write_job_from_data
-
-    services._LEGACY_DESIGN_WARNED.clear()
-    hass.states.async_set("binary_sensor.laundry", "on")
-    source = icon_document()
-    source["elements"][0]["field_templates"] = {
-        "color": "{{ 'red' if value == 'on' else 'black' }}"
-    }
-    design = legacy_design(source)
-    data = {"design": Template(design, hass).async_render(), "payload": []}
-    first = await build_write_job_from_data(hass, wolink_entry, data)
-    hass.states.async_set("binary_sensor.laundry", "off")
-    second = await build_write_job_from_data(hass, wolink_entry, data)
-    assert first.image_png != second.image_png
-    # The older source is said to be outdated once per tag, not at every run.
-    assert caplog.text.count("runs from a saved designer source") == 1
-    # And a repair the user can see, until Home Assistant restarts or the tag is unloaded.
     from homeassistant.helpers import issue_registry as ir
 
+    from custom_components.ble_esl import services
+    from custom_components.ble_esl.services import (
+        build_write_job_from_data,
+        clear_legacy_design_notice,
+    )
+
+    services._LEGACY_DESIGN_WARNED.clear()
+    payload = [{"type": "rectangle", "x_start": 4, "y_start": 4, "x_end": 40, "y_end": 30}]
+    plain = await build_write_job_from_data(hass, wolink_entry, {"payload": payload})
+    # What an older release saved beside the payload is not read any more.
+    legacy = {"payload": payload, "design": legacy_design(icon_document()), "design_specs": {}}
+    first = await build_write_job_from_data(hass, wolink_entry, legacy)
+    second = await build_write_job_from_data(hass, wolink_entry, legacy)
+    assert first.image_png == second.image_png == plain.image_png
+    # It is said once per tag, in the log and as a repair, until the tag is unloaded.
+    assert caplog.text.count("no longer used") == 1
     issue = ir.async_get(hass).async_get_issue("ble_esl", f"legacy_design_{wolink_entry.entry_id}")
     assert issue is not None and issue.translation_key == "legacy_design"
-    from custom_components.ble_esl.services import clear_legacy_design_notice
-
     clear_legacy_design_notice(hass, wolink_entry.entry_id)
     assert ir.async_get(hass).async_get_issue("ble_esl", issue.issue_id) is None
 
@@ -232,20 +226,6 @@ async def test_automation_templates_can_read_trigger_objects(hass, wolink_entry)
     ).image_png
 
 
-async def test_invalid_design_specs_raise_a_service_error(hass, wolink_entry):
-    """The ``design_specs`` an older release saved are still checked when they run."""
-    from homeassistant.exceptions import ServiceValidationError
-
-    from custom_components.ble_esl.services import build_write_job_from_data
-
-    data = {"design": legacy_design(native_text("{{ message }}")), "payload": []}
-    for bad in ("oops", {"type": "row"}, {"value": "x"}):
-        with pytest.raises(ServiceValidationError):
-            await build_write_job_from_data(
-                hass, wolink_entry, {**data, "design_specs": {"native": bad}}
-            )
-
-
 async def test_field_hidden_icon_with_null_glyph_still_has_an_editing_ghost(hass, wolink_entry):
     hass.states.async_set("binary_sensor.laundry", "on")
     source = icon_document(rotation=0)
@@ -307,21 +287,19 @@ async def test_design_orientation_sets_canvas_export_and_written_output(hass, wo
     assert upright["rotate"] == 0
     assert "rotate:" not in upright["service"]
 
-    # A design an older release saved carries the orientation; an explicit `rotate` overrides it.
-    job = await build_write_job_from_data(
-        hass, wolink_entry, {"design": legacy_design(source), "payload": []}
-    )
-    assert job.image.size == (physical.width, physical.height)
-    editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(
-        "RGB"
-    )
-    assert ImageChops.difference(job.image, editor_image.rotate(-90, expand=True)).getbbox() is None
     plain_job = await build_write_job_from_data(
         hass,
         wolink_entry,
         {"payload": exported["payload_data"], "rotate": 90, "background": "white"},
     )
-    assert ImageChops.difference(plain_job.image, job.image).getbbox() is None
+    assert plain_job.image.size == (physical.width, physical.height)
+    editor_image = Image.open(BytesIO(base64.b64decode(preview["png"].split(",")[1]))).convert(
+        "RGB"
+    )
+    assert (
+        ImageChops.difference(plain_job.image, editor_image.rotate(-90, expand=True)).getbbox()
+        is None
+    )
 
 
 async def test_import_payload_uses_the_automation_orientation(hass, wolink_entry, hass_ws_client):

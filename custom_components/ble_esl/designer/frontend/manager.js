@@ -1,5 +1,4 @@
 import { materialIcon } from "./editor/material-icons.js";
-import { decodeAutomationDesign } from "./editor/automation-source.js";
 import { t, language, bindStatic, localize, errorText } from "./i18n.js";
 import { hasStoredDraft, removeStoredDraft } from "./editor/draft-store.js";
 import "./panel.js";
@@ -924,27 +923,8 @@ class EslManager extends HTMLElement {
         );
       let previewVariables = this.safeAutomationVariables(config, selectedPath);
       const prompted = new Set();
-      let design =
-        data.design === undefined ? null : decodeAutomationDesign(data.design);
-      if (design?.elements?.some((element) => element.type !== "imagespec")) {
-        // An older design's entity-bound components open as imagespec elements,
-        // where that draws exactly what they did; the rest stay as they are.
-        try {
-          // The action's own rotate wins, as it does when the automation runs.
-          const effective = data.rotate ?? design.rotate;
-          const converted = await editor.api("convert_document", {
-            entry_id: entryId,
-            document:
-              effective === undefined ? design : { ...design, rotate: effective },
-          });
-          if (!current()) return;
-          design = { ...design, elements: converted.document.elements };
-        } catch {
-          if (!current()) return;
-        }
-      }
       // The action's own `rotate` wins, as it does when the automation runs.
-      const rotate = Number(data.rotate ?? design?.rotate ?? 0);
+      const rotate = Number(data.rotate ?? 0);
       if (![0, 90, 180, 270].includes(rotate))
         throw new Error(
           t(this.hass, "This automation rotation is not supported."),
@@ -987,26 +967,8 @@ class EslManager extends HTMLElement {
           );
         return result;
       };
-      let imported = null;
-      if (design) {
-        // The design is what runs; the stored payload only helps to ask for the
-        // preview parameters, so a payload that cannot be imported is no reason
-        // to refuse a design that opens fine.
-        try {
-          await importPayload();
-        } catch {
-          if (!current()) return;
-        }
-        if (!current()) return;
-        imported = {
-          elements: design.elements,
-          issues: [],
-          different_pixels: 0,
-        };
-      } else {
-        imported = await importPayload();
-        if (!imported) return;
-      }
+      const imported = await importPayload();
+      if (!imported) return;
       if (
         imported.issues.length ||
         (data.payload.length && imported.different_pixels !== 0)
@@ -1021,7 +983,7 @@ class EslManager extends HTMLElement {
         !editor.applyAutomationPayload(
           imported,
           data.payload,
-          design?.background ?? data.background,
+          data.background,
           data.payload.length === 0,
           entryId,
           token,

@@ -1991,7 +1991,7 @@ test("manager header fits narrow mobile widths without clipping controls", async
   expect(bounds.childrenFit).toBe(true);
 });
 
-test("an automation saved with an older design opens from it and is saved as a payload only", async ({
+test("an automation saved with an older design opens from its payload and is saved without the design", async ({
   page,
   request,
 }) => {
@@ -2008,9 +2008,7 @@ test("an automation saved with an older design opens from it and is saved as a p
         height: 40,
         entity_id: "binary_sensor.laundry_finished",
         icon: "mdi:washing-machine",
-        rotation: 90,
         icon_rules: [{ kind: "state", state: "on", icon: "mdi:check" }],
-        field_templates: { color: "{{ 'red' if value == 'on' else 'black' }}" },
       },
     ],
   };
@@ -2038,6 +2036,7 @@ test("an automation saved with an older design opens from it and is saved as a p
               },
             ],
             design,
+            design_specs: {},
           },
         },
       ],
@@ -2055,55 +2054,33 @@ test("an automation saved with an older design opens from it and is saved as a p
   await expect(
     page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  // A payload cannot follow its field template, so the component stays as it was.
+  // The source is not read any more: the payload is what opens, as elements.
   expect(
     await page.evaluate(() =>
       window.manager.editor.document.elements.map((e) => e.type),
     ),
-  ).toEqual(["conditional_icon"]);
+  ).toEqual(["imagespec"]);
+  await page.evaluate(() => {
+    window.manager.editor.element.spec.size = 41;
+    window.manager.editor.edited();
+  });
   await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.locator(".message")).toContainText("Automation saved.");
   const response = await request.get("/api/config/automation/config/morning");
   const saved = await response.json();
-  // An older save's design opened fine; saving keeps the payload alone.
+  // Saving keeps the payload alone.
   expect(saved.actions[0].data.design).toBeUndefined();
+  expect(saved.actions[0].data.design_specs).toBeUndefined();
   expect(saved.actions[0].data.payload.length).toBeGreaterThan(0);
 });
 
-for (const [name, action] of [
-  ["the action's rotate", { rotate: 90 }],
-  ["the design's rotate", { design: true }],
-]) {
+for (const [name, action] of [["the action's rotate", { rotate: 90 }]]) {
   test(`automation editing follows ${name} and writes it back`, async ({
     page,
     request,
   }) => {
-    const source = {
-      version: 1,
-      background: "white",
-      rotate: 90,
-      elements: [
-        {
-          id: "portrait-text",
-          type: "text",
-          x: 4,
-          y: 4,
-          width: 60,
-          height: 24,
-          text: "Hi",
-        },
-      ],
-    };
     const data = { background: "white", payload: [] };
     if (action.rotate) data.rotate = action.rotate;
-    if (action.design)
-      data.design =
-        "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
-    else
-      data.design =
-        "{{ " +
-        JSON.stringify(JSON.stringify({ ...source, rotate: undefined })) +
-        " | from_json }}";
     await request.post("/api/config/automation/config/morning", {
       data: {
         id: "morning",
