@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **`design` and `design_specs` are no longer read.** An action that still carries the designer source an older release saved now runs from its `payload`, whose values are as they were when it was last saved (a sensor or entity-bound component that was only followed through `design` shows its saved value until the automation is saved again from the ESL Manager). The two fields are gone from the `ble_esl.write` / `ble_esl.write_guarded` descriptions, and the Repairs notice and log line now say that the source is unused. Opening such an automation in the designer imports its payload, as for any other, and keeps the background of its source (releases before 1.8 drew that one); saving it drops both fields.
 - Designer: a design that reads the weather forecast from `fc['weather.xxx']` (the `weather_forecast` template does) is previewed with the real daily forecast, which the designer fetches itself and never saves. A new automation made from it gets the *Weather: Get forecasts* step (`response_variable: fc`) before the write, and *Save to existing automation* offers to add that step when the automation has none.
 - Designer: *Import JSON* is gone, and *Export JSON* is offered only for sensor tile styles. A design is exchanged as its payload (*Payload YAML* and *Import YAML*), not as the designer's own document.
 

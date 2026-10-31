@@ -11,7 +11,6 @@ from __future__ import annotations
 import asyncio
 from asyncio import Future, Lock
 from collections.abc import Awaitable, Callable, Mapping
-from contextlib import nullcontext
 import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -43,7 +42,7 @@ from homeassistant.core import (
     SupportsResponse,
     callback,
 )
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import (
@@ -82,6 +81,28 @@ _LOGGER = logging.getLogger(__name__)
 _LEGACY_DESIGN_WARNED: set[str] = set()
 
 
+def _note_legacy_design(hass: HomeAssistant, entry: BleEslConfigEntry) -> None:
+    """Say once per tag that an action still carries a designer source nothing reads."""
+    if entry.entry_id in _LEGACY_DESIGN_WARNED:
+        return
+    _LEGACY_DESIGN_WARNED.add(entry.entry_id)
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        f"legacy_design_{entry.entry_id}",
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="legacy_design",
+        translation_placeholders={"name": entry.title},
+    )
+    _LOGGER.warning(
+        "ble_esl.write for %s carries a designer source (design) that is no longer used: "
+        "it runs from its payload as it was when saved. Open the automation in the ESL Manager "
+        "and save it again to bring the payload up to date",
+        entry.title,
+    )
+
+
 @callback
 def clear_legacy_design_notice(hass: HomeAssistant, entry_id: str) -> None:
     """Forget the notice for a tag that is unloaded or removed."""
@@ -106,13 +127,13 @@ def _color(value: Any) -> str:
     return value
 
 
+_COLOR_NAMES = ("white", "black", "red", "yellow")
+
 # Known keys are validated; anything else (the entity/device/area target and
 # keys from older automations) passes through untouched.
 WRITE_SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("payload"): list,
-        vol.Optional("design"): vol.Any(dict, str),
-        vol.Optional("design_specs"): dict,
         vol.Optional("rotate"): vol.All(vol.Coerce(int), vol.In((0, 90, 180, 270))),
         vol.Optional("background"): _color,
         vol.Optional("dry_run"): cv.boolean,
@@ -352,77 +373,24 @@ async def build_write_job_from_data(
     data.parser.set_preset(preset)
 
     if image is None and "design" in service_data:
-        # Import lazily: the optional designer also uses this write pipeline.
-        from .designer import KEY
-        from .designer.automation_source import decode_design
-        from .designer.layout import compile_payload, validate, validate_spec
-        from .designer.specs import templates_in
-
-        designer = hass.data[KEY]
-        # Saved by an older designer; saving the design again from the designer
-        # replaces it with a plain payload.
-        if entry.entry_id not in _LEGACY_DESIGN_WARNED:
-            _LEGACY_DESIGN_WARNED.add(entry.entry_id)
-            ir.async_create_issue(
-                hass,
-                DOMAIN,
-                f"legacy_design_{entry.entry_id}",
-                is_fixable=False,
-                severity=ir.IssueSeverity.WARNING,
-                translation_key="legacy_design",
-                translation_placeholders={"name": entry.title},
-            )
-            _LOGGER.warning(
-                "ble_esl.write for %s runs from a saved designer source (design): "
-                "open its automation in the ESL Manager and save it again to keep only the payload "
-                "(parts a payload cannot follow are then fixed at their current value, and a "
-                "forecast or an angle that is not a multiple of 90° needs a template or a "
-                "quarter turn first; such an automation can be left as it is)",
-                entry.title,
-            )
-        try:
-            document = validate(decode_design(service_data["design"]), preset)
-            # HA rendered these with the automation's own variables (trigger, this, ...).
-            rendered_specs = service_data.get("design_specs") or {}
-            for element in document["elements"]:
-                if (
-                    element["type"] == "imagespec"
-                    and element["id"] in rendered_specs
-                    and templates_in(element["spec"])
-                ):
-                    element["spec"] = rendered_specs[element["id"]]
-                    if not isinstance(element["spec"], dict):
-                        raise vol.Invalid(f"{element['id']}: design_specs must hold objects")
-                    validate_spec(element)
-                    element["_spec_resolved"] = True
-        except (ValueError, vol.Invalid) as err:
-            raise ServiceValidationError(f"Invalid design: {err}") from err
-        payload = compile_payload(
-            hass,
-            document,
-            designer.templates,
-            await designer.forecasts(document),
-        )
-        service_data = {
-            "rotate": document.get("rotate", 0),
-            **service_data,
-            "payload": payload,
-            "background": document["background"],
-        }
+        _note_legacy_design(hass, entry)
+        # Releases before 1.8 did not keep the action's background in step with the
+        # design's, and drew the design's: that colour stays what the tag shows.
+        design = service_data["design"]
+        if isinstance(design, dict) and design.get("background") in _COLOR_NAMES:
+            service_data = {**service_data, "background": design["background"]}
 
     if image is None:
-        render_lock = designer.render_lock if "design" in service_data else nullcontext()
-        async with render_lock:
-            image = await hass.async_add_executor_job(
-                partial(
-                    render_image,
-                    hass,
-                    preset,
-                    repair_yaml11_keys(service_data.get("payload", "")),
-                    rotate=service_data.get("rotate", 0),
-                    background=service_data.get("background", "white"),
-                )
+        image = await hass.async_add_executor_job(
+            partial(
+                render_image,
+                hass,
+                preset,
+                repair_yaml11_keys(service_data.get("payload", "")),
+                rotate=service_data.get("rotate", 0),
+                background=service_data.get("background", "white"),
             )
+        )
     image_png = await hass.async_add_executor_job(encode_png, image)
     if lifecycle_generation == data.lifecycle_generation and (
         preview_generation is None or preview_generation == data.request_generation

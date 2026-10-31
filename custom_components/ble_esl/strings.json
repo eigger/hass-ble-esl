@@ -19,14 +19,6 @@
         "dry_run": {
           "name": "Dry Run",
           "description": "Generate the image without sending it to the device."
-        },
-        "design": {
-          "name": "Designer source",
-          "description": "Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload."
-        },
-        "design_specs": {
-          "name": "Designer templates",
-          "description": "Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables."
         }
       }
     },
@@ -53,14 +45,6 @@
         "debounce_override_ms": {
           "name": "Debounce Override",
           "description": "Override the configured debounce delay for this call (0 = immediate)."
-        },
-        "design": {
-          "name": "Designer source",
-          "description": "Legacy field. The designer source an older release saved; it still runs, but the designer now saves only the payload."
-        },
-        "design_specs": {
-          "name": "Designer templates",
-          "description": "Legacy field. The imagespec templates saved with an older designer source, rendered by Home Assistant with the automation variables."
         }
       }
     }
@@ -167,8 +151,8 @@
   },
   "issues": {
     "legacy_design": {
-      "title": "An automation runs from an older designer source",
-      "description": "An automation for {name} still carries the designer source (design) that an older release saved. It keeps working, but the designer now saves only the payload. Open the automation in the ESL Manager and save it again to replace the source with a payload. Parts a payload cannot follow (field templates, binary and weather icon rules, sensor templates, data fields with two or more decimals) are fixed at their current value when saved, and a weather forecast or an angle that is not a multiple of 90° must first become a template or a quarter turn. You can leave such an automation as it is. This notice goes away when Home Assistant restarts."
+      "title": "An automation carries a designer source that is no longer used",
+      "description": "An automation for {name} still carries the designer source (design) that an older release saved. It is no longer used: the automation runs from its saved payload, whose values are as they were when it was last saved. Open it in the ESL Manager and save it again to bring the payload up to date and drop the source. This notice goes away when Home Assistant restarts."
     }
   }
 }

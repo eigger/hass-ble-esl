@@ -40,7 +40,6 @@ from .layout import (
     LiveReport,
     compile_payload,
     frozen_items,
-    is_bound,
     live_payload,
     sensor_values,
     substitute,
@@ -680,39 +679,6 @@ class Designer:
             "frozen": frozen,
         }
 
-    async def convert_document(self, entry, document):
-        """An older design with its entity-bound components turned into imagespec elements.
-
-        A component is replaced only when the elements draw exactly what it did
-        and follow its entity as far as a payload can; any other stays as it is,
-        so opening a design never changes how it looks or what it follows.
-        """
-        preset = self.preset(entry, document.get("rotate", 0))
-        document = validate(document, preset)
-        elements, kept = [], []
-        for number, element in enumerate(document["elements"]):
-            if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
-                elements.append(element)
-                continue
-            room = len(elements) + len(document["elements"]) - number
-            try:
-                result = await self._convert_element(preset, room, element)
-            except HomeAssistantError:
-                result = None
-            if (
-                result is None
-                or not result["elements"]
-                or result["issues"]
-                or result["different_pixels"] != 0
-                or result["frozen"]
-                or room - 1 + len(result["elements"]) > 100
-            ):
-                elements.append(element)
-                kept.append(element["id"])
-                continue
-            elements.extend(result["elements"])
-        return {"document": {**document, "elements": elements}, "kept": kept}
-
     async def save_template(self, key, template):
         if not key or ":" not in key:
             raise HomeAssistantError("Choose a sensor type")
@@ -778,7 +744,6 @@ class Designer:
                 "import_yaml",
                 "import_payload",
                 "convert",
-                "convert_document",
                 "send",
                 "templates",
                 "design_templates",
@@ -894,8 +859,6 @@ async def websocket_designer(hass, connection, msg):
             remove=action == "unlink_automation",
             link_id=msg.get("link_id"),
         )
-    elif action == "convert_document":
-        result = await designer.convert_document(designer.entry(msg["entry_id"]), msg["document"])
     elif action == "import_yaml":
         result = await designer.import_yaml(
             designer.entry(msg["entry_id"]),
