@@ -158,9 +158,21 @@ def automation_draft(exported, name, defaults=None):
     defaults = defaults or {}
     # Steps the template brought, then any the payload needs that it did not.
     steps = list(defaults.get("actions", []))
-    have = {step.get("response_variable") for step in steps}
+
+    def fetched(step):
+        target = step.get("target") or step.get("data") or {}
+        ids = target.get("entity_id", [])
+        return {ids} if isinstance(ids, str) else set(ids)
+
+    # One that sets the same variable for every entity the payload reads is enough.
     steps.extend(
-        step for step in exported.get("setup_actions", []) if step["response_variable"] not in have
+        step
+        for step in exported.get("setup_actions", [])
+        if not any(
+            have.get("response_variable") == step["response_variable"]
+            and fetched(step) <= fetched(have)
+            for have in steps
+        )
     )
     return {
         "alias": defaults.get("alias") or name,

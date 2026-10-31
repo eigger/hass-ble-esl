@@ -1378,6 +1378,28 @@ class EslManager extends HTMLElement {
   // automation: the one that still equals `expectedAction`, at `path` when
   // given. Everything else in the automation stays as it is. Resolves with the
   // written action, or null when `current()` says the request is obsolete.
+  // Whether an enabled step of the automation already sets the variable the
+  // step would, for every entity the step fetches.
+  setsVariable(config, step) {
+    const wanted = new Set([step.target?.entity_id].flat());
+    let found = false;
+    const visit = (value) => {
+      if (!value || typeof value !== "object" || found) return;
+      if (Array.isArray(value)) return value.forEach(visit);
+      if (
+        value.response_variable === step.response_variable &&
+        value.enabled !== false
+      ) {
+        const ids = new Set(
+          [value.target?.entity_id ?? value.data?.entity_id].flat(),
+        );
+        if ([...wanted].every((id) => ids.has(id))) found = true;
+      }
+      Object.values(value).forEach(visit);
+    };
+    visit(config);
+    return found;
+  }
   async replaceWriteAction({
     configId,
     matchSource,
@@ -1466,24 +1488,32 @@ class EslManager extends HTMLElement {
     // automation needs that step before the write, and the user decides.
     let writePath = selected.path;
     for (const step of exported.setup_actions || []) {
-      const variable = step.response_variable;
-      if (JSON.stringify(updated).includes(`"response_variable":"${variable}"`))
-        continue;
+      if (this.setsVariable(updated, step)) continue;
       if (
         !window.confirm(
           t(
             this.hass,
             "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.",
-            { variable },
+            { variable: step.response_variable },
           ),
         )
       )
         continue;
-      const parent = this.actionAt(updated, writePath.slice(0, -1));
-      const index = writePath.at(-1);
-      if (!Array.isArray(parent) || typeof index !== "number") continue;
-      parent.splice(index, 0, step);
-      writePath = [...writePath.slice(0, -1), index + 1];
+      const parentPath = writePath.slice(0, -1);
+      const key = writePath.at(-1);
+      const parent = this.actionAt(updated, parentPath);
+      if (Array.isArray(parent) && typeof key === "number") {
+        parent.splice(key, 0, step);
+        writePath = [...parentPath, key + 1];
+      } else if (parent && typeof key === "string") {
+        // A write given as a single action (`then: {action: …}`) becomes a list.
+        parent[key] = [step, parent[key]];
+        writePath = [...parentPath, key, 1];
+      } else {
+        throw new Error(
+          t(this.hass, "The selected write action is no longer available."),
+        );
+      }
     }
     await this.hass.callApi(
       "POST",

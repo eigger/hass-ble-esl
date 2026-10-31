@@ -99,7 +99,7 @@ def _preview_variable_map(value):
 
 # A payload reads the forecast a Weather: Get forecasts step fetched into ``fc``.
 FORECAST_VARIABLE = "fc"
-_FORECAST_ENTITY = re.compile(r"""\bfc\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]""")
+_FORECAST_ENTITY = re.compile(r"""(?<![\w.])fc\s*\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]""")
 
 
 def forecast_entities(source):
@@ -211,7 +211,9 @@ class Designer:
         """``variables`` with the forecast ``source`` reads, fetched as the automation will.
 
         What the user gave wins, and an entity without a forecast leaves the
-        template to its own fallback.
+        template to its own fallback. Only the preview uses it, so a provider
+        that is slow or fails never stops a render: it is waited for briefly
+        and not asked again for a minute.
         """
         entities = forecast_entities(source)
         if not entities or FORECAST_VARIABLE in variables:
@@ -220,8 +222,11 @@ class Designer:
         for entity_id in entities:
             key = (entity_id, "daily")
             cached = self.forecast_cache.get(key)
-            if not cached or time.monotonic() - cached[0] >= 600:
-                try:
+            if cached and time.monotonic() - cached[0] < (600 if cached[1] else 60):
+                forecast[entity_id] = {"forecast": cached[1]}
+                continue
+            try:
+                async with asyncio.timeout(10):
                     response = await self.hass.services.async_call(
                         "weather",
                         "get_forecasts",
@@ -229,16 +234,20 @@ class Designer:
                         blocking=True,
                         return_response=True,
                     )
-                    cached = self.forecast_cache[key] = (
-                        time.monotonic(),
-                        response[entity_id]["forecast"],
-                    )
-                except (HomeAssistantError, KeyError, vol.Invalid):
-                    continue
-            forecast[entity_id] = {"forecast": cached[1]}
+                days = response[entity_id]["forecast"]
+            except Exception:
+                days = []
+            self.forecast_cache[key] = (time.monotonic(), days)
+            forecast[entity_id] = {"forecast": days}
+        forecast = {entity: value for entity, value in forecast.items() if value["forecast"]}
         if not forecast:
             return variables
-        return _preview_variable_map({**variables, FORECAST_VARIABLE: forecast})
+        # A week is what a design shows; more would only fill the preview's size limit.
+        forecast = {e: {"forecast": v["forecast"][:7]} for e, v in forecast.items()}
+        try:
+            return _preview_variable_map({**variables, FORECAST_VARIABLE: forecast})
+        except HomeAssistantError:
+            return variables
 
     def preset(self, entry, rotate=0):
         """The preset a write would use now, refined by the last advertisement.

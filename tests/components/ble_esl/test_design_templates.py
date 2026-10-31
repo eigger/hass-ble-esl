@@ -890,3 +890,63 @@ async def test_a_design_that_reads_no_forecast_needs_no_step(hass, wolink_entry)
         wolink_entry, {"version": 1, "elements": [], "background": "white"}
     )
     assert saved["setup_actions"] == []
+
+
+def test_the_forecast_scan_reads_a_template_the_way_it_runs():
+    from custom_components.ble_esl.designer import forecast_entities
+
+    assert forecast_entities({"v": "{{ fc ['weather.a'].forecast }}"}) == ["weather.a"]
+    assert forecast_entities({"v": '{{ fc["weather.b_2"] }}'}) == ["weather.b_2"]
+    # Not the variable the forecast step sets.
+    assert forecast_entities({"v": "{{ states.fc['weather.z'] }} {{ my_fc['weather.y'] }}"}) == []
+
+
+async def test_a_failing_forecast_provider_never_stops_a_preview(hass, wolink_entry):
+    from homeassistant.core import SupportsResponse
+
+    calls = []
+
+    async def get_forecasts(call):
+        calls.append(1)
+        raise TimeoutError("provider is down")
+
+    hass.services.async_register(
+        "weather", "get_forecasts", get_forecasts, supports_response=SupportsResponse.ONLY
+    )
+    hass.states.async_set("weather.home", "sunny", {"temperature": 20})
+    designer = hass.data[KEY]
+    applied = await designer.apply_design_template(wolink_entry, "weather_forecast")
+    document = {"version": 1, "elements": applied["elements"], "background": "white"}
+    preview = await designer.preview(wolink_entry, document)
+    assert "--°" in [item.get("value") for item in preview["payload"]]
+    saved = await designer.export(wolink_entry, document)
+    assert saved["validation_errors"] == []
+    # A failure is remembered for a while, not asked again at every render.
+    assert len(calls) == 1
+
+
+def test_a_step_for_other_entities_is_not_taken_for_the_one_the_payload_needs():
+    from custom_components.ble_esl.designer.export import automation_draft
+
+    def step(*entities):
+        return {
+            "action": "weather.get_forecasts",
+            "target": {"entity_id": list(entities)},
+            "data": {"type": "daily"},
+            "response_variable": "fc",
+        }
+
+    exported = {
+        "service": "action: ble_esl.write\ndata:\n  payload: []\n",
+        "setup_actions": [step("weather.home", "weather.office")],
+    }
+    # The template's step covers only one of them: the payload's covers both.
+    draft = automation_draft(exported, "x", {"actions": [step("weather.home")]})
+    assert [a["action"] for a in draft["actions"]] == [
+        "weather.get_forecasts",
+        "weather.get_forecasts",
+        "ble_esl.write",
+    ]
+    # One that already covers them all is enough.
+    draft = automation_draft(exported, "x", {"actions": [step("weather.office", "weather.home")]})
+    assert [a["action"] for a in draft["actions"]] == ["weather.get_forecasts", "ble_esl.write"]
