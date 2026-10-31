@@ -90,7 +90,6 @@ export default {
   "Bring front": "Przenieś na wierzch",
   "By sensor type": "Według typu czujnika",
   "Center horizontally": "Wyśrodkuj w poziomie",
-  "Checking display…": "Sprawdzam wyświetlacz…",
   "Choose a sample sensor above to preview this tile style.":
     "Wybierz czujnik próbki powyżej, aby wyświetlić podgląd tego stylu kafelka.",
   "Choose an automation…": "Wybierz automatyzację…",
@@ -162,7 +161,6 @@ export default {
   "Image URL": "Adres URL obrazu",
   "Image added": "Dodano obraz",
   "Image upload failed": "Przesyłanie obrazu nie powiodło się",
-  "Import JSON": "Importuj JSON",
   "Import YAML": "Importuj YAML",
   "In 2 days": "Za 2 dni",
   "In 3 days": "Za 3 dni",
@@ -545,8 +543,6 @@ export default {
   "Could not save to the automation": "Nie udało się zapisać w automatyzacji",
   "Discard the unsaved changes to this automation design?":
     "Odrzucić niezapisane zmiany w tym projekcie automatyzacji?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Zastąpić bieżący projekt zaimportowanym plikiem? Można to cofnąć.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Odłączyć {name} od tego ESL? Sama automatyzacja nie zostanie zmieniona.",
   Continue: "Dalej",

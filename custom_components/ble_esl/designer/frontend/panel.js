@@ -22,7 +22,6 @@ import "./template-dialog.js";
 import "./preview-parameters-dialog.js";
 import { newSpecElement, specEditorHtml, specLabel } from "./spec-editor.js";
 import { applySpecInput } from "./editor/inspector/spec-input.js";
-import { normalizeImportedDocument } from "./editor/document-operations.js";
 import { handleImageUpload } from "./editor/image-upload.js";
 import { renderColorPicker } from "./editor/color-picker.js";
 import { renderToolbar, TOOLBAR_STYLE } from "./editor/toolbar-view.js";
@@ -1415,7 +1414,7 @@ export class BleEslDesigner extends HTMLElement {
               "inspector",
             ),
           },
-          libraryContent: `${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.")}</p><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export">${t(this.hass, "Export JSON")}</button><button data-action="import" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import JSON")}</button><input id="file" type="file" accept="application/json" hidden></div>`,
+          libraryContent: `${this.templateParts()}<div ${this.mode === "template" ? "hidden" : ""}><ha-entity-picker id="entity-picker"></ha-entity-picker><div class="entity-preview"></div></div><h2>${t(this.hass, "Components")}</h2><p class="hint">${t(this.hass, "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.")}</p><div class="tools"><button class="icon-button" data-add="text" aria-label="${t(this.hass, "Add text")}" title="${t(this.hass, "Text")}">${toolIcon("text")}</button><button class="icon-button" data-add="rectangle" aria-label="${t(this.hass, "Add shape")}" title="${t(this.hass, "Shape")}">${toolIcon("shape")}</button><button class="icon-button" data-add="icon" aria-label="${t(this.hass, "Add icon")}" title="${t(this.hass, "Icon")}">${toolIcon("icon")}</button><button class="icon-button" data-add="image" aria-label="${t(this.hass, "Add image")}" title="${t(this.hass, "Image")}">${toolIcon("image")}</button></div>${this.specPalette()}<div class="footer-tools"><button data-action="yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Payload YAML")}</button><button data-action="import-yaml" ${this.mode === "template" ? "hidden" : ""}>${t(this.hass, "Import YAML")}</button><button data-action="export" ${this.mode === "template" ? "" : "hidden"}>${t(this.hass, "Export JSON")}</button></div>`,
           elementActions: element ? this.elementActions() : "",
           propertyContent: `${element && this.selectedElements.length === 1 && element.type !== "imagespec" ? `${this.mode === "template" || isBoundComponent(element) ? `<button class="wide" data-action="configure-component">${t(this.hass, "Configure")}</button>` : ""}${this.mode === "template" ? "" : `<button class="wide" data-action="convert" title="${t(this.hass, "Turn this into plain imagespec elements to edit field by field; a sensor's value becomes a template")}">${t(this.hass, "Convert to elements")}</button>`}` : ""}${this.properties(element)}`,
           layerRows: renderLayerRows({
@@ -2853,9 +2852,7 @@ export class BleEslDesigner extends HTMLElement {
         }.json`;
         link.click();
         URL.revokeObjectURL(url);
-      } else if (action === "import")
-        this.shadowRoot.querySelector("#file").click();
-      else this.transform(action);
+      } else this.transform(action);
     } catch (error) {
       this.report(error, action === "preview" ? "preview" : "operation");
     } finally {
@@ -3181,47 +3178,6 @@ export class BleEslDesigner extends HTMLElement {
       handleImageUpload(this, input);
       return;
     }
-    if (id === "file") {
-      const file = input.files?.[0];
-      if (!file) return;
-      const context = this.documentSessionContext();
-      this.busy = true;
-      this.status = "Checking display…";
-      this.render();
-      try {
-        const imported = JSON.parse(await file.text());
-        if (!this.isDocumentSessionCurrent(context)) return;
-        await this.api("preview", {
-          entry_id: context.entryId,
-          document: imported,
-        });
-        if (!this.isDocumentSessionCurrent(context)) return;
-        if (
-          this.dirty &&
-          !window.confirm(
-            t(
-              this.hass,
-              "Replace the current design with the imported file? You can undo this.",
-            ),
-          )
-        ) {
-          this.status = "Ready";
-          return;
-        }
-        this.checkpoint();
-        this.document = this.normalizeImportedDocument(imported);
-        this.selected = null;
-        this.edited();
-      } catch (error) {
-        if (this.isDocumentSessionCurrent(context)) this.report(error);
-      } finally {
-        if (this.isDocumentSessionOwner(context)) {
-          this.busy = false;
-          this.render();
-        }
-      }
-      return;
-    }
     if (id === "background") {
       this.checkpoint();
       this.document.background = input.value;
@@ -3292,14 +3248,6 @@ export class BleEslDesigner extends HTMLElement {
       this.edited();
     }
   }
-  normalizeImportedDocument(document) {
-    return normalizeImportedDocument(document, {
-      emptyDocument,
-      clone,
-      createId,
-    });
-  }
-
   key(event) {
     return handleCanvasKey(this, event);
   }

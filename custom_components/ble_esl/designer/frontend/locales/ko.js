@@ -87,7 +87,6 @@ export default {
   "Bring front": "맨 앞으로 이동",
   "By sensor type": "센서 유형별",
   "Center horizontally": "가로 가운데 정렬",
-  "Checking display…": "화면 확인 중…",
   "Choose a sample sensor above to preview this tile style.":
     "위에서 미리보기에 사용할 센서를 선택하세요.",
   "Choose an automation…": "자동화를 선택하세요…",
@@ -158,7 +157,6 @@ export default {
   "Image URL": "이미지 URL",
   "Image added": "이미지 추가됨",
   "Image upload failed": "이미지 업로드 실패",
-  "Import JSON": "JSON 가져오기",
   "Import YAML": "YAML 가져오기",
   "Edit selected automation design": "선택한 자동화 디자인 편집",
   "Save automation": "자동화 저장",
@@ -536,8 +534,6 @@ export default {
   "Could not save to the automation": "자동화에 저장하지 못했습니다",
   "Discard the unsaved changes to this automation design?":
     "이 자동화 디자인의 저장하지 않은 변경 사항을 버리시겠습니까?",
-  "Replace the current design with the imported file? You can undo this.":
-    "현재 디자인을 가져온 파일로 바꾸시겠습니까? 실행 취소할 수 있습니다.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "이 ESL에서 {name} 연결을 해제하시겠습니까? 자동화 자체는 변경되지 않습니다.",
   Continue: "계속",

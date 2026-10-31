@@ -91,7 +91,6 @@ export default {
   "Bring front": "Trazer para a frente",
   "By sensor type": "Por tipo de sensor",
   "Center horizontally": "Centralizar horizontalmente",
-  "Checking display…": "Verificando exibição…",
   "Choose a sample sensor above to preview this tile style.":
     "Escolha um sensor de amostra acima para visualizar este estilo de bloco.",
   "Choose an automation…": "Escolha uma automação…",
@@ -163,7 +162,6 @@ export default {
   "Image URL": "URL da imagem",
   "Image added": "Imagem adicionada",
   "Image upload failed": "Falha no upload da imagem",
-  "Import JSON": "Importar JSON",
   "Import YAML": "Importar YAML",
   "In 2 days": "Em 2 dias",
   "In 3 days": "Em 3 dias",
@@ -551,8 +549,6 @@ export default {
   "Could not save to the automation": "Não foi possível salvar na automação",
   "Discard the unsaved changes to this automation design?":
     "Descartar as alterações não salvas deste design da automação?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Substituir o design atual pelo arquivo importado? Você pode desfazer.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Desvincular {name} deste ESL? A automação em si não é alterada.",
   Continue: "Continuar",

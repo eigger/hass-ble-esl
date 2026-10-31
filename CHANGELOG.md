@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Designer: *Import JSON* is gone, and *Export JSON* is offered only for sensor tile styles. A design is exchanged as its payload (*Payload YAML* and *Import YAML*), not as the designer's own document.
+
 ## 1.9.0-beta.1
 
 ### Changed
