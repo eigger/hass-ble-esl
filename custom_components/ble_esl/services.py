@@ -44,7 +44,7 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.service import (
     async_extract_config_entry_ids,
@@ -355,6 +355,15 @@ async def build_write_job_from_data(
         # replaces it with a plain payload.
         if entry.entry_id not in _LEGACY_DESIGN_WARNED:
             _LEGACY_DESIGN_WARNED.add(entry.entry_id)
+            ir.async_create_issue(
+                hass,
+                DOMAIN,
+                f"legacy_design_{entry.entry_id}",
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="legacy_design",
+                translation_placeholders={"name": entry.title},
+            )
             _LOGGER.warning(
                 "ble_esl.write for %s runs from a saved designer source (design): "
                 "open its automation in the ESL Manager and save it again to keep only the payload "

@@ -43,6 +43,7 @@ from custom_components.ble_esl.designer.layout import (
     LiveReport,
     compile_payload,
     frozen_items,
+    is_bound,
     live_payload,
     sensor_values,
     substitute,
@@ -422,26 +423,22 @@ async def handle(request):
         element = next((el for el in document["elements"] if el["id"] == msg["element_id"]), None)
         if element is None or element["type"] == "imagespec":
             return web.Response(status=400, text="That element cannot be converted")
-        alone = {"elements": [element]}
-        forecasts = await demo_forecasts()
-        items = snapshot_layers(HASS, alone, TEMPLATES, forecasts)[0][1]
-        report = LiveReport()
-        live = compile_payload(
-            HASS, alone, TEMPLATES, forecasts, keep_templates=True, report=report
-        )
-        if len(live) != len(items):
-            live, report = items, LiveReport()
-        elements, issues, original, rebuilt = convert(HASS, items, live, preset)
-        different = None
-        if elements:
-            different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
+        return web.json_response(await demo_convert(element, preset))
+    if msg["action"] == "convert_document":
+        elements, frozen, kept = [], [], []
+        for element in document["elements"]:
+            if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
+                elements.append(element)
+                continue
+            result = await demo_convert(element, preset)
+            if not result["elements"] or result["issues"] or result["different_pixels"] != 0:
+                elements.append(element)
+                kept.append(element["id"])
+                continue
+            elements.extend(result["elements"])
+            frozen.extend(result["frozen"])
         return web.json_response(
-            {
-                "elements": elements,
-                "issues": issues,
-                "different_pixels": different,
-                "frozen": frozen_items(alone, report.live),
-            }
+            {"document": {**document, "elements": elements}, "frozen": frozen, "kept": kept}
         )
     if msg["action"] == "save_design_template":
         try:
@@ -507,6 +504,26 @@ async def handle(request):
         # Like Home Assistant's schema: e.g. the removed per-tag "save".
         return web.Response(status=400, text=f"Unknown action {msg['action']}")
     return await preview(document, preset, msg.get("preview_variables"))
+
+
+async def demo_convert(element, preset):
+    alone = {"elements": [element]}
+    forecasts = await demo_forecasts()
+    items = snapshot_layers(HASS, alone, TEMPLATES, forecasts)[0][1]
+    report = LiveReport()
+    live = compile_payload(HASS, alone, TEMPLATES, forecasts, keep_templates=True, report=report)
+    if len(live) != len(items):
+        live, report = items, LiveReport()
+    elements, issues, original, rebuilt = convert(HASS, items, live, preset)
+    different = None
+    if elements:
+        different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
+    return {
+        "elements": elements,
+        "issues": issues,
+        "different_pixels": different,
+        "frozen": frozen_items(alone, report.live),
+    }
 
 
 async def demo_forecasts():

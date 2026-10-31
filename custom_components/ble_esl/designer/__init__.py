@@ -39,6 +39,7 @@ from .layout import (
     LiveReport,
     compile_payload,
     frozen_items,
+    is_bound,
     live_payload,
     sensor_values,
     substitute,
@@ -556,15 +557,17 @@ class Designer:
             raise HomeAssistantError("That element is not in the display")
         if element["type"] == "imagespec":
             raise HomeAssistantError("That is an imagespec element already")
+        return await self._convert_element(preset, len(document["elements"]), element)
+
+    async def _convert_element(self, preset, count, element):
         alone = {"elements": [element]}
         forecasts = await self.forecasts(alone)
         # Checked once the element is known to turn into how many: see below.
         snapshots = snapshot_layers(self.hass, alone, self.templates, forecasts)
         items = snapshots[0][1]
-        if len(document["elements"]) - 1 + len(items) > 100:
+        if count - 1 + len(items) > 100:
             raise HomeAssistantError(
-                f"Converting would make {len(document['elements']) - 1 + len(items)} elements; "
-                "a display holds 100"
+                f"Converting would make {count - 1 + len(items)} elements; a display holds 100"
             )
         # The same items with what follows the entity written as templates.
         report = LiveReport()
@@ -590,6 +593,38 @@ class Designer:
             "different_pixels": different,
             "frozen": frozen,
         }
+
+    async def convert_document(self, entry, document):
+        """An older design with its entity-bound components turned into imagespec elements.
+
+        A component is replaced only when the elements draw exactly what it did;
+        any other stays as it is, so opening a design never changes how it looks.
+        """
+        preset = self.preset(entry, document.get("rotate", 0))
+        document = validate(document, preset)
+        elements, frozen, kept = [], [], []
+        for number, element in enumerate(document["elements"]):
+            if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
+                elements.append(element)
+                continue
+            room = len(elements) + len(document["elements"]) - number
+            try:
+                result = await self._convert_element(preset, room, element)
+            except HomeAssistantError:
+                result = None
+            if (
+                result is None
+                or not result["elements"]
+                or result["issues"]
+                or result["different_pixels"] != 0
+                or room - 1 + len(result["elements"]) > 100
+            ):
+                elements.append(element)
+                kept.append(element["id"])
+                continue
+            elements.extend(result["elements"])
+            frozen.extend(result["frozen"])
+        return {"document": {**document, "elements": elements}, "frozen": frozen, "kept": kept}
 
     async def save_template(self, key, template):
         if not key or ":" not in key:
@@ -656,6 +691,7 @@ class Designer:
                 "import_yaml",
                 "import_payload",
                 "convert",
+                "convert_document",
                 "send",
                 "templates",
                 "design_templates",
@@ -771,6 +807,8 @@ async def websocket_designer(hass, connection, msg):
             remove=action == "unlink_automation",
             link_id=msg.get("link_id"),
         )
+    elif action == "convert_document":
+        result = await designer.convert_document(designer.entry(msg["entry_id"]), msg["document"])
     elif action == "import_yaml":
         result = await designer.import_yaml(
             designer.entry(msg["entry_id"]),
