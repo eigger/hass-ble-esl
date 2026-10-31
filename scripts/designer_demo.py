@@ -21,7 +21,11 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from custom_components.ble_esl.designer import _preview_variable_map
+from custom_components.ble_esl.designer import (
+    _preview_variable_map,
+    forecast_entities,
+    forecast_step,
+)
 from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
     check_name,
@@ -473,6 +477,16 @@ async def handle(request):
     if msg["action"] in ("export", "automation"):
         forecasts = await demo_forecasts()
         variables = _preview_variable_map(msg.get("preview_variables"))
+        if "fc" not in variables and (entities := forecast_entities(document)):
+            # What the designer fetches from the weather service, here canned.
+            variables = {
+                **variables,
+                "fc": {
+                    e: {"forecast": forecasts[(e, "daily")]}
+                    for e in entities
+                    if (e, "daily") in forecasts
+                },
+            }
         payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
         report = LiveReport()
         live = live_payload(HASS, document, TEMPLATES, forecasts, report=report)
@@ -486,6 +500,8 @@ async def handle(request):
             live,
             rotate=document.get("rotate", 0),
         )
+        step = forecast_step(live if live is not None else payload)
+        result["setup_actions"] = [step] if step else []
         if msg["action"] == "automation":
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")

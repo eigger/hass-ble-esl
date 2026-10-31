@@ -646,4 +646,6 @@ export default {
     "Klicken Sie auf ein Element, um es auszuwählen · Klicken Sie auf Text, um ihn zu bearbeiten · Ziehen zum Verschieben · Eckgriffe ziehen, um die Größe zu ändern · Ausrichtungshilfen erscheinen in der Nähe von Kanten und Mitten · Pfeiltasten verschieben um 1 px · Umschalt + Pfeiltasten verschieben um 10 px · Eingabetaste bearbeitet den ausgewählten Text · Entf / Rücktaste löscht · Rechtsklick für Aktionen · ⌘/Ctrl + D dupliziert · ⌘/Ctrl + S speichert · ⌘/Ctrl + Z macht rückgängig · ⌘/Ctrl + Umschalt + Z stellt wieder her",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Mit den Symbolen fügst du Text, eine Form, ein Symbol oder ein Bild hinzu; für alles, was einer Entität folgt, wähle oben einen Sensor oder unten ein Element.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Dieses Design liest die Wettervorhersage aus {variable}, aber die Automatisierung hat keinen Schritt, der sie setzt. „Wetter: Vorhersagen abrufen“ vor der Schreibaktion hinzufügen? Abbrechen speichert ohne ihn.",
 };

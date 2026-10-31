@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Designer: a design that reads the weather forecast from `fc['weather.xxx']` (the `weather_forecast` template does) is previewed with the real daily forecast, which the designer fetches itself and never saves. A new automation made from it gets the *Weather: Get forecasts* step (`response_variable: fc`) before the write, and *Save to existing automation* offers to add that step when the automation has none.
 - Designer: *Import JSON* is gone, and *Export JSON* is offered only for sensor tile styles. A design is exchanged as its payload (*Payload YAML* and *Import YAML*), not as the designer's own document.
 
 ## 1.9.0-beta.1

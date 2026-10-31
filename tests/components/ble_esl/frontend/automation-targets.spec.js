@@ -209,6 +209,51 @@ test("a blank design saves into an existing automation and picks its write actio
   await expect(page.locator("#dirty-badge")).toBeHidden();
 });
 
+test("a design that reads the forecast offers to add the step that fetches it", async ({
+  page,
+  request,
+}) => {
+  const original = await automation(request, "temperature");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.waitForFunction(() => window.manager.editor?.specs?.types);
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.addSpec("text");
+    editor.element.spec.value =
+      "{{ fc['weather.home'].forecast[1].condition }}";
+    editor.edited();
+  });
+  const messages = [];
+  page.on("dialog", (dialog) => {
+    messages.push(dialog.message());
+    dialog.accept();
+  });
+  await page
+    .getByRole("button", { name: "Save to existing automation…", exact: true })
+    .click();
+  const chooser = page.getByRole("dialog", {
+    name: "Choose the automation to save to:",
+  });
+  await chooser.getByRole("radio", { name: "Temperature display" }).check();
+  await chooser.getByRole("button", { name: "Continue" }).click();
+  await expect(page.locator(".message")).toContainText(
+    "Saved to Temperature display.",
+  );
+  expect(messages.some((message) => message.includes("fc"))).toBe(true);
+  const saved = await automation(request, "temperature");
+  const names = saved.actions.map((action) => action.action || action.service);
+  const write = names.indexOf("ble_esl.write");
+  expect(names[write - 1]).toBe("weather.get_forecasts");
+  expect(saved.actions[write - 1]).toMatchObject({
+    target: { entity_id: ["weather.home"] },
+    data: { type: "daily" },
+    response_variable: "fc",
+  });
+  expect(saved.actions.length).toBe(original.actions.length + 1);
+});
+
 test("saving into an automation keeps the design's orientation", async ({
   page,
   request,

@@ -1462,12 +1462,35 @@ class EslManager extends HTMLElement {
       (data.background !== undefined || background !== "white")
     )
       data.background = background;
+    // A payload that reads a variable a step sets (the weather forecast): the
+    // automation needs that step before the write, and the user decides.
+    let writePath = selected.path;
+    for (const step of exported.setup_actions || []) {
+      const variable = step.response_variable;
+      if (JSON.stringify(updated).includes(`"response_variable":"${variable}"`))
+        continue;
+      if (
+        !window.confirm(
+          t(
+            this.hass,
+            "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.",
+            { variable },
+          ),
+        )
+      )
+        continue;
+      const parent = this.actionAt(updated, writePath.slice(0, -1));
+      const index = writePath.at(-1);
+      if (!Array.isArray(parent) || typeof index !== "number") continue;
+      parent.splice(index, 0, step);
+      writePath = [...writePath.slice(0, -1), index + 1];
+    }
     await this.hass.callApi(
       "POST",
       `config/automation/config/${encodeURIComponent(configId)}`,
       updated,
     );
-    return { action, path: selected.path };
+    return { action, path: writePath };
   }
   // Automations that could take this design: those linked to the ESL whose
   // ble_esl.write actions target it. The automation being edited is not

@@ -641,4 +641,6 @@ export default {
     "Shift / Ctrl / ⌘ + クリックで複数の要素を選択 · キャンバスの空いている場所をドラッグして範囲を選択 · ? ですべてのショートカットを表示",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "ボタンでテキスト・図形・アイコン・画像を追加できます。エンティティに追従するものは、上でセンサーを選ぶか、下の要素を使います。",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "このデザインは {variable} から天気予報を読み取りますが、オートメーションにはそれを設定するステップがありません。書き込みアクションの前に「天気: 予報を取得」ステップを追加しますか？キャンセルすると追加せずに保存します。",
 };

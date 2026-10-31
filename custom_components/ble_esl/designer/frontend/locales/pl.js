@@ -635,4 +635,6 @@ export default {
     "Shift / Ctrl / ⌘ + kliknięcie zaznacza kilka elementów · Przeciągnięcie po pustym miejscu płótna zaznacza obszar · ? pokazuje wszystkie skróty",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Użyj przycisków, aby dodać tekst, kształt, ikonę lub obraz; dla wszystkiego, co śledzi encję, wybierz czujnik powyżej albo element poniżej.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Ten projekt odczytuje prognozę pogody z {variable}, ale automatyzacja nie ma kroku, który ją ustawia. Dodać krok Pogoda: pobierz prognozy przed akcją zapisu? Anuluj zapisuje bez niego.",
 };

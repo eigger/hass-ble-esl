@@ -624,4 +624,6 @@ export default {
     "Shift / Ctrl / ⌘ + 클릭으로 여러 요소 선택 · 캔버스의 빈 곳을 드래그하면 영역 선택 · ? 키로 모든 단축키 표시",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "아이콘 버튼으로 텍스트, 도형, 아이콘, 이미지를 추가하세요. 엔티티를 따라가는 것은 위에서 센서를 고르거나 아래의 요소를 사용하세요.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "이 디자인은 {variable}에서 날씨 예보를 읽지만 자동화에는 이를 설정하는 단계가 없습니다. 쓰기 동작 앞에 '날씨: 예보 가져오기' 단계를 추가할까요? 취소하면 추가하지 않고 저장합니다.",
 };

@@ -641,4 +641,6 @@ export default {
     "Shift / Ctrl / ⌘ + klik selecteert meerdere elementen · Slepen op een lege plek van het canvas selecteert een gebied · ? toont alle sneltoetsen",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Gebruik de knoppen om tekst, een vorm, een pictogram of een afbeelding toe te voegen; kies voor alles wat een entiteit volgt hierboven een sensor of hieronder een element.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Dit ontwerp leest de weersverwachting uit {variable}, maar de automatisering heeft geen stap die deze instelt. De stap Weer: verwachtingen ophalen vóór de schrijfactie toevoegen? Annuleren slaat op zonder.",
 };

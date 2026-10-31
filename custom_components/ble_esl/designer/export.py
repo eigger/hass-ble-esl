@@ -156,12 +156,18 @@ def automation_draft(exported, name, defaults=None):
     """
     action = yaml.safe_load(exported.get("live_service", exported["service"]))
     defaults = defaults or {}
+    # Steps the template brought, then any the payload needs that it did not.
+    steps = list(defaults.get("actions", []))
+    have = {step.get("response_variable") for step in steps}
+    steps.extend(
+        step for step in exported.get("setup_actions", []) if step["response_variable"] not in have
+    )
     return {
         "alias": defaults.get("alias") or name,
         "description": defaults.get("description", ""),
         "triggers": defaults.get("triggers", []),
         "conditions": defaults.get("conditions", []),
-        "actions": [*defaults.get("actions", []), action],
+        "actions": [*steps, action],
         "mode": defaults.get("mode", "single"),
         **{key: defaults[key] for key in ("max", "max_exceeded") if key in defaults},
     }

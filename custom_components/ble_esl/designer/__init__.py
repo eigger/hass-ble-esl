@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import tempfile
 import time
 
@@ -96,6 +97,33 @@ def _preview_variable_map(value):
     return value
 
 
+# A payload reads the forecast a Weather: Get forecasts step fetched into ``fc``.
+FORECAST_VARIABLE = "fc"
+_FORECAST_ENTITY = re.compile(r"""\bfc\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]""")
+
+
+def forecast_entities(source):
+    """The weather entities a design or payload reads from ``fc``."""
+    try:
+        text = json.dumps(source, ensure_ascii=False, default=str)
+    except (TypeError, ValueError):
+        return []
+    return sorted(set(_FORECAST_ENTITY.findall(text)))
+
+
+def forecast_step(source):
+    """The step that fetches the forecasts ``source`` reads, or None."""
+    entities = forecast_entities(source)
+    if not entities:
+        return None
+    return {
+        "action": "weather.get_forecasts",
+        "target": {"entity_id": entities},
+        "data": {"type": "daily"},
+        "response_variable": FORECAST_VARIABLE,
+    }
+
+
 class Designer:
     """Render layouts for preview, export or explicit transmission.
 
@@ -179,6 +207,39 @@ class Designer:
             result[key] = cached[1]
         return result
 
+    async def forecast_variable(self, source, variables):
+        """``variables`` with the forecast ``source`` reads, fetched as the automation will.
+
+        What the user gave wins, and an entity without a forecast leaves the
+        template to its own fallback.
+        """
+        entities = forecast_entities(source)
+        if not entities or FORECAST_VARIABLE in variables:
+            return variables
+        forecast = {}
+        for entity_id in entities:
+            key = (entity_id, "daily")
+            cached = self.forecast_cache.get(key)
+            if not cached or time.monotonic() - cached[0] >= 600:
+                try:
+                    response = await self.hass.services.async_call(
+                        "weather",
+                        "get_forecasts",
+                        {"entity_id": entity_id, "type": "daily"},
+                        blocking=True,
+                        return_response=True,
+                    )
+                    cached = self.forecast_cache[key] = (
+                        time.monotonic(),
+                        response[entity_id]["forecast"],
+                    )
+                except (HomeAssistantError, KeyError, vol.Invalid):
+                    continue
+            forecast[entity_id] = {"forecast": cached[1]}
+        if not forecast:
+            return variables
+        return _preview_variable_map({**variables, FORECAST_VARIABLE: forecast})
+
     def preset(self, entry, rotate=0):
         """The preset a write would use now, refined by the last advertisement.
 
@@ -206,7 +267,9 @@ class Designer:
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
         forecasts = await self.forecasts(document)
-        preview_variables = _preview_variable_map(preview_variables)
+        preview_variables = await self.forecast_variable(
+            document, _preview_variable_map(preview_variables)
+        )
         snapshots = snapshot_layers(
             self.hass, document, self.templates, forecasts, preview_variables
         )
@@ -233,7 +296,9 @@ class Designer:
         """The display as YAML for an automation: what the preview shows, as a payload."""
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
-        preview_variables = _preview_variable_map(preview_variables)
+        preview_variables = await self.forecast_variable(
+            document, _preview_variable_map(preview_variables)
+        )
         # A payload has no forecast: an element that wants one is refused below.
         forecasts = {}
         payload = compile_payload(
@@ -279,6 +344,9 @@ class Designer:
             else None
         )
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
+        # What the payload reads from the run, that the automation has to set first.
+        step = forecast_step(result["payload_data"] or payload)
+        result["setup_actions"] = [step] if step else []
         return result
 
     async def automation(self, entry, document, preview_variables=None, defaults=None):
@@ -510,7 +578,9 @@ class Designer:
             )
         items = repair_yaml11_keys(items)
         preset = self.preset(entry, rotate)
-        preview_variables = _preview_variable_map(preview_variables)
+        preview_variables = await self.forecast_variable(
+            items, _preview_variable_map(preview_variables)
+        )
         elements, imported, issues = elements_from(items, preset, max(0, 100 - existing))
         different = None
         if elements:

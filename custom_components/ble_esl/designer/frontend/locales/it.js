@@ -640,4 +640,6 @@ export default {
     "Maiusc / Ctrl / ⌘ + clic seleziona più elementi · Trascinare su una zona vuota della tela seleziona un'area · ? mostra tutte le scorciatoie",
   "Use the icon buttons to add text, a shape, an icon or an image; pick a sensor above or an element below for anything that follows an entity.":
     "Usa i pulsanti per aggiungere testo, una forma, un'icona o un'immagine; per ciò che segue un'entità scegli un sensore sopra o un elemento sotto.",
+  "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
+    "Questo design legge le previsioni meteo da {variable}, ma l'automazione non ha alcun passaggio che la imposti. Aggiungere il passaggio Meteo: ottieni previsioni prima dell'azione di scrittura? Annulla salva senza.",
 };

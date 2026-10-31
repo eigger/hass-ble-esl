@@ -796,3 +796,97 @@ async def test_template_steps_come_before_the_write_in_a_new_automation(hass, wo
     )
     actions = result["automation"]["actions"]
     assert [step["action"] for step in actions] == ["weather.get_forecasts", "ble_esl.write"]
+
+
+async def _weather_forecast_service(hass):
+    from homeassistant.core import SupportsResponse
+
+    calls = []
+    forecast = [
+        {"datetime": "2026-11-02T12:00:00+00:00", "condition": "sunny"},
+        {
+            "datetime": "2026-11-03T12:00:00+00:00",
+            "condition": "rainy",
+            "temperature": 18.4,
+            "templow": 9,
+        },
+        {
+            "datetime": "2026-11-04T12:00:00+00:00",
+            "condition": "cloudy",
+            "temperature": 20,
+            "templow": 11,
+        },
+        {
+            "datetime": "2026-11-05T12:00:00+00:00",
+            "condition": "snowy",
+            "temperature": 2,
+            "templow": -3,
+        },
+    ]
+
+    async def get_forecasts(call):
+        calls.append(dict(call.data))
+        # Like the real service: one entity id or a list of them.
+        ids = call.data["entity_id"]
+        ids = [ids] if isinstance(ids, str) else ids
+        return {entity: {"forecast": forecast} for entity in ids}
+
+    hass.services.async_register(
+        "weather", "get_forecasts", get_forecasts, supports_response=SupportsResponse.ONLY
+    )
+    return calls
+
+
+async def test_applying_the_forecast_template_previews_the_real_forecast(hass, wolink_entry):
+    calls = await _weather_forecast_service(hass)
+    hass.states.async_set("weather.home", "sunny", {"temperature": 20})
+    designer = hass.data[KEY]
+    result = await designer.apply_design_template(wolink_entry, "weather_forecast")
+    assert result["issues"] == [] and result["different_pixels"] == 0
+    assert calls and calls[0]["type"] == "daily"
+    # The preview draws the fetched forecast, not the placeholders.
+    document = {"version": 1, "elements": result["elements"], "background": "white"}
+    preview = await designer.preview(wolink_entry, document)
+    texts = [item.get("value") for item in preview["payload"]]
+    assert "18°" in texts and "weather-rainy" in texts
+    # What the preview supplied never ends up in the saved payload.
+    saved = await designer.export(wolink_entry, document)
+    assert "fc[" in str(saved["payload_data"]) and "18°" not in str(saved["payload_data"])
+    # And the payload says which step has to fetch it.
+    assert saved["setup_actions"] == [
+        {
+            "action": "weather.get_forecasts",
+            "target": {"entity_id": ["weather.home"]},
+            "data": {"type": "daily"},
+            "response_variable": "fc",
+        }
+    ]
+
+
+async def test_a_new_automation_gets_the_forecast_step_once(hass, wolink_entry):
+    await _weather_forecast_service(hass)
+    hass.states.async_set("weather.home", "sunny", {"temperature": 20})
+    designer = hass.data[KEY]
+    applied = await designer.apply_design_template(wolink_entry, "weather_forecast")
+    document = {"version": 1, "elements": applied["elements"], "background": "white"}
+    # Without the template's own steps (e.g. the design was added to a display).
+    bare = await designer.automation(wolink_entry, document)
+    assert [a["action"] for a in bare["automation"]["actions"]] == [
+        "weather.get_forecasts",
+        "ble_esl.write",
+    ]
+    # With them: still one fetch, the template's.
+    withtemplate = await designer.automation(
+        wolink_entry, document, defaults=applied["template"]["automation"]
+    )
+    assert [a["action"] for a in withtemplate["automation"]["actions"]] == [
+        "weather.get_forecasts",
+        "ble_esl.write",
+    ]
+
+
+async def test_a_design_that_reads_no_forecast_needs_no_step(hass, wolink_entry):
+    saved = await hass.data[KEY].export(
+        wolink_entry, {"version": 1, "elements": [], "background": "white"}
+    )
+    assert saved["setup_actions"] == []
