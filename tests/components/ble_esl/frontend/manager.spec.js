@@ -2261,3 +2261,30 @@ test("an empty search result offers to clear the search and filter", async ({
   await expect(page.getByLabel("Search ESLs")).toHaveValue("");
   await expect(page.getByLabel("Search ESLs")).toBeFocused();
 });
+
+test("an automation design can discard its unsaved edits", async ({ page }) => {
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  page.on("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  const discard = page.getByRole("button", { name: "Discard changes" });
+  await expect(discard).toBeHidden();
+  const before = await page.locator(".el").count();
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator(".el")).toHaveCount(before + 1);
+  await expect(discard).toBeVisible();
+  await discard.click();
+  await expect(page.locator(".el")).toHaveCount(before);
+  await expect(discard).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+});

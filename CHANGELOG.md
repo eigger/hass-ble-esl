@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Designer: emphasised (primary) buttons, *Save to automation* and *Connected automations* now react to the mouse pointer; they showed no hover change before.
+- Designer: *Discard changes* is available while editing an automation design and puts back the design as it was opened.
+
 ## 1.9.0-beta.2
 
 ### Changed
