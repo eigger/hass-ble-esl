@@ -45,11 +45,12 @@ export default {
   "Move {label} backward": "Переместить {label} назад.",
   "Delete {label}": "Удалить {label}",
   "Resize {corner}": "Изменение размера {corner}",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Преобразовано в элементов: {count}, выглядят точно так же{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Преобразовано в элементов: {count}; отличается пикселей: {pixels}{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "Преобразовано в элементов: {count}, выглядят точно так же{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "Преобразовано в элементов: {count}; отличается пикселей: {pixels}{skipped}{frozen}",
   "; {count} not converted": "; {count} не преобразовано",
+  "; some values are as of now, not live": "; некоторые значения зафиксированы на текущий момент",
   "{count} placed, {skipped} skipped.": "{count} размещен, {skipped} пропущен.",
   "Font size": "Размер шрифта",
   "Min value": "Минимальное значение",

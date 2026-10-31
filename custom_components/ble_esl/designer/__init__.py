@@ -567,9 +567,13 @@ class Designer:
                 "a display holds 100"
             )
         # The same items with what follows the entity written as templates.
-        live = compile_payload(self.hass, alone, self.templates, forecasts, keep_templates=True)
+        report = LiveReport()
+        live = compile_payload(
+            self.hass, alone, self.templates, forecasts, keep_templates=True, report=report
+        )
         if len(live) != len(items):
             live = items
+        frozen = frozen_items(alone, report.live)
         elements, issues, original, rebuilt = convert(self.hass, items, live, preset)
         different = None
         if elements:
@@ -580,7 +584,12 @@ class Designer:
                     )
             except HomeAssistantError as err:
                 issues.append(f"render: {err}")
-        return {"elements": elements, "issues": issues, "different_pixels": different}
+        return {
+            "elements": elements,
+            "issues": issues,
+            "different_pixels": different,
+            "frozen": frozen,
+        }
 
     async def save_template(self, key, template):
         if not key or ":" not in key:

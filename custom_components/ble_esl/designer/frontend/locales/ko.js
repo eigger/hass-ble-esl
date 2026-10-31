@@ -44,11 +44,12 @@ export default {
   "Move {label} backward": "{label} 뒤로 이동",
   "Delete {label}": "{label} 삭제",
   "Resize {corner}": "{corner} 크기 변경",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "요소 {count}개로 변환됨. 이전과 동일하게 표시{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "요소 {count}개로 변환됨. 이전과 {pixels}픽셀 차이{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "요소 {count}개로 변환됨. 이전과 동일하게 표시{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "요소 {count}개로 변환됨. 이전과 {pixels}픽셀 차이{skipped}{frozen}",
   "; {count} not converted": "; {count}개 변환하지 못함",
+  "; some values are as of now, not live": "; 일부 값은 현재 시점의 값이며 실시간으로 따라가지 않습니다",
   "{count} placed, {skipped} skipped.": "{count}개 배치, {skipped}개 건너뜀.",
   "Font size": "글꼴 크기",
   "Min value": "최솟값",

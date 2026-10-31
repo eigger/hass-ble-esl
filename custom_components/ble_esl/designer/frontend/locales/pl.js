@@ -45,11 +45,12 @@ export default {
   "Move {label} backward": "Przejdź {label} do tyłu",
   "Delete {label}": "Usuń {label}",
   "Resize {corner}": "Zmień rozmiar {corner}",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Przekonwertowano na {count} elementów, narysowanych dokładnie jak wcześniej{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Przekonwertowano na {count} elementów; różnica pikseli: {pixels}{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "Przekonwertowano na {count} elementów, narysowanych dokładnie jak wcześniej{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "Przekonwertowano na {count} elementów; różnica pikseli: {pixels}{skipped}{frozen}",
   "; {count} not converted": "; {count} nie został przekonwertowany",
+  "; some values are as of now, not live": "; niektóre wartości są zapisane na ten moment, nie na żywo",
   "{count} placed, {skipped} skipped.":
     "{count} umieszczono, {skipped} pominięto.",
   "Font size": "Rozmiar czcionki",

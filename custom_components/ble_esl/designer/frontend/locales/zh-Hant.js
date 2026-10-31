@@ -41,11 +41,12 @@ export default {
   "Move {label} backward": "向後移動{label}",
   "Delete {label}": "刪除{label}",
   "Resize {corner}": "調整大小{corner}",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "已轉換為 {count} 個元素，繪製效果與之前完全一致{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "已轉換為 {count} 個元素；有 {pixels} 個像素與之前不同{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "已轉換為 {count} 個元素，繪製效果與之前完全一致{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "已轉換為 {count} 個元素；有 {pixels} 個像素與之前不同{skipped}{frozen}",
   "; {count} not converted": "; {count} 未轉換",
+  "; some values are as of now, not live": "; 部分值為目前時刻的值，不會即時更新",
   "{count} placed, {skipped} skipped.": "放置{count}，跳過{skipped}。",
   "Font size": "字體大小",
   "Min value": "最小值",

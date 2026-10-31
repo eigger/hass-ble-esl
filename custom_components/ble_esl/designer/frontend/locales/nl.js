@@ -47,11 +47,12 @@ export default {
   "Move {label} backward": "Verplaats {label} achteruit",
   "Delete {label}": "Verwijderen {label}",
   "Resize {corner}": "Formaat wijzigen {corner}",
-  "Converted to {count} elements, drawn exactly as before{skipped}":
-    "Geconverteerd naar {count} elementen, precies getekend zoals voorheen{skipped}",
-  "Converted to {count} elements; {pixels} pixels differ from before{skipped}":
-    "Geconverteerd naar {count} elementen; {pixels} pixels verschillen van voorheen{skipped}",
+  "Converted to {count} elements, drawn exactly as before{skipped}{frozen}":
+    "Geconverteerd naar {count} elementen, precies getekend zoals voorheen{skipped}{frozen}",
+  "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
+    "Geconverteerd naar {count} elementen; {pixels} pixels verschillen van voorheen{skipped}{frozen}",
   "; {count} not converted": "; {count} niet geconverteerd",
+  "; some values are as of now, not live": "; sommige waarden gelden alleen voor nu en volgen niet live",
   "{count} placed, {skipped} skipped.":
     "{count} geplaatst, {skipped} overgeslagen.",
   "Font size": "Lettergrootte",

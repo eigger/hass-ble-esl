@@ -83,7 +83,7 @@ test("sensor defaults, keyboard, dragging, resize, undo, save and preview", asyn
   await expect(page.locator("#interval")).toHaveCount(0);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await expect(page.locator('[data-property="decimals"]')).toHaveValue("1");
   const element = page.locator(".el.selected");
   await element.focus();
@@ -148,7 +148,8 @@ test("entity drag and drop, discovery-only tag and narrow screen", async ({
   await source.dragTo(page.locator(".stage"), {
     targetPosition: { x: 35, y: 35 },
   });
-  await expect(page.locator(".el")).toHaveCount(1);
+  // The dropped sensor became its icon, label and value.
+  await expect(page.locator(".el")).toHaveCount(3);
   await page.getByLabel("ESL", { exact: true }).selectOption("demo-discovery");
   await expect(
     page.getByRole("button", { name: "Send to ESL" }),
@@ -295,7 +296,7 @@ test("element actions are in the context menu and inspector bar; trash, Backspac
 test("typing properties updates without blur and keeps text editing shortcuts", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   const label = page.locator('[data-property="label"]');
   await label.fill("Living room");
   await expect(label).toBeFocused();
@@ -377,7 +378,7 @@ test("sensor type template designer saves, previews and preserves the display dr
 test("weather uses an icon and offers a value selector but no forecast time", async ({
   page,
 }) => {
-  await pickSensor(page, "weather.home");
+  await addSensorTile(page, "weather.home");
   await expect(page.locator(".el.selected .value")).toHaveText("");
   // A payload holds no forecast: the time selector is only for older designs.
   await expect(page.getByLabel("Weather time", { exact: true })).toHaveCount(0);
@@ -947,7 +948,7 @@ test("clicking empty canvas and surrounding space deselects the component", asyn
 test("transparent component padding does not capture hover or clicks above another layer", async ({
   page,
 }) => {
-  await pickSensor(page, "sensor.office_temperature");
+  await addSensorTile(page, "sensor.office_temperature");
   await page.evaluate(() => {
     window.panel.element.template = "default";
     window.panel.edited();
@@ -1663,10 +1664,10 @@ test("a picked sensor becomes elements whose value is a template", async ({
     .locator("ble-esl-yaml-dialog dialog")
     .getByLabel("YAML", { exact: true });
   await expect(yaml).toHaveValue(/states\("sensor\.office_temperature"\)/);
-  // Undo brings the sensor back as one element.
+  // One undo takes the whole sensor away: no tile is left in between.
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Undo", exact: false }).click();
-  await expect(page.locator(".layer")).toHaveCount(1);
+  await expect(page.locator(".layer")).toHaveCount(0);
 });
 
 test("pressing Convert twice converts once", async ({ page, request }) => {

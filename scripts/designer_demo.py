@@ -425,7 +425,10 @@ async def handle(request):
         alone = {"elements": [element]}
         forecasts = await demo_forecasts()
         items = snapshot_layers(HASS, alone, TEMPLATES, forecasts)[0][1]
-        live = compile_payload(HASS, alone, TEMPLATES, forecasts, keep_templates=True)
+        report = LiveReport()
+        live = compile_payload(
+            HASS, alone, TEMPLATES, forecasts, keep_templates=True, report=report
+        )
         if len(live) != len(items):
             live = items
         elements, issues, original, rebuilt = convert(HASS, items, live, preset)
@@ -433,7 +436,12 @@ async def handle(request):
         if elements:
             different = await asyncio.to_thread(different_pixels, HASS, preset, original, rebuilt)
         return web.json_response(
-            {"elements": elements, "issues": issues, "different_pixels": different}
+            {
+                "elements": elements,
+                "issues": issues,
+                "different_pixels": different,
+                "frozen": frozen_items(alone, report.live),
+            }
         )
     if msg["action"] == "save_design_template":
         try:

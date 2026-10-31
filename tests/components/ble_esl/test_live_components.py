@@ -325,3 +325,21 @@ async def test_a_converted_component_saves_the_same_payload_it_would_have_saved(
     assert after["payload_data"] == before["payload_data"]
     hass.states.async_set("sensor.temp", "30", {"unit_of_measurement": "°C"})
     assert drawn(hass, after)[-1]["value"] == "30.0 °C"
+
+
+async def test_converting_says_what_stays_as_of_now(hass, wolink_entry):
+    hass.states.async_set("sensor.mode", "eco")
+    live = await hass.data[KEY].convert(
+        wolink_entry,
+        document(element("sensor", "tile", entity_id="sensor.mode")),
+        "tile",
+    )
+    # No unit: the value could be read back as a number, so it stays as drawn.
+    assert len(live["frozen"]) == 1 and live["frozen"][0].startswith("tile:")
+    hass.states.async_set("sensor.temp", "5", {"unit_of_measurement": "W"})
+    live = await hass.data[KEY].convert(
+        wolink_entry,
+        document(element("sensor", "tile", entity_id="sensor.temp")),
+        "tile",
+    )
+    assert live["frozen"] == []
