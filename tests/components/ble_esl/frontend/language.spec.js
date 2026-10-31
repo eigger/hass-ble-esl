@@ -73,7 +73,8 @@ test("locale switches retain designer history, nested modal drafts and templates
   // An older design's component that follows an entity still opens in its editor.
   await page.evaluate(() => {
     const editor = window.manager.editor;
-    editor.element.field_templates = { color: "{{ 'red' }}" };
+    editor.element.entity_id = "sensor.demo_temperature";
+    editor.element.data_field = "state";
     editor.edited();
   });
   const afterBinding = await page.evaluate(() => ({
@@ -83,12 +84,12 @@ test("locale switches retain designer history, nested modal drafts and templates
   }));
   await page.getByRole("button", { name: "Configure", exact: true }).click();
   const component = page.locator("ble-esl-component-editor");
-  await component.locator("#text").fill("Ready");
+  await component.locator("#font_size").fill("31");
   await setLanguage(page, "ko");
   await expect(
     component.getByRole("heading", { name: "컴포넌트 편집" }),
   ).toBeVisible();
-  await expect(component.locator("#text")).toHaveValue("Ready");
+  await expect(component.locator("#font_size")).toHaveValue("31");
   await expect(component.locator('[data-type="rectangle"]')).toContainText(
     "도형",
   );
@@ -96,7 +97,7 @@ test("locale switches retain designer history, nested modal drafts and templates
   await expect(
     component.getByRole("heading", { name: "Edit component" }),
   ).toBeVisible();
-  await expect(component.locator("#text")).toHaveValue("Ready");
+  await expect(component.locator("#font_size")).toHaveValue("31");
   await component.locator("#close").click();
   expect(
     await page.evaluate(() => ({

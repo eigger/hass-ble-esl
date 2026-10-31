@@ -851,6 +851,150 @@ test("Bluetooth send transfers the design without storing it on the server", asy
   await expect(page.locator("#dirty-badge")).toBeVisible();
 });
 
+test("inspector and template sample use native HA entity pickers", async ({
+  page,
+}) => {
+  await addSensorTile(page, "sensor.office_temperature");
+  const bound = page.locator('ha-entity-picker[data-property="entity_id"]');
+  await expect(bound).toHaveCount(1);
+  expect(
+    await bound.evaluate((picker) => ({
+      value: picker.value,
+      hass: !!picker.hass,
+      required: picker.required,
+    })),
+  ).toEqual({ value: "sensor.office_temperature", hass: true, required: true });
+  await bound.getByRole("combobox").fill("temperature");
+  await bound.getByRole("combobox").press("Backspace");
+  await expect(page.locator(".el")).toHaveCount(1);
+  await bound.evaluate((picker) =>
+    picker.dispatchEvent(
+      new CustomEvent("value-changed", {
+        detail: { value: "binary_sensor.window" },
+      }),
+    ),
+  );
+  expect(await page.evaluate(() => window.panel.element.entity_id)).toBe(
+    "binary_sensor.window",
+  );
+  await expect(page.locator('[data-property="decimals"]')).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Sensor tile styles", exact: true })
+    .click();
+  const sample = page.locator("ha-entity-picker#template-sample");
+  await expect(sample).toHaveCount(1);
+  await sample.evaluate((picker) =>
+    picker.dispatchEvent(
+      new CustomEvent("value-changed", {
+        detail: { value: "binary_sensor.window" },
+      }),
+    ),
+  );
+  expect(
+    await page.evaluate(() => ({
+      entity: window.panel.sampleEntity,
+      type: window.panel.templateSensorType,
+    })),
+  ).toEqual({ entity: "binary_sensor.window", type: "output:binary" });
+});
+
+test("clicking empty canvas and surrounding space deselects the component", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Add text", exact: true }).click();
+  await expect(page.locator(".el.selected")).toHaveCount(1);
+  const stage = await page.locator(".stage").boundingBox();
+  await page.mouse.click(stage.x + stage.width - 5, stage.y + stage.height - 5);
+  await expect(page.locator(".el.selected")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Configure", exact: true }),
+  ).toHaveCount(0);
+  await page.locator(".el").click();
+  await expect(page.locator(".el.selected")).toHaveCount(1);
+  await page.locator(".canvas-wrap").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator(".el.selected")).toHaveCount(0);
+  await expect(page.locator(".el")).toHaveCount(1);
+});
+
+test("transparent component padding does not capture hover or clicks above another layer", async ({
+  page,
+}) => {
+  await addSensorTile(page, "sensor.office_temperature");
+  await page.evaluate(() => {
+    window.panel.element.template = "default";
+    window.panel.edited();
+  });
+  await page.locator('[data-property="show_label"]').uncheck();
+  await page.waitForFunction(() => {
+    const p = window.panel,
+      e = p.element,
+      b = p.layerBounds?.[e?.id];
+    return b && b[3] < e.height - 12;
+  });
+  const fixture = await page.evaluate(() => {
+    const p = window.panel,
+      sensor = p.element;
+    p.add("rectangle");
+    const shape = p.element;
+    Object.assign(shape, {
+      x: sensor.x + sensor.width - 12,
+      y: sensor.y + sensor.height - 12,
+      width: 10,
+      height: 10,
+    });
+    p.document.elements = [shape, sensor];
+    p.selected = null;
+    p.edited();
+    return {
+      sensor: sensor.id,
+      shape: shape.id,
+      x: shape.x + 5,
+      y: shape.y + 5,
+    };
+  });
+  await page.waitForFunction(
+    (id) => !!window.panel.layerBounds?.[id],
+    fixture.shape,
+  );
+  const stage = await page.locator(".stage").boundingBox();
+  const zoom = await page.evaluate(() => window.panel.zoom);
+  const point = {
+    x: stage.x + fixture.x * zoom,
+    y: stage.y + fixture.y * zoom,
+  };
+  await page.mouse.move(point.x, point.y);
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        window.panel.shadowRoot.elementFromPoint(x, y)?.closest("[data-id]")
+          ?.dataset.id,
+      point,
+    ),
+  ).toBe(fixture.shape);
+  await page.mouse.click(point.x, point.y);
+  expect(await page.evaluate(() => window.panel.selected)).toBe(fixture.shape);
+  const empty = await page.evaluate(() => {
+    const e = window.panel.document.elements.find((e) => e.type === "sensor");
+    return { x: e.x + 5, y: e.y + e.height - 5 };
+  });
+  await page.mouse.click(stage.x + empty.x * zoom, stage.y + empty.y * zoom);
+  expect(await page.evaluate(() => window.panel.selected)).toBeNull();
+});
+
+test("an icon's picker opens the editor without any entity binding", async ({
+  page,
+}) => {
+  await page.locator('[data-add="icon"]').click();
+  await expect(page.locator('[data-action="configure-component"]')).toHaveCount(
+    0,
+  );
+  await page.locator('[data-action="pick-icon"]').click();
+  const modal = page.locator("ble-esl-component-editor");
+  await expect(modal.locator("dialog")).toBeVisible();
+  await expect(modal.locator("#source")).toBeHidden();
+  await expect(modal.locator("#field")).toBeHidden();
+});
+
 test("sensor components inside templates can open Configure and render", async ({
   page,
 }) => {

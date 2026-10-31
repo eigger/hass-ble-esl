@@ -4,32 +4,20 @@
 
 ### Changed
 
-- Designer: *Add component* and *Dynamic fields* are gone, and *Configure* is offered only for a component that already follows an entity (an older design's sensor tile, data field or field template). Anything new that follows an entity is a sensor picked above or an imagespec element with a template; *Convert to elements* turns an older component into those.
-
-### Changed
-
+- Designer: *Add component* and *Dynamic fields* are gone, and *Configure* is offered only for an older design's component that already follows an entity (a sensor tile or data field); a plain element's icon picker no longer binds anything. Anything new that follows an entity is a sensor picked above or an imagespec element with a template; *Convert to elements* turns an older component, field templates included, into those.
 - Designer: an automation saved by an older release opens with its entity-bound components as imagespec elements, where that draws exactly what they did; any other component stays as it was, so opening never changes how a design looks.
 - `ble_esl.write` raises a Repairs notice (once per tag and run) while an automation still runs from a saved designer source (`design`); open it in the ESL Manager and save it again.
 - Designer: a sensor added past the 100-element limit says so instead of being placed.
-
-### Changed
-
 - Designer: a sensor picked, dropped or added from the library becomes imagespec elements at once (its value a template that follows the entity), so what is edited is what the payload holds. *Conditional icon*, *Progress bar* and *Gauge* are no longer offered under *Add component* (the imagespec elements are); designs that have them still open and can be edited. *Convert to elements* and saving into an automation now write the same templates.
-
-### Changed
-
 - Designer: components bound to an entity are saved into the payload as templates where Home Assistant can follow the entity: a sensor's value, a data field's text, the icon a rule picks, a bar's or gauge's progress. A piece is templated only when its template renders exactly what was drawn, and only where Home Assistant cannot turn the rendered text back into a number (a sensor value needs a unit; data-field text with two or more decimals cannot be followed); anything else (field templates, binary and weather icons, sensors drawn through a sensor template) is saved as of now and reported. Hidden elements are saved as `visible: false` and come back when the automation is reopened.
+- `ble_esl.write` logs once per tag and Home Assistant run when an automation still runs from a saved designer source (`design`); saving it again from the ESL Manager replaces that with a plain payload (a weather forecast or an angle that is not a multiple of 90° must first become a template or a quarter turn).
+- Designer: a payload cannot hold a weather forecast or an element turned by an angle that is not a multiple of 90°, so the forecast time selector is gone (an older design's forecast can be set back to now), rotation moves in steps of 90°, and such an element cannot be saved into an automation. Use a template over a *Weather: Get forecasts* response instead.
+- Designer: saving into an automation keeps only the `payload` (element templates stay live); it no longer writes `design` / `design_specs`. Actions saved by earlier releases still run and open in the designer, and saving them again drops those fields. What a payload cannot follow live (sensor components, field templates, templated polygon corners, free-angle rotation, hidden elements) is saved as of now, and the save message says so.
 
 ### Added
 
 - Designer and ESL Manager: **Discard changes** drops a tag's unsaved design (a button next to the "Unsaved changes" badge on the card and in the editor bar), and editing a design back to how it started no longer leaves it marked as unsaved.
 - Design template `weather_forecast`: the next three days of a weather entity's daily forecast. Its automation carries the `weather.get_forecasts` step that fills it in; templates can now bring `actions` that run before the write.
-
-### Changed
-
-- `ble_esl.write` logs once per tag and Home Assistant run when an automation still runs from a saved designer source (`design`); saving it again from the ESL Manager replaces that with a plain payload (a weather forecast or an angle that is not a multiple of 90° must first become a template or a quarter turn).
-- Designer: a payload cannot hold a weather forecast or an element turned by an angle that is not a multiple of 90°, so the forecast time selector is gone (an older design's forecast can be set back to now), rotation moves in steps of 90°, and such an element cannot be saved into an automation. Use a template over a *Weather: Get forecasts* response instead.
-- Designer: saving into an automation keeps only the `payload` (element templates stay live); it no longer writes `design` / `design_specs`. Actions saved by earlier releases still run and open in the designer, and saving them again drops those fields. What a payload cannot follow live (sensor components, field templates, templated polygon corners, free-angle rotation, hidden elements) is saved as of now, and the save message says so.
 
 ## 1.8.0
 

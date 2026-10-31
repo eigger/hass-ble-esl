@@ -70,8 +70,8 @@ into fixed coordinates through preview parameters.
 
 | To | Do |
 |---|---|
-| Add a text, shape, icon or image | The four icon buttons under **Components**, one click each. **＋ Add component** opens the component editor first, with more choices: a value from a sensor, progress bar, gauge, conditional icon |
-| Add a sensor | Pick it in **Entities**: one sensor component that draws the icon, name and value. **Configure** edits it; [Convert to elements](#convert-to-elements) splits it into elements |
+| Add a text, shape, icon or image | The four icon buttons under **Components**, one click each |
+| Add a sensor | Pick it in **Entities**: it is placed as imagespec elements (icon, name and a value that follows the sensor) |
 | Add **any** imagespec element | **All elements** → choose one → **Add**. All thirty types are there: shapes, text (tables and multi-line text too), codes (QR, bar, data matrix), charts, media (icon, image), layout containers, widgets |
 | Move, resize | Drag the element or its corner handle; arrow keys nudge one pixel, Shift ten |
 | Edit a value | The **Element properties** panel lists every field imagespec has for the type except the position (the frame sets that), plus `dither`; required fields are marked `*`, defaults show as placeholders |
@@ -140,7 +140,7 @@ The status line says whether the result is drawn exactly as before (`0` pixels d
 
 **Sensor tile styles** (the second tab) are reusable layouts for a kind of sensor: design one with `{{name}}`, `{{state}}`, `{{unit}}` and `{{icon}}` placeholders and every sensor component of that kind uses it, scaled to its frame. They belong to the older components and cannot hold imagespec elements; convert a sensor to take it out of the template system.
 
-**Configure** opens the older component's own editor (entity, data field, icon rules, field templates).
+**Configure** opens the component editor for an older design's component that follows an entity (entity, data field, icon rules). A component with only field templates has no editor: use [Convert to elements](#convert-to-elements).
 
 ## Limits
 

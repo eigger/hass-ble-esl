@@ -116,7 +116,8 @@ test("configure modal keeps rotation slider and numeric value in sync", async ({
 }) => {
   // Only an older design's component that follows an entity is configured.
   await page.evaluate(() => {
-    window.panel.element.field_templates = { color: "{{ 'red' }}" };
+    window.panel.element.entity_id = "sensor.office_temperature";
+    window.panel.element.data_field = "state";
     window.panel.edited();
   });
   await page.getByRole("button", { name: "Configure", exact: true }).click();

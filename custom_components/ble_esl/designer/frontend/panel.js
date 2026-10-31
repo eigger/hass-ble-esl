@@ -15,15 +15,7 @@ import {
   errorText,
   serverMessage,
 } from "./i18n.js";
-import "./component-editor.js";
-
-// A component of an older design that follows an entity: only these are still configured.
-const isBoundComponent = (element) =>
-  Boolean(
-    (element.type === "sensor" && element.entity_id) ||
-    (element.entity_id && element.data_field) ||
-    Object.keys(element.field_templates || {}).length,
-  );
+import { isBoundComponent } from "./component-editor.js";
 import "./yaml-dialog.js";
 import "./import-dialog.js";
 import "./template-dialog.js";
