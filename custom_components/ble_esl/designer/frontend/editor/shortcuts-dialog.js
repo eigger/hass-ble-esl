@@ -40,6 +40,7 @@ export function openShortcutsDialog(hass) {
     ul{margin:0;padding-left:20px;overflow:auto;line-height:1.7}
     .actions{display:flex;justify-content:flex-end}
     button{font:inherit;color:var(--text-primary-color,white);background:var(--primary-color,#166d75);border:1px solid var(--primary-color,#166d75);border-radius:6px;padding:8px 12px;cursor:pointer}
+    button:hover{filter:brightness(1.18);box-shadow:0 1px 4px #0003}
   </style><dialog aria-label="${esc(title)}"><div class="body"><h2>${esc(title)}</h2><ul>${items}</ul><div class="actions"><button type="button" data-close>${esc(t(hass, "Close"))}</button></div></div></dialog>`;
   const dialog = host.shadowRoot.querySelector("dialog");
   const close = () => {

@@ -41,7 +41,7 @@ export class ImportDialog extends HTMLElement {
       form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:90vh;box-sizing:border-box}
       h2{margin:0;font-size:16px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}button.primary:hover:not(:disabled){filter:brightness(1.18);box-shadow:0 1px 4px #0003}
+      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}button.primary:hover:not(:disabled){filter:brightness(1.18);box-shadow:0 1px 4px #0003}button:not(.primary):hover:not(:disabled){border-color:var(--primary-color,#257d86)}button:not(.primary):not(.swatch):not([aria-pressed="true"]):not([aria-selected="true"]):not(.active):hover:not(:disabled){background:color-mix(in srgb,var(--primary-color,#257d86) 10%,var(--card-background-color,white))}
       button:disabled{opacity:.5;cursor:default}
       textarea{min-height:260px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical;padding:10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
