@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Designer: buttons in the editor, the ESL Manager, its dialogs and the component editor now react to the mouse pointer, including emphasised (primary) buttons, *Save to automation* and *Connected automations*, which showed no hover change before.
+- Designer: *Discard changes* is available while editing an automation design and puts back the design as it was opened or last saved to the automation.
+- Designer: the status line under the toolbar keeps its height, so sending a display no longer shifts the page.
+
 ## 1.9.0-beta.2
 
 ### Changed

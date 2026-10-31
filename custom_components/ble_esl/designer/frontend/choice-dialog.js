@@ -32,7 +32,7 @@ export function chooseOne(hass, title, labels) {
       label{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;cursor:pointer;overflow-wrap:anywhere}
       input{margin-top:2px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
-      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}
+      button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}button.primary:hover:not(:disabled){filter:brightness(1.18);box-shadow:0 1px 4px #0003}button:not(.primary):hover:not(:disabled){border-color:var(--primary-color,#257d86)}button:not(.primary):not(.swatch):not([aria-pressed="true"]):not([aria-selected="true"]):not(.active):hover:not(:disabled){background:color-mix(in srgb,var(--primary-color,#257d86) 10%,var(--card-background-color,white))}
       .actions{display:flex;gap:6px;justify-content:flex-end}
     </style><dialog aria-label="${esc(title)}"><form method="dialog"><fieldset><legend>${esc(title)}</legend>${labels
       .map(
