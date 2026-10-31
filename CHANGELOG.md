@@ -1,35 +1,30 @@
 # Changelog
 
-## 1.9.0-beta.3
-
-### Fixed
-
-- Designer: buttons in the editor, the ESL Manager, its dialogs and the component editor now react to the mouse pointer, including emphasised (primary) buttons, *Save to automation* and *Connected automations*, which showed no hover change before.
-- Designer: *Discard changes* is available while editing an automation design and puts back the design as it was opened or last saved to the automation.
-- Designer: the status line under the toolbar keeps its height, so sending a display no longer shifts the page.
-
-## 1.9.0-beta.2
+## 1.9.0
 
 ### Changed
 
 - **`design` and `design_specs` are no longer read.** An action that still carries the designer source an older release saved now runs from its `payload`, whose values are as they were when it was last saved (a sensor or entity-bound component that was only followed through `design` shows its saved value until the automation is saved again from the ESL Manager). The two fields are gone from the `ble_esl.write` / `ble_esl.write_guarded` descriptions, and the Repairs notice and log line now say that the source is unused. Opening such an automation in the designer imports its payload, as for any other, and keeps the background of its source (releases before 1.8 drew that one); saving it drops both fields.
 - Designer: a design that reads the weather forecast from `fc['weather.xxx']` (the `weather_forecast` template does) is previewed with the real daily forecast, which the designer fetches itself and never saves. A new automation made from it gets the *Weather: Get forecasts* step (`response_variable: fc`) before the write, and *Save to existing automation* offers to add that step when the automation has none.
 - Designer: *Import JSON* is gone, and *Export JSON* is offered only for sensor tile styles. A design is exchanged as its payload (*Payload YAML* and *Import YAML*), not as the designer's own document.
-
-## 1.9.0-beta.1
-
-### Changed
-
 - **The designer saves only the payload.** Saving into an automation writes the `ble_esl.write` payload with its templates kept; the designer source (`design` / `design_specs`) is no longer written. Components that follow an entity are saved as templates where Home Assistant can follow the entity: a sensor's value with its unit, a data field's text, the icon a rule picks, a bar's or gauge's progress. A piece is templated only when its template renders exactly what was drawn and Home Assistant cannot turn the rendered text back into a number (a sensor value needs a unit; data-field text with two or more decimals cannot be followed); anything else (field templates, binary and weather icons, sensors drawn through a sensor template, a sensor that is unavailable when saved) is saved as of now, and the save message says so. Hidden elements are saved as `visible: false` and come back when the automation is reopened.
 - **Automations saved by earlier releases keep working.** An action that carries `design` still runs. While one does, `ble_esl.write` logs once and Home Assistant raises a Repairs notice for that tag (it goes away when the tag is unloaded or Home Assistant restarts). Opening such an automation in the designer shows its entity-bound components as imagespec elements where that draws exactly what they did, and leaves any other as it was; saving it again replaces `design` with the payload, which fixes at their current value the parts a payload cannot follow (field templates, binary and weather icon rules, sensor templates, data fields with two or more decimals, templated polygon corners). Such an automation can be left as it is; the notice comes back on the first write after a restart, and a design with a weather forecast or a free angle cannot be saved again until those become a template or a quarter turn.
 - **A payload holds no weather forecast and no free-angle rotation**, so the designer no longer offers them: rotation moves in steps of 90°, the forecast time selector is gone (an older design's forecast can be set back to now), and such an element cannot be saved into an automation. Read a forecast with a *Weather: Get forecasts* action and a template over its response, as the new `weather_forecast` template does.
 - **A sensor put on the display becomes imagespec elements** (icon, name, and a value that follows the entity), so what is edited is what the payload holds. *Add component*, *Conditional icon*, *Progress bar*, *Gauge* and *Dynamic fields* are gone; *Configure* is offered only for an older design's component that already follows an entity (and in sensor-tile style mode), an icon's picker no longer binds anything, and *Convert to elements* turns any older component into imagespec elements. Converting and saving write the same templates.
 - Designer: a sensor added past the 100-element limit says so instead of being placed.
 
+
 ### Added
 
 - Designer and ESL Manager: **Discard changes** drops a tag's unsaved design (a button next to the "Unsaved changes" badge on the card and in the editor bar), and editing a design back to how it started no longer leaves it marked as unsaved.
 - Design template `weather_forecast`: the next three days of a weather entity's daily forecast. Its automation carries the `weather.get_forecasts` step that fills it in; templates can now bring `actions` that run before the write.
+
+
+### Fixed
+
+- Designer: buttons in the editor, the ESL Manager, its dialogs and the component editor now react to the mouse pointer, including emphasised (primary) buttons, *Save to automation* and *Connected automations*, which showed no hover change before.
+- Designer: *Discard changes* is available while editing an automation design and puts back the design as it was opened or last saved to the automation.
+- Designer: the status line under the toolbar keeps its height, so sending a display no longer shifts the page.
 
 ## 1.8.0
 
