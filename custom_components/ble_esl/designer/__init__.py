@@ -603,7 +603,7 @@ class Designer:
         """
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
-        elements, frozen, kept = [], [], []
+        elements, kept = [], []
         for number, element in enumerate(document["elements"]):
             if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
                 elements.append(element)
@@ -625,8 +625,7 @@ class Designer:
                 kept.append(element["id"])
                 continue
             elements.extend(result["elements"])
-            frozen.extend(result["frozen"])
-        return {"document": {**document, "elements": elements}, "frozen": frozen, "kept": kept}
+        return {"document": {**document, "elements": elements}, "kept": kept}
 
     async def save_template(self, key, template):
         if not key or ":" not in key:

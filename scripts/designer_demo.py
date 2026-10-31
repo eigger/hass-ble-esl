@@ -425,7 +425,7 @@ async def handle(request):
             return web.Response(status=400, text="That element cannot be converted")
         return web.json_response(await demo_convert(element, preset))
     if msg["action"] == "convert_document":
-        elements, frozen, kept = [], [], []
+        elements, kept = [], []
         for element in document["elements"]:
             if element["type"] == "imagespec" or not is_bound(element) or not element["visible"]:
                 elements.append(element)
@@ -441,10 +441,7 @@ async def handle(request):
                 kept.append(element["id"])
                 continue
             elements.extend(result["elements"])
-            frozen.extend(result["frozen"])
-        return web.json_response(
-            {"document": {**document, "elements": elements}, "frozen": frozen, "kept": kept}
-        )
+        return web.json_response({"document": {**document, "elements": elements}, "kept": kept})
     if msg["action"] == "save_design_template":
         try:
             name = check_name(msg.get("name"))
