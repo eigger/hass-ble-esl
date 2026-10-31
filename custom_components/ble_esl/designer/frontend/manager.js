@@ -1388,6 +1388,7 @@ class EslManager extends HTMLElement {
       if (Array.isArray(value)) return value.forEach(visit);
       if (
         value.response_variable === step.response_variable &&
+        value.data?.type === step.data?.type &&
         value.enabled !== false
       ) {
         const ids = new Set(

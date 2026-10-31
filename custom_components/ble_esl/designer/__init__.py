@@ -138,6 +138,7 @@ class Designer:
         self.templates = {}
         self.design_templates = {}
         self.forecast_cache = {}
+        self.forecast_failed = {}
         self.locks = {}
         self.render_lock = asyncio.Lock()
         self.template_lock = asyncio.Lock()
@@ -221,8 +222,11 @@ class Designer:
         forecast = {}
         for entity_id in entities:
             key = (entity_id, "daily")
+            failed = self.forecast_failed.get(entity_id)
+            if failed is not None and time.monotonic() - failed < 60:
+                continue
             cached = self.forecast_cache.get(key)
-            if cached and time.monotonic() - cached[0] < (600 if cached[1] else 60):
+            if cached and time.monotonic() - cached[0] < 600:
                 forecast[entity_id] = {"forecast": cached[1]}
                 continue
             try:
@@ -236,7 +240,10 @@ class Designer:
                     )
                 days = response[entity_id]["forecast"]
             except Exception:
-                days = []
+                # Kept apart from the forecasts a write uses: a failure here is not one there.
+                self.forecast_failed[entity_id] = time.monotonic()
+                continue
+            self.forecast_failed.pop(entity_id, None)
             self.forecast_cache[key] = (time.monotonic(), days)
             forecast[entity_id] = {"forecast": days}
         forecast = {entity: value for entity, value in forecast.items() if value["forecast"]}

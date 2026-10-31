@@ -950,3 +950,14 @@ def test_a_step_for_other_entities_is_not_taken_for_the_one_the_payload_needs():
     # One that already covers them all is enough.
     draft = automation_draft(exported, "x", {"actions": [step("weather.office", "weather.home")]})
     assert [a["action"] for a in draft["actions"]] == ["weather.get_forecasts", "ble_esl.write"]
+
+
+async def test_a_failed_preview_fetch_does_not_hide_the_forecast_from_a_write(hass, wolink_entry):
+    from custom_components.ble_esl.designer import forecast_entities  # noqa: F401
+
+    designer = hass.data[KEY]
+    designer.forecast_failed["weather.home"] = __import__("time").monotonic()
+    # The preview skips a provider that just failed ...
+    assert await designer.forecast_variable({"v": "{{ fc['weather.home'] }}"}, {}) == {}
+    # ... and what a write reads is untouched by it.
+    assert ("weather.home", "daily") not in designer.forecast_cache

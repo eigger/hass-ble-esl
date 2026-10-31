@@ -170,6 +170,7 @@ def automation_draft(exported, name, defaults=None):
         for step in exported.get("setup_actions", [])
         if not any(
             have.get("response_variable") == step["response_variable"]
+            and (have.get("data") or {}).get("type") == step["data"]["type"]
             and fetched(step) <= fetched(have)
             for have in steps
         )
