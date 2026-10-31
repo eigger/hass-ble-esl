@@ -34,7 +34,7 @@ keeps a small margin around the complete last successful image.
 
 In the Designer toolbar, choose **Create automation**, review the current design's action and name, then choose **Create automation** in the dialog. This creates a new Home Assistant automation with `ble_esl.write` targeted at the current ESL's registered device. Unsaved edits are included. Triggers and conditions are empty; use **Edit automation** to configure when it runs.
 
-The automation contains a copy of the exported action. To change it later, open it with **Edit automation design** and use **Save to automation**, or write the current design into it with **Save to existing automation…**. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; sensor components and field templates contain their values at creation time, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
+The automation contains a copy of the exported action. To change it later, open it with **Edit automation design** and use **Save to automation**, or write the current design into it with **Save to existing automation…**. Jinja templates in imagespec elements are preserved and evaluated when the automation runs; a sensor's value, a data field's text, the icon a rule picks and a bar's progress follow their entity where Home Assistant can follow it, while field templates and what it cannot follow contain their values at the time of saving, as in **Payload YAML**. The local demo only stores a preview in memory and does not create an automation in Home Assistant.
 
 ## Existing automation associations
 
