@@ -52,7 +52,8 @@ export default {
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
     "Geconverteerd naar {count} elementen; {pixels} pixels verschillen van voorheen{skipped}{frozen}",
   "; {count} not converted": "; {count} niet geconverteerd",
-  "; some values are as of now, not live": "; sommige waarden gelden alleen voor nu en volgen niet live",
+  "; some values are as of now, not live":
+    "; sommige waarden gelden alleen voor nu en volgen niet live",
   "{count} placed, {skipped} skipped.":
     "{count} geplaatst, {skipped} overgeslagen.",
   "Font size": "Lettergrootte",
@@ -421,7 +422,8 @@ export default {
   "The selected write action is no longer available.":
     "De geselecteerde schrijfactie is niet meer beschikbaar.",
   "Automation saved.": "Automatisering opgeslagen.",
-  "Automation saved. Some values are as of now, not live.": "Automatisering opgeslagen. Sommige waarden gelden alleen voor dit moment en volgen niet live.",
+  "Automation saved. Some values are as of now, not live.":
+    "Automatisering opgeslagen. Sommige waarden gelden alleen voor dit moment en volgen niet live.",
   "Automation configuration identity is missing.":
     "De identiteit van de automatiseringsconfiguratie ontbreekt.",
   "Automation configuration could not be loaded safely.":
@@ -566,7 +568,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "Geen automatisering met een ble_esl.write-actie voor deze ESL gevonden.",
   "Saved to {name}.": "Opgeslagen in {name}.",
-  "Saved to {name}. Some values are as of now, not live.": "Opgeslagen in {name}. Sommige waarden gelden alleen voor dit moment en volgen niet live.",
+  "Saved to {name}. Some values are as of now, not live.":
+    "Opgeslagen in {name}. Sommige waarden gelden alleen voor dit moment en volgen niet live.",
   "This automation rotation is not supported.":
     "De rotatie van deze automatisering wordt niet ondersteund.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":

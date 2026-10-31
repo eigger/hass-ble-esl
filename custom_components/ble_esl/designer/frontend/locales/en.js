@@ -49,7 +49,8 @@ export default {
   "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}":
     "Converted to {count} elements; {pixels} pixels differ from before{skipped}{frozen}",
   "; {count} not converted": "; {count} not converted",
-  "; some values are as of now, not live": "; some values are as of now, not live",
+  "; some values are as of now, not live":
+    "; some values are as of now, not live",
   "{count} placed, {skipped} skipped.": "{count} placed, {skipped} skipped.",
   "Font size": "Font size",
   "Min value": "Min value",
@@ -267,7 +268,8 @@ export default {
   "The selected write action is no longer available.":
     "The selected write action is no longer available.",
   "Automation saved.": "Automation saved.",
-  "Automation saved. Some values are as of now, not live.": "Automation saved. Some values are as of now, not live.",
+  "Automation saved. Some values are as of now, not live.":
+    "Automation saved. Some values are as of now, not live.",
   "In 2 days": "In 2 days",
   "In 3 days": "In 3 days",
   "In sync": "In sync",
@@ -553,7 +555,8 @@ export default {
   "No automation with a ble_esl.write action for this ESL was found.":
     "No automation with a ble_esl.write action for this ESL was found.",
   "Saved to {name}.": "Saved to {name}.",
-  "Saved to {name}. Some values are as of now, not live.": "Saved to {name}. Some values are as of now, not live.",
+  "Saved to {name}. Some values are as of now, not live.":
+    "Saved to {name}. Some values are as of now, not live.",
   "This automation rotation is not supported.":
     "This automation rotation is not supported.",
   "Restore the unsaved changes you made to this automation design? Cancel discards them.":
