@@ -383,3 +383,21 @@ async def test_an_older_design_opens_with_its_components_as_elements_drawn_the_s
     saved_new = await designer.export(wolink_entry, opened["document"])
     assert saved_old["payload_data"] == saved_new["payload_data"]
     assert saved_new["frozen"] == []
+
+
+async def test_opening_keeps_a_component_whose_entity_a_payload_cannot_follow(hass, wolink_entry):
+    hass.states.async_set("sensor.temp", "21", {"unit_of_measurement": "°C"})
+    old = document(
+        element(
+            "text",
+            "templated",
+            text="x",
+            field_templates={
+                "color": "{{ 'red' if states('sensor.temp') | float > 20 else 'black' }}"
+            },
+        ),
+        element("sensor", "missing", entity_id="sensor.nope"),
+    )
+    opened = await hass.data[KEY].convert_document(wolink_entry, old)
+    assert opened["kept"] == ["templated", "missing"]
+    assert [el["type"] for el in opened["document"]["elements"]] == ["text", "sensor"]

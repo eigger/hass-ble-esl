@@ -2055,12 +2055,12 @@ test("an automation saved with an older design opens from it and is saved as a p
   await expect(
     page.getByRole("button", { name: "Save to automation" }),
   ).toBeVisible();
-  // Its component opens as imagespec elements, drawn exactly as it was.
+  // A payload cannot follow its field template, so the component stays as it was.
   expect(
     await page.evaluate(() =>
       window.manager.editor.document.elements.map((e) => e.type),
     ),
-  ).toEqual(["imagespec"]);
+  ).toEqual(["conditional_icon"]);
   await page.getByRole("button", { name: "Save to automation" }).click();
   await expect(page.locator(".message")).toContainText("Automation saved.");
   const response = await request.get("/api/config/automation/config/morning");

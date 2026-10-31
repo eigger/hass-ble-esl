@@ -597,8 +597,9 @@ class Designer:
     async def convert_document(self, entry, document):
         """An older design with its entity-bound components turned into imagespec elements.
 
-        A component is replaced only when the elements draw exactly what it did;
-        any other stays as it is, so opening a design never changes how it looks.
+        A component is replaced only when the elements draw exactly what it did
+        and follow its entity as far as a payload can; any other stays as it is,
+        so opening a design never changes how it looks or what it follows.
         """
         preset = self.preset(entry, document.get("rotate", 0))
         document = validate(document, preset)
@@ -617,6 +618,7 @@ class Designer:
                 or not result["elements"]
                 or result["issues"]
                 or result["different_pixels"] != 0
+                or result["frozen"]
                 or room - 1 + len(result["elements"]) > 100
             ):
                 elements.append(element)

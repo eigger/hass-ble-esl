@@ -81,6 +81,14 @@ _LOGGER = logging.getLogger(__name__)
 # Entries already told that an automation still carries an older designer source.
 _LEGACY_DESIGN_WARNED: set[str] = set()
 
+
+@callback
+def clear_legacy_design_notice(hass: HomeAssistant, entry_id: str) -> None:
+    """Forget the notice for a tag that is unloaded or removed."""
+    _LEGACY_DESIGN_WARNED.discard(entry_id)
+    ir.async_delete_issue(hass, DOMAIN, f"legacy_design_{entry_id}")
+
+
 # imagespec's one-letter color shorthands, on top of the names and #RGB /
 # #RRGGBB that PIL understands.
 _COLOR_SHORTHANDS = frozenset({"w", "b", "r", "y", "g", "o"})

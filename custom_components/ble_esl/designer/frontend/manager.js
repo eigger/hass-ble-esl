@@ -930,9 +930,12 @@ class EslManager extends HTMLElement {
         // An older design's entity-bound components open as imagespec elements,
         // where that draws exactly what they did; the rest stay as they are.
         try {
+          // The action's own rotate wins, as it does when the automation runs.
+          const effective = data.rotate ?? design.rotate;
           const converted = await editor.api("convert_document", {
             entry_id: entryId,
-            document: design,
+            document:
+              effective === undefined ? design : { ...design, rotate: effective },
           });
           if (!current()) return;
           design = { ...design, elements: converted.document.elements };

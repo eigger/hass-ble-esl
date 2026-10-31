@@ -431,7 +431,12 @@ async def handle(request):
                 elements.append(element)
                 continue
             result = await demo_convert(element, preset)
-            if not result["elements"] or result["issues"] or result["different_pixels"] != 0:
+            if (
+                not result["elements"]
+                or result["issues"]
+                or result["different_pixels"] != 0
+                or result["frozen"]
+            ):
                 elements.append(element)
                 kept.append(element["id"])
                 continue

@@ -37,7 +37,12 @@ from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
 from .data import BleEslRuntimeData
 from .designer import KEY as DESIGNER_KEY, async_setup_designer
 from .device import format_model_name, resolve_preset
-from .services import async_setup_services, cancel_pending_write, track_reports
+from .services import (
+    async_setup_services,
+    cancel_pending_write,
+    clear_legacy_design_notice,
+    track_reports,
+)
 from .storage import ImageStore
 from .types import BleEslConfigEntry
 
@@ -215,6 +220,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> b
     if unload_ok:
         designer = hass.data[DESIGNER_KEY]
         designer.remove_panel_if_unused(entry.entry_id)
+        clear_legacy_design_notice(hass, entry.entry_id)
         # Invalidate every queued write from this runtime, including an
         # immediate write waiting on the shared BLE lock.
         data = entry.runtime_data
