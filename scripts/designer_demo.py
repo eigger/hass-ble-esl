@@ -430,7 +430,7 @@ async def handle(request):
             HASS, alone, TEMPLATES, forecasts, keep_templates=True, report=report
         )
         if len(live) != len(items):
-            live = items
+            live, report = items, LiveReport()
         elements, issues, original, rebuilt = convert(HASS, items, live, preset)
         different = None
         if elements:

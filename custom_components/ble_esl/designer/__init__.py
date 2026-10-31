@@ -572,7 +572,7 @@ class Designer:
             self.hass, alone, self.templates, forecasts, keep_templates=True, report=report
         )
         if len(live) != len(items):
-            live = items
+            live, report = items, LiveReport()
         frozen = frozen_items(alone, report.live)
         elements, issues, original, rebuilt = convert(self.hass, items, live, preset)
         different = None

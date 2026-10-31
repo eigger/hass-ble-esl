@@ -2356,10 +2356,19 @@ export class BleEslDesigner extends HTMLElement {
   // edited is what the payload will hold, templates included. The sensor tile
   // is converted before it is placed: one undo step, and no moment in which a
   // tile that is not payload data can be edited.
-  async addEntity(entity, x, y) {
+  // One at a time, so each lands beside the one before it.
+  addEntity(entity, x, y) {
+    this.entityQueue = (this.entityQueue || Promise.resolve()).then(() =>
+      this.placeEntity(entity, x, y),
+    );
+    return this.entityQueue;
+  }
+  async placeEntity(entity, x, y) {
     const context = this.documentSessionContext();
     const tile = this.placedElement("sensor", entity, x, y);
     const selected = this.selected;
+    this.status = "Converting…";
+    this.renderStatus();
     try {
       const result = await this.api("convert", {
         entry_id: context.entryId,
