@@ -2074,6 +2074,45 @@ test("an automation saved with an older design opens from its payload and is sav
   expect(saved.actions[0].data.payload.length).toBeGreaterThan(0);
 });
 
+test("an older design source's background is what opens, as it was what showed", async ({
+  page,
+  request,
+}) => {
+  const source = { version: 1, background: "black", elements: [] };
+  const design =
+    "{{ " + JSON.stringify(JSON.stringify(source)) + " | from_json }}";
+  await request.post("/api/config/automation/config/morning", {
+    data: {
+      id: "morning",
+      alias: "Morning",
+      triggers: [],
+      conditions: [],
+      actions: [
+        {
+          action: "ble_esl.write",
+          target: { device_id: "demo-device-0" },
+          data: { background: "white", payload: [], design },
+        },
+      ],
+      mode: "single",
+    },
+  });
+  await page
+    .locator('[data-action="automations"][data-entry="demo-writable"]')
+    .click();
+  await page
+    .getByRole("dialog", { name: "Connected automations" })
+    .getByRole("button", { name: "Edit automation design", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Save to automation" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => window.manager.editor.document.background),
+  ).toBe("black");
+});
+
 for (const [name, action] of [["the action's rotate", { rotate: 90 }]]) {
   test(`automation editing follows ${name} and writes it back`, async ({
     page,

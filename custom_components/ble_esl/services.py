@@ -127,6 +127,8 @@ def _color(value: Any) -> str:
     return value
 
 
+_COLOR_NAMES = ("white", "black", "red", "yellow")
+
 # Known keys are validated; anything else (the entity/device/area target and
 # keys from older automations) passes through untouched.
 WRITE_SERVICE_SCHEMA = vol.Schema(
@@ -372,6 +374,11 @@ async def build_write_job_from_data(
 
     if image is None and "design" in service_data:
         _note_legacy_design(hass, entry)
+        # Releases before 1.8 did not keep the action's background in step with the
+        # design's, and drew the design's: that colour stays what the tag shows.
+        design = service_data["design"]
+        if isinstance(design, dict) and design.get("background") in _COLOR_NAMES:
+            service_data = {**service_data, "background": design["background"]}
 
     if image is None:
         image = await hass.async_add_executor_job(

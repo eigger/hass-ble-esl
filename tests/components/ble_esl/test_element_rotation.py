@@ -142,6 +142,10 @@ async def test_an_action_with_an_older_designer_source_runs_from_its_payload(
     first = await build_write_job_from_data(hass, wolink_entry, legacy)
     second = await build_write_job_from_data(hass, wolink_entry, legacy)
     assert first.image_png == second.image_png == plain.image_png
+    # Before 1.8 the design's background was what showed, whatever the action said.
+    black = {**legacy, "background": "white", "design": {"background": "black", "elements": []}}
+    dark = await build_write_job_from_data(hass, wolink_entry, black)
+    assert dark.image_png != plain.image_png
     # It is said once per tag, in the log and as a repair, until the tag is unloaded.
     assert caplog.text.count("no longer used") == 1
     issue = ir.async_get(hass).async_get_issue("ble_esl", f"legacy_design_{wolink_entry.entry_id}")

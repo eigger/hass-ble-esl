@@ -25,6 +25,19 @@ const css = `
 `;
 
 const AUTOMATION_DRAFT_KEY = "ble_esl_designer_automation_draft";
+// Releases before 1.8 drew an action with the background of the design source it
+// carried, which is no longer read: this is that colour, if there is one.
+function legacyBackground(design) {
+  const match =
+    typeof design === "string" &&
+    design.match(/^\{\{ ("(?:[^"\\]|\\.)*") \| from_json \}\}$/);
+  if (!match) return undefined;
+  try {
+    return JSON.parse(JSON.parse(match[1])).background;
+  } catch {
+    return undefined;
+  }
+}
 class EslManager extends HTMLElement {
   constructor() {
     super();
@@ -921,6 +934,7 @@ class EslManager extends HTMLElement {
             "This automation background is not supported by the selected ESL.",
           ),
         );
+      const background = legacyBackground(data.design) ?? data.background;
       let previewVariables = this.safeAutomationVariables(config, selectedPath);
       const prompted = new Set();
       // The action's own `rotate` wins, as it does when the automation runs.
@@ -934,7 +948,7 @@ class EslManager extends HTMLElement {
         for (let attempt = 0; attempt < 64; attempt++) {
           result = await editor.prepareAutomationPayload(
             data.payload,
-            data.background,
+            background,
             entryId,
             previewVariables,
             rotate,
@@ -983,7 +997,7 @@ class EslManager extends HTMLElement {
         !editor.applyAutomationPayload(
           imported,
           data.payload,
-          data.background,
+          background,
           data.payload.length === 0,
           entryId,
           token,
