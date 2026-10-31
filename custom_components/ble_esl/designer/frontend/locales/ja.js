@@ -90,7 +90,6 @@ export default {
   "Bring front": "最前面へ移動",
   "By sensor type": "センサーの種類別",
   "Center horizontally": "水平方向の中央揃え",
-  "Checking display…": "表示を確認しています…",
   "Choose a sample sensor above to preview this tile style.":
     "このタイルスタイルをプレビューするには、上のサンプル センサーを選択してください。",
   "Choose an automation…": "オートメーションを選択してください…",
@@ -162,7 +161,6 @@ export default {
   "Image URL": "画像の URL",
   "Image added": "画像を追加しました",
   "Image upload failed": "画像のアップロードに失敗しました",
-  "Import JSON": "JSON をインポートします",
   "Import YAML": "YAML をインポートします",
   "In 2 days": "2日後",
   "In 3 days": "3日以内",
@@ -547,8 +545,6 @@ export default {
   "Could not save to the automation": "オートメーションに保存できませんでした",
   "Discard the unsaved changes to this automation design?":
     "このオートメーションのデザインの未保存の変更を破棄しますか？",
-  "Replace the current design with the imported file? You can undo this.":
-    "現在のデザインをインポートしたファイルで置き換えますか？元に戻すことができます。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} とこの ESL のリンクを解除しますか？オートメーション自体は変更されません。",
   Continue: "続行",

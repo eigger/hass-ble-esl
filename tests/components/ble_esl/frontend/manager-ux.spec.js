@@ -5,14 +5,13 @@ test.beforeEach(async ({ page, request }) => {
   await page.goto("/?manager");
   await expect(page.locator(".card")).toHaveCount(2);
   await expect(
-    page.locator(
-      '[data-entry="demo-writable"] [data-action="automations"]',
-    ),
+    page.locator('[data-entry="demo-writable"] [data-action="automations"]'),
   ).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
-        () => window.manager.automationCache.get("demo-writable")?.linked.length,
+        () =>
+          window.manager.automationCache.get("demo-writable")?.linked.length,
       ),
     )
     .toBeGreaterThan(0);
@@ -385,38 +384,11 @@ test("leaving an automation design with unsaved changes asks first", async ({
   await expect(page.locator("#dashboard")).toBeVisible();
 });
 
-test("importing JSON over unsaved work and unlinking an automation ask first", async ({
-  page,
-}) => {
+test("unlinking an automation asks first", async ({ page }) => {
   await page
     .locator('[data-action="edit"][data-entry="demo-writable"]')
     .click();
-  const clean = JSON.stringify(
-    await page.evaluate(() => window.manager.editor.document),
-  );
-  const file = {
-    name: "design.json",
-    mimeType: "application/json",
-    buffer: Buffer.from(clean),
-  };
-  await page.getByRole("button", { name: "Add text", exact: true }).click();
-  const before = await page.evaluate(
-    () => window.manager.editor.document.elements.length,
-  );
   const messages = [];
-  page.once("dialog", (dialog) => {
-    messages.push(dialog.message());
-    dialog.dismiss();
-  });
-  await page.locator("#file").setInputFiles(file);
-  await expect.poll(() => messages.length).toBe(1);
-  expect(messages[0]).toContain("Replace the current design");
-  await expect
-    .poll(() => page.evaluate(() => window.manager.editor.busy))
-    .toBe(false);
-  expect(
-    await page.evaluate(() => window.manager.editor.document.elements.length),
-  ).toBe(before);
   await page.locator('[data-action="dashboard"]').click();
   await page
     .locator('[data-action="automations"][data-entry="demo-writable"]')
@@ -430,8 +402,8 @@ test("importing JSON over unsaved work and unlinking an automation ask first", a
     confirm.dismiss();
   });
   await unlink.click();
-  await expect.poll(() => messages.length).toBe(2);
-  expect(messages[1]).toContain("Unlink");
+  await expect.poll(() => messages.length).toBe(1);
+  expect(messages[0]).toContain("Unlink");
   await expect(dialog.getByRole("button", { name: /^Unlink / })).toHaveCount(
     count,
   );

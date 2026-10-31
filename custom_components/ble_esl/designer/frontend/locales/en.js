@@ -87,7 +87,6 @@ export default {
   "Bring front": "Bring front",
   "By sensor type": "By sensor type",
   "Center horizontally": "Center horizontally",
-  "Checking display…": "Checking display…",
   "Choose a sample sensor above to preview this tile style.":
     "Choose a sample sensor above to preview this tile style.",
   "Choose an automation…": "Choose an automation…",
@@ -158,7 +157,6 @@ export default {
   "Image URL": "Image URL",
   "Image added": "Image added",
   "Image upload failed": "Image upload failed",
-  "Import JSON": "Import JSON",
   "Import YAML": "Import YAML",
   "Edit selected automation design": "Edit selected automation design",
   "Save automation": "Save automation",
@@ -537,8 +535,6 @@ export default {
   "Could not save to the automation": "Could not save to the automation",
   "Discard the unsaved changes to this automation design?":
     "Discard the unsaved changes to this automation design?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Replace the current design with the imported file? You can undo this.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Unlink {name} from this ESL? The automation itself is not changed.",
   Continue: "Continue",

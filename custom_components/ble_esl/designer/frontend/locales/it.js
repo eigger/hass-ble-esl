@@ -91,7 +91,6 @@ export default {
   "Bring front": "Porta in primo piano",
   "By sensor type": "Per tipo di sensore",
   "Center horizontally": "Centrare orizzontalmente",
-  "Checking display…": "Controllo del display…",
   "Choose a sample sensor above to preview this tile style.":
     "Scegli un sensore campione qui sopra per visualizzare l'anteprima di questo stile tessera.",
   "Choose an automation…": "Scegli un'automazione…",
@@ -163,7 +162,6 @@ export default {
   "Image URL": "URL dell'immagine",
   "Image added": "Immagine aggiunta",
   "Image upload failed": "Caricamento immagine non riuscito",
-  "Import JSON": "Importa JSON",
   "Import YAML": "Importa YAML",
   "In 2 days": "Tra 2 giorni",
   "In 3 days": "Entro 3 giorni",
@@ -550,8 +548,6 @@ export default {
   "Could not save to the automation": "Impossibile salvare nell'automazione",
   "Discard the unsaved changes to this automation design?":
     "Scartare le modifiche non salvate di questo design dell'automazione?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Sostituire il design attuale con il file importato? Puoi annullare l'operazione.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Scollegare {name} da questo ESL? L'automazione stessa non viene modificata.",
   Continue: "Continua",

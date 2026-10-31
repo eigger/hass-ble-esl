@@ -89,7 +89,6 @@ export default {
   "Bring front": "Mettre au premier plan",
   "By sensor type": "Par type de capteur",
   "Center horizontally": "Centrer horizontalement",
-  "Checking display…": "Vérification de l'affichage…",
   "Choose a sample sensor above to preview this tile style.":
     "Choisissez un exemple de capteur ci-dessus pour prévisualiser ce style de tuile.",
   "Choose an automation…": "Choisissez une automatisation…",
@@ -161,7 +160,6 @@ export default {
   "Image URL": "URL de l'image",
   "Image added": "Image ajoutée",
   "Image upload failed": "Échec du téléchargement de l'image",
-  "Import JSON": "Importer JSON",
   "Import YAML": "Importer YAML",
   "In 2 days": "Dans 2 jours",
   "In 3 days": "Dans 3 jours",
@@ -550,8 +548,6 @@ export default {
     "Impossible d'enregistrer dans l'automatisation",
   "Discard the unsaved changes to this automation design?":
     "Abandonner les modifications non enregistrées de ce design de l'automatisation ?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Remplacer le design actuel par le fichier importé ? Vous pouvez annuler cette action.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Dissocier {name} de cet ESL ? L'automatisation elle-même n'est pas modifiée.",
   Continue: "Continuer",

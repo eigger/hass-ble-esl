@@ -87,7 +87,6 @@ export default {
   "Bring front": "置于顶层",
   "By sensor type": "按传感器类型",
   "Center horizontally": "水平居中",
-  "Checking display…": "检查显示……",
   "Choose a sample sensor above to preview this tile style.":
     "选择上面的示例传感器来预览该磁贴样式。",
   "Choose an automation…": "选择自动化……",
@@ -159,7 +158,6 @@ export default {
   "Image URL": "图像URL",
   "Image added": "图像已添加",
   "Image upload failed": "图像上传失败",
-  "Import JSON": "导入JSON",
   "Import YAML": "导入YAML",
   "In 2 days": "2天内",
   "In 3 days": "3天内",
@@ -535,8 +533,6 @@ export default {
   "Could not save to the automation": "无法保存到自动化",
   "Discard the unsaved changes to this automation design?":
     "要放弃对此自动化设计的未保存更改吗？",
-  "Replace the current design with the imported file? You can undo this.":
-    "要用导入的文件替换当前设计吗？此操作可以撤销。",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "要将 {name} 与此 ESL 取消关联吗？自动化本身不会更改。",
   Continue: "继续",

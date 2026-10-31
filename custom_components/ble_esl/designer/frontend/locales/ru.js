@@ -89,7 +89,6 @@ export default {
   "Bring front": "На передний план",
   "By sensor type": "По типу датчика",
   "Center horizontally": "Центрировать по горизонтали",
-  "Checking display…": "Проверка дисплея…",
   "Choose a sample sensor above to preview this tile style.":
     "Выберите образец датчика выше, чтобы просмотреть этот стиль плитки.",
   "Choose an automation…": "Выберите автоматизацию…",
@@ -161,7 +160,6 @@ export default {
   "Image URL": "URL-адрес изображения",
   "Image added": "Изображение добавлено",
   "Image upload failed": "Не удалось загрузить изображение.",
-  "Import JSON": "Импорт JSON",
   "Import YAML": "Импорт YAML",
   "In 2 days": "Через 2 дня",
   "In 3 days": "Через 3 дня",
@@ -546,8 +544,6 @@ export default {
   "Could not save to the automation": "Не удалось сохранить в автоматизацию",
   "Discard the unsaved changes to this automation design?":
     "Отменить несохранённые изменения этого дизайна автоматизации?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Заменить текущий дизайн импортированным файлом? Это можно отменить.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "Отвязать {name} от этого ESL? Сама автоматизация не изменится.",
   Continue: "Продолжить",

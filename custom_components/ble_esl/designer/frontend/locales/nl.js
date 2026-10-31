@@ -92,7 +92,6 @@ export default {
   "Bring front": "Helemaal naar voren",
   "By sensor type": "Per sensortype",
   "Center horizontally": "Horizontaal centreren",
-  "Checking display…": "Display controleren…",
   "Choose a sample sensor above to preview this tile style.":
     "Kies hierboven een voorbeeldsensor om een voorbeeld van deze tegelstijl te bekijken.",
   "Choose an automation…": "Kies een automatisering…",
@@ -163,7 +162,6 @@ export default {
   "Image URL": "Afbeeldings-URL",
   "Image added": "Afbeelding toegevoegd",
   "Image upload failed": "Uploaden van afbeelding mislukt",
-  "Import JSON": "Importeren JSON",
   "Import YAML": "Importeren YAML",
   "In 2 days": "Binnen 2 dagen",
   "In 3 days": "Binnen 3 dagen",
@@ -548,8 +546,6 @@ export default {
   "Could not save to the automation": "Opslaan in de automatisering mislukt",
   "Discard the unsaved changes to this automation design?":
     "De niet-opgeslagen wijzigingen in dit automatiseringsontwerp negeren?",
-  "Replace the current design with the imported file? You can undo this.":
-    "Het huidige ontwerp vervangen door het geïmporteerde bestand? U kunt dit ongedaan maken.",
   "Unlink {name} from this ESL? The automation itself is not changed.":
     "{name} ontkoppelen van deze ESL? De automatisering zelf wordt niet gewijzigd.",
   Continue: "Doorgaan",
