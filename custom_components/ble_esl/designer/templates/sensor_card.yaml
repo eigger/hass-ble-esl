@@ -152,6 +152,4 @@ automation:
   triggers:
     - trigger: time_pattern
       minutes: /${interval}
-    - trigger: state
-      entity_id: ${sensor}
-  mode: restart
+  mode: single

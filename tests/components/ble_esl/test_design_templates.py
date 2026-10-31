@@ -1089,3 +1089,26 @@ async def test_date_weather_shows_the_day_and_the_weather(hass):
     assert "" in _texts(_shown(hass, "date_weather", given={"weekdays": "a"}))
     hass.states.async_set("weather.home", "unavailable", {})
     assert "--" in _texts(_shown(hass, "date_weather"))
+
+
+@pytest.mark.parametrize("template_id", sorted(TEMPLATES))
+async def test_every_automation_option_is_a_valid_home_assistant_automation(hass, template_id):
+    template = TEMPLATES[template_id]
+    seed_entities(hass, template)
+    choices = {
+        name: parameter["options"]
+        for name, parameter in template["parameters"].items()
+        if parameter["type"] == "select" and parameter["group"] == "automation"
+    }
+    for name, options in choices.items():
+        for option in options:
+            built = build(template, 250, 128, "BWR", {name: option})
+            config = {
+                **built["automation"],
+                "alias": "x",
+                "actions": [
+                    *built["automation"].get("actions", []),
+                    {"action": "ble_esl.write", "data": {"payload": built["payload"]}},
+                ],
+            }
+            assert await async_validate_config_item(hass, "x", config), (name, option)

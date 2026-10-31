@@ -41,7 +41,7 @@ parameters:
   interval:
     type: select
     group: automation
-    options: ["15", "30", "60"]
+    options: ["10", "15", "30"]
     default: "30"
     label: { en: Also update every (minutes), ko: 정기 갱신 주기 (분) }
 
@@ -202,6 +202,9 @@ automation:
     - trigger: state
       entity_id: ${calendar}
       attribute: message
+    - trigger: state
+      entity_id: ${calendar}
+      attribute: start_time
     - trigger: time_pattern
       minutes: /${interval}
-  mode: restart
+  mode: single

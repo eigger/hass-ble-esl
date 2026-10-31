@@ -186,4 +186,5 @@ automation:
       minutes: /${interval}
     - trigger: state
       entity_id: ${status}
-  mode: restart
+      to: ~
+  mode: single
