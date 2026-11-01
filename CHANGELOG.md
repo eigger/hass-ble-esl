@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+## 1.10.0
+
 ### Added
 
 - Design templates `sensor_card` (any sensor's icon, title and value), `calendar_next` (the current or next event of a calendar), `print_progress` (a 3D printer's progress bar, status and finish time), `date_weather` (date and weekday beside a weather entity's conditions) and `countdown` (days left until a date, D-12 / D-Day / D+3), each with 250×128 and 400×300 layouts and an automation.
+
+### Fixed
+
+- A `rectangle` whose start and end are on the same row or column (a zero-height or zero-width bar) no longer leaves stray outline pixels next to it; it is drawn as a single line (imagespec 1.1.1).
 
 ## 1.9.0
 
