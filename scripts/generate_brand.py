@@ -1,11 +1,10 @@
 """Generate Home Assistant brand images for BLE ESL.
 
 The artwork is an original geometric brand mark on a dark navy rounded square:
-a cyan and white electronic shelf label (e-paper display tag) with a tri-color
-accent block, barcode bars, DataMatrix grid, and a golden Bluetooth badge with
-wireless signal arcs. Drawn from geometric primitives at 4x scale and
-downsampled, so no source image, external font file, or network access is
-needed. Run with Pillow 12.3.0 for reproducible PNGs.
+a centered cyan and white electronic shelf label (e-paper display tag) featuring
+a bold Bluetooth rune and clean tri-color display blocks. Drawn from geometric
+primitives at 4x scale and downsampled, so no source image, external font file,
+or network access is needed. Run with Pillow 12.3.0 for reproducible PNGs.
 """
 
 from __future__ import annotations
@@ -21,8 +20,6 @@ SCALE = 4
 NAVY = "#1b2a41"
 CYAN = "#38bdf8"
 WHITE = "#ffffff"
-YELLOW = "#ffd23f"
-GOLD = "#f2a900"
 CORAL = "#ef4444"
 WORDMARK = "#0ea5e9"
 
@@ -65,49 +62,18 @@ def _draw_bt_rune(
 ) -> None:
     """Draw a crisp geometric Bluetooth rune centered at (cx, cy)."""
     hh = h / 2.0
-    hw = h * 0.29
+    hw = h * 0.30
     top = (cx, cy - hh)
     bot = (cx, cy + hh)
     ur = (cx + hw, cy - hh * 0.5)
     lr = (cx + hw, cy + hh * 0.5)
-    ul = (cx - hw * 0.95, cy - hh * 0.48)
-    ll = (cx - hw * 0.95, cy + hh * 0.48)
+    ul = (cx - hw * 0.92, cy - hh * 0.46)
+    ll = (cx - hw * 0.92, cy + hh * 0.46)
     _draw_thick_line(d, top, bot, width, fill)
     _draw_thick_line(d, top, ur, width, fill)
     _draw_thick_line(d, ur, ll, width, fill)
     _draw_thick_line(d, bot, lr, width, fill)
     _draw_thick_line(d, lr, ul, width, fill)
-
-
-def _draw_arc_ring(
-    d: ImageDraw.ImageDraw,
-    cx: float,
-    cy: float,
-    r_in: float,
-    r_out: float,
-    deg_start: float,
-    deg_end: float,
-    fill: str,
-) -> None:
-    """Draw a smooth annular sector."""
-    steps = 48
-    a0 = math.radians(deg_start)
-    a1 = math.radians(deg_end)
-    pts_out = [
-        (
-            cx + r_out * math.cos(a0 + (a1 - a0) * i / steps),
-            cy + r_out * math.sin(a0 + (a1 - a0) * i / steps),
-        )
-        for i in range(steps + 1)
-    ]
-    pts_in = [
-        (
-            cx + r_in * math.cos(a0 + (a1 - a0) * i / steps),
-            cy + r_in * math.sin(a0 + (a1 - a0) * i / steps),
-        )
-        for i in range(steps + 1)
-    ]
-    d.polygon(pts_out + list(reversed(pts_in)), fill=fill)
 
 
 def draw_icon() -> Image.Image:
@@ -122,55 +88,18 @@ def draw_icon() -> Image.Image:
     # 1. Dark navy rounded square background.
     d.rounded_rectangle(box(0, 0, SIZE - 1, SIZE - 1), radius=104 * s, fill=NAVY)
 
-    # 2. Outer ESL tag bezel (cyan) + inner E-Ink screen (white).
-    d.rounded_rectangle(box(52, 136, 404, 420), radius=38 * s, fill=CYAN)
-    d.rounded_rectangle(box(76, 160, 380, 396), radius=20 * s, fill=WHITE)
+    # 2. Centered ESL tag bezel (cyan) + inner E-Ink screen (white).
+    d.rounded_rectangle(box(52, 112, 460, 400), radius=42 * s, fill=CYAN)
+    d.rounded_rectangle(box(80, 140, 432, 372), radius=24 * s, fill=WHITE)
 
-    # 3. E-Ink tri-color accent header & data layout on the screen.
-    # Red/coral promo pill (classic BWR/BWY e-paper accent) + dark navy title bars.
-    d.rounded_rectangle(box(98, 182, 172, 230), radius=10 * s, fill=CORAL)
-    d.rounded_rectangle(box(188, 184, 272, 202), radius=6 * s, fill=NAVY)
-    d.rounded_rectangle(box(188, 212, 252, 230), radius=6 * s, fill=NAVY)
+    # 3. Bold, simple elements inside the E-Ink screen:
+    # Left side: large Bluetooth rune in dark navy.
+    _draw_bt_rune(d, cx=168 * s, cy=256 * s, h=148 * s, width=16 * s, fill=NAVY)
 
-    # Large price / metric block in navy.
-    d.rounded_rectangle(box(98, 250, 260, 294), radius=8 * s, fill=NAVY)
-
-    # Crisp vertical barcode bars along the bottom-left of the e-paper screen.
-    barcode_x = [
-        (98, 108),
-        (116, 122),
-        (130, 144),
-        (152, 158),
-        (166, 176),
-        (184, 198),
-        (206, 212),
-        (220, 230),
-        (238, 246),
-        (254, 260),
-    ]
-    for x0, x1 in barcode_x:
-        d.rounded_rectangle(box(x0, 316, x1, 372), radius=2 * s, fill=NAVY)
-
-    # 2D QR / DataMatrix finder & cells on the bottom-right of the screen.
-    d.rounded_rectangle(box(286, 268, 358, 372), radius=8 * s, fill=CYAN)
-    d.rounded_rectangle(box(298, 280, 346, 328), radius=4 * s, fill=WHITE)
-    d.rounded_rectangle(box(310, 292, 334, 316), radius=2 * s, fill=NAVY)
-    d.rounded_rectangle(box(298, 340, 318, 360), radius=3 * s, fill=NAVY)
-    d.rounded_rectangle(box(326, 340, 346, 360), radius=3 * s, fill=NAVY)
-
-    # 4. Circular Bluetooth badge overlapping the top-right corner of the ESL tag
-    #    with a dark-navy negative-space knockout ring.
-    bcx, bcy = 356 * s, 168 * s
-    d.ellipse([bcx - 72 * s, bcy - 72 * s, bcx + 72 * s, bcy + 72 * s], fill=NAVY)
-    d.ellipse([bcx - 54 * s, bcy - 54 * s, bcx + 54 * s, bcy + 54 * s], fill=GOLD)
-    _draw_bt_rune(d, bcx, bcy, h=64 * s, width=9 * s, fill=NAVY)
-
-    # 5. Golden wireless signal arcs radiating from the top-right badge.
-    for r_in, r_out, col in (
-        (82 * s, 96 * s, YELLOW),
-        (108 * s, 122 * s, GOLD),
-    ):
-        _draw_arc_ring(d, bcx, bcy, r_in, r_out, -68, 16, fill=col)
+    # Right side: bold red E-Ink price/promo block + two thick navy bars.
+    d.rounded_rectangle(box(248, 176, 396, 236), radius=14 * s, fill=CORAL)
+    d.rounded_rectangle(box(248, 260, 396, 290), radius=10 * s, fill=NAVY)
+    d.rounded_rectangle(box(248, 308, 352, 338), radius=10 * s, fill=NAVY)
 
     return image.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 
