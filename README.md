@@ -18,11 +18,9 @@ Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
 
 ![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
-The Downloads badge counts GitHub release asset downloads of the current release, not active installations.
-
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.**
 
-BLE ESL is a [HACS](https://hacs.xyz/) custom integration: one action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.
+One action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.
 
 It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
