@@ -16,6 +16,8 @@ A Home Assistant custom integration that sends layouts to Bluetooth Low Energy e
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
+The Downloads badge counts attached asset downloads for the latest GitHub release. It does not measure active installations.
+
 ![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
 **Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.**
@@ -55,9 +57,9 @@ Have a tag that speaks another protocol? See [Adding a protocol](custom_componen
 
 ## Requirements
 
-- Home Assistant **2025.12** or newer. Marketplace is built in from 2026.11; earlier supported versions need [HACS](https://hacs.xyz/) for store installation.
-- A Bluetooth adapter or ESPHome Bluetooth proxy that supports **active connections** (see [Bluetooth](#bluetooth)).
-- A supported tag (above).
+- **Home Assistant:** 2025.12.0 or later.
+- **Bluetooth:** A Bluetooth adapter or an ESPHome Bluetooth proxy that supports active connections. See [Bluetooth](#bluetooth).
+- **Device:** A supported tag from [Supported tags](#supported-tags).
 
 ## Installation
 
@@ -65,11 +67,13 @@ Have a tag that speaks another protocol? See [Adding a protocol](custom_componen
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
 <!-- hass-standards:installation:end -->
 
-1. On Home Assistant 2026.11 or later, open **Settings → Marketplace** and search for **BLE ESL**. On earlier supported versions, search in the default **HACS** integration catalog. The button above opens the repository in the appropriate store.
-2. Download **BLE ESL**. Restart Home Assistant if prompted.
-3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
+1. Click the badge above to open the repository in Marketplace.
+2. If you need to add it yourself, go to **Settings → Marketplace → Add from link** and enter <https://github.com/eigger/hass-ble-esl>. Connect GitHub if prompted.
+3. Select **Install**. Restart Home Assistant if prompted, then continue to [Configuration](#configuration).
 
-For manual installation, copy `custom_components/ble_esl` into your Home Assistant configuration’s `custom_components` directory and restart Home Assistant.
+## Configuration
+
+Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
 
 Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
 
@@ -110,7 +114,9 @@ Add `dry_run: true` to render without sending — the result shows up in the tag
 
 See the [payload guide](docs/payload.md) for rendering options and complete action examples, and the [documentation index](#documentation) for layouts, usage and the visual designer.
 
-## Limits and warnings
+<a name="limits-and-warnings"></a>
+
+## Important limitations
 
 > [!WARNING]
 > Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).

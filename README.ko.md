@@ -16,9 +16,9 @@ Bluetooth 저전력 전자가격표시기(ESL)에 레이아웃을 전송하는 H
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
-![BLE ESL](custom_components/ble_esl/brand/logo.png)
+Downloads 배지는 최신 GitHub 릴리스의 첨부 파일 다운로드를 집계합니다. 현재 활성 설치 수는 이 집계에 포함되지 않습니다.
 
-Downloads 배지는 현재 GitHub 릴리스의 첨부 asset 다운로드 합계이며 활성 설치 수가 아닙니다.
+![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
 > 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
 
@@ -59,9 +59,9 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 ## 요구사항
 
-- Home Assistant **2025.12** 이상. 2026.11 이상에는 마켓플레이스가 내장되어 있으며, 이전 지원 버전에서 스토어로 설치하려면 [HACS](https://hacs.xyz/)가 필요합니다.
-- **active 연결**을 지원하는 Bluetooth 어댑터나 ESPHome Bluetooth 프록시([Bluetooth](#bluetooth) 참고).
-- 위 표의 지원 태그.
+- **Home Assistant:** 2025.12.0 이상.
+- **Bluetooth:** 활성 연결을 지원하는 Bluetooth 어댑터 또는 ESPHome Bluetooth 프록시. [Bluetooth](#bluetooth)를 참고하세요.
+- **기기:** [지원 태그](#지원-태그)에 나열된 태그.
 
 ## 설치
 
@@ -69,11 +69,13 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
 <!-- hass-standards:installation:end -->
 
-1. Home Assistant 2026.11 이상에서는 **설정 → 마켓플레이스**에서 **BLE ESL**을 검색합니다. 이전 지원 버전에서는 **HACS** 기본 통합 카탈로그에서 검색합니다. 위 버튼은 버전에 맞는 스토어의 저장소 화면을 엽니다.
-2. **BLE ESL**을 다운로드합니다. 안내가 표시되면 Home Assistant를 재시작합니다.
-3. 범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
+1. 위 배지를 클릭해 마켓플레이스에서 저장소를 엽니다.
+2. 저장소를 직접 추가하려면 **설정 → 마켓플레이스 → 링크에서 추가**에서 <https://github.com/eigger/hass-ble-esl>을 입력합니다. 안내가 표시되면 GitHub 계정을 연결합니다.
+3. **설치**를 선택합니다. 재시작 안내가 표시되면 Home Assistant를 재시작합니다. 설치가 끝나면 [설정](#설정)으로 이동합니다.
 
-수동 설치는 `custom_components/ble_esl`을 Home Assistant 설정의 `custom_components` 디렉터리에 복사한 뒤 Home Assistant를 재시작합니다.
+## 설정
+
+범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
 
 옵션(Retry Count, Prevent Duplicate Send, Debounce Delay, WOLINK / easyTag의 Model)은 **구성**에 있습니다. [docs/ko/usage.md](docs/ko/usage.md#옵션)를 보세요.
 
@@ -114,7 +116,9 @@ data:
 
 렌더링 옵션과 전체 액션 예제는 [payload 안내](docs/payload.ko.md), 레이아웃과 사용법, 비주얼 디자이너는 [문서 목록](#문서)을 보세요.
 
-## 제한사항과 주의
+<a name="제한사항과-주의"></a>
+
+## 중요 제한사항
 
 > [!WARNING]
 > 미검증 WOLINK 및 easyTag 프리셋은 기술 사양서로 만들어졌으며 실제 태그에서 테스트되지 않았습니다. 써 보셨다면 [Discussions](https://github.com/eigger/hass-ble-esl/discussions)에 결과를 알려 주세요.
