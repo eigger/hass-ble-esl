@@ -16,6 +16,8 @@
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
+![BLE ESL](custom_components/ble_esl/brand/logo.png)
+
 Downloads 배지는 현재 GitHub 릴리스의 첨부 asset 다운로드 합계이며 활성 설치 수가 아닙니다.
 
 > 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
