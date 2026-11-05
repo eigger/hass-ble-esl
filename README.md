@@ -16,13 +16,9 @@ A Home Assistant custom integration that sends layouts to Bluetooth Low Energy e
 <!-- hass-standards:badges:end -->
 <!-- hass-standards:header:end -->
 
-The Downloads badge counts attached asset downloads for the latest GitHub release. It does not measure active installations.
-
 ![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
-**Battery-powered e-paper displays that show your Home Assistant data for months to years on one battery.**
-
-One action call pushes a calendar, weather, sensor readings or a photo to the tag over Bluetooth — no gateway, no cloud, no wiring.
+Use one Home Assistant action to send calendars, weather, sensor readings or photos to e-paper tags over Bluetooth. Tags can run for months to years on one battery without a gateway, cloud service or wiring.
 
 It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
@@ -35,8 +31,6 @@ Photos of real tags. [More examples with YAML →](examples/README.md)
 
 ## Supported tags
 
-BLE protocol families, sold under these brands:
-
 | Protocol | Brand | Sizes | Colors | Status | Buy |
 |---|---|---|---|---|---|
 | **ETAG** | Hipoink | 2.13" (250 × 122) | BWR | ✅ verified; [protocol notes](docs/etag.md) | [AliExpress](https://de.aliexpress.com/item/1005009110927073.html) |
@@ -45,13 +39,11 @@ BLE protocol families, sold under these brands:
 | **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7" and 4.2" BWRY and 2.9" BWR verified on hardware; other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
 | **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
 
-Full model list with resolutions and model codes: **[docs/models.md](docs/models.md)**.
-
-Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
+See the [full model list](docs/models.md) for resolutions and model codes, or [add a protocol](custom_components/ble_esl/esl_ble/README.md) for another tag.
 
 ## Features
 
-- Two actions, `ble_esl.write` and `ble_esl.write_guarded` (skips unchanged images, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
+- Write layouts with `ble_esl.write` using [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates. `ble_esl.write_guarded` skips unchanged images, respects Write Lock and debounces bursts.
 - **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
 - Failure sensors and a diagnostics download that say at which stage a write failed and through which radio.
 
@@ -81,15 +73,11 @@ Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the n
 
 ### Bluetooth
 
-For remote Bluetooth, use a **Bluetooth proxy** with **active connections** (`bluetooth_proxy: active: true`; `esp32_ble_tracker: scan_parameters: active: true` is the documented starting scan configuration). A local adapter that works reliably can also be used.
+For remote Bluetooth, enable active connections with `bluetooth_proxy: active: true`. Start with `esp32_ble_tracker: scan_parameters: active: true` and the default scan interval. Passive scanning also supports GATT when active connections are enabled.
 
-Passive scanning can still support GATT connections; connection capability is controlled separately by `bluetooth_proxy.active`. Keep the scan interval at its default.
+BLE ESL first connects over GATT when you write to the tag. No pairing is needed. Close the ETAG companion app and keep other integrations from writing to the same tag.
 
-A discovered tag is not yet a working connection: the first GATT connection happens on the first write. BLE ESL does not pair with tags; close the companion app (ETAG) and make sure no other integration writes to the same tag.
-
-- [BLE ESL Bluetooth setup](docs/bluetooth.md): ESPHome snippet and integration-specific guidance.
-- [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md): shared setup, hardware recommendations and connection troubleshooting.
-- [Troubleshooting](docs/troubleshooting.md): tag-specific conditions and failure sensors.
+See the [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md) for hardware, setup and connection troubleshooting.
 
 ## Quick start
 
@@ -110,7 +98,7 @@ data:
 
 The tag refreshes in a few seconds.
 
-Add `dry_run: true` to render without sending — the result shows up in the tag's **Preview Content** image entity.
+Add `dry_run: true` to render without sending. The **Preview Content** image entity shows the rendered image rather than reading the panel.
 
 See the [payload guide](docs/payload.md) for rendering options and complete action examples, and the [documentation index](#documentation) for layouts, usage and the visual designer.
 
@@ -122,7 +110,6 @@ See the [payload guide](docs/payload.md) for rendering options and complete acti
 > Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
 
 - XTE sizes other than 2.13", 2.66", 2.9" and 4.2" are size-only presets picked by hand; a preset that does not match the hardware can produce a successful write but a wrong-looking panel.
-- **Preview Content** is what was rendered, not a readback of the panel.
 - The designer does not transmit on sensor changes; schedule updates with automations. E-paper is not an LCD — avoid overly frequent redraws; `write_guarded` and the Prevent Duplicate Send / Debounce Delay options help.
 
 ## Documentation
@@ -130,8 +117,8 @@ See the [payload guide](docs/payload.md) for rendering options and complete acti
 | Topic | English | 한국어 |
 |---|---|---|
 | Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
-| Bluetooth setup | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
-| Troubleshooting and reporting | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
+| Bluetooth setup and ESPHome example | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
+| Tag troubleshooting and failure sensors | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
 | Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
 | Supported models and where to buy | [docs/models.md](docs/models.md) | — |
 | ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
@@ -143,10 +130,9 @@ See the [payload guide](docs/payload.md) for rendering options and complete acti
 
 ## Troubleshooting and diagnostics
 
-- A label not updating? **[docs/troubleshooting.md](docs/troubleshooting.md)** — the failure sensors say where a write died and why.
 - When reporting a bug, attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters.
 - The tag MAC is redacted, but check the remaining data before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting).
-- Tested a WOLINK or easyTag tag, or have a Poshiji size that asked for a manual model pick? Share the result through the support links below to help verify presets.
+- If a Poshiji tag required manual model selection, share its size and result through the support links below to help verify the preset.
 
 <!-- hass-standards:support:start -->
 ## Support
