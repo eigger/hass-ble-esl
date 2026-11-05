@@ -13,7 +13,7 @@
   "hacs": "default",
   "release": true,
   "installation_link": "#installation",
-  "hacs_default_evidence": "https://github.com/hacs/default/blob/master/integration includes eigger/hass-ble-esl; checked 2026-10-21.",
+  "hacs_default_evidence": "https://github.com/hacs/default/blob/master/integration includes eigger/hass-ble-esl; checked 2026-11-05.",
   "tests_workflow": "tests.yml",
   "validate_workflow": "validate.yml",
   "installation_links": {
@@ -21,10 +21,10 @@
     "README.ko.md": "#설치"
   },
   "readme": {
-    "title": "hass-ble-esl",
+    "title": "BLE ESL for Home Assistant",
     "descriptions": {
-      "en": "Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration",
-      "ko": "범용 BLE 전자가격표시기(ESL) Home Assistant 통합구성요소"
+      "en": "A Home Assistant custom integration that sends layouts to Bluetooth Low Energy electronic shelf labels.",
+      "ko": "Bluetooth 저전력 전자가격표시기(ESL)에 레이아웃을 전송하는 Home Assistant 커스텀 통합입니다."
     },
     "issues": true,
     "discussions": true,
