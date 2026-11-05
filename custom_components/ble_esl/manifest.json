@@ -1,4 +1,4 @@
-﻿{
+{
   "domain": "ble_esl",
   "name": "BLE ESL",
   "after_dependencies": [
@@ -68,4 +68,3 @@
   ],
   "version": "1.10.2"
 }
-
