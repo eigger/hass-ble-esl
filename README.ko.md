@@ -24,26 +24,9 @@ Home Assistant 액션 한 번으로 e-paper 태그에 캘린더, 날씨, 센서 
 
 Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
 
-<details>
-<summary>실제 태그 사진</summary>
+<img title="Gicisky · 2.1&quot; (250×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> <img title="Gicisky · 2.9&quot; (296×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> <img title="Poshiji PSJ-420 · 4.2&quot; (400×300)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> <img title="Gicisky · 10.2&quot; (960×640)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" />
 
-**Gicisky · 2.1" (250×128)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" />
-
-**Gicisky · 2.9" (296×128)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" />
-
-**Poshiji PSJ-420 · 4.2" (400×300)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" />
-
-**Gicisky · 10.2" (960×640)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" />
-
-</details>
+**사진 속 모델** · Gicisky · 2.1" (250×128) / Gicisky · 2.9" (296×128) / Poshiji PSJ-420 · 4.2" (400×300) / Gicisky · 10.2" (960×640)
 
 [YAML이 포함된 예제 더 보기 →](examples/README.md) (영어)
 

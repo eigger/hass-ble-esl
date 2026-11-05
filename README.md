@@ -22,26 +22,9 @@ Use one Home Assistant action to send calendars, weather, sensor readings or pho
 
 It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
-<details>
-<summary>Photos of real tags</summary>
+<img title="Gicisky · 2.1&quot; (250×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> <img title="Gicisky · 2.9&quot; (296×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> <img title="Poshiji PSJ-420 · 4.2&quot; (400×300)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> <img title="Gicisky · 10.2&quot; (960×640)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" />
 
-**Gicisky · 2.1" (250×128)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" />
-
-**Gicisky · 2.9" (296×128)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" />
-
-**Poshiji PSJ-420 · 4.2" (400×300)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" />
-
-**Gicisky · 10.2" (960×640)**
-
-<img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" />
-
-</details>
+**Models shown** · Gicisky · 2.1" (250×128) / Gicisky · 2.9" (296×128) / Poshiji PSJ-420 · 4.2" (400×300) / Gicisky · 10.2" (960×640)
 
 [More examples with YAML →](examples/README.md)
 
