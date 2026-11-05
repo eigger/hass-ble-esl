@@ -22,9 +22,12 @@ Use one Home Assistant action to send calendars, weather, sensor readings or pho
 
 It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
 
-<img title="Gicisky · 2.1&quot; (250×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> <img title="Gicisky · 2.9&quot; (296×128)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> <img title="Poshiji PSJ-420 · 4.2&quot; (400×300)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> <img title="Gicisky · 10.2&quot; (960×640)" src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" />
-
-**Models shown** · Gicisky · 2.1" (250×128) / Gicisky · 2.9" (296×128) / Poshiji PSJ-420 · 4.2" (400×300) / Gicisky · 10.2" (960×640)
+<p align="center">
+<ruby><bdi>Poshiji PSJ-420 · 4.2″ (400×300)</bdi><rt><img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="128" height="112"></rt></ruby> &emsp;
+<ruby><bdi>Gicisky · 2.1″ (250×128)</bdi><rt><img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="211" height="112"></rt></ruby> &emsp;
+<ruby><bdi>Gicisky · 2.9″ (296×128)</bdi><rt><img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="237" height="112"></rt></ruby> &emsp;
+<ruby><bdi>Gicisky · 10.2″ (960×640)</bdi><rt><img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="149" height="112"></rt></ruby>
+</p>
 
 [More examples with YAML →](examples/README.md)
 
