@@ -1,10 +1,11 @@
 """Generate Home Assistant brand images for BLE ESL.
 
 The artwork is an original geometric brand mark on a dark navy rounded square:
-a centered cyan and white electronic shelf label (e-paper display tag) featuring
-a bold Bluetooth rune and clean tri-color display blocks. Drawn from geometric
-primitives at 4x scale and downsampled, so no source image, external font file,
-or network access is needed. Run with Pillow 12.3.0 for reproducible PNGs.
+a centered electronic shelf label (e-paper display tag) with an off-white / light-gray
+plastic housing bezel, crisp white e-paper screen, bold Bluetooth rune, and clean
+tri-color display blocks. Drawn from geometric primitives at 4x scale and
+downsampled, so no source image, external font file, or network access is needed.
+Run with Pillow 12.3.0 for reproducible PNGs.
 """
 
 from __future__ import annotations
@@ -18,9 +19,9 @@ BRAND = Path(__file__).resolve().parents[1] / "custom_components/ble_esl/brand"
 SIZE = 512
 SCALE = 4
 NAVY = "#1b2a41"
-CYAN = "#38bdf8"
-WHITE = "#ffffff"
-CORAL = "#ef4444"
+BEZEL = "#e2e8f0"  # Realistic ESL off-white / light slate plastic casing
+WHITE = "#ffffff"  # E-paper display screen
+CORAL = "#ef4444"  # Tri-color E-paper red accent
 WORDMARK = "#0ea5e9"
 
 
@@ -88,8 +89,8 @@ def draw_icon() -> Image.Image:
     # 1. Dark navy rounded square background.
     d.rounded_rectangle(box(0, 0, SIZE - 1, SIZE - 1), radius=104 * s, fill=NAVY)
 
-    # 2. Centered ESL tag bezel (cyan) + inner E-Ink screen (white).
-    d.rounded_rectangle(box(52, 112, 460, 400), radius=42 * s, fill=CYAN)
+    # 2. Centered ESL tag bezel (realistic light gray/off-white plastic casing) + inner E-Ink screen (white).
+    d.rounded_rectangle(box(52, 112, 460, 400), radius=42 * s, fill=BEZEL)
     d.rounded_rectangle(box(80, 140, 432, 372), radius=24 * s, fill=WHITE)
 
     # 3. Bold, simple elements inside the E-Ink screen:
