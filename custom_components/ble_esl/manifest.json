@@ -1,31 +1,70 @@
 {
-    "domain": "ble_esl",
-    "name": "BLE ESL",
-    "after_dependencies": ["recorder"],
-    "bluetooth": [
-        {"manufacturer_id": 48042, "connectable": true},
-        {"service_uuid": "30323032-4c53-4545-4c42-4b4e494c4f57", "connectable": true},
-        {"service_uuid": "00001523-1212-efde-1523-785feabcd123", "connectable": true},
-        {"manufacturer_id": 20563, "connectable": true},
-        {"service_uuid": "0000fef0-0000-1000-8000-00805f9b34fb", "connectable": true},
-        {"service_uuid": "0000fdf0-0000-1000-8000-00805f9b34fb", "connectable": true},
-        {"service_uuid": "0000fcf0-0000-1000-8000-00805f9b34fb", "connectable": true},
-        {"manufacturer_id": 21080, "connectable": true},
-        {"local_name": "ETAG-*", "connectable": true},
-    ],
-    "categories": ["productivity_information"],
-    "codeowners": ["@eigger"],
-    "config_flow": true,
-    "dependencies": ["bluetooth_adapters", "frontend", "http", "panel_custom", "websocket_api"],
-    "documentation": "https://github.com/eigger/hass-ble-esl",
-    "integration_type": "device",
-    "iot_class": "local_push",
-    "issue_tracker": "https://github.com/eigger/hass-ble-esl/issues",
-    "requirements": [
-        "blesession\u003e=0.9.1",
-        "bluetooth-sensor-state-data\u003e=1.9.0",
-        "imagespec[datamatrix]\u003e=1.1.1",
-        "sensor-state-data\u003e=2.20.0",
-    ],
-    "version": "1.10.1",
+  "domain": "ble_esl",
+  "name": "BLE ESL",
+  "after_dependencies": [
+    "recorder"
+  ],
+  "bluetooth": [
+    {
+      "manufacturer_id": 48042,
+      "connectable": true
+    },
+    {
+      "service_uuid": "30323032-4c53-4545-4c42-4b4e494c4f57",
+      "connectable": true
+    },
+    {
+      "service_uuid": "00001523-1212-efde-1523-785feabcd123",
+      "connectable": true
+    },
+    {
+      "manufacturer_id": 20563,
+      "connectable": true
+    },
+    {
+      "service_uuid": "0000fef0-0000-1000-8000-00805f9b34fb",
+      "connectable": true
+    },
+    {
+      "service_uuid": "0000fdf0-0000-1000-8000-00805f9b34fb",
+      "connectable": true
+    },
+    {
+      "service_uuid": "0000fcf0-0000-1000-8000-00805f9b34fb",
+      "connectable": true
+    },
+    {
+      "manufacturer_id": 21080,
+      "connectable": true
+    },
+    {
+      "local_name": "ETAG-*",
+      "connectable": true
+    }
+  ],
+  "categories": [
+    "productivity_information"
+  ],
+  "codeowners": [
+    "@eigger"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "bluetooth_adapters",
+    "frontend",
+    "http",
+    "panel_custom",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/eigger/hass-ble-esl",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/eigger/hass-ble-esl/issues",
+  "requirements": [
+    "blesession>=0.9.1",
+    "bluetooth-sensor-state-data>=1.9.0",
+    "imagespec[datamatrix]>=1.1.1",
+    "sensor-state-data>=2.20.0"
+  ],
+  "version": "1.10.1"
 }
