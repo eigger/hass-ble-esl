@@ -137,3 +137,10 @@
 - 계획/범위: 중앙 참조·메타데이터를 중앙 bootstrap 렌더러로 동기화하고 current/editor의 고정 기대값만 제거합니다. 플러그인 0.13.373/HA 2026.10.2 조합을 검증하며 minimum-ha의 2025.12.0·최소 requirements/constraints·지원 메타데이터·통합 runtime은 보존합니다.
 - 구현 root / GOV-05 독립 리뷰 review_pr36. 실제 로컬 명령·설치 버전·초기 CRLF 실패와 재검증, 독립 리뷰 결과·최종 대상 SHA·각 원격 CI/설치 버전은 [PR #277](https://github.com/eigger/hass-ble-esl/pull/277)에 한 번 기록합니다. 필수 CI 실패·대기는 성공으로 처리하지 않습니다. 실제 기기·HA UI는 미검증입니다.
 - 기존 Dependabot은 중앙 참조 PR과 same-major 자동 병합을 계속 담당하며 updater는 고정 expected-ha-version 입력을 제거하지 않습니다. 이번 수동 입력 전환은 이후 플러그인 갱신에서 기대 버전을 중복 수정하지 않기 위한 일회성 변경입니다.
+
+## 2026-11-05 README 형식 부분 변경
+
+- 기준 `6773eb325dfb72a2c5516c86c8b47a8980db5537` (`main`). 중앙 README 작성 기준은 [중앙 PR #49](https://github.com/eigger/hass-repo-standards/pull/49), 병합 커밋 `72093dc104561920ccf4690ce8b03965534d3bb9`. 기존 중앙 release `v1.1.5` pin과 최소 HA 2025.12.0을 유지합니다.
+- 양언어 제목·소개·설치와 기능 제목을 정리하고 태그 표·기기별 상태·마이그레이션·프록시·예제·경고를 보존합니다. [기본 카탈로그](https://github.com/hacs/default/blob/master/integration)에 등재된 것을 2026-11-05 확인했습니다.
+- 관리 영역의 영문 `Related Projects`는 기존 release 검사 계약을 유지합니다. 새 중앙 기준 `Related projects` 적용은 새 immutable release를 채택한 후 별도 수행해야 합니다. 새 중앙 검사에서 이 불일치가 감지된 상태이며 PASS로 취급하지 않습니다.
+- 로컬 Windows Python 3.14.6에서 LF 정규화한 기존 중앙 `v1.1.5` snapshot의 `check_integration.py` 종료 0. 자체 검토 범위는 README와 설정 diff이며 실제 UI·기기 동작은 미검증입니다. 원격 CI는 PR 결과를 따릅니다.

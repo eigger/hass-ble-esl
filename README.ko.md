@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
-# hass-ble-esl
+# BLE ESL for Home Assistant
 
-범용 BLE 전자가격표시기(ESL) Home Assistant 통합구성요소
+Bluetooth 저전력 전자가격표시기(ESL)에 레이아웃을 전송하는 Home Assistant 커스텀 통합입니다.
 
 [English](README.md) | **한국어**
 
@@ -24,7 +24,7 @@ Downloads 배지는 현재 GitHub 릴리스의 첨부 asset 다운로드 합계�
 
 **배터리 하나로 수개월에서 수년 동안 Home Assistant 데이터를 보여주는 e-paper 디스플레이.**
 
-BLE ESL은 [HACS](https://hacs.xyz/) 사용자 지정(custom) 통합구성요소입니다. 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다.
+BLE ESL은 커스텀 통합입니다. 액션 한 번으로 캘린더, 날씨, 센서 값, 사진을 블루투스로 태그에 보냅니다 — 게이트웨이도, 클라우드도, 배선도 없습니다.
 
 Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
 
@@ -51,7 +51,7 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 다른 프로토콜을 쓰는 태그가 있나요? [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md) (영어)를 보세요.
 
-주요 기능:
+## 주요 기능
 
 - 두 액션 `ble_esl.write`와 `ble_esl.write_guarded`(바뀌지 않은 이미지는 건너뛰고, Write Lock 스위치를 존중하며, 연속 호출을 디바운스). 레이아웃은 [imagespec](https://github.com/eigger/imagespec) 요소와 Jinja 템플릿으로 적습니다.
 - **ESL Manager**: 같은 payload를 YAML로 내보내는 사이드바 대시보드와 비주얼 디자이너.
@@ -59,7 +59,7 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 
 ## 요구사항
 
-- Home Assistant **2025.12** 이상. 권장 설치에는 [HACS](https://hacs.xyz/)가 필요합니다.
+- Home Assistant **2025.12** 이상. 2026.11 이상에는 마켓플레이스가 내장되어 있으며, 이전 지원 버전에서 스토어로 설치하려면 [HACS](https://hacs.xyz/)가 필요합니다.
 - **active 연결**을 지원하는 Bluetooth 어댑터나 ESPHome Bluetooth 프록시([Bluetooth](#bluetooth) 참고).
 - 위 표의 지원 태그.
 
@@ -69,9 +69,11 @@ BLE 프로토콜 계열과 판매 브랜드는 다음과 같습니다:
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
 <!-- hass-standards:installation:end -->
 
-1. **HACS** 기본 통합 카탈로그에서 **BLE ESL**을 설치하거나, `custom_components/ble_esl`을 설정 폴더에 복사합니다.
-2. Home Assistant를 재시작합니다.
+1. Home Assistant 2026.11 이상에서는 **설정 → 마켓플레이스**에서 **BLE ESL**을 검색합니다. 이전 지원 버전에서는 **HACS** 기본 통합 카탈로그에서 검색합니다. 위 버튼은 버전에 맞는 스토어의 저장소 화면을 엽니다.
+2. **BLE ESL**을 다운로드합니다. 안내가 표시되면 Home Assistant를 재시작합니다.
 3. 범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
+
+수동 설치는 `custom_components/ble_esl`을 Home Assistant 설정의 `custom_components` 디렉터리에 복사한 뒤 Home Assistant를 재시작합니다.
 
 옵션(Retry Count, Prevent Duplicate Send, Debounce Delay, WOLINK / easyTag의 Model)은 **구성**에 있습니다. [docs/ko/usage.md](docs/ko/usage.md#옵션)를 보세요.
 

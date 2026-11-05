@@ -1,7 +1,7 @@
 <!-- hass-standards:header:start -->
-# hass-ble-esl
+# BLE ESL for Home Assistant
 
-Generic BLE Electronic Shelf Label (ESL) Home Assistant Integration
+A Home Assistant custom integration that sends layouts to Bluetooth Low Energy electronic shelf labels.
 
 **English** | [한국어](README.ko.md)
 
@@ -47,7 +47,7 @@ Full model list with resolutions and model codes: **[docs/models.md](docs/models
 
 Have a tag that speaks another protocol? See [Adding a protocol](custom_components/ble_esl/esl_ble/README.md).
 
-Key features:
+## Features
 
 - Two actions, `ble_esl.write` and `ble_esl.write_guarded` (skips unchanged images, honours a Write Lock switch, debounces bursts), with layouts written as [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates.
 - **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
@@ -55,7 +55,7 @@ Key features:
 
 ## Requirements
 
-- Home Assistant **2025.12** or newer, with [HACS](https://hacs.xyz/) for the recommended install.
+- Home Assistant **2025.12** or newer. Marketplace is built in from 2026.11; earlier supported versions need [HACS](https://hacs.xyz/) for store installation.
 - A Bluetooth adapter or ESPHome Bluetooth proxy that supports **active connections** (see [Bluetooth](#bluetooth)).
 - A supported tag (above).
 
@@ -65,9 +65,11 @@ Key features:
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eigger&repository=hass-ble-esl)
 <!-- hass-standards:installation:end -->
 
-1. Install **BLE ESL** from the default **HACS** integration catalog, or copy `custom_components/ble_esl` into your config.
-2. Restart Home Assistant.
+1. On Home Assistant 2026.11 or later, open **Settings → Marketplace** and search for **BLE ESL**. On earlier supported versions, search in the default **HACS** integration catalog. The button above opens the repository in the appropriate store.
+2. Download **BLE ESL**. Restart Home Assistant if prompted.
 3. Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
+
+For manual installation, copy `custom_components/ble_esl` into your Home Assistant configuration’s `custom_components` directory and restart Home Assistant.
 
 Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
 
