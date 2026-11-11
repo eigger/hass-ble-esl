@@ -18,11 +18,18 @@ if TYPE_CHECKING:
     from .storage import ImageStore
 
 
+def tag_identifier(address: str, full: bool) -> str:
+    """The id embedded in unique ids; the legacy short form can collide between tags."""
+    digits = address.replace(":", "")
+    return digits if full else digits[-8:]
+
+
 @dataclass
 class BleEslRuntimeData:
     """Everything a loaded config entry holds, attached as entry.runtime_data."""
 
     address: str
+    full_id: bool
     protocol: EslProtocol
     preset: DevicePreset
     parser: BleParser
@@ -96,5 +103,6 @@ class BleEslRuntimeData:
 
     @property
     def identifier(self) -> str:
-        """Short tag id used in names and unique ids (last 8 hex digits of the address)."""
-        return self.address.replace(":", "")[-8:]
+        """Tag id used in unique ids: the full address, or for entries created before
+        CONF_FULL_ID the last 8 hex digits (kept so existing entity ids stay valid)."""
+        return tag_identifier(self.address, self.full_id)

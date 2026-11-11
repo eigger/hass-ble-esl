@@ -20,6 +20,10 @@ DATA_LOCK: HassKey[Lock] = HassKey(f"{DOMAIN}_ble_lock")
 # Options / Config keys
 CONF_PROTOCOL = "protocol"
 CONF_MODEL = "model"
+# Set on entries created once unique ids moved to the full address. Entries
+# without it keep the legacy id (last 8 hex digits), which collides for tags
+# whose addresses differ only in the first bytes; their entity ids must not change.
+CONF_FULL_ID = "full_id"
 CONF_RETRY_COUNT = "retry_count"
 CONF_PREVENT_DUPLICATE_SEND = "prevent_duplicate_send"
 CONF_DEBOUNCE_MS = "debounce_ms"

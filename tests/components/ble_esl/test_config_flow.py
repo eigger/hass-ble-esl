@@ -14,6 +14,7 @@ import voluptuous as vol
 from custom_components.ble_esl.config_flow import _model_selector_options
 from custom_components.ble_esl.const import (
     CONF_DEBOUNCE_MS,
+    CONF_FULL_ID,
     CONF_MODEL,
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
@@ -76,7 +77,7 @@ async def test_bluetooth_discovery_wolink_known_display_skips_model(
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "wolink", CONF_MODEL: "290-bwr"}
+    assert result["data"] == {CONF_PROTOCOL: "wolink", CONF_MODEL: "290-bwr", CONF_FULL_ID: True}
     assert result["result"].runtime_data.preset.key == "290-bwr"
 
 
@@ -98,7 +99,7 @@ async def test_bluetooth_discovery_wolink_asks_for_model(
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == f'Zhsunyco {IDENT} (3.5" BWRY)'
-    assert result["data"] == {CONF_PROTOCOL: "wolink", CONF_MODEL: "350"}
+    assert result["data"] == {CONF_PROTOCOL: "wolink", CONF_MODEL: "350", CONF_FULL_ID: True}
     entry = result["result"]
     assert entry.unique_id == ADDRESS
     assert entry.state is ConfigEntryState.LOADED
@@ -116,7 +117,7 @@ async def test_bluetooth_discovery_picksmart_detects_model(
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "picksmart", CONF_MODEL: "0x0033"}
+    assert result["data"] == {CONF_PROTOCOL: "picksmart", CONF_MODEL: "0x0033", CONF_FULL_ID: True}
 
 
 async def test_bluetooth_discovery_rejects_shared_picksmart_manufacturer_id(
@@ -139,7 +140,7 @@ async def test_bluetooth_discovery_xte(hass: HomeAssistant, enable_bluetooth) ->
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-420"}
+    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-420", CONF_FULL_ID: True}
 
 
 async def test_bluetooth_discovery_xte_unknown_device_number_asks_for_model(
@@ -168,7 +169,7 @@ async def test_bluetooth_discovery_xte_unknown_device_number_asks_for_model(
     )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-350"}
+    assert result["data"] == {CONF_PROTOCOL: "xte", CONF_MODEL: "psj-350", CONF_FULL_ID: True}
     assert result["result"].runtime_data.preset.key == "psj-350"
     assert result["title"].startswith("Poshiji ")
 
