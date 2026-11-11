@@ -13,7 +13,7 @@ from pytest_homeassistant_custom_component.components.diagnostics import (
 )
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
-from custom_components.ble_esl.const import CONF_RETRY_COUNT, DOMAIN
+from custom_components.ble_esl.const import CONF_FULL_ID, CONF_RETRY_COUNT, DOMAIN
 from custom_components.ble_esl.esl_ble.wolink.const import MANUFACTURER_ID
 from tests.components.ble_esl.bt import inject_bluetooth_service_info, service_info
 from tests.components.ble_esl.conftest import ADDRESS, IDENT, device_id_of, setup_entry
@@ -143,3 +143,15 @@ async def test_diagnostics_masks_mac_in_write_errors(
     dump = str(result)
     assert ADDRESS not in dump and ADDRESS.lower() not in dump
     assert ADDRESS.replace(":", "") not in dump.replace(IDENT, "")
+
+
+async def test_diagnostics_identifier_for_full_id_entry(
+    hass: HomeAssistant, hass_client: ClientSessionGenerator, enable_bluetooth
+) -> None:
+    assert await async_setup_component(hass, "diagnostics", {})
+    entry = await setup_entry(hass, data={CONF_FULL_ID: True})
+
+    result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
+
+    assert result["device"]["identifier"] == IDENT
+    assert ADDRESS.replace(":", "") not in str(result).replace(IDENT, "")

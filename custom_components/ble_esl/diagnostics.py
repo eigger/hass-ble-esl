@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_PREVENT_DUPLICATE_SEND,
     DEFAULT_RETRY_COUNT,
 )
+from .data import tag_identifier
 from .types import BleEslConfigEntry
 
 OPTION_DEFAULTS = {
@@ -31,8 +32,9 @@ OPTION_DEFAULTS = {
     CONF_DEBOUNCE_MS: DEFAULT_DEBOUNCE_MS,
 }
 
-# The MAC identifies the tag's owner across reports; the 8-hex-digit
-# identifier used in entity names is enough to tell devices apart.
+# The MAC identifies the tag's owner across reports; the 8-hex-digit short
+# id (the last 8 digits of the address) is enough to tell devices apart.
+# `identifier` is the full address for new entries, so it is not reported.
 TO_REDACT = {"address", "unique_id"}
 
 
@@ -89,7 +91,7 @@ async def async_get_config_entry_diagnostics(
             "extra": dict(preset.extra),
         },
         "device": {
-            "identifier": data.identifier,
+            "identifier": tag_identifier(data.address, False),
             "address": data.address,
             "manufacturer": data.manufacturer,
             "model": data.model,
