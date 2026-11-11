@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.10.3
+
 ### Fixed
 
 - Two tags whose addresses differ only in the first bytes (for example Poshiji `B9:B9:00:18:39:37` and `F3:83:00:18:39:37`) shared the same entity unique ids, because only the last 8 hex digits of the address were used. Tags added from now on use the full address. Tags that are already set up keep their current unique ids, so their entity ids and automations do not change; two tags that already collide must be removed and added again to get distinct ids.
