@@ -32,6 +32,7 @@ import voluptuous as vol
 from . import esl_ble
 from .const import (
     CONF_DEBOUNCE_MS,
+    CONF_FULL_ID,
     CONF_MODEL,
     CONF_PREVENT_DUPLICATE_SEND,
     CONF_PROTOCOL,
@@ -177,6 +178,7 @@ class BleEslConfigFlow(ConfigFlow, domain=DOMAIN):
             data={
                 CONF_PROTOCOL: protocol.id,
                 CONF_MODEL: model_key,
+                CONF_FULL_ID: True,
             },
         )
 

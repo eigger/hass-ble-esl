@@ -25,6 +25,7 @@ from sensor_state_data import SensorUpdate
 
 from . import esl_ble
 from .const import (
+    CONF_FULL_ID,
     CONF_MODEL,
     CONF_PROTOCOL,
     DATA_LOCK,
@@ -34,7 +35,7 @@ from .const import (
     WRITE_LOCK,
 )
 from .coordinator import BleEslPassiveBluetoothProcessorCoordinator
-from .data import BleEslRuntimeData
+from .data import BleEslRuntimeData, tag_identifier
 from .designer import KEY as DESIGNER_KEY, async_setup_designer
 from .device import format_model_name, resolve_preset
 from .services import (
@@ -126,7 +127,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
     if service_info:
         parser.update(service_info)
 
-    identifier = address.replace(":", "")[-8:]
+    full_id = bool(entry.data.get(CONF_FULL_ID))
+    identifier = tag_identifier(address, full_id)
     manufacturer = protocol.brand
     model = format_model_name(preset)
     sw_version = adv_info.sw_version if adv_info else None
@@ -170,6 +172,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BleEslConfigEntry) -> bo
 
     entry.runtime_data = BleEslRuntimeData(
         address=address,
+        full_id=full_id,
         protocol=protocol,
         preset=preset,
         parser=parser,
