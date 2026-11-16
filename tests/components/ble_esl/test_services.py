@@ -102,7 +102,11 @@ async def test_write_sends_rendered_image_and_updates_image_entity(
     assert tag_writer.write_prepared.await_count == 1
     assert tag_writer.sent_image().size == (296, 128)
     assert hass.states.get(f"image.zhsunyco_{IDENT}_last_updated_content").state != "unknown"
-    report = wolink_entry.runtime_data.reports.last
+    report = dict(wolink_entry.runtime_data.reports.last)
+    if "last_seen_s" in report:
+        assert report.pop("last_seen_s") >= 0
+    if "lock_wait_s" in report:
+        assert report.pop("lock_wait_s") == 0.0
     radio = {k: report.pop(k) for k in ("via", "via_type", "rssi", "paths") if k in report}
     assert report == {
         "operation": "write",
