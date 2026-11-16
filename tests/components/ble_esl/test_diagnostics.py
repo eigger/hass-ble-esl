@@ -77,7 +77,11 @@ async def test_diagnostics_content_and_redaction(
     )
     result = await get_diagnostics_for_config_entry(hass, hass_client, entry)
     assert result["write_state"]["last_write"]["success"] is True
-    failure = result["write_state"]["last_failure_write"]
+    failure = dict(result["write_state"]["last_failure_write"])
+    if "last_seen_s" in failure:
+        assert failure.pop("last_seen_s") >= 0
+    if "lock_wait_s" in failure:
+        assert failure.pop("lock_wait_s") == 0.0
     assert failure == {
         "operation": "write",
         "success": False,
