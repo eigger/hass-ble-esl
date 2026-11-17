@@ -22,7 +22,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 2.66" | 296 × 152 | BWRY | Zhsunyco | WOLINK | `266` | ✅ verified |
 | 2.66" | 296 × 152 | BWR | Zhsunyco | easyTag | ET0266-3A | ⚠️ untested |
 | 2.66" | 296 × 152 | BWRY | Poshiji | XTE | PSJ-266 | ✅ verified |
-| 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
+| 2.9" | 296 × 128 | BWRY | Zhsunyco | WOLINK | — | ✅ verified |
 | 2.9" | 296 × 128 | BWR | Zhsunyco | WOLINK | `290-bwr` | ✅ verified |
 | 2.9" | 296 × 128 | BWR | Zhsunyco | easyTag | ET0290-3DB / ETR290-FF | ⚠️ untested |
 | 2.9" | 296 × 128 | BWRY | Poshiji | XTE | PSJ-290 | ✅ verified |
