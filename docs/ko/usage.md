@@ -78,7 +78,7 @@ data:
 | **Debounce Delay (ms)** | 0 | 0–120000 | 쓰기 전 대기; 새 요청이 오면 대기 중인 요청은 취소 |
 
 > [!TIP]
-> 자주 발화하는 자동화라면 **Prevent Duplicate Send**나 **Debounce Delay**를 켜서 태그 배터리와 BLE 점유를 아끼세요. 전송 중에 실패한 쓰기는 다음 재시도에서 패킷 간격을 더 두고 보냅니다; 계속 실패하면 **Write Duration** 센서의 속성이 링크 문제인지 배치 문제인지 알려줍니다 — [troubleshooting.md](troubleshooting.md)를 보세요.
+> 자주 발화하는 자동화라면 **Prevent Duplicate Send**나 **Debounce Delay**를 켜서 태그 배터리와 BLE 점유를 아끼세요. 전송 중에 실패한 쓰기는 다음 재시도에서 패킷 간격을 더 두고 보냅니다; 계속 실패하면 **Write Duration** 센서의 속성이 링크 문제인지 배치 문제인지 알려줍니다 — [troubleshooting.md](../troubleshooting.ko.md)를 보세요.
 
 이 옵션은 BLE ESL 전용이며 Bluetooth 프록시 펌웨어 설정이 아닙니다.
 

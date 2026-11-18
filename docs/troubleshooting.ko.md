@@ -2,13 +2,11 @@
 
 [README](../README.ko.md) | [English](troubleshooting.md) | **한국어**
 
-> 영어 문서가 기준입니다. 내용이 다르면 [영어 원문](troubleshooting.md)을 따릅니다. 엔티티 이름과 속성 키는 Home Assistant 화면에 보이는 영어 그대로 적었습니다.
-
-라벨이 갱신되지 않을 때 통합구성요소는 대개 그 이유를 이미 기록해 둡니다. 진단 센서부터 읽고, 센서로 볼 수 없는 경우를 확인한 뒤 관련 증거를 이슈에 첨부하세요.
+태그 화면이 갱신되지 않으면 먼저 진단 센서에서 어느 단계까지 진행됐는지 확인하세요. 센서에 기록되지 않는 경우도 아래에 정리했습니다. 문제가 계속되면 관련 진단 정보를 이슈에 첨부하세요.
 
 ## 공통 문제 해결
 
-먼저 [공통 Bluetooth 문제 해결](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.ko.md)을 확인하세요. 프록시 선택·펌웨어·Home Assistant 등록은 [Bluetooth proxy 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)를 따르세요. BLE ESL의 프록시 안내는 [bluetooth.md](ko/bluetooth.md)에 있습니다.
+먼저 [공통 Bluetooth 문제 해결](https://github.com/eigger/blesession/blob/main/docs/troubleshooting.ko.md)을 확인하세요. 프록시 선택, 펌웨어, Home Assistant 등록은 [Bluetooth 프록시 안내](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)에 있습니다. 이 통합에 필요한 설정은 [BLE ESL Bluetooth 설정](ko/bluetooth.md)을 참고하세요.
 
 ## 기기별 확인 사항
 
@@ -16,15 +14,15 @@
 
 ### 발견과 연결의 차이
 
-Home Assistant에 태그가 나타났다는 것은 **발견**되었다는 뜻일 뿐입니다: 어떤 라디오가 광고를 받았다는 것입니다. GATT 연결, 프로토콜 핸드셰이크, 이미지 전송이 될지는 아직 알 수 없고, 이것들은 쓰기가 실행될 때만 일어납니다. **Signal Strength** 센서와 진단의 광고 정보는 발견에서 오고, 아래 쓰기 센서(`failed_stage`, `via`, 단계별 타이밍)는 연결에서 옵니다.
+Home Assistant에 태그가 표시되면 Bluetooth 어댑터나 프록시가 태그의 광고를 수신한 것입니다. GATT 연결, 프로토콜 핸드셰이크, 이미지 전송은 쓰기 액션을 실행할 때 진행됩니다. **Signal Strength** 센서와 진단 파일의 광고 정보는 수신한 광고를 바탕으로 합니다. `failed_stage`, `via`, 단계별 소요 시간은 쓰기 시도에서 기록됩니다.
 
-- 태그를 가장 잘 들은 라디오가 실제 연결에 쓰인 라디오라는 보장은 없습니다. `via`는 링크가 사용한 라디오이며, `via_unconfirmed`가 `true`이면 태그를 가장 잘 들은 라디오일 뿐입니다. 가장 강한 광고를 받은 라디오가 링크와 다르면 `advertised_via`가 나타납니다.
-- 연결하려면 ESPHome 프록시에 `bluetooth_proxy.active: true`가 필요합니다(또는 연결 가능한 로컬 어댑터). 이 설정이 없는 프록시는 광고만 전달합니다. [bluetooth.md](ko/bluetooth.md#프록시-설정)를 보세요.
+- `via`에는 실제 연결에 사용한 어댑터나 프록시가 표시됩니다. `via_unconfirmed`가 `true`이면 연결 경로를 확인할 수 없어 신호가 가장 강했던 수신 경로가 표시됩니다. 실제 연결 경로와 신호가 가장 강했던 수신 경로가 다르면 `advertised_via`에 수신 경로가 표시됩니다.
+- 연결을 지원하는 로컬 어댑터 또는 `bluetooth_proxy.active: true`를 설정한 ESPHome 프록시가 필요합니다. 이 설정이 없는 프록시는 광고만 전달합니다. [프록시 설정](ko/bluetooth.md#프록시-설정)
 - BLE ESL은 어떤 태그와도 페어링·본딩하지 않으며, 이 통합구성요소의 어떤 프로토콜에도 깨우기 단계(버튼 누르기 등)가 없습니다. 쓰기 시도마다 연결을 최대 두 번 시도하는데, 잠든 태그가 두 번째 시도에 응답하는 경우가 많기 때문입니다. 특정 태그 모델을 손으로 깨워야 하는지는 **검증되지 않았습니다**.
 
 ### 프로토콜별 조건
 
-링크가 올라온 뒤 각 프로토콜이 하는 일을 [`esl_ble/`](../custom_components/ble_esl/esl_ble/README.md)(영어) 구현 기준으로 정리했습니다. *검증되지 않음*이라고 적힌 칸은 어느 쪽으로도 주장하지 않습니다.
+연결 후 각 프로토콜의 인증과 전송 조건입니다. *미검증* 항목은 실기기에서 확인이 필요한 조건입니다. [프로토콜 구현 안내 (영어)](../custom_components/ble_esl/esl_ble/README.md)
 
 | 프로토콜 | 인증 / 페어링 | 다른 앱·통합 | 전송 제약 |
 |---|---|---|---|
@@ -49,43 +47,49 @@ Home Assistant에 태그가 나타났다는 것은 **발견**되었다는 뜻일
 
 ### 실패 읽기
 
-Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔는지 말해 줍니다. `likely_cause`는 단계, 에러 문구, 라디오 상황을 합쳐 한 문장으로 읽은 것이고(영어), `error`는 정확한 원문 메시지입니다.
+**Last Failure Time**의 `failed_stage`에서 어느 단계까지 진행됐는지 확인하세요. `likely_cause`는 실패 단계, 오류 메시지, Bluetooth 연결 상태를 바탕으로 추정한 원인입니다. `error`에는 오류 메시지 원문이 표시됩니다.
 
 #### `unreachable`
 
-어떤 라디오도 지금 태그의 광고를 못 봄; 시도 자체가 없었음.
-- *확인:* `error`에 *No connectable radio sees …*. 프록시/어댑터 자체는 HA에서 살아 있나?
-- *조치:* 더 가까이 두기, 배터리 교체(**Battery** 센서 확인), 프록시가 온라인인지 확인.
+어댑터와 프록시에서 태그의 광고를 수신하지 못해 연결을 시도하지 않은 상태입니다.
+
+- **확인**. `error`에 *No connectable radio sees …*가 표시되면 Home Assistant에서 어댑터나 프록시가 동작하는지 확인하세요.
+- **조치**. 태그를 더 가까이 옮기고 **Battery** 센서를 확인해 필요하면 배터리를 교체하세요. 프록시가 온라인인지도 확인하세요.
 
 #### `connect`
 
-링크가 올라오지 않음(태그가 광고는 했지만 연결을 받지 않음).
-- *확인:* `rssi`와 `paths`(태그에 닿는 라디오 수). `error`에 *slot* = 프록시의 연결 슬롯이 모두 사용 중.
-- *조치:* `rssi`가 약하면(대략 −85 dBm 이하): 태그를 옮기거나 근처에 프록시 추가 — `paths: 1`이면 대체할 다른 라디오도 없다는 뜻. *slot*: 프록시당 BLE 기기를 줄이거나 프록시를 하나 더. 그 외에는 대개 일시적 — 재시도가 처리합니다.
+태그의 광고는 수신했지만 Bluetooth 연결에 실패한 상태입니다.
+
+- **확인**. `rssi`와 `paths`를 확인하세요. `paths`는 태그의 광고를 수신한 어댑터와 프록시의 수입니다. `error`에 *slot*이 나오면 프록시의 연결 슬롯이 모두 사용 중입니다.
+- **조치**. `rssi`가 약하면(약 −85 dBm 이하) 태그를 옮기거나 근처에 프록시를 추가하세요. `paths: 1`이면 대체 경로가 없습니다. 슬롯이 부족하면 프록시에 연결된 BLE 기기 수를 줄이거나 프록시를 추가하세요. 그 외의 일시적인 실패는 자동 재시도로 해결되는 경우가 많습니다.
 
 #### `session`
 
-연결은 됐지만 프로토콜이 시작되기 전에 태그가 세션을 끊거나 거부.
-- *확인:* 매번 반복되나?
-- *조치:* 한 번이면 무시. 매번이면 프로토콜이나 모델이 안 맞을 수 있음 — 진단 파일의 프리셋과 [models.md](models.md)의 모델 표를 확인.
+Bluetooth 연결 후 프로토콜이 시작되기 전에 태그가 세션을 끊거나 거부한 상태입니다.
+
+- **확인**. 쓰기를 시도할 때마다 반복되는지 확인하세요.
+- **조치**. 한 번만 발생했다면 다음 쓰기 결과를 확인하세요. 매번 실패하면 진단 파일의 프리셋을 [지원 모델 표 (영어)](models.md)와 대조하세요.
 
 #### `auth` (`failed_detail: handshake`)
 
-이미지 데이터를 보내기 전에 태그가 응답하지 않았거나 잘못 응답. `auth`는 BLE 통합들이 공통으로 쓰는 이 단계의 이름이고, `failed_detail`이 이 태그에서의 이름입니다.
-- *확인:* PickSmart `start_probes: 3` = START에 끝내 응답 없음. WOLINK *device error 5* = 인증 거부. *No response … after command 0x01* (XTE) = size 명령에 응답 없음.
-- *조치:* 무응답: 태그가 아직 준비되지 않은 것 — 일시적, 재시도가 처리; 항상 그렇다면 이 프로토콜이 모르는 태그 펌웨어. 인증 거부: WOLINK 태그가 아니거나 펌웨어가 다름. 잘못된 응답: 프로토콜/모델이 틀림.
+이미지 데이터를 보내기 전에 태그가 응답하지 않았거나 잘못 응답한 경우입니다. `auth`는 BLE 통합에서 공통으로 쓰는 단계 이름입니다. `failed_detail`에는 태그 프로토콜에 해당하는 세부 단계가 기록됩니다.
+
+- **확인**. PickSmart의 `start_probes: 3`은 START 명령에 응답이 없었음을 뜻합니다. WOLINK의 *device error 5*는 인증 거부입니다. XTE의 *No response … after command 0x01*은 이미지 크기 명령에 응답이 없었음을 뜻합니다.
+- **조치**. 응답이 없으면 태그가 준비되는 동안 자동 재시도를 기다리세요. 무응답이 계속되면 펌웨어 지원 여부를 확인하세요. WOLINK 인증이 거부되면 프로토콜과 펌웨어를 확인하고, 잘못된 응답이 오면 프로토콜과 모델을 대조하세요.
 
 #### `transfer`
 
-이미지 데이터를 보내는 중에 실패. 링크 품질을 가리키는 유일한 경우.
-- *확인:* `resends` / `round_trip_ms` (PickSmart), `sends` 대 `parts` (어디까지 갔나), `chunk_size` (XTE / WOLINK: 협상된 청크 크기; 작을수록 쓰기 느림), `rssi`, `via` (어느 라디오).
-- *조치:* 태그나 실제로 쓰인 프록시(`via`)를 옮기거나 하나 추가. 다음 재시도는 자동으로 패킷 간격을 더 둡니다(`pacing_s`).
+이미지 데이터를 전송하는 중에 실패했습니다. 이 단계에서는 Bluetooth 연결 품질을 먼저 확인하세요.
+
+- **확인**. PickSmart는 `resends`와 `round_trip_ms`를 확인하세요. `sends`와 `parts`를 비교하면 전송 진행 상황을 볼 수 있습니다. XTE와 WOLINK의 `chunk_size`는 협상된 청크 크기입니다. 값이 작으면 한 번에 보내는 데이터가 적어집니다. 신호 세기는 `rssi`에서, 연결 경로는 `via`에서 확인하세요.
+- **조치**. 태그나 `via`에 표시된 프록시를 옮기거나 프록시를 추가하세요. 다음 재시도에서는 패킷 간격(`pacing_s`)이 자동으로 늘어납니다.
 
 #### `finish`
 
-이미지는 보냈는데 태그가 완료를 확인하지 않음.
-- *확인:* WOLINK / easyTag에서는 **패널 리프레시** — `finish_s`가 기다린 시간. XTE에서는 end-command 응답. *device error N* = 태그가 문제를 보고.
-- *조치:* 패널: 춥거나 큰 패널은 느리고, 대개 이미지는 그래도 뜹니다 — 태그를 확인. *device error*가 반복: 태그가 이미지를 거부(모델/패킹이 틀림) — 프리셋과 태그 라벨을 대조.
+이미지를 보냈지만 태그에서 완료 응답을 받지 못했습니다.
+
+- **확인**. WOLINK과 easyTag의 `finish_s`는 패널 갱신을 기다린 시간입니다. XTE에서는 종료 명령의 응답을 기다립니다. *device error N*은 태그가 보고한 오류입니다.
+- **조치**. 온도가 낮거나 패널이 크면 갱신이 오래 걸립니다. 실제 태그에 이미지가 표시됐는지 확인하세요. *device error*가 반복되면 모델이나 이미지 데이터 형식이 맞지 않아 태그가 이미지를 거부했을 수 있습니다. 프리셋과 태그 라벨을 대조하세요.
 
 #### 빠른 확인
 
@@ -108,15 +112,15 @@ Last Failure Time의 `failed_stage`부터 봅니다: 시도가 어디까지 갔�
 
 **쓰기는 성공했는데 패널에 다른 것이 보임.** `success: true`인데 라벨이 그대로이거나, 줄무늬가 생기거나, 거울상입니다. 이미지는 태그에 도달했고, 태그가 잘못된 크기나 색 순서로 해석한 것 — 하드웨어와 맞지 않는 프리셋입니다. 미검증 WOLINK / easyTag 프리셋과 크기만 맞춘 XTE 프리셋이 틀릴 수 있는 지점이 여기입니다. **Last Updated Content**(보낸 것)와 태그 사진을 비교하고, 진단 파일의 프리셋을 태그에 인쇄된 라벨과 대조하세요([models.md](models.md)). 둘을 첨부해 [이슈를 열어](https://github.com/eigger/hass-ble-esl/issues) 주세요 — 프리셋은 그렇게 고쳐집니다.
 
-**Gicisky 7.5인치 BWR** 태그에서 쓰기는 성공했는데 빨간 줄무늬나 지속적인 빨간 노이즈가 보인다면 USB 저장 볼륨 손상일 수도 있습니다. 이슈 제보자는 태그의 2MB USB 볼륨을 FAT12로 다시 포맷해 해결했습니다. 절차는 [이슈 #177](https://github.com/eigger/hass-ble-esl/issues/177)을 참고하세요.
+**Gicisky 7.5인치 BWR** 태그에서 전송에 성공한 뒤에도 빨간 줄무늬나 노이즈가 계속 나타나면 USB 저장 볼륨이 손상됐을 수 있습니다. 제보자는 태그의 2 MB USB 볼륨을 FAT12로 다시 포맷해 해결했습니다. [이슈 #177의 해결 절차](https://github.com/eigger/hass-ble-esl/issues/177)
 
-**BLE 통신 전에 액션 자체가 에러.** 렌더링되지 않는 템플릿, 없는 폰트 파일, 받을 수 없는 `dlimg` URL: 액션이 그 메시지와 함께 즉시 실패하고 쓰기 센서에는 아무것도 기록되지 않습니다. **개발자 도구 → 액션**에서 `dry_run: true`로 재현하고 **Preview Content**를 보세요 — 미리보기가 맞으면 페이로드는 문제없습니다.
+**Bluetooth 전송을 시작하기 전에 액션이 실패하는 경우**. 템플릿을 렌더링하지 못하거나 글꼴 파일 또는 `dlimg` URL을 읽을 수 없으면 액션이 즉시 오류를 반환합니다. 이 경우 쓰기 센서에는 기록되지 않습니다. **개발자 도구 → 액션**에서 `dry_run: true`로 실행하고 **Preview Content**에서 렌더링 결과를 확인하세요.
 
 **쓰기가 시도되지 않음.** 액션은 `locked`(**Write Lock** 스위치가 켜짐 — `ble_esl.write`도 막습니다)로 끝나거나, `ble_esl.write_guarded`의 경우 `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 실패로 치지 않습니다: Failure Count와 Last Failure Time은 그대로입니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요. BLE 락까지 갔다가 멈춘 쓰기는 **Write Duration** 속성에 `success: false`와 `skipped: locked` / `duplicate` / `dropped`를 남깁니다 — 자동화 트레이스는 액션이 실행됐다고 하는데 태그는 그대로일 때 확인할 곳입니다. Write Lock 스위치에 막힌 모든 `ble_esl.write`(큐에 넣기 전에 검사하지 않습니다)와, 순서를 기다리는 동안 조건이 바뀐 guarded 쓰기가 여기 해당합니다. `ble_esl.write_guarded`는 큐에 넣기 전에도 검사하므로, 평범한 중복은 아무것도 기록하지 않고 반환됩니다.
 
 ### 간헐적 실패
 
-가끔만 실패하는 쓰기 때문에 Last Failure Time이 속성을 계속 보관합니다: 이미 나중 성공을 보여주는 Write Duration이 아니라 거기를 보세요. 실패 당시의 `failed_stage`와 `rssi`가 핵심입니다. 실패가 특정 `via`에 몰리면 그 프록시가 문제이고, 매번 `paths`가 1이었다면 두 번째 라디오가 대체 경로가 되어 줬을 것입니다.
+쓰기가 간헐적으로 실패하면 **Last Failure Time**에서 실패 당시의 `failed_stage`와 `rssi`를 확인하세요. **Write Duration**은 이후에 성공한 쓰기로 갱신됩니다. 실패가 특정 `via`에 몰리면 해당 프록시를 점검하세요. 실패할 때마다 `paths`가 1이었다면 어댑터나 프록시를 추가해 대체 경로를 확보할 수 있습니다.
 
 Home Assistant는 Write Duration의 속성도 상태 변경마다 기록하므로, 실패 시각 근처의 그 센서 히스토리에는 마지막 실패뿐 아니라 모든 시도의 내역이 있습니다.
 
@@ -128,7 +132,7 @@ Home Assistant의 YAML 편집기는 YAML 1.1을 따르므로 따옴표 없는 `y
 
 ### 어디를 볼까
 
-태그의 기기 페이지를 엽니다(**설정 → 기기 및 서비스 → BLE ESL → 태그**). *진단* 아래에 읽어야 할 엔티티가 셋 있고, 순서는 이렇습니다:
+**설정 → 기기 및 서비스 → BLE ESL → 태그**에서 기기 페이지를 열고, **진단** 아래의 엔티티를 다음 순서로 확인하세요.
 
 | 엔티티 | 알려주는 것 |
 |---|---|
@@ -136,17 +140,17 @@ Home Assistant의 YAML 편집기는 YAML 1.1을 따르므로 따옴표 없는 `y
 | **Write Duration** | **가장 최근** 쓰기에 걸린 초(성공이든 아니든). *속성*은 그 시도의 같은 내역입니다. 디버깅하려는 쓰기가 마지막 쓰기일 때 봅니다. |
 | **Failure Count** | 통합구성요소가 (재)로드된 이후 실패한 쓰기 수. 라벨은 멀쩡해 보이는데 이 값이 올라간다면 아무도 안 보는 자동화 안에서 쓰기가 실패하고 있는 것입니다. |
 
-속성 보는 법: 엔티티 클릭 → ⋮ → **속성**, 또는 **개발자 도구 → 상태**에서 엔티티를 검색. 템플릿에서는
+엔티티를 열어 **⋮ → 속성**을 선택하거나 **개발자 도구 → 상태**에서 엔티티를 검색하세요. 템플릿에서는 다음과 같이 속성을 읽을 수 있습니다.
 
 ```jinja
 {{ state_attr('sensor.<brand>_<id>_last_failure_time', 'likely_cause') }}
 ```
 
- — 예: PickSmart 태그는 `sensor.gicisky_a1b2c3d4_…`, WOLINK / easyTag는 `sensor.zhsunyco_a1b2c3d4_…`, XTE는 `sensor.poshiji_a1b2c3d4_…` (id는 MAC 주소 마지막 8자리).
+엔티티 ID는 PickSmart의 경우 `sensor.gicisky_a1b2c3d4_…`, WOLINK과 easyTag는 `sensor.zhsunyco_a1b2c3d4_…`, XTE는 `sensor.poshiji_a1b2c3d4_…`와 같은 형식입니다. `id`에 해당하는 부분은 태그 MAC 주소의 마지막 8자리입니다.
 
 같은 내역이 **진단 다운로드**(기기 페이지 → ⋮ → *진단 다운로드*, `write_state.last_write`와 `write_state.last_failure_write`)에도 있고, 자동화가 요청하면 액션 응답(`response_variable` → `timing`)에도 들어 있습니다.
 
-도움이 되는 엔티티가 둘 더 있지만, 뜻을 정확히 알고 읽어야 합니다:
+이미지 동기화와 쓰기 진행 상태는 다음 두 엔티티에서 확인할 수 있습니다.
 
 - **Display In Sync** (바이너리) — 마지막 *렌더 이미지*와 태그가 받은 것으로 알려진 마지막 이미지가 같으면 켜지고, 다르면 꺼집니다. 예를 들어 다른 이미지를 `dry_run`으로 렌더링하거나 새 렌더 후 쓰기에 실패하면 꺼집니다. 둘 중 하나라도 알 수 없으면 `unknown`입니다. 쓰기 도중 통합구성요소를 재로드하면 태그가 전송을 끝냈는지 알 수 없어 `unknown`이 될 수 있습니다. 패널에 물리적으로 무엇이 보이는지는 모릅니다.
 - **Connectivity** (바이너리) — **쓰기가 진행 중인 동안** 켜짐(첫 시도부터 최종 결과까지, 연결 재시도 포함); 그 외에는 꺼짐. "태그가 근처에 있다"는 뜻도, "링크가 올라왔다"는 뜻도 아닙니다.
