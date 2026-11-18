@@ -6,7 +6,7 @@
 
 BLE ESL은 이미지를 보낼 때 태그마다 GATT로(`blesession`을 통해) 연결합니다. Home Assistant에는 **active 연결**이 가능한 Bluetooth 어댑터나 ESPHome Bluetooth 프록시가 필요합니다. 태그의 광고가 보인다고 해서 쓸 수 있는 것은 아닙니다.
 
-공통 프록시 설정·추천 하드웨어·일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)에 있습니다. 이 문서에는 BLE ESL 고유 내용만 남기고, 태그별 조건과 실패 센서는 [troubleshooting.md](troubleshooting.md)에 있습니다.
+공통 프록시 설정·추천 하드웨어·일반적인 연결 문제 확인 순서는 [Bluetooth proxy 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)에 있습니다. 이 문서에는 BLE ESL 고유 내용만 남기고, 태그별 조건과 실패 센서는 [troubleshooting.md](../troubleshooting.ko.md)에 있습니다.
 
 ## 프록시 설정
 
@@ -35,7 +35,7 @@ bluetooth_proxy:
 
 ## BLE ESL 고유 사항
 
-- **발견은 연결이 아닙니다.** Home Assistant에 나타난(광고로 발견된) 태그는 아직 연결된 적이 없습니다. 실제 GATT 연결은 첫 쓰기 때 일어납니다. [발견과 연결의 차이](troubleshooting.md#발견과-연결의-차이)를 보세요.
+- **발견은 연결이 아닙니다.** Home Assistant에 나타난(광고로 발견된) 태그는 아직 연결된 적이 없습니다. 실제 GATT 연결은 첫 쓰기 때 일어납니다. [발견과 연결의 차이](../troubleshooting.ko.md#발견과-연결의-차이)를 보세요.
 - **쓰기는 한 번에 하나.** 모든 태그의 쓰기가 BLE 잠금 하나를 공유합니다. 한 번에 한 시도만 라디오를 잡고, 재시도해야 하는 태그는 다른 태그에 먼저 순서를 넘깁니다.
 - **통합구성요소 옵션은 프록시 설정이 아닙니다.** Retry Count, Prevent Duplicate Send, Debounce Delay는 BLE ESL 옵션입니다([usage.md](usage.md#옵션)). 프록시 펌웨어를 바꾸지 않으며 다른 Bluetooth 통합의 기본값도 아닙니다.
-- **프로토콜별 조건**(인증, 최소 쓰기 크기, 제조사 앱)은 [troubleshooting.md](troubleshooting.md#프로토콜별-조건)에 있습니다.
+- **프로토콜별 조건**(인증, 최소 쓰기 크기, 제조사 앱)은 [troubleshooting.md](../troubleshooting.ko.md#프로토콜별-조건)에 있습니다.

@@ -112,7 +112,7 @@
 
 1. **개발자 도구 → 액션**에서 `ble_esl.write`를 `dry_run: true`로 호출하고 **Preview Content** 이미지 엔티티가 예전처럼 렌더링되는지 봅니다.
 2. 실제로 한 번 써서 **Display In Sync**가 켜지고 **Failure Count**가 0으로 유지되는지 확인합니다.
-3. 쓰기가 실패하면 **Write Duration** 센서 속성(`attempt`, `error`, `start_probes`, `round_trip_ms`)을 보거나 기기 페이지에서 **⋮ → 진단 다운로드**를 받으세요 — 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고가 들어 있고, 이슈 리포트에 필요한 것이 그것입니다. 자세한 읽는 법은 [트러블슈팅](troubleshooting.md)에 있습니다.
+3. 쓰기가 실패하면 **Write Duration** 센서 속성(`attempt`, `error`, `start_probes`, `round_trip_ms`)을 보거나 기기 페이지에서 **⋮ → 진단 다운로드**를 받으세요 — 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고가 들어 있고, 이슈 리포트에 필요한 것이 그것입니다. 자세한 읽는 법은 [트러블슈팅](../troubleshooting.ko.md)에 있습니다.
 
 ### 자주 묻는 것
 
