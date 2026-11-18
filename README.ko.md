@@ -18,36 +18,32 @@ Bluetooth 저전력 전자가격표시기(ESL)에 레이아웃을 전송하는 H
 
 ![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
-> 영어 문서가 기준입니다. 내용이 다르면 [영어 README](README.md)를 따릅니다.
-
-Home Assistant 액션 한 번으로 e-paper 태그에 캘린더, 날씨, 센서 값 또는 사진을 Bluetooth로 전송합니다. 태그는 게이트웨이, 클라우드, 배선 없이 배터리 하나로 수개월에서 수년 동안 동작할 수 있습니다.
-
-Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주장하지 않습니다. [왜 e-paper 태그인가? →](docs/ko/usage.md#왜-e-paper-태그인가)
+Home Assistant 액션 한 번으로 전자종이 태그에 일정, 날씨, 센서 값, 사진을 표시할 수 있습니다. 전용 ESL 게이트웨이나 클라우드 서비스 없이 Bluetooth로 화면을 갱신하며, 태그는 배터리로 수개월에서 수년까지 동작할 수 있습니다.
 
 | 2.1" (250×128) | 2.9" (296×128) | 4.2" (400×300) | 10.2" (960×640) |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 | Gicisky | Gicisky | Poshiji PSJ-420 | Gicisky |
 
-실제 태그 사진입니다. [YAML이 포함된 예제 더 보기 →](examples/README.md) (영어)
+[YAML 예제 더 보기 (영어)](examples/README.md)
 
 ## 지원 태그
 
-| 프로토콜 | 브랜드 | 크기 | 색상 | 상태 | 구매 |
-|---|---|---|---|---|---|
-| **ETAG** | Hipoink | 2.13" (250 × 122) | BWR | ✅ 검증; [프로토콜 노트](docs/etag.md) (영어) | [AliExpress](https://de.aliexpress.com/item/1005009110927073.html) |
-| **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ 실기기 검증 | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
-| **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ 2.13", 2.66", 2.9", 4.2"는 실기기 검증 완료; 다른 크기는 크기만 맞춘 프리셋 | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
-| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7", 4.2" BWRY와 2.9" BWR 실기기 검증 완료; 다른 크기는 미검증 | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
-| **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ 사양서 기반, 미검증 | — |
+| 브랜드 | 프로토콜 | 크기 | 색상 | 실기기 검증 |
+| --- | --- | --- | --- | --- |
+| Hipoink | ETAG | 2.13" | BWR | 2.13" |
+| Gicisky | PickSmart | 2.1"–10.2" | BW / BWR / BWRY | 목록의 모든 모델 |
+| Poshiji | XTE | 1.54"–7.5" | BWRY | 2.13", 2.66", 2.9", 4.2" |
+| Zhsunyco | WOLINK | 1.54"–13.3" | BWR / BWRY | 1.54", 2.66", 2.9", 3.5", 3.7", 4.2" (BWRY) 및 2.9" (BWR) |
+| Zhsunyco | easyTag | 1.54"–10.2" | BW / BWR | 미검증 |
 
-해상도와 모델 코드는 [전체 모델 목록](docs/models.md)에서 확인하세요. 다른 태그는 [프로토콜 추가하기](custom_components/ble_esl/esl_ble/README.md)를 참고하세요. 두 문서는 영어입니다.
+[모델 코드, 해상도, 구매처 (영어)](docs/models.md)
 
 ## 주요 기능
 
-- [imagespec](https://github.com/eigger/imagespec) 요소와 Jinja 템플릿으로 레이아웃을 만들고 `ble_esl.write`로 전송합니다. `ble_esl.write_guarded`는 이미지가 같으면 건너뛰고, Write Lock을 따르며, 연속 호출을 디바운스합니다.
-- **ESL Manager**: 같은 payload를 YAML로 내보내는 사이드바 대시보드와 비주얼 디자이너.
-- 쓰기가 어느 단계에서, 어떤 라디오를 거쳐 실패했는지 알려 주는 실패 센서와 진단 다운로드.
+- 사이드바의 **ESL Manager**에서 태그와 전송 상태를 확인합니다. 편집기에서 레이아웃을 디자인하고 미리 본 뒤 자동화용 YAML로 내보낼 수 있습니다.
+- **쓰기 액션**은 [imagespec](https://github.com/eigger/imagespec) 요소와 Jinja 템플릿을 렌더링합니다. `ble_esl.write_guarded`는 쓰기 잠금(Write Lock)을 적용하고, 동일한 이미지를 건너뛰며, 연속 호출을 디바운스합니다.
+- **진단 정보**에서 쓰기가 실패한 단계와 사용한 Bluetooth 어댑터 또는 프록시를 확인합니다.
 
 ## 요구사항
 
@@ -65,25 +61,25 @@ Home Assistant Core에 포함된 통합이 아니며 Core 품질 등급을 주�
 2. 저장소를 직접 추가하려면 **설정 → 마켓플레이스 → 링크에서 추가**에서 <https://github.com/eigger/hass-ble-esl>을 입력합니다. 안내가 표시되면 GitHub 계정을 연결합니다.
 3. **설치**를 선택합니다. 재시작 안내가 표시되면 Home Assistant를 재시작합니다. 설치가 끝나면 [설정](#설정)으로 이동합니다.
 
+Home Assistant 2026.11 이전 버전에서는 같은 배지가 HACS를 엽니다. [HACS 설정 (영어)](https://www.hacs.xyz/docs/use/)
+
 ## 설정
 
-범위 안의 태그는 자동으로 발견됩니다 — **설정 → 기기 및 서비스**에서 확인하거나, **통합구성요소 추가 → BLE ESL**로 추가합니다.
+자동으로 발견된 태그는 **설정 → 기기 및 서비스**에서 확인합니다. 수동으로 등록하려면 **통합구성요소 추가 → BLE ESL**을 선택하세요.
 
-옵션(Retry Count, Prevent Duplicate Send, Debounce Delay, WOLINK / easyTag의 Model)은 **구성**에 있습니다. [docs/ko/usage.md](docs/ko/usage.md#옵션)를 보세요.
+**구성**에서 재시도 횟수, 중복 전송 방지, 디바운스 지연을 설정할 수 있습니다. WOLINK 또는 easyTag는 기기에 맞는 **모델**을 선택하세요. [통합 옵션](docs/ko/usage.md#옵션)
 
-`hass-gicisky`나 `hass-zhsunyco`에서 오셨나요? 태그를 새 `ble_esl` 도메인으로 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꿔야 합니다 — 페이로드는 그대로입니다. **[마이그레이션 가이드 →](docs/ko/migration.md)**
+`hass-gicisky`나 `hass-zhsunyco`에서 옮겨오는 경우 BLE ESL에 태그를 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꾸세요. 기존 페이로드를 재사용할 수 있습니다. [마이그레이션 가이드](docs/ko/migration.md)
 
 ### Bluetooth
 
-원격 Bluetooth 연결은 `bluetooth_proxy: active: true`로 켭니다. 스캔은 `esp32_ble_tracker: scan_parameters: active: true`와 기본 간격으로 시작하세요. 활성 연결을 켜 두면 패시브 스캔에서도 GATT 연결을 사용할 수 있습니다.
+ESPHome 프록시를 사용한다면 `bluetooth_proxy.active: true`를 켜세요. [스캔 옵션과 ESPHome 설정 예제](docs/ko/bluetooth.md)
 
-첫 쓰기 때 GATT로 연결합니다. 페어링은 필요 없습니다. ETAG 제조사 앱을 닫고 다른 통합이 같은 태그에 쓰지 않도록 하세요.
-
-하드웨어, 설정, 연결 문제 해결은 [Bluetooth 프록시 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)를 참고하세요.
+BLE ESL은 첫 쓰기 때 페어링 없이 연결합니다. ETAG 제조사 앱을 닫고 여러 통합에서 같은 태그에 쓰지 않도록 하세요. [Bluetooth 프록시 가이드](https://github.com/eigger/blesession/blob/main/docs/bluetooth.ko.md)
 
 ## 빠른 시작
 
-**개발자 도구 → 액션**에서:
+**개발자 도구 → 액션**에서 `ble_esl.write`를 선택하고 태그를 대상으로 지정하세요.
 
 ```yaml
 action: ble_esl.write
@@ -98,43 +94,37 @@ data:
       size: 40
 ```
 
-몇 초 뒤 태그가 갱신됩니다.
-
-`dry_run: true`를 붙이면 태그에 전송하지 않고 렌더링합니다. **Preview Content** 이미지 엔티티에는 렌더링 결과가 표시되며 패널의 실제 화면은 읽어 오지 않습니다.
-
-렌더링 옵션과 전체 액션 예제는 [payload 안내](docs/payload.ko.md), 레이아웃과 사용법, 비주얼 디자이너는 [문서 목록](#문서)을 보세요.
+몇 초 뒤 태그가 갱신됩니다. 전송 전에 미리 보려면 `data` 아래에 `dry_run: true`를 추가하고 **Preview Content** 이미지 엔티티를 확인하세요. [페이로드 안내와 액션 예제](docs/payload.ko.md)
 
 <a name="제한사항과-주의"></a>
 
 ## 중요 제한사항
 
 > [!WARNING]
-> 미검증 WOLINK 및 easyTag 프리셋은 기술 사양서로 만들어졌으며 실제 태그에서 테스트되지 않았습니다. 써 보셨다면 [Discussions](https://github.com/eigger/hass-ble-esl/discussions)에 결과를 알려 주세요.
+> 표의 실기기 검증 목록에 없는 WOLINK 프리셋과 모든 easyTag 프리셋은 기술 사양을 바탕으로 만들었습니다. 사용해 보셨다면 [Discussions](https://github.com/eigger/hass-ble-esl/discussions)에 모델과 결과를 공유해 주세요.
 
-- XTE의 2.13", 2.66", 2.9", 4.2" 외 크기는 손으로 고르는 크기만 맞춘 프리셋입니다. 하드웨어와 맞지 않는 프리셋은 쓰기는 성공해도 화면이 이상하게 나올 수 있습니다.
-- 디자이너는 센서 변경 시 자동 전송하지 않습니다. 자동화로 갱신 시점을 정하세요. e-paper는 LCD가 아니므로 너무 잦은 갱신은 피하세요. `write_guarded`와 Prevent Duplicate Send / Debounce Delay 옵션이 도움이 됩니다.
+- 그 외 XTE 크기는 화면 크기만 반영한 프리셋을 직접 선택합니다. 기기와 맞지 않는 프리셋을 선택하면 전송에 성공해도 화면이 깨질 수 있습니다.
+- 센서 값이 바뀔 때 태그를 갱신하려면 Home Assistant 자동화를 사용하세요. 배터리를 오래 쓰려면 갱신 간격을 충분히 두세요.
 
 ## 문서
 
 | 주제 | 한국어 | English |
-|---|---|---|
-| 사용 개요: 첫 레이아웃, 비주얼 에디터, 액션, 옵션, 페이로드와 렌더링 | [docs/ko/usage.md](docs/ko/usage.md) | [docs/usage.md](docs/usage.md) |
-| Bluetooth 설정 및 ESPHome 예제 | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) | [docs/bluetooth.md](docs/bluetooth.md) |
-| 태그 문제 해결과 실패 센서 | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) | [docs/troubleshooting.md](docs/troubleshooting.md) |
-| 액션, 응답 데이터, 엔티티, 폰트 | — (영어만) | [docs/actions.md](docs/actions.md) |
-| 지원 모델과 구매처 | — (영어만) | [docs/models.md](docs/models.md) |
-| ESL Manager / 디자이너 | [docs/ko/designer.md](docs/ko/designer.md) | [docs/designer.md](docs/designer.md) |
-| 디자인 템플릿 | [docs/ko/design-templates.md](docs/ko/design-templates.md) | [docs/design-templates.md](docs/design-templates.md) |
-| hass-gicisky / hass-zhsunyco에서 마이그레이션 | [docs/ko/migration.md](docs/ko/migration.md) | [docs/migration.md](docs/migration.md) |
-| 프로토콜 노트 (ETAG, XTE) | — (영어만) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) |
-| 예제 | — (영어만) | [examples/README.md](examples/README.md) |
-| 개발: 테스트, 검증 환경, 린트, 프로토콜 추가 | — (영어만) | [docs/development.md](docs/development.md) |
+| --- | --- | --- |
+| 사용법과 옵션 | [한국어](docs/ko/usage.md) | [English](docs/usage.md) |
+| ESL Manager와 디자이너 | [한국어](docs/ko/designer.md) | [English](docs/designer.md) |
+| 디자인 템플릿 | [한국어](docs/ko/design-templates.md) | [English](docs/design-templates.md) |
+| 페이로드 안내 | [한국어](docs/payload.ko.md) | [English](docs/payload.md) |
+| 액션, 엔티티, 글꼴 | — | [English](docs/actions.md) |
+| Bluetooth 설정 | [한국어](docs/ko/bluetooth.md) | [English](docs/bluetooth.md) |
+| 문제 해결 | [한국어](docs/troubleshooting.ko.md) | [English](docs/troubleshooting.md) |
+| 마이그레이션 | [한국어](docs/ko/migration.md) | [English](docs/migration.md) |
+| 프로토콜 노트 | — | [ETAG](docs/etag.md), [XTE](docs/xte.md) |
+| 개발 | — | [테스트와 개발](docs/development.md), [프로토콜 추가](custom_components/ble_esl/esl_ble/README.md) |
 
 ## 문제 해결과 진단
 
-- 버그를 제보할 때는 태그의 진단 파일을 첨부해 주세요: **기기 페이지 → ⋮ → 진단 다운로드**. 프로토콜, 프리셋, 펌웨어, 옵션, 마지막 광고, 실패 카운터가 들어 있습니다.
-- 태그 MAC은 가려지지만 나머지 데이터는 올리기 전에 확인하세요 — [제거할 정보](docs/troubleshooting.ko.md#올리기-전에-민감-정보-제거).
-- Poshiji 태그에서 모델을 직접 선택해야 했다면 아래 지원 링크로 태그 크기와 결과를 알려 주세요.
+- 쓰기 실패를 제보할 때는 **기기 페이지 → ⋮ → 진단 다운로드**에서 태그의 진단 파일을 첨부해 주세요. [공유 전 가려야 할 정보](docs/troubleshooting.ko.md#올리기-전에-민감-정보-제거)
+- Poshiji 프리셋을 직접 선택했다면 패널 크기, 선택한 프리셋, 전송 결과를 함께 알려 주세요.
 
 <!-- hass-standards:support:start -->
 ## 지원

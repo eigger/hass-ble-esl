@@ -18,34 +18,32 @@ A Home Assistant custom integration that sends layouts to Bluetooth Low Energy e
 
 ![BLE ESL](custom_components/ble_esl/brand/logo.png)
 
-Use one Home Assistant action to send calendars, weather, sensor readings or photos to e-paper tags over Bluetooth. Tags can run for months to years on one battery without a gateway, cloud service or wiring.
-
-It is not part of Home Assistant Core and claims no Core quality tier. [Why e-paper tags? →](docs/usage.md#why-e-paper-tags)
+Display calendars, weather, sensor readings, or photos on e-paper tags with a single Home Assistant action. Tags update over Bluetooth without a dedicated ESL gateway or cloud service and can run for months or even years on batteries.
 
 | 2.1" (250×128) | 2.9" (296×128) | 4.2" (400×300) | 10.2" (960×640) |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/21_1.png" alt="2.1 inch Gicisky" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/29_1.png" alt="2.9 inch Gicisky" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/poshiji/poshiji_psj420_4color.png" alt="4.2 inch Poshiji PSJ-420" width="200" /> | <img src="https://raw.githubusercontent.com/eigger/hass-ble-esl/main/docs/images/gicisky/102_1.jpg" alt="10.2 inch Gicisky" width="200" /> |
 | Gicisky | Gicisky | Poshiji PSJ-420 | Gicisky |
 
-Photos of real tags. [More examples with YAML →](examples/README.md)
+[More examples with YAML](examples/README.md)
 
 ## Supported tags
 
-| Protocol | Brand | Sizes | Colors | Status | Buy |
-|---|---|---|---|---|---|
-| **ETAG** | Hipoink | 2.13" (250 × 122) | BWR | ✅ verified; [protocol notes](docs/etag.md) | [AliExpress](https://de.aliexpress.com/item/1005009110927073.html) |
-| **PickSmart** | Gicisky | 2.1" – 10.2" | BW / BWR / BWRY | ✅ verified on hardware | [AliExpress](https://ko.aliexpress.com/item/1005002399342939.html) |
-| **XTE** | Poshiji | 1.54" – 7.5" | BWRY | ✅ 2.13", 2.66", 2.9" and 4.2" verified on real tags by owner; other sizes size-only presets | [AliExpress](https://ko.aliexpress.com/item/1005012725381116.html) |
-| **WOLINK** | Zhsunyco | 1.54" – 13.3" | BWR / BWRY | ✅ 1.54", 2.66", 3.5", 3.7" and 4.2" BWRY and 2.9" BWR verified on hardware; other sizes untested | [AliExpress](https://ko.aliexpress.com/item/1005009231276243.html) |
-| **easyTag** | Zhsunyco | 1.54" – 10.2" | BW / BWR | ⚠️ from specifications, untested | — |
+| Brand | Protocol | Sizes | Colors | Tested on hardware |
+| --- | --- | --- | --- | --- |
+| Hipoink | ETAG | 2.13" | BWR | 2.13" |
+| Gicisky | PickSmart | 2.1"–10.2" | BW / BWR / BWRY | All listed models |
+| Poshiji | XTE | 1.54"–7.5" | BWRY | 2.13", 2.66", 2.9", 4.2" |
+| Zhsunyco | WOLINK | 1.54"–13.3" | BWR / BWRY | 1.54", 2.66", 2.9", 3.5", 3.7", 4.2" (BWRY) and 2.9" (BWR) |
+| Zhsunyco | easyTag | 1.54"–10.2" | BW / BWR | Untested |
 
-See the [full model list](docs/models.md) for resolutions and model codes, or [add a protocol](custom_components/ble_esl/esl_ble/README.md) for another tag.
+[Model codes, resolutions, and purchase links](docs/models.md)
 
 ## Features
 
-- Write layouts with `ble_esl.write` using [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates. `ble_esl.write_guarded` skips unchanged images, respects Write Lock and debounces bursts.
-- **ESL Manager**, a sidebar dashboard and visual designer that exports the same payload as YAML.
-- Failure sensors and a diagnostics download that say at which stage a write failed and through which radio.
+- **ESL Manager** shows tag and transmission status in the sidebar. Design layouts visually, preview them, and export YAML for automations.
+- **Write actions** render [imagespec](https://github.com/eigger/imagespec) elements and Jinja templates. `ble_esl.write_guarded` respects Write Lock, skips unchanged images, and debounces rapid calls.
+- **Diagnostics** show where a write failed and which Bluetooth adapter or proxy was used.
 
 ## Requirements
 
@@ -63,25 +61,25 @@ See the [full model list](docs/models.md) for resolutions and model codes, or [a
 2. If you need to add it yourself, go to **Settings → Marketplace → Add from link** and enter <https://github.com/eigger/hass-ble-esl>. Connect GitHub if prompted.
 3. Select **Install**. Restart Home Assistant if prompted, then continue to [Configuration](#configuration).
 
+On Home Assistant versions before 2026.11, the same badge opens HACS. [HACS setup](https://www.hacs.xyz/docs/use/)
+
 ## Configuration
 
-Tags in range are discovered automatically — confirm them under **Settings → Devices & services**, or add one via **Add integration → BLE ESL**.
+Confirm discovered tags in **Settings → Devices & services**. To add a tag manually, choose **Add integration → BLE ESL**.
 
-Options (Retry Count, Prevent Duplicate Send, Debounce Delay, and Model for WOLINK / easyTag) are under **Configure**; see [docs/usage.md](docs/usage.md#options).
+Set retries, duplicate prevention, and debounce under **Configure**. Choose the matching **Model** for WOLINK or easyTag. [Integration options](docs/usage.md#options)
 
-Coming from `hass-gicisky` or `hass-zhsunyco`? Tags must be re-added under the new `ble_esl` domain and `gicisky.write` renamed to `ble_esl.write` — the payload stays the same. **[Migration guide →](docs/migration.md)**
+If you use `hass-gicisky` or `hass-zhsunyco`, re-add the tags in BLE ESL and replace `gicisky.write` with `ble_esl.write`. You can reuse the same payload. [Migration guide](docs/migration.md)
 
 ### Bluetooth
 
-For remote Bluetooth, enable active connections with `bluetooth_proxy: active: true`. Start with `esp32_ble_tracker: scan_parameters: active: true` and the default scan interval. Passive scanning also supports GATT when active connections are enabled.
+For ESPHome proxies, enable `bluetooth_proxy.active: true`. [Scan settings and ESPHome example](docs/bluetooth.md)
 
-BLE ESL first connects over GATT when you write to the tag. No pairing is needed. Close the ETAG companion app and keep other integrations from writing to the same tag.
-
-See the [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md) for hardware, setup and connection troubleshooting.
+BLE ESL connects on the first write without pairing. Close the ETAG companion app and avoid writing to the same tag from multiple integrations. [Bluetooth proxy guide](https://github.com/eigger/blesession/blob/main/docs/bluetooth.md)
 
 ## Quick start
 
-From **Developer tools → Actions**:
+In **Developer tools → Actions**, select your tag as the target for `ble_esl.write`.
 
 ```yaml
 action: ble_esl.write
@@ -96,43 +94,37 @@ data:
       size: 40
 ```
 
-The tag refreshes in a few seconds.
-
-Add `dry_run: true` to render without sending. The **Preview Content** image entity shows the rendered image rather than reading the panel.
-
-See the [payload guide](docs/payload.md) for rendering options and complete action examples, and the [documentation index](#documentation) for layouts, usage and the visual designer.
+The tag refreshes in a few seconds. To preview the layout without sending it, add `dry_run: true` under `data` and open the **Preview Content** image entity. [Payload guide and action examples](docs/payload.md)
 
 <a name="limits-and-warnings"></a>
 
 ## Important limitations
 
 > [!WARNING]
-> Untested WOLINK and easyTag presets are built from technical specifications and have not been tested on physical tags. If you try one, please report the result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
+> WOLINK presets outside the tested list and all easyTag presets are based on specifications. If you try one, share the model and result in [Discussions](https://github.com/eigger/hass-ble-esl/discussions).
 
-- XTE sizes other than 2.13", 2.66", 2.9" and 4.2" are size-only presets picked by hand; a preset that does not match the hardware can produce a successful write but a wrong-looking panel.
-- The designer does not transmit on sensor changes; schedule updates with automations. E-paper is not an LCD — avoid overly frequent redraws; `write_guarded` and the Prevent Duplicate Send / Debounce Delay options help.
+- Other XTE sizes use manually selected, size-only presets. A mismatched preset can write successfully and still display the image incorrectly.
+- Use Home Assistant automations to update tags when sensors change. Keep refreshes infrequent to preserve battery life.
 
 ## Documentation
 
 | Topic | English | 한국어 |
-|---|---|---|
-| Usage overview: first layout, visual editor, actions, options, payload & rendering | [docs/usage.md](docs/usage.md) | [docs/ko/usage.md](docs/ko/usage.md) |
-| Bluetooth setup and ESPHome example | [docs/bluetooth.md](docs/bluetooth.md) | [docs/ko/bluetooth.md](docs/ko/bluetooth.md) |
-| Tag troubleshooting and failure sensors | [docs/troubleshooting.md](docs/troubleshooting.md) | [docs/troubleshooting.ko.md](docs/troubleshooting.ko.md) |
-| Actions, response data, entities, fonts | [docs/actions.md](docs/actions.md) | — |
-| Supported models and where to buy | [docs/models.md](docs/models.md) | — |
-| ESL Manager / Designer | [docs/designer.md](docs/designer.md) | [docs/ko/designer.md](docs/ko/designer.md) |
-| Design templates | [docs/design-templates.md](docs/design-templates.md) | [docs/ko/design-templates.md](docs/ko/design-templates.md) |
-| Migration from hass-gicisky / hass-zhsunyco | [docs/migration.md](docs/migration.md) | [docs/ko/migration.md](docs/ko/migration.md) |
-| Protocol notes (ETAG, XTE) | [docs/etag.md](docs/etag.md), [docs/xte.md](docs/xte.md) | — |
-| Examples | [examples/README.md](examples/README.md) | — |
-| Development: tests, verified environments, lint, adding a protocol | [docs/development.md](docs/development.md) | — |
+| --- | --- | --- |
+| Usage and options | [English](docs/usage.md) | [한국어](docs/ko/usage.md) |
+| ESL Manager and Designer | [English](docs/designer.md) | [한국어](docs/ko/designer.md) |
+| Design templates | [English](docs/design-templates.md) | [한국어](docs/ko/design-templates.md) |
+| Payload guide | [English](docs/payload.md) | [한국어](docs/payload.ko.md) |
+| Actions, entities, and fonts | [English](docs/actions.md) | — |
+| Bluetooth setup | [English](docs/bluetooth.md) | [한국어](docs/ko/bluetooth.md) |
+| Troubleshooting | [English](docs/troubleshooting.md) | [한국어](docs/troubleshooting.ko.md) |
+| Migration | [English](docs/migration.md) | [한국어](docs/ko/migration.md) |
+| Protocol notes | [ETAG](docs/etag.md), [XTE](docs/xte.md) | — |
+| Development | [Tests and development](docs/development.md), [Adding a protocol](custom_components/ble_esl/esl_ble/README.md) | — |
 
 ## Troubleshooting and diagnostics
 
-- When reporting a bug, attach the tag's diagnostics: **the device page → ⋮ → Download diagnostics**. It contains the protocol, preset, firmware, options, last advertisement and failure counters.
-- The tag MAC is redacted, but check the remaining data before posting — see [what to remove](docs/troubleshooting.md#remove-sensitive-information-before-posting).
-- If a Poshiji tag required manual model selection, share its size and result through the support links below to help verify the preset.
+- For write failures, attach the tag's diagnostics from **Device page → ⋮ → Download diagnostics**. [What to redact before sharing](docs/troubleshooting.md#remove-sensitive-information-before-posting)
+- If you selected a Poshiji preset manually, include the panel size, preset, and result.
 
 <!-- hass-standards:support:start -->
 ## Support
