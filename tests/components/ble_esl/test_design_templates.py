@@ -66,6 +66,15 @@ def seed_entities(hass, template):
             )
 
 
+def stable_template_payloads(hass, imported, elements):
+    """Compare geometry with the same clock on both sides of the round trip."""
+    from homeassistant.util import dt as dt_util
+
+    now = dt_util.now()
+    with patch.object(dt_util, "now", return_value=now):
+        return payloads(hass, imported, elements)
+
+
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
 @pytest.mark.parametrize(("width", "height"), SIZES)
 @pytest.mark.parametrize("colors", ["BW", "BWR", "BWRY"])
@@ -76,7 +85,7 @@ async def test_bundled_template_imports_and_draws_exactly(hass, template_id, wid
     elements, imported, issues = elements_from(built["payload"], preset)
     assert issues == []
     assert len(elements) == len(built["payload"])
-    original, rebuilt = payloads(hass, imported, elements)
+    original, rebuilt = stable_template_payloads(hass, imported, elements)
     assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
     for item in original:
         for key in ("x", "x_start", "x_end"):
@@ -661,7 +670,7 @@ async def test_weather_template_draws_every_condition(hass, width, height):
         )
         elements, imported, issues = elements_from(built["payload"], preset)
         assert issues == [], condition
-        original, rebuilt = payloads(hass, imported, elements)
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, condition
 
 
@@ -1125,7 +1134,7 @@ async def test_outdoor_weather_exact_sizes_use_editable_elements(hass, size):
     elements, imported, issues = elements_from(built["payload"], preset)
     assert not built["scaled"]
     assert issues == []
-    original, rebuilt = payloads(hass, imported, elements)
+    original, rebuilt = stable_template_payloads(hass, imported, elements)
     assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
 
 
