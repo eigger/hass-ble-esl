@@ -1556,3 +1556,282 @@ async def test_commute_weather_4_inches_and_above_shows_weekly_forecast(hass):
             )
         )
         assert {"7일 주간 예보", "목", "주간 비·눈: 월(75%)"} <= set(vals_102)
+
+
+async def test_commute_weather_handles_unavailable_non_numeric_and_stale_forecasts(hass):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set(
+        "weather.home",
+        "unavailable",
+        {
+            "temperature": float("nan"),
+            "temperature_unit": "°C",
+            "apparent_temperature": True,
+            "humidity": "unknown",
+            "wind_speed": float("inf"),
+        },
+    )
+    stale_fc = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": (today - timedelta(days=1)).isoformat(),
+                        "temperature": 99,
+                        "templow": 98,
+                        "condition": "sunny",
+                    }
+                ]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        for variables in ({}, stale_fc):
+            built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+            vals = _values(resolve_templates(hass, built["payload"], set(), variables))
+            assert {"예보 정보 없음", "예보 없음", "예보 대기 중", "weather-cloudy-alert"} <= set(
+                vals
+            )
+            assert "99°" not in vals and "우산 불필요" not in vals
+
+        built_42 = build(TEMPLATES["weather_commute"], 400, 300, "BWR")
+        vals_42 = _values(resolve_templates(hass, built_42["payload"], set(), stale_fc))
+        assert "예보 정보 없음" in vals_42
+        assert "weather-cloudy-alert" in vals_42
+        assert "weather-cloudy" not in vals_42
+
+
+async def test_commute_weather_units_and_precipitation_formatting(hass):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+
+    def render_296(state_attrs, daily_row):
+        hass.states.async_set("weather.home", "sunny", state_attrs)
+        fc = {
+            "fc": {
+                "weather.home": {
+                    "forecast": [
+                        {"datetime": (today + timedelta(hours=4)).isoformat(), **daily_row}
+                    ]
+                }
+            }
+        }
+        built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+        return _values(resolve_templates(hass, built["payload"], set(), fc))
+
+    with freeze_time(today, real_asyncio=True):
+        # 10°F spread and 7 mph wind are normal in imperial units (not 10°C / 7 m/s).
+        vals_mild_imp = render_296(
+            {
+                "temperature": 60,
+                "temperature_unit": "°F",
+                "apparent_temperature": 59,
+                "humidity": 50,
+                "wind_speed": 7,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "sunny",
+                "temperature": 68,
+                "templow": 58,
+                "precipitation_probability": 10,
+            },
+        )
+        assert "우산 불필요" in vals_mild_imp
+        assert "일교차 주의" not in vals_mild_imp and "강풍 주의" not in vals_mild_imp
+
+        # 18°F spread triggers temperature-gap advisory; 16 mph triggers wind advisory.
+        vals_gap_imp = render_296(
+            {
+                "temperature": 55,
+                "temperature_unit": "°F",
+                "apparent_temperature": 53,
+                "humidity": 40,
+                "wind_speed": 5,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "sunny",
+                "temperature": 73,
+                "templow": 55,
+                "precipitation_probability": 0,
+            },
+        )
+        assert {"일교차 주의", "일교차 18°"} <= set(vals_gap_imp)
+
+        vals_wind_imp = render_296(
+            {
+                "temperature": 55,
+                "temperature_unit": "°F",
+                "apparent_temperature": 49,
+                "humidity": 45,
+                "wind_speed": 16,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "cloudy",
+                "temperature": 60,
+                "templow": 52,
+                "precipitation_probability": 20,
+            },
+        )
+        assert "강풍 주의" in vals_wind_imp
+
+        # Positive precipitation in inches (0.04in) and near-integer mm (1.96mm -> 2mm).
+        vals_in = render_296(
+            {
+                "temperature": 50,
+                "temperature_unit": "°F",
+                "apparent_temperature": 48,
+                "humidity": 80,
+                "wind_speed": 5,
+                "wind_speed_unit": "mph",
+                "precipitation_unit": "in",
+            },
+            {
+                "condition": "rainy",
+                "temperature": 54,
+                "templow": 46,
+                "precipitation_probability": 70,
+                "precipitation": 0.04,
+            },
+        )
+        assert "강수 70% · 0.04in" in vals_in
+
+        vals_mm = render_296(
+            {
+                "temperature": 11,
+                "temperature_unit": "°C",
+                "apparent_temperature": 9,
+                "humidity": 80,
+                "wind_speed": 3,
+                "wind_speed_unit": "m/s",
+                "precipitation_unit": "mm",
+            },
+            {
+                "condition": "rainy",
+                "temperature": 14,
+                "templow": 8,
+                "precipitation_probability": 70,
+                "precipitation": 1.96,
+            },
+        )
+        assert "강수 70% · 2mm" in vals_mm
+
+
+@pytest.mark.parametrize(
+    ("accent", "expected_ink", "expected_fg"),
+    [("yellow", "yellow", "black"), ("white", "black", "black")],
+)
+async def test_commute_weather_yellow_and_white_accent_contrast(
+    hass, accent, expected_ink, expected_fg
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set("weather.home", "rainy", {"temperature": 11, "temperature_unit": "°C"})
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": (today + timedelta(days=offset, hours=4)).isoformat(),
+                        "condition": "rainy",
+                        "temperature": 13,
+                        "templow": 6,
+                        "precipitation_probability": 80,
+                    }
+                    for offset in range(6)
+                ]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built = build(TEMPLATES["weather_commute"], 400, 300, "BWRY", {"accent": accent})
+        rendered = resolve_templates(hass, built["payload"], set(), variables)
+        pill_rect = next(
+            item for item in rendered if item["type"] == "rectangle" and item["y_start"] < 20
+        )
+        assert pill_rect["fill"] == expected_ink
+        pill_text = next(item for item in rendered if item.get("value") == "우산 챙기기")
+        assert pill_text["color"] == expected_fg
+        pop_texts = [item for item in rendered if item.get("value") == "80%"]
+        assert pop_texts and all(item["color"] == expected_fg for item in pop_texts)
+        high_text = next(
+            item for item in rendered if item.get("value") == "13°" and item["y"] < 100
+        )
+        assert high_text["color"] == expected_ink
+
+
+async def test_commute_weather_designer_preview_fetches_all_seven_forecast_days(hass, wolink_entry):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.core import SupportsResponse
+    from homeassistant.util import dt as dt_util
+
+    thursday = datetime(2026, 11, 19, 7, 30, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    daily = [
+        {
+            "datetime": (thursday + timedelta(days=offset, hours=5)).isoformat(),
+            "condition": "sunny",
+            "temperature": 10 + offset,
+            "templow": 2 + offset,
+            "precipitation_probability": 10,
+        }
+        for offset in range(-1, 8)
+    ]
+
+    async def get_forecasts(call):
+        return {"weather.home": {"forecast": daily}}
+
+    hass.services.async_register(
+        "weather", "get_forecasts", get_forecasts, supports_response=SupportsResponse.ONLY
+    )
+    hass.states.async_set("weather.home", "sunny", {"temperature": 10, "temperature_unit": "°C"})
+    designer = hass.data[KEY]
+    with freeze_time(thursday, real_asyncio=True):
+        built = build(TEMPLATES["weather_commute"], 960, 640, "BWR")
+        variables = await designer.forecast_variable(built["payload"], {})
+        assert len(variables["fc"]["weather.home"]["forecast"]) == 9
+        vals = _values(resolve_templates(hass, built["payload"], set(), variables))
+        # Day +7 (목) has temperature 17° / templow 9° (not truncated at index 7).
+        assert {"목", "17°", "9°"} <= set(vals)
+
+
+@pytest.mark.parametrize("size", sorted(TEMPLATES["weather_commute"]["layouts"]))
+def test_commute_weather_boxes_do_not_overlap_in_any_layout(size):
+    from itertools import combinations
+
+    width, height = (int(part) for part in size.split("x"))
+    items = build(TEMPLATES["weather_commute"], width, height, "BWRY")["payload"]
+    frames = []
+    for item in items:
+        if item["type"] == "text_fit":
+            frames.append(("text_fit", _frame(item)))
+        elif item["type"] == "icon":
+            sz = item["size"]
+            left = item["x"] - (sz // 2 if item.get("anchor") == "mt" else 0)
+            top = item["y"]
+            frames.append(("icon", (left, top, left + sz, top + sz)))
+    for (kind_a, a), (kind_b, b) in combinations(frames, 2):
+        # Adjacent icon/text inside a shared pill/banner may touch or share margins,
+        # but two text_fit boxes or a text_fit box and an icon must never overlap.
+        if "text_fit" in (kind_a, kind_b):
+            assert a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1], (
+                size,
+                (kind_a, a),
+                (kind_b, b),
+            )
