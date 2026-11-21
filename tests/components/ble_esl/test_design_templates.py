@@ -1428,3 +1428,126 @@ async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientati
     with freeze_time(now, real_asyncio=True):
         for size in ((296, 128), (128, 296), (300, 400)):
             assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))
+
+
+async def test_date_shows_week_bar_from_4_2_inches(hass):
+    from datetime import datetime
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    now = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    with freeze_time(now, real_asyncio=True):
+        for size in ((400, 300), (300, 400)):
+            texts = _texts(
+                _shown(hass, "date", *size, given={"weekdays": "Mon,Tue,Wed,Thu,Fri,Sat,Sun"})
+            )
+            assert any("ISO W" in t for t in texts)
+            assert {"Mon", "Sun", "16", "22"} <= set(texts)
+
+
+async def test_weather_forecast_4_2_shows_5_days_and_skips_yesterday_when_current(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    fc = {
+        "weather.home": {
+            "forecast": [
+                {
+                    "datetime": (today + timedelta(days=offset)).isoformat(),
+                    "condition": "sunny",
+                    "temperature": 99 if offset == -1 else 10 + offset,
+                    "templow": 98 if offset == -1 else 2 + offset,
+                    "precipitation_probability": 25 if offset >= 1 else 0,
+                }
+                for offset in range(-1, 6)
+            ]
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built = build(TEMPLATES["weather_forecast"], 400, 300, "BWR")
+        vals = _values(resolve_templates(hass, built["payload"], set(), {"fc": fc}))
+        assert "99°" not in vals and "98°" not in vals
+        assert {"11°", "3°", "15°", "7°", "25%"} <= set(vals)
+
+
+async def test_sensor_card_warn_above_highlights_and_respects_bw_fallback(hass):
+    hass.states.async_set("sensor.temperature", "32.4", {"unit_of_measurement": "°C"})
+    rendered_bwr = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "30"})["payload"],
+        set(),
+    )
+    val_item = next(item for item in rendered_bwr if str(item.get("value")) == "32.4")
+    assert val_item["color"] == "red"
+
+    rendered_bw = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BW", {"warn_above": "30"})["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_bw if str(item.get("value")) == "32.4")["color"] == "black"
+    )
+
+    rendered_ok = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "35"})["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_ok if str(item.get("value")) == "32.4")["color"] == "black"
+    )
+
+
+async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(hass):
+    hass.states.async_set("sensor.print_progress", "55")
+    hass.states.async_set("sensor.print_status", "printing")
+    hass.states.async_set("sensor.print_end_time", "2026-11-19T18:45:00+00:00")
+    hass.states.async_set("sensor.nozzle_temp", "210.4")
+    hass.states.async_set("sensor.bed_temp", "60.2")
+    texts_with = _texts(
+        _shown(
+            hass,
+            "print_progress",
+            800,
+            480,
+            {"nozzle_sensor": "sensor.nozzle_temp", "bed_sensor": "sensor.bed_temp"},
+        )
+    )
+    assert "210° / 60°" in texts_with
+    texts_without = _texts(_shown(hass, "print_progress", 800, 480))
+    assert "—" in texts_without
+
+
+async def test_calendar_next_renders_upcoming_events_on_large_tags(hass):
+    hass.states.async_set("calendar.home", "on", {"message": "Fallback"})
+    events = {
+        "calendar.home": {
+            "events": [
+                {
+                    "summary": "Standup",
+                    "start": "2026-11-22T09:30:00+09:00",
+                    "end": "2026-11-22T10:00:00+09:00",
+                    "location": "Room A",
+                },
+                {
+                    "summary": "Design Review",
+                    "start": "2026-11-22T14:00:00+09:00",
+                    "end": "2026-11-22T15:00:00+09:00",
+                },
+                {
+                    "summary": "Release Day",
+                    "start": "2026-11-23",
+                    "end": "2026-11-24",
+                },
+            ]
+        }
+    }
+    built = build(TEMPLATES["calendar_next"], 800, 480, "BWR")
+    texts = _texts(resolve_templates(hass, built["payload"], set(), {"events": events}))
+    assert "Standup" in texts and "Room A" in texts
+    assert any("Design Review" in t and "Release Day" in t for t in texts)

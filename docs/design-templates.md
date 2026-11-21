@@ -19,20 +19,20 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 
 ## Bundled templates
 
-The gallery selects an exact layout by tag resolution for the 1.54- to 13.3-inch presets, including portrait and landscape orientations. Compact screens keep the key values prominent. From 5.8 inches, the existing templates use the added space for details supported by the same entities in both orientations. Templates keep their existing update schedules.
+The gallery selects an exact layout by tag resolution for the 1.54- to 13.3-inch presets, including portrait and landscape orientations. Compact screens keep the key values prominent. From 4.2 inches (`date`, `weather_forecast`) and 5.8 inches, the existing templates use the added space for details supported by the same entities in both orientations. Templates keep their existing update schedules.
 
 | Template | Main content | Added on larger screens | Automation |
 |---|---|---|---|
-| `date` | Month/day with the weekday below (weekend color) | Year, ISO week and the current week's dates | Daily at 12:00 |
+| `date` | Month/day with the weekday below (weekend color) | Year, ISO week and the current week's dates (from 4.2 inches) | Daily at 12:00 |
 | `wifi` | Wi-Fi QR code (WPA, WPA3/SAE, WEP, open; hidden networks) with a title and hint | Network name for visible networks and security type | none |
 | `message` | Large centred text that shrinks to fit (one line by default) | Optional second line | none |
 | `color_check` | Black, white, red and yellow swatches | Resolution and 1, 2 and 4 px line samples | none |
 | `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | Feels-like temperature, humidity and wind | Every 10, 15 or 30 minutes |
-| `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | Five or seven forecast days with precipitation probability | Every 1, 3 or 6 hours |
+| `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | Five (from 4.2 inches) or seven forecast days with precipitation probability | Every 1, 3 or 6 hours |
 | `weather_outdoor` | Korean outdoor weather with current and low/high temperatures, rain or snow timing, a 7-day forecast from 4.2 inches, and hourly outlook from 7.5 inches | 7-day outlook from 4.2 inches and time slots from 7.5 inches | Hourly |
-| `sensor_card` | Icon, title and value with unit of any `sensor` entity (title empty = the entity's name; numbers rounded to one decimal) | Last update and an optional second sensor reading | Every 5, 10, 15 or 30 minutes |
-| `calendar_next` | The current or next event of a `calendar` entity: title, date and time, location (the entity's own attributes, so no service call) | End time and description when supplied | When the event changes and every 10, 15 or 30 minutes |
-| `print_progress` | A 3D printer's progress bar and percentage, status and finish time from three `sensor` entities (progress is kept between 0 and 100) | Estimated time remaining | Every 1, 5, 10 or 15 minutes and when the status changes |
+| `sensor_card` | Icon, title and value with unit of any `sensor` entity (title empty = the entity's name; numbers rounded to one decimal, optional alert threshold) | Last update and an optional second sensor reading | Every 5, 10, 15 or 30 minutes |
+| `calendar_next` | The current or next event of a `calendar` entity: title, date and time, location (falls back to entity attributes) | Up to three upcoming events via `calendar.get_events`, or end time and description | When the event changes and every 10, 15 or 30 minutes |
+| `print_progress` | A 3D printer's progress bar and percentage, status and finish time from three `sensor` entities (progress is kept between 0 and 100) | Estimated time remaining and optional nozzle/bed temperature sensors | Every 1, 5, 10 or 15 minutes and when the status changes |
 | `date_weather` | Today's date and weekday beside the icon, temperature and condition of a `weather` entity | Feels-like temperature, humidity and wind | Every 10, 15 or 30 minutes |
 | `countdown` | Days left until a date (`D-12`, `D-Day`, `D+3`) with a title; the number turns to the alert color from a chosen number of days before the date and stays in it after the date (`--` for an invalid date) | Target weekday and interval in weeks and days | Daily at 00:05 |
 

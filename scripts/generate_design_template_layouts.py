@@ -42,6 +42,10 @@ class Layout:
         return self.height > self.width * 1.2
 
     @property
+    def medium(self):
+        return min(self.width, self.height) >= 300
+
+    @property
     def detail(self):
         return min(self.width, self.height) >= 480
 
@@ -158,7 +162,7 @@ def number_metric(key, unit=None):
 def date_layout(layout, base):
     date, weekday = values(base, "text")
     weekend = next(item["color"] for item in base if item.get("value") == weekday)
-    if layout.detail:
+    if layout.detail or layout.medium:
         layout.text(
             (5, 5, 95, 17),
             template(
@@ -262,9 +266,46 @@ def calendar_layout(layout, base):
     heading, title, start, location = values(base)
     if layout.detail:
         layout.header(heading, "${accent}")
-        layout.text((5, 21, 95, 46), title, 22, align="left", lines=2)
+        ev_prefix = tag(
+            "set _evs = events['${calendar}'].events | default([], true) "
+            "if events is defined and events['${calendar}'] is defined else []"
+        )
+        title_expr = title.split("{{", 1)[1].rsplit("}}", 1)[0].strip()
+        loc_expr = location.split("{{", 1)[1].rsplit("}}", 1)[0].strip()
+        layout.text(
+            (5, 21, 95, 46),
+            ev_prefix
+            + template(
+                f"(_evs[0].summary | default('${{empty_text}}', true)) if _evs else ({title_expr})"
+            ),
+            22,
+            align="left",
+            lines=2,
+        )
+        ev_period = (
+            tag("set _sr = (_evs[0].start | default('')) | string")
+            + tag("set _er = (_evs[0].end | default('')) | string")
+            + tag("set _sd = as_datetime(_sr, none)")
+            + tag("set _ed = as_datetime(_er, none)")
+            + tag(
+                "if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif"
+            )
+            + tag(
+                "if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif"
+            )
+        )
         period = (
-            tag(f"set start = as_datetime({attribute('calendar', 'start_time')}, none)")
+            ev_prefix
+            + tag("if _evs")
+            + ev_period
+            + template(
+                "_sd.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
+                "~ (' - ' ~ _ed.strftime('${time_format}' if _ed.date() == _sd.date() else '${date_format} ${time_format}') "
+                "if _ed is not none and _ed >= _sd and (_sr | length > 10 or _ed.date() > _sd.date() + timedelta(days=1)) else '') "
+                "if _sd is not none else ''"
+            )
+            + tag("else")
+            + tag(f"set start = as_datetime({attribute('calendar', 'start_time')}, none)")
             + tag(f"set end = as_datetime({attribute('calendar', 'end_time')}, none)")
             + tag(f"set all_day = {attribute('calendar', 'all_day')}")
             + template(
@@ -273,14 +314,45 @@ def calendar_layout(layout, base):
                 "(' - ' ~ end.strftime('${time_format}' if end.date() == start.date() else '${date_format} ${time_format}') "
                 "if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '')) if start else ''"
             )
+            + tag("endif")
         )
         layout.icon(8, 53, "clock-outline", 6)
         layout.text((14, 48, 95, 58), period, 8, align="left")
         layout.icon(8, 65, "map-marker-outline", 6)
-        layout.text((14, 60, 95, 70), location, 8, align="left")
-        note = template(f"{attribute('calendar', 'description')} or ''")
+        layout.text(
+            (14, 60, 95, 70),
+            ev_prefix
+            + template(f"(_evs[0].location | default('', true)) if _evs else ({loc_expr})"),
+            8,
+            align="left",
+        )
+        more_events = (
+            ev_prefix
+            + tag("if _evs | length > 1")
+            + tag("set _ns = namespace(lines=[])")
+            + tag("for _ev in _evs[1:3]")
+            + tag("set _sr = (_ev.start | default('')) | string")
+            + tag("set _dt = as_datetime(_sr, none)")
+            + tag(
+                "if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif"
+            )
+            + tag(
+                "set _when = _dt.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
+                "if _dt is not none else ''"
+            )
+            + tag(
+                "set _ns.lines = _ns.lines + [(_when ~ '  ' if _when else '') ~ (_ev.summary | default('', true))]"
+            )
+            + tag("endfor")
+            + template("_ns.lines | join('\\n')")
+            + tag("elif _evs")
+            + template("_evs[0].description | default('', true)")
+            + tag("else")
+            + template(f"{attribute('calendar', 'description')} or ''")
+            + tag("endif")
+        )
         layout.rule(5, 74, 95, 74)
-        layout.text((5, 77, 95, 95), note, 6, align="left", lines=3)
+        layout.text((5, 77, 95, 95), more_events, 6, align="left", lines=3)
     else:
         layout.header(heading, "${accent}")
         layout.text((5, 23, 95, 60), title, 24, align="left", lines=2)
@@ -294,15 +366,16 @@ def calendar_layout(layout, base):
 
 def sensor_layout(layout, base):
     title, value, unit = values(base)
+    value_color = next(item["color"] for item in base if item.get("value") == value)
     layout.header(title)
     if layout.square:
         layout.icon(50, 30, "${icon}", 14)
-        layout.text((5, 39, 95, 62 if layout.detail else 77), value, 35, color="${color}")
+        layout.text((5, 39, 95, 62 if layout.detail else 77), value, 35, color=value_color)
         layout.text((5, 62 if layout.detail else 78, 95, 71 if layout.detail else 95), unit, 12)
     else:
         limit = 70 if layout.detail else 95
         layout.icon(19, (19 + limit) / 2, "${icon}", 27)
-        layout.text((33, 22, 76, limit), value, 45, color="${color}", align="right")
+        layout.text((33, 22, 76, limit), value, 45, color=value_color, align="right")
         layout.text((78, 22, 95, limit), unit, 14, align="left")
     if layout.detail:
         last = tag("set s = states['${sensor}']") + template(
@@ -342,10 +415,30 @@ def print_layout(layout, base):
                 "((minutes // 60) ~ 'h ' if minutes >= 60 else '') ~ (minutes % 60) ~ 'm' if minutes >= 0 else '—'"
             )
         )
+        temps = (
+            tag("set _ns = '${nozzle_sensor}'")
+            + tag("set _bs = '${bed_sensor}'")
+            + tag("set _nv = states(_ns) | float(none) if _ns.startswith('sensor.') else none")
+            + tag("set _bv = states(_bs) | float(none) if _bs.startswith('sensor.') else none")
+            + tag(
+                "set _nt = (_nv | round(0) | int ~ '°') if _nv is not none and _nv == _nv else '—'"
+            )
+            + tag(
+                "set _bt = (_bv | round(0) | int ~ '°') if _bv is not none and _bv == _bv else '—'"
+            )
+            + template(
+                "_nt ~ ' / ' ~ _bt if (_ns.startswith('sensor.') or _bs.startswith('sensor.')) else '—'"
+            )
+        )
         layout.row(
             71,
             95,
-            (("Status", status, None), ("ETA", finish, None), ("Remaining", remaining, None)),
+            (
+                ("Status", status, None),
+                ("ETA", finish, None),
+                ("Remaining", remaining, None),
+                ("Nozzle / Bed", temps, None),
+            ),
         )
     elif layout.square:
         layout.text((6, 69, 94, 82), status, 14)
@@ -461,10 +554,39 @@ def forecast_layout(layout, base):
     # Reuse the existing forecast parsing, condition mapping and fallbacks.
     day, high, low = values(base, "text")[:3]
     glyph = values(base, "icon")[0]
-    indices = range(7) if layout.large else range(1, 6 if layout.detail else 4)
-    if layout.detail:
+    future_filter = (
+        "set _raw = fc['${weather}'].forecast | default([], true) "
+        "if fc is defined and fc['${weather}'] is defined else [] %}"
+        "{% set _fn = namespace(rows=[], cur=false) %}"
+        "{% for _i in _raw %}{% set _dt = as_datetime(_i.datetime | default(none), none) %}"
+        "{% if _dt is not none and as_local(_dt).date() >= now().date() %}{% set _fn.cur = true %}{% break %}{% endif %}{% endfor %}"
+        "{% if _fn.cur %}{% for _i in _raw %}{% set _dt = as_datetime(_i.datetime | default(none), none) %}"
+        "{% if _dt is none or as_local(_dt).date() >= now().date() %}{% set _fn.rows = _fn.rows + [_i] %}{% endif %}{% endfor %}"
+        "{% set f = _fn.rows %}{% else %}{% set f = _raw %}{% endif"
+    )
+    day = day.replace(
+        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
+        future_filter,
+    )
+    high = high.replace(
+        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
+        future_filter,
+    )
+    low = low.replace(
+        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
+        future_filter,
+    )
+    glyph = glyph.replace(
+        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
+        future_filter,
+    )
+
+    show_chance = layout.detail or layout.medium
+    indices = range(7) if layout.large else range(1, 6 if show_chance else 4)
+    if show_chance:
         layout.text((5, 3, 48, 16), f"{len(indices)}-day forecast", 12, align="left")
-        layout.text((49, 4, 95, 16), "Low / High  ·  Precip.", 7, align="right")
+        right_label = "Low / High  ·  Precip." if layout.detail else "High · Low · Precip."
+        layout.text((49, 4, 95, 16), right_label, 7, align="right")
         layout.rule(5, 18, 95, 18)
     low_result = low.split("{{", 1)[1].split("}}", 1)[0].strip()
     high_result = high.split("{{", 1)[1].split("}}", 1)[0].strip()
@@ -483,10 +605,8 @@ def forecast_layout(layout, base):
             return value.replace("f[1]", f"f[{slot}]").replace("length > 1", f"length > {slot}")
 
         if layout.square:
-            top = (21 if layout.detail else 5) + index * (72 if layout.detail else 90) / len(
-                indices
-            )
-            bottom = top + (72 if layout.detail else 90) / len(indices)
+            top = (21 if show_chance else 5) + index * (72 if show_chance else 90) / len(indices)
+            bottom = top + (72 if show_chance else 90) / len(indices)
             mid = (top + bottom) / 2
             if index:
                 layout.rule(5, top, 95, top)
@@ -495,13 +615,17 @@ def forecast_layout(layout, base):
             if layout.detail:
                 layout.text((43, top, 71, bottom), field(temperature_pair), 9)
                 layout.text((72, top, 95, bottom), field(chance), 8)
+            elif layout.medium:
+                layout.text((42, top, 59, bottom), field(high), 10)
+                layout.text((59, top, 76, bottom), field(low), 9)
+                layout.text((77, top, 95, bottom), field(chance), 8)
             else:
                 layout.text((43, top, 68, bottom), field(high), 12)
                 layout.text((70, top, 95, bottom), field(low), 10)
         else:
             left = 5 + index * 90 / len(indices)
             right = 5 + (index + 1) * 90 / len(indices)
-            top = 20 if layout.detail else 3
+            top = 20 if show_chance else 3
             if index:
                 layout.rule(left, top + 2, left, 95)
             layout.text((left, top, right, top + 14), field(day), 9)
@@ -512,6 +636,10 @@ def forecast_layout(layout, base):
             if layout.detail:
                 layout.text((left + 0.6, 62, right - 0.6, 78), field(temperature_pair), 10)
                 layout.text((left, 80, right, 95), field(chance), 8)
+            elif layout.medium:
+                layout.text((left, 61, right, 74), field(high), 12)
+                layout.text((left, 74, right, 85), field(low), 9)
+                layout.text((left, 85, right, 96), field(chance), 8)
             else:
                 layout.text((left, 63, right, 82), field(high), 15)
                 layout.text((left, 82, right, 96), field(low), 10)
@@ -616,5 +744,5 @@ if __name__ == "__main__":
         "layouts"
     ]
     for path in sorted(DIRECTORY.glob("*.yaml")):
-        if path.name != "weather_outdoor.yaml":
+        if yaml.safe_load(path.read_text(encoding="utf-8")).get("id") in BUILDERS:
             path.write_text(generate(path, sizes), encoding="utf-8")
