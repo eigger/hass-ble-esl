@@ -116,3 +116,135 @@ layouts:
       eclevel: m
       border: 1
       color: black
+  # BEGIN GENERATED SIZE LAYOUTS
+  200x200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 10, y: 4, width: 180, height: 30, size: 30, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 10, y: 158, width: 180, height: 30, size: 22, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 42, y: 36, width: 116, height: 116, boxsize: 1, eclevel: m, border: 4, color: black}
+  240x416:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 8, width: 216, height: 63, size: 63, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 12, y: 329, width: 216, height: 62, size: 26, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 21, y: 75, width: 197, height: 197, boxsize: 1, eclevel: m, border: 4, color: black}
+  212x104:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 102, y: 9, width: 102, height: 32, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 104, y: 45, width: 97, height: 47, size: 11, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 5, y: 6, width: 92, height: 92, boxsize: 1, eclevel: m, border: 4, color: black}
+  104x212:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 5, y: 4, width: 94, height: 32, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 5, y: 167, width: 94, height: 32, size: 11, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 9, y: 38, width: 85, height: 85, boxsize: 1, eclevel: m, border: 4, color: black}
+  250x122:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 120, y: 11, width: 120, height: 37, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 122, y: 52, width: 116, height: 55, size: 13, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 6, y: 7, width: 107, height: 107, boxsize: 1, eclevel: m, border: 4, color: black}
+  122x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 5, width: 110, height: 37, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 6, y: 198, width: 110, height: 37, size: 13, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 11, y: 45, width: 100, height: 100, boxsize: 1, eclevel: m, border: 4, color: black}
+  128x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 5, width: 116, height: 37, size: 35, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 6, y: 198, width: 116, height: 37, size: 14, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 11, y: 45, width: 105, height: 105, boxsize: 1, eclevel: m, border: 4, color: black}
+  250x132:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 120, y: 12, width: 120, height: 39, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 122, y: 57, width: 116, height: 59, size: 15, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 5, y: 11, width: 110, height: 110, boxsize: 1, eclevel: m, border: 4, color: black}
+  132x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 5, width: 118, height: 37, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 7, y: 198, width: 118, height: 37, size: 15, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 12, y: 45, width: 108, height: 108, boxsize: 1, eclevel: m, border: 4, color: black}
+  296x128:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 142, y: 12, width: 142, height: 38, size: 35, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 145, y: 55, width: 136, height: 58, size: 14, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 14, y: 7, width: 113, height: 113, boxsize: 1, eclevel: m, border: 4, color: black}
+  128x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 6, width: 116, height: 44, size: 35, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 6, y: 234, width: 116, height: 44, size: 14, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 11, y: 53, width: 105, height: 105, boxsize: 1, eclevel: m, border: 4, color: black}
+  296x152:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 142, y: 14, width: 142, height: 45, size: 41, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 145, y: 65, width: 136, height: 69, size: 17, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 6, y: 11, width: 130, height: 130, boxsize: 1, eclevel: m, border: 4, color: black}
+  152x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 8, y: 6, width: 136, height: 44, size: 41, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 8, y: 234, width: 136, height: 44, size: 17, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 13, y: 53, width: 125, height: 125, boxsize: 1, eclevel: m, border: 4, color: black}
+  384x184:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 184, y: 17, width: 185, height: 55, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 188, y: 79, width: 177, height: 83, size: 20, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 11, y: 11, width: 162, height: 162, boxsize: 1, eclevel: m, border: 4, color: black}
+  184x384:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 9, y: 8, width: 166, height: 57, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 9, y: 303, width: 166, height: 58, size: 20, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 16, y: 69, width: 151, height: 151, boxsize: 1, eclevel: m, border: 4, color: black}
+  416x240:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 200, y: 22, width: 199, height: 72, size: 65, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 204, y: 103, width: 191, height: 108, size: 26, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 8, y: 28, width: 183, height: 183, boxsize: 1, eclevel: m, border: 4, color: black}
+  300x400:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 8, width: 270, height: 60, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 15, y: 276, width: 270, height: 40, size: 33, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 15, y: 316, width: 270, height: 40, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 15, y: 360, width: 270, height: 28, size: 21, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 50, y: 72, width: 200, height: 200, boxsize: 1, eclevel: m, border: 4, color: black}
+  648x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 311, y: 43, width: 311, height: 144, size: 130, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 318, y: 206, width: 298, height: 96, size: 53, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 318, y: 331, width: 298, height: 82, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 318, y: 418, width: 298, height: 48, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 13, y: 97, width: 285, height: 285, boxsize: 1, eclevel: m, border: 4, color: black}
+  480x648:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 13, width: 432, height: 97, size: 97, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 24, y: 447, width: 432, height: 65, size: 53, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 24, y: 512, width: 432, height: 65, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 24, y: 583, width: 432, height: 46, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 78, y: 117, width: 324, height: 324, boxsize: 1, eclevel: m, border: 4, color: black}
+  800x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 384, y: 43, width: 384, height: 144, size: 130, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 392, y: 206, width: 368, height: 96, size: 53, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 392, y: 331, width: 368, height: 82, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 392, y: 418, width: 368, height: 48, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 16, y: 64, width: 352, height: 352, boxsize: 1, eclevel: m, border: 4, color: black}
+  480x800:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 16, width: 432, height: 120, size: 120, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 24, y: 552, width: 432, height: 80, size: 53, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 24, y: 632, width: 432, height: 80, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 24, y: 720, width: 432, height: 56, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 43, y: 144, width: 394, height: 394, boxsize: 1, eclevel: m, border: 4, color: black}
+  960x640:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 461, y: 58, width: 461, height: 192, size: 173, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 470, y: 275, width: 442, height: 128, size: 70, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 470, y: 442, width: 442, height: 108, size: 77, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 470, y: 557, width: 442, height: 64, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 19, y: 109, width: 422, height: 422, boxsize: 1, eclevel: m, border: 4, color: black}
+  640x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 19, width: 576, height: 144, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 32, y: 662, width: 576, height: 96, size: 70, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 32, y: 758, width: 576, height: 96, size: 77, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 32, y: 864, width: 576, height: 67, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 80, y: 173, width: 480, height: 480, boxsize: 1, eclevel: m, border: 4, color: black}
+  960x680:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 461, y: 61, width: 461, height: 204, size: 184, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 470, y: 292, width: 442, height: 136, size: 75, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 470, y: 469, width: 442, height: 116, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 470, y: 592, width: 442, height: 68, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 19, y: 129, width: 422, height: 422, boxsize: 1, eclevel: m, border: 4, color: black}
+  680x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 34, y: 19, width: 612, height: 144, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 34, y: 662, width: 612, height: 96, size: 75, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 34, y: 758, width: 612, height: 96, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 34, y: 864, width: 612, height: 67, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 100, y: 173, width: 480, height: 480, boxsize: 1, eclevel: m, border: 4, color: black}
+  1600x1200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 768, y: 108, width: 768, height: 360, size: 324, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 784, y: 516, width: 736, height: 240, size: 132, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 784, y: 828, width: 736, height: 204, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 784, y: 1044, width: 736, height: 120, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 32, y: 248, width: 704, height: 704, boxsize: 1, eclevel: m, border: 4, color: black}
+  1200x1600:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 60, y: 32, width: 1080, height: 240, size: 240, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 60, y: 1104, width: 1080, height: 160, size: 132, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 60, y: 1264, width: 1080, height: 160, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 60, y: 1440, width: 1080, height: 112, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 200, y: 288, width: 800, height: 800, boxsize: 1, eclevel: m, border: 4, color: black}
+  # END GENERATED SIZE LAYOUTS

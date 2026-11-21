@@ -120,6 +120,247 @@ layouts:
       align: center
       valign: middle
       color: black
+  # BEGIN GENERATED SIZE LAYOUTS
+  200x200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 10, y: 6, width: 180, height: 28, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 10, y_start: 38, x_end: 190, y_end: 38, width: 1, fill: black}
+    - {type: text_fit, value: &id001 '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ ''--'' if n is none else (''D-Day'' if n == 0 else (''D-'' ~ n if n > 0 else ''D+'' ~ (0 - n))) }}', font: '${font}', x: 10, y: 44, width: 180, height: 106, size: 92, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: &id002 '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{% set n = (t.date() - now().date()).days if t else none %}{{ ''${alert_color}'' if n is not none and n <= ${alert_days} else ''black'' }}'}
+    - {type: line, x_start: 10, y_start: 154, x_end: 190, y_end: 154, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 10, y: 158, width: 180, height: 34, size: 30, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  240x416:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 12, width: 216, height: 59, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 79, x_end: 228, y_end: 79, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 12, y: 92, width: 216, height: 220, size: 110, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 12, y_start: 320, x_end: 228, y_end: 320, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 12, y: 329, width: 216, height: 70, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  212x104:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 11, y: 3, width: 190, height: 15, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 11, y_start: 20, x_end: 201, y_end: 20, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 11, y: 23, width: 190, height: 55, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 11, y_start: 80, x_end: 201, y_end: 80, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 11, y: 82, width: 190, height: 18, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  104x212:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 5, y: 6, width: 94, height: 30, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 5, y_start: 40, x_end: 99, y_end: 40, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 5, y: 47, width: 94, height: 112, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 5, y_start: 163, x_end: 99, y_end: 163, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 5, y: 167, width: 94, height: 37, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x122:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 4, width: 226, height: 17, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 23, x_end: 238, y_end: 23, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 12, y: 27, width: 226, height: 65, size: 56, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 12, y_start: 94, x_end: 238, y_end: 94, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 12, y: 96, width: 226, height: 21, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  122x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 8, width: 110, height: 34, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 48, x_end: 116, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 55, width: 110, height: 133, size: 56, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 6, y_start: 192, x_end: 116, y_end: 192, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 6, y: 198, width: 110, height: 42, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  128x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 8, width: 116, height: 34, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 48, x_end: 122, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 55, width: 116, height: 133, size: 59, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 6, y_start: 192, x_end: 122, y_end: 192, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 6, y: 198, width: 116, height: 42, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x132:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 4, width: 226, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 25, x_end: 238, y_end: 25, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 12, y: 29, width: 226, height: 70, size: 61, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 12, y_start: 102, x_end: 238, y_end: 102, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 12, y: 104, width: 226, height: 23, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  132x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 8, width: 118, height: 34, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 7, y_start: 48, x_end: 125, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 7, y: 55, width: 118, height: 133, size: 61, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 7, y_start: 192, x_end: 125, y_end: 192, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 7, y: 198, width: 118, height: 42, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x128:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 4, width: 266, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 24, x_end: 281, y_end: 24, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 15, y: 28, width: 266, height: 68, size: 59, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 15, y_start: 99, x_end: 281, y_end: 99, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 15, y: 101, width: 266, height: 22, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  128x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 9, width: 116, height: 41, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 56, x_end: 122, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 65, width: 116, height: 157, size: 59, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 6, y_start: 228, x_end: 122, y_end: 228, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 6, y: 234, width: 116, height: 50, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x152:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 5, width: 266, height: 21, size: 21, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 29, x_end: 281, y_end: 29, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 15, y: 33, width: 266, height: 81, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 15, y_start: 117, x_end: 281, y_end: 117, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 15, y: 120, width: 266, height: 26, size: 23, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  152x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 8, y: 9, width: 136, height: 41, size: 23, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 8, y_start: 56, x_end: 144, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 8, y: 65, width: 136, height: 157, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 8, y_start: 228, x_end: 144, y_end: 228, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 8, y: 234, width: 136, height: 50, size: 23, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  384x184:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 19, y: 6, width: 346, height: 25, size: 25, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 19, y_start: 35, x_end: 365, y_end: 35, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 19, y: 40, width: 346, height: 98, size: 85, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 19, y_start: 142, x_end: 365, y_end: 142, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 19, y: 145, width: 346, height: 32, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  184x384:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 9, y: 12, width: 166, height: 53, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 9, y_start: 73, x_end: 175, y_end: 73, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 9, y: 84, width: 166, height: 204, size: 85, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 9, y_start: 296, x_end: 175, y_end: 296, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 9, y: 303, width: 166, height: 66, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  416x240:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 21, y: 7, width: 374, height: 34, size: 34, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 21, y_start: 46, x_end: 395, y_end: 46, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 21, y: 53, width: 374, height: 127, size: 110, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 21, y_start: 185, x_end: 395, y_end: 185, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 21, y: 190, width: 374, height: 40, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  300x400:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 15, y: 88, width: 270, height: 176, size: 138, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 15, y_start: 280, x_end: 285, y_end: 280, width: 1, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 18, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 18, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 105, y_start: 300, x_end: 105, y_end: 376, width: 1, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 108, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 108, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 195, y_start: 300, x_end: 195, y_end: 376, width: 1, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 198, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id003 '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{% set n = (t.date() - now().date()).days if t else 0 %}{{ ((n | abs) // 7) ~ ''w '' ~ ((n | abs) % 7) ~ ''d'' if t and (n | abs) >= 7 else '''' }}', font: '${font}', x: 198, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  648x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 32, y: 106, width: 584, height: 211, size: 211, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 32, y_start: 336, x_end: 616, y_end: 336, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 39, y: 389, width: 181, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 39, y: 423, width: 181, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 227, y_start: 360, x_end: 227, y_end: 451, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 233, y: 389, width: 182, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 233, y: 423, width: 182, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 421, y_start: 360, x_end: 421, y_end: 451, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 428, y: 389, width: 181, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 428, y: 423, width: 181, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x648:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 24, y: 143, width: 432, height: 285, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 24, y_start: 454, x_end: 456, y_end: 454, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 29, y: 525, width: 134, height: 42, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 29, y: 571, width: 134, height: 51, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 486, x_end: 168, y_end: 609, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 173, y: 525, width: 134, height: 42, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 173, y: 571, width: 134, height: 51, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 486, x_end: 312, y_end: 609, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 317, y: 525, width: 134, height: 42, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 317, y: 571, width: 134, height: 51, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  800x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 40, y: 106, width: 720, height: 211, size: 211, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 40, y_start: 336, x_end: 760, y_end: 336, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 48, y: 389, width: 224, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 48, y: 423, width: 224, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 280, y_start: 360, x_end: 280, y_end: 451, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 288, y: 389, width: 224, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 288, y: 423, width: 224, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 520, y_start: 360, x_end: 520, y_end: 451, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 528, y: 389, width: 224, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 528, y: 423, width: 224, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x800:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 24, y: 176, width: 432, height: 352, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 24, y_start: 560, x_end: 456, y_end: 560, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 29, y: 648, width: 134, height: 52, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 29, y: 705, width: 134, height: 63, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 600, x_end: 168, y_end: 752, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 173, y: 648, width: 134, height: 52, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 173, y: 705, width: 134, height: 63, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 600, x_end: 312, y_end: 752, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 317, y: 648, width: 134, height: 52, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 317, y: 705, width: 134, height: 63, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x640:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 48, y: 141, width: 864, height: 281, size: 281, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 48, y_start: 448, x_end: 912, y_end: 448, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 58, y: 519, width: 268, height: 41, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 58, y: 564, width: 268, height: 50, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 480, x_end: 336, y_end: 602, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 346, y: 519, width: 268, height: 41, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 346, y: 564, width: 268, height: 50, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 480, x_end: 624, y_end: 602, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 634, y: 519, width: 268, height: 41, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 634, y: 564, width: 268, height: 50, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  640x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 32, y: 211, width: 576, height: 423, size: 294, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 32, y_start: 672, x_end: 608, y_end: 672, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 38, y: 778, width: 180, height: 62, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 38, y: 847, width: 180, height: 75, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 224, y_start: 720, x_end: 224, y_end: 902, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 230, y: 778, width: 180, height: 62, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 230, y: 847, width: 180, height: 75, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 416, y_start: 720, x_end: 416, y_end: 902, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 422, y: 778, width: 180, height: 62, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 422, y: 847, width: 180, height: 75, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x680:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 48, y: 150, width: 864, height: 299, size: 299, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 48, y_start: 476, x_end: 912, y_end: 476, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 58, y: 551, width: 268, height: 44, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 58, y: 600, width: 268, height: 53, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 510, x_end: 336, y_end: 639, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 346, y: 551, width: 268, height: 44, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 346, y: 600, width: 268, height: 53, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 510, x_end: 624, y_end: 639, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 634, y: 551, width: 268, height: 44, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 634, y: 600, width: 268, height: 53, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  680x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 34, y: 211, width: 612, height: 423, size: 313, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 34, y_start: 672, x_end: 646, y_end: 672, width: 2, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 41, y: 778, width: 190, height: 62, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 41, y: 847, width: 190, height: 75, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 238, y_start: 720, x_end: 238, y_end: 902, width: 2, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 245, y: 778, width: 190, height: 62, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 245, y: 847, width: 190, height: 75, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 442, y_start: 720, x_end: 442, y_end: 902, width: 2, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 449, y: 778, width: 190, height: 62, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 449, y: 847, width: 190, height: 75, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1600x1200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 80, y: 264, width: 1440, height: 528, size: 528, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 80, y_start: 840, x_end: 1520, y_end: 840, width: 4, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 96, y: 973, width: 448, height: 77, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 96, y: 1058, width: 448, height: 94, size: 94, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 560, y_start: 900, x_end: 560, y_end: 1128, width: 4, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 576, y: 973, width: 448, height: 77, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 576, y: 1058, width: 448, height: 94, size: 94, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 1040, y_start: 900, x_end: 1040, y_end: 1128, width: 4, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 1056, y: 973, width: 448, height: 77, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 1056, y: 1058, width: 448, height: 94, size: 94, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1200x1600:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 60, y: 352, width: 1080, height: 704, size: 552, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 60, y_start: 1120, x_end: 1140, y_end: 1120, width: 4, fill: black}
+    - {type: text_fit, value: Target, font: '${font}', x: 72, y: 1297, width: 336, height: 103, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 72, y: 1411, width: 336, height: 125, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 420, y_start: 1200, x_end: 420, y_end: 1504, width: 4, fill: black}
+    - {type: text_fit, value: Weekday, font: '${font}', x: 432, y: 1297, width: 336, height: 103, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 432, y: 1411, width: 336, height: 125, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 780, y_start: 1200, x_end: 780, y_end: 1504, width: 4, fill: black}
+    - {type: text_fit, value: Interval, font: '${font}', x: 792, y: 1297, width: 336, height: 103, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id003, font: '${font}', x: 792, y: 1411, width: 336, height: 125, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  # END GENERATED SIZE LAYOUTS
 
 automation:
   triggers:

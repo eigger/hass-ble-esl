@@ -33,3 +33,336 @@ layouts:
     - {type: text, value: RED, x: 248, y: 115, size: 16, color: white, anchor: mt, font: "${font}"}
     - {type: rectangle, x_start: 301, y_start: 65, x_end: 390, y_end: 205, fill: yellow, outline: black}
     - {type: text, value: YELLOW, x: 345, y: 115, size: 16, color: black, anchor: mt, font: "${font}"}
+  # BEGIN GENERATED SIZE LAYOUTS
+  200x200:
+    - {type: rectangle, x_start: 8, y_start: 14, x_end: 95, y_end: 96, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 10, y: 14, width: 84, height: 83, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 100, y_start: 14, x_end: 187, y_end: 96, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 102, y: 14, width: 84, height: 83, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 8, y_start: 101, x_end: 95, y_end: 183, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 10, y: 101, width: 84, height: 83, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 100, y_start: 101, x_end: 187, y_end: 183, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 102, y: 101, width: 84, height: 83, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  240x416:
+    - {type: rectangle, x_start: 10, y_start: 29, x_end: 114, y_end: 201, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 12, y: 29, width: 101, height: 173, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 120, y_start: 29, x_end: 225, y_end: 201, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 122, y: 29, width: 101, height: 173, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 10, y_start: 210, x_end: 114, y_end: 382, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 12, y: 210, width: 101, height: 173, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 120, y_start: 210, x_end: 225, y_end: 382, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 122, y: 210, width: 101, height: 173, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  212x104:
+    - {type: rectangle, x_start: 8, y_start: 7, x_end: 52, y_end: 95, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 11, y: 7, width: 40, height: 89, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 57, y_start: 7, x_end: 101, y_end: 95, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 59, y: 7, width: 41, height: 89, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 106, y_start: 7, x_end: 150, y_end: 95, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 108, y: 7, width: 40, height: 89, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 155, y_start: 7, x_end: 198, y_end: 95, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 157, y: 7, width: 40, height: 89, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  104x212:
+    - {type: rectangle, x_start: 4, y_start: 15, x_end: 49, y_end: 102, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 5, y: 15, width: 44, height: 88, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 52, y_start: 15, x_end: 97, y_end: 102, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 53, y: 15, width: 44, height: 88, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 4, y_start: 107, x_end: 49, y_end: 194, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 5, y: 107, width: 44, height: 88, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 52, y_start: 107, x_end: 97, y_end: 194, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 53, y: 107, width: 44, height: 88, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x122:
+    - {type: rectangle, x_start: 10, y_start: 9, x_end: 61, y_end: 111, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 12, y: 9, width: 48, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 68, y_start: 9, x_end: 119, y_end: 111, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 70, y: 9, width: 48, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 125, y_start: 9, x_end: 177, y_end: 111, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 128, y: 9, width: 47, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 182, y_start: 9, x_end: 234, y_end: 111, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 185, y: 9, width: 47, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  122x250:
+    - {type: rectangle, x_start: 5, y_start: 18, x_end: 58, y_end: 120, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 6, y: 18, width: 51, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 61, y_start: 18, x_end: 114, y_end: 120, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 62, y: 18, width: 51, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 5, y_start: 126, x_end: 58, y_end: 229, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 6, y: 126, width: 51, height: 104, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 61, y_start: 126, x_end: 114, y_end: 229, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 62, y: 126, width: 51, height: 104, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  128x250:
+    - {type: rectangle, x_start: 5, y_start: 18, x_end: 60, y_end: 120, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 6, y: 18, width: 54, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 64, y_start: 18, x_end: 119, y_end: 120, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 65, y: 18, width: 54, height: 103, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 5, y_start: 126, x_end: 60, y_end: 229, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 6, y: 126, width: 54, height: 104, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 64, y_start: 126, x_end: 119, y_end: 229, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 65, y: 126, width: 54, height: 104, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x132:
+    - {type: rectangle, x_start: 10, y_start: 9, x_end: 61, y_end: 120, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 12, y: 9, width: 48, height: 112, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 68, y_start: 9, x_end: 119, y_end: 120, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 70, y: 9, width: 48, height: 112, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 125, y_start: 9, x_end: 177, y_end: 120, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 128, y: 9, width: 47, height: 112, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 182, y_start: 9, x_end: 234, y_end: 120, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 185, y: 9, width: 47, height: 112, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  132x250:
+    - {type: rectangle, x_start: 5, y_start: 18, x_end: 62, y_end: 120, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 7, y: 18, width: 55, height: 103, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 66, y_start: 18, x_end: 123, y_end: 120, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 67, y: 18, width: 56, height: 103, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 5, y_start: 126, x_end: 62, y_end: 229, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 7, y: 126, width: 55, height: 104, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 66, y_start: 126, x_end: 123, y_end: 229, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 67, y: 126, width: 56, height: 104, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x128:
+    - {type: rectangle, x_start: 12, y_start: 9, x_end: 73, y_end: 117, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 15, y: 9, width: 56, height: 109, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 80, y_start: 9, x_end: 141, y_end: 117, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 83, y: 9, width: 56, height: 109, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 148, y_start: 9, x_end: 209, y_end: 117, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 151, y: 9, width: 56, height: 109, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 216, y_start: 9, x_end: 277, y_end: 117, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 219, y: 9, width: 56, height: 109, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  128x296:
+    - {type: rectangle, x_start: 5, y_start: 21, x_end: 60, y_end: 143, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 6, y: 21, width: 54, height: 123, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 64, y_start: 21, x_end: 119, y_end: 143, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 65, y: 21, width: 54, height: 123, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 5, y_start: 149, x_end: 60, y_end: 271, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 6, y: 149, width: 54, height: 123, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 64, y_start: 149, x_end: 119, y_end: 271, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 65, y: 149, width: 54, height: 123, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x152:
+    - {type: rectangle, x_start: 12, y_start: 11, x_end: 73, y_end: 139, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 15, y: 11, width: 56, height: 129, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 80, y_start: 11, x_end: 141, y_end: 139, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 83, y: 11, width: 56, height: 129, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 148, y_start: 11, x_end: 209, y_end: 139, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 151, y: 11, width: 56, height: 129, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 216, y_start: 11, x_end: 277, y_end: 139, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 219, y: 11, width: 56, height: 129, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  152x296:
+    - {type: rectangle, x_start: 6, y_start: 21, x_end: 72, y_end: 143, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 8, y: 21, width: 63, height: 123, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 76, y_start: 21, x_end: 142, y_end: 143, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 78, y: 21, width: 63, height: 123, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 6, y_start: 149, x_end: 72, y_end: 271, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 8, y: 149, width: 63, height: 123, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 76, y_start: 149, x_end: 142, y_end: 271, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 78, y: 149, width: 63, height: 123, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  384x184:
+    - {type: rectangle, x_start: 15, y_start: 13, x_end: 95, y_end: 168, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 19, y: 13, width: 73, height: 156, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 104, y_start: 13, x_end: 183, y_end: 168, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 108, y: 13, width: 72, height: 156, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 192, y_start: 13, x_end: 272, y_end: 168, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 196, y: 13, width: 73, height: 156, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 280, y_start: 13, x_end: 360, y_end: 168, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 284, y: 13, width: 73, height: 156, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  184x384:
+    - {type: rectangle, x_start: 7, y_start: 27, x_end: 87, y_end: 185, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 9, y: 27, width: 77, height: 159, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 92, y_start: 27, x_end: 172, y_end: 185, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 94, y: 27, width: 77, height: 159, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 7, y_start: 194, x_end: 87, y_end: 352, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 9, y: 194, width: 77, height: 159, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 92, y_start: 194, x_end: 172, y_end: 352, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 94, y: 194, width: 77, height: 159, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  416x240:
+    - {type: rectangle, x_start: 17, y_start: 17, x_end: 103, y_end: 220, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 21, y: 17, width: 79, height: 204, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 112, y_start: 17, x_end: 199, y_end: 220, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 116, y: 17, width: 80, height: 204, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 208, y_start: 17, x_end: 294, y_end: 220, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 212, y: 17, width: 79, height: 204, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 304, y_start: 17, x_end: 390, y_end: 220, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 308, y: 17, width: 79, height: 204, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  300x400:
+    - {type: text_fit, value: 300 x 400 px, font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
+    - {type: rectangle, x_start: 12, y_start: 84, x_end: 143, y_end: 181, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 15, y: 84, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 150, y_start: 84, x_end: 281, y_end: 181, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 153, y: 84, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 12, y_start: 190, x_end: 143, y_end: 287, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 15, y: 190, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 150, y_start: 190, x_end: 281, y_end: 287, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 153, y: 190, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 324, x_end: 90, y_end: 324, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 15, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 105, y_start: 324, x_end: 180, y_end: 324, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 105, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 195, y_start: 324, x_end: 270, y_end: 324, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 195, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  648x480:
+    - {type: text_fit, value: 648 x 480 px, font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
+    - {type: rectangle, x_start: 26, y_start: 101, x_end: 161, y_end: 345, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 32, y: 101, width: 124, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 175, y_start: 101, x_end: 310, y_end: 345, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 181, y: 101, width: 124, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 324, y_start: 101, x_end: 459, y_end: 345, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 330, y: 101, width: 124, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 473, y_start: 101, x_end: 608, y_end: 345, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 480, y: 101, width: 123, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 389, x_end: 194, y_end: 389, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 32, y: 408, width: 162, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 227, y_start: 389, x_end: 389, y_end: 389, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 227, y: 408, width: 162, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 421, y_start: 389, x_end: 583, y_end: 389, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 421, y: 408, width: 162, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x648:
+    - {type: text_fit, value: 480 x 648 px, font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
+    - {type: rectangle, x_start: 19, y_start: 136, x_end: 229, y_end: 294, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 24, y: 136, width: 202, height: 159, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 240, y_start: 136, x_end: 450, y_end: 294, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 245, y: 136, width: 201, height: 159, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 19, y_start: 308, x_end: 229, y_end: 466, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 24, y: 308, width: 202, height: 159, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 240, y_start: 308, x_end: 450, y_end: 466, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 245, y: 308, width: 201, height: 159, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 525, x_end: 144, y_end: 525, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 24, y: 551, width: 120, height: 65, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 525, x_end: 288, y_end: 525, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 168, y: 551, width: 120, height: 65, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 525, x_end: 432, y_end: 525, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 312, y: 551, width: 120, height: 65, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  800x480:
+    - {type: text_fit, value: 800 x 480 px, font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
+    - {type: rectangle, x_start: 32, y_start: 101, x_end: 199, y_end: 345, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 40, y: 101, width: 152, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 216, y_start: 101, x_end: 383, y_end: 345, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 224, y: 101, width: 152, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 400, y_start: 101, x_end: 567, y_end: 345, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 408, y: 101, width: 152, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 584, y_start: 101, x_end: 751, y_end: 345, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 592, y: 101, width: 152, height: 245, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 40, y_start: 389, x_end: 240, y_end: 389, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 40, y: 408, width: 200, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 280, y_start: 389, x_end: 480, y_end: 389, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 280, y: 408, width: 200, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 520, y_start: 389, x_end: 720, y_end: 389, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 520, y: 408, width: 200, height: 48, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x800:
+    - {type: text_fit, value: 480 x 800 px, font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
+    - {type: rectangle, x_start: 19, y_start: 168, x_end: 229, y_end: 363, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 24, y: 168, width: 202, height: 196, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 240, y_start: 168, x_end: 450, y_end: 363, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 245, y: 168, width: 201, height: 196, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 19, y_start: 380, x_end: 229, y_end: 575, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 24, y: 380, width: 202, height: 196, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 240, y_start: 380, x_end: 450, y_end: 575, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 245, y: 380, width: 201, height: 196, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 648, x_end: 144, y_end: 648, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 24, y: 680, width: 120, height: 80, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 648, x_end: 288, y_end: 648, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 168, y: 680, width: 120, height: 80, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 648, x_end: 432, y_end: 648, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 312, y: 680, width: 120, height: 80, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x640:
+    - {type: text_fit, value: 960 x 640 px, font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
+    - {type: rectangle, x_start: 38, y_start: 134, x_end: 239, y_end: 460, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 48, y: 134, width: 182, height: 327, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 259, y_start: 134, x_end: 460, y_end: 460, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 269, y: 134, width: 182, height: 327, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 480, y_start: 134, x_end: 681, y_end: 460, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 490, y: 134, width: 182, height: 327, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 701, y_start: 134, x_end: 901, y_end: 460, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 710, y: 134, width: 183, height: 327, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 518, x_end: 288, y_end: 518, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 48, y: 544, width: 240, height: 64, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 518, x_end: 576, y_end: 518, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 336, y: 544, width: 240, height: 64, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 518, x_end: 864, y_end: 518, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 624, y: 544, width: 240, height: 64, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  640x960:
+    - {type: text_fit, value: 640 x 960 px, font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
+    - {type: rectangle, x_start: 26, y_start: 202, x_end: 306, y_end: 436, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 32, y: 202, width: 269, height: 235, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 320, y_start: 202, x_end: 601, y_end: 436, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 326, y: 202, width: 269, height: 235, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 26, y_start: 456, x_end: 306, y_end: 690, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 32, y: 456, width: 269, height: 235, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 320, y_start: 456, x_end: 601, y_end: 690, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 326, y: 456, width: 269, height: 235, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 778, x_end: 192, y_end: 778, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 32, y: 816, width: 160, height: 96, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 224, y_start: 778, x_end: 384, y_end: 778, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 224, y: 816, width: 160, height: 96, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 416, y_start: 778, x_end: 576, y_end: 778, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 416, y: 816, width: 160, height: 96, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x680:
+    - {type: text_fit, value: 960 x 680 px, font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
+    - {type: rectangle, x_start: 38, y_start: 143, x_end: 239, y_end: 489, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 48, y: 143, width: 182, height: 347, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 259, y_start: 143, x_end: 460, y_end: 489, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 269, y: 143, width: 182, height: 347, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 480, y_start: 143, x_end: 681, y_end: 489, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 490, y: 143, width: 182, height: 347, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 701, y_start: 143, x_end: 901, y_end: 489, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 710, y: 143, width: 183, height: 347, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 551, x_end: 288, y_end: 551, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 48, y: 578, width: 240, height: 68, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 551, x_end: 576, y_end: 551, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 336, y: 578, width: 240, height: 68, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 551, x_end: 864, y_end: 551, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 624, y: 578, width: 240, height: 68, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  680x960:
+    - {type: text_fit, value: 680 x 960 px, font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
+    - {type: rectangle, x_start: 27, y_start: 202, x_end: 325, y_end: 436, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 34, y: 202, width: 286, height: 235, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 340, y_start: 202, x_end: 638, y_end: 436, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 347, y: 202, width: 285, height: 235, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 27, y_start: 456, x_end: 325, y_end: 690, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 34, y: 456, width: 286, height: 235, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 340, y_start: 456, x_end: 638, y_end: 690, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 347, y: 456, width: 285, height: 235, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 34, y_start: 778, x_end: 204, y_end: 778, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 34, y: 816, width: 170, height: 96, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 238, y_start: 778, x_end: 408, y_end: 778, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 238, y: 816, width: 170, height: 96, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 442, y_start: 778, x_end: 612, y_end: 778, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 442, y: 816, width: 170, height: 96, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1600x1200:
+    - {type: text_fit, value: 1600 x 1200 px, font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
+    - {type: rectangle, x_start: 64, y_start: 252, x_end: 399, y_end: 863, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 80, y: 252, width: 304, height: 612, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 432, y_start: 252, x_end: 767, y_end: 863, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 448, y: 252, width: 304, height: 612, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 800, y_start: 252, x_end: 1135, y_end: 863, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 816, y: 252, width: 304, height: 612, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 1168, y_start: 252, x_end: 1503, y_end: 863, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 1184, y: 252, width: 304, height: 612, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 80, y_start: 972, x_end: 480, y_end: 972, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 80, y: 1020, width: 400, height: 120, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 560, y_start: 972, x_end: 960, y_end: 972, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 560, y: 1020, width: 400, height: 120, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 1040, y_start: 972, x_end: 1440, y_end: 972, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 1040, y: 1020, width: 400, height: 120, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1200x1600:
+    - {type: text_fit, value: 1200 x 1600 px, font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
+    - {type: rectangle, x_start: 48, y_start: 336, x_end: 575, y_end: 727, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 60, y: 336, width: 504, height: 392, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 600, y_start: 336, x_end: 1127, y_end: 727, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 612, y: 336, width: 504, height: 392, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 48, y_start: 760, x_end: 575, y_end: 1151, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 60, y: 760, width: 504, height: 392, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 600, y_start: 760, x_end: 1127, y_end: 1151, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 612, y: 760, width: 504, height: 392, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 60, y_start: 1296, x_end: 360, y_end: 1296, width: 1, fill: black}
+    - {type: text_fit, value: 1 px, font: '${font}', x: 60, y: 1360, width: 300, height: 160, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 420, y_start: 1296, x_end: 720, y_end: 1296, width: 2, fill: black}
+    - {type: text_fit, value: 2 px, font: '${font}', x: 420, y: 1360, width: 300, height: 160, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 780, y_start: 1296, x_end: 1080, y_end: 1296, width: 4, fill: black}
+    - {type: text_fit, value: 4 px, font: '${font}', x: 780, y: 1360, width: 300, height: 160, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  # END GENERATED SIZE LAYOUTS

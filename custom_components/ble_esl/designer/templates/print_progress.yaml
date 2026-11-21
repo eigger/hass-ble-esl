@@ -179,6 +179,263 @@ layouts:
       align: right
       valign: middle
       color: black
+  # BEGIN GENERATED SIZE LAYOUTS
+  200x200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 10, y: 6, width: 180, height: 28, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 10, y_start: 38, x_end: 190, y_end: 38, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 10, y: 44, width: 180, height: 70, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 12, y_start: 118, x_end: 187, y_end: 133, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 12, y: 138, width: 176, height: 26, size: 26, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 12, y: 166, width: 176, height: 28, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  240x416:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 12, width: 216, height: 59, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 79, x_end: 228, y_end: 79, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 12, y: 92, width: 216, height: 145, size: 91, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 14, y_start: 245, x_end: 225, y_end: 278, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 14, y: 287, width: 212, height: 54, size: 34, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 14, y: 345, width: 212, height: 59, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  212x104:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 11, y: 3, width: 190, height: 15, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 11, y_start: 20, x_end: 201, y_end: 20, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 11, y: 23, width: 190, height: 36, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 13, y_start: 61, x_end: 198, y_end: 69, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 13, y: 74, width: 82, height: 26, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 100, y: 74, width: 99, height: 26, size: 16, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  104x212:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 5, y: 6, width: 94, height: 30, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 5, y_start: 40, x_end: 99, y_end: 40, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 5, y: 47, width: 94, height: 74, size: 40, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 6, y_start: 125, x_end: 97, y_end: 141, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 6, y: 146, width: 92, height: 28, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 6, y: 176, width: 92, height: 30, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x122:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 4, width: 226, height: 17, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 23, x_end: 238, y_end: 23, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 12, y: 27, width: 226, height: 43, size: 43, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 15, y_start: 72, x_end: 234, y_end: 81, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 15, y: 87, width: 97, height: 30, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 118, y: 87, width: 117, height: 30, size: 18, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  122x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 8, width: 110, height: 34, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 48, x_end: 116, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 6, y: 55, width: 110, height: 87, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 7, y_start: 148, x_end: 114, y_end: 167, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 7, y: 172, width: 108, height: 33, size: 17, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 7, y: 208, width: 108, height: 34, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  128x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 8, width: 116, height: 34, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 48, x_end: 122, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 6, y: 55, width: 116, height: 87, size: 49, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 8, y_start: 148, x_end: 119, y_end: 167, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 8, y: 172, width: 112, height: 33, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 8, y: 208, width: 112, height: 34, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  250x132:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 12, y: 4, width: 226, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 25, x_end: 238, y_end: 25, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 12, y: 29, width: 226, height: 46, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 15, y_start: 78, x_end: 234, y_end: 87, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 15, y: 94, width: 97, height: 33, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 118, y: 94, width: 117, height: 33, size: 20, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  132x250:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 8, width: 118, height: 34, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 7, y_start: 48, x_end: 125, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 7, y: 55, width: 118, height: 87, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 8, y_start: 148, x_end: 123, y_end: 167, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 8, y: 172, width: 116, height: 33, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 8, y: 208, width: 116, height: 34, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x128:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 4, width: 266, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 24, x_end: 281, y_end: 24, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 15, y: 28, width: 266, height: 45, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 18, y_start: 76, x_end: 277, y_end: 85, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 18, y: 91, width: 115, height: 32, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 139, y: 91, width: 139, height: 32, size: 19, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  128x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 9, width: 116, height: 41, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 56, x_end: 122, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 6, y: 65, width: 116, height: 104, size: 49, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 8, y_start: 175, x_end: 119, y_end: 197, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 8, y: 204, width: 112, height: 39, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 8, y: 246, width: 112, height: 41, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  296x152:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 5, width: 266, height: 21, size: 21, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 29, x_end: 281, y_end: 29, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 15, y: 33, width: 266, height: 54, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 18, y_start: 90, x_end: 277, y_end: 101, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 18, y: 108, width: 115, height: 38, size: 23, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 139, y: 108, width: 139, height: 38, size: 23, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  152x296:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 8, y: 9, width: 136, height: 41, size: 23, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 8, y_start: 56, x_end: 144, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 8, y: 65, width: 136, height: 104, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 9, y_start: 175, x_end: 142, y_end: 197, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 9, y: 204, width: 134, height: 39, size: 21, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 9, y: 246, width: 134, height: 41, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  384x184:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 19, y: 6, width: 346, height: 25, size: 25, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 19, y_start: 35, x_end: 365, y_end: 35, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 19, y: 40, width: 346, height: 65, size: 65, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 23, y_start: 109, x_end: 360, y_end: 122, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 23, y: 131, width: 150, height: 46, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 180, y: 131, width: 181, height: 46, size: 28, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  184x384:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 9, y: 12, width: 166, height: 53, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 9, y_start: 73, x_end: 175, y_end: 73, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 9, y: 84, width: 166, height: 135, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 11, y_start: 227, x_end: 172, y_end: 256, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 11, y: 265, width: 162, height: 50, size: 26, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 11, y: 319, width: 162, height: 53, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  416x240:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 21, y: 7, width: 374, height: 34, size: 34, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 21, y_start: 46, x_end: 395, y_end: 46, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 21, y: 53, width: 374, height: 84, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 25, y_start: 142, x_end: 390, y_end: 160, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 25, y: 170, width: 162, height: 60, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 196, y: 170, width: 195, height: 60, size: 36, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+  300x400:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 15, y: 88, width: 270, height: 136, size: 114, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 18, y_start: 236, x_end: 281, y_end: 267, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 18, y: 318, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 18, y: 347, width: 84, height: 33, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 105, y_start: 292, x_end: 105, y_end: 372, width: 1, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 108, y: 318, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 108, y: 347, width: 84, height: 33, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 195, y_start: 292, x_end: 195, y_end: 372, width: 1, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 198, y: 318, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id001 '{% set d = as_datetime(states(''${end_time}''), none) %}{% set minutes = ((as_timestamp(d) - as_timestamp(now())) / 60) | round(0, ''ceil'') | int if d else -1 %}{{ ((minutes // 60) ~ ''h '' if minutes >= 60 else '''') ~ (minutes % 60) ~ ''m'' if minutes >= 0 else ''—'' }}', font: '${font}', x: 198, y: 347, width: 84, height: 33, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  648x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 32, y: 106, width: 584, height: 163, size: 163, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 39, y_start: 283, x_end: 608, y_end: 321, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 39, y: 381, width: 181, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 39, y: 417, width: 181, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 227, y_start: 350, x_end: 227, y_end: 446, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 233, y: 381, width: 182, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 233, y: 417, width: 182, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 421, y_start: 350, x_end: 421, y_end: 446, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 428, y: 381, width: 181, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 428, y: 417, width: 181, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x648:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 24, y: 143, width: 432, height: 220, size: 182, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 29, y_start: 382, x_end: 450, y_end: 433, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 29, y: 515, width: 134, height: 43, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 29, y: 563, width: 134, height: 53, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 473, x_end: 168, y_end: 603, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 173, y: 515, width: 134, height: 43, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 173, y: 563, width: 134, height: 53, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 473, x_end: 312, y_end: 603, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 317, y: 515, width: 134, height: 43, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 317, y: 563, width: 134, height: 53, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  800x480:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 40, y: 106, width: 720, height: 163, size: 163, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 48, y_start: 283, x_end: 751, y_end: 321, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 48, y: 381, width: 224, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 48, y: 417, width: 224, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 280, y_start: 350, x_end: 280, y_end: 446, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 288, y: 381, width: 224, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 288, y: 417, width: 224, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 520, y_start: 350, x_end: 520, y_end: 446, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 528, y: 381, width: 224, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 528, y: 417, width: 224, height: 39, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  480x800:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 24, y: 176, width: 432, height: 272, size: 182, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 29, y_start: 472, x_end: 450, y_end: 535, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 29, y: 635, width: 134, height: 54, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 29, y: 695, width: 134, height: 65, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 168, y_start: 584, x_end: 168, y_end: 744, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 173, y: 635, width: 134, height: 54, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 173, y: 695, width: 134, height: 65, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 312, y_start: 584, x_end: 312, y_end: 744, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 317, y: 635, width: 134, height: 54, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 317, y: 695, width: 134, height: 65, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x640:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 48, y: 141, width: 864, height: 217, size: 217, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 58, y_start: 378, x_end: 901, y_end: 428, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 58, y: 508, width: 268, height: 43, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 58, y: 556, width: 268, height: 52, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 467, x_end: 336, y_end: 595, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 346, y: 508, width: 268, height: 43, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 346, y: 556, width: 268, height: 52, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 467, x_end: 624, y_end: 595, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 634, y: 508, width: 268, height: 43, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 634, y: 556, width: 268, height: 52, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  640x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 32, y: 211, width: 576, height: 327, size: 243, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 38, y_start: 566, x_end: 601, y_end: 642, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 38, y: 762, width: 180, height: 65, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 38, y: 834, width: 180, height: 78, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 224, y_start: 701, x_end: 224, y_end: 893, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 230, y: 762, width: 180, height: 65, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 230, y: 834, width: 180, height: 78, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 416, y_start: 701, x_end: 416, y_end: 893, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 422, y: 762, width: 180, height: 65, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 422, y: 834, width: 180, height: 78, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  960x680:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 48, y: 150, width: 864, height: 231, size: 231, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 58, y_start: 401, x_end: 901, y_end: 455, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 58, y: 540, width: 268, height: 46, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 58, y: 591, width: 268, height: 55, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 336, y_start: 496, x_end: 336, y_end: 632, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 346, y: 540, width: 268, height: 46, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 346, y: 591, width: 268, height: 55, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 624, y_start: 496, x_end: 624, y_end: 632, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 634, y: 540, width: 268, height: 46, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 634, y: 591, width: 268, height: 55, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  680x960:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 34, y: 211, width: 612, height: 327, size: 258, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 41, y_start: 566, x_end: 638, y_end: 642, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 41, y: 762, width: 190, height: 65, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 41, y: 834, width: 190, height: 78, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 238, y_start: 701, x_end: 238, y_end: 893, width: 2, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 245, y: 762, width: 190, height: 65, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 245, y: 834, width: 190, height: 78, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 442, y_start: 701, x_end: 442, y_end: 893, width: 2, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 449, y: 762, width: 190, height: 65, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 449, y: 834, width: 190, height: 78, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1600x1200:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 80, y: 264, width: 1440, height: 408, size: 408, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 96, y_start: 708, x_end: 1503, y_end: 803, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 96, y: 953, width: 448, height: 80, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 96, y: 1042, width: 448, height: 98, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 560, y_start: 876, x_end: 560, y_end: 1116, width: 4, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 576, y: 953, width: 448, height: 80, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 576, y: 1042, width: 448, height: 98, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 1040, y_start: 876, x_end: 1040, y_end: 1116, width: 4, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 1056, y: 953, width: 448, height: 80, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 1056, y: 1042, width: 448, height: 98, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  1200x1600:
+    - {type: text_fit, value: '${title}', font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
+    - {type: text_fit, value: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}%', font: '${font}', x: 60, y: 352, width: 1080, height: 544, size: 456, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: progress_bar, x_start: 72, y_start: 944, x_end: 1127, y_end: 1071, progress: '{% set p = states(''${progress}'') | float(0) %}{% set p = p if p == p else 0 %}{{ [0, [100, p] | min] | max | round(0) | int }}', fill: '${color}', outline: black, background: white, show_percentage: false}
+    - {type: text_fit, value: Status, font: '${font}', x: 72, y: 1270, width: 336, height: 108, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ states(''${status}'') }}', font: '${font}', x: 72, y: 1389, width: 336, height: 131, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 420, y_start: 1168, x_end: 420, y_end: 1488, width: 4, fill: black}
+    - {type: text_fit, value: ETA, font: '${font}', x: 432, y: 1270, width: 336, height: 108, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '${eta_label} {% set d = as_datetime(states(''${end_time}''), none) %}{{ as_local(d).strftime(''${time_format}'') if d else ''--'' }}', font: '${font}', x: 432, y: 1389, width: 336, height: 131, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 780, y_start: 1168, x_end: 780, y_end: 1488, width: 4, fill: black}
+    - {type: text_fit, value: Remaining, font: '${font}', x: 792, y: 1270, width: 336, height: 108, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 792, y: 1389, width: 336, height: 131, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+  # END GENERATED SIZE LAYOUTS
 
 automation:
   triggers:
