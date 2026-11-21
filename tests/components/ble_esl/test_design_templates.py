@@ -1428,3 +1428,112 @@ async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientati
     with freeze_time(now, real_asyncio=True):
         for size in ((296, 128), (128, 296), (300, 400)):
             assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))
+
+
+def test_indoor_climate_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["indoor_climate"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "indoor_climate.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind == "progress_bar":
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in boxes:
+            assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+            assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        for idx in range(len(boxes)):
+            for jdx in range(idx + 1, len(boxes)):
+                i1, t1, b1 = boxes[idx]
+                i2, t2, b2 = boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+
+
+async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+
+    hass.states.async_set("sensor.temperature", "23.5", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "48", {"unit_of_measurement": "%"})
+    texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "23.5°C" in texts and "48%" in texts and "쾌적" in texts and "미설정" in texts
+
+    # Optional CO2 / PM2.5 sensors trigger ventilation alert and accent contrast across BW/BWR/BWRY.
+    hass.states.async_set("sensor.co2", "1250")
+    hass.states.async_set("sensor.pm25", "42")
+    options = {"co2_sensor": "sensor.co2", "pm25_sensor": "sensor.pm25"}
+    alert_items = resolve_templates(
+        hass, build(TEMPLATES["indoor_climate"], 800, 480, "BWR", options)["payload"], set()
+    )
+    alert_texts = [str(item.get("value", "")) for item in alert_items]
+    assert "1250 ppm" in alert_texts and "42 ug/m3" in alert_texts and "환기 권장" in alert_texts
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "red" for item in alert_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white" for item in alert_items
+    )
+
+    bwry_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in bwry_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "black" for item in bwry_items
+    )
+
+    bw_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white" for item in bw_items
+    )
+
+    # Edge cases: non-numeric / nan / inf / bool states never crash and round-trip cleanly.
+    for bad in ("unavailable", "nan", "inf", "warm", "True"):
+        hass.states.async_set("sensor.temperature", bad, {"unit_of_measurement": "°C"})
+        hass.states.async_set("sensor.humidity", bad)
+        hass.states.async_set("sensor.co2", bad)
+        hass.states.async_set("sensor.pm25", bad)
+        rendered = _shown(hass, "indoor_climate", 800, 480, options)
+        bad_texts = _texts(rendered)
+        assert "--°C" in bad_texts and "--%" in bad_texts and "센서 대기" in bad_texts
+        render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), rendered)
+
+    for w, h in ((200, 200), (212, 104), (104, 212), (384, 184), (300, 400), (800, 480)):
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["indoor_climate"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == []
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0

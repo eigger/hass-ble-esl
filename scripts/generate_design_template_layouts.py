@@ -616,5 +616,5 @@ if __name__ == "__main__":
         "layouts"
     ]
     for path in sorted(DIRECTORY.glob("*.yaml")):
-        if path.name != "weather_outdoor.yaml":
+        if path.stem in BUILDERS:
             path.write_text(generate(path, sizes), encoding="utf-8")
