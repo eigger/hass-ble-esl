@@ -103,6 +103,18 @@ STATES["weather.home"] = {
     "state": "cloudy",
     "attributes": {"friendly_name": "Weather", "temperature": 18.5, "temperature_unit": "°C"},
 }
+STATES["calendar.home"] = {
+    "entity_id": "calendar.home",
+    "state": "on",
+    "attributes": {
+        "friendly_name": "Calendar",
+        "message": "Morning standup",
+        "start_time": f"{dt_util.now().date().isoformat()} 09:30:00",
+        "end_time": f"{dt_util.now().date().isoformat()} 10:00:00",
+        "all_day": False,
+        "location": "Studio",
+    },
+}
 TEMPLATES = {}
 TAGS = [
     {
@@ -545,12 +557,39 @@ async def demo_forecasts():
 
 
 def demo_payload_variables(source, forecasts, provided=None):
-    """Make the demo's sample forecasts available just as in the real Designer."""
+    """Make the demo's sample forecasts and calendar events available just as in the real Designer."""
     variables = _preview_variable_map(provided)
+    now = dt_util.now()
+    sample_events = [
+        {
+            "summary": "Design review",
+            "start": (now + timedelta(hours=2)).isoformat(),
+            "end": (now + timedelta(hours=3)).isoformat(),
+            "location": "Studio 2",
+            "description": "Review upcoming ESL layouts.",
+        },
+        {
+            "summary": "Team sync",
+            "start": (now + timedelta(days=1, hours=1)).isoformat(),
+            "end": (now + timedelta(days=1, hours=2)).isoformat(),
+        },
+        {
+            "summary": "Release day",
+            "start": (now + timedelta(days=2)).date().isoformat(),
+            "end": (now + timedelta(days=3)).date().isoformat(),
+        },
+    ]
     for step in forecast_steps(source):
         name = step["response_variable"]
-        kind = step["data"]["type"]
-        if name not in variables:
+        if name in variables:
+            continue
+        if step["action"] == "calendar.get_events":
+            variables[name] = {
+                entity: {"events": sample_events} for entity in step["target"]["entity_id"]
+            }
+            continue
+        kind = (step.get("data") or {}).get("type")
+        if kind:
             variables[name] = {
                 entity: {"forecast": forecasts[(entity, kind)]}
                 for entity in step["target"]["entity_id"]
