@@ -289,21 +289,9 @@ layouts:
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 15, y: 24, width: 270, height: 64, size: 63, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set names = ''${weekdays}''.split('','') %}{{ names[now().weekday()] if names|length > now().weekday() else '''' }}', font: '${font}', x: 15, y: 92, width: 270, height: 64, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '{{ ''${weekend_color}'' if now().weekday() >= 5 else ''black'' }}'}
     - {type: line, x_start: 24, y_start: 160, x_end: 276, y_end: 160, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 69, y: 212, size: 57, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 120, y: 168, width: 165, height: 64, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 120, y: 232, width: 165, height: 36, size: 27, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 272, x_end: 285, y_end: 272, width: 1, fill: black}
-    - {type: icon, value: thermometer, x: 60, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Feels like, font: '${font}', x: 18, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id003 '{% set v = state_attr(''${weather}'', ''apparent_temperature'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''temperature_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 18, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 105, y_start: 284, x_end: 105, y_end: 376, width: 1, fill: black}
-    - {type: icon, value: water-percent, x: 150, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Humidity, font: '${font}', x: 108, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{% set v = state_attr(''${weather}'', ''humidity'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ ''%'' if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 108, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 195, y_start: 284, x_end: 195, y_end: 376, width: 1, fill: black}
-    - {type: icon, value: weather-windy, x: 240, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Wind, font: '${font}', x: 198, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id004 '{% set v = state_attr(''${weather}'', ''wind_speed'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''wind_speed_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 198, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 69, y: 252, size: 72, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 120, y: 192, width: 165, height: 100, size: 78, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 15, y: 304, width: 270, height: 76, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 26, y: 38, width: 311, height: 165, size: 139, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set names = ''${weekdays}''.split('','') %}{{ names[now().weekday()] if names|length > now().weekday() else '''' }}', font: '${font}', x: 32, y: 209, width: 298, height: 113, size: 113, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '{{ ''${weekend_color}'' if now().weekday() >= 5 else ''black'' }}'}
@@ -314,7 +302,7 @@ layouts:
     - {type: line, x_start: 32, y_start: 326, x_end: 616, y_end: 326, width: 2, fill: black}
     - {type: icon, value: thermometer, x: 130, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Feels like, font: '${font}', x: 39, y: 377, width: 181, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id003, font: '${font}', x: 39, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id003 '{% set v = state_attr(''${weather}'', ''apparent_temperature'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''temperature_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 39, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 227, y_start: 341, x_end: 227, y_end: 451, width: 2, fill: black}
     - {type: icon, value: water-percent, x: 324, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Humidity, font: '${font}', x: 233, y: 377, width: 182, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -322,7 +310,7 @@ layouts:
     - {type: line, x_start: 421, y_start: 341, x_end: 421, y_end: 451, width: 2, fill: black}
     - {type: icon, value: weather-windy, x: 518, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Wind, font: '${font}', x: 428, y: 377, width: 181, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id004, font: '${font}', x: 428, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id004 '{% set v = state_attr(''${weather}'', ''wind_speed'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''wind_speed_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 428, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 24, y: 39, width: 432, height: 104, size: 101, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set names = ''${weekdays}''.split('','') %}{{ names[now().weekday()] if names|length > now().weekday() else '''' }}', font: '${font}', x: 24, y: 149, width: 432, height: 104, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '{{ ''${weekend_color}'' if now().weekday() >= 5 else ''black'' }}'}

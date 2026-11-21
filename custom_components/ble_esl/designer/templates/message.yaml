@@ -84,11 +84,9 @@ layouts:
   416x240:
     - {type: text_fit, value: '${text}', font: '${font}', x: 21, y: 12, width: 374, height: 216, size: 216, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
   400x300:
-    - {type: text_fit, value: '${text}', font: '${font}', x: 20, y: 15, width: 360, height: 213, size: 213, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
-    - {type: text_fit, value: '${subtitle}', font: '${font}', x: 28, y: 240, width: 344, height: 42, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '${text}', font: '${font}', x: 20, y: 15, width: 360, height: 270, size: 270, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
   300x400:
-    - {type: text_fit, value: '${text}', font: '${font}', x: 15, y: 20, width: 270, height: 284, size: 284, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
-    - {type: text_fit, value: '${subtitle}', font: '${font}', x: 21, y: 320, width: 258, height: 56, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '${text}', font: '${font}', x: 15, y: 20, width: 270, height: 360, size: 300, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
   648x480:
     - {type: text_fit, value: '${text}', font: '${font}', x: 32, y: 24, width: 584, height: 341, size: 341, min_size: 7, max_lines: '${lines}', align: center, valign: middle, fit: shrink, color: '${color}'}
     - {type: text_fit, value: '${subtitle}', font: '${font}', x: 45, y: 384, width: 558, height: 67, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}

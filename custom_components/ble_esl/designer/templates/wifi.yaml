@@ -183,10 +183,8 @@ layouts:
     - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 8, y: 28, width: 183, height: 183, boxsize: 1, eclevel: m, border: 4, color: black}
   300x400:
     - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 8, width: 270, height: 60, size: 60, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '${hint}', font: '${font}', x: 15, y: 276, width: 270, height: 40, size: 33, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ ''${ssid}'' if ''${hidden}'' == ''false'' else '''' }}', font: '${font}', x: 15, y: 316, width: 270, height: 40, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ ''Open'' if ''${security}'' == ''nopass'' else (''WPA3'' if ''${security}'' == ''SAE'' else ''${security}'') }}', font: '${font}', x: 15, y: 360, width: 270, height: 28, size: 21, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 50, y: 72, width: 200, height: 200, boxsize: 1, eclevel: m, border: 4, color: black}
+    - {type: text_fit, value: '${hint}', font: '${font}', x: 15, y: 316, width: 270, height: 60, size: 33, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}
+    - {type: qrcode, data: 'WIFI:T:${security};S:${ssid};P:${password};H:${hidden};;', x: 34, y: 72, width: 232, height: 232, boxsize: 1, eclevel: m, border: 4, color: black}
   648x480:
     - {type: text_fit, value: '${title}', font: '${font}', x: 311, y: 43, width: 311, height: 144, size: 130, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '${hint}', font: '${font}', x: 318, y: 206, width: 298, height: 96, size: 53, min_size: 7, max_lines: 2, align: center, valign: middle, fit: shrink, color: black}

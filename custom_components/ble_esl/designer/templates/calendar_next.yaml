@@ -328,19 +328,17 @@ layouts:
   300x400:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
-    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 15, y: 84, width: 270, height: 100, size: 66, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: clock-outline, x: 24, y: 212, size: 18, anchor: mm, color: black}
-    - {type: text_fit, value: &id002 '{% set start = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set end = as_datetime(state_attr(''${calendar}'', ''end_time''), none) %}{% set all_day = state_attr(''${calendar}'', ''all_day'') %}{{ start.strftime(''${date_format}'') ~ ('''' if all_day else '' '' ~ start.strftime(''${time_format}'') ~ ('' - '' ~ end.strftime(''${time_format}'' if end.date() == start.date() else ''${date_format} ${time_format}'') if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '''')) if start else '''' }}', font: '${font}', x: 42, y: 192, width: 243, height: 40, size: 24, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: map-marker-outline, x: 24, y: 260, size: 18, anchor: mm, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 42, y: 240, width: 243, height: 40, size: 24, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 296, x_end: 285, y_end: 296, width: 1, fill: black}
-    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 15, y: 308, width: 270, height: 72, size: 18, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 15, y: 92, width: 270, height: 148, size: 72, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 27, y: 284, size: 30, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 51, y: 256, width: 234, height: 60, size: 33, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 27, y: 352, size: 30, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 51, y: 324, width: 234, height: 60, size: 33, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
     - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 32, y: 101, width: 584, height: 120, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
     - {type: icon, value: clock-outline, x: 52, y: 254, size: 29, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 91, y: 230, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id002 '{% set start = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set end = as_datetime(state_attr(''${calendar}'', ''end_time''), none) %}{% set all_day = state_attr(''${calendar}'', ''all_day'') %}{{ start.strftime(''${date_format}'') ~ ('''' if all_day else '' '' ~ start.strftime(''${time_format}'') ~ ('' - '' ~ end.strftime(''${time_format}'' if end.date() == start.date() else ''${date_format} ${time_format}'') if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '''')) if start else '''' }}', font: '${font}', x: 91, y: 230, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: icon, value: map-marker-outline, x: 52, y: 312, size: 29, anchor: mm, color: black}
     - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 91, y: 288, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 355, x_end: 616, y_end: 355, width: 2, fill: black}

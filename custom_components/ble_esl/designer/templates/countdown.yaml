@@ -220,16 +220,9 @@ layouts:
   300x400:
     - {type: text_fit, value: '${title}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 15, y: 88, width: 270, height: 176, size: 138, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
-    - {type: line, x_start: 15, y_start: 280, x_end: 285, y_end: 280, width: 1, fill: black}
-    - {type: text_fit, value: Target, font: '${font}', x: 18, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '${target}', font: '${font}', x: 18, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 105, y_start: 300, x_end: 105, y_end: 376, width: 1, fill: black}
-    - {type: text_fit, value: Weekday, font: '${font}', x: 108, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 108, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 195, y_start: 300, x_end: 195, y_end: 376, width: 1, fill: black}
-    - {type: text_fit, value: Interval, font: '${font}', x: 198, y: 324, width: 84, height: 26, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id003 '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{% set n = (t.date() - now().date()).days if t else 0 %}{{ ((n | abs) // 7) ~ ''w '' ~ ((n | abs) % 7) ~ ''d'' if t and (n | abs) >= 7 else '''' }}', font: '${font}', x: 198, y: 353, width: 84, height: 31, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 15, y: 88, width: 270, height: 212, size: 138, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id002}
+    - {type: line, x_start: 15, y_start: 308, x_end: 285, y_end: 308, width: 1, fill: black}
+    - {type: text_fit, value: '${target}', font: '${font}', x: 15, y: 316, width: 270, height: 68, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
@@ -242,7 +235,7 @@ layouts:
     - {type: text_fit, value: '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{{ t.strftime(''%A'') if t else '''' }}', font: '${font}', x: 233, y: 423, width: 182, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 421, y_start: 360, x_end: 421, y_end: 451, width: 2, fill: black}
     - {type: text_fit, value: Interval, font: '${font}', x: 428, y: 389, width: 181, height: 31, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id003, font: '${font}', x: 428, y: 423, width: 181, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id003 '{% set t = strptime(''${target}'', ''%Y-%m-%d'', none) %}{% set n = (t.date() - now().date()).days if t else 0 %}{{ ((n | abs) // 7) ~ ''w '' ~ ((n | abs) % 7) ~ ''d'' if t and (n | abs) >= 7 else '''' }}', font: '${font}', x: 428, y: 423, width: 181, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '${title}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}

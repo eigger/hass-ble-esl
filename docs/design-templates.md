@@ -19,7 +19,7 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 
 ## Bundled templates
 
-The gallery selects an exact layout by tag resolution for the 1.54- to 13.3-inch presets, including portrait and landscape orientations. Compact screens keep the key values prominent. Larger screens use the added space for details supported by the same entities. Templates keep their existing update schedules.
+The gallery selects an exact layout by tag resolution for the 1.54- to 13.3-inch presets, including portrait and landscape orientations. Compact screens keep the key values prominent. From 5.8 inches, the existing templates use the added space for details supported by the same entities in both orientations. Templates keep their existing update schedules.
 
 | Template | Main content | Added on larger screens | Automation |
 |---|---|---|---|

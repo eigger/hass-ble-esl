@@ -1382,3 +1382,49 @@ async def test_large_wifi_does_not_print_a_hidden_network_name(hass):
     assert "Private network" not in _texts(layout)
     assert "WPA3" in _texts(layout)
     assert "S:Private network;" in next(item["data"] for item in layout if item["type"] == "qrcode")
+
+
+@pytest.mark.parametrize(
+    ("short", "long", "detail"), [(300, 400, False), (480, 648, True), (480, 800, True)]
+)
+async def test_gallery_information_tier_is_preserved_when_rotating(hass, short, long, detail):
+    hass.states.async_set("sensor.temperature", "24", {"unit_of_measurement": "°C"})
+    hass.states.async_set(
+        "sensor.humidity", "47", {"friendly_name": "Humidity", "unit_of_measurement": "%"}
+    )
+    options = {"secondary_sensor": "sensor.humidity"}
+    for width, height in ((short, long), (long, short)):
+        values = _texts(_shown(hass, "sensor_card", width, height, options))
+        assert ("47 %" in values) is detail
+
+
+def test_gallery_parses_bundled_layouts_once_but_loads_user_edits(tmp_path):
+    from custom_components.ble_esl.designer import design_templates as module
+
+    module._bundled_templates.cache_clear()
+    path = tmp_path / "sample.yaml"
+    path.write_text(MINIMAL, encoding="utf-8")
+    try:
+        with patch.object(module, "load_templates", wraps=module.load_templates) as parse:
+            originals = module.load_all(tmp_path)
+            originals["date"]["layouts"].clear()
+            path.write_text(MINIMAL.replace("Sample", "Updated"), encoding="utf-8")
+            refreshed = module.load_all(tmp_path)
+            assert refreshed["date"]["layouts"]
+            assert refreshed["sample"]["name"] == "Updated"
+            assert [call.args for call in parse.call_args_list] == [(), (tmp_path,), (tmp_path,)]
+    finally:
+        module._bundled_templates.cache_clear()
+
+
+async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientations(hass):
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    now = dt_util.now().replace(hour=7, minute=15)
+    hass.states.async_set(
+        "weather.home", "sunny", {"humidity": 55, "temperature": 15, "temperature_unit": "°C"}
+    )
+    with freeze_time(now, real_asyncio=True):
+        for size in ((296, 128), (128, 296), (300, 400)):
+            assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))

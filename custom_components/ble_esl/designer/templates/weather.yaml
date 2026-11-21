@@ -169,127 +169,166 @@ layouts:
   200x200:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 8, y: 6, width: 184, height: 24, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 8, y: 32, width: 184, height: 18, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: &id001 'weather-{{ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''unknown'': ''cloudy-alert'', ''unavailable'': ''cloudy-alert''}.get(states(''${weather}''), states(''${weather}'')) }}', x: 100, y: 78, size: 48, anchor: mm, color: black}
-    - {type: text_fit, value: &id002 '{% set t = state_attr(''${weather}'', ''temperature'') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ ''--'' if r is none else (r | int if r == r | int else r) }}{{ state_attr(''${weather}'', ''temperature_unit'') or '''' }}', font: '${font}', x: 10, y: 104, width: 180, height: 52, size: 52, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 10, y: 158, width: 180, height: 32, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: &id001 'weather-{{ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''unknown'': ''cloudy-alert'', ''unavailable'': ''cloudy-alert''}.get(states(''${weather}''), states(''${weather}'')) }}', x: 100, y: 74, size: 44, anchor: mm, color: black}
+    - {type: text_fit, value: &id002 '{% set t = state_attr(''${weather}'', ''temperature'') %}{% set r = t | round(1) if t is number and t is not boolean and t == t and t | abs < 100000 else none %}{{ ''--'' if r is none else (r | int if r == r | int else r) }}{{ state_attr(''${weather}'', ''temperature_unit'') or '''' }}', font: '${font}', x: 10, y: 100, width: 180, height: 42, size: 42, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 10, y: 144, width: 180, height: 22, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 10, y_start: 168, x_end: 190, y_end: 168, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 10, y: 172, width: 86, height: 24, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 102, y: 172, width: 88, height: 24, size: 20, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   240x416:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 10, y: 12, width: 220, height: 50, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 10, y: 67, width: 220, height: 37, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 120, y: 162, size: 58, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 216, width: 216, height: 108, size: 74, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 12, y: 329, width: 216, height: 66, size: 26, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 120, y: 154, size: 53, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 208, width: 216, height: 87, size: 72, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 12, y: 300, width: 216, height: 45, size: 26, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 349, x_end: 228, y_end: 349, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 12, y: 358, width: 103, height: 50, size: 24, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 122, y: 358, width: 106, height: 50, size: 24, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   212x104:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 11, y: 3, width: 74, height: 16, size: 12, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 87, y: 3, width: 114, height: 16, size: 14, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 11, y: 3, width: 93, height: 16, size: 12, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 106, y: 3, width: 95, height: 16, size: 14, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 11, y_start: 20, x_end: 201, y_end: 20, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 45, y: 56, size: 40, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 81, y: 23, width: 120, height: 48, size: 43, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 81, y: 72, width: 120, height: 26, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 45, y: 51, size: 40, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 81, y: 23, width: 120, height: 38, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 81, y: 62, width: 120, height: 22, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 11, y_start: 87, x_end: 201, y_end: 87, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 11, y: 89, width: 91, height: 13, size: 10, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 108, y: 89, width: 93, height: 13, size: 10, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   104x212:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 4, y: 6, width: 96, height: 26, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 4, y: 34, width: 96, height: 19, size: 8, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 52, y: 83, size: 25, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 5, y: 110, width: 94, height: 55, size: 32, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 5, y: 167, width: 94, height: 34, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 52, y: 78, size: 23, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 5, y: 106, width: 94, height: 45, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 5, y: 153, width: 94, height: 23, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 5, y_start: 178, x_end: 99, y_end: 178, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 5, y: 182, width: 45, height: 26, size: 10, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 53, y: 182, width: 46, height: 26, size: 10, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   250x122:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 12, y: 4, width: 88, height: 18, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 102, y: 4, width: 136, height: 18, size: 16, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 12, y: 4, width: 110, height: 18, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 125, y: 4, width: 113, height: 18, size: 16, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 12, y_start: 23, x_end: 238, y_end: 23, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 52, y: 66, size: 46, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 95, y: 27, width: 143, height: 56, size: 50, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 95, y: 84, width: 143, height: 31, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 52, y: 60, size: 46, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 95, y: 27, width: 143, height: 45, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 95, y: 73, width: 143, height: 26, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 102, x_end: 238, y_end: 102, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 12, y: 105, width: 108, height: 15, size: 12, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 128, y: 105, width: 110, height: 15, size: 12, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   122x250:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 5, y: 8, width: 112, height: 30, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 5, y: 40, width: 112, height: 22, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 61, y: 98, size: 29, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 130, width: 110, height: 65, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 198, width: 110, height: 40, size: 13, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 61, y: 92, size: 27, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 125, width: 110, height: 53, size: 37, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 180, width: 110, height: 28, size: 13, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 210, x_end: 116, y_end: 210, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 6, y: 215, width: 53, height: 30, size: 12, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 62, y: 215, width: 54, height: 30, size: 12, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   128x250:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 5, y: 8, width: 118, height: 30, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 5, y: 40, width: 118, height: 22, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 64, y: 98, size: 31, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 130, width: 116, height: 65, size: 40, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 198, width: 116, height: 40, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 64, y: 92, size: 28, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 125, width: 116, height: 53, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 180, width: 116, height: 28, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 210, x_end: 122, y_end: 210, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 6, y: 215, width: 55, height: 30, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 65, y: 215, width: 57, height: 30, size: 13, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   250x132:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 12, y: 4, width: 88, height: 20, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 102, y: 4, width: 136, height: 20, size: 17, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 12, y: 4, width: 110, height: 20, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 125, y: 4, width: 113, height: 20, size: 17, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 12, y_start: 25, x_end: 238, y_end: 25, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 52, y: 71, size: 50, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 95, y: 29, width: 143, height: 61, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 95, y: 91, width: 143, height: 33, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 52, y: 65, size: 50, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 95, y: 29, width: 143, height: 49, size: 49, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 95, y: 79, width: 143, height: 28, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 12, y_start: 111, x_end: 238, y_end: 111, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 12, y: 114, width: 108, height: 15, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 128, y: 114, width: 110, height: 15, size: 13, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   132x250:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 5, y: 8, width: 122, height: 30, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 5, y: 40, width: 122, height: 22, size: 11, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 66, y: 98, size: 32, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 7, y: 130, width: 118, height: 65, size: 41, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 7, y: 198, width: 118, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 66, y: 92, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 7, y: 125, width: 118, height: 53, size: 40, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 7, y: 180, width: 118, height: 28, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 7, y_start: 210, x_end: 125, y_end: 210, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 7, y: 215, width: 56, height: 30, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 67, y: 215, width: 58, height: 30, size: 13, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   296x128:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 15, y: 4, width: 103, height: 19, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 121, y: 4, width: 160, height: 19, size: 17, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 15, y: 4, width: 130, height: 19, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 148, y: 4, width: 133, height: 19, size: 17, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 24, x_end: 281, y_end: 24, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 62, y: 69, size: 49, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 112, y: 28, width: 169, height: 59, size: 52, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 112, y: 88, width: 169, height: 32, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 62, y: 63, size: 49, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 112, y: 28, width: 169, height: 48, size: 48, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 112, y: 77, width: 169, height: 27, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 108, x_end: 281, y_end: 108, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 15, y: 110, width: 127, height: 15, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 151, y: 110, width: 130, height: 15, size: 13, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   128x296:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 5, y: 9, width: 118, height: 35, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 5, y: 47, width: 118, height: 27, size: 10, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 64, y: 115, size: 31, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 154, width: 116, height: 77, size: 40, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 234, width: 116, height: 47, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 64, y: 110, size: 28, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 148, width: 116, height: 62, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 6, y: 213, width: 116, height: 33, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 6, y_start: 249, x_end: 122, y_end: 249, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 6, y: 255, width: 55, height: 35, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 65, y: 255, width: 57, height: 35, size: 13, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   296x152:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 15, y: 5, width: 103, height: 22, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 121, y: 5, width: 160, height: 22, size: 20, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 15, y: 5, width: 130, height: 22, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 148, y: 5, width: 133, height: 22, size: 20, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 29, x_end: 281, y_end: 29, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 62, y: 82, size: 58, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 112, y: 33, width: 169, height: 70, size: 62, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 112, y: 105, width: 169, height: 38, size: 23, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 62, y: 74, size: 58, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 112, y: 33, width: 169, height: 57, size: 57, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 112, y: 91, width: 169, height: 32, size: 23, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 128, x_end: 281, y_end: 128, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 15, y: 131, width: 127, height: 18, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 151, y: 131, width: 130, height: 18, size: 15, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   152x296:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 6, y: 9, width: 140, height: 35, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 6, y: 47, width: 140, height: 27, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 76, y: 115, size: 36, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 8, y: 154, width: 136, height: 77, size: 47, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 8, y: 234, width: 136, height: 47, size: 17, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 76, y: 110, size: 33, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 8, y: 148, width: 136, height: 62, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 8, y: 213, width: 136, height: 33, size: 17, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 8, y_start: 249, x_end: 144, y_end: 249, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 8, y: 255, width: 65, height: 35, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 78, y: 255, width: 66, height: 35, size: 15, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   384x184:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 19, y: 6, width: 135, height: 27, size: 22, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 157, y: 6, width: 208, height: 27, size: 24, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 19, y: 6, width: 169, height: 27, size: 22, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 192, y: 6, width: 173, height: 27, size: 24, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 19, y_start: 35, x_end: 365, y_end: 35, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 81, y: 99, size: 70, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 146, y: 40, width: 219, height: 85, size: 75, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 146, y: 127, width: 219, height: 46, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 81, y: 90, size: 70, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 146, y: 40, width: 219, height: 69, size: 69, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 146, y: 110, width: 219, height: 39, size: 28, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 19, y_start: 155, x_end: 365, y_end: 155, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 19, y: 158, width: 165, height: 22, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 196, y: 158, width: 169, height: 22, size: 18, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   184x384:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 7, y: 12, width: 170, height: 46, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 7, y: 61, width: 170, height: 35, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 92, y: 150, size: 44, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 9, y: 200, width: 166, height: 100, size: 57, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 9, y: 303, width: 166, height: 62, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 92, y: 142, size: 40, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 9, y: 192, width: 166, height: 81, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 9, y: 276, width: 166, height: 43, size: 20, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 9, y_start: 323, x_end: 175, y_end: 323, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 9, y: 330, width: 79, height: 46, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 94, y: 330, width: 81, height: 46, size: 18, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   416x240:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 21, y: 7, width: 145, height: 36, size: 29, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 171, y: 7, width: 224, height: 36, size: 31, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 21, y: 7, width: 183, height: 36, size: 29, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 208, y: 7, width: 187, height: 36, size: 31, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 21, y_start: 46, x_end: 395, y_end: 46, width: 1, fill: black}
-    - {type: icon, value: *id001, x: 87, y: 130, size: 91, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 158, y: 53, width: 237, height: 110, size: 98, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 158, y: 166, width: 237, height: 60, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 87, y: 118, size: 91, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 158, y: 53, width: 237, height: 89, size: 89, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 158, y: 144, width: 237, height: 50, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 21, y_start: 202, x_end: 395, y_end: 202, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 21, y: 206, width: 179, height: 29, size: 24, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 212, y: 206, width: 183, height: 29, size: 24, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   300x400:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 12, y: 12, width: 276, height: 48, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 12, y: 64, width: 276, height: 36, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: icon, value: *id001, x: 69, y: 180, size: 78, anchor: mm, color: black}
-    - {type: text_fit, value: *id002, font: '${font}', x: 114, y: 112, width: 168, height: 100, size: 87, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 114, y: 216, width: 168, height: 48, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 272, x_end: 285, y_end: 272, width: 1, fill: black}
-    - {type: icon, value: thermometer, x: 60, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Feels like, font: '${font}', x: 18, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id003 '{% set v = state_attr(''${weather}'', ''apparent_temperature'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''temperature_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 18, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 105, y_start: 284, x_end: 105, y_end: 376, width: 1, fill: black}
-    - {type: icon, value: water-percent, x: 150, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Humidity, font: '${font}', x: 108, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{% set v = state_attr(''${weather}'', ''humidity'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ ''%'' if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 108, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 195, y_start: 284, x_end: 195, y_end: 376, width: 1, fill: black}
-    - {type: icon, value: weather-windy, x: 240, y: 298, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: Wind, font: '${font}', x: 198, y: 314, width: 84, height: 30, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id004 '{% set v = state_attr(''${weather}'', ''wind_speed'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''wind_speed_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 198, y: 347, width: 84, height: 37, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: *id001, x: 150, y: 148, size: 66, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 15, y: 200, width: 270, height: 84, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 15, y: 288, width: 270, height: 44, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 15, y_start: 336, x_end: 285, y_end: 336, width: 1, fill: black}
+    - {type: text_fit, value: '{% set h = state_attr(''${weather}'', ''humidity'') %}{{ h ~ ''%'' if h is number and h is not boolean and h == h and h | abs < 100000 else '''' }}', font: '${font}', x: 15, y: 344, width: 129, height: 48, size: 30, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''%H:%M'') }}', font: '${font}', x: 153, y: 344, width: 132, height: 48, size: 30, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
   648x480:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 32, y: 14, width: 227, height: 72, size: 58, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 266, y: 14, width: 350, height: 72, size: 62, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 32, y: 14, width: 286, height: 72, size: 58, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 324, y: 14, width: 292, height: 72, size: 62, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
     - {type: icon, value: *id001, x: 136, y: 230, size: 182, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 246, y: 106, width: 370, height: 148, size: 148, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -297,7 +336,7 @@ layouts:
     - {type: line, x_start: 32, y_start: 326, x_end: 616, y_end: 326, width: 2, fill: black}
     - {type: icon, value: thermometer, x: 130, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Feels like, font: '${font}', x: 39, y: 377, width: 181, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id003, font: '${font}', x: 39, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id003 '{% set v = state_attr(''${weather}'', ''apparent_temperature'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''temperature_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 39, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 227, y_start: 341, x_end: 227, y_end: 451, width: 2, fill: black}
     - {type: icon, value: water-percent, x: 324, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Humidity, font: '${font}', x: 233, y: 377, width: 182, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -305,10 +344,10 @@ layouts:
     - {type: line, x_start: 421, y_start: 341, x_end: 421, y_end: 451, width: 2, fill: black}
     - {type: icon, value: weather-windy, x: 518, y: 357, size: 24, anchor: mm, color: black}
     - {type: text_fit, value: Wind, font: '${font}', x: 428, y: 377, width: 181, height: 36, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id004, font: '${font}', x: 428, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id004 '{% set v = state_attr(''${weather}'', ''wind_speed'') %}{{ (v | float | round(1) | string | regex_replace(''[.]0$'', '''')) ~ '' '' ~ (state_attr(''${weather}'', ''wind_speed_unit'') or '''') if is_number(v) and v is not boolean else ''—'' }}', font: '${font}', x: 428, y: 417, width: 181, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 19, y: 19, width: 442, height: 78, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 19, y: 104, width: 442, height: 58, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 19, y: 104, width: 442, height: 58, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: icon, value: *id001, x: 110, y: 292, size: 125, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 182, y: 181, width: 269, height: 162, size: 139, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 182, y: 350, width: 269, height: 78, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -325,8 +364,8 @@ layouts:
     - {type: text_fit, value: Wind, font: '${font}', x: 317, y: 508, width: 134, height: 49, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 317, y: 563, width: 134, height: 59, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   800x480:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 40, y: 14, width: 280, height: 72, size: 58, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 328, y: 14, width: 432, height: 72, size: 62, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 40, y: 14, width: 352, height: 72, size: 58, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 400, y: 14, width: 360, height: 72, size: 62, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
     - {type: icon, value: *id001, x: 168, y: 230, size: 182, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 304, y: 106, width: 456, height: 148, size: 148, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -345,7 +384,7 @@ layouts:
     - {type: text_fit, value: *id004, font: '${font}', x: 528, y: 417, width: 224, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x800:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 19, y: 24, width: 442, height: 96, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 19, y: 128, width: 442, height: 72, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 19, y: 128, width: 442, height: 72, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: icon, value: *id001, x: 110, y: 360, size: 125, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 182, y: 224, width: 269, height: 200, size: 139, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 182, y: 432, width: 269, height: 96, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -362,8 +401,8 @@ layouts:
     - {type: text_fit, value: Wind, font: '${font}', x: 317, y: 628, width: 134, height: 60, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 317, y: 695, width: 134, height: 73, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   960x640:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 48, y: 19, width: 336, height: 96, size: 77, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 394, y: 19, width: 518, height: 96, size: 83, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 48, y: 19, width: 422, height: 96, size: 77, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 480, y: 19, width: 432, height: 96, size: 83, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
     - {type: icon, value: *id001, x: 202, y: 307, size: 243, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 365, y: 141, width: 547, height: 198, size: 198, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -382,7 +421,7 @@ layouts:
     - {type: text_fit, value: *id004, font: '${font}', x: 634, y: 556, width: 268, height: 58, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   640x960:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 26, y: 29, width: 588, height: 115, size: 77, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 26, y: 154, width: 588, height: 86, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 26, y: 154, width: 588, height: 86, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: icon, value: *id001, x: 147, y: 432, size: 166, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 243, y: 269, width: 359, height: 240, size: 186, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 243, y: 518, width: 359, height: 116, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -399,8 +438,8 @@ layouts:
     - {type: text_fit, value: Wind, font: '${font}', x: 422, y: 753, width: 180, height: 73, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 422, y: 833, width: 180, height: 89, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   960x680:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 48, y: 20, width: 336, height: 102, size: 82, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 394, y: 20, width: 518, height: 102, size: 88, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 48, y: 20, width: 422, height: 102, size: 82, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 480, y: 20, width: 432, height: 102, size: 88, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
     - {type: icon, value: *id001, x: 202, y: 326, size: 258, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 365, y: 150, width: 547, height: 210, size: 210, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -419,7 +458,7 @@ layouts:
     - {type: text_fit, value: *id004, font: '${font}', x: 634, y: 590, width: 268, height: 63, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   680x960:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 27, y: 29, width: 626, height: 115, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 27, y: 154, width: 626, height: 86, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 27, y: 154, width: 626, height: 86, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: icon, value: *id001, x: 156, y: 432, size: 177, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 258, y: 269, width: 381, height: 240, size: 197, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 258, y: 518, width: 381, height: 116, size: 75, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -436,8 +475,8 @@ layouts:
     - {type: text_fit, value: Wind, font: '${font}', x: 449, y: 753, width: 190, height: 73, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 449, y: 833, width: 190, height: 89, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   1600x1200:
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 80, y: 36, width: 560, height: 180, size: 144, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 656, y: 36, width: 864, height: 180, size: 156, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 80, y: 36, width: 704, height: 180, size: 144, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 800, y: 36, width: 720, height: 180, size: 156, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
     - {type: icon, value: *id001, x: 336, y: 576, size: 456, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 608, y: 264, width: 912, height: 372, size: 372, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
@@ -456,7 +495,7 @@ layouts:
     - {type: text_fit, value: *id004, font: '${font}', x: 1056, y: 1042, width: 448, height: 110, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   1200x1600:
     - {type: text_fit, value: '{{ state_attr(''${weather}'', ''friendly_name'') or '''' }}', font: '${font}', x: 48, y: 48, width: 1104, height: 192, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}', font: '${font}', x: 48, y: 256, width: 1104, height: 144, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{{ now().strftime(''${date_format}'') }}  {{ now().strftime(''%H:%M'') }}', font: '${font}', x: 48, y: 256, width: 1104, height: 144, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: icon, value: *id001, x: 276, y: 720, size: 312, anchor: mm, color: black}
     - {type: text_fit, value: *id002, font: '${font}', x: 456, y: 448, width: 672, height: 400, size: 348, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{{ state_translated(''${weather}'') }}', font: '${font}', x: 456, y: 864, width: 672, height: 192, size: 132, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}

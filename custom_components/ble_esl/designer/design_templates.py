@@ -1,5 +1,7 @@
 """Ready-made designs: YAML files that become designer elements and an automation."""
 
+from copy import deepcopy
+from functools import cache
 import logging
 import math
 from pathlib import Path
@@ -189,9 +191,15 @@ def load_templates(directory=TEMPLATE_DIR):
     return templates
 
 
+@cache
+def _bundled_templates():
+    """Bundled layouts are immutable for the lifetime of the running integration."""
+    return {key: {**value, "source": "bundled"} for key, value in load_templates().items()}
+
+
 def load_all(user_dir=None):
-    """Bundled templates, then the user's own; a user file cannot replace a bundled id."""
-    templates = {key: {**value, "source": "bundled"} for key, value in load_templates().items()}
+    """Reuse parsed bundled templates, and read the user's files anew."""
+    templates = deepcopy(_bundled_templates())
     if user_dir is not None and Path(user_dir).is_dir():
         for key, value in load_templates(user_dir).items():
             if key in templates:

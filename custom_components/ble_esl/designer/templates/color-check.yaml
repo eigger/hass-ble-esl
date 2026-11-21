@@ -179,22 +179,14 @@ layouts:
     - {type: rectangle, x_start: 304, y_start: 17, x_end: 390, y_end: 220, fill: yellow, outline: black}
     - {type: text_fit, value: YELLOW, font: '${font}', x: 308, y: 17, width: 79, height: 204, size: 19, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   300x400:
-    - {type: text_fit, value: 300 x 400 px, font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
-    - {type: rectangle, x_start: 12, y_start: 84, x_end: 143, y_end: 181, fill: black, outline: black}
-    - {type: text_fit, value: BLACK, font: '${font}', x: 15, y: 84, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
-    - {type: rectangle, x_start: 150, y_start: 84, x_end: 281, y_end: 181, fill: white, outline: black}
-    - {type: text_fit, value: WHITE, font: '${font}', x: 153, y: 84, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: rectangle, x_start: 12, y_start: 190, x_end: 143, y_end: 287, fill: red, outline: black}
-    - {type: text_fit, value: RED, font: '${font}', x: 15, y: 190, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
-    - {type: rectangle, x_start: 150, y_start: 190, x_end: 281, y_end: 287, fill: yellow, outline: black}
-    - {type: text_fit, value: YELLOW, font: '${font}', x: 153, y: 190, width: 126, height: 98, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 324, x_end: 90, y_end: 324, width: 1, fill: black}
-    - {type: text_fit, value: 1 px, font: '${font}', x: 15, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 105, y_start: 324, x_end: 180, y_end: 324, width: 2, fill: black}
-    - {type: text_fit, value: 2 px, font: '${font}', x: 105, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 195, y_start: 324, x_end: 270, y_end: 324, width: 4, fill: black}
-    - {type: text_fit, value: 4 px, font: '${font}', x: 195, y: 340, width: 75, height: 40, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 12, y_start: 28, x_end: 143, y_end: 193, fill: black, outline: black}
+    - {type: text_fit, value: BLACK, font: '${font}', x: 15, y: 28, width: 126, height: 166, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 150, y_start: 28, x_end: 281, y_end: 193, fill: white, outline: black}
+    - {type: text_fit, value: WHITE, font: '${font}', x: 153, y: 28, width: 126, height: 166, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: rectangle, x_start: 12, y_start: 202, x_end: 143, y_end: 367, fill: red, outline: black}
+    - {type: text_fit, value: RED, font: '${font}', x: 15, y: 202, width: 126, height: 166, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: white}
+    - {type: rectangle, x_start: 150, y_start: 202, x_end: 281, y_end: 367, fill: yellow, outline: black}
+    - {type: text_fit, value: YELLOW, font: '${font}', x: 153, y: 202, width: 126, height: 166, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: 648 x 480 px, font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}

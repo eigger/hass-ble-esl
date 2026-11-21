@@ -254,14 +254,8 @@ layouts:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 150, y: 120, size: 42, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 15, y: 156, width: 270, height: 92, size: 92, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
-    - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 15, y: 248, width: 270, height: 36, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 15, y_start: 292, x_end: 285, y_end: 292, width: 1, fill: black}
-    - {type: text_fit, value: Updated, font: '${font}', x: 18, y: 328, width: 129, height: 22, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 18, y: 353, width: 129, height: 27, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: line, x_start: 150, y_start: 308, x_end: 150, y_end: 372, width: 1, fill: black}
-    - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 153, y: 328, width: 129, height: 22, size: 14, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id001 '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.state ~ ('' '' ~ s.attributes.unit_of_measurement if s.attributes.unit_of_measurement is defined else '''') if s is not none else '''' }}', font: '${font}', x: 153, y: 353, width: 129, height: 27, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 15, y: 156, width: 270, height: 152, size: 105, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 15, y: 312, width: 270, height: 68, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
@@ -273,7 +267,7 @@ layouts:
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 39, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 324, y_start: 370, x_end: 324, y_end: 446, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 330, y: 394, width: 279, height: 26, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 330, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id001 '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.state ~ ('' '' ~ s.attributes.unit_of_measurement if s.attributes.unit_of_measurement is defined else '''') if s is not none else '''' }}', font: '${font}', x: 330, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}

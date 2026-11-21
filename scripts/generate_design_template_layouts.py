@@ -43,7 +43,7 @@ class Layout:
 
     @property
     def detail(self):
-        return min(self.width, self.height) >= 300
+        return min(self.width, self.height) >= 480
 
     @property
     def large(self):
@@ -395,32 +395,34 @@ def conditions(layout, *, bottom=96):
 
 
 def current_weather_layout(layout, base):
-    date, name, temperature, unit, state = values(base, "text")[:5]
+    date, name, temperature, unit, state, humidity, updated = values(base, "text")
     weather_icon = values(base, "icon")[0]
+    header_date = date + "  " + updated if layout.detail else date
     if layout.square:
         layout.text((4, 3, 96, 15), name, 12)
-        layout.text((4, 16, 96, 25), date, 8)
+        layout.text((4, 16, 96, 25), header_date, 8)
         if layout.detail:
             layout.icon(23, 45, weather_icon, 26)
             layout.text((38, 28, 94, 53), temperature + unit, 29)
             layout.text((38, 54, 94, 66), state, 11)
-            layout.rule(5, 68, 95, 68)
-            conditions(layout)
         else:
-            layout.icon(50, 39, weather_icon, 24)
-            layout.text((5, 52, 95, 78), temperature + unit, 31)
-            layout.text((5, 79, 95, 95), state, 11)
-
+            layout.icon(50, 37, weather_icon, 22)
+            layout.text((5, 50, 95, 71), temperature + unit, 30)
+            layout.text((5, 72, 95, 83), state, 11)
     else:
-        layout.text((5, 3, 40, 18), date, 12, align="left")
-        layout.text((41, 3, 95, 18), name, 13, align="right")
+        layout.text((5, 3, 49, 18), header_date, 12, align="left")
+        layout.text((50, 3, 95, 18), name, 13, align="right")
         layout.rule(5, 19, 95, 19)
-        layout.icon(21, 48 if layout.detail else 54, weather_icon, 38)
-        layout.text((38, 22, 95, 53 if layout.detail else 68), temperature + unit, 41)
-        layout.text((38, 54 if layout.detail else 69, 95, 66 if layout.detail else 94), state, 15)
-        if layout.detail:
-            layout.rule(5, 68, 95, 68)
-            conditions(layout)
+        layout.icon(21, 48 if layout.detail else 49, weather_icon, 38)
+        layout.text((38, 22, 95, 53 if layout.detail else 59), temperature + unit, 41)
+        layout.text((38, 54 if layout.detail else 60, 95, 66 if layout.detail else 81), state, 15)
+    if layout.detail:
+        layout.rule(5, 68, 95, 68)
+        conditions(layout)
+    else:
+        layout.rule(5, 84, 95, 84)
+        layout.text((5, 86, 48, 98), humidity, 10, align="left")
+        layout.text((51, 86, 95, 98), updated, 10, align="right")
 
 
 def date_weather_layout(layout, base):
