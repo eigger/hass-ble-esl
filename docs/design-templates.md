@@ -19,20 +19,22 @@ Bundled templates live in [`custom_components/ble_esl/designer/templates/`](../c
 
 ## Bundled templates
 
-| Template | What it makes | Layouts | Automation |
+The gallery selects an exact layout by tag resolution for the 1.54- to 13.3-inch presets, including portrait and landscape orientations. Compact screens keep the key values prominent. From 5.8 inches, the existing templates use the added space for details supported by the same entities in both orientations. Templates keep their existing update schedules.
+
+| Template | Main content | Added on larger screens | Automation |
 |---|---|---|---|
-| `date` | Month/day with the weekday below (weekend color) | 250×128, 400×300 | Daily at 12:00 |
-| `wifi` | Wi-Fi QR code (WPA, WPA3/SAE, WEP, open; hidden networks) with a title and hint | 250×128, 400×300 | none |
-| `message` | Large centred text that shrinks to fit (one line by default) | 250×128 (scaled) | none |
-| `color_check` | Black, white, red and yellow swatches | 250×128, 400×300 | none |
-| `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | 250×128, 400×300 | Every 10, 15 or 30 minutes |
-| `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | 250×128, 400×300 | Every 1, 3 or 6 hours |
-| `weather_outdoor` | Korean outdoor weather with current and low/high temperatures, rain or snow timing, a 7-day forecast from 4.2 inches, and hourly outlook from 7.5 inches | Supported tag sizes from 1.54 to 13.3 inches | Hourly |
-| `sensor_card` | Icon, title and value with unit of any `sensor` entity (title empty = the entity's name; numbers rounded to one decimal) | 250×128, 400×300 | Every 5, 10, 15 or 30 minutes |
-| `calendar_next` | The current or next event of a `calendar` entity: title, date and time, location (the entity's own attributes, so no service call) | 250×128, 400×300 | When the event changes and every 10, 15 or 30 minutes |
-| `print_progress` | A 3D printer's progress bar and percentage, status and finish time from three `sensor` entities (progress is kept between 0 and 100) | 250×128, 400×300 | Every 1, 5, 10 or 15 minutes and when the status changes |
-| `date_weather` | Today's date and weekday beside the icon, temperature and condition of a `weather` entity | 250×128, 400×300 | Every 10, 15 or 30 minutes |
-| `countdown` | Days left until a date (`D-12`, `D-Day`, `D+3`) with a title; the number turns to the alert color from a chosen number of days before the date and stays in it after the date (`--` for an invalid date) | 250×128, 400×300 | Daily at 00:05 |
+| `date` | Month/day with the weekday below (weekend color) | Year, ISO week and the current week's dates | Daily at 12:00 |
+| `wifi` | Wi-Fi QR code (WPA, WPA3/SAE, WEP, open; hidden networks) with a title and hint | Network name for visible networks and security type | none |
+| `message` | Large centred text that shrinks to fit (one line by default) | Optional second line | none |
+| `color_check` | Black, white, red and yellow swatches | Resolution and 1, 2 and 4 px line samples | none |
+| `weather_now` | Icon, temperature, condition and humidity of a chosen `weather` entity (missing values show `--` or nothing) | Feels-like temperature, humidity and wind | Every 10, 15 or 30 minutes |
+| `weather_forecast` | The next three days of a `weather` entity's daily forecast: weekday, icon, high and low (`--` until the forecast is fetched) | Five or seven forecast days with precipitation probability | Every 1, 3 or 6 hours |
+| `weather_outdoor` | Korean outdoor weather with current and low/high temperatures, rain or snow timing, a 7-day forecast from 4.2 inches, and hourly outlook from 7.5 inches | 7-day outlook from 4.2 inches and time slots from 7.5 inches | Hourly |
+| `sensor_card` | Icon, title and value with unit of any `sensor` entity (title empty = the entity's name; numbers rounded to one decimal) | Last update and an optional second sensor reading | Every 5, 10, 15 or 30 minutes |
+| `calendar_next` | The current or next event of a `calendar` entity: title, date and time, location (the entity's own attributes, so no service call) | End time and description when supplied | When the event changes and every 10, 15 or 30 minutes |
+| `print_progress` | A 3D printer's progress bar and percentage, status and finish time from three `sensor` entities (progress is kept between 0 and 100) | Estimated time remaining | Every 1, 5, 10 or 15 minutes and when the status changes |
+| `date_weather` | Today's date and weekday beside the icon, temperature and condition of a `weather` entity | Feels-like temperature, humidity and wind | Every 10, 15 or 30 minutes |
+| `countdown` | Days left until a date (`D-12`, `D-Day`, `D+3`) with a title; the number turns to the alert color from a chosen number of days before the date and stays in it after the date (`--` for an invalid date) | Target weekday and interval in weeks and days | Daily at 00:05 |
 
 The designer saves a plain payload, so a service response is read by the payload's own templates: `weather_forecast` reads `fc`, the `response_variable` of the `weather.get_forecasts` step in its `automation.actions`. The Designer previews such a design with the real daily forecast of the weather entity it names (fetched for the preview only), and adds that step to a new automation made from it; saving into an existing automation that has no such step asks first whether to add it. Examples that build their elements with a loop (presence) are not templates: a template carries a fixed payload. `calendar_next` reads the calendar entity's own attributes (the current or next event) instead of fetching a list of events, so it needs no service step. A single entity can be a parameter, as `weather_now` does.
 

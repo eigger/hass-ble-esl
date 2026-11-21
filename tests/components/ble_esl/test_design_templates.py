@@ -414,8 +414,8 @@ def test_wifi_text_does_not_overlap_the_qr_code():
         qr = next(_frame(item) for item in items if item["type"] == "qrcode")
         for item in items:
             if item["type"] == "text_fit":
-                left, _, right, _ = _frame(item)
-                assert left >= qr[2] or right <= qr[0], size
+                left, top, right, bottom = _frame(item)
+                assert left >= qr[2] or right <= qr[0] or top >= qr[3] or bottom <= qr[1], size
 
 
 def test_message_text_and_line_count_are_applied():
@@ -1310,3 +1310,121 @@ async def test_outdoor_weather_automation_fetches_both_forecasts_once(hass, woli
         ]
         assert [step["data"]["type"] for step in actions[:2]] == ["daily", "hourly"]
         assert all(step["continue_on_error"] for step in actions[:2])
+
+
+@pytest.mark.parametrize("template_id", sorted(set(TEMPLATES) - {"weather_outdoor"}))
+@pytest.mark.parametrize("size", sorted(TEMPLATES["weather_outdoor"]["layouts"]))
+async def test_existing_templates_cover_all_gallery_sizes(hass, template_id, size):
+    width, height = map(int, size.split("x"))
+    template = TEMPLATES[template_id]
+    preset = DevicePreset("gallery", "gallery", width, height, "BWR")
+    seed_entities(hass, template)
+    built = build(template, width, height, "BWR")
+    assert built["layout"] == size and not built["scaled"]
+    elements, imported, issues = elements_from(built["payload"], preset)
+    assert issues == []
+    assert len(elements) == len(built["payload"])
+    original, rebuilt = stable_template_payloads(hass, imported, elements)
+    assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
+
+
+async def test_large_calendar_adds_end_time_and_optional_details(hass):
+    event = {
+        "message": "Project review",
+        "start_time": "2026-11-02 14:30:00",
+        "end_time": "2026-11-02 16:00:00",
+        "location": "Studio 2",
+        "description": "Bring the drawings.",
+    }
+    hass.states.async_set("calendar.home", "on", event)
+    assert {"11/02 14:30 - 16:00", "Bring the drawings."} <= set(
+        _texts(_shown(hass, "calendar_next", 800, 480))
+    )
+    hass.states.async_set("calendar.home", "on", {**event, "all_day": True})
+    assert "11/02" in _texts(_shown(hass, "calendar_next", 480, 800))
+    assert not any("16:00" in value for value in _texts(_shown(hass, "calendar_next", 480, 800)))
+
+
+async def test_large_forecast_uses_seven_days_with_precipitation(hass):
+    forecast = [
+        {
+            "temperature": index + 10,
+            "templow": index + 3,
+            "condition": "partlycloudy",
+            "precipitation_probability": index * 10,
+        }
+        for index in range(7)
+    ]
+    built = build(TEMPLATES["weather_forecast"], 960, 640, "BW")
+    shown = _texts(
+        resolve_templates(
+            hass, built["payload"], set(), {"fc": {"weather.home": {"forecast": forecast}}}
+        )
+    )
+    assert {"3° / 10°", "9° / 16°", "0%", "60%"} <= set(shown)
+
+
+async def test_large_sensor_optional_second_reading_and_compact_message(hass):
+    hass.states.async_set("sensor.temperature", "24", {"unit_of_measurement": "°C"})
+    hass.states.async_set(
+        "sensor.humidity", "47", {"friendly_name": "Humidity", "unit_of_measurement": "%"}
+    )
+    values = _texts(_shown(hass, "sensor_card", 800, 480, {"secondary_sensor": "sensor.humidity"}))
+    assert {"24", "°C", "Humidity", "47 %"} <= set(values)
+    given = {"text": "Welcome", "subtitle": "Front desk"}
+    assert _texts(_shown(hass, "message", 296, 128, given)) == ["Welcome"]
+    assert _texts(_shown(hass, "message", 800, 480, given)) == ["Welcome", "Front desk"]
+
+
+async def test_large_wifi_does_not_print_a_hidden_network_name(hass):
+    given = {"ssid": "Private network", "security": "SAE", "hidden": "true"}
+    layout = _shown(hass, "wifi", 480, 800, given)
+    assert "Private network" not in _texts(layout)
+    assert "WPA3" in _texts(layout)
+    assert "S:Private network;" in next(item["data"] for item in layout if item["type"] == "qrcode")
+
+
+@pytest.mark.parametrize(
+    ("short", "long", "detail"), [(300, 400, False), (480, 648, True), (480, 800, True)]
+)
+async def test_gallery_information_tier_is_preserved_when_rotating(hass, short, long, detail):
+    hass.states.async_set("sensor.temperature", "24", {"unit_of_measurement": "°C"})
+    hass.states.async_set(
+        "sensor.humidity", "47", {"friendly_name": "Humidity", "unit_of_measurement": "%"}
+    )
+    options = {"secondary_sensor": "sensor.humidity"}
+    for width, height in ((short, long), (long, short)):
+        values = _texts(_shown(hass, "sensor_card", width, height, options))
+        assert ("47 %" in values) is detail
+
+
+def test_gallery_parses_bundled_layouts_once_but_loads_user_edits(tmp_path):
+    from custom_components.ble_esl.designer import design_templates as module
+
+    module._bundled_templates.cache_clear()
+    path = tmp_path / "sample.yaml"
+    path.write_text(MINIMAL, encoding="utf-8")
+    try:
+        with patch.object(module, "load_templates", wraps=module.load_templates) as parse:
+            originals = module.load_all(tmp_path)
+            originals["date"]["layouts"].clear()
+            path.write_text(MINIMAL.replace("Sample", "Updated"), encoding="utf-8")
+            refreshed = module.load_all(tmp_path)
+            assert refreshed["date"]["layouts"]
+            assert refreshed["sample"]["name"] == "Updated"
+            assert [call.args for call in parse.call_args_list] == [(), (tmp_path,), (tmp_path,)]
+    finally:
+        module._bundled_templates.cache_clear()
+
+
+async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientations(hass):
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    now = dt_util.now().replace(hour=7, minute=15)
+    hass.states.async_set(
+        "weather.home", "sunny", {"humidity": 55, "temperature": 15, "temperature_unit": "°C"}
+    )
+    with freeze_time(now, real_asyncio=True):
+        for size in ((296, 128), (128, 296), (300, 400)):
+            assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))

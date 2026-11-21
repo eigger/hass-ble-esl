@@ -196,6 +196,244 @@ layouts:
       align: left
       valign: middle
       color: black
+  # BEGIN GENERATED SIZE LAYOUTS
+  200x200:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 10, y: 6, width: 180, height: 28, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 10, y_start: 38, x_end: 190, y_end: 38, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 10, y: 46, width: 180, height: 74, size: 48, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 18, y: 142, size: 20, anchor: mm, color: black}
+    - {type: text_fit, value: &id001 '{% set a = state_attr(''${calendar}'', ''start_time'') %}{% set d = as_datetime(a, none) if a else none %}{{ '''' if d is none else (d.strftime(''${date_format}'') if state_attr(''${calendar}'', ''all_day'') else d.strftime(''${date_format} ${time_format}'')) }}', font: '${font}', x: 34, y: 128, width: 156, height: 30, size: 22, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 18, y: 176, size: 20, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 34, y: 162, width: 156, height: 30, size: 22, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  240x416:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 12, y: 12, width: 216, height: 59, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 12, y_start: 79, x_end: 228, y_end: 79, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 12, y: 96, width: 216, height: 154, size: 58, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 22, y: 295, size: 24, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 41, y: 266, width: 187, height: 63, size: 26, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 22, y: 366, size: 24, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 41, y: 337, width: 187, height: 62, size: 26, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  212x104:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 11, y: 3, width: 190, height: 15, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 11, y_start: 20, x_end: 201, y_end: 20, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 11, y: 24, width: 190, height: 38, size: 25, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 19, y: 74, size: 10, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 36, y: 67, width: 165, height: 15, size: 11, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 19, y: 92, size: 10, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 36, y: 84, width: 165, height: 16, size: 11, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  104x212:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 5, y: 6, width: 94, height: 30, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 5, y_start: 40, x_end: 99, y_end: 40, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 5, y: 49, width: 94, height: 78, size: 25, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 9, y: 151, size: 10, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 18, y: 136, width: 81, height: 31, size: 11, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 9, y: 187, size: 10, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 18, y: 172, width: 81, height: 32, size: 11, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  250x122:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 12, y: 4, width: 226, height: 17, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 12, y_start: 23, x_end: 238, y_end: 23, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 12, y: 28, width: 226, height: 45, size: 29, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 22, y: 87, size: 12, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 42, y: 78, width: 196, height: 18, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 22, y: 107, size: 12, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 42, y: 99, width: 196, height: 18, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  122x250:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 6, y: 8, width: 110, height: 34, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 6, y_start: 48, x_end: 116, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 6, y: 58, width: 110, height: 92, size: 29, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 11, y: 178, size: 12, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 21, y: 160, width: 95, height: 38, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 11, y: 220, size: 12, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 21, y: 202, width: 95, height: 38, size: 13, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  128x250:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 6, y: 8, width: 116, height: 34, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 6, y_start: 48, x_end: 122, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 6, y: 58, width: 116, height: 92, size: 31, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 12, y: 178, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 22, y: 160, width: 100, height: 38, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 12, y: 220, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 22, y: 202, width: 100, height: 38, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  250x132:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 12, y: 4, width: 226, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 12, y_start: 25, x_end: 238, y_end: 25, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 12, y: 30, width: 226, height: 49, size: 32, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 22, y: 94, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 42, y: 84, width: 196, height: 20, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 22, y: 116, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 42, y: 107, width: 196, height: 20, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  132x250:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 7, y: 8, width: 118, height: 34, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 7, y_start: 48, x_end: 125, y_end: 48, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 7, y: 58, width: 118, height: 92, size: 32, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 12, y: 178, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 22, y: 160, width: 103, height: 38, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 12, y: 220, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 22, y: 202, width: 103, height: 38, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  296x128:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 15, y: 4, width: 266, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 15, y_start: 24, x_end: 281, y_end: 24, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 15, y: 29, width: 266, height: 48, size: 31, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 27, y: 91, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 50, y: 82, width: 231, height: 19, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 27, y: 113, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 50, y: 104, width: 231, height: 19, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  128x296:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 6, y: 9, width: 116, height: 41, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 6, y_start: 56, x_end: 122, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 6, y: 68, width: 116, height: 110, size: 31, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 12, y: 210, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 22, y: 189, width: 100, height: 45, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 12, y: 260, size: 13, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 22, y: 240, width: 100, height: 44, size: 14, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  296x152:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 15, y: 5, width: 266, height: 21, size: 21, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 15, y_start: 29, x_end: 281, y_end: 29, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 15, y: 35, width: 266, height: 56, size: 36, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 27, y: 108, size: 15, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 50, y: 97, width: 231, height: 23, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 27, y: 134, size: 15, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 50, y: 123, width: 231, height: 23, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  152x296:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 8, y: 9, width: 136, height: 41, size: 23, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 8, y_start: 56, x_end: 144, y_end: 56, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 8, y: 68, width: 136, height: 110, size: 36, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 14, y: 210, size: 15, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 26, y: 189, width: 118, height: 45, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 14, y: 260, size: 15, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 26, y: 240, width: 118, height: 44, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  384x184:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 19, y: 6, width: 346, height: 25, size: 25, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 19, y_start: 35, x_end: 365, y_end: 35, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 19, y: 42, width: 346, height: 68, size: 44, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 35, y: 131, size: 18, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 65, y: 118, width: 300, height: 27, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 35, y: 162, size: 18, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 65, y: 149, width: 300, height: 28, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  184x384:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 9, y: 12, width: 166, height: 53, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 9, y_start: 73, x_end: 175, y_end: 73, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 9, y: 88, width: 166, height: 142, size: 44, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 17, y: 273, size: 18, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 31, y: 246, width: 144, height: 57, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 17, y: 338, size: 18, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 31, y: 311, width: 144, height: 58, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  416x240:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 21, y: 7, width: 374, height: 34, size: 34, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 21, y_start: 46, x_end: 395, y_end: 46, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 21, y: 55, width: 374, height: 89, size: 58, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 37, y: 170, size: 24, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 71, y: 154, width: 324, height: 36, size: 26, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 37, y: 211, size: 24, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 71, y: 194, width: 324, height: 36, size: 26, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  300x400:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 15, y: 92, width: 270, height: 148, size: 72, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 27, y: 284, size: 30, anchor: mm, color: black}
+    - {type: text_fit, value: *id001, font: '${font}', x: 51, y: 256, width: 234, height: 60, size: 33, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 27, y: 352, size: 30, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 51, y: 324, width: 234, height: 60, size: 33, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+  648x480:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 32, y: 101, width: 584, height: 120, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 52, y: 254, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: &id002 '{% set start = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set end = as_datetime(state_attr(''${calendar}'', ''end_time''), none) %}{% set all_day = state_attr(''${calendar}'', ''all_day'') %}{{ start.strftime(''${date_format}'') ~ ('''' if all_day else '' '' ~ start.strftime(''${time_format}'') ~ ('' - '' ~ end.strftime(''${time_format}'' if end.date() == start.date() else ''${date_format} ${time_format}'') if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '''')) if start else '''' }}', font: '${font}', x: 91, y: 230, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 52, y: 312, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 91, y: 288, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 355, x_end: 616, y_end: 355, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 32, y: 370, width: 584, height: 86, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  480x648:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 24, y: 136, width: 432, height: 162, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 38, y: 343, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 67, y: 311, width: 389, height: 65, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 38, y: 421, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 67, y: 389, width: 389, height: 65, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 480, x_end: 456, y_end: 480, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 24, y: 499, width: 432, height: 117, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  800x480:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 40, y: 101, width: 720, height: 120, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 64, y: 254, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 112, y: 230, width: 648, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 64, y: 312, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 112, y: 288, width: 648, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 40, y_start: 355, x_end: 760, y_end: 355, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 40, y: 370, width: 720, height: 86, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  480x800:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 24, y: 168, width: 432, height: 200, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 38, y: 424, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 67, y: 384, width: 389, height: 80, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 38, y: 520, size: 29, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 67, y: 480, width: 389, height: 80, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 24, y_start: 592, x_end: 456, y_end: 592, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 24, y: 616, width: 432, height: 144, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  960x640:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 48, y: 134, width: 864, height: 160, size: 141, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 77, y: 339, size: 38, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 134, y: 307, width: 778, height: 64, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 77, y: 416, size: 38, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 134, y: 384, width: 778, height: 64, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 474, x_end: 912, y_end: 474, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 48, y: 493, width: 864, height: 115, size: 38, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  640x960:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 32, y: 202, width: 576, height: 240, size: 141, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 51, y: 509, size: 38, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 90, y: 461, width: 518, height: 96, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 51, y: 624, size: 38, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 90, y: 576, width: 518, height: 96, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 32, y_start: 710, x_end: 608, y_end: 710, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 32, y: 739, width: 576, height: 173, size: 38, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  960x680:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 48, y: 143, width: 864, height: 170, size: 150, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 77, y: 360, size: 41, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 134, y: 326, width: 778, height: 68, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 77, y: 442, size: 41, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 134, y: 408, width: 778, height: 68, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 48, y_start: 503, x_end: 912, y_end: 503, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 48, y: 524, width: 864, height: 122, size: 41, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  680x960:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 34, y: 202, width: 612, height: 240, size: 150, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 54, y: 509, size: 41, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 95, y: 461, width: 551, height: 96, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 54, y: 624, size: 41, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 95, y: 576, width: 551, height: 96, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 34, y_start: 710, x_end: 646, y_end: 710, width: 2, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 34, y: 739, width: 612, height: 173, size: 41, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  1600x1200:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 80, y: 252, width: 1440, height: 300, size: 264, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 128, y: 636, size: 72, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 224, y: 576, width: 1296, height: 120, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 128, y: 780, size: 72, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 224, y: 720, width: 1296, height: 120, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 80, y_start: 888, x_end: 1520, y_end: 888, width: 4, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 80, y: 924, width: 1440, height: 216, size: 72, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  1200x1600:
+    - {type: text_fit, value: '${heading}', font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
+    - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''message'') or ''${empty_text}'' }}', font: '${font}', x: 60, y: 336, width: 1080, height: 400, size: 264, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: clock-outline, x: 96, y: 848, size: 72, anchor: mm, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 168, y: 768, width: 972, height: 160, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: icon, value: map-marker-outline, x: 96, y: 1040, size: 72, anchor: mm, color: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''location'') or '''' }}', font: '${font}', x: 168, y: 960, width: 972, height: 160, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: line, x_start: 60, y_start: 1184, x_end: 1140, y_end: 1184, width: 4, fill: black}
+    - {type: text_fit, value: '{{ state_attr(''${calendar}'', ''description'') or '''' }}', font: '${font}', x: 60, y: 1232, width: 1080, height: 288, size: 72, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+  # END GENERATED SIZE LAYOUTS
 
 automation:
   triggers:
