@@ -1369,7 +1369,9 @@ class EslManager extends HTMLElement {
       if (Array.isArray(value)) return value.forEach(visit);
       if (
         value.response_variable === step.response_variable &&
-        value.data?.type === step.data?.type &&
+        (value.action || value.service) === step.action &&
+        (step.data?.type === undefined ||
+          value.data?.type === step.data?.type) &&
         value.enabled !== false
       ) {
         const ids = new Set(
@@ -1471,13 +1473,13 @@ class EslManager extends HTMLElement {
     let writePath = selected.path;
     for (const step of exported.setup_actions || []) {
       if (this.setsVariable(updated, step)) continue;
+      const prompt =
+        step.action === "calendar.get_events"
+          ? "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it."
+          : "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.";
       if (
         !window.confirm(
-          t(
-            this.hass,
-            "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.",
-            { variable: step.response_variable },
-          ),
+          t(this.hass, prompt, { variable: step.response_variable }),
         )
       )
         continue;
