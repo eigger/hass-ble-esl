@@ -640,4 +640,6 @@ export default {
     "Кнопки добавляют текст, фигуру, значок или изображение; для всего, что следует за объектом, выберите датчик выше или элемент ниже.",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "Этот дизайн берёт прогноз погоды из {variable}, но в автоматизации нет шага, который его задаёт. Добавить шаг «Погода: получить прогнозы» перед действием записи? Отмена сохранит без него.",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "Этот дизайн берёт события календаря из {variable}, но в автоматизации нет шага, который их задаёт. Добавить шаг «Календарь: получить события» перед действием записи? Отмена сохранит без него.",
 };

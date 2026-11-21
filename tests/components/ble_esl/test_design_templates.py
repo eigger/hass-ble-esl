@@ -1775,3 +1775,15 @@ async def test_calendar_next_renders_upcoming_events_on_large_tags(hass, wolink_
         "calendar.get_events",
         "ble_esl.write",
     ]
+
+
+def test_demo_payload_variables_supports_calendar_get_events():
+    from scripts.designer_demo import demo_payload_variables
+
+    payload = build(TEMPLATES["calendar_next"], 800, 480, "BWR")["payload"]
+    variables = demo_payload_variables(payload, {})
+    assert "events" in variables
+    assert variables["events"]["calendar.home"]["events"]
+    assert all(
+        "summary" in ev and "start" in ev for ev in variables["events"]["calendar.home"]["events"]
+    )

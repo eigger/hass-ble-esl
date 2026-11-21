@@ -606,4 +606,6 @@ export default {
     "用按鈕新增文字、形狀、圖示或影像；需要跟隨實體的內容，請在上方選擇感測器或使用下方的元素。",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "此設計從 {variable} 讀取天氣預報，但自動化中沒有設定它的步驟。要在寫入動作之前新增「天氣：取得預報」步驟嗎？取消則不新增直接儲存。",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "此設計從 {variable} 讀取行事曆活動，但自動化中沒有設定它的步驟。要在寫入動作之前新增「行事曆：取得活動」步驟嗎？取消則不新增直接儲存。",
 };

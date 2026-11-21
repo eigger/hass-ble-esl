@@ -650,4 +650,6 @@ export default {
     "Usa los botones para añadir texto, una forma, un icono o una imagen; para lo que siga a una entidad, elige un sensor arriba o un elemento abajo.",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "Este diseño lee el pronóstico del tiempo de {variable}, pero la automatización no tiene ningún paso que la defina. ¿Añadir el paso Tiempo: obtener pronósticos antes de la acción de escritura? Cancelar guarda sin él.",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "Este diseño lee los eventos del calendario de {variable}, pero la automatización no tiene ningún paso que la defina. ¿Añadir el paso Calendario: obtener eventos antes de la acción de escritura? Cancelar guarda sin él.",
 };
