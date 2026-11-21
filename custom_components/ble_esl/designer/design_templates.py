@@ -132,12 +132,23 @@ def _references(value):
             yield from _references(item)
 
 
-def parse_template(text):
+class _BundledLoader(yaml.SafeLoader):
+    """Bundled templates may share immutable scalar strings between layouts."""
+
+    def compose_node(self, parent, index):
+        is_alias = self.check_event(yaml.AliasEvent)
+        node = super().compose_node(parent, index)
+        if is_alias and not isinstance(node, yaml.ScalarNode):
+            raise yaml.YAMLError("Bundled templates accept only scalar aliases")
+        return node
+
+
+def parse_template(text, *, bundled=False):
     """A validated template from YAML text; raises ``vol.Invalid`` or ``ValueError``."""
     if len(text.encode()) > MAX_TEMPLATE_BYTES:
         raise ValueError("template is too large")
     try:
-        template = TEMPLATE(yaml.load(text, Loader=_NoAliases))
+        template = TEMPLATE(yaml.load(text, Loader=_BundledLoader if bundled else _NoAliases))
     except (yaml.YAMLError, RecursionError) as err:
         raise ValueError(f"not usable YAML: {err}") from err
     declared = template["parameters"]
@@ -165,7 +176,9 @@ def load_templates(directory=TEMPLATE_DIR):
             # A user folder is untrusted: look at the size before reading.
             if path.stat().st_size > MAX_TEMPLATE_BYTES:
                 raise ValueError("template is too large")
-            template = parse_template(path.read_text(encoding="utf-8"))
+            template = parse_template(
+                path.read_text(encoding="utf-8"), bundled=path.parent == TEMPLATE_DIR
+            )
         except (OSError, ValueError, vol.Invalid) as err:
             _LOGGER.warning("Ignoring design template %s: %s", path.name, err)
             continue

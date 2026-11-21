@@ -956,7 +956,7 @@ async def test_a_failed_preview_fetch_does_not_hide_the_forecast_from_a_write(ha
     from custom_components.ble_esl.designer import forecast_entities  # noqa: F401
 
     designer = hass.data[KEY]
-    designer.forecast_failed["weather.home"] = __import__("time").monotonic()
+    designer.forecast_failed[("weather.home", "daily")] = __import__("time").monotonic()
     # The preview skips a provider that just failed ...
     assert await designer.forecast_variable({"v": "{{ fc['weather.home'] }}"}, {}) == {}
     # ... and what a write reads is untouched by it.
@@ -1115,3 +1115,134 @@ async def test_every_automation_option_is_a_valid_home_assistant_automation(hass
                 ],
             }
             assert await async_validate_config_item(hass, "x", config), (name, option)
+
+
+@pytest.mark.parametrize("size", sorted(TEMPLATES["weather_outdoor"]["layouts"]))
+async def test_outdoor_weather_exact_sizes_use_editable_elements(hass, size):
+    width, height = (int(part) for part in size.split("x"))
+    preset = DevicePreset("outdoor", "outdoor", width, height, "BWR")
+    built = build(TEMPLATES["weather_outdoor"], width, height, "BWR")
+    elements, imported, issues = elements_from(built["payload"], preset)
+    assert not built["scaled"]
+    assert issues == []
+    original, rebuilt = payloads(hass, imported, elements)
+    assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
+
+
+async def test_outdoor_weather_reads_dated_forecasts_and_keeps_missing_slots_blank(hass):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day()
+
+    def date(hour):
+        return (today + timedelta(hours=hour)).isoformat()
+
+    hass.states.async_set(
+        "weather.home",
+        "cloudy",
+        {
+            "temperature": -2,
+            "temperature_unit": "°C",
+            "apparent_temperature": -5,
+            "wind_speed": 18,
+            "wind_speed_unit": "km/h",
+        },
+    )
+    hass.states.async_set("sensor.snow_today", "2.5", {"unit_of_measurement": "cm"})
+    hass.states.async_set("sun.sun", "above_horizon", {"next_setting": date(17)})
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {"datetime": date(-12), "temperature": 99, "templow": 98},
+                    {"datetime": date(12), "condition": "snowy", "temperature": 2, "templow": -5},
+                    {"datetime": date(36), "condition": "sunny", "temperature": 5, "templow": -2},
+                ]
+            }
+        },
+        "fc_hourly": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": date(7),
+                        "condition": "snowy",
+                        "temperature": -3,
+                        "precipitation_probability": 70,
+                    },
+                    {
+                        "datetime": date(8),
+                        "condition": "snowy",
+                        "temperature": -2,
+                        "precipitation_probability": 80,
+                    },
+                    {
+                        "datetime": date(10),
+                        "condition": "cloudy",
+                        "temperature": 0,
+                        "precipitation_probability": 0,
+                    },
+                    {"datetime": date(19), "condition": "cloudy", "temperature": -1},
+                ]
+            }
+        },
+    }
+    built = build(
+        TEMPLATES["weather_outdoor"], 960, 640, "BWR", {"snowfall_sensor": "sensor.snow_today"}
+    )
+    with freeze_time(today + timedelta(hours=6), real_asyncio=True):
+        rendered = resolve_templates(hass, built["payload"], set(), variables)
+    values = _values(rendered)
+    assert {
+        "-2°C",
+        "-5°C",
+        "18 km/h",
+        "최저 -5° / 최고 2°",
+        "07~08시 눈 80%",
+        "미끄럼 주의",
+        "weather-snowy",
+        "0%",
+        "예상 적설",
+        "2.5 cm",
+        "17:00",
+    } <= set(values)
+    assert "99°" not in values and "—" in values
+    series = [item["values"] for item in rendered if item["type"] == "sparkline"]
+    assert series == [[-3.0, 0.0], [], [], [], []]
+
+
+async def test_outdoor_weather_automation_fetches_both_forecasts_once(hass, wolink_entry):
+    from homeassistant.core import SupportsResponse
+
+    calls = []
+
+    async def get_forecasts(call):
+        calls.append(call.data["type"])
+        if call.data["type"] == "hourly":
+            raise HomeAssistantError("Hourly data unavailable")
+        return {"weather.home": {"forecast": []}}
+
+    hass.services.async_register(
+        "weather", "get_forecasts", get_forecasts, supports_response=SupportsResponse.ONLY
+    )
+    seed_entities(hass, TEMPLATES["weather_outdoor"])
+    designer = hass.data[KEY]
+    applied = await designer.apply_design_template(wolink_entry, "weather_outdoor")
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
+    document = {"version": 1, "elements": applied["elements"], "background": "white"}
+    preview = await designer.preview(wolink_entry, document)
+    assert "예보 정보 없음" in _values(preview["payload"])
+    # The failed hourly lookup is cooled down independently of the daily response.
+    assert calls == ["daily", "hourly"]
+    for defaults in (None, applied["template"]["automation"]):
+        result = await designer.automation(wolink_entry, document, defaults=defaults)
+        actions = result["automation"]["actions"]
+        assert [action["action"] for action in actions] == [
+            "weather.get_forecasts",
+            "weather.get_forecasts",
+            "ble_esl.write",
+        ]
+        assert [step["data"]["type"] for step in actions[:2]] == ["daily", "hourly"]
+        assert all(step["continue_on_error"] for step in actions[:2])

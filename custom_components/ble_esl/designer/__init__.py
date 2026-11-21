@@ -96,31 +96,47 @@ def _preview_variable_map(value):
     return value
 
 
-# A payload reads the forecast a Weather: Get forecasts step fetched into ``fc``.
-FORECAST_VARIABLE = "fc"
-_FORECAST_ENTITY = re.compile(r"""(?<![\w.])fc\s*\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]""")
+# Named responses referenced by imported weather payloads.
+_FORECAST_TYPES = {"fc": "daily", "fc_hourly": "hourly"}
+_FORECAST_ENTITY = re.compile(
+    r"""(?<![\w.])(fc|fc_hourly)\s*\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]"""
+)
 
 
-def forecast_entities(source):
-    """The weather entities a design or payload reads from ``fc``."""
+def _forecast_references(source):
     try:
         text = json.dumps(source, ensure_ascii=False, default=str)
     except (TypeError, ValueError):
-        return []
-    return sorted(set(_FORECAST_ENTITY.findall(text)))
-
-
-def forecast_step(source):
-    """The step that fetches the forecasts ``source`` reads, or None."""
-    entities = forecast_entities(source)
-    if not entities:
-        return None
+        return {}
+    references = {}
+    for variable, entity in _FORECAST_ENTITY.findall(text):
+        references.setdefault(variable, set()).add(entity)
     return {
-        "action": "weather.get_forecasts",
-        "target": {"entity_id": entities},
-        "data": {"type": "daily"},
-        "response_variable": FORECAST_VARIABLE,
+        variable: sorted(references[variable])
+        for variable in _FORECAST_TYPES
+        if variable in references
     }
+
+
+def forecast_entities(source):
+    """The weather entities a design or payload reads from the daily response."""
+    return _forecast_references(source).get("fc", [])
+
+
+def forecast_steps(source):
+    """The steps that fetch the forecasts the payload reads."""
+    references = _forecast_references(source)
+    return [
+        {
+            "action": "weather.get_forecasts",
+            "target": {"entity_id": entities},
+            "data": {"type": _FORECAST_TYPES[variable]},
+            "response_variable": variable,
+            # An hourly design can still display the current weather and either forecast.
+            **({"continue_on_error": True} if "fc_hourly" in references else {}),
+        }
+        for variable, entities in references.items()
+    ]
 
 
 class Designer:
@@ -207,51 +223,55 @@ class Designer:
             result[key] = cached[1]
         return result
 
-    async def forecast_variable(self, source, variables):
-        """``variables`` with the forecast ``source`` reads, fetched as the automation will.
-
-        What the user gave wins, and an entity without a forecast leaves the
-        template to its own fallback. Only the preview uses it, so a provider
-        that is slow or fails never stops a render: it is waited for briefly
-        and not asked again for a minute.
-        """
-        entities = forecast_entities(source)
-        if not entities or FORECAST_VARIABLE in variables:
-            return variables
-        forecast = {}
-        for entity_id in entities:
-            key = (entity_id, "daily")
-            failed = self.forecast_failed.get(entity_id)
-            if failed is not None and time.monotonic() - failed < 60:
-                continue
-            cached = self.forecast_cache.get(key)
-            if cached and time.monotonic() - cached[0] < 600:
-                forecast[entity_id] = {"forecast": cached[1]}
-                continue
-            try:
-                async with asyncio.timeout(10):
-                    response = await self.hass.services.async_call(
-                        "weather",
-                        "get_forecasts",
-                        {"entity_id": entity_id, "type": "daily"},
-                        blocking=True,
-                        return_response=True,
-                    )
-                days = response[entity_id]["forecast"]
-            except Exception:
-                # Kept apart from the forecasts a write uses: a failure here is not one there.
-                self.forecast_failed[entity_id] = time.monotonic()
-                continue
-            self.forecast_failed.pop(entity_id, None)
-            self.forecast_cache[key] = (time.monotonic(), days)
-            forecast[entity_id] = {"forecast": days}
-        forecast = {entity: value for entity, value in forecast.items() if value["forecast"]}
-        if not forecast:
-            return variables
-        # A week is what a design shows; more would only fill the preview's size limit.
-        forecast = {e: {"forecast": v["forecast"][:7]} for e, v in forecast.items()}
+    async def _preview_forecast(self, entity_id, forecast_type):
+        key = (entity_id, forecast_type)
+        now = time.monotonic()
+        failed = self.forecast_failed.get(key)
+        if failed is not None and now - failed < 60:
+            return []
+        cached = self.forecast_cache.get(key)
+        if cached and now - cached[0] < 600:
+            return cached[1]
         try:
-            return _preview_variable_map({**variables, FORECAST_VARIABLE: forecast})
+            async with asyncio.timeout(10):
+                response = await self.hass.services.async_call(
+                    "weather",
+                    "get_forecasts",
+                    {"entity_id": entity_id, "type": forecast_type},
+                    blocking=True,
+                    return_response=True,
+                )
+            forecast = response[entity_id]["forecast"]
+        except Exception:
+            self.forecast_failed[key] = time.monotonic()
+            return []
+        self.forecast_failed.pop(key, None)
+        self.forecast_cache[key] = (time.monotonic(), forecast)
+        return forecast
+
+    async def forecast_variable(self, source, variables):
+        """Fetch referenced forecast responses for previews unless supplied by the user."""
+        requests = [
+            (variable, entity)
+            for variable, entities in _forecast_references(source).items()
+            if variable not in variables
+            for entity in entities
+        ]
+        if not requests:
+            return variables
+        results = await asyncio.gather(
+            *(
+                self._preview_forecast(entity, _FORECAST_TYPES[variable])
+                for variable, entity in requests
+            )
+        )
+        forecasts = {}
+        for (variable, entity), items in zip(requests, results, strict=True):
+            if items:
+                limit = 7 if variable == "fc" else 25  # Allow a 25-hour local day.
+                forecasts.setdefault(variable, {})[entity] = {"forecast": items[:limit]}
+        try:
+            return _preview_variable_map({**variables, **forecasts})
         except HomeAssistantError:
             return variables
 
@@ -360,8 +380,7 @@ class Designer:
         )
         result["writable"] = getattr(entry.runtime_data.protocol, "writable", True)
         # What the payload reads from the run, that the automation has to set first.
-        step = forecast_step(result["payload_data"] or payload)
-        result["setup_actions"] = [step] if step else []
+        result["setup_actions"] = forecast_steps(result["payload_data"] or payload)
         return result
 
     async def automation(self, entry, document, preview_variables=None, defaults=None):
@@ -528,7 +547,8 @@ class Designer:
         built = build_template(template, preset.width, preset.height, preset.colors, given)
         # What was given must exist, as when applying; defaults are only drawn.
         await self.ensure_template_inputs(template, built["parameters"], set(given))
-        payload = resolve_templates(self.hass, built["payload"], set())
+        variables = await self.forecast_variable(built["payload"], {})
+        payload = resolve_templates(self.hass, built["payload"], set(), variables)
         async with self.render_lock:
             image = await self.hass.async_add_executor_job(
                 partial(render_image, self.hass, preset, payload, background=built["background"])
