@@ -1439,7 +1439,7 @@ def test_indoor_climate_covers_all_29_sizes_without_overlap():
         kind = item["type"]
         if kind == "text_fit":
             return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
-        if kind == "progress_bar":
+        if kind in ("progress_bar", "rectangle", "line"):
             return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
         if kind == "icon":
             size = item["size"]
@@ -1454,18 +1454,23 @@ def test_indoor_climate_covers_all_29_sizes_without_overlap():
     for size, items in template["layouts"].items():
         assert len(items) <= 100, size
         width, height = (int(part) for part in size.split("x"))
-        boxes = [
+        all_boxes = [
             (index, item["type"], box)
             for index, item in enumerate(items)
             if (box := _box(item)) is not None
         ]
-        for index, kind, box in boxes:
-            assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
-            assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
-        for idx in range(len(boxes)):
-            for jdx in range(idx + 1, len(boxes)):
-                i1, t1, b1 = boxes[idx]
-                i2, t2, b2 = boxes[jdx]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
                 overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
                 assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
 
@@ -1478,7 +1483,28 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
     texts = _texts(_shown(hass, "indoor_climate", 800, 480))
     assert "23.5°C" in texts and "48%" in texts and "쾌적" in texts and "미설정" in texts
 
+    # Warm / slightly humid thresholds stay consistent between chips and header badge.
+    hass.states.async_set("sensor.temperature", "27.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "63", {"unit_of_measurement": "%"})
+    warm_texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "따뜻" in warm_texts and "약간 습함" in warm_texts and "보통" in warm_texts
+
+    # Fahrenheit support: comfort thresholds & hints adapt without false overheating alerts.
+    hass.states.async_set("sensor.temperature", "72", {"unit_of_measurement": "°F"})
+    hass.states.async_set("sensor.humidity", "50", {"unit_of_measurement": "%"})
+    f_texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "72°F" in f_texts and "쾌적" in f_texts and "적정 68 ~ 79°F" in f_texts
+
+    # Near-zero negative temperatures never render as "-0°C", while real negatives keep their sign.
+    hass.states.async_set("sensor.temperature", "-0.04", {"unit_of_measurement": "°C"})
+    assert "0°C" in _texts(_shown(hass, "indoor_climate", 400, 300))
+    assert "-0°C" not in _texts(_shown(hass, "indoor_climate", 400, 300))
+    hass.states.async_set("sensor.temperature", "-12.5", {"unit_of_measurement": "°C"})
+    assert "-12.5°C" in _texts(_shown(hass, "indoor_climate", 400, 300))
+
     # Optional CO2 / PM2.5 sensors trigger ventilation alert and accent contrast across BW/BWR/BWRY.
+    hass.states.async_set("sensor.temperature", "24.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "48", {"unit_of_measurement": "%"})
     hass.states.async_set("sensor.co2", "1250")
     hass.states.async_set("sensor.pm25", "42")
     options = {"co2_sensor": "sensor.co2", "pm25_sensor": "sensor.pm25"}
@@ -1494,6 +1520,7 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
         item.get("value") == "환기 권장" and item.get("color") == "white" for item in alert_items
     )
 
+    # accent="yellow" on BWRY uses yellow pill + black text, and keeps white-bg text/icons black.
     bwry_items = resolve_templates(
         hass,
         build(TEMPLATES["indoor_climate"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
@@ -1507,6 +1534,27 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
     assert any(
         item.get("value") == "환기 권장" and item.get("color") == "black" for item in bwry_items
     )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in bwry_items
+    )
+
+    # accent="white" never renders black-on-black pill text.
+    white_accent_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 400, 300, "BWR", {**options, "accent": "white"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black"
+        for item in white_accent_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white"
+        for item in white_accent_items
+    )
 
     bw_items = resolve_templates(
         hass,
@@ -1517,6 +1565,22 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
     assert any(
         item.get("value") == "환기 권장" and item.get("color") == "white" for item in bw_items
     )
+
+    # Tiny portrait with CO2 only does not duplicate CO2, and dry air shows humidifier hint.
+    co2_only = _texts(_shown(hass, "indoor_climate", 104, 212, {"co2_sensor": "sensor.co2"}))
+    assert co2_only.count("CO2 1250 ppm") == 1 and not any(
+        t.startswith("CO2 ") and t != "CO2 1250 ppm" for t in co2_only
+    )
+    hass.states.async_set("sensor.humidity", "22")
+    dry_tiny = _texts(_shown(hass, "indoor_climate", 104, 212))
+    assert "가습기 사용 권장" in dry_tiny and "적정 20~26°C" not in dry_tiny
+
+    # Malformed optional entity IDs are treated as unset rather than missing entities.
+    for bogus in ("1.2", "sensor.", " sensor.co2 ", "a.b.c"):
+        bogus_texts = _texts(
+            _shown(hass, "indoor_climate", 800, 480, {"co2_sensor": bogus, "pm25_sensor": bogus})
+        )
+        assert bogus_texts.count("미설정") == 2 and bogus_texts.count("선택") == 2
 
     # Edge cases: non-numeric / nan / inf / bool states never crash and round-trip cleanly.
     for bad in ("unavailable", "nan", "inf", "warm", "True"):
@@ -1529,11 +1593,16 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
         assert "--°C" in bad_texts and "--%" in bad_texts and "센서 대기" in bad_texts
         render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), rendered)
 
-    for w, h in ((200, 200), (212, 104), (104, 212), (384, 184), (300, 400), (800, 480)):
+    hass.states.async_set("sensor.temperature", "29.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "70")
+    hass.states.async_set("sensor.co2", "1100")
+    hass.states.async_set("sensor.pm25", "40")
+    for size in TEMPLATES["indoor_climate"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
         preset = DevicePreset("test", "test", w, h, "BWR")
         elements, imported, issues = elements_from(
             build(TEMPLATES["indoor_climate"], w, h, "BWR", options)["payload"], preset
         )
-        assert issues == []
+        assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
-        assert different_pixels(hass, preset, original, rebuilt) == 0
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size
