@@ -640,4 +640,6 @@ export default {
     "Użyj przycisków, aby dodać tekst, kształt, ikonę lub obraz; dla wszystkiego, co śledzi encję, wybierz czujnik powyżej albo element poniżej.",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "Ten projekt odczytuje prognozę pogody z {variable}, ale automatyzacja nie ma kroku, który ją ustawia. Dodać krok Pogoda: pobierz prognozy przed akcją zapisu? Anuluj zapisuje bez niego.",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "Ten projekt odczytuje wydarzenia kalendarza z {variable}, ale automatyzacja nie ma kroku, który je ustawia. Dodać krok Kalendarz: pobierz wydarzenia przed akcją zapisu? Anuluj zapisuje bez niego.",
 };

@@ -96,11 +96,12 @@ def _preview_variable_map(value):
     return value
 
 
-# Named responses referenced by imported weather payloads.
+# Named responses referenced by imported weather/calendar payloads.
 _FORECAST_TYPES = {"fc": "daily", "fc_hourly": "hourly"}
 _FORECAST_ENTITY = re.compile(
     r"""(?<![\w.])(fc|fc_hourly)\s*\[\s*\\?['"](weather\.\w+)\\?['"]\s*\]"""
 )
+_CALENDAR_ENTITY = re.compile(r"""(?<![\w.])(events)\s*\[\s*\\?['"](calendar\.\w+)\\?['"]\s*\]""")
 
 
 def _forecast_references(source):
@@ -118,15 +119,23 @@ def _forecast_references(source):
     }
 
 
+def _calendar_references(source):
+    try:
+        text = json.dumps(source, ensure_ascii=False, default=str)
+    except (TypeError, ValueError):
+        return []
+    return sorted({entity for _, entity in _CALENDAR_ENTITY.findall(text)})
+
+
 def forecast_entities(source):
     """The weather entities a design or payload reads from the daily response."""
     return _forecast_references(source).get("fc", [])
 
 
 def forecast_steps(source):
-    """The steps that fetch the forecasts the payload reads."""
+    """The steps that fetch the forecasts and calendar events the payload reads."""
     references = _forecast_references(source)
-    return [
+    steps = [
         {
             "action": "weather.get_forecasts",
             "target": {"entity_id": entities},
@@ -137,6 +146,18 @@ def forecast_steps(source):
         }
         for variable, entities in references.items()
     ]
+    calendars = _calendar_references(source)
+    if calendars:
+        steps.append(
+            {
+                "action": "calendar.get_events",
+                "target": {"entity_id": calendars},
+                "data": {"duration": {"days": 7}},
+                "response_variable": "events",
+                "continue_on_error": True,
+            }
+        )
+    return steps
 
 
 class Designer:
@@ -249,27 +270,60 @@ class Designer:
         self.forecast_cache[key] = (time.monotonic(), forecast)
         return forecast
 
+    async def _preview_calendar_events(self, entity_id):
+        key = (entity_id, "calendar")
+        now = time.monotonic()
+        failed = self.forecast_failed.get(key)
+        if failed is not None and now - failed < 60:
+            return []
+        cached = self.forecast_cache.get(key)
+        if cached and now - cached[0] < 600:
+            return cached[1]
+        try:
+            async with asyncio.timeout(10):
+                response = await self.hass.services.async_call(
+                    "calendar",
+                    "get_events",
+                    {"entity_id": entity_id, "duration": {"days": 7}},
+                    blocking=True,
+                    return_response=True,
+                )
+            events = response[entity_id]["events"]
+        except Exception:
+            self.forecast_failed[key] = time.monotonic()
+            return []
+        self.forecast_failed.pop(key, None)
+        self.forecast_cache[key] = (time.monotonic(), events)
+        return events
+
     async def forecast_variable(self, source, variables):
-        """Fetch referenced forecast responses for previews unless supplied by the user."""
+        """Fetch referenced forecast and calendar responses for previews unless supplied."""
         requests = [
             (variable, entity)
             for variable, entities in _forecast_references(source).items()
             if variable not in variables
             for entity in entities
         ]
-        if not requests:
+        cal_entities = [] if "events" in variables else _calendar_references(source)
+        if not requests and not cal_entities:
             return variables
-        results = await asyncio.gather(
-            *(
-                self._preview_forecast(entity, _FORECAST_TYPES[variable])
-                for variable, entity in requests
-            )
+        weather_results, cal_results = await asyncio.gather(
+            asyncio.gather(
+                *(
+                    self._preview_forecast(entity, _FORECAST_TYPES[variable])
+                    for variable, entity in requests
+                )
+            ),
+            asyncio.gather(*(self._preview_calendar_events(entity) for entity in cal_entities)),
         )
         forecasts = {}
-        for (variable, entity), items in zip(requests, results, strict=True):
+        for (variable, entity), items in zip(requests, weather_results, strict=True):
             if items:
                 limit = 7 if variable == "fc" else 25  # Allow a 25-hour local day.
                 forecasts.setdefault(variable, {})[entity] = {"forecast": items[:limit]}
+        for entity, items in zip(cal_entities, cal_results, strict=True):
+            if items:
+                forecasts.setdefault("events", {})[entity] = {"events": items[:10]}
         try:
             return _preview_variable_map({**variables, **forecasts})
         except HomeAssistantError:

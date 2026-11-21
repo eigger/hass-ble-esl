@@ -646,4 +646,6 @@ export default {
     "Gebruik de knoppen om tekst, een vorm, een pictogram of een afbeelding toe te voegen; kies voor alles wat een entiteit volgt hierboven een sensor of hieronder een element.",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "Dit ontwerp leest de weersverwachting uit {variable}, maar de automatisering heeft geen stap die deze instelt. De stap Weer: verwachtingen ophalen vóór de schrijfactie toevoegen? Annuleren slaat op zonder.",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "Dit ontwerp leest agenda-afspraken uit {variable}, maar de automatisering heeft geen stap die deze instelt. De stap Agenda: afspraken ophalen vóór de schrijfactie toevoegen? Annuleren slaat op zonder.",
 };
