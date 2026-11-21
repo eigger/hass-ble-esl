@@ -1324,7 +1324,7 @@ async def test_existing_templates_cover_all_gallery_sizes(hass, template_id, siz
     elements, imported, issues = elements_from(built["payload"], preset)
     assert issues == []
     assert len(elements) == len(built["payload"])
-    original, rebuilt = payloads(hass, imported, elements)
+    original, rebuilt = stable_template_payloads(hass, imported, elements)
     assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
 
 
