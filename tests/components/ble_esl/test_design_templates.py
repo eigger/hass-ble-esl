@@ -1428,3 +1428,131 @@ async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientati
     with freeze_time(now, real_asyncio=True):
         for size in ((296, 128), (128, 296), (300, 400)):
             assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))
+
+
+@pytest.mark.parametrize(
+    ("condition", "daily_row", "short_alert", "long_alert"),
+    [
+        (
+            "rainy",
+            {"temperature": 13, "templow": 6, "precipitation_probability": 80, "precipitation": 12},
+            "우산 80%",
+            "우산 챙기기",
+        ),
+        (
+            "snowy",
+            {"temperature": 1, "templow": -6, "precipitation_probability": 70, "precipitation": 3},
+            "눈 70%",
+            "눈길 주의",
+        ),
+        (
+            "sunny",
+            {"temperature": 18, "templow": 4, "precipitation_probability": 10},
+            "일교차 14°",
+            "일교차 주의",
+        ),
+    ],
+)
+async def test_commute_weather_under_4_inches_alerts_and_metrics(
+    hass, condition, daily_row, short_alert, long_alert
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set(
+        "weather.home",
+        condition,
+        {
+            "temperature": 11,
+            "temperature_unit": "°C",
+            "apparent_temperature": 9,
+            "humidity": 82,
+            "wind_speed": 4.2,
+            "wind_speed_unit": "m/s",
+        },
+    )
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [{"datetime": (today + timedelta(hours=4)).isoformat(), **daily_row}]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built_250 = build(TEMPLATES["weather_commute"], 250, 128, "BWR")
+        vals_250 = _values(resolve_templates(hass, built_250["payload"], set(), variables))
+        assert short_alert in vals_250
+        assert f"{daily_row['templow']}°" in vals_250
+        assert f"{daily_row['temperature']}°" in vals_250
+        assert "체감 9° · 습도 82%" in vals_250
+
+        built_296 = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+        vals_296 = _values(resolve_templates(hass, built_296["payload"], set(), variables))
+        assert {short_alert, long_alert, "체감 9°", "습도 82%", "바람 4.2 m/s"} <= set(vals_296)
+
+
+async def test_commute_weather_4_inches_and_above_shows_weekly_forecast(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    thursday = datetime(2026, 11, 19, 7, 30, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    hass.states.async_set(
+        "weather.home",
+        "rainy",
+        {
+            "temperature": 11,
+            "temperature_unit": "°C",
+            "apparent_temperature": 9,
+            "humidity": 82,
+            "wind_speed": 4.2,
+            "wind_speed_unit": "m/s",
+        },
+    )
+    daily = [
+        {
+            "datetime": (thursday + timedelta(days=offset, hours=5)).isoformat(),
+            "condition": "rainy" if offset in (0, 4) else "sunny",
+            "temperature": 13 + offset,
+            "templow": 6 + offset,
+            "precipitation_probability": 80 if offset == 0 else (75 if offset == 4 else 10),
+            "precipitation": 12 if offset == 0 else 0,
+        }
+        for offset in range(8)
+    ]
+    variables = {"fc": {"weather.home": {"forecast": daily}}}
+
+    with freeze_time(thursday, real_asyncio=True):
+        rendered_42 = resolve_templates(
+            hass, build(TEMPLATES["weather_commute"], 400, 300, "BWR")["payload"], set(), variables
+        )
+        vals_42 = _values(rendered_42)
+        assert {"우산 챙기기", "금", "토", "일", "월", "화", "75%"} <= set(vals_42)
+        assert "수" not in vals_42
+        weekend_items = [item for item in rendered_42 if item.get("value") in ("토", "일")]
+        assert weekend_items and all(item["color"] == "red" for item in weekend_items)
+
+        vals_75 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_commute"], 800, 480, "BWR")["payload"],
+                set(),
+                variables,
+            )
+        )
+        assert {"• 우산 필수 (80%)", "주간 비·눈: 월(75%)", "수"} <= set(vals_75)
+        assert "목" not in vals_75
+
+        vals_102 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_commute"], 960, 640, "BWR")["payload"],
+                set(),
+                variables,
+            )
+        )
+        assert {"7일 주간 예보", "목", "주간 비·눈: 월(75%)"} <= set(vals_102)
