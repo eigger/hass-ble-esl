@@ -41,6 +41,7 @@ ICONS_MAP = (
 )
 
 WET_SET = "('rainy', 'pouring', 'lightning-rainy', 'hail', 'snowy', 'snowy-rainy')"
+TF_EXPR = f"(('{TIME_FMT}' | trim) or '%H:%M')"
 
 
 def _finite_temp(raw_expr: str, var: str = "_v") -> str:
@@ -64,17 +65,30 @@ def _finite_int(raw_expr: str, var: str = "_vi") -> str:
 
 FC_PRELUDE = (
     "{% set _td = now().strftime('%Y-%m-%d') %}"
-    f"{{% set _fcr = (fc['{WEATHER}'].forecast | default([], true)) if (fc is defined and fc is mapping and '{WEATHER}' in fc and fc['{WEATHER}'] is mapping and fc['{WEATHER}'].forecast is iterable) else [] %}}"
-    "{% set _fc = _fcr | selectattr('datetime', 'string') | selectattr('datetime', 'ge', _td) | list %}"
-    "{% set _day0 = _fc[0] if _fc else (_fcr[0] if _fcr else {}) %}"
+    f"{{% set _fco = fc['{WEATHER}'] if (fc is defined and fc is mapping and '{WEATHER}' in fc and fc['{WEATHER}'] is mapping) else {{}} %}}"
+    "{% set _fcw = _fco.get('forecast') %}"
+    "{% set _fcr = (_fcw | select('mapping') | list) if (_fcw is sequence and _fcw is not string) else [] %}"
+    "{% set _ns = namespace(fc=[]) %}"
+    "{% for _it in _fcr %}"
+    "{% set _dt = as_datetime((_it.get('datetime') | default('')) | string, none) %}"
+    "{% if _dt is not none %}"
+    "{% set _dl = as_local(_dt) if _dt.tzinfo is not none else _dt %}"
+    "{% if _dl.strftime('%Y-%m-%d') >= _td %}{% set _ns.fc = _ns.fc + [_it] %}{% endif %}"
+    "{% endif %}"
+    "{% endfor %}"
+    "{% set _fc = _ns.fc %}"
 )
 
-EVS_PRELUDE = f"{{% set _evs = (events['{CALENDAR}'].events | default([], true)) if (events is defined and events is mapping and '{CALENDAR}' in events and events['{CALENDAR}'] is mapping and events['{CALENDAR}'].events is iterable) else [] %}}"
+EVS_PRELUDE = (
+    f"{{% set _eco = events['{CALENDAR}'] if (events is defined and events is mapping and '{CALENDAR}' in events and events['{CALENDAR}'] is mapping) else {{}} %}}"
+    "{% set _evw = _eco.get('events') %}"
+    "{% set _evs = (_evw | select('mapping') | list) if (_evw is sequence and _evw is not string) else [] %}"
+)
 
 DATE_SHORT = f"{{{{ now().strftime('%m/%d') ~ ' (' ~ {DAYS_TUPLE}[now().weekday()] ~ ')' }}}}"
 DATE_LONG = f"{{{{ now().strftime('%Y.%m.%d') ~ ' (' ~ {DAYS_TUPLE}[now().weekday()] ~ ')' }}}}"
 DATE_COLOR = f"{{{{ {TEXT_INK_EXPR} if now().weekday() >= 5 else 'black' }}}}"
-CLOCK = f"{{{{ now().strftime('{TIME_FMT} 갱신') }}}}"
+CLOCK = f"{{{{ now().strftime({TF_EXPR}) ~ ' 갱신' }}}}"
 
 TU_EXPR = f"(state_attr('{WEATHER}', 'temperature_unit') or '°C')"
 CURR_TEMP = (
@@ -88,14 +102,15 @@ CURR_HUM = (
     + "{{ ('습도 ' ~ _hm ~ '%') if _hm != '--' else '습도 --' }}"
 )
 
+DAY0_PRELUDE = FC_PRELUDE + "{% set _day0 = _fc[0] if _fc else (_fcr[0] if _fcr else {}) %}"
 TODAY_HILO_FULL = (
-    FC_PRELUDE
+    DAY0_PRELUDE
     + _finite_int("_day0.get('templow')", "_lo")
     + _finite_int("_day0.get('temperature')", "_hi")
     + "{{ '최저 ' ~ _lo ~ '° / 최고 ' ~ _hi ~ '°' }}"
 )
 TODAY_HILO_COMPACT = (
-    FC_PRELUDE
+    DAY0_PRELUDE
     + _finite_int("_day0.get('templow')", "_lo")
     + _finite_int("_day0.get('temperature')", "_hi")
     + "{{ _lo ~ '°/' ~ _hi ~ '°' }}"
@@ -106,7 +121,7 @@ def _fc_day(idx: int) -> tuple[str, str, str, str, str]:
     sel = f"{FC_PRELUDE}{{% set _d = _fc[{idx}] if (_fc | length > {idx}) else {{}} %}}"
     day_label = (
         sel
-        + "{% set _dt = as_datetime((_d.datetime | default('')) | string, none) %}"
+        + "{% set _dt = as_datetime((_d.get('datetime') | default('')) | string, none) %}"
         + "{% set _dl = as_local(_dt) if (_dt is not none and _dt.tzinfo is not none) else _dt %}"
         + f"{{{{ '오늘' if {idx} == 0 else ({DAYS_TUPLE}[_dl.weekday()] if _dl is not none else '—') }}}}"
     )
@@ -135,13 +150,9 @@ def _fc_day(idx: int) -> tuple[str, str, str, str, str]:
 ATTR_TITLE = f"{{{{ state_attr('{CALENDAR}', 'message') or '예정된 일정 없음' }}}}"
 ATTR_WHEN = (
     f"{{% set _st = as_datetime(state_attr('{CALENDAR}', 'start_time'), none) %}}"
-    f"{{% set _ed = as_datetime(state_attr('{CALENDAR}', 'end_time'), none) %}}"
     f"{{% set _ad = state_attr('{CALENDAR}', 'all_day') %}}"
     "{% if _st is not none and _st.tzinfo is not none %}{% set _st = as_local(_st) %}{% endif %}"
-    "{% if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif %}"
-    "{{ (_st.strftime('%m/%d') ~ (' 종일' if _ad else ' ' ~ _st.strftime('"
-    + TIME_FMT
-    + "'))) if _st is not none else '일정 대기' }}"
+    f"{{{{ (_st.strftime('%m/%d') ~ (' 종일' if _ad else ' ' ~ _st.strftime({TF_EXPR}))) if _st is not none else '일정 대기' }}}}"
 )
 ATTR_LOC = (
     f"{{% set _l = state_attr('{CALENDAR}', 'location') or '' %}}"
@@ -149,7 +160,7 @@ ATTR_LOC = (
 )
 ATTR_LOC_OR_CLOCK = (
     f"{{% set _l = state_attr('{CALENDAR}', 'location') or '' %}}"
-    "{{ _l if _l else now().strftime('" + TIME_FMT + " 갱신') }}"
+    f"{{{{ _l if _l else (now().strftime({TF_EXPR}) ~ ' 갱신') }}}}"
 )
 
 # 4.2"+ Calendar helpers (reads `events` from calendar.get_events with entity-attribute fallback)
@@ -167,17 +178,18 @@ CAL_BADGE_COLOR = BADGE_PRELUDE + "{{ _fg if _cnt > 0 else 'black' }}"
 def _event_slot(idx: int) -> tuple[str, str, str, str]:
     """Return (when, summary, location, color) templates for upcoming slot `idx`."""
     when_ev = (
-        "{% set _sr = (_ev.start | default('')) | string %}"
-        "{% set _er = (_ev.end | default('')) | string %}"
+        f"{{% set _tf = {TF_EXPR} %}}"
+        "{% set _sr = (_ev.get('start') | default('')) | string %}"
+        "{% set _er = (_ev.get('end') | default('')) | string %}"
         "{% set _sd = as_datetime(_sr, none) %}"
         "{% set _ed = as_datetime(_er, none) %}"
         "{% if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif %}"
         "{% if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif %}"
         "{{ "
-        f"_sd.strftime('%m/%d' if _sr | length == 10 else '%m/%d {TIME_FMT}') "
+        "_sd.strftime('%m/%d' if _sr | length == 10 else '%m/%d ' ~ _tf) "
         "~ ((' - ' ~ (_ed - timedelta(days=1)).strftime('%m/%d')) "
         "if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) "
-        f"else (' - ' ~ _ed.strftime('{TIME_FMT}' if _ed.date() == _sd.date() else '%m/%d {TIME_FMT}') "
+        "else (' - ' ~ _ed.strftime(_tf if _ed.date() == _sd.date() else '%m/%d ' ~ _tf) "
         "if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '')) "
         "if _sd is not none else '' }}"
     )
@@ -192,11 +204,11 @@ def _event_slot(idx: int) -> tuple[str, str, str, str]:
         )
         title_val = (
             EVS_PRELUDE
-            + f"{{{{ (_evs[0].summary | default('일정 없음', true)) if _evs else (state_attr('{CALENDAR}', 'message') or '예정된 일정 없음') }}}}"
+            + f"{{{{ (_evs[0].get('summary') | default('일정 없음', true)) if _evs else (state_attr('{CALENDAR}', 'message') or '예정된 일정 없음') }}}}"
         )
         loc_val = (
             EVS_PRELUDE
-            + f"{{{{ (_evs[0].location | default('', true)) if _evs else (state_attr('{CALENDAR}', 'location') or '') }}}}"
+            + f"{{{{ (_evs[0].get('location') | default('', true)) if _evs else (state_attr('{CALENDAR}', 'location') or '') }}}}"
         )
         slot_color = (
             EVS_PRELUDE
@@ -211,11 +223,11 @@ def _event_slot(idx: int) -> tuple[str, str, str, str]:
         )
         title_val = (
             EVS_PRELUDE
-            + f"{{{{ (_evs[{idx}].summary | default('', true)) if _evs | length > {idx} else '' }}}}"
+            + f"{{{{ (_evs[{idx}].get('summary') | default('', true)) if _evs | length > {idx} else '' }}}}"
         )
         loc_val = (
             EVS_PRELUDE
-            + f"{{{{ (_evs[{idx}].location | default('', true)) if _evs | length > {idx} else '' }}}}"
+            + f"{{{{ (_evs[{idx}].get('location') | default('', true)) if _evs | length > {idx} else '' }}}}"
         )
         slot_color = "black"
     return when_val, title_val, loc_val, slot_color
@@ -278,6 +290,7 @@ class Canvas:
         valign: str = "middle",
         color: str = "black",
         min_size: int = 7,
+        max_lines: int = 1,
     ) -> None:
         self.items.append(
             FlowElement(
@@ -291,7 +304,8 @@ class Canvas:
                     "height": self.rh(y, h),
                     "size": max(min_size, round(size * self.sy)),
                     "min_size": min_size,
-                    "max_lines": 1,
+                    "max_lines": max_lines,
+                    "fit": "shrink_ellipsis",
                     "align": align,
                     "valign": valign,
                     "color": color,
@@ -389,7 +403,7 @@ def _square_200(w: int, h: int) -> list[FlowElement]:
     c.icon("calendar-today", 20, 116, 16, color=TEXT_INK)
     c.text_fit("다음 일정", 32, 106, 56, 20, 12, color=TEXT_INK)
     c.text_fit(ATTR_WHEN, 90, 106, 100, 20, 12, align="right")
-    c.text_fit(ATTR_TITLE, 10, 132, 180, 34, 20)
+    c.text_fit(ATTR_TITLE, 10, 132, 180, 36, 20, max_lines=2)
     c.text_fit(ATTR_LOC, 10, 170, 180, 22, 12)
     return c.items
 
@@ -408,7 +422,7 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
 
     c.text_fit("다음 일정", 118, 30, 56, 20, 12, color=TEXT_INK)
     c.text_fit(ATTR_WHEN, 176, 30, 68, 20, 11, align="right")
-    c.text_fit(ATTR_TITLE, 118, 56, 126, 36, 19)
+    c.text_fit(ATTR_TITLE, 118, 56, 126, 36, 19, max_lines=2)
     c.text_fit(ATTR_LOC, 118, 96, 126, 23, 12)
     return c.items
 
@@ -426,7 +440,7 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
     c.text_fit("다음 일정", 6, 126, 116, 20, 12, align="center", color=TEXT_INK)
     c.text_fit(ATTR_WHEN, 6, 150, 116, 22, 12, align="center")
-    c.text_fit(ATTR_TITLE, 6, 177, 116, 38, 18, align="center")
+    c.text_fit(ATTR_TITLE, 6, 177, 116, 38, 18, align="center", max_lines=2)
     c.text_fit(ATTR_LOC_OR_CLOCK, 6, 220, 116, 22, 11, align="center")
     return c.items
 
@@ -447,7 +461,7 @@ def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
 
     c.text_fit("다음 일정", 176, 40, 80, 24, 14, color=TEXT_INK)
     c.text_fit(ATTR_WHEN, 260, 40, 116, 24, 13, align="right")
-    c.text_fit(ATTR_TITLE, 176, 72, 200, 56, 26)
+    c.text_fit(ATTR_TITLE, 176, 72, 200, 56, 26, max_lines=2)
     c.text_fit(ATTR_LOC, 176, 136, 200, 32, 14)
     return c.items
 
@@ -468,7 +482,7 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c.rect(10, 194, 174, 374, radius=6)
     c.text_fit("다음 일정", 18, 204, 148, 22, 14, color=TEXT_INK)
     c.text_fit(ATTR_WHEN, 18, 232, 148, 24, 13)
-    c.text_fit(ATTR_TITLE, 18, 264, 148, 60, 22)
+    c.text_fit(ATTR_TITLE, 18, 264, 148, 60, 22, max_lines=2)
     c.text_fit(ATTR_LOC, 18, 332, 148, 30, 13)
     return c.items
 
@@ -482,7 +496,6 @@ def _panel_landscape(w: int, h: int) -> list[FlowElement]:
     c.text_fit(CAL_BADGE_TEXT, 596, 19, 172, 32, 19, align="center", color=CAL_BADGE_COLOR)
     c.line(24, 64, 776, 64, width=2)
 
-    # Left card: Upcoming calendar events
     c.rect(24, 76, 468, 464, width=1.5, radius=10)
     c.icon("calendar", 48, 100, 24, color=TEXT_INK)
     c.text_fit("다가오는 일정", 68, 84, 240, 32, 20)
@@ -495,7 +508,6 @@ def _panel_landscape(w: int, h: int) -> list[FlowElement]:
         c.text_fit(loc_val, 276, top + 2, 176, 28, 14, align="right")
         c.text_fit(title_val, 40, top + 34, 412, 42, 23)
 
-    # Right top card: Current weather
     c.rect(484, 76, 776, 234, width=1.5, radius=10)
     c.icon(CURR_ICON, 534, 130, 56, color=CURR_ICON_COLOR)
     c.text_fit(CURR_TEMP, 574, 88, 186, 64, 52)
@@ -503,7 +515,6 @@ def _panel_landscape(w: int, h: int) -> list[FlowElement]:
     c.text_fit(CURR_HUM, 642, 160, 118, 30, 17, align="right")
     c.text_fit(TODAY_HILO_FULL, 500, 196, 260, 30, 18)
 
-    # Right bottom card: 4-day weather forecast
     c.rect(484, 246, 776, 464, width=1.5, radius=10)
     c.text_fit("4일 예보", 500, 254, 260, 28, 18)
     for idx in range(4):
@@ -524,7 +535,6 @@ def _panel_portrait(w: int, h: int) -> list[FlowElement]:
     c.rect(20, 58, 460, 96, fill=CAL_BADGE_FILL, outline=CAL_BADGE_OUTLINE, width=2, radius=8)
     c.text_fit(CAL_BADGE_TEXT, 28, 61, 424, 32, 19, align="center", color=CAL_BADGE_COLOR)
 
-    # Weather + 4-day forecast card
     c.rect(20, 108, 460, 384, width=1.5, radius=10)
     c.icon(CURR_ICON, 64, 158, 50, color=CURR_ICON_COLOR)
     c.text_fit(CURR_TEMP, 102, 116, 162, 64, 46)
@@ -541,7 +551,6 @@ def _panel_portrait(w: int, h: int) -> list[FlowElement]:
         c.text_fit(hilo_val, col_x, 306, 98, 34, 16, align="center")
         c.text_fit(chance_val, col_x, 342, 98, 32, 16, align="center", color=day_color)
 
-    # Upcoming calendar card
     c.rect(20, 396, 460, 784, width=1.5, radius=10)
     c.icon("calendar", 44, 420, 22, color=TEXT_INK)
     c.text_fit("다가오는 일정", 64, 404, 380, 34, 20)
@@ -620,6 +629,7 @@ def generate() -> str:
             "time_format": {
                 "type": "string",
                 "default": "%H:%M",
+                "min_length": 1,
                 "label": {"en": "Time format (strftime)", "ko": "시간 형식 (strftime)"},
             },
             "interval": {

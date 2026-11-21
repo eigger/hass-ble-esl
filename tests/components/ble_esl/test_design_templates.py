@@ -1631,7 +1631,22 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
                                 "summary": "Mix",
                                 "start": "2026-11-23",
                                 "end": "2026-11-23T12:00:00+09:00",
-                            }
+                            },
+                            {
+                                "summary": "SingleDayAll",
+                                "start": "2026-11-23",
+                                "end": "2026-11-24",
+                            },
+                            {
+                                "summary": "MultiTimed",
+                                "start": "2026-11-23T09:00:00",
+                                "end": "2026-11-24T18:00:00",
+                            },
+                            {
+                                "summary": "주간 제품 디자인 리뷰 및 일정 확인 장기 타이틀 테스트",
+                                "start": "2026-11-25T10:00:00+00:00",
+                                "end": "2026-11-25T11:00:00+00:00",
+                            },
                         ]
                     }
                 }
@@ -1639,8 +1654,34 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         )
     )
     assert "0°C" in near_zero_texts and "-0°C" not in near_zero_texts and "Mix" in near_zero_texts
+    assert "11/23" in near_zero_texts and "11/23 - 11/23" not in near_zero_texts
+    assert "11/23 09:00 - 11/24 18:00" in near_zero_texts
+    utc_expected = dt_util.as_local(dt_util.parse_datetime("2026-11-25T10:00:00+00:00")).strftime(
+        "%m/%d %H:%M"
+    )
+    assert any(utc_expected in t for t in near_zero_texts)
 
-    # Designer preview, export, automation deduplication, and demo_payload_variables.
+    # Malformed / incomplete fc & events mappings never crash under strict=True.
+    for bad_fc, bad_ev in (
+        ({"weather.home": {}}, {"calendar.home": {}}),
+        ({"weather.home": {"forecast": "none"}}, {"calendar.home": {"events": "none"}}),
+        ({"weather.home": {"forecast": {"a": 1}}}, {"calendar.home": {"events": {"a": 1}}}),
+        ({"weather.home": {"forecast": [None]}}, {"calendar.home": {"events": [None]}}),
+    ):
+        bad_res = _texts(
+            resolve_templates(hass, large_payload, set(), {"fc": bad_fc, "events": bad_ev})
+        )
+        assert "Fallback Meeting" in bad_res and "일정 1건" in bad_res
+
+    # Empty time_format is rejected by parameter validation.
+    with pytest.raises(HomeAssistantError, match="time_format"):
+        resolve_parameters(TEMPLATES["calendar_weather"], {"time_format": ""}, "BWR")
+
+    # Designer preview, preview_design_template, apply_design_template, export, automation validation, and demo.
+    from scripts.designer_demo import STATES as DEMO_STATES
+
+    assert "calendar.home" in DEMO_STATES
+
     async def get_forecasts(call):
         return {
             entity: {"forecast": forecast}
@@ -1651,7 +1692,11 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
             )
         }
 
+    event_calls = 0
+
     async def get_events(call):
+        nonlocal event_calls
+        event_calls += 1
         ids = call.data["entity_id"]
         ids = [ids] if isinstance(ids, str) else ids
         return {entity: {"events": events} for entity in ids}
@@ -1670,6 +1715,10 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
     large_doc = {"version": 1, "elements": large_elements, "background": "white"}
     preview = await designer.preview(wolink_entry, large_doc)
     assert "Standup" in _texts(preview["payload"])
+    gallery_preview = await designer.preview_design_template(wolink_entry, "calendar_weather")
+    assert gallery_preview["png"].startswith("data:image/png;base64,")
+    applied = await designer.apply_design_template(wolink_entry, "calendar_weather")
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
     saved = await designer.export(wolink_entry, large_doc)
     assert [step["action"] for step in saved["setup_actions"]] == [
         "weather.get_forecasts",
@@ -1681,6 +1730,7 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         "calendar.get_events",
         "ble_esl.write",
     ]
+    await async_validate_config_item(hass, {}, auto["automation"])
     auto_dedup = await designer.automation(
         wolink_entry, large_doc, defaults={"actions": saved["setup_actions"]}
     )
@@ -1690,6 +1740,29 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         "ble_esl.write",
     ]
 
+    # _preview_calendar_events cools down after a failing service call.
+    fail_calls = 0
+
+    async def failing_get_events(call):
+        nonlocal fail_calls
+        fail_calls += 1
+        raise RuntimeError("calendar backend down")
+
+    hass.states.async_set("calendar.work", "on", {"message": "Work Fallback"})
+    hass.services.async_register(
+        "calendar", "get_events", failing_get_events, supports_response=SupportsResponse.ONLY
+    )
+    work_elements, _, _ = elements_from(
+        build(TEMPLATES["calendar_weather"], 800, 480, "BWR", {"calendar": "calendar.work"})[
+            "payload"
+        ],
+        DevicePreset("large", "large", 800, 480, "BWR"),
+    )
+    work_doc = {"version": 1, "elements": work_elements, "background": "white"}
+    await designer.preview(wolink_entry, work_doc)
+    await designer.preview(wolink_entry, work_doc)
+    assert fail_calls == 1
+
     demo_vars = demo_payload_variables(large_payload, {("weather.home", "daily"): forecast})
     assert (
         "fc" in demo_vars
@@ -1697,8 +1770,19 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         and demo_vars["events"]["calendar.home"]["events"]
     )
 
-    # Round-trip pixel parity across all 29 sizes.
+    # Round-trip pixel parity across all 29 sizes (with long summary shrink_ellipsis).
     hass.states.async_set("weather.home", "cloudy", {"temperature": 18, "humidity": 55})
+    hass.states.async_set(
+        "calendar.home",
+        "on",
+        {
+            "message": "주간 제품 디자인 회의 및 리뷰 일정 상세 확인",
+            "start_time": f"{today} 09:30:00",
+            "end_time": f"{today} 10:00:00",
+            "all_day": False,
+            "location": "Main Conference Room A",
+        },
+    )
     for size in TEMPLATES["calendar_weather"]["layouts"]:
         w, h = (int(part) for part in size.split("x"))
         preset = DevicePreset("test", "test", w, h, "BWR")

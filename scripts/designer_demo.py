@@ -103,6 +103,18 @@ STATES["weather.home"] = {
     "state": "cloudy",
     "attributes": {"friendly_name": "Weather", "temperature": 18.5, "temperature_unit": "°C"},
 }
+STATES["calendar.home"] = {
+    "entity_id": "calendar.home",
+    "state": "on",
+    "attributes": {
+        "friendly_name": "Calendar",
+        "message": "Morning standup",
+        "start_time": f"{dt_util.now().date().isoformat()} 09:30:00",
+        "end_time": f"{dt_util.now().date().isoformat()} 10:00:00",
+        "all_day": False,
+        "location": "Studio",
+    },
+}
 TEMPLATES = {}
 TAGS = [
     {
