@@ -300,8 +300,10 @@ def calendar_layout(layout, base):
             + ev_period
             + template(
                 "_sd.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
-                "~ (' - ' ~ _ed.strftime('${time_format}' if _ed.date() == _sd.date() else '${date_format} ${time_format}') "
-                "if _ed is not none and _ed >= _sd and (_sr | length > 10 or _ed.date() > _sd.date() + timedelta(days=1)) else '') "
+                "~ ((' - ' ~ (_ed - timedelta(days=1)).strftime('${date_format}')) "
+                "if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) "
+                "else (' - ' ~ _ed.strftime('${time_format}' if _ed.date() == _sd.date() else '${date_format} ${time_format}') "
+                "if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '')) "
                 "if _sd is not none else ''"
             )
             + tag("else")
@@ -326,25 +328,29 @@ def calendar_layout(layout, base):
             8,
             align="left",
         )
-        more_events = (
+
+        def upcoming_slot(index):
+            return (
+                ev_prefix
+                + tag(f"if _evs | length > {index}")
+                + tag(f"set _ev = _evs[{index}]")
+                + tag("set _sr = (_ev.start | default('')) | string")
+                + tag("set _dt = as_datetime(_sr, none)")
+                + tag(
+                    "if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif"
+                )
+                + tag(
+                    "set _when = _dt.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
+                    "if _dt is not none else ''"
+                )
+                + template("(_when ~ '  ' if _when else '') ~ (_ev.summary | default('', true))")
+                + tag("endif")
+            )
+
+        slot_one = (
             ev_prefix
             + tag("if _evs | length > 1")
-            + tag("set _ns = namespace(lines=[])")
-            + tag("for _ev in _evs[1:3]")
-            + tag("set _sr = (_ev.start | default('')) | string")
-            + tag("set _dt = as_datetime(_sr, none)")
-            + tag(
-                "if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif"
-            )
-            + tag(
-                "set _when = _dt.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
-                "if _dt is not none else ''"
-            )
-            + tag(
-                "set _ns.lines = _ns.lines + [(_when ~ '  ' if _when else '') ~ (_ev.summary | default('', true))]"
-            )
-            + tag("endfor")
-            + template("_ns.lines | join('\\n')")
+            + upcoming_slot(1).removeprefix(ev_prefix)
             + tag("elif _evs")
             + template("_evs[0].description | default('', true)")
             + tag("else")
@@ -352,7 +358,8 @@ def calendar_layout(layout, base):
             + tag("endif")
         )
         layout.rule(5, 74, 95, 74)
-        layout.text((5, 77, 95, 95), more_events, 6, align="left", lines=3)
+        layout.text((5, 76, 95, 85), slot_one, 6.5, align="left", lines=1)
+        layout.text((5, 87, 95, 96), upcoming_slot(2), 6.5, align="left", lines=1)
     else:
         layout.header(heading, "${accent}")
         layout.text((5, 23, 95, 60), title, 24, align="left", lines=2)
@@ -418,14 +425,10 @@ def print_layout(layout, base):
         temps = (
             tag("set _ns = '${nozzle_sensor}'")
             + tag("set _bs = '${bed_sensor}'")
-            + tag("set _nv = states(_ns) | float(none) if _ns.startswith('sensor.') else none")
-            + tag("set _bv = states(_bs) | float(none) if _bs.startswith('sensor.') else none")
-            + tag(
-                "set _nt = (_nv | round(0) | int ~ '°') if _nv is not none and _nv == _nv else '—'"
-            )
-            + tag(
-                "set _bt = (_bv | round(0) | int ~ '°') if _bv is not none and _bv == _bv else '—'"
-            )
+            + tag("set _nr = states(_ns) if _ns.startswith('sensor.') else ''")
+            + tag("set _br = states(_bs) if _bs.startswith('sensor.') else ''")
+            + tag("set _nt = (_nr | float | round(0) | int ~ '°') if is_number(_nr) else '—'")
+            + tag("set _bt = (_br | float | round(0) | int ~ '°') if is_number(_br) else '—'")
             + template(
                 "_nt ~ ' / ' ~ _bt if (_ns.startswith('sensor.') or _bs.startswith('sensor.')) else '—'"
             )
@@ -554,32 +557,6 @@ def forecast_layout(layout, base):
     # Reuse the existing forecast parsing, condition mapping and fallbacks.
     day, high, low = values(base, "text")[:3]
     glyph = values(base, "icon")[0]
-    future_filter = (
-        "set _raw = fc['${weather}'].forecast | default([], true) "
-        "if fc is defined and fc['${weather}'] is defined else [] %}"
-        "{% set _fn = namespace(rows=[], cur=false) %}"
-        "{% for _i in _raw %}{% set _dt = as_datetime(_i.datetime | default(none), none) %}"
-        "{% if _dt is not none and as_local(_dt).date() >= now().date() %}{% set _fn.cur = true %}{% break %}{% endif %}{% endfor %}"
-        "{% if _fn.cur %}{% for _i in _raw %}{% set _dt = as_datetime(_i.datetime | default(none), none) %}"
-        "{% if _dt is none or as_local(_dt).date() >= now().date() %}{% set _fn.rows = _fn.rows + [_i] %}{% endif %}{% endfor %}"
-        "{% set f = _fn.rows %}{% else %}{% set f = _raw %}{% endif"
-    )
-    day = day.replace(
-        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
-        future_filter,
-    )
-    high = high.replace(
-        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
-        future_filter,
-    )
-    low = low.replace(
-        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
-        future_filter,
-    )
-    glyph = glyph.replace(
-        "set f = fc['${weather}'].forecast if fc is defined and fc['${weather}'] is defined else []",
-        future_filter,
-    )
 
     show_chance = layout.detail or layout.medium
     indices = range(7) if layout.large else range(1, 6 if show_chance else 4)

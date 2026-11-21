@@ -338,11 +338,12 @@ layouts:
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
     - {type: text_fit, value: &id002 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{{ (_evs[0].summary | default(''${empty_text}'', true)) if _evs else (state_attr(''${calendar}'', ''message'') or ''${empty_text}'') }}', font: '${font}', x: 32, y: 101, width: 584, height: 120, size: 106, min_size: 7, max_lines: 2, align: left, valign: middle, fit: shrink, color: black}
     - {type: icon, value: clock-outline, x: 52, y: 254, size: 29, anchor: mm, color: black}
-    - {type: text_fit, value: &id003 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{% if _evs %}{% set _sr = (_evs[0].start | default('''')) | string %}{% set _er = (_evs[0].end | default('''')) | string %}{% set _sd = as_datetime(_sr, none) %}{% set _ed = as_datetime(_er, none) %}{% if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif %}{% if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif %}{{ _sd.strftime(''${date_format}'' if _sr | length == 10 else ''${date_format} ${time_format}'') ~ ('' - '' ~ _ed.strftime(''${time_format}'' if _ed.date() == _sd.date() else ''${date_format} ${time_format}'') if _ed is not none and _ed >= _sd and (_sr | length > 10 or _ed.date() > _sd.date() + timedelta(days=1)) else '''') if _sd is not none else '''' }}{% else %}{% set start = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set end = as_datetime(state_attr(''${calendar}'', ''end_time''), none) %}{% set all_day = state_attr(''${calendar}'', ''all_day'') %}{{ start.strftime(''${date_format}'') ~ ('''' if all_day else '' '' ~ start.strftime(''${time_format}'') ~ ('' - '' ~ end.strftime(''${time_format}'' if end.date() == start.date() else ''${date_format} ${time_format}'') if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '''')) if start else '''' }}{% endif %}', font: '${font}', x: 91, y: 230, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id003 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{% if _evs %}{% set _sr = (_evs[0].start | default('''')) | string %}{% set _er = (_evs[0].end | default('''')) | string %}{% set _sd = as_datetime(_sr, none) %}{% set _ed = as_datetime(_er, none) %}{% if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif %}{% if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif %}{{ _sd.strftime(''${date_format}'' if _sr | length == 10 else ''${date_format} ${time_format}'') ~ (('' - '' ~ (_ed - timedelta(days=1)).strftime(''${date_format}'')) if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) else ('' - '' ~ _ed.strftime(''${time_format}'' if _ed.date() == _sd.date() else ''${date_format} ${time_format}'') if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '''')) if _sd is not none else '''' }}{% else %}{% set start = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set end = as_datetime(state_attr(''${calendar}'', ''end_time''), none) %}{% set all_day = state_attr(''${calendar}'', ''all_day'') %}{{ start.strftime(''${date_format}'') ~ ('''' if all_day else '' '' ~ start.strftime(''${time_format}'') ~ ('' - '' ~ end.strftime(''${time_format}'' if end.date() == start.date() else ''${date_format} ${time_format}'') if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '''')) if start else '''' }}{% endif %}', font: '${font}', x: 91, y: 230, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: icon, value: map-marker-outline, x: 52, y: 312, size: 29, anchor: mm, color: black}
     - {type: text_fit, value: &id004 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{{ (_evs[0].location | default('''', true)) if _evs else (state_attr(''${calendar}'', ''location'') or '''') }}', font: '${font}', x: 91, y: 288, width: 525, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 355, x_end: 616, y_end: 355, width: 2, fill: black}
-    - {type: text_fit, value: &id005 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{% if _evs | length > 1 %}{% set _ns = namespace(lines=[]) %}{% for _ev in _evs[1:3] %}{% set _sr = (_ev.start | default('''')) | string %}{% set _dt = as_datetime(_sr, none) %}{% if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif %}{% set _when = _dt.strftime(''${date_format}'' if _sr | length == 10 else ''${date_format} ${time_format}'') if _dt is not none else '''' %}{% set _ns.lines = _ns.lines + [(_when ~ ''  '' if _when else '''') ~ (_ev.summary | default('''', true))] %}{% endfor %}{{ _ns.lines | join(''\n'') }}{% elif _evs %}{{ _evs[0].description | default('''', true) }}{% else %}{{ state_attr(''${calendar}'', ''description'') or '''' }}{% endif %}', font: '${font}', x: 32, y: 370, width: 584, height: 86, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id005 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{% if _evs | length > 1 %}{% if _evs | length > 1 %}{% set _ev = _evs[1] %}{% set _sr = (_ev.start | default('''')) | string %}{% set _dt = as_datetime(_sr, none) %}{% if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif %}{% set _when = _dt.strftime(''${date_format}'' if _sr | length == 10 else ''${date_format} ${time_format}'') if _dt is not none else '''' %}{{ (_when ~ ''  '' if _when else '''') ~ (_ev.summary | default('''', true)) }}{% endif %}{% elif _evs %}{{ _evs[0].description | default('''', true) }}{% else %}{{ state_attr(''${calendar}'', ''description'') or '''' }}{% endif %}', font: '${font}', x: 32, y: 365, width: 584, height: 43, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id006 '{% set _evs = events[''${calendar}''].events | default([], true) if events is defined and events[''${calendar}''] is defined else [] %}{% if _evs | length > 2 %}{% set _ev = _evs[2] %}{% set _sr = (_ev.start | default('''')) | string %}{% set _dt = as_datetime(_sr, none) %}{% if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif %}{% set _when = _dt.strftime(''${date_format}'' if _sr | length == 10 else ''${date_format} ${time_format}'') if _dt is not none else '''' %}{{ (_when ~ ''  '' if _when else '''') ~ (_ev.summary | default('''', true)) }}{% endif %}', font: '${font}', x: 32, y: 418, width: 584, height: 43, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
@@ -352,7 +353,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 38, y: 421, size: 29, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 67, y: 389, width: 389, height: 65, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 480, x_end: 456, y_end: 480, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 24, y: 499, width: 432, height: 117, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 24, y: 492, width: 432, height: 59, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 24, y: 564, width: 432, height: 58, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   800x480:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
@@ -362,7 +364,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 64, y: 312, size: 29, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 112, y: 288, width: 648, height: 48, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 40, y_start: 355, x_end: 760, y_end: 355, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 40, y: 370, width: 720, height: 86, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 40, y: 365, width: 720, height: 43, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 40, y: 418, width: 720, height: 43, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   480x800:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
@@ -372,7 +375,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 38, y: 520, size: 29, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 67, y: 480, width: 389, height: 80, size: 38, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 592, x_end: 456, y_end: 592, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 24, y: 616, width: 432, height: 144, size: 29, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 24, y: 608, width: 432, height: 72, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 24, y: 696, width: 432, height: 72, size: 31, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   960x640:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
@@ -382,7 +386,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 77, y: 416, size: 38, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 134, y: 384, width: 778, height: 64, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 474, x_end: 912, y_end: 474, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 48, y: 493, width: 864, height: 115, size: 38, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 48, y: 486, width: 864, height: 58, size: 42, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 48, y: 557, width: 864, height: 57, size: 42, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   640x960:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
@@ -392,7 +397,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 51, y: 624, size: 38, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 90, y: 576, width: 518, height: 96, size: 51, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 710, x_end: 608, y_end: 710, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 32, y: 739, width: 576, height: 173, size: 38, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 32, y: 730, width: 576, height: 86, size: 42, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 32, y: 835, width: 576, height: 87, size: 42, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   960x680:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
@@ -402,7 +408,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 77, y: 442, size: 41, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 134, y: 408, width: 778, height: 68, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 503, x_end: 912, y_end: 503, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 48, y: 524, width: 864, height: 122, size: 41, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 48, y: 517, width: 864, height: 61, size: 44, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 48, y: 592, width: 864, height: 61, size: 44, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   680x960:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
@@ -412,7 +419,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 54, y: 624, size: 41, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 95, y: 576, width: 551, height: 96, size: 54, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 34, y_start: 710, x_end: 646, y_end: 710, width: 2, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 34, y: 739, width: 612, height: 173, size: 41, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 34, y: 730, width: 612, height: 86, size: 44, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 34, y: 835, width: 612, height: 87, size: 44, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   1600x1200:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
@@ -422,7 +430,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 128, y: 780, size: 72, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 224, y: 720, width: 1296, height: 120, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 80, y_start: 888, x_end: 1520, y_end: 888, width: 4, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 80, y: 924, width: 1440, height: 216, size: 72, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 80, y: 912, width: 1440, height: 108, size: 78, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 80, y: 1044, width: 1440, height: 108, size: 78, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   1200x1600:
     - {type: text_fit, value: '${heading}', font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: '${accent}'}
     - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
@@ -432,7 +441,8 @@ layouts:
     - {type: icon, value: map-marker-outline, x: 96, y: 1040, size: 72, anchor: mm, color: black}
     - {type: text_fit, value: *id004, font: '${font}', x: 168, y: 960, width: 972, height: 160, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 60, y_start: 1184, x_end: 1140, y_end: 1184, width: 4, fill: black}
-    - {type: text_fit, value: *id005, font: '${font}', x: 60, y: 1232, width: 1080, height: 288, size: 72, min_size: 7, max_lines: 3, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id005, font: '${font}', x: 60, y: 1216, width: 1080, height: 144, size: 78, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id006, font: '${font}', x: 60, y: 1392, width: 1080, height: 144, size: 78, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   # END GENERATED SIZE LAYOUTS
 
 automation:
@@ -441,13 +451,4 @@ automation:
       entity_id: ${calendar}
     - trigger: time_pattern
       minutes: /${interval}
-  actions:
-    - action: calendar.get_events
-      target:
-        entity_id: ${calendar}
-      data:
-        duration:
-          days: 7
-      response_variable: events
-      continue_on_error: true
   mode: single

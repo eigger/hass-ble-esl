@@ -93,7 +93,7 @@ layouts:
       fit: shrink
       align: right
       valign: middle
-      color: "{% set s = states('${sensor}') %}{% set n = s | float(none) %}{% set lim = '${warn_above}' | float(none) %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and lim == lim and n is not none and n == n and n >= lim else '${color}' }}"
+      color: "{% set s = states('${sensor}') %}{% set _w = '${warn_above}' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and n is not none and n >= lim else '${color}' }}"
     - type: text_fit
       value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
       font: ${font}
@@ -147,7 +147,7 @@ layouts:
       fit: shrink
       align: right
       valign: middle
-      color: "{% set s = states('${sensor}') %}{% set n = s | float(none) %}{% set lim = '${warn_above}' | float(none) %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and lim == lim and n is not none and n == n and n >= lim else '${color}' }}"
+      color: "{% set s = states('${sensor}') %}{% set _w = '${warn_above}' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and n is not none and n >= lim else '${color}' }}"
     - type: text_fit
       value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
       font: ${font}
@@ -166,7 +166,7 @@ layouts:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 10, y: 6, width: 180, height: 28, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 10, y_start: 38, x_end: 190, y_end: 38, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 100, y: 60, size: 28, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 10, y: 78, width: 180, height: 76, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: &id001 '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{% set lim = ''${warn_above}'' | float(none) %}{{ (''black'' if ''${warn_color}'' == ''white'' else ''${warn_color}'') if lim is not none and lim == lim and n is not none and n == n and n >= lim else ''${color}'' }}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 10, y: 78, width: 180, height: 76, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: &id001 '{% set s = states(''${sensor}'') %}{% set _w = ''${warn_above}'' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ (''black'' if ''${warn_color}'' == ''white'' else ''${warn_color}'') if lim is not none and n is not none and n >= lim else ''${color}'' }}'}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 10, y: 156, width: 180, height: 34, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   240x416:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 12, y: 12, width: 216, height: 59, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}

@@ -1474,6 +1474,86 @@ async def test_weather_forecast_4_2_shows_5_days_and_skips_yesterday_when_curren
         assert {"11°", "3°", "15°", "7°", "25%"} <= set(vals)
 
 
+async def test_weather_forecast_250x128_and_non_numeric_edge_cases(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    fc_yesterday = {
+        "weather.home": {
+            "forecast": [
+                {
+                    "datetime": (today - timedelta(days=1)).isoformat(),
+                    "condition": "sunny",
+                    "temperature": 99,
+                    "templow": 98,
+                },
+                {
+                    "datetime": today.isoformat(),
+                    "condition": "cloudy",
+                    "temperature": 12,
+                    "templow": 4,
+                },
+                {
+                    "datetime": (today + timedelta(days=1)).isoformat(),
+                    "condition": "rainy",
+                    "temperature": 15,
+                    "templow": 7,
+                },
+            ]
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        vals_250 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_forecast"], 250, 128, "BWR")["payload"],
+                set(),
+                {"fc": fc_yesterday},
+            )
+        )
+        assert "99°" not in vals_250 and "98°" not in vals_250
+        assert {"15°", "7°", "weather-rainy"} <= set(vals_250)
+
+        # Edge cases: NaN/inf/bool temperatures, invalid/None datetime, and None forecast entry.
+        edge_fc = {
+            "weather.home": {
+                "forecast": [
+                    {"datetime": None, "temperature": True, "templow": False},
+                    {
+                        "datetime": "not-a-date",
+                        "temperature": float("nan"),
+                        "templow": float("inf"),
+                    },
+                    {"datetime": today.isoformat(), "temperature": 10, "templow": 2},
+                ]
+            }
+        }
+        for size in ((250, 128), (800, 480)):
+            vals_edge = _values(
+                resolve_templates(
+                    hass,
+                    build(TEMPLATES["weather_forecast"], *size, "BWR")["payload"],
+                    set(),
+                    {"fc": edge_fc},
+                )
+            )
+            assert "--°" in vals_edge or "--° / --°" in vals_edge
+            assert "1°" not in vals_edge and "0°" not in vals_edge
+
+        vals_none = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_forecast"], 250, 128, "BWR")["payload"],
+                set(),
+                {"fc": {"weather.home": None}},
+            )
+        )
+        assert "--°" in vals_none
+
+
 async def test_sensor_card_warn_above_highlights_and_respects_bw_fallback(hass):
     hass.states.async_set("sensor.temperature", "32.4", {"unit_of_measurement": "°C"})
     rendered_bwr = resolve_templates(
@@ -1481,8 +1561,7 @@ async def test_sensor_card_warn_above_highlights_and_respects_bw_fallback(hass):
         build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "30"})["payload"],
         set(),
     )
-    val_item = next(item for item in rendered_bwr if str(item.get("value")) == "32.4")
-    assert val_item["color"] == "red"
+    assert next(item for item in rendered_bwr if str(item.get("value")) == "32.4")["color"] == "red"
 
     rendered_bw = resolve_templates(
         hass,
@@ -1502,6 +1581,42 @@ async def test_sensor_card_warn_above_highlights_and_respects_bw_fallback(hass):
         next(item for item in rendered_ok if str(item.get("value")) == "32.4")["color"] == "black"
     )
 
+    # White warn_color stays visible (black), negative thresholds work, and non-numeric thresholds/states do not crash.
+    rendered_white = resolve_templates(
+        hass,
+        build(
+            TEMPLATES["sensor_card"], 400, 300, "BWRY", {"warn_above": "-5", "warn_color": "white"}
+        )["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_white if str(item.get("value")) == "32.4")["color"]
+        == "black"
+    )
+
+    for warn_above in ("", "abc", "nan", "inf"):
+        rendered_safe = resolve_templates(
+            hass,
+            build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": warn_above})["payload"],
+            set(),
+        )
+        assert (
+            next(item for item in rendered_safe if str(item.get("value")) == "32.4")["color"]
+            == "black"
+        )
+
+    for bad_state in ("inf", "nan", "unavailable"):
+        hass.states.async_set("sensor.temperature", bad_state, {"unit_of_measurement": "°C"})
+        rendered_bad = resolve_templates(
+            hass,
+            build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "30"})["payload"],
+            set(),
+        )
+        assert (
+            next(item for item in rendered_bad if str(item.get("value")) == bad_state)["color"]
+            == "black"
+        )
+
 
 async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(hass):
     hass.states.async_set("sensor.print_progress", "55")
@@ -1519,35 +1634,144 @@ async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(
         )
     )
     assert "210° / 60°" in texts_with
-    texts_without = _texts(_shown(hass, "print_progress", 800, 480))
-    assert "—" in texts_without
+    assert "—" in _texts(_shown(hass, "print_progress", 800, 480))
+
+    # Single sensor supplied and non-sensor IDs.
+    assert "210° / —" in _texts(
+        _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "sensor.nozzle_temp"})
+    )
+    assert "—" in _texts(
+        _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "binary_sensor.door"})
+    )
+
+    # Non-numeric sensor states (unavailable, nan, inf) never raise OverflowError.
+    for bad in ("unavailable", "nan", "inf"):
+        hass.states.async_set("sensor.nozzle_temp", bad)
+        hass.states.async_set("sensor.bed_temp", bad)
+        assert "— / —" in _texts(
+            _shown(
+                hass,
+                "print_progress",
+                800,
+                480,
+                {"nozzle_sensor": "sensor.nozzle_temp", "bed_sensor": "sensor.bed_temp"},
+            )
+        )
 
 
-async def test_calendar_next_renders_upcoming_events_on_large_tags(hass):
+async def test_calendar_next_renders_upcoming_events_on_large_tags(hass, wolink_entry):
+    from homeassistant.core import SupportsResponse
+
     hass.states.async_set("calendar.home", "on", {"message": "Fallback"})
-    events = {
-        "calendar.home": {
-            "events": [
-                {
-                    "summary": "Standup",
-                    "start": "2026-11-22T09:30:00+09:00",
-                    "end": "2026-11-22T10:00:00+09:00",
-                    "location": "Room A",
-                },
-                {
-                    "summary": "Design Review",
-                    "start": "2026-11-22T14:00:00+09:00",
-                    "end": "2026-11-22T15:00:00+09:00",
-                },
-                {
-                    "summary": "Release Day",
-                    "start": "2026-11-23",
-                    "end": "2026-11-24",
-                },
-            ]
-        }
-    }
+    events = [
+        {
+            "summary": "Standup",
+            "start": "2026-11-22T09:30:00+09:00",
+            "end": "2026-11-22T10:00:00+09:00",
+            "location": "Room A",
+        },
+        {
+            "summary": "Design Review",
+            "start": "2026-11-22T14:00:00+09:00",
+            "end": "2026-11-22T15:00:00+09:00",
+        },
+        {
+            "summary": "Release Day",
+            "start": "2026-11-23",
+            "end": "2026-11-25",
+        },
+    ]
     built = build(TEMPLATES["calendar_next"], 800, 480, "BWR")
-    texts = _texts(resolve_templates(hass, built["payload"], set(), {"events": events}))
+    rendered = resolve_templates(
+        hass, built["payload"], set(), {"events": {"calendar.home": {"events": events}}}
+    )
+    texts = _texts(rendered)
     assert "Standup" in texts and "Room A" in texts
-    assert any("Design Review" in t and "Release Day" in t for t in texts)
+    assert any("Design Review" in t for t in texts)
+    assert any("Release Day" in t for t in texts)
+    # Multi-line regression guard: event 2 and 3 sit in separate single-line boxes and render cleanly.
+    assert not any("Design Review" in t and "Release Day" in t for t in texts)
+    render_image(hass, DevicePreset("test", "test", 800, 480, "BWR"), rendered)
+
+    # Multi-day all-day event formatting (exclusive end 11/25 -> 11/23 - 11/24 without 00:00) and mixed tz bounds.
+    all_day_texts = _texts(
+        resolve_templates(
+            hass,
+            built["payload"],
+            set(),
+            {"events": {"calendar.home": {"events": [events[2]]}}},
+        )
+    )
+    assert "11/23 - 11/24" in all_day_texts and not any("00:00" in t for t in all_day_texts)
+
+    mixed_tz = [{"summary": "Mixed", "start": "2026-11-23", "end": "2026-11-23T12:00:00+09:00"}]
+    mixed_texts = _texts(
+        resolve_templates(
+            hass,
+            built["payload"],
+            set(),
+            {"events": {"calendar.home": {"events": mixed_tz}}},
+        )
+    )
+    assert "Mixed" in mixed_texts and "11/23" in mixed_texts
+
+    # Empty events fall back to calendar entity attributes.
+    assert "Fallback" in _texts(
+        resolve_templates(
+            hass, built["payload"], set(), {"events": {"calendar.home": {"events": []}}}
+        )
+    )
+
+    # Designer preview, export setup_actions, and automation draft support calendar.get_events on 5.8"+,
+    # while small <480px layouts omit it.
+    small_elements, _, _ = elements_from(
+        build(TEMPLATES["calendar_next"], 250, 128, "BWR")["payload"],
+        DevicePreset("small", "small", 250, 128, "BWR"),
+    )
+    small_saved = await hass.data[KEY].export(
+        wolink_entry, {"version": 1, "elements": small_elements, "background": "white"}
+    )
+    assert small_saved["setup_actions"] == []
+
+    calls = []
+
+    async def get_events(call):
+        calls.append(dict(call.data))
+        ids = call.data["entity_id"]
+        ids = [ids] if isinstance(ids, str) else ids
+        return {entity: {"events": events} for entity in ids}
+
+    hass.services.async_register(
+        "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
+    )
+    designer = hass.data[KEY]
+    large_elements, _, issues = elements_from(
+        built["payload"], DevicePreset("large", "large", 800, 480, "BWR")
+    )
+    assert issues == []
+    large_doc = {"version": 1, "elements": large_elements, "background": "white"}
+    preview = await designer.preview(wolink_entry, large_doc)
+    assert "Standup" in _texts(preview["payload"]) and calls
+    saved = await designer.export(wolink_entry, large_doc)
+    assert saved["setup_actions"] == [
+        {
+            "action": "calendar.get_events",
+            "target": {"entity_id": ["calendar.home"]},
+            "data": {"duration": {"days": 7}},
+            "response_variable": "events",
+            "continue_on_error": True,
+        }
+    ]
+    auto = await designer.automation(wolink_entry, large_doc)
+    assert [step["action"] for step in auto["automation"]["actions"]] == [
+        "calendar.get_events",
+        "ble_esl.write",
+    ]
+    # Re-applying with defaults already containing calendar.get_events does not duplicate the step.
+    auto_dedup = await designer.automation(
+        wolink_entry, large_doc, defaults={"actions": saved["setup_actions"]}
+    )
+    assert [step["action"] for step in auto_dedup["automation"]["actions"]] == [
+        "calendar.get_events",
+        "ble_esl.write",
+    ]
