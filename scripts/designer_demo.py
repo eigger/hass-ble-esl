@@ -23,8 +23,7 @@ from homeassistant.util import dt as dt_util
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from custom_components.ble_esl.designer import (
     _preview_variable_map,
-    forecast_entities,
-    forecast_step,
+    forecast_steps,
 )
 from custom_components.ble_esl.designer.design_templates import (
     build as build_template,
@@ -328,7 +327,12 @@ async def handle(request):
                 render_image,
                 HASS,
                 preset,
-                resolve_templates(HASS, built["payload"], set()),
+                resolve_templates(
+                    HASS,
+                    built["payload"],
+                    set(),
+                    demo_payload_variables(built["payload"], await demo_forecasts()),
+                ),
                 background=built["background"],
             )
         except HomeAssistantError as err:
@@ -395,7 +399,12 @@ async def handle(request):
         if elements:
             try:
                 original, rebuilt = payloads(
-                    HASS, imported, elements, _preview_variable_map(msg.get("preview_variables"))
+                    HASS,
+                    imported,
+                    elements,
+                    demo_payload_variables(
+                        items, await demo_forecasts(), msg.get("preview_variables")
+                    ),
                 )
             except MissingTemplateParameter as err:
                 missing = set(
@@ -457,20 +466,10 @@ async def handle(request):
         return web.json_response({"status": "demo_only"})
     if msg["action"] in ("export", "automation"):
         forecasts = await demo_forecasts()
-        variables = _preview_variable_map(msg.get("preview_variables"))
-        if "fc" not in variables and (entities := forecast_entities(document)):
-            # What the designer fetches from the weather service, here canned.
-            variables = {
-                **variables,
-                "fc": {
-                    e: {"forecast": forecasts[(e, "daily")]}
-                    for e in entities
-                    if (e, "daily") in forecasts
-                },
-            }
+        variables = demo_payload_variables(document, forecasts, msg.get("preview_variables"))
         payload = compile_payload(HASS, document, TEMPLATES, forecasts, preview_variables=variables)
         report = LiveReport()
-        live = live_payload(HASS, document, TEMPLATES, forecasts, report=report)
+        live = live_payload(HASS, document, TEMPLATES, forecasts, variables, report=report)
         frozen = frozen_items(document, report.live)
         issues = list(frozen)
         result = export_yaml(
@@ -481,8 +480,7 @@ async def handle(request):
             live,
             rotate=document.get("rotate", 0),
         )
-        step = forecast_step(live if live is not None else payload)
-        result["setup_actions"] = [step] if step else []
+        result["setup_actions"] = forecast_steps(live if live is not None else payload)
         if msg["action"] == "automation":
             if not tag["writable"]:
                 raise HomeAssistantError("This ESL does not support writing")
@@ -526,24 +524,44 @@ async def demo_convert(element, preset):
 
 
 async def demo_forecasts():
+    now = dt_util.now()
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
     return {
         ("weather.home", kind): [
             {
-                "datetime": (dt_util.now() + timedelta(days=day)).isoformat(),
+                "datetime": (midnight + offset).isoformat(),
                 "condition": "sunny",
                 "temperature": 22.5,
                 "templow": 15,
                 "precipitation_probability": 20,
             }
-            for day in range(4)
+            for offset in offsets
         ]
-        for kind in ("daily", "hourly")
+        for kind, offsets in (
+            ("daily", [timedelta(days=day, hours=12) for day in range(7)]),
+            ("hourly", [timedelta(hours=hour) for hour in range(now.hour, now.hour + 24)]),
+        )
     }
+
+
+def demo_payload_variables(source, forecasts, provided=None):
+    """Make the demo's sample forecasts available just as in the real Designer."""
+    variables = _preview_variable_map(provided)
+    for step in forecast_steps(source):
+        name = step["response_variable"]
+        kind = step["data"]["type"]
+        if name not in variables:
+            variables[name] = {
+                entity: {"forecast": forecasts[(entity, kind)]}
+                for entity in step["target"]["entity_id"]
+                if (entity, kind) in forecasts
+            }
+    return variables
 
 
 async def preview(document, preset, preview_variables=None):
     forecasts = await demo_forecasts()
-    variables = _preview_variable_map(preview_variables)
+    variables = demo_payload_variables(document, forecasts, preview_variables)
     snapshots = snapshot_layers(HASS, document, TEMPLATES, forecasts, variables)
     payload = [item for _, part in snapshots for item in part]
     image, layers = await asyncio.to_thread(

@@ -185,22 +185,43 @@ def temperature_range():
     )
 
 
+def precipitation(row):
+    """Jinja fragment that derives the kind and validated probability for one row."""
+    return (
+        tag(f"set condition = {row}.condition | default('')")
+        + tag(f"set p = {row}.precipitation_probability | default(none)")
+        + tag(
+            "set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none"
+        )
+        + tag(f"set amount = {row}.precipitation | default(none)")
+        + tag(
+            f"set kind = 'snow' if condition in {SNOW!r} else ('rain' if condition in {RAIN!r} "
+            "else ('wet' if (p is not none and p >= 50) or "
+            "(is_number(amount) and amount is not boolean and amount | float > 0) else ''))"
+        )
+    )
+
+
 def advice(key):
-    # Use the first remaining contiguous event. The window ends at the last
-    # forecast hour, and shows the first event's peak reported probability.
+    # Select the first remaining contiguous event. A partial hourly response
+    # cannot rule out a wet daily forecast.
     choose_event = (
         tag("set now_hour = now().replace(minute=0, second=0, microsecond=0)")
-        + tag("set e = namespace(kind='', start=none, end=none, chance=none, checked=false)")
+        + tag(
+            "set e = namespace(kind='', start=none, end=none, chance=none, hours=[], covered=false, risk=0)"
+        )
         + tag(f"for i in ({rows('fc_hourly')})")
         + tag("set dt = as_datetime(i.datetime | default(none), none)")
         + tag("if dt is not none")
         + tag("set t = as_local(dt)")
         + tag("if t.date() == now_hour.date() and t >= now_hour")
-        + tag("set condition = i.condition | default('')")
-        + tag(
-            f"set kind = 'snow' if condition in {SNOW!r} else ('rain' if condition in {RAIN!r} else '')"
-        )
-        + tag(f"set e.checked = e.checked or condition in {tuple(ICONS)!r}")
+        + precipitation("i")
+        + tag("if p is not none")
+        + tag("set e.risk = [e.risk, p] | max")
+        + tag("endif")
+        + tag(f"if condition in {tuple(ICONS)!r} or p is not none or kind")
+        + tag("set e.hours = e.hours + [t.hour]")
+        + tag("endif")
         + tag("if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600)")
         + tag("break")
         + tag("endif")
@@ -208,9 +229,8 @@ def advice(key):
         + tag("set e.kind = kind")
         + tag("set e.start = e.start or t")
         + tag("set e.end = t")
-        + tag("set p = i.precipitation_probability | default(none)")
-        + tag("if is_number(p) and p is not boolean")
-        + tag("set e.chance = [e.chance | default(0, true), p | float] | max")
+        + tag("if p is not none")
+        + tag("set e.chance = [e.chance | default(0, true), p] | max")
         + tag("endif")
         + tag("endif")
         + tag("endif")
@@ -218,25 +238,30 @@ def advice(key):
         + tag("endfor")
     )
     daily_fallback = (
-        select_forecast("fc", "now().date()")
-        + tag("set condition = row.condition | default('')")
-        + tag("if not e.kind and not e.checked")
-        + tag(
-            f"set e.kind = 'snow' if condition in {SNOW!r} else ('rain' if condition in {RAIN!r} else '')"
-        )
-        + tag("set p = row.precipitation_probability | default(none)")
-        + tag("set e.chance = p | float if e.kind and is_number(p) and p is not boolean else none")
-        + tag(f"set e.checked = e.checked or (not e.kind and condition in {tuple(ICONS)!r})")
+        tag("if not e.kind")
+        + tag("if e.hours | unique | list | count == 24 - now_hour.hour")
+        + tag("set e.covered = true")
+        + tag("else")
+        + select_forecast("fc", "now().date()")
+        + precipitation("row")
+        + tag("set e.kind = kind")
+        + tag("set e.chance = p")
+        + tag("if p is not none")
+        + tag("set e.risk = [e.risk, p] | max")
+        + tag("endif")
+        + tag(f"set e.covered = condition in {tuple(ICONS)!r} or p is not none")
+        + tag("endif")
         + tag("endif")
     )
     output = {
-        "icon": "'snowflake' if e.kind == 'snow' else ('umbrella-outline' if e.kind else ('weather-sunny' if e.checked else 'weather-cloudy-alert'))",
-        "label": "'미끄럼 주의' if e.kind == 'snow' else ('우산 챙기기' if e.kind else ('오늘 외출' if e.checked else '예보 정보 없음'))",
+        "icon": "'snowflake' if e.kind == 'snow' else ('umbrella-outline' if e.kind else ('weather-sunny' if e.covered or e.risk else 'weather-cloudy-alert'))",
+        "label": "'미끄럼 주의' if e.kind == 'snow' else ('우산 챙기기' if e.kind else ('오늘 외출' if e.covered or e.risk else '예보 정보 없음'))",
         "color": f"{ACCENT!r} if e.kind else 'black'",
         "timing": (
             "(e.start.strftime('%H') ~ ('~' ~ e.end.strftime('%H') if e.end != e.start else '') ~ '시 ' if e.start else '오늘 ')"
-            " ~ ('눈' if e.kind == 'snow' else '비') ~ (' ' ~ (e.chance | round | int) ~ '%' if e.chance is not none else '')"
-            " if e.kind else ('비·눈 예보 없음' if e.checked else '—')"
+            " ~ ('눈' if e.kind == 'snow' else ('비' if e.kind == 'rain' else '강수'))"
+            " ~ (' ' ~ (e.chance | round | int) ~ '%' if e.chance is not none else '')"
+            " if e.kind else ('강수 ' ~ (e.risk | round | int) ~ '%' if e.risk else ('비·눈 예보 없음' if e.covered else '—'))"
         ),
     }
     return choose_event + daily_fallback + expression(output[key])
@@ -285,6 +310,24 @@ def text(x, y, value, size, bold=False, anchor="lt", color="black"):
     }
 
 
+def fit_text(x, y, width, height, value, size, *, align="center"):
+    return {
+        "type": "text_fit",
+        "value": value,
+        "font": BOLD,
+        "x": x,
+        "y": y,
+        "width": width,
+        "height": height,
+        "size": size,
+        "min_size": 7,
+        "fit": "shrink",
+        "align": align,
+        "valign": "middle",
+        "max_lines": 1,
+    }
+
+
 def icon(x, y, value, size, anchor="lt", color="black"):
     return {
         "type": "icon",
@@ -323,7 +366,15 @@ def compact(width, height):
         text(8, height - 19, temperature_range(), 10 if small else 12, True),
         icon(mid + 8, y, advice("icon"), 17, color=advice("color")),
         text(mid + 8, y + 21, advice("label"), 14 if small else 17, True, color=advice("color")),
-        text(mid + 8, y + 44, advice("timing"), 11 if small else 13, True),
+        fit_text(
+            mid + 8,
+            y + 42,
+            width - mid - 13,
+            19,
+            advice("timing"),
+            11 if small else 13,
+            align="left",
+        ),
     ]
 
 
@@ -339,7 +390,7 @@ def narrow_portrait(width, height):
         line(8, round(height * 0.61), width - 9, round(height * 0.61)),
         icon(mid, round(height * 0.66), advice("icon"), 20, "mt", advice("color")),
         text(mid, round(height * 0.78), advice("label"), 14, True, "mt", advice("color")),
-        text(mid, round(height * 0.89), advice("timing"), 10, True, "mt"),
+        fit_text(5, round(height * 0.88), width - 10, 15, advice("timing"), 10),
     ]
 
 
@@ -365,7 +416,9 @@ def stacked(width, height):
         line(12, action - 4, width - 13, action - 4),
         icon(18, action + 10, advice("icon"), 25, color=advice("color")),
         text(53, action + 8, advice("label"), 22 if portrait else 18, True, color=advice("color")),
-        text(53, action + 38, advice("timing"), 16 if portrait else 14, True),
+        fit_text(
+            53, action + 34, width - 59, 23, advice("timing"), 16 if portrait else 14, align="left"
+        ),
     ]
     if portrait:
         for index, (hour, label) in enumerate(
@@ -468,11 +521,22 @@ def weekly(width, height):
     rule(14, 135, 386, 135, 2)
     t(14, 146, "7일 예보", 16, True)
     t(386, 151, "최저 / 최고 · 강수확률", 11, anchor="rt")
-    week_columns(t, i, rule, width=372, left=14, y=(174, 186, 208, 245, 271), sizes=(13, 26, 12))
+    week_columns(
+        result,
+        t,
+        i,
+        rule,
+        scale=(sx, sy),
+        width=372,
+        left=14,
+        y=(174, 186, 208, 245, 271),
+        sizes=(13, 26, 12),
+    )
     return result
 
 
-def week_columns(t, i, rule, *, width, left, y, sizes):
+def week_columns(result, t, i, rule, *, scale, width, left, y, sizes):
+    sx, sy = scale
     cell = width / 7
     heading, icon_size, value_size = sizes
     mark, date, icon_y, values, chance = y
@@ -486,7 +550,19 @@ def week_columns(t, i, rule, *, width, left, y, sizes):
             rule(x, date - 3, x, chance + value_size + 2)
         t(mid, date, forecast(day, "date"), heading, True, "mt")
         i(mid, icon_y, forecast(day, "icon"), icon_size, "mt", color)
-        t(mid, values, forecast(day, "range"), value_size, True, "mt")
+        # Reserve the space between the dividers even for double-negative
+        # ranges in Celsius and three-digit values in Fahrenheit.
+        left_edge = round((x + 2) * sx)
+        result.append(
+            fit_text(
+                left_edge,
+                round((values - 2) * sy),
+                round((x + cell - 2) * sx) - left_edge,
+                round((chance - values) * sy),
+                forecast(day, "range"),
+                round(value_size * sx),
+            )
+        )
         t(mid, chance, forecast(day, "chance"), value_size, True, "mt", color)
 
 
@@ -581,7 +657,17 @@ def large_layout(width, height):
     rule(24, 329, 776, 329, 2)
     t(24, 342, "7일 예보", 21, True)
     t(776, 346, "최저 / 최고 · 강수확률", 15, anchor="rt")
-    week_columns(t, i, rule, width=752, left=24, y=(373, 384, 407, 435, 456), sizes=(17, 29, 16))
+    week_columns(
+        result,
+        t,
+        i,
+        rule,
+        scale=(sx, sy),
+        width=752,
+        left=24,
+        y=(373, 384, 407, 435, 456),
+        sizes=(17, 29, 16),
+    )
     return result
 
 

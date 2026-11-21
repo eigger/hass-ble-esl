@@ -1213,6 +1213,61 @@ async def test_outdoor_weather_reads_dated_forecasts_and_keeps_missing_slots_bla
     assert series == [[-3.0, 0.0], [], [], [], []]
 
 
+@pytest.mark.parametrize(
+    ("hourly", "daily", "expected"),
+    [
+        ([(7, "cloudy", 90)], {}, "07시 강수 90%"),
+        ([(7, "cloudy", 20)], {}, "강수 20%"),
+        ([(7, "sunny", 0)], {}, "예보 정보 없음"),
+        ([(7, "sunny", 0)], {"condition": "rainy", "precipitation_probability": 60}, "오늘 비 60%"),
+        ([(hour, "sunny", 0) for hour in range(6, 24)], {"condition": "rainy"}, "비·눈 예보 없음"),
+    ],
+)
+async def test_outdoor_weather_uses_partial_forecast_cautiously(hass, hourly, daily, expected):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day()
+
+    def at(hour):
+        return (today + timedelta(hours=hour)).isoformat()
+
+    forecasts = {
+        "fc_hourly": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": at(hour),
+                        "condition": condition,
+                        "precipitation_probability": chance,
+                    }
+                    for hour, condition, chance in hourly
+                ]
+            },
+        },
+        "fc": {"weather.home": {"forecast": [{"datetime": at(12), **daily}]}},
+    }
+    built = build(TEMPLATES["weather_outdoor"], 212, 104, "BWR")
+    with freeze_time(today + timedelta(hours=6), real_asyncio=True):
+        values = _values(resolve_templates(hass, built["payload"], set(), forecasts))
+    assert expected in values
+
+
+@pytest.mark.parametrize(("width", "height"), [(400, 300), (300, 400), (800, 480)])
+def test_outdoor_weather_weekly_temperatures_stay_in_their_columns(width, height):
+    from itertools import pairwise
+
+    items = build(TEMPLATES["weather_outdoor"], width, height, "BWR")["payload"]
+    ranges = [
+        item for item in items if item["type"] == "text_fit" and "row.templow" in item["value"]
+    ]
+    assert len(ranges) == 7
+    assert all(item["max_lines"] == 1 and item["fit"] == "shrink" for item in ranges)
+    assert all(a["x"] + a["width"] < b["x"] for a, b in pairwise(ranges))
+
+
 async def test_outdoor_weather_automation_fetches_both_forecasts_once(hass, wolink_entry):
     from homeassistant.core import SupportsResponse
 
