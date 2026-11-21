@@ -103,6 +103,11 @@ STATES["weather.home"] = {
     "state": "cloudy",
     "attributes": {"friendly_name": "Weather", "temperature": 18.5, "temperature_unit": "°C"},
 }
+STATES["person.home"] = {
+    "entity_id": "person.home",
+    "state": "home",
+    "attributes": {"friendly_name": "Alex"},
+}
 TEMPLATES = {}
 TAGS = [
     {
