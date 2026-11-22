@@ -27,6 +27,14 @@ parameters:
     type: color
     default: black
     label: { en: Value color, ko: 값 색상 }
+  warn_above:
+    type: string
+    default: ""
+    label: { en: "Alert threshold (>= value, optional)", ko: "경고 기준값 (이상일 때 강조, 선택)" }
+  warn_color:
+    type: color
+    default: red
+    label: { en: Alert color, ko: 경고 색상 }
   font:
     type: font
     default: CookieRunBold.ttf
@@ -85,7 +93,7 @@ layouts:
       fit: shrink
       align: right
       valign: middle
-      color: ${color}
+      color: "{% set s = states('${sensor}') %}{% set _w = '${warn_above}' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and n is not none and n >= lim else '${color}' }}"
     - type: text_fit
       value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
       font: ${font}
@@ -139,7 +147,7 @@ layouts:
       fit: shrink
       align: right
       valign: middle
-      color: ${color}
+      color: "{% set s = states('${sensor}') %}{% set _w = '${warn_above}' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') if lim is not none and n is not none and n >= lim else '${color}' }}"
     - type: text_fit
       value: "{{ state_attr('${sensor}', 'unit_of_measurement') or '' }}"
       font: ${font}
@@ -158,224 +166,224 @@ layouts:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 10, y: 6, width: 180, height: 28, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 10, y_start: 38, x_end: 190, y_end: 38, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 100, y: 60, size: 28, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 10, y: 78, width: 180, height: 76, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 10, y: 78, width: 180, height: 76, size: 70, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: &id001 '{% set s = states(''${sensor}'') %}{% set _w = ''${warn_above}'' %}{% set lim = (_w | float) if is_number(_w) else none %}{% set n = (s | float) if is_number(s) else none %}{{ (''black'' if ''${warn_color}'' == ''white'' else ''${warn_color}'') if lim is not none and n is not none and n >= lim else ''${color}'' }}'}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 10, y: 156, width: 180, height: 34, size: 24, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   240x416:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 12, y: 12, width: 216, height: 59, size: 36, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 12, y_start: 79, x_end: 228, y_end: 79, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 120, y: 125, size: 34, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 12, y: 162, width: 216, height: 158, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 12, y: 162, width: 216, height: 158, size: 84, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 12, y: 324, width: 216, height: 71, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   212x104:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 11, y: 3, width: 190, height: 15, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 11, y_start: 20, x_end: 201, y_end: 20, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 40, y: 59, size: 28, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 70, y: 23, width: 91, height: 76, size: 47, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 70, y: 23, width: 91, height: 76, size: 47, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 165, y: 23, width: 36, height: 76, size: 15, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   104x212:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 5, y: 6, width: 94, height: 30, size: 16, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 5, y_start: 40, x_end: 99, y_end: 40, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 52, y: 64, size: 15, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 5, y: 83, width: 94, height: 80, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 5, y: 83, width: 94, height: 80, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 5, y: 165, width: 94, height: 36, size: 12, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   250x122:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 12, y: 4, width: 226, height: 17, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 12, y_start: 23, x_end: 238, y_end: 23, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 48, y: 70, size: 33, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 82, y: 27, width: 108, height: 89, size: 55, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 82, y: 27, width: 108, height: 89, size: 55, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 195, y: 27, width: 43, height: 89, size: 17, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   122x250:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 6, y: 8, width: 110, height: 34, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 6, y_start: 48, x_end: 116, y_end: 48, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 61, y: 75, size: 17, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 98, width: 110, height: 94, size: 43, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 98, width: 110, height: 94, size: 43, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 6, y: 195, width: 110, height: 43, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   128x250:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 6, y: 8, width: 116, height: 34, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 6, y_start: 48, x_end: 122, y_end: 48, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 64, y: 75, size: 18, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 98, width: 116, height: 94, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 98, width: 116, height: 94, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 6, y: 195, width: 116, height: 43, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   250x132:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 12, y: 4, width: 226, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 12, y_start: 25, x_end: 238, y_end: 25, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 48, y: 75, size: 36, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 82, y: 29, width: 108, height: 96, size: 59, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 82, y: 29, width: 108, height: 96, size: 59, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 195, y: 29, width: 43, height: 96, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   132x250:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 7, y: 8, width: 118, height: 34, size: 20, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 7, y_start: 48, x_end: 125, y_end: 48, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 66, y: 75, size: 18, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 7, y: 98, width: 118, height: 94, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 7, y: 98, width: 118, height: 94, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 7, y: 195, width: 118, height: 43, size: 16, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   296x128:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 15, y: 4, width: 266, height: 18, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 24, x_end: 281, y_end: 24, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 56, y: 73, size: 35, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 98, y: 28, width: 127, height: 94, size: 58, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 98, y: 28, width: 127, height: 94, size: 58, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 231, y: 28, width: 50, height: 94, size: 18, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   128x296:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 6, y: 9, width: 116, height: 41, size: 19, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 6, y_start: 56, x_end: 122, y_end: 56, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 64, y: 89, size: 18, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 115, width: 116, height: 113, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 6, y: 115, width: 116, height: 113, size: 45, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 6, y: 231, width: 116, height: 50, size: 15, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   296x152:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 15, y: 5, width: 266, height: 21, size: 21, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 29, x_end: 281, y_end: 29, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 56, y: 87, size: 41, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 98, y: 33, width: 127, height: 111, size: 68, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 98, y: 33, width: 127, height: 111, size: 68, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 231, y: 33, width: 50, height: 111, size: 21, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   152x296:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 8, y: 9, width: 136, height: 41, size: 23, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 8, y_start: 56, x_end: 144, y_end: 56, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 76, y: 89, size: 21, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 8, y: 115, width: 136, height: 113, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 8, y: 115, width: 136, height: 113, size: 53, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 8, y: 231, width: 136, height: 50, size: 18, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   384x184:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 19, y: 6, width: 346, height: 25, size: 25, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 19, y_start: 35, x_end: 365, y_end: 35, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 73, y: 105, size: 50, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 127, y: 40, width: 165, height: 135, size: 83, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 127, y: 40, width: 165, height: 135, size: 83, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 300, y: 40, width: 65, height: 135, size: 26, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   184x384:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 9, y: 12, width: 166, height: 53, size: 28, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 9, y_start: 73, x_end: 175, y_end: 73, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 92, y: 115, size: 26, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 9, y: 150, width: 166, height: 146, size: 64, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 9, y: 150, width: 166, height: 146, size: 64, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 9, y: 300, width: 166, height: 65, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   416x240:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 21, y: 7, width: 374, height: 34, size: 34, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 21, y_start: 46, x_end: 395, y_end: 46, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 79, y: 137, size: 65, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 137, y: 53, width: 179, height: 175, size: 108, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 137, y: 53, width: 179, height: 175, size: 108, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 324, y: 53, width: 71, height: 175, size: 34, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
   300x400:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 15, y: 12, width: 270, height: 56, size: 45, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 15, y_start: 76, x_end: 285, y_end: 76, width: 1, fill: black}
     - {type: icon, value: '${icon}', x: 150, y: 120, size: 42, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 15, y: 156, width: 270, height: 152, size: 105, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 15, y: 156, width: 270, height: 152, size: 105, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 15, y: 312, width: 270, height: 68, size: 36, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   648x480:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 32, y: 14, width: 584, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 91, x_end: 616, y_end: 91, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 123, y: 214, size: 130, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 214, y: 106, width: 278, height: 230, size: 216, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 214, y: 106, width: 278, height: 230, size: 216, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 505, y: 106, width: 111, height: 230, size: 67, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 350, x_end: 616, y_end: 350, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 39, y: 394, width: 279, height: 26, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 39, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 324, y_start: 370, x_end: 324, y_end: 446, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 330, y: 394, width: 279, height: 26, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: &id001 '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.state ~ ('' '' ~ s.attributes.unit_of_measurement if s.attributes.unit_of_measurement is defined else '''') if s is not none else '''' }}', font: '${font}', x: 330, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: &id002 '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.state ~ ('' '' ~ s.attributes.unit_of_measurement if s.attributes.unit_of_measurement is defined else '''') if s is not none else '''' }}', font: '${font}', x: 330, y: 423, width: 279, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x648:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 24, y: 19, width: 432, height: 91, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 123, x_end: 456, y_end: 123, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 240, y: 194, size: 67, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 24, y: 253, width: 432, height: 149, size: 149, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 24, y: 253, width: 432, height: 149, size: 149, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 24, y: 402, width: 432, height: 58, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 473, x_end: 456, y_end: 473, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 29, y: 531, width: 206, height: 37, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 29, y: 572, width: 206, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 240, y_start: 499, x_end: 240, y_end: 603, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 245, y: 531, width: 206, height: 37, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 245, y: 572, width: 206, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 245, y: 572, width: 206, height: 44, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   800x480:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 40, y: 14, width: 720, height: 68, size: 68, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 40, y_start: 91, x_end: 760, y_end: 91, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 152, y: 214, size: 130, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 264, y: 106, width: 344, height: 230, size: 216, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 264, y: 106, width: 344, height: 230, size: 216, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 624, y: 106, width: 136, height: 230, size: 67, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 40, y_start: 350, x_end: 760, y_end: 350, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 48, y: 394, width: 344, height: 26, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 48, y: 423, width: 344, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 400, y_start: 370, x_end: 400, y_end: 446, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 408, y: 394, width: 344, height: 26, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 408, y: 423, width: 344, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 408, y: 423, width: 344, height: 33, size: 33, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   480x800:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 24, y: 24, width: 432, height: 112, size: 72, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 152, x_end: 456, y_end: 152, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 240, y: 240, size: 67, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 24, y: 312, width: 432, height: 184, size: 168, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 24, y: 312, width: 432, height: 184, size: 168, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 24, y: 496, width: 432, height: 72, size: 58, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 24, y_start: 584, x_end: 456, y_end: 584, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 29, y: 656, width: 206, height: 45, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 29, y: 706, width: 206, height: 54, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 240, y_start: 616, x_end: 240, y_end: 744, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 245, y: 656, width: 206, height: 45, size: 22, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 245, y: 706, width: 206, height: 54, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 245, y: 706, width: 206, height: 54, size: 38, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   960x640:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 48, y: 19, width: 864, height: 90, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 122, x_end: 912, y_end: 122, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 182, y: 285, size: 173, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 317, y: 141, width: 413, height: 307, size: 288, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 317, y: 141, width: 413, height: 307, size: 288, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 749, y: 141, width: 163, height: 307, size: 90, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 467, x_end: 912, y_end: 467, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 58, y: 525, width: 412, height: 36, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 58, y: 564, width: 412, height: 44, size: 44, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 480, y_start: 493, x_end: 480, y_end: 595, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 490, y: 525, width: 412, height: 36, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 490, y: 564, width: 412, height: 44, size: 44, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 490, y: 564, width: 412, height: 44, size: 44, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   640x960:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 32, y: 29, width: 576, height: 134, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 182, x_end: 608, y_end: 182, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 320, y: 288, size: 90, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 32, y: 374, width: 576, height: 221, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 32, y: 374, width: 576, height: 221, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 32, y: 595, width: 576, height: 87, size: 77, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 32, y_start: 701, x_end: 608, y_end: 701, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 38, y: 787, width: 276, height: 54, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 38, y: 847, width: 276, height: 65, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 320, y_start: 739, x_end: 320, y_end: 893, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 326, y: 787, width: 276, height: 54, size: 29, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 326, y: 847, width: 276, height: 65, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 326, y: 847, width: 276, height: 65, size: 51, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   960x680:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 48, y: 20, width: 864, height: 96, size: 96, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 129, x_end: 912, y_end: 129, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 182, y: 303, size: 184, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 317, y: 150, width: 413, height: 326, size: 306, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 317, y: 150, width: 413, height: 326, size: 306, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 749, y: 150, width: 163, height: 326, size: 95, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 48, y_start: 496, x_end: 912, y_end: 496, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 58, y: 558, width: 412, height: 38, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 58, y: 600, width: 412, height: 46, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 480, y_start: 524, x_end: 480, y_end: 632, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 490, y: 558, width: 412, height: 38, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 490, y: 600, width: 412, height: 46, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 490, y: 600, width: 412, height: 46, size: 46, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   680x960:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 34, y: 29, width: 612, height: 134, size: 102, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 34, y_start: 182, x_end: 646, y_end: 182, width: 2, fill: black}
     - {type: icon, value: '${icon}', x: 340, y: 288, size: 95, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 34, y: 374, width: 612, height: 221, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 34, y: 374, width: 612, height: 221, size: 221, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 34, y: 595, width: 612, height: 87, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 34, y_start: 701, x_end: 646, y_end: 701, width: 2, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 41, y: 787, width: 292, height: 54, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 41, y: 847, width: 292, height: 65, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 340, y_start: 739, x_end: 340, y_end: 893, width: 2, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 347, y: 787, width: 292, height: 54, size: 31, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 347, y: 847, width: 292, height: 65, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 347, y: 847, width: 292, height: 65, size: 54, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   1600x1200:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 80, y: 36, width: 1440, height: 168, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 80, y_start: 228, x_end: 1520, y_end: 228, width: 4, fill: black}
     - {type: icon, value: '${icon}', x: 304, y: 534, size: 324, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 528, y: 264, width: 688, height: 576, size: 540, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 528, y: 264, width: 688, height: 576, size: 540, min_size: 7, max_lines: 1, align: right, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 1248, y: 264, width: 272, height: 576, size: 168, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 80, y_start: 876, x_end: 1520, y_end: 876, width: 4, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 96, y: 984, width: 688, height: 67, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 96, y: 1058, width: 688, height: 82, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 800, y_start: 924, x_end: 800, y_end: 1116, width: 4, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 816, y: 984, width: 688, height: 67, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 816, y: 1058, width: 688, height: 82, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 816, y: 1058, width: 688, height: 82, size: 82, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   1200x1600:
     - {type: text_fit, value: '{{ ''${title}'' or state_attr(''${sensor}'', ''friendly_name'') or '''' }}', font: '${font}', x: 60, y: 48, width: 1080, height: 224, size: 180, min_size: 7, max_lines: 1, align: left, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 60, y_start: 304, x_end: 1140, y_end: 304, width: 4, fill: black}
     - {type: icon, value: '${icon}', x: 600, y: 480, size: 168, anchor: mm, color: black}
-    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 60, y: 624, width: 1080, height: 368, size: 368, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: '${color}'}
+    - {type: text_fit, value: '{% set s = states(''${sensor}'') %}{% set n = s | float(none) %}{{ s if n is none or n != n else (n | round(1) | string | replace(''.0'', '''')) }}', font: '${font}', x: 60, y: 624, width: 1080, height: 368, size: 368, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: *id001}
     - {type: text_fit, value: '{{ state_attr(''${sensor}'', ''unit_of_measurement'') or '''' }}', font: '${font}', x: 60, y: 992, width: 1080, height: 144, size: 144, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 60, y_start: 1168, x_end: 1140, y_end: 1168, width: 4, fill: black}
     - {type: text_fit, value: Updated, font: '${font}', x: 72, y: 1312, width: 516, height: 90, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: text_fit, value: '{% set s = states[''${sensor}''] %}{{ as_local(s.last_updated).strftime(''%m/%d %H:%M'') if s is not none else '''' }}', font: '${font}', x: 72, y: 1411, width: 516, height: 109, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
     - {type: line, x_start: 600, y_start: 1232, x_end: 600, y_end: 1488, width: 4, fill: black}
     - {type: text_fit, value: '{% set e = ''${secondary_sensor}'' %}{% set s = states[e] if e.startswith(''sensor.'') else none %}{{ s.name if s is not none else '''' }}', font: '${font}', x: 612, y: 1312, width: 516, height: 90, size: 55, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
-    - {type: text_fit, value: *id001, font: '${font}', x: 612, y: 1411, width: 516, height: 109, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
+    - {type: text_fit, value: *id002, font: '${font}', x: 612, y: 1411, width: 516, height: 109, size: 96, min_size: 7, max_lines: 1, align: center, valign: middle, fit: shrink, color: black}
   # END GENERATED SIZE LAYOUTS
 
 automation:
