@@ -248,7 +248,7 @@ export class TemplateDialog extends HTMLElement {
     const nameInput = this.shadowRoot.querySelector("[data-save-name]");
     if (nameInput) this.saveName = nameInput.value;
     const hass = this.panel.hass;
-    const { width, height } = this.panel.tag;
+    const { width, height } = this.context.tag;
     const done = this.done;
     const note = this.note
       ? `<p class="note" role="status" tabindex="-1" autofocus>${esc(t(hass, this.note))}</p>`
