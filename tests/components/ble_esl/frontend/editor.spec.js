@@ -2033,6 +2033,44 @@ test("design template: only the design list and options scroll on a small screen
   await expect(gallery).toHaveCount(0);
 });
 
+test("design template: the gallery and its actions fit in a short viewport", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  await page.evaluate(() => {
+    window.panel.hass = { ...window.panel.hass, locale: { language: "de" } };
+  });
+  await page.getByRole("button", { name: "Designgalerie öffnen" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const title = gallery.getByRole("heading", { name: "Designgalerie" });
+  const cancel = gallery.getByRole("button", { name: "Abbrechen" });
+  const date = gallery.getByRole("button", { name: /Date label/ });
+  await expect(date).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 240 });
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+  await expect(gallery.locator("[data-template]").first()).toBeInViewport();
+  const save = gallery.getByRole("button", { name: "Als Vorlage speichern" });
+  await save.scrollIntoViewIfNeeded();
+  await expect(save).toBeInViewport({ ratio: 1 });
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+  await date.click();
+
+  await page.setViewportSize({ width: 320, height: 220 });
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toBeVisible();
+  const options = gallery.locator(".options");
+  await expect
+    .poll(() => options.evaluate((node) => node.scrollWidth - node.clientWidth))
+    .toBe(0);
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(
+    gallery.getByRole("button", { name: "Zur Anzeige hinzufügen" }),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+});
+
 test("design template: gallery applies elements and prefills the automation", async ({
   page,
 }) => {
@@ -2098,6 +2136,33 @@ test("design template: a missing font reports the error and keeps the display", 
   await gallery.getByRole("button", { name: "Add to display" }).click();
   await expect(gallery).toContainText("Font not found");
   await expect(page.locator(".el")).toHaveCount(0);
+});
+
+test("design template: partial placement keeps the issue details in view", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.panel.applyDesignTemplate = async () => ({
+      elements: [{}],
+      issues: Array.from(
+        { length: 12 },
+        (_, index) => `Skipped element ${index + 1}`,
+      ),
+    });
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await expect(gallery.locator("[data-form-preview]")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 300 });
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery.getByRole("status")).toHaveText("1 placed, 12 skipped.");
+  await expect(
+    gallery.getByText("Skipped element 1", { exact: true }),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(gallery.getByRole("button", { name: "Close" })).toBeInViewport({
+    ratio: 1,
+  });
 });
 
 test("design template triggers are dropped once the template's elements are gone", async ({

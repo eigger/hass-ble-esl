@@ -198,7 +198,7 @@ export class TemplateDialog extends HTMLElement {
     }
     return values;
   }
-  templateOptions() {
+  templateOptions(note) {
     const hass = this.panel.hass;
     const entries = Object.entries(this.chosen.parameters);
     const group = (name) =>
@@ -217,6 +217,7 @@ export class TemplateDialog extends HTMLElement {
     const design = group("design"),
       automation = group("automation");
     return `<div class="scroll-area options">
+        ${note}
         ${this.issues.length ? `<ul class="issues">${this.issues.map((issue) => `<li>${esc(issue)}</li>`).join("")}</ul>` : ""}
         <p class="muted">${esc(localized(hass, this.chosen.description))}</p>
         <img class="preview" data-form-preview alt="${esc(localized(hass, this.chosen.name))}" ${this.formPreview ? `src="${esc(this.formPreview)}"` : "hidden"}><p class="issues" data-form-preview-note ${this.formPreviewNote ? "" : "hidden"}>${esc(this.formPreviewNote || "")}</p>
@@ -225,20 +226,21 @@ export class TemplateDialog extends HTMLElement {
         ${automation ? `<h3>${t(hass, "Automation")}</h3><div class="fields">${automation}</div>` : ""}
       </div>`;
   }
-  gallery() {
-    if (!this.templates) return "";
+  gallery(note) {
+    if (!this.templates) return note;
     const hass = this.panel.hass;
     const save = this.panel.document.elements.length
       ? `<h3>${t(hass, "Save current design as a template")}</h3><div class="save"><input type="text" data-save-name maxlength="80" aria-label="${t(hass, "Design template name")}" placeholder="${t(hass, "Design template name")}" value="${esc(this.saveName || "")}"><button type="button" data-save>${t(hass, "Save as template")}</button></div>`
       : "";
-    if (!this.templates.length)
-      return `<p class="muted">${t(hass, "No design templates fit this display.")}</p>${save}`;
-    return `<p class="muted">${t(hass, "Choose a ready-made design. It is added as ordinary elements you can edit.")}</p><div class="scroll-area list">${this.templates
-      .map(
-        (template) =>
-          `<button type="button" class="card" data-template="${esc(template.id)}"><img class="thumb" data-preview="${esc(template.id)}" alt="" ${this.previews[template.id] ? `src="${esc(this.previews[template.id])}"` : "hidden"}><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${template.source === "user" ? `${t(hass, "My template")} · ` : ""}${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
-      )
-      .join("")}</div>${save}`;
+    const list = this.templates.length
+      ? `<p class="muted">${t(hass, "Choose a ready-made design. It is added as ordinary elements you can edit.")}</p><div class="scroll-area list">${this.templates
+          .map(
+            (template) =>
+              `<button type="button" class="card" data-template="${esc(template.id)}"><img class="thumb" data-preview="${esc(template.id)}" alt="" ${this.previews[template.id] ? `src="${esc(this.previews[template.id])}"` : "hidden"}><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${template.source === "user" ? `${t(hass, "My template")} · ` : ""}${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
+          )
+          .join("")}</div>`
+      : `<p class="muted">${t(hass, "No design templates fit this display.")}</p>`;
+    return `<div class="gallery-content">${list}${save}${note}</div>`;
   }
   render() {
     if (this.chosen && this.shadowRoot.querySelector("[data-param]"))
@@ -247,13 +249,16 @@ export class TemplateDialog extends HTMLElement {
     if (nameInput) this.saveName = nameInput.value;
     const hass = this.panel.hass;
     const done = this.done;
+    const note = this.note
+      ? `<p class="note" role="status" ${this.issues.length ? 'tabindex="-1" autofocus' : ""}>${esc(t(hass, this.note))}</p>`
+      : "";
     this.shadowRoot.innerHTML = `<style>
       dialog{width:min(560px,94vw);max-height:90vh;max-height:90dvh;box-sizing:border-box;overflow:hidden;padding:0;border:1px solid var(--divider-color,#cbd3de);border-radius:10px;background:var(--card-background-color,white);color:var(--primary-text-color,#18232f);font:14px system-ui}
       dialog::backdrop{background:#0006}
       form{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:calc(90vh - 2px);max-height:calc(90dvh - 2px);box-sizing:border-box}
-      form > :not(.scroll-area){flex-shrink:0}
+      form > :not(.scroll-area,.gallery-content),.gallery-content > :not(.scroll-area){flex-shrink:0}
       .scroll-area{min-height:0;overflow:auto;overscroll-behavior:contain;padding:3px;margin:-3px}
-      .options{display:flex;flex-direction:column;gap:12px}
+      .gallery-content,.options{display:flex;flex-direction:column;gap:12px;min-height:0}
       .options > *{flex-shrink:0}
       h2,h3{margin:0;font-size:16px} h3{font-size:14px}
       button{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px 12px;cursor:pointer}
@@ -261,20 +266,26 @@ export class TemplateDialog extends HTMLElement {
       button:disabled{opacity:.5;cursor:default}
       .list{display:grid;gap:8px}
       .card{display:flex;flex-direction:column;gap:2px;text-align:left}
-      .thumb,.preview{max-width:100%;border:1px solid var(--divider-color,#cbd3de);border-radius:4px;image-rendering:pixelated;background:white;align-self:flex-start}
-      .fields{display:grid;gap:10px}
+      .thumb,.preview{max-width:100%;box-sizing:border-box;border:1px solid var(--divider-color,#cbd3de);border-radius:4px;image-rendering:pixelated;background:white;align-self:flex-start}
+      .fields{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+      .fields input,.fields select{min-width:0}
       label{display:grid;gap:4px;font-size:13px}
       input[type=text],input[type=number],input[type=time],select{font:inherit;padding:6px 8px;border:1px solid var(--divider-color,#cbd3de);border-radius:6px;background:var(--secondary-background-color,#f5f7fa);color:inherit}
       input[type=checkbox]{justify-self:start}
       .save{display:flex;gap:6px} .save input{flex:1;min-width:0}
       .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
-      .note{margin:0;font-size:13px}
+      .note{margin:0;font-size:13px;overflow-wrap:anywhere}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
+      @media (max-height:320px){
+        form{padding:10px;gap:8px}
+        .actions button{padding:6px 8px}
+        .gallery-content{overflow:auto;overscroll-behavior:contain;padding:3px;margin:-3px}
+        .list{flex-shrink:0;overflow:visible}
+      }
     </style><dialog aria-label="${t(hass, "Design gallery")}"><form method="dialog">
       <h2>${t(hass, "Design gallery")}</h2>
-      ${this.chosen ? this.templateOptions() : this.gallery()}
-      ${this.note ? `<p class="note" role="status">${esc(t(hass, this.note))}</p>` : ""}
+      ${this.chosen ? this.templateOptions(note) : this.gallery(note)}
       <div class="actions">${
         done
           ? ""
@@ -289,9 +300,10 @@ export class TemplateDialog extends HTMLElement {
       this.close();
     });
     dialog.showModal();
-    this.shadowRoot
-      .querySelector("[data-param], [data-template], button")
-      ?.focus();
+    if (!this.issues.length)
+      this.shadowRoot
+        .querySelector("[data-param], [data-template], button")
+        ?.focus();
   }
   async click(event) {
     const button = event
