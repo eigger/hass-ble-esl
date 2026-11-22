@@ -1430,6 +1430,950 @@ async def test_compact_weather_keeps_humidity_and_update_clock_in_both_orientati
             assert {"55%", "07:15"} <= set(_texts(_shown(hass, "weather_now", *size)))
 
 
+async def test_date_shows_week_bar_from_4_2_inches(hass):
+    from datetime import datetime
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    now = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    with freeze_time(now, real_asyncio=True):
+        for size in ((400, 300), (300, 400)):
+            texts = _texts(
+                _shown(hass, "date", *size, given={"weekdays": "Mon,Tue,Wed,Thu,Fri,Sat,Sun"})
+            )
+            assert any("ISO W" in t for t in texts)
+            assert {"Mon", "Sun", "16", "22"} <= set(texts)
+
+
+async def test_weather_forecast_4_2_shows_5_days_and_skips_yesterday_when_current(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    fc = {
+        "weather.home": {
+            "forecast": [
+                {
+                    "datetime": (today + timedelta(days=offset)).isoformat(),
+                    "condition": "sunny",
+                    "temperature": 99 if offset == -1 else 10 + offset,
+                    "templow": 98 if offset == -1 else 2 + offset,
+                    "precipitation_probability": 25 if offset >= 1 else 0,
+                }
+                for offset in range(-1, 6)
+            ]
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built = build(TEMPLATES["weather_forecast"], 400, 300, "BWR")
+        vals = _values(resolve_templates(hass, built["payload"], set(), {"fc": fc}))
+        assert "99°" not in vals and "98°" not in vals
+        assert {"11°", "3°", "15°", "7°", "25%"} <= set(vals)
+
+
+async def test_weather_forecast_250x128_and_non_numeric_edge_cases(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = datetime(2026, 11, 19, 9, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    fc_yesterday = {
+        "weather.home": {
+            "forecast": [
+                {
+                    "datetime": (today - timedelta(days=1)).isoformat(),
+                    "condition": "sunny",
+                    "temperature": 99,
+                    "templow": 98,
+                },
+                {
+                    "datetime": today.isoformat(),
+                    "condition": "cloudy",
+                    "temperature": 12,
+                    "templow": 4,
+                },
+                {
+                    "datetime": (today + timedelta(days=1)).isoformat(),
+                    "condition": "rainy",
+                    "temperature": 15,
+                    "templow": 7,
+                },
+            ]
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        vals_250 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_forecast"], 250, 128, "BWR")["payload"],
+                set(),
+                {"fc": fc_yesterday},
+            )
+        )
+        assert "99°" not in vals_250 and "98°" not in vals_250
+        assert {"15°", "7°", "weather-rainy"} <= set(vals_250)
+
+        # Edge cases: NaN/inf/bool temperatures, invalid/None datetime, and None forecast entry.
+        edge_fc = {
+            "weather.home": {
+                "forecast": [
+                    {"datetime": None, "temperature": True, "templow": False},
+                    {
+                        "datetime": "not-a-date",
+                        "temperature": float("nan"),
+                        "templow": float("inf"),
+                    },
+                    {"datetime": today.isoformat(), "temperature": 10, "templow": 2},
+                ]
+            }
+        }
+        for size in ((250, 128), (800, 480)):
+            vals_edge = _values(
+                resolve_templates(
+                    hass,
+                    build(TEMPLATES["weather_forecast"], *size, "BWR")["payload"],
+                    set(),
+                    {"fc": edge_fc},
+                )
+            )
+            assert "--°" in vals_edge or "--° / --°" in vals_edge
+            assert "1°" not in vals_edge and "0°" not in vals_edge
+
+        vals_none = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_forecast"], 250, 128, "BWR")["payload"],
+                set(),
+                {"fc": {"weather.home": None}},
+            )
+        )
+        assert "--°" in vals_none
+
+
+async def test_sensor_card_warn_above_highlights_and_respects_bw_fallback(hass):
+    hass.states.async_set("sensor.temperature", "32.4", {"unit_of_measurement": "°C"})
+    rendered_bwr = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "30"})["payload"],
+        set(),
+    )
+    assert next(item for item in rendered_bwr if str(item.get("value")) == "32.4")["color"] == "red"
+
+    rendered_bw = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BW", {"warn_above": "30"})["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_bw if str(item.get("value")) == "32.4")["color"] == "black"
+    )
+
+    rendered_ok = resolve_templates(
+        hass,
+        build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "35"})["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_ok if str(item.get("value")) == "32.4")["color"] == "black"
+    )
+
+    # White warn_color stays visible (black), negative thresholds work, and non-numeric thresholds/states do not crash.
+    rendered_white = resolve_templates(
+        hass,
+        build(
+            TEMPLATES["sensor_card"], 400, 300, "BWRY", {"warn_above": "-5", "warn_color": "white"}
+        )["payload"],
+        set(),
+    )
+    assert (
+        next(item for item in rendered_white if str(item.get("value")) == "32.4")["color"]
+        == "black"
+    )
+
+    for warn_above in ("", "abc", "nan", "inf"):
+        rendered_safe = resolve_templates(
+            hass,
+            build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": warn_above})["payload"],
+            set(),
+        )
+        assert (
+            next(item for item in rendered_safe if str(item.get("value")) == "32.4")["color"]
+            == "black"
+        )
+
+    for bad_state in ("inf", "nan", "unavailable"):
+        hass.states.async_set("sensor.temperature", bad_state, {"unit_of_measurement": "°C"})
+        rendered_bad = resolve_templates(
+            hass,
+            build(TEMPLATES["sensor_card"], 400, 300, "BWR", {"warn_above": "30"})["payload"],
+            set(),
+        )
+        assert (
+            next(item for item in rendered_bad if str(item.get("value")) == bad_state)["color"]
+            == "black"
+        )
+
+
+async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(hass):
+    hass.states.async_set("sensor.print_progress", "55")
+    hass.states.async_set("sensor.print_status", "printing")
+    hass.states.async_set("sensor.print_end_time", "2026-11-19T18:45:00+00:00")
+    hass.states.async_set("sensor.nozzle_temp", "210.4")
+    hass.states.async_set("sensor.bed_temp", "60.2")
+    texts_with = _texts(
+        _shown(
+            hass,
+            "print_progress",
+            800,
+            480,
+            {"nozzle_sensor": "sensor.nozzle_temp", "bed_sensor": "sensor.bed_temp"},
+        )
+    )
+    assert "210° / 60°" in texts_with
+    assert "—" in _texts(_shown(hass, "print_progress", 800, 480))
+
+    # Single sensor supplied and non-sensor IDs.
+    assert "210° / —" in _texts(
+        _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "sensor.nozzle_temp"})
+    )
+    assert "—" in _texts(
+        _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "binary_sensor.door"})
+    )
+
+    # Non-numeric sensor states (unavailable, nan, inf) never raise OverflowError.
+    for bad in ("unavailable", "nan", "inf"):
+        hass.states.async_set("sensor.nozzle_temp", bad)
+        hass.states.async_set("sensor.bed_temp", bad)
+        assert "— / —" in _texts(
+            _shown(
+                hass,
+                "print_progress",
+                800,
+                480,
+                {"nozzle_sensor": "sensor.nozzle_temp", "bed_sensor": "sensor.bed_temp"},
+            )
+        )
+
+
+async def test_calendar_next_renders_upcoming_events_on_large_tags(hass, wolink_entry):
+    from homeassistant.core import SupportsResponse
+
+    hass.states.async_set("calendar.home", "on", {"message": "Fallback"})
+    events = [
+        {
+            "summary": "Standup",
+            "start": "2026-11-22T09:30:00+09:00",
+            "end": "2026-11-22T10:00:00+09:00",
+            "location": "Room A",
+        },
+        {
+            "summary": "Design Review",
+            "start": "2026-11-22T14:00:00+09:00",
+            "end": "2026-11-22T15:00:00+09:00",
+        },
+        {
+            "summary": "Release Day",
+            "start": "2026-11-23",
+            "end": "2026-11-25",
+        },
+    ]
+    built = build(TEMPLATES["calendar_next"], 800, 480, "BWR")
+    rendered = resolve_templates(
+        hass, built["payload"], set(), {"events": {"calendar.home": {"events": events}}}
+    )
+    texts = _texts(rendered)
+    assert "Standup" in texts and "Room A" in texts
+    assert any("Design Review" in t for t in texts)
+    assert any("Release Day" in t for t in texts)
+    # Multi-line regression guard: event 2 and 3 sit in separate single-line boxes and render cleanly.
+    assert not any("Design Review" in t and "Release Day" in t for t in texts)
+    render_image(hass, DevicePreset("test", "test", 800, 480, "BWR"), rendered)
+
+    # Multi-day all-day event formatting (exclusive end 11/25 -> 11/23 - 11/24 without 00:00) and mixed tz bounds.
+    all_day_texts = _texts(
+        resolve_templates(
+            hass,
+            built["payload"],
+            set(),
+            {"events": {"calendar.home": {"events": [events[2]]}}},
+        )
+    )
+    assert "11/23 - 11/24" in all_day_texts and not any("00:00" in t for t in all_day_texts)
+
+    mixed_tz = [{"summary": "Mixed", "start": "2026-11-23", "end": "2026-11-23T12:00:00+09:00"}]
+    mixed_texts = _texts(
+        resolve_templates(
+            hass,
+            built["payload"],
+            set(),
+            {"events": {"calendar.home": {"events": mixed_tz}}},
+        )
+    )
+    assert "Mixed" in mixed_texts and "11/23" in mixed_texts
+
+    # Empty events fall back to calendar entity attributes.
+    assert "Fallback" in _texts(
+        resolve_templates(
+            hass, built["payload"], set(), {"events": {"calendar.home": {"events": []}}}
+        )
+    )
+
+    # Designer preview, export setup_actions, and automation draft support calendar.get_events on 5.8"+,
+    # while small <480px layouts omit it.
+    small_elements, _, _ = elements_from(
+        build(TEMPLATES["calendar_next"], 250, 128, "BWR")["payload"],
+        DevicePreset("small", "small", 250, 128, "BWR"),
+    )
+    small_saved = await hass.data[KEY].export(
+        wolink_entry, {"version": 1, "elements": small_elements, "background": "white"}
+    )
+    assert small_saved["setup_actions"] == []
+
+    calls = []
+
+    async def get_events(call):
+        calls.append(dict(call.data))
+        ids = call.data["entity_id"]
+        ids = [ids] if isinstance(ids, str) else ids
+        return {entity: {"events": events} for entity in ids}
+
+    hass.services.async_register(
+        "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
+    )
+    designer = hass.data[KEY]
+    large_elements, _, issues = elements_from(
+        built["payload"], DevicePreset("large", "large", 800, 480, "BWR")
+    )
+    assert issues == []
+    large_doc = {"version": 1, "elements": large_elements, "background": "white"}
+    preview = await designer.preview(wolink_entry, large_doc)
+    assert "Standup" in _texts(preview["payload"]) and calls
+    saved = await designer.export(wolink_entry, large_doc)
+    assert saved["setup_actions"] == [
+        {
+            "action": "calendar.get_events",
+            "target": {"entity_id": ["calendar.home"]},
+            "data": {"duration": {"days": 7}},
+            "response_variable": "events",
+            "continue_on_error": True,
+        }
+    ]
+    auto = await designer.automation(wolink_entry, large_doc)
+    assert [step["action"] for step in auto["automation"]["actions"]] == [
+        "calendar.get_events",
+        "ble_esl.write",
+    ]
+    # Re-applying with defaults already containing calendar.get_events does not duplicate the step.
+    auto_dedup = await designer.automation(
+        wolink_entry, large_doc, defaults={"actions": saved["setup_actions"]}
+    )
+    assert [step["action"] for step in auto_dedup["automation"]["actions"]] == [
+        "calendar.get_events",
+        "ble_esl.write",
+    ]
+
+
+def test_demo_payload_variables_supports_calendar_get_events():
+    from scripts.designer_demo import demo_payload_variables
+
+    payload = build(TEMPLATES["calendar_next"], 800, 480, "BWR")["payload"]
+    variables = demo_payload_variables(payload, {})
+    assert "events" in variables
+    assert variables["events"]["calendar.home"]["events"]
+    assert all(
+        "summary" in ev and "start" in ev for ev in variables["events"]["calendar.home"]["events"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("condition", "daily_row", "short_alert", "long_alert"),
+    [
+        (
+            "rainy",
+            {"temperature": 13, "templow": 6, "precipitation_probability": 80, "precipitation": 12},
+            "우산 80%",
+            "우산 챙기기",
+        ),
+        (
+            "snowy",
+            {"temperature": 1, "templow": -6, "precipitation_probability": 70, "precipitation": 3},
+            "눈 70%",
+            "눈길 주의",
+        ),
+        (
+            "sunny",
+            {"temperature": 18, "templow": 4, "precipitation_probability": 10},
+            "일교차 14°",
+            "일교차 주의",
+        ),
+    ],
+)
+async def test_commute_weather_under_4_inches_alerts_and_metrics(
+    hass, condition, daily_row, short_alert, long_alert
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set(
+        "weather.home",
+        condition,
+        {
+            "temperature": 11,
+            "temperature_unit": "°C",
+            "apparent_temperature": 9,
+            "humidity": 82,
+            "wind_speed": 4.2,
+            "wind_speed_unit": "m/s",
+        },
+    )
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [{"datetime": (today + timedelta(hours=4)).isoformat(), **daily_row}]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built_250 = build(TEMPLATES["weather_commute"], 250, 128, "BWR")
+        vals_250 = _values(resolve_templates(hass, built_250["payload"], set(), variables))
+        assert short_alert in vals_250
+        assert f"{daily_row['templow']}°" in vals_250
+        assert f"{daily_row['temperature']}°" in vals_250
+        assert "체감 9° · 습도 82%" in vals_250
+
+        built_296 = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+        vals_296 = _values(resolve_templates(hass, built_296["payload"], set(), variables))
+        assert {short_alert, long_alert, "체감 9°", "습도 82%", "바람 4.2 m/s"} <= set(vals_296)
+
+
+async def test_commute_weather_4_inches_and_above_shows_weekly_forecast(hass):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    thursday = datetime(2026, 11, 19, 7, 30, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    hass.states.async_set(
+        "weather.home",
+        "rainy",
+        {
+            "temperature": 11,
+            "temperature_unit": "°C",
+            "apparent_temperature": 9,
+            "humidity": 82,
+            "wind_speed": 4.2,
+            "wind_speed_unit": "m/s",
+        },
+    )
+    daily = [
+        {
+            "datetime": (thursday + timedelta(days=offset, hours=5)).isoformat(),
+            "condition": "rainy" if offset in (0, 4) else "sunny",
+            "temperature": 13 + offset,
+            "templow": 6 + offset,
+            "precipitation_probability": 80 if offset == 0 else (75 if offset == 4 else 10),
+            "precipitation": 12 if offset == 0 else 0,
+        }
+        for offset in range(8)
+    ]
+    variables = {"fc": {"weather.home": {"forecast": daily}}}
+
+    with freeze_time(thursday, real_asyncio=True):
+        rendered_42 = resolve_templates(
+            hass, build(TEMPLATES["weather_commute"], 400, 300, "BWR")["payload"], set(), variables
+        )
+        vals_42 = _values(rendered_42)
+        assert {"우산 챙기기", "금", "토", "일", "월", "화", "75%"} <= set(vals_42)
+        assert "수" not in vals_42
+        weekend_items = [item for item in rendered_42 if item.get("value") in ("토", "일")]
+        assert weekend_items and all(item["color"] == "red" for item in weekend_items)
+
+        vals_75 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_commute"], 800, 480, "BWR")["payload"],
+                set(),
+                variables,
+            )
+        )
+        assert {"• 우산 필수 (80%)", "주간 비·눈: 월(75%)", "수"} <= set(vals_75)
+        assert "목" not in vals_75
+
+        vals_102 = _values(
+            resolve_templates(
+                hass,
+                build(TEMPLATES["weather_commute"], 960, 640, "BWR")["payload"],
+                set(),
+                variables,
+            )
+        )
+        assert {"7일 주간 예보", "목", "주간 비·눈: 월(75%)"} <= set(vals_102)
+
+
+async def test_commute_weather_handles_unavailable_non_numeric_and_stale_forecasts(hass):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set(
+        "weather.home",
+        "unavailable",
+        {
+            "temperature": float("nan"),
+            "temperature_unit": "°C",
+            "apparent_temperature": True,
+            "humidity": "unknown",
+            "wind_speed": float("inf"),
+        },
+    )
+    stale_fc = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": (today - timedelta(days=1)).isoformat(),
+                        "temperature": 99,
+                        "templow": 98,
+                        "condition": "sunny",
+                    }
+                ]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        for variables in ({}, stale_fc):
+            built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+            vals = _values(resolve_templates(hass, built["payload"], set(), variables))
+            assert {"예보 정보 없음", "예보 없음", "예보 대기 중", "weather-cloudy-alert"} <= set(
+                vals
+            )
+            assert "99°" not in vals and "우산 불필요" not in vals
+
+        built_42 = build(TEMPLATES["weather_commute"], 400, 300, "BWR")
+        vals_42 = _values(resolve_templates(hass, built_42["payload"], set(), stale_fc))
+        assert "예보 정보 없음" in vals_42
+        assert "weather-cloudy-alert" in vals_42
+        assert "weather-cloudy" not in vals_42
+
+
+async def test_commute_weather_units_and_precipitation_formatting(hass):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+
+    def render_296(state_attrs, daily_row):
+        hass.states.async_set("weather.home", "sunny", state_attrs)
+        fc = {
+            "fc": {
+                "weather.home": {
+                    "forecast": [
+                        {"datetime": (today + timedelta(hours=4)).isoformat(), **daily_row}
+                    ]
+                }
+            }
+        }
+        built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+        return _values(resolve_templates(hass, built["payload"], set(), fc))
+
+    with freeze_time(today, real_asyncio=True):
+        # 10°F spread and 7 mph wind are normal in imperial units (not 10°C / 7 m/s).
+        vals_mild_imp = render_296(
+            {
+                "temperature": 60,
+                "temperature_unit": "°F",
+                "apparent_temperature": 59,
+                "humidity": 50,
+                "wind_speed": 7,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "sunny",
+                "temperature": 68,
+                "templow": 58,
+                "precipitation_probability": 10,
+            },
+        )
+        assert "우산 불필요" in vals_mild_imp
+        assert "일교차 주의" not in vals_mild_imp and "강풍 주의" not in vals_mild_imp
+
+        # 18°F spread triggers temperature-gap advisory; 16 mph triggers wind advisory.
+        vals_gap_imp = render_296(
+            {
+                "temperature": 55,
+                "temperature_unit": "°F",
+                "apparent_temperature": 53,
+                "humidity": 40,
+                "wind_speed": 5,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "sunny",
+                "temperature": 73,
+                "templow": 55,
+                "precipitation_probability": 0,
+            },
+        )
+        assert {"일교차 주의", "일교차 18°"} <= set(vals_gap_imp)
+
+        vals_wind_imp = render_296(
+            {
+                "temperature": 55,
+                "temperature_unit": "°F",
+                "apparent_temperature": 49,
+                "humidity": 45,
+                "wind_speed": 16,
+                "wind_speed_unit": "mph",
+            },
+            {
+                "condition": "cloudy",
+                "temperature": 60,
+                "templow": 52,
+                "precipitation_probability": 20,
+            },
+        )
+        assert "강풍 주의" in vals_wind_imp
+
+        # Positive precipitation in inches (0.04in) and near-integer mm (1.96mm -> 2mm).
+        vals_in = render_296(
+            {
+                "temperature": 50,
+                "temperature_unit": "°F",
+                "apparent_temperature": 48,
+                "humidity": 80,
+                "wind_speed": 5,
+                "wind_speed_unit": "mph",
+                "precipitation_unit": "in",
+            },
+            {
+                "condition": "rainy",
+                "temperature": 54,
+                "templow": 46,
+                "precipitation_probability": 70,
+                "precipitation": 0.04,
+            },
+        )
+        assert "강수 70% · 0.04in" in vals_in
+
+        vals_mm = render_296(
+            {
+                "temperature": 11,
+                "temperature_unit": "°C",
+                "apparent_temperature": 9,
+                "humidity": 80,
+                "wind_speed": 3,
+                "wind_speed_unit": "m/s",
+                "precipitation_unit": "mm",
+            },
+            {
+                "condition": "rainy",
+                "temperature": 14,
+                "templow": 8,
+                "precipitation_probability": 70,
+                "precipitation": 1.96,
+            },
+        )
+        assert "강수 70% · 2mm" in vals_mm
+
+
+@pytest.mark.parametrize(
+    ("accent", "expected_ink", "expected_fg"),
+    [("yellow", "yellow", "black"), ("white", "black", "black")],
+)
+async def test_commute_weather_yellow_and_white_accent_contrast(
+    hass, accent, expected_ink, expected_fg
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
+    hass.states.async_set("weather.home", "rainy", {"temperature": 11, "temperature_unit": "°C"})
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": (today + timedelta(days=offset, hours=4)).isoformat(),
+                        "condition": "rainy",
+                        "temperature": 13,
+                        "templow": 6,
+                        "precipitation_probability": 80,
+                    }
+                    for offset in range(6)
+                ]
+            }
+        }
+    }
+    with freeze_time(today, real_asyncio=True):
+        built = build(TEMPLATES["weather_commute"], 400, 300, "BWRY", {"accent": accent})
+        rendered = resolve_templates(hass, built["payload"], set(), variables)
+        pill_rect = next(
+            item for item in rendered if item["type"] == "rectangle" and item["y_start"] < 20
+        )
+        assert pill_rect["fill"] == expected_ink
+        pill_text = next(item for item in rendered if item.get("value") == "우산 챙기기")
+        assert pill_text["color"] == expected_fg
+        pop_texts = [item for item in rendered if item.get("value") == "80%"]
+        assert pop_texts and all(item["color"] == expected_fg for item in pop_texts)
+        high_text = next(
+            item for item in rendered if item.get("value") == "13°" and item["y"] < 100
+        )
+        assert high_text["color"] == expected_ink
+
+
+async def test_commute_weather_designer_preview_fetches_all_seven_forecast_days(hass, wolink_entry):
+    from datetime import datetime, timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.core import SupportsResponse
+    from homeassistant.util import dt as dt_util
+
+    thursday = datetime(2026, 11, 19, 7, 30, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    daily = [
+        {
+            "datetime": (thursday + timedelta(days=offset, hours=5)).isoformat(),
+            "condition": "sunny",
+            "temperature": 10 + offset,
+            "templow": 2 + offset,
+            "precipitation_probability": 10,
+        }
+        for offset in range(-1, 8)
+    ]
+
+    async def get_forecasts(call):
+        return {"weather.home": {"forecast": daily}}
+
+    hass.services.async_register(
+        "weather", "get_forecasts", get_forecasts, supports_response=SupportsResponse.ONLY
+    )
+    hass.states.async_set("weather.home", "sunny", {"temperature": 10, "temperature_unit": "°C"})
+    designer = hass.data[KEY]
+    with freeze_time(thursday, real_asyncio=True):
+        built = build(TEMPLATES["weather_commute"], 960, 640, "BWR")
+        variables = await designer.forecast_variable(built["payload"], {})
+        assert len(variables["fc"]["weather.home"]["forecast"]) == 9
+        vals = _values(resolve_templates(hass, built["payload"], set(), variables))
+        # Day +7 (목) has temperature 17° / templow 9° (not truncated at index 7).
+        assert {"목", "17°", "9°"} <= set(vals)
+
+
+@pytest.mark.parametrize("size", sorted(TEMPLATES["weather_commute"]["layouts"]))
+def test_commute_weather_boxes_do_not_overlap_in_any_layout(size):
+    from itertools import combinations
+
+    width, height = (int(part) for part in size.split("x"))
+    items = build(TEMPLATES["weather_commute"], width, height, "BWRY")["payload"]
+    frames = []
+    for item in items:
+        if item["type"] == "text_fit":
+            frames.append(("text_fit", _frame(item)))
+        elif item["type"] == "icon":
+            sz = item["size"]
+            left = item["x"] - (sz // 2 if item.get("anchor") == "mt" else 0)
+            top = item["y"]
+            frames.append(("icon", (left, top, left + sz, top + sz)))
+    for (kind_a, a), (kind_b, b) in combinations(frames, 2):
+        # Adjacent icon/text inside a shared pill/banner may touch or share margins,
+        # but two text_fit boxes or a text_fit box and an icon must never overlap.
+        if "text_fit" in (kind_a, kind_b):
+            assert a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1], (
+                size,
+                (kind_a, a),
+                (kind_b, b),
+            )
+
+
+def test_indoor_climate_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["indoor_climate"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "indoor_climate.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind in ("progress_bar", "rectangle", "line"):
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        all_boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+
+
+async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+
+    hass.states.async_set("sensor.temperature", "23.5", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "48", {"unit_of_measurement": "%"})
+    texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "23.5°C" in texts and "48%" in texts and "쾌적" in texts and "미설정" in texts
+
+    # Warm / slightly humid thresholds stay consistent between chips and header badge.
+    hass.states.async_set("sensor.temperature", "27.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "63", {"unit_of_measurement": "%"})
+    warm_texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "따뜻" in warm_texts and "약간 습함" in warm_texts and "보통" in warm_texts
+
+    # Fahrenheit support: comfort thresholds & hints adapt without false overheating alerts.
+    hass.states.async_set("sensor.temperature", "72", {"unit_of_measurement": "°F"})
+    hass.states.async_set("sensor.humidity", "50", {"unit_of_measurement": "%"})
+    f_texts = _texts(_shown(hass, "indoor_climate", 800, 480))
+    assert "72°F" in f_texts and "쾌적" in f_texts and "적정 68 ~ 79°F" in f_texts
+
+    # Near-zero negative temperatures never render as "-0°C", while real negatives keep their sign.
+    hass.states.async_set("sensor.temperature", "-0.04", {"unit_of_measurement": "°C"})
+    assert "0°C" in _texts(_shown(hass, "indoor_climate", 400, 300))
+    assert "-0°C" not in _texts(_shown(hass, "indoor_climate", 400, 300))
+    hass.states.async_set("sensor.temperature", "-12.5", {"unit_of_measurement": "°C"})
+    assert "-12.5°C" in _texts(_shown(hass, "indoor_climate", 400, 300))
+
+    # Optional CO2 / PM2.5 sensors trigger ventilation alert and accent contrast across BW/BWR/BWRY.
+    hass.states.async_set("sensor.temperature", "24.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "48", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.co2", "1250")
+    hass.states.async_set("sensor.pm25", "42")
+    options = {"co2_sensor": "sensor.co2", "pm25_sensor": "sensor.pm25"}
+    alert_items = resolve_templates(
+        hass, build(TEMPLATES["indoor_climate"], 800, 480, "BWR", options)["payload"], set()
+    )
+    alert_texts = [str(item.get("value", "")) for item in alert_items]
+    assert "1250 ppm" in alert_texts and "42 ug/m3" in alert_texts and "환기 권장" in alert_texts
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "red" for item in alert_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white" for item in alert_items
+    )
+
+    # accent="yellow" on BWRY uses yellow pill + black text, and keeps white-bg text/icons black.
+    bwry_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in bwry_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "black" for item in bwry_items
+    )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in bwry_items
+    )
+
+    # accent="white" never renders black-on-black pill text.
+    white_accent_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 400, 300, "BWR", {**options, "accent": "white"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black"
+        for item in white_accent_items
+    )
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white"
+        for item in white_accent_items
+    )
+
+    bw_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "white" for item in bw_items
+    )
+
+    # Tiny portrait with CO2 only does not duplicate CO2, and dry air shows humidifier hint.
+    co2_only = _texts(_shown(hass, "indoor_climate", 104, 212, {"co2_sensor": "sensor.co2"}))
+    assert co2_only.count("CO2 1250 ppm") == 1 and not any(
+        t.startswith("CO2 ") and t != "CO2 1250 ppm" for t in co2_only
+    )
+    hass.states.async_set("sensor.humidity", "22")
+    dry_tiny = _texts(_shown(hass, "indoor_climate", 104, 212))
+    assert "가습기 사용 권장" in dry_tiny and "적정 20~26°C" not in dry_tiny
+
+    # Malformed optional entity IDs are treated as unset rather than missing entities.
+    for bogus in ("1.2", "sensor.", " sensor.co2 ", "a.b.c"):
+        bogus_texts = _texts(
+            _shown(hass, "indoor_climate", 800, 480, {"co2_sensor": bogus, "pm25_sensor": bogus})
+        )
+        assert bogus_texts.count("미설정") == 2 and bogus_texts.count("선택") == 2
+
+    # Edge cases: non-numeric / nan / inf / bool states never crash and round-trip cleanly.
+    for bad in ("unavailable", "nan", "inf", "warm", "True"):
+        hass.states.async_set("sensor.temperature", bad, {"unit_of_measurement": "°C"})
+        hass.states.async_set("sensor.humidity", bad)
+        hass.states.async_set("sensor.co2", bad)
+        hass.states.async_set("sensor.pm25", bad)
+        rendered = _shown(hass, "indoor_climate", 800, 480, options)
+        bad_texts = _texts(rendered)
+        assert "--°C" in bad_texts and "--%" in bad_texts and "센서 대기" in bad_texts
+        render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), rendered)
+
+    hass.states.async_set("sensor.temperature", "29.0", {"unit_of_measurement": "°C"})
+    hass.states.async_set("sensor.humidity", "70")
+    hass.states.async_set("sensor.co2", "1100")
+    hass.states.async_set("sensor.pm25", "40")
+    for size in TEMPLATES["indoor_climate"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["indoor_climate"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == [], size
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
 def test_calendar_weather_covers_all_29_sizes_without_overlap():
     template = TEMPLATES["calendar_weather"]
     assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])

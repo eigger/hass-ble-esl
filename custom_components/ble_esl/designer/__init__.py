@@ -319,7 +319,9 @@ class Designer:
         forecasts = {}
         for (variable, entity), items in zip(requests, weather_results, strict=True):
             if items:
-                limit = 7 if variable == "fc" else 25  # Allow a 25-hour local day.
+                limit = (
+                    9 if variable == "fc" else 25
+                )  # Allow today + 7 days (+ leading yesterday) or 25-hour local day.
                 forecasts.setdefault(variable, {})[entity] = {"forecast": items[:limit]}
         for entity, items in zip(cal_entities, cal_results, strict=True):
             if items:
