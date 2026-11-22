@@ -489,6 +489,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "home_presence",
+        "categories": ["smart_home"],
         "name": {"en": "Home presence", "ko": "가족 재실 · 현관"},
         "description": {
             "en": "Track up to 4 household members (home, away, custom zones) with an optional entryway door sensor.",

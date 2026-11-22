@@ -629,6 +629,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "indoor_climate",
+        "categories": ["smart_home"],
         "name": {"en": "Indoor climate", "ko": "실내 환경"},
         "description": {
             "en": "Indoor temperature, humidity, and comfort badge with optional CO2 and PM2.5 metrics and ventilation advice.",

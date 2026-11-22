@@ -1,5 +1,6 @@
 template: 1
 id: date
+categories: [schedule]
 name:
   en: Date label
   ko: 날짜 라벨

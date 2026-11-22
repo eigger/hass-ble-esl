@@ -600,6 +600,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "appliance_status",
+        "categories": ["smart_home"],
         "name": {"en": "Appliance status & alerts", "ko": "가전 상태 · 완료 알림"},
         "description": {
             "en": "Track up to 3 home appliances with running, completion and error alerts plus optional remaining time.",

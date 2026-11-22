@@ -184,6 +184,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Sommige lettertypen van de editor zijn niet beschikbaar; vervangende lettertypen worden gebruikt.",
   "Retry fonts": "Lettertypen opnieuw proberen",
+  "No templates in this category.": "Geen sjablonen in deze categorie.",
+  "Template categories": "Sjablooncategorieën",
+  All: "Alles",
+  Weather: "Weer",
+  Schedule: "Agenda",
+  "Smart home": "Slim huis",
+  Labels: "Etiketten",
   "Loading designer": "Designer laden",
   "Loading image…": "Afbeelding wordt geladen…",
   "Loading…": "Bezig met laden...",

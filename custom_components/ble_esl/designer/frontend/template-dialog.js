@@ -78,6 +78,8 @@ export class TemplateDialog extends HTMLElement {
         if (event.target.dataset?.param !== undefined) this.schedulePreview();
       });
     this.previews = {};
+    this.previewFailures = new Set();
+    this.category = "all";
   }
   async open(panel, onClose, context) {
     this.panel = panel;
@@ -87,6 +89,8 @@ export class TemplateDialog extends HTMLElement {
     this.chosen = null;
     this.note = "";
     this.issues = [];
+    this.onResize = () => this.loadThumbnails();
+    window.addEventListener("resize", this.onResize);
     this.render();
     try {
       this.templates = await panel.api("design_templates", {
@@ -98,32 +102,49 @@ export class TemplateDialog extends HTMLElement {
     if (!this.closed) this.render();
     this.loadThumbnails();
   }
-  // One thumbnail at a time: each is a real render on the server.
-  async loadThumbnails() {
-    // A newer run (after Back or a save) replaces this one.
-    const run = (this.thumbnailRun = (this.thumbnailRun || 0) + 1);
-    for (const template of this.templates || []) {
-      // The user's own preview comes first: it shares the server's render lock.
-      if (this.closed || this.chosen || run !== this.thumbnailRun) return;
-      if (this.previews[template.id]) continue;
-      try {
-        const result = await this.panel.api("preview_design_template", {
-          entry_id: this.context.entryId,
-          template_id: template.id,
-        });
-        this.previews[template.id] = result.png;
-      } catch {
-        continue;
-      }
-      if (run !== this.thumbnailRun) return;
-      const image = [
-        ...this.shadowRoot.querySelectorAll("[data-preview]"),
-      ].find((node) => node.dataset.preview === template.id);
-      if (image) {
-        image.src = this.previews[template.id];
-        image.hidden = false;
-      }
-    }
+  // Only visible cards compete for the server's shared render lock. A single
+  // in-flight request is allowed to finish, then the current viewport wins.
+  loadThumbnails() {
+    if (this.closed || this.chosen || this.thumbnailPending || this.formPending)
+      return;
+    const list = this.shadowRoot.querySelector(".list");
+    if (!list) return;
+    const gallery = this.shadowRoot.querySelector(".gallery-content");
+    const viewport =
+      getComputedStyle(gallery).overflowY === "auto" ? gallery : list;
+    const bounds = viewport.getBoundingClientRect();
+    const card = [...list.querySelectorAll("[data-template]")].find((node) => {
+      const rect = node.getBoundingClientRect();
+      return (
+        rect.bottom > bounds.top &&
+        rect.top < bounds.bottom &&
+        !this.previews[node.dataset.template] &&
+        !this.previewFailures.has(node.dataset.template)
+      );
+    });
+    if (!card) return;
+    const id = card.dataset.template;
+    this.thumbnailPending = true;
+    this.panel
+      .api("preview_design_template", {
+        entry_id: this.context.entryId,
+        template_id: id,
+      })
+      .then((result) => {
+        this.previews[id] = result.png;
+        const image = [
+          ...this.shadowRoot.querySelectorAll("[data-preview]"),
+        ].find((node) => node.dataset.preview === id);
+        if (image && !this.chosen && !this.closed) {
+          image.src = result.png;
+          image.hidden = false;
+        }
+      })
+      .catch(() => this.previewFailures.add(id))
+      .finally(() => {
+        this.thumbnailPending = false;
+        this.loadThumbnails();
+      });
   }
   // The chosen template drawn with the values typed so far.
   schedulePreview(immediate = false) {
@@ -137,6 +158,7 @@ export class TemplateDialog extends HTMLElement {
     if (this.closed || !this.chosen) return;
     const token = (this.previewToken = (this.previewToken || 0) + 1);
     let png;
+    this.formPending = (this.formPending || 0) + 1;
     try {
       png = (
         await this.panel.api("preview_design_template", {
@@ -151,6 +173,9 @@ export class TemplateDialog extends HTMLElement {
       this.formPreviewNote = "";
       this.showFormPreview(null, serverMessage(this.panel.hass, error));
       return;
+    } finally {
+      this.formPending--;
+      this.loadThumbnails();
     }
     if (this.closed || token !== this.previewToken) return;
     this.formPreview = png;
@@ -173,6 +198,7 @@ export class TemplateDialog extends HTMLElement {
     if (this.closed) return;
     this.closed = true;
     clearTimeout(this.previewTimer);
+    window.removeEventListener("resize", this.onResize);
     // Only while the design it was applied to is still the one being edited.
     const create =
       this.thenCreate && this.panel.isDocumentSessionOwner(this.context);
@@ -232,21 +258,49 @@ export class TemplateDialog extends HTMLElement {
     const save = this.panel.document.elements.length
       ? `<h3>${t(hass, "Save current design as a template")}</h3><div class="save"><input type="text" data-save-name maxlength="80" aria-label="${t(hass, "Design template name")}" placeholder="${t(hass, "Design template name")}" value="${esc(this.saveName || "")}"><button type="button" data-save>${t(hass, "Save as template")}</button></div>`
       : "";
+    const categories = [
+      ["all", "All"],
+      ["weather", "Weather"],
+      ["schedule", "Schedule"],
+      ["smart_home", "Smart home"],
+      ["labels", "Labels"],
+    ];
+    const filters = `<div class="filters" role="group" aria-label="${t(hass, "Template categories")}">${categories.map(([key, label]) => `<button type="button" data-category="${key}" aria-pressed="${this.category === key}">${t(hass, label)}</button>`).join("")}</div>`;
+    const shown = this.templates.filter(
+      (template) =>
+        this.category === "all" || template.categories?.includes(this.category),
+    );
     const list = this.templates.length
-      ? `<p class="muted">${t(hass, "Choose a ready-made design. It is added as ordinary elements you can edit.")}</p><div class="scroll-area list">${this.templates
-          .map(
-            (template) =>
-              `<button type="button" class="card" data-template="${esc(template.id)}"><img class="thumb" data-preview="${esc(template.id)}" alt="" ${this.previews[template.id] ? `src="${esc(this.previews[template.id])}"` : "hidden"}><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${template.source === "user" ? `${t(hass, "My template")} · ` : ""}${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
-          )
-          .join("")}</div>`
+      ? `<p class="muted">${t(hass, "Choose a ready-made design. It is added as ordinary elements you can edit.")}</p><div class="scroll-area list">${
+          shown.length
+            ? shown
+                .map(
+                  (template) =>
+                    `<button type="button" class="card" data-template="${esc(template.id)}"><img class="thumb" data-preview="${esc(template.id)}" alt="" ${this.previews[template.id] ? `src="${esc(this.previews[template.id])}"` : "hidden"}><b>${esc(localized(hass, template.name))}</b><span class="muted">${esc(localized(hass, template.description))}</span><span class="muted">${template.source === "user" ? `${t(hass, "My template")} · ` : ""}${esc(template.layout)}${template.scaled ? ` · ${t(hass, "Adjusted to this display")}` : ""}</span></button>`,
+                )
+                .join("")
+            : `<p class="muted">${t(hass, "No templates in this category.")}</p>`
+        }</div>`
       : `<p class="muted">${t(hass, "No design templates fit this display.")}</p>`;
-    return `<div class="gallery-content">${list}${save}${note}</div>`;
+    return `<div class="gallery-content">${this.templates.length ? filters : ""}${list}${save}${note}</div>`;
   }
   render() {
     if (this.chosen && this.shadowRoot.querySelector("[data-param]"))
       this.typed = this.values();
     const nameInput = this.shadowRoot.querySelector("[data-save-name]");
     if (nameInput) this.saveName = nameInput.value;
+    const oldList = this.shadowRoot.querySelector(".list");
+    const oldGallery = this.shadowRoot.querySelector(".gallery-content");
+    if (oldList && !this.chosen) {
+      this.listScroll = oldList.scrollTop;
+      this.galleryScroll = oldGallery.scrollTop;
+    }
+    const active = this.shadowRoot.activeElement;
+    const focusKey = active?.dataset?.category
+      ? `[data-category="${active.dataset.category}"]`
+      : active?.dataset?.template
+        ? `[data-template="${CSS.escape(active.dataset.template)}"]`
+        : null;
     const hass = this.panel.hass;
     const { width, height } = this.context.tag;
     const done = this.done;
@@ -266,6 +320,7 @@ export class TemplateDialog extends HTMLElement {
       button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}${primaryHover}${buttonHover()}
       button:disabled{opacity:.5;cursor:default}
       .list{display:grid;gap:8px}
+      .filters{display:flex;gap:5px;flex-wrap:wrap}.filters button{padding:5px 8px}.filters [aria-pressed="true"]{border-color:var(--primary-color,#166d75);color:var(--primary-color,#166d75)}
       .card{display:flex;flex-direction:column;gap:2px;text-align:left}
       .thumb,.preview{max-width:100%;box-sizing:border-box;border:1px solid var(--divider-color,#cbd3de);border-radius:4px;image-rendering:pixelated;background:white;align-self:flex-start}
       .thumb{display:block;width:${width}px;height:auto;aspect-ratio:${width}/${height};object-fit:contain}
@@ -280,7 +335,7 @@ export class TemplateDialog extends HTMLElement {
       .muted{color:var(--secondary-text-color,#637083);font-size:12px;margin:0}
       .note{margin:0;font-size:13px;overflow-wrap:anywhere}
       .issues{color:#c33;margin:0;padding-left:18px;font-size:12px}
-      @media (max-height:320px){
+      @media (max-height:400px){
         form{padding:10px;gap:8px}
         .actions button{padding:6px 8px}
         .gallery-content{overflow:auto;overscroll-behavior:contain;padding:3px;margin:-3px}
@@ -309,7 +364,29 @@ export class TemplateDialog extends HTMLElement {
       this.close();
     });
     dialog.showModal();
-    if (!this.note)
+    const list = this.shadowRoot.querySelector(".list");
+    const gallery = this.shadowRoot.querySelector(".gallery-content");
+    if (list) {
+      list.scrollTop = this.listScroll || 0;
+      gallery.scrollTop = this.galleryScroll || 0;
+      list.addEventListener("scroll", () => this.loadThumbnails());
+      gallery.addEventListener("scroll", () => this.loadThumbnails());
+      const compact = getComputedStyle(gallery).overflowY === "auto";
+      if (this.focusTemplate && !(this.note && compact)) {
+        list
+          .querySelector(`[data-template="${CSS.escape(this.focusTemplate)}"]`)
+          ?.focus();
+      }
+      this.focusTemplate = null;
+      if (this.note && compact)
+        this.shadowRoot
+          .querySelector(".note")
+          ?.scrollIntoView({ block: "nearest" });
+      requestAnimationFrame(() => this.loadThumbnails());
+    }
+    if (focusKey && !this.chosen)
+      this.shadowRoot.querySelector(focusKey)?.focus();
+    else if (!this.note && !this.shadowRoot.activeElement?.dataset?.template)
       this.shadowRoot
         .querySelector("[data-param], [data-template], button")
         ?.focus();
@@ -320,20 +397,35 @@ export class TemplateDialog extends HTMLElement {
       .find((node) => node.tagName === "BUTTON");
     if (!button) return;
     if ("close" in button.dataset) return this.close();
+    if (this.pending) return;
     if ("back" in button.dataset) {
       this.chosen = null;
       this.typed = null;
       this.formPreview = null;
       this.formPreviewNote = "";
       this.previewToken = (this.previewToken || 0) + 1;
-      this.loadThumbnails();
+      this.focusTemplate = this.lastTemplate;
       this.note = "";
       this.issues = [];
       return this.render();
     }
+    if (button.dataset.category) {
+      this.category = button.dataset.category;
+      this.listScroll = 0;
+      this.galleryScroll = 0;
+      // Discard the old scroll positions before rebuilding the filtered list.
+      this.shadowRoot.querySelector(".list").scrollTop = 0;
+      this.shadowRoot.querySelector(".gallery-content").scrollTop = 0;
+      this.render();
+      return;
+    }
     if ("save" in button.dataset) {
       if (this.pending) return;
       this.pending = true;
+      for (const control of this.shadowRoot.querySelectorAll(
+        "[data-category], [data-template], [data-save]",
+      ))
+        control.disabled = true;
       const name = this.shadowRoot.querySelector("[data-save-name]").value;
       try {
         const saved = await this.panel.api("save_design_template", {
@@ -347,6 +439,8 @@ export class TemplateDialog extends HTMLElement {
         const input = this.shadowRoot.querySelector("[data-save-name]");
         if (input) input.value = "";
         this.saveName = "";
+        this.category = "all";
+        this.focusTemplate = saved.id;
         this.note = {
           key: "Saved template {name}.",
           values: { name: saved.id },
@@ -363,6 +457,10 @@ export class TemplateDialog extends HTMLElement {
       return;
     }
     if (button.dataset.template) {
+      this.lastTemplate = button.dataset.template;
+      this.listScroll = this.shadowRoot.querySelector(".list")?.scrollTop || 0;
+      this.galleryScroll =
+        this.shadowRoot.querySelector(".gallery-content")?.scrollTop || 0;
       this.chosen = this.templates.find(
         (template) => template.id === button.dataset.template,
       );

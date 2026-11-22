@@ -1,5 +1,6 @@
 template: 1
 id: message
+categories: [labels]
 name:
   en: Message
   ko: 메시지

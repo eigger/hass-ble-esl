@@ -1,5 +1,6 @@
 template: 1
 id: sensor_card
+categories: [smart_home]
 name:
   en: Sensor card
   ko: 센서 카드

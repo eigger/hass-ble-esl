@@ -1,5 +1,6 @@
 template: 1
 id: calendar_next
+categories: [schedule]
 name:
   en: Next calendar event
   ko: 다음 일정

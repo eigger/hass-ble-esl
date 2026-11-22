@@ -588,6 +588,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "calendar_weather",
+        "categories": ["schedule", "weather"],
         "name": {"en": "Calendar & weather", "ko": "캘린더 · 날씨"},
         "description": {
             "en": "Combined schedule and weather dashboard: today's weather and next event on compact tags, and upcoming events with a 4-day forecast from 4.2 inches.",

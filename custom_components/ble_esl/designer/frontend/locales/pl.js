@@ -183,6 +183,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Niektóre czcionki edytora są niedostępne; używane są czcionki zastępcze.",
   "Retry fonts": "Ponów ładowanie czcionek",
+  "No templates in this category.": "Brak szablonów w tej kategorii.",
+  "Template categories": "Kategorie szablonów",
+  All: "Wszystkie",
+  Weather: "Pogoda",
+  Schedule: "Harmonogram",
+  "Smart home": "Inteligentny dom",
+  Labels: "Etykiety",
   "Loading designer": "Ładowanie projektanta",
   "Loading image…": "Ładowanie obrazu…",
   "Loading…": "Ładowanie…",

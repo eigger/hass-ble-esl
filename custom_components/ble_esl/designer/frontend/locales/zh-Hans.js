@@ -173,6 +173,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "部分编辑器字体不可用，正在使用替代字体。",
   "Retry fonts": "重试字体",
+  "No templates in this category.": "此类别中没有模板。",
+  "Template categories": "模板类别",
+  All: "全部",
+  Weather: "天气",
+  Schedule: "日程",
+  "Smart home": "智能家居",
+  Labels: "标签",
   "Loading designer": "加载设计器",
   "Loading image…": "正在加载图像…",
   "Loading…": "加载中……",

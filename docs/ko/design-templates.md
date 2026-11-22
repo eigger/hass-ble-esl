@@ -1,5 +1,8 @@
 # 디자인 템플릿
 
+갤러리에서 날씨, 일정, 스마트 홈, 라벨 분류로 템플릿을 필터링할 수 있습니다. 하나의 템플릿은 여러 분류에 속할 수 있으며, 분류가 없는 템플릿은 전체에 표시됩니다. YAML의 `categories`는 선택 사항입니다. 예: `categories: [weather, schedule]`. 사용 가능한 값은 `weather`, `schedule`, `smart_home`, `labels`입니다.
+
+
 **[English](../design-templates.md)** | 한국어
 
 > 영어 문서가 기준입니다. 내용이 다르면 [영어 원문](../design-templates.md)을 따릅니다.

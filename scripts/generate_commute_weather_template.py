@@ -1666,6 +1666,7 @@ def generate():
     data = {
         "template": 1,
         "id": "weather_commute",
+        "categories": ["weather"],
         "name": {"en": "Commute weather", "ko": "출근 날씨 브리핑"},
         "description": {
             "en": (

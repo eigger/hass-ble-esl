@@ -289,6 +289,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Some editor fonts are unavailable; fallback fonts are in use.",
   "Retry fonts": "Retry fonts",
+  "No templates in this category.": "No templates in this category.",
+  "Template categories": "Template categories",
+  All: "All",
+  Weather: "Weather",
+  Schedule: "Schedule",
+  "Smart home": "Smart home",
+  Labels: "Labels",
   "Loading designer": "Loading designer",
   "Loading image…": "Loading image…",
   "Loading…": "Loading…",

@@ -1,5 +1,6 @@
 template: 1
 id: print_progress
+categories: [smart_home]
 name:
   en: Print progress
   ko: 출력 진행률
