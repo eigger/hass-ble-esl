@@ -286,6 +286,9 @@ export default {
   "Live preview": "미리보기",
   "Loading ESLs…": "ESL 불러오는 중…",
   "Loading automations…": "자동화 불러오는 중…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "일부 편집기 글꼴을 사용할 수 없어 대체 글꼴을 사용합니다.",
+  "Retry fonts": "글꼴 다시 불러오기",
   "Loading designer": "디자이너 불러오는 중",
   "Loading image…": "이미지 불러오는 중…",
   "Loading…": "불러오는 중…",

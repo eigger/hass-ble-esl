@@ -181,6 +181,9 @@ export default {
   "Live preview": "Livevoorbeeld",
   "Loading ESLs…": "ESLs laden…",
   "Loading automations…": "Automatiseringen laden…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "Sommige lettertypen van de editor zijn niet beschikbaar; vervangende lettertypen worden gebruikt.",
+  "Retry fonts": "Lettertypen opnieuw proberen",
   "Loading designer": "Designer laden",
   "Loading image…": "Afbeelding wordt geladen…",
   "Loading…": "Bezig met laden...",

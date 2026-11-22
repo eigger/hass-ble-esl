@@ -286,6 +286,9 @@ export default {
   "Live preview": "Live preview",
   "Loading ESLs…": "Loading ESLs…",
   "Loading automations…": "Loading automations…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "Some editor fonts are unavailable; fallback fonts are in use.",
+  "Retry fonts": "Retry fonts",
   "Loading designer": "Loading designer",
   "Loading image…": "Loading image…",
   "Loading…": "Loading…",

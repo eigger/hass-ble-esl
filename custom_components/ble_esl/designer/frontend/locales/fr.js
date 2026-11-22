@@ -179,6 +179,9 @@ export default {
   "Live preview": "Aperçu en direct",
   "Loading ESLs…": "Chargement des ESL…",
   "Loading automations…": "Chargement des automatisations…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "Certaines polices de l’éditeur sont indisponibles ; des polices de remplacement sont utilisées.",
+  "Retry fonts": "Réessayer les polices",
   "Loading designer": "Concepteur de chargement",
   "Loading image…": "Chargement de l'image…",
   "Loading…": "Chargement…",

@@ -179,6 +179,9 @@ export default {
   "Live preview": "Предпросмотр в реальном времени",
   "Loading ESLs…": "Загрузка ESLs…",
   "Loading automations…": "Загрузка автоматизаций…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "Некоторые шрифты редактора недоступны; используются запасные шрифты.",
+  "Retry fonts": "Повторить загрузку шрифтов",
   "Loading designer": "Загрузка конструктора",
   "Loading image…": "Загрузка изображения…",
   "Loading…": "Загрузка…",
