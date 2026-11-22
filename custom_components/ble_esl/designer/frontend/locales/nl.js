@@ -190,7 +190,7 @@ export default {
   Weather: "Weer",
   Schedule: "Agenda",
   "Smart home": "Slim huis",
-  Labels: "Labels",
+  Labels: "Etiketten",
   "Loading designer": "Designer laden",
   "Loading image…": "Afbeelding wordt geladen…",
   "Loading…": "Bezig met laden...",

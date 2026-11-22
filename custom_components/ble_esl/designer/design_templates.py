@@ -113,7 +113,9 @@ TEMPLATE = vol.Schema(
         vol.Required("id"): _SLUG,
         vol.Required("name"): _LOCALIZED,
         vol.Optional("description", default=""): _LOCALIZED,
-        vol.Optional("categories", default=list): [vol.In(("weather", "schedule", "smart_home", "labels"))],
+        vol.Optional("categories", default=list): [
+            vol.In(("weather", "schedule", "smart_home", "labels"))
+        ],
         vol.Optional("background", default="white"): vol.In(tuple(_COLORS)),
         vol.Required("layouts"): vol.All(
             {_SIZE: vol.All([dict], vol.Length(max=MAX_ELEMENTS))}, vol.Length(min=1)
