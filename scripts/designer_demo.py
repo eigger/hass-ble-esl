@@ -115,6 +115,11 @@ STATES["calendar.home"] = {
         "location": "Studio",
     },
 }
+STATES["person.home"] = {
+    "entity_id": "person.home",
+    "state": "home",
+    "attributes": {"friendly_name": "Alex"},
+}
 TEMPLATES = {}
 TAGS = [
     {

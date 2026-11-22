@@ -2736,3 +2736,220 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
+def test_home_presence_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["home_presence"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "home_presence.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind in ("rectangle", "line"):
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        all_boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        line_boxes = [entry for entry in all_boxes if entry[1] == "line"]
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+            i1, t1, b1 = fg_boxes[idx]
+            for li, _, lb in line_boxes:
+                lx0, ly0, lx1, ly1 = lb
+                line_box = (lx0, ly0, lx1 + (lx0 == lx1), ly1 + (ly0 == ly1))
+                hits_line = (
+                    b1[0] < line_box[2]
+                    and line_box[0] < b1[2]
+                    and b1[1] < line_box[3]
+                    and line_box[1] < b1[3]
+                )
+                assert not hits_line, f"{size}: element {i1}({t1}) {b1} touches line {li} {lb}"
+
+
+async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, wolink_entry):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+    from scripts.designer_demo import STATES as DEMO_STATES
+
+    assert "person.home" in DEMO_STATES
+
+    hass.states.async_set("person.home", "home", {"friendly_name": "민준"})
+    hass.states.async_set("person.partner", "not_home", {"friendly_name": "서연"})
+    hass.states.async_set("person.kid", "학교", {"friendly_name": "지우"})
+    hass.states.async_set("person.guest", "unavailable", {"friendly_name": "손님"})
+    hass.states.async_set("binary_sensor.front_door", "on", {"friendly_name": "현관문"})
+
+    options = {
+        "person_1": "person.home",
+        "person_2": "person.partner",
+        "person_3": "person.kid",
+        "person_4": "person.guest",
+        "door_sensor": "binary_sensor.front_door",
+    }
+    rendered = resolve_templates(
+        hass, build(TEMPLATES["home_presence"], 800, 480, "BWR", options)["payload"], set()
+    )
+    texts = [str(item.get("value", "")) for item in rendered]
+    assert {"민준", "서연", "지우", "손님", "재실", "외출", "학교", "알 수 없음"} <= set(texts)
+    assert "재실 1/4" in texts and "현관 출입문 · 열림 주의" in texts
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in rendered)
+    assert any(
+        item.get("value") == "현관 출입문 · 열림 주의" and item.get("color") == "white"
+        for item in rendered
+    )
+    render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), rendered)
+
+    # All away + door closed -> neutral badge & door closed banner.
+    hass.states.async_set("person.home", "not_home", {"friendly_name": "민준"})
+    hass.states.async_set("binary_sensor.front_door", "off")
+    away_texts = _texts(_shown(hass, "home_presence", 800, 480, options))
+    assert "전원 외출" in away_texts and "현관 출입문 · 닫힘 (안전)" in away_texts
+
+    # 0-person configured/missing, unknown state, and valid-format missing optional entities.
+    zero_texts = _texts(
+        _shown(
+            hass,
+            "home_presence",
+            800,
+            480,
+            {"person_1": "person.missing_primary", "door_sensor": "binary_sensor.missing_door"},
+        )
+    )
+    assert "연결 대기" in zero_texts and "엔티티 없음" in zero_texts
+    assert "현관 출입문 · 확인 필요" in zero_texts
+
+    hass.states.async_set("person.unknown_member", "unknown", {"friendly_name": "누군가"})
+    unknown_texts = _texts(
+        _shown(hass, "home_presence", 800, 480, {"person_2": "person.unknown_member"})
+    )
+    assert "누군가" in unknown_texts and "알 수 없음" in unknown_texts
+
+    # Compact portrait layouts with unset door_sensor/people avoid duplicate clock & orphan icons.
+    hass.states.async_set("person.home", "home", {"friendly_name": "민준"})
+    for cw, ch in ((104, 212), (128, 250), (184, 384), (240, 416)):
+        compact_items = resolve_templates(
+            hass, build(TEMPLATES["home_presence"], cw, ch, "BWR")["payload"], set()
+        )
+        compact_texts = [str(item.get("value", "")) for item in compact_items]
+        assert "현관 · 미설정" in compact_texts
+        assert sum(1 for t in compact_texts if "갱신" in t) == 1
+        if (cw, ch) in ((184, 384), (240, 416)):
+            white_icons = [
+                item
+                for item in compact_items
+                if item.get("type") == "icon"
+                and item.get("value") == "account-outline"
+                and item.get("color") == "white"
+            ]
+            assert len(white_icons) == 3
+
+    # Unavailable door & unset optional people + malformed IDs handled safely.
+    hass.states.async_set("person.home", "home", {"friendly_name": "민준"})
+    hass.states.async_set("binary_sensor.front_door", "unavailable")
+    unavail_texts = _texts(_shown(hass, "home_presence", 800, 480, options))
+    assert "현관 출입문 · 확인 필요" in unavail_texts
+
+    for bogus in ("1.2", "person.", " binary_sensor.door ", "a.b.c"):
+        unset_texts = _texts(
+            _shown(
+                hass,
+                "home_presence",
+                800,
+                480,
+                {"person_2": bogus, "person_3": bogus, "person_4": bogus, "door_sensor": bogus},
+            )
+        )
+        assert unset_texts.count("미설정") == 3 and "현관 센서 · 미설정" in unset_texts
+
+    # Contrast safety on BWRY accent=yellow, BWR accent=white, and BW.
+    hass.states.async_set("binary_sensor.front_door", "on")
+    bwry_items = resolve_templates(
+        hass,
+        build(TEMPLATES["home_presence"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in bwry_items
+    )
+    assert any(
+        item.get("value") == "재실 1/4" and item.get("color") == "black" for item in bwry_items
+    )
+    assert any(
+        item.get("value") == "현관 출입문 · 열림 주의" and item.get("color") == "black"
+        for item in bwry_items
+    )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in bwry_items
+    )
+
+    white_items = resolve_templates(
+        hass,
+        build(TEMPLATES["home_presence"], 400, 300, "BWR", {**options, "accent": "white"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in white_items
+    )
+    assert any(
+        item.get("value") == "재실 1/4" and item.get("color") == "white" for item in white_items
+    )
+
+    bw_items = resolve_templates(
+        hass,
+        build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
+    assert any(
+        item.get("value") == "재실 1/4" and item.get("color") == "white" for item in bw_items
+    )
+
+    # Designer preview & apply + full 29-size round-trip pixel parity.
+    designer = hass.data[KEY]
+    preview = await designer.preview_design_template(wolink_entry, "home_presence", options)
+    assert preview["png"].startswith("data:image/png;base64,")
+    applied = await designer.apply_design_template(wolink_entry, "home_presence", options)
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
+
+    for size in TEMPLATES["home_presence"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["home_presence"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == [], size
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size

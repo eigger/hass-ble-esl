@@ -40,8 +40,9 @@
 | `countdown` | 정해진 날짜까지 남은 일수(`D-12`, `D-Day`, `D+3`)와 제목. 지정한 일수 이내와 날짜가 지난 뒤에도 강조 색상 (잘못된 날짜는 `--`) | 목표일의 요일과 주·일 단위 기간 | 매일 00:05 |
 | `indoor_climate` | 실내 온도·습도, 쾌적/환기 배지 및 요약 문구 (선택 CO2·PM2.5) | 온도·습도·CO2·초미세먼지 진행률 막대 카드(3.7인치 세로·4.2인치 이상) 및 환기 권장 배너 | 5/10/15/30분마다 |
 | `calendar_weather` | 오늘 날짜·현재 날씨·최저/최고 기온과 다음 일정 1건(엔티티 속성) | 4일 일별 예보·강수확률 및 다가오는 일정 최대 4건(`calendar.get_events`) | 10/15/30분마다 |
+| `home_presence` | 가족 재실 수 배지, 최대 4명의 재실·외출·위치 상태 및 선택 현관문 상태 요약 | 구성원별 카드(상태·마지막 변경 시각)와 현관 출입문 열림/닫힘 배너 | 5/10/15/30분마다 |
 
-디자이너는 일반 payload를 저장하므로, 서비스 응답은 payload 안의 템플릿이 직접 읽습니다. `weather_forecast`와 `calendar_weather`는 `weather.get_forecasts`의 `response_variable`인 `fc`를 읽고, 5.8인치 이상 `calendar_next` 및 4.2인치 이상 `calendar_weather` 레이아웃은 `calendar.get_events`의 `response_variable`인 `events`를 읽습니다(작은 태그이거나 `events`가 없으면 캘린더 엔티티 속성으로 자동 폴백). 디자이너는 미리보기 시 해당 엔티티의 실제 일별 예보나 캘린더 일정을 조회해 그리며, 자동화를 만들거나 업데이트할 때 필요한 조회 단계를 함께 추가합니다. 반복문으로 요소를 만드는(재실) 예제는 템플릿이 아닙니다. 템플릿은 고정된 payload를 담기 때문입니다. `weather_now`처럼 엔티티 하나는 parameter가 될 수 있습니다.
+디자이너는 일반 payload를 저장하므로, 서비스 응답은 payload 안의 템플릿이 직접 읽습니다. `weather_forecast`와 `calendar_weather`는 `weather.get_forecasts`의 `response_variable`인 `fc`를 읽고, 5.8인치 이상 `calendar_next` 및 4.2인치 이상 `calendar_weather` 레이아웃은 `calendar.get_events`의 `response_variable`인 `events`를 읽습니다(작은 태그이거나 `events`가 없으면 캘린더 엔티티 속성으로 자동 폴백). 디자이너는 미리보기 시 해당 엔티티의 실제 일별 예보나 캘린더 일정을 조회해 그리며, 자동화를 만들거나 업데이트할 때 필요한 조회 단계를 함께 추가합니다. 반복문으로 가변 길이 요소를 만드는 예제는 템플릿이 아닙니다. 템플릿은 고정된 payload를 담기 때문입니다(따라서 `home_presence`는 최대 4명까지 고정 슬롯으로 구성됩니다). `weather_now`처럼 엔티티 하나는 parameter가 될 수 있습니다.
 
 외출 날씨는 선택한 날씨 엔티티의 일별·시간별 예보를 사용합니다. 가져올 수 없는 항목은 `—`로 표시합니다. 10.2·13.3인치에서 오늘 예상 적설을 제공하는 센서를 입력하면 양수일 때 예상 강수량 자리에 표시합니다. 일몰은 `sun.sun`에서 가져옵니다.
 
