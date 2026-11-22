@@ -651,4 +651,6 @@ export default {
     "Mit den Symbolen fügst du Text, eine Form, ein Symbol oder ein Bild hinzu; für alles, was einer Entität folgt, wähle oben einen Sensor oder unten ein Element.",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "Dieses Design liest die Wettervorhersage aus {variable}, aber die Automatisierung hat keinen Schritt, der sie setzt. „Wetter: Vorhersagen abrufen“ vor der Schreibaktion hinzufügen? Abbrechen speichert ohne ihn.",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "Dieses Design liest Kalendertermine aus {variable}, aber die Automatisierung hat keinen Schritt, der sie setzt. „Kalender: Termine abrufen“ vor der Schreibaktion hinzufügen? Abbrechen speichert ohne ihn.",
 };
