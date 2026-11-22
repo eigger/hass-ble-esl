@@ -2992,7 +2992,14 @@ def test_energy_power_covers_all_29_sizes_without_overlap():
                 assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
                 assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
         fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        rect_boxes = [entry for entry in all_boxes if entry[1] == "rectangle"]
         line_boxes = [entry for entry in all_boxes if entry[1] == "line"]
+        for r1 in range(len(rect_boxes)):
+            for r2 in range(r1 + 1, len(rect_boxes)):
+                i1, _, b1 = rect_boxes[r1]
+                i2, _, b2 = rect_boxes[r2]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
         for idx in range(len(fg_boxes)):
             for jdx in range(idx + 1, len(fg_boxes)):
                 i1, t1, b1 = fg_boxes[idx]
@@ -3010,6 +3017,16 @@ def test_energy_power_covers_all_29_sizes_without_overlap():
                     and line_box[1] < b1[3]
                 )
                 assert not hits_line, f"{size}: element {i1}({t1}) {b1} touches line {li} {lb}"
+            for ri, _, rb in rect_boxes:
+                rw = round(items[ri].get("width", 1))
+                inside = (
+                    b1[0] >= rb[0] + rw
+                    and b1[2] <= rb[2] - rw
+                    and b1[1] >= rb[1] + rw
+                    and b1[3] <= rb[3] - rw
+                )
+                disjoint = b1[2] <= rb[0] or rb[2] <= b1[0] or b1[3] <= rb[1] or rb[3] <= b1[1]
+                assert inside or disjoint, f"{size}: {i1}({t1}) {b1} crosses rect {ri} border {rb}"
 
 
 async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, wolink_entry):
@@ -3080,7 +3097,51 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
     nz_texts = _texts(_shown(hass, "energy_power", 400, 300))
     assert "0 W" in nz_texts and "-0 W" not in nz_texts
 
-    for cw, ch in ((104, 212), (184, 384)):
+    # Solar kW/fractional W formatting consistency across compact portrait, tiny/medium landscape, & panels.
+    hass.states.async_set("sensor.power", "1800", {"unit_of_measurement": "W"})  # 보통 (50-80%)
+    hass.states.async_set("sensor.energy_today", "1.05", {"unit_of_measurement": "kWh"})
+    hass.states.async_set("sensor.solar_power", "0.84", {"unit_of_measurement": "kW"})
+    assert "보통" in _texts(_shown(hass, "energy_power", 800, 480, options))
+    assert {"1.05 kWh", "0.84 kW"} <= set(_texts(_shown(hass, "energy_power", 800, 480, options)))
+    tiny_p_texts = _texts(_shown(hass, "energy_power", 104, 212, options))
+    assert "오늘 1.05kWh" in tiny_p_texts and "태양광 0.84kW" in tiny_p_texts
+
+    hass.states.async_set("sensor.solar_power", "2.001", {"unit_of_measurement": "kW"})
+    tiny_l_texts = _texts(_shown(hass, "energy_power", 212, 104, options))
+    assert "오늘 1.05kWh · 태양광 2kW" in tiny_l_texts and "부하 60%" in tiny_l_texts
+
+    hass.states.async_set("sensor.solar_power", "840.4", {"unit_of_measurement": "W"})
+    med_l_items = resolve_templates(
+        hass, build(TEMPLATES["energy_power"], 384, 184, "BWR", options)["payload"], set()
+    )
+    med_l_texts = [str(item.get("value", "")) for item in med_l_items]
+    assert "태양광 840W 발전 중 · 현재 부하 60%" in med_l_texts
+    assert sum(1 for t in med_l_texts if "갱신" in t) == 1
+
+    # Medium compact landscape without optional sensors shows advice without duplicating header clock.
+    med_l_plain = _texts(_shown(hass, "energy_power", 384, 184))
+    assert sum(1 for t in med_l_plain if "갱신" in t or ":00" in t or ":" in t) == 1
+    assert any("안정적인 전력 사용 중입니다" in t for t in med_l_plain)
+
+    # Caution tier (80-99%), BW fallback, budget_watts coercion bounds, & empty/missing unit.
+    hass.states.async_set("sensor.power", "2500", {})
+    caution_bw = resolve_templates(
+        hass, build(TEMPLATES["energy_power"], 800, 480, "BW", {"accent": "red"})["payload"], set()
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in caution_bw
+    )
+    assert any(item.get("value") == "주의" and item.get("color") == "white" for item in caution_bw)
+    assert any(
+        item.get("type") == "progress_bar" and item.get("progress") == 83 for item in caution_bw
+    )
+
+    with pytest.raises(HomeAssistantError, match="budget_watts"):
+        resolve_parameters(TEMPLATES["energy_power"], {"budget_watts": 50}, "BWR")
+    with pytest.raises(HomeAssistantError, match="budget_watts"):
+        resolve_parameters(TEMPLATES["energy_power"], {"budget_watts": 60000}, "BWR")
+
+    for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
         p_texts = _texts(_shown(hass, "energy_power", cw, ch))
         assert sum(1 for t in p_texts if "갱신" in t) == 1
 
@@ -3096,7 +3157,7 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         )
         assert bogus_texts.count("미설정") == 2
 
-    for bad in ("unavailable", "nan", "inf", "True"):
+    for bad in ("unavailable", "unknown", "nan", "inf", "-inf", "True", "False"):
         hass.states.async_set("sensor.power", bad, {"unit_of_measurement": "W"})
         hass.states.async_set("sensor.energy_today", bad)
         hass.states.async_set("sensor.solar_power", bad)

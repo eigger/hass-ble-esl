@@ -39,12 +39,24 @@ def _finite(entity_expr: str, var: str, set_flag: str | None = None) -> str:
     )
 
 
-def _fmt_num(var: str, decimals: int = 1) -> str:
-    """Format finite float `var` cleanly without '-0' or trailing '.0' bugs."""
+def _fmt_power_or_solar(var: str, unit_var: str, out_var: str) -> str:
+    """Format W/kW float cleanly into `out_var` without '-0' or trailing '.0'."""
     return (
-        f"{{% set _f1 = (({var} | round({decimals})) + 0) %}}"
+        f"{{% set _dec = 2 if {unit_var} in ('kW', 'kw', 'KW') else 0 %}}"
+        f"{{% set _f1 = (({var} | round(_dec)) + 0) %}}"
         "{% set _f2 = 0 if _f1 == 0 else _f1 %}"
         "{% set _fi = _f2 | int %}"
+        f"{{% set {out_var} = ((_fi if _f2 == _fi else _f2) | string) %}}"
+    )
+
+
+def _fmt_energy_str(var: str, out_var: str) -> str:
+    """Format up to 2-decimal energy float cleanly into `out_var` without '-0' or trailing '.0'."""
+    return (
+        f"{{% set _f1 = (({var} | round(2)) + 0) %}}"
+        "{% set _f2 = 0 if _f1 == 0 else _f1 %}"
+        "{% set _fi = _f2 | int %}"
+        f"{{% set {out_var} = ((_fi if _f2 == _fi else _f2) | string) %}}"
     )
 
 
@@ -75,13 +87,10 @@ SOLAR_PRELUDE = (
 )
 
 PWR_VAL = (
-    PWR_PRELUDE + "{% if _p is not none %}"
-    "{% set _dec = 2 if _pu in ('kW', 'kw', 'KW') else 0 %}"
-    "{% set _f1 = ((_p | round(_dec)) + 0) %}"
-    "{% set _f2 = 0 if _f1 == 0 else _f1 %}"
-    "{% set _fi = _f2 | int %}"
-    "{{ ((_fi if _f2 == _fi else _f2) | string) ~ ' ' ~ _pu }}"
-    "{% else %}{{ '-- ' ~ _pu }}{% endif %}"
+    PWR_PRELUDE
+    + "{% if _p is not none %}"
+    + _fmt_power_or_solar("_p", "_pu", "_pf")
+    + "{{ _pf ~ ' ' ~ _pu }}{% else %}{{ '-- ' ~ _pu }}{% endif %}"
 )
 PWR_COLOR = PWR_PRELUDE + "{{ _tink if _alert else 'black' }}"
 PWR_BAR_COLOR = PWR_PRELUDE + "{{ _ink if _alert else 'black' }}"
@@ -89,6 +98,10 @@ PWR_PCT = PWR_PRELUDE + "{{ _pct }}"
 PWR_HINT = (
     PWR_PRELUDE
     + "{{ ('목표 ' ~ (_bg | round(0) | int) ~ 'W 대비 ' ~ _ratio ~ '%') if _pw is not none else ('목표 최대 ' ~ (_bg | round(0) | int) ~ 'W') }}"
+)
+PWR_HINT_COMPACT = (
+    PWR_PRELUDE
+    + "{{ ('부하 ' ~ _ratio ~ '%') if _pw is not none else ('목표 ' ~ (_bg | round(0) | int) ~ 'W') }}"
 )
 
 BADGE_TEXT = PWR_PRELUDE + "{{ _badge }}"
@@ -99,41 +112,35 @@ BADGE_COLOR = PWR_PRELUDE + "{{ _fg if _alert else 'black' }}"
 ENERGY_VAL = (
     ENERGY_PRELUDE
     + "{% if _e is not none %}"
-    + _fmt_num("_e", 1)
-    + "{{ ((_fi if _f2 == _fi else _f2) | string) ~ ' ' ~ _eu }}"
-    "{% else %}{{ ('-- ' ~ _eu) if _has_e else '미설정' }}{% endif %}"
+    + _fmt_energy_str("_e", "_ef")
+    + "{{ _ef ~ ' ' ~ _eu }}{% else %}{{ ('-- ' ~ _eu) if _has_e else '미설정' }}{% endif %}"
 )
 ENERGY_SHORT = (
     ENERGY_PRELUDE
     + "{% if _e is not none %}"
-    + _fmt_num("_e", 1)
-    + "{{ '오늘 ' ~ ((_fi if _f2 == _fi else _f2) | string) ~ _eu }}"
-    "{% else %}{{ '오늘 --' if _has_e else '오늘 미설정' }}{% endif %}"
+    + _fmt_energy_str("_e", "_ef")
+    + "{{ '오늘 ' ~ _ef ~ _eu }}{% else %}{{ '오늘 --' if _has_e else '오늘 미설정' }}{% endif %}"
 )
 
 SOLAR_VAL = (
-    SOLAR_PRELUDE + "{% if _s is not none %}"
-    "{% set _dec = 2 if _su in ('kW', 'kw', 'KW') else 0 %}"
-    "{% set _f1 = ((_s | round(_dec)) + 0) %}"
-    "{% set _f2 = 0 if _f1 == 0 else _f1 %}"
-    "{% set _fi = _f2 | int %}"
-    "{{ ((_fi if _f2 == _fi else _f2) | string) ~ ' ' ~ _su }}"
-    "{% else %}{{ ('-- ' ~ _su) if _has_s else '미설정' }}{% endif %}"
+    SOLAR_PRELUDE
+    + "{% if _s is not none %}"
+    + _fmt_power_or_solar("_s", "_su", "_sf")
+    + "{{ _sf ~ ' ' ~ _su }}{% else %}{{ ('-- ' ~ _su) if _has_s else '미설정' }}{% endif %}"
 )
 SOLAR_SHORT = (
-    SOLAR_PRELUDE + "{% if _s is not none %}"
-    "{% set _dec = 2 if _su in ('kW', 'kw', 'KW') else 0 %}"
-    "{% set _f1 = ((_s | round(_dec)) + 0) %}"
-    "{% set _f2 = 0 if _f1 == 0 else _f1 %}"
-    "{% set _fi = _f2 | int %}"
-    "{{ '태양광 ' ~ ((_fi if _f2 == _fi else _f2) | string) ~ _su }}"
-    "{% else %}{{ '태양광 --' if _has_s else '태양광 미설정' }}{% endif %}"
+    SOLAR_PRELUDE
+    + "{% if _s is not none %}"
+    + _fmt_power_or_solar("_s", "_su", "_sf")
+    + "{{ '태양광 ' ~ _sf ~ _su }}{% else %}{{ '태양광 --' if _has_s else '태양광 미설정' }}{% endif %}"
 )
 
 ADVICE_TEXT = (
     PWR_PRELUDE
     + SOLAR_PRELUDE
-    + "{% set _sf = ((_s | round(0) | int) if _s == (_s | round(0)) else ((_s | round(2)) + 0)) if _s is not none else 0 %}"
+    + "{% if _s is not none %}"
+    + _fmt_power_or_solar("_s", "_su", "_sf")
+    + "{% else %}{% set _sf = '' %}{% endif %}"
     + "{{ "
     "('목표 전력(' ~ (_bg | round(0) | int) ~ 'W)을 초과했습니다 · 대기전력 차단을 권장합니다') if (_pw is not none and _pw >= _bg) else ("
     "'전력 사용량이 높습니다 · 고전력 가전 동시 사용에 유의하세요' if _alert else ("
@@ -152,9 +159,12 @@ COMPACT_FOOTER = (
     PWR_PRELUDE
     + ENERGY_PRELUDE
     + SOLAR_PRELUDE
-    + "{% set _ef = (((_e | round(1)) + 0) | int) if (_e is not none and ((_e | round(1)) + 0) == ((_e | round(1)) + 0) | int) else (((_e | round(1)) + 0) if _e is not none else 0) %}"
-    + "{% set _es = (_ef | string ~ _eu) if _e is not none else '' %}"
-    + "{% set _ss = ((_s | round(0) | int | string) ~ _su) if (_s is not none and _su not in ('kW', 'kw', 'KW')) else (((((_s | round(2)) + 0) | string) ~ _su) if _s is not none else '') %}"
+    + "{% if _e is not none %}"
+    + _fmt_energy_str("_e", "_ef")
+    + "{% set _es = _ef ~ _eu %}{% else %}{% set _es = '' %}{% endif %}"
+    + "{% if _s is not none %}"
+    + _fmt_power_or_solar("_s", "_su", "_sf")
+    + "{% set _ss = _sf ~ _su %}{% else %}{% set _ss = '' %}{% endif %}"
     + "{{ "
     "('오늘 ' ~ _es ~ ' · 태양광 ' ~ _ss) if (_es and _ss) else ("
     "('오늘 ' ~ _es ~ ' · 부하 ' ~ _ratio ~ '%') if _es else ("
@@ -164,13 +174,18 @@ COMPACT_FOOTER = (
 PORTRAIT_LINE_1 = (
     PWR_PRELUDE
     + ENERGY_PRELUDE
-    + "{% set _ef = (((_e | round(1)) + 0) | int) if (_e is not none and ((_e | round(1)) + 0) == ((_e | round(1)) + 0) | int) else (((_e | round(1)) + 0) if _e is not none else 0) %}"
-    + "{{ ('오늘 ' ~ (_ef | string) ~ _eu) if _e is not none else (('오늘 --') if _has_e else (('부하 ' ~ _ratio ~ '%') if _pw is not none else '센서 연결 확인')) }}"
+    + "{% if _e is not none %}"
+    + _fmt_energy_str("_e", "_ef")
+    + "{{ '오늘 ' ~ _ef ~ _eu }}"
+    "{% else %}{{ '오늘 --' if _has_e else (('부하 ' ~ _ratio ~ '%') if _pw is not none else '센서 연결 확인') }}{% endif %}"
 )
 PORTRAIT_LINE_2 = (
     SOLAR_PRELUDE
     + PWR_PRELUDE
-    + "{{ ('태양광 ' ~ ((_s | round(0) | int) | string) ~ _su) if _s is not none else (('목표 ' ~ (_bg | round(0) | int) ~ 'W') if _pw is not none else '전력 --') }}"
+    + "{% if _s is not none %}"
+    + _fmt_power_or_solar("_s", "_su", "_sf")
+    + "{{ '태양광 ' ~ _sf ~ _su }}"
+    "{% else %}{{ ('태양광 --') if _has_s else (('목표 ' ~ (_bg | round(0) | int) ~ 'W') if _pw is not none else '전력 --') }}{% endif %}"
 )
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
@@ -383,8 +398,8 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     c.line(6, 25, 244, 25)
 
     c.icon("lightning-bolt", 24, 54, 28, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 44, 31, 134, 42, 32, color=PWR_COLOR)
-    c.text_fit(PWR_HINT, 182, 34, 62, 36, 11, align="right")
+    c.text_fit(PWR_VAL, 44, 31, 130, 42, 32, color=PWR_COLOR)
+    c.text_fit(PWR_HINT_COMPACT, 178, 34, 66, 36, 12, align="right")
     c.progress_bar(10, 79, 240, 92, PWR_PCT, fill=PWR_BAR_COLOR)
 
     c.line(6, 98, 244, 98)
@@ -428,7 +443,7 @@ def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
 
     c.line(8, 149, 376, 149)
     c.icon(ADVICE_ICON, 20, 166, 17, color=ADVICE_COLOR)
-    c.text_fit(COMPACT_FOOTER, 34, 154, 342, 24, 13)
+    c.text_fit(ADVICE_TEXT, 34, 154, 342, 24, 13)
     return c.items
 
 
