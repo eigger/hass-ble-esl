@@ -482,9 +482,11 @@ test("manager messages float in view, can be dismissed, and confirmations clear"
   expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
   await page.getByRole("button", { name: "Dismiss message" }).click();
   await expect(message).toBeHidden();
+  await page.clock.install();
   await page.evaluate(() => window.manager.message("Saved.", "success"));
   await expect(message).toHaveAttribute("role", "status");
-  await expect(message).toBeHidden({ timeout: 10000 });
+  await page.clock.fastForward(6000);
+  await expect(message).toBeHidden();
 });
 
 test("choosing between several write actions uses an accessible radio list", async ({

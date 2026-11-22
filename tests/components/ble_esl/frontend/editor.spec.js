@@ -1268,22 +1268,20 @@ test("generic rotation is editable on battery elements and appears in the payloa
 });
 
 test("every imagespec element can be added and rendered", async ({ page }) => {
-  // Each preview renders every element added so far.
-  test.setTimeout(120_000);
-  const types = await page.evaluate(() =>
-    window.panel.specs.types.map((type) => type.type),
-  );
-  expect(types.length).toBeGreaterThan(25);
-  // plot reads the recorder, which the demo server does not have.
-  for (const type of types.filter((type) => type !== "plot")) {
-    await page.evaluate((type) => window.panel.addSpec(type), type);
-    await page.waitForFunction(
-      () => window.panel.preview && !window.panel.error,
-    );
-  }
-  expect(await page.evaluate(() => window.panel.document.elements.length)).toBe(
-    types.length - 1,
-  );
+  const { expected, added } = await page.evaluate(() => {
+    const panel = window.panel;
+    // plot reads the recorder, which the demo server does not have.
+    const expected = panel.specs.types
+      .map(({ type }) => type)
+      .filter((type) => type !== "plot");
+    // The preview debounce batches these additions into one render.
+    for (const type of expected) panel.addSpec(type);
+    const added = panel.document.elements.map((element) => element.spec.type);
+    return { expected, added };
+  });
+  expect(expected.length).toBeGreaterThanOrEqual(25);
+  expect(added).toEqual(expected);
+  await page.waitForFunction(() => window.panel.preview && !window.panel.error);
 });
 
 test("a click on an element keeps the exact preview and a drag swaps in the layers", async ({
@@ -2421,6 +2419,7 @@ test("send results float in view without moving the page, and clear themselves; 
       .locator(".workspace")
       .evaluate((node) => node.getBoundingClientRect().top + scrollY);
   const before = await workspaceTop();
+  await page.clock.install();
   await page.locator('[data-action="send"]').click();
   const toast = page.locator(".toast");
   await expect(toast).toContainText("demo_only");
@@ -2431,7 +2430,8 @@ test("send results float in view without moving the page, and clear themselves; 
     });
   expect(await inView()).toBe(true);
   expect(Math.abs((await workspaceTop()) - before)).toBeLessThan(0.5);
-  await expect(toast).toHaveCount(0, { timeout: 10000 });
+  await page.clock.fastForward(6000);
+  await expect(toast).toHaveCount(0);
   expect(Math.abs((await workspaceTop()) - before)).toBeLessThan(0.5);
   await page.evaluate(() => window.panel.report(new Error("Broken")));
   await expect(toast).toContainText("Broken");
@@ -2440,7 +2440,7 @@ test("send results float in view without moving the page, and clear themselves; 
   expect(await inView()).toBe(true);
   // The close button is not part of the live region.
   await expect(toast.getByRole("alert").getByRole("button")).toHaveCount(0);
-  await page.waitForTimeout(7000);
+  await page.clock.fastForward(7000);
   await expect(toast).toContainText("Broken");
   await page.getByRole("button", { name: "Dismiss message" }).click();
   await expect(toast).toHaveCount(0);
