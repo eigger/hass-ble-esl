@@ -134,6 +134,11 @@ STATES["sensor.ev_battery"] = {
     "state": "78",
     "attributes": {"unit_of_measurement": "%", "friendly_name": "EV Battery"},
 }
+STATES["sensor.washer_state"] = {
+    "entity_id": "sensor.washer_state",
+    "state": "running",
+    "attributes": {"friendly_name": "세탁기"},
+}
 TEMPLATES = {}
 TAGS = [
     {

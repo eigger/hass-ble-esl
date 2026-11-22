@@ -3403,3 +3403,256 @@ async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, w
         assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
+def test_appliance_status_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["appliance_status"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "appliance_status.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind in ("progress_bar", "rectangle", "line"):
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        all_boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        rect_boxes = [entry for entry in all_boxes if entry[1] == "rectangle"]
+        line_boxes = [entry for entry in all_boxes if entry[1] == "line"]
+        for r1 in range(len(rect_boxes)):
+            for r2 in range(r1 + 1, len(rect_boxes)):
+                i1, _, b1 = rect_boxes[r1]
+                i2, _, b2 = rect_boxes[r2]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+            i1, t1, b1 = fg_boxes[idx]
+            for li, _, lb in line_boxes:
+                lx0, ly0, lx1, ly1 = lb
+                line_box = (lx0, ly0, lx1 + (lx0 == lx1), ly1 + (ly0 == ly1))
+                hits_line = (
+                    b1[0] < line_box[2]
+                    and line_box[0] < b1[2]
+                    and b1[1] < line_box[3]
+                    and line_box[1] < b1[3]
+                )
+                assert not hits_line, f"{size}: element {i1}({t1}) {b1} touches line {li} {lb}"
+            for ri, _, rb in rect_boxes:
+                rw = round(items[ri].get("width", 1))
+                inside = (
+                    b1[0] >= rb[0] + rw
+                    and b1[2] <= rb[2] - rw
+                    and b1[1] >= rb[1] + rw
+                    and b1[3] <= rb[3] - rw
+                )
+                disjoint = b1[2] <= rb[0] or rb[2] <= b1[0] or b1[3] <= rb[1] or rb[3] <= b1[1]
+                assert inside or disjoint, f"{size}: {i1}({t1}) {b1} crosses rect {ri} border {rb}"
+
+
+async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(hass, wolink_entry):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+    from scripts.designer_demo import STATES as DEMO_STATES
+
+    assert "sensor.washer_state" in DEMO_STATES
+
+    hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
+    hass.states.async_set("sensor.washer_remaining", "25", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dryer_state", "complete", {"friendly_name": "건조기"})
+    hass.states.async_set("sensor.dryer_remaining", "0", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dishwasher_state", "idle", {"friendly_name": "식기세척기"})
+    hass.states.async_set("sensor.dishwasher_remaining", "1.5", {"unit_of_measurement": "h"})
+    options = {
+        "remaining_1": "sensor.washer_remaining",
+        "appliance_2": "sensor.dryer_state",
+        "remaining_2": "sensor.dryer_remaining",
+        "appliance_3": "sensor.dishwasher_state",
+        "remaining_3": "sensor.dishwasher_remaining",
+    }
+
+    # Completion alert highlights dryer slot + badge + banner.
+    done_items = resolve_templates(
+        hass, build(TEMPLATES["appliance_status"], 800, 480, "BWR", options)["payload"], set()
+    )
+    done_texts = [str(item.get("value", "")) for item in done_items]
+    assert {"동작 중", "남은 25분", "완료됨", "대기 중", "완료 알림"} <= set(done_texts)
+    assert any("건조기 작동 완료" in t for t in done_texts)
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in done_items)
+    assert any(
+        item.get("value") == "완료 알림" and item.get("color") == "white" for item in done_items
+    )
+    assert any(
+        item.get("type") == "icon" and item.get("value") == "check-circle-outline"
+        for item in done_items
+    )
+    render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), done_items)
+
+    # Error alert overrides completion alert + checks BW/BWRY/white contrast.
+    hass.states.async_set("sensor.dishwasher_state", "fault", {"friendly_name": "식기세척기"})
+    err_bwry = resolve_templates(
+        hass,
+        build(TEMPLATES["appliance_status"], 800, 480, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    err_texts = [str(item.get("value", "")) for item in err_bwry]
+    assert "오류 확인" in err_texts and any("식기세척기 오류 확인 필요" in t for t in err_texts)
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in err_bwry
+    )
+    assert any(
+        item.get("value") == "오류 확인" and item.get("color") == "black" for item in err_bwry
+    )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in err_bwry
+    )
+
+    white_items = resolve_templates(
+        hass,
+        build(TEMPLATES["appliance_status"], 400, 300, "BWR", {**options, "accent": "white"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in white_items
+    )
+    assert any(
+        item.get("value") == "오류 확인" and item.get("color") == "white" for item in white_items
+    )
+
+    bw_items = resolve_templates(
+        hass,
+        build(TEMPLATES["appliance_status"], 800, 480, "BW", {**options, "accent": "red"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
+
+    # All-running + paused + remaining time units (hour/sec/string/negative clamp) + compact layout checks.
+    hass.states.async_set("sensor.washer_state", "paused", {"friendly_name": "세탁기"})
+    hass.states.async_set("sensor.washer_remaining", "-0.4", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dryer_state", "drying", {"friendly_name": "건조기"})
+    hass.states.async_set("sensor.dryer_remaining", "90", {"unit_of_measurement": "sec"})
+    hass.states.async_set("sensor.dishwasher_state", "washing", {"friendly_name": "식기세척기"})
+    hass.states.async_set("sensor.dishwasher_remaining", "1.5", {"unit_of_measurement": "h"})
+    run_texts = _texts(_shown(hass, "appliance_status", 800, 480, options))
+    assert {"일시정지", "남은 0분", "남은 2분", "남은 1.5시간", "동작 2"} <= set(run_texts)
+    assert "-0" not in str(run_texts)
+
+    # Unset slots hide compact icons cleanly ('white') and panel displays 미설정, plus no duplicate clocks.
+    hass.states.async_set("sensor.washer_state", "finished", {"friendly_name": "세탁기"})
+    compact_unset = resolve_templates(
+        hass, build(TEMPLATES["appliance_status"], 200, 200, "BWR", {})["payload"], set()
+    )
+    white_icons = [
+        item
+        for item in compact_unset
+        if item.get("type") == "icon" and item.get("color") == "white"
+    ]
+    assert len(white_icons) == 2
+
+    for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
+        c_texts = _texts(_shown(hass, "appliance_status", cw, ch, options))
+        assert sum(1 for t in c_texts if "갱신" in t) == 1
+
+    # Bogus optional entity strings and non-finite/boolean states degrade safely without errors.
+    for bogus in ("1.2", "sensor.", " sensor.dryer_state ", "a.b.c"):
+        bogus_texts = _texts(
+            _shown(
+                hass,
+                "appliance_status",
+                800,
+                480,
+                {"appliance_2": bogus, "appliance_3": bogus, "remaining_1": bogus},
+            )
+        )
+        assert bogus_texts.count("미설정") >= 2
+
+    for bad in ("unavailable", "unknown", "nan", "inf", "-inf", "True", "False"):
+        hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
+        hass.states.async_set("sensor.washer_remaining", bad, {"unit_of_measurement": "min"})
+        rem_opts = {"remaining_1": "sensor.washer_remaining"}
+        bad_rendered = _shown(hass, "appliance_status", 800, 480, rem_opts)
+        bad_texts = _texts(bad_rendered)
+        assert "세탁기" in bad_texts and "동작 중" in bad_texts
+        assert not any(bad in t or "남은 " in t for t in bad_texts)
+        compact_bad = _texts(_shown(hass, "appliance_status", 212, 104, rem_opts))
+        assert not any(bad in t or "남은 " in t or f"동작 · {bad}" in t for t in compact_bad)
+        render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), bad_rendered)
+
+    # All-unavailable/missing and custom states never claim all appliances are idle.
+    hass.states.async_set("sensor.washer_state", "unavailable", {"friendly_name": "세탁기"})
+    unavail_panel = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "상태 대기" in unavail_panel and "가전 상태를 확인할 수 없습니다" in unavail_panel
+    assert "모두 대기" not in unavail_panel and "모든 가전이 대기 중입니다" not in unavail_panel
+
+    unavail_compact = _texts(_shown(hass, "appliance_status", 104, 212, {}))
+    assert "상태 대기" in unavail_compact and "가전 상태 확인 필요" in unavail_compact
+
+    hass.states.async_set("sensor.washer_state", "spin_rinse", {"friendly_name": "세탁기"})
+    custom_panel = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "spin_rinse" in custom_panel and "세탁기 상태: spin_rinse" in custom_panel
+
+    hass.states.async_set("sensor.washer_state", "idle", {"friendly_name": "세탁기"})
+    partial_idle = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "대기 중" in partial_idle and "대기 중인 가전이 있습니다" in partial_idle
+    assert "모든 가전이 대기 중입니다" not in partial_idle
+
+    hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
+    hass.states.async_set("sensor.washer_remaining", "25", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dryer_state", "complete", {"friendly_name": "건조기"})
+    hass.states.async_set("sensor.dishwasher_state", "idle", {"friendly_name": "식기세척기"})
+    designer = hass.data[KEY]
+    preview = await designer.preview_design_template(wolink_entry, "appliance_status", options)
+    assert preview["png"].startswith("data:image/png;base64,")
+    applied = await designer.apply_design_template(wolink_entry, "appliance_status", options)
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
+
+    for size in TEMPLATES["appliance_status"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["appliance_status"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == [], size
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size
