@@ -23,7 +23,6 @@ ENTITY_RE = r"^[a-z][a-z0-9_]*[.][a-z0-9_]+$"
 BADGE_INK_EXPR = f"('black' if '{ACCENT}' == 'white' else '{ACCENT}')"
 BADGE_FG_EXPR = "('black' if _ink == 'yellow' else 'white')"
 TEXT_INK_EXPR = f"('black' if '{ACCENT}' in ('yellow', 'white') else '{ACCENT}')"
-TEXT_INK = f"{{{{ {TEXT_INK_EXPR} }}}}"
 
 
 def _finite(entity_expr: str, var: str, set_flag: str | None = None) -> str:
@@ -99,10 +98,6 @@ PWR_HINT = (
     PWR_PRELUDE
     + "{{ ('목표 ' ~ (_bg | round(0) | int) ~ 'W 대비 ' ~ _ratio ~ '%') if _pw is not none else ('목표 최대 ' ~ (_bg | round(0) | int) ~ 'W') }}"
 )
-PWR_HINT_COMPACT = (
-    PWR_PRELUDE
-    + "{{ ('부하 ' ~ _ratio ~ '%') if _pw is not none else ('목표 ' ~ (_bg | round(0) | int) ~ 'W') }}"
-)
 
 BADGE_TEXT = PWR_PRELUDE + "{{ _badge }}"
 BADGE_FILL = PWR_PRELUDE + "{{ _ink if _alert else 'white' }}"
@@ -128,12 +123,6 @@ SOLAR_VAL = (
     + _fmt_power_or_solar("_s", "_su", "_sf")
     + "{{ _sf ~ ' ' ~ _su }}{% else %}{{ ('-- ' ~ _su) if _has_s else '미설정' }}{% endif %}"
 )
-SOLAR_SHORT = (
-    SOLAR_PRELUDE
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{{ '태양광 ' ~ _sf ~ _su }}{% else %}{{ '태양광 --' if _has_s else '태양광 미설정' }}{% endif %}"
-)
 
 ADVICE_TEXT = (
     PWR_PRELUDE
@@ -155,38 +144,6 @@ ADVICE_ICON = (
 )
 ADVICE_COLOR = PWR_PRELUDE + "{{ _tink if _alert else 'black' }}"
 
-COMPACT_FOOTER = (
-    PWR_PRELUDE
-    + ENERGY_PRELUDE
-    + SOLAR_PRELUDE
-    + "{% if _e is not none %}"
-    + _fmt_energy_str("_e", "_ef")
-    + "{% set _es = _ef ~ _eu %}{% else %}{% set _es = '' %}{% endif %}"
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{% set _ss = _sf ~ _su %}{% else %}{% set _ss = '' %}{% endif %}"
-    + "{{ "
-    "('오늘 ' ~ _es ~ ' · 태양광 ' ~ _ss) if (_es and _ss) else ("
-    "('오늘 ' ~ _es ~ ' · 부하 ' ~ _ratio ~ '%') if _es else ("
-    "('태양광 ' ~ _ss ~ ' · 부하 ' ~ _ratio ~ '%') if _ss else ("
-    "('목표 ' ~ (_bg | round(0) | int) ~ 'W 대비 ' ~ _ratio ~ '% · ' ~ now().strftime('%H:%M')) if _pw is not none else '센서 연결 확인'))) }}"
-)
-PORTRAIT_LINE_1 = (
-    PWR_PRELUDE
-    + ENERGY_PRELUDE
-    + "{% if _e is not none %}"
-    + _fmt_energy_str("_e", "_ef")
-    + "{{ '오늘 ' ~ _ef ~ _eu }}"
-    "{% else %}{{ '오늘 --' if _has_e else (('부하 ' ~ _ratio ~ '%') if _pw is not none else '센서 연결 확인') }}{% endif %}"
-)
-PORTRAIT_LINE_2 = (
-    SOLAR_PRELUDE
-    + PWR_PRELUDE
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{{ '태양광 ' ~ _sf ~ _su }}"
-    "{% else %}{{ ('태양광 --') if _has_s else (('목표 ' ~ (_bg | round(0) | int) ~ 'W') if _pw is not none else '전력 --') }}{% endif %}"
-)
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
 
@@ -373,103 +330,82 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 7, 110, 21, 15)
-    c.rect(124, 6, 190, 29, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 127, 8, 60, 19, 12, align="center", color=BADGE_COLOR)
-    c.line(10, 34, 190, 34)
-
-    c.icon("lightning-bolt", 26, 66, 30, color=PWR_COLOR)
-    c.text_fit("현재 소비 전력", 46, 40, 144, 17, 12)
-    c.text_fit(PWR_VAL, 46, 58, 144, 42, 34, color=PWR_COLOR)
-    c.progress_bar(10, 106, 190, 118, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PWR_HINT, 10, 122, 180, 18, 11, align="center")
-    c.line(10, 144, 190, 144)
-
-    c.text_fit(ENERGY_SHORT, 10, 148, 180, 20, 12, align="center")
-    c.text_fit(SOLAR_SHORT, 10, 171, 180, 20, 12, align="center")
+    c.text_fit(PWR_VAL, 10, 12, 180, 68, 54, align="center", color="black", min_size=16)
+    c.text_fit(BADGE_TEXT, 10, 82, 180, 34, 24, align="center", color=ADVICE_COLOR, min_size=16)
+    c.line(14, 122, 186, 122)
+    c.text_fit(ENERGY_SHORT, 10, 132, 180, 56, 26, align="center", color="black", min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 130, 19, 13)
-    c.rect(140, 1, 244, 23, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 144, 3, 96, 17, 11, align="center", color=BADGE_COLOR)
-    c.line(6, 25, 244, 25)
-
-    c.icon("lightning-bolt", 24, 54, 28, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 44, 31, 130, 42, 32, color=PWR_COLOR)
-    c.text_fit(PWR_HINT_COMPACT, 178, 34, 66, 36, 12, align="right")
-    c.progress_bar(10, 79, 240, 92, PWR_PCT, fill=PWR_BAR_COLOR)
-
-    c.line(6, 98, 244, 98)
-    c.text_fit(COMPACT_FOOTER, 6, 102, 238, 22, 11, align="center")
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    c = Canvas(w, h, vw, 128)
+    if large:
+        c.icon("flash", 24, 39, 24, color=ADVICE_COLOR)
+        c.text_fit(PWR_VAL, 40, 6, 152, 66, 54, align="center", color="black", min_size=ms)
+        c.text_fit(BADGE_TEXT, 196, 8, 92, 62, 28, align="center", color=ADVICE_COLOR, min_size=ms)
+    else:
+        c.text_fit(PWR_VAL, 8, 6, 156, 66, 52, align="center", color="black", min_size=ms)
+        c.text_fit(BADGE_TEXT, 168, 8, 74, 62, 26, align="center", color=ADVICE_COLOR, min_size=ms)
+    c.line(8, 76, vw - 8, 76)
+    c.text_fit(
+        ENERGY_SHORT,
+        8,
+        82,
+        vw - 16,
+        40,
+        28 if large else 26,
+        align="center",
+        color="black",
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 4, 116, 20, 14, align="center")
-    c.rect(8, 27, 120, 52, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 30, 104, 18, 12, align="center", color=BADGE_COLOR)
-    c.line(6, 56, 122, 56)
-
-    c.icon("lightning-bolt", 64, 76, 24, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 6, 94, 116, 36, 26, align="center", color=PWR_COLOR)
-    c.progress_bar(10, 134, 118, 146, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PORTRAIT_LINE_1, 6, 152, 116, 20, 12, align="center")
-    c.line(6, 176, 122, 176)
-
-    c.text_fit(PORTRAIT_LINE_2, 6, 182, 116, 20, 11, align="center")
-    c.text_fit(CLOCK, 6, 214, 116, 20, 10, align="center")
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(PWR_VAL, 6, 12, 116, vh * 0.30, 44, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
+    c.text_fit(
+        BADGE_TEXT,
+        6,
+        vh * 0.40,
+        116,
+        vh * 0.22,
+        24,
+        align="center",
+        color=ADVICE_COLOR,
+        min_size=ms,
+    )
+    c.line(10, vh * 0.64, 118, vh * 0.64)
+    c.text_fit(
+        ENERGY_SHORT, 6, vh * 0.68, 116, vh * 0.26, 22, align="center", color="black", min_size=ms
+    )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.icon("flash", 18, 17, 18, color=PWR_COLOR)
-    c.text_fit(TITLE, 32, 6, 144, 22, 16)
-    c.rect(182, 5, 294, 30, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 186, 7, 104, 21, 13, align="center", color=BADGE_COLOR)
-    c.text_fit(CLOCK, 300, 7, 76, 22, 12, align="right")
-    c.line(8, 34, 376, 34)
-
-    c.icon("lightning-bolt", 30, 70, 34, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 52, 42, 198, 52, 42, color=PWR_COLOR)
-    c.text_fit(PWR_HINT, 256, 50, 120, 32, 13, align="right")
-    c.progress_bar(12, 102, 372, 118, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(ENERGY_SHORT, 12, 124, 176, 20, 13)
-    c.text_fit(SOLAR_SHORT, 196, 124, 176, 20, 13, align="right")
-
-    c.line(8, 149, 376, 149)
-    c.icon(ADVICE_ICON, 20, 166, 17, color=ADVICE_COLOR)
-    c.text_fit(ADVICE_TEXT, 34, 154, 342, 24, 13)
+    c.icon("flash", 28, 56, 32, color=ADVICE_COLOR)
+    c.text_fit(PWR_VAL, 48, 12, 204, 92, 66, align="center", color="black", min_size=18)
+    c.text_fit(BADGE_TEXT, 258, 14, 116, 88, 32, align="center", color=ADVICE_COLOR, min_size=18)
+    c.line(12, 108, 372, 108)
+    c.text_fit(ENERGY_SHORT, 12, 118, 360, 54, 30, align="center", color="black", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 24, 18)
-    c.rect(10, 35, 174, 59, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 37, 156, 20, 13, align="center", color=BADGE_COLOR)
-
-    c.rect(10, 66, 174, 196, radius=6)
-    c.icon("lightning-bolt", 26, 86, 20, color=PWR_COLOR)
-    c.text_fit("현재 소비 전력", 40, 74, 126, 22, 14)
-    c.text_fit(PWR_VAL, 16, 104, 152, 46, 36, color=PWR_COLOR)
-    c.progress_bar(16, 154, 168, 166, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PWR_HINT, 16, 170, 152, 20, 12)
-
-    c.rect(10, 204, 174, 286, radius=6)
-    c.icon("meter-electric", 25, 224, 18)
-    c.text_fit("오늘 전력량", 38, 212, 128, 22, 14)
-    c.text_fit(ENERGY_VAL, 16, 242, 152, 34, 26)
-
-    c.rect(10, 294, 174, 376, radius=6)
-    c.icon("solar-power", 25, 314, 18)
-    c.text_fit("태양광 발전", 38, 302, 128, 22, 14)
-    c.text_fit(SOLAR_VAL, 16, 330, 152, 24, 18)
-    c.text_fit(CLOCK, 16, 354, 152, 18, 11, align="right")
+    c.text_fit(PWR_VAL, 10, 20, 164, 106, 58, align="center", color="black", min_size=16)
+    c.line(16, 142, 168, 142)
+    c.text_fit(BADGE_TEXT, 10, 158, 164, 62, 32, align="center", color=ADVICE_COLOR, min_size=16)
+    c.line(16, 236, 168, 236)
+    c.text_fit(ENERGY_SHORT, 10, 256, 164, 108, 28, align="center", color="black", min_size=16)
     return c.items
 
 

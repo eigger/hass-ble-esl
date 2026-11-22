@@ -21,7 +21,6 @@ ENTITY_RE = r"^[a-z][a-z0-9_]*[.][a-z0-9_]+$"
 BADGE_INK_EXPR = f"('black' if '{ACCENT}' == 'white' else '{ACCENT}')"
 BADGE_FG_EXPR = "('black' if _ink == 'yellow' else 'white')"
 TEXT_INK_EXPR = f"('black' if '{ACCENT}' in ('yellow', 'white') else '{ACCENT}')"
-TEXT_INK = f"{{{{ {TEXT_INK_EXPR} }}}}"
 
 COUNT_PRELUDE = (
     "{% set _ns = namespace(tot=0, home=0) %}"
@@ -41,6 +40,24 @@ BADGE_TEXT = (
     COUNT_PRELUDE
     + "{{ '연결 대기' if _ns.tot == 0 else (('재실 ' ~ _ns.home ~ '/' ~ _ns.tot) if _ns.home > 0 else '전원 외출') }}"
 )
+HOME_SUMMARY = (
+    "{% set _ns = namespace(tot=0, home=0, names=[]) %}"
+    f"{{% for _pe in {PEOPLE!r} %}}"
+    f"{{% if _pe is match('{ENTITY_RE}') %}}"
+    "{% set _po = states[_pe] %}"
+    "{% if _po is not none %}"
+    "{% set _ns.tot = _ns.tot + 1 %}"
+    "{% if (_po.state | string) == 'home' %}"
+    "{% set _ns.home = _ns.home + 1 %}"
+    "{% set _ns.names = _ns.names + [(_po.name[:8] if _po.name else _pe.split('.')[-1][:8])] %}"
+    "{% endif %}"
+    "{% endif %}"
+    "{% endif %}"
+    "{% endfor %}"
+    "{{ '구성원 센서 연결 대기' if _ns.tot == 0 else ("
+    "('재실: ' ~ ((_ns.names[:3] | join(', ')) ~ (' 외 ' ~ (_ns.home - 3) ~ '명' if _ns.home > 3 else ''))) if _ns.home > 0 else ("
+    "'등록 ' ~ _ns.tot ~ '명 모두 외출')) }}"
+)
 BADGE_FILL = COUNT_PRELUDE + "{{ _ink if _ns.home > 0 else 'white' }}"
 BADGE_OUTLINE = COUNT_PRELUDE + "{{ _ink if _ns.home > 0 else 'black' }}"
 BADGE_COLOR = COUNT_PRELUDE + "{{ _fg if _ns.home > 0 else 'black' }}"
@@ -57,10 +74,6 @@ DOOR_PRELUDE = (
 DOOR_BANNER_TEXT = (
     DOOR_PRELUDE
     + "{{ '현관 출입문 · 열림 주의' if _dopen else ('현관 출입문 · 닫힘 (안전)' if (_has_d and _ds == 'off') else ('현관 출입문 · 확인 필요' if _has_d else '현관 센서 · 미설정')) }}"
-)
-DOOR_COMPACT_TEXT = (
-    DOOR_PRELUDE
-    + "{{ '현관 · 열림 주의' if _dopen else ('현관 · 닫힘' if (_has_d and _ds == 'off') else ('현관 · 대기' if _has_d else now().strftime('%H:%M 갱신'))) }}"
 )
 DOOR_STATUS_COMPACT = (
     DOOR_PRELUDE
@@ -269,110 +282,110 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 7, 104, 21, 15)
-    c.rect(118, 6, 190, 29, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 121, 8, 66, 19, 12, align="center", color=BADGE_COLOR)
-    c.line(10, 34, 190, 34)
-
-    for idx in range(4):
-        top = 40 + idx * 30
-        if idx:
-            c.line(10, top - 2, 190, top - 2)
-        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
-        c.icon(icon, 21, top + 13, 18, color=icon_color)
-        c.text_fit(name, 36, top + 2, 86, 22, 14)
-        c.text_fit(status, 126, top + 2, 64, 22, 14, align="right", color=color)
-
-    c.line(10, 162, 190, 162)
-    c.icon(DOOR_ICON, 21, 178, 17, color=DOOR_TEXT_COLOR)
-    c.text_fit(DOOR_COMPACT_TEXT, 36, 167, 154, 22, 12, color=DOOR_TEXT_COLOR)
+    c.text_fit(BADGE_TEXT, 10, 16, 180, 94, 52, align="center", color="black", min_size=16)
+    c.line(14, 122, 186, 122)
+    c.text_fit(
+        DOOR_STATUS_COMPACT,
+        10,
+        134,
+        180,
+        52,
+        26,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=16,
+    )
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 120, 19, 13)
-    c.rect(130, 1, 244, 23, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 134, 3, 106, 17, 11, align="center", color=BADGE_COLOR)
-    c.line(6, 25, 244, 25)
-    c.line(125, 28, 125, 97)
-    c.line(6, 62, 244, 62)
-
-    coords = ((6, 27), (129, 27), (6, 64), (129, 64))
-    for idx, (left, top) in enumerate(coords):
-        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
-        c.icon(icon, left + 12, top + 16, 16, color=icon_color)
-        c.text_fit(name, left + 25, top + 1, 89, 15, 12)
-        c.text_fit(status, left + 25, top + 17, 89, 15, 12, color=color)
-
-    c.line(6, 100, 244, 100)
-    c.icon(DOOR_ICON, 17, 114, 15, color=DOOR_TEXT_COLOR)
-    c.text_fit(DOOR_COMPACT_TEXT, 29, 103, 215, 22, 11, color=DOOR_TEXT_COLOR)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(
+        BADGE_TEXT,
+        8,
+        8,
+        vw - 16,
+        66,
+        54 if large else 52,
+        align="center",
+        color="black",
+        min_size=ms,
+    )
+    c.line(10, 78, vw - 10, 78)
+    c.text_fit(
+        DOOR_STATUS_COMPACT,
+        8,
+        84,
+        vw - 16,
+        38,
+        28 if large else 26,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 4, 116, 20, 14, align="center")
-    c.rect(8, 27, 120, 52, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 30, 104, 18, 12, align="center", color=BADGE_COLOR)
-    c.line(6, 56, 122, 56)
-
-    for idx in range(4):
-        top = 60 + idx * 35
-        if idx:
-            c.line(6, top - 2, 122, top - 2)
-        name, status, _, color, _, _ = _person(idx, compact=True)
-        c.text_fit(name, 6, top, 116, 15, 12, align="center")
-        c.text_fit(status, 6, top + 16, 116, 15, 12, align="center", color=color)
-
-    c.line(6, 200, 122, 200)
-    c.text_fit(DOOR_STATUS_COMPACT, 6, 204, 116, 20, 11, align="center", color=DOOR_TEXT_COLOR)
-    c.text_fit(CLOCK, 6, 226, 116, 20, 10, align="center")
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(BADGE_TEXT, 6, 20, 116, vh * 0.44, 44, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.56, 118, vh * 0.56)
+    c.text_fit(
+        DOOR_STATUS_COMPACT,
+        6,
+        vh * 0.62,
+        116,
+        vh * 0.30,
+        22,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=ms,
+    )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.icon("home-outline", 18, 17, 18)
-    c.text_fit(TITLE, 32, 6, 144, 22, 16)
-    c.rect(182, 5, 294, 30, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 186, 7, 104, 21, 13, align="center", color=BADGE_COLOR)
-    c.text_fit(CLOCK, 300, 7, 76, 22, 12, align="right")
-    c.line(8, 34, 376, 34)
-
-    cards = ((10, 40), (198, 40), (10, 94), (198, 94))
-    for idx, (left, top) in enumerate(cards):
-        c.rect(left, top, left + 176, top + 48, radius=5)
-        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
-        c.icon(icon, left + 18, top + 24, 22, color=icon_color)
-        c.text_fit(name, left + 34, top + 5, 136, 19, 13)
-        c.text_fit(status, left + 34, top + 26, 136, 19, 14, color=color)
-
-    c.line(8, 147, 376, 147)
-    c.icon(DOOR_ICON, 20, 165, 18, color=DOOR_TEXT_COLOR)
-    c.text_fit(DOOR_BANNER_TEXT, 34, 152, 342, 24, 13, color=DOOR_TEXT_COLOR)
+    c.text_fit(BADGE_TEXT, 10, 10, 364, 78, 64, align="center", color="black", min_size=18)
+    c.text_fit(HOME_SUMMARY, 10, 94, 364, 38, 28, align="center", color="black", min_size=18)
+    c.line(12, 138, 372, 138)
+    c.text_fit(
+        DOOR_STATUS_COMPACT,
+        10,
+        144,
+        364,
+        34,
+        26,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=18,
+    )
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 24, 18)
-    c.rect(10, 35, 174, 59, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 37, 156, 20, 13, align="center", color=BADGE_COLOR)
-
-    for idx in range(4):
-        top = 66 + idx * 62
-        c.rect(10, top, 174, top + 55, radius=6)
-        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
-        c.icon(icon, 28, top + 27, 22, color=icon_color)
-        c.text_fit(name, 44, top + 6, 122, 20, 14)
-        c.text_fit(status, 44, top + 29, 122, 21, 15, color=color)
-
-    c.rect(10, 316, 174, 376, fill=DOOR_BANNER_FILL, outline=DOOR_BANNER_OUTLINE, radius=6)
-    c.icon(DOOR_ICON, 26, 338, 18, color=DOOR_BANNER_FG)
-    c.text_fit(DOOR_STATUS_COMPACT, 40, 326, 126, 24, 13, color=DOOR_BANNER_FG)
-    c.text_fit(CLOCK, 18, 352, 148, 19, 11, align="right", color=DOOR_BANNER_FG)
+    c.text_fit(BADGE_TEXT, 10, 24, 164, 110, 58, align="center", color="black", min_size=16)
+    c.line(16, 154, 168, 154)
+    c.text_fit(HOME_SUMMARY, 10, 174, 164, 88, 26, align="center", color="black", min_size=16)
+    c.line(16, 282, 168, 282)
+    c.text_fit(
+        DOOR_STATUS_COMPACT,
+        10,
+        300,
+        164,
+        60,
+        26,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=16,
+    )
     return c.items
 
 

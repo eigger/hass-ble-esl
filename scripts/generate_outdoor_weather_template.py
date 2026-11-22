@@ -132,6 +132,8 @@ def field_value(key):
         return f"'weather-' ~ {ICONS!r}.get(row.condition | default(''), 'cloudy-alert')"
     if key == "color":
         return f"{ACCENT!r} if row.condition | default('') in {WET!r} else 'black'"
+    if key == "safe_color":
+        return f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r}) if row.condition | default('') in {WET!r} else 'black'"
     if key == "chance":
         return number("row.precipitation_probability | default(none)", "'%'")
     if key == "range":
@@ -257,6 +259,7 @@ def advice(key):
         "icon": "'snowflake' if e.kind == 'snow' else ('umbrella-outline' if e.kind else ('weather-sunny' if e.covered or e.risk else 'weather-cloudy-alert'))",
         "label": "'미끄럼 주의' if e.kind == 'snow' else ('우산 챙기기' if e.kind else ('오늘 외출' if e.covered or e.risk else '예보 정보 없음'))",
         "color": f"{ACCENT!r} if e.kind else 'black'",
+        "safe_color": f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r}) if e.kind else 'black'",
         "timing": (
             "(e.start.strftime('%H') ~ ('~' ~ e.end.strftime('%H') if e.end != e.start else '') ~ '시 ' if e.start else '오늘 ')"
             " ~ ('눈' if e.kind == 'snow' else ('비' if e.kind == 'rain' else '강수'))"
@@ -310,8 +313,8 @@ def text(x, y, value, size, bold=False, anchor="lt", color="black"):
     }
 
 
-def fit_text(x, y, width, height, value, size, *, align="center"):
-    return {
+def fit_text(x, y, width, height, value, size, *, align="center", color="black", min_size=None):
+    item = {
         "type": "text_fit",
         "value": value,
         "font": BOLD,
@@ -320,12 +323,15 @@ def fit_text(x, y, width, height, value, size, *, align="center"):
         "width": width,
         "height": height,
         "size": size,
-        "min_size": 7,
+        "min_size": 7 if min_size is None else min_size,
         "fit": "shrink",
         "align": align,
         "valign": "middle",
         "max_lines": 1,
     }
+    if color != "black":
+        item["color"] = color
+    return item
 
 
 def icon(x, y, value, size, anchor="lt", color="black"):
@@ -353,135 +359,260 @@ def line(x1, y1, x2, y2, width=1, color="black"):
 
 
 def compact(width, height):
-    small = width < 240
-    mid = width // 2 + 2
-    y = 29 + (height - 104) // 3
+    large = width >= 296
+    narrow = width < 240
+    x0 = 6 if narrow else 8
+    ms = 18 if large else 16
+    temp_sz = (56 if height >= 150 else 52) if large else (44 if narrow else 48)
+    label_sz = 26 if large else (20 if narrow else 24)
+    timing_sz = 28 if large else (22 if narrow else 25)
+    div_y = round(height * 0.55)
+    if large:
+        mid = round(width * 0.43)
+        ic_sz = 28
+        ic_x = mid + 4
+        lbl_x = mid + ic_sz + 10
+        lbl_r = 8
+    elif narrow:
+        mid = 82
+        ic_sz = 20
+        ic_x = mid + 2
+        lbl_x = mid + ic_sz + 6
+        lbl_r = 6
+    else:
+        mid = 104
+        ic_sz = 24
+        ic_x = mid + 4
+        lbl_x = mid + ic_sz + 10
+        lbl_r = 8
     return [
-        text(8, 6, "오늘 날씨", 13, True),
-        text(width - 8, 7, expression("now().strftime('%H:%M 갱신')"), 11, anchor="rt"),
-        line(8, 24, width - 9, 24),
-        line(mid, y, mid, height - 10),
-        text(8, y, current("condition"), 11),
-        text(8, y + 15, current("temperature"), 28 if small else 35, True),
-        text(8, height - 19, temperature_range(), 10 if small else 12, True),
-        icon(mid + 8, y, advice("icon"), 17, color=advice("color")),
-        text(mid + 8, y + 21, advice("label"), 14 if small else 17, True, color=advice("color")),
         fit_text(
-            mid + 8,
-            y + 42,
-            width - mid - 13,
-            19,
-            advice("timing"),
-            11 if small else 13,
+            x0,
+            6,
+            mid - x0 - (2 if narrow else 6),
+            div_y - 12,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=ms,
+        ),
+        icon(ic_x, (div_y - ic_sz) // 2, advice("icon"), ic_sz, color=advice("safe_color")),
+        fit_text(
+            lbl_x,
+            6,
+            width - lbl_x - lbl_r,
+            div_y - 12,
+            advice("label"),
+            label_sz,
             align="left",
+            color="black",
+            min_size=ms,
+        ),
+        line(8, div_y, width - 8, div_y),
+        fit_text(
+            8,
+            div_y + 6,
+            width - 16,
+            height - div_y - 12,
+            advice("timing"),
+            timing_sz,
+            align="center",
+            min_size=ms,
         ),
     ]
 
 
 def narrow_portrait(width, height):
-    mid = width // 2
+    tall = height >= 296
+    ms = 15 if tall else 14
+    pad = 4
+    inner = width - 2 * pad
+    temp_sz = (46 if width >= 145 else 42) if tall else (36 if width < 120 else 40)
+    label_sz = 22 if tall else 19
+    timing_sz = 20 if tall else 18
+    div_y = round(height * 0.44)
+    lbl_y = div_y + 10
+    lbl_h = round(height * 0.24)
+    tim_y = lbl_y + lbl_h + 6
     return [
-        text(mid, 7, "오늘 날씨", 14, True, "mt"),
-        text(mid, 25, expression("now().strftime('%H:%M 갱신')"), 10, anchor="mt"),
-        line(8, 41, width - 9, 41),
-        text(mid, round(height * 0.24), current("condition"), 10, anchor="mt"),
-        text(mid, round(height * 0.32), current("temperature"), min(34, width // 3), True, "mt"),
-        text(mid, round(height * 0.50), temperature_range(), 10, True, "mt"),
-        line(8, round(height * 0.61), width - 9, round(height * 0.61)),
-        icon(mid, round(height * 0.66), advice("icon"), 20, "mt", advice("color")),
-        text(mid, round(height * 0.78), advice("label"), 14, True, "mt", advice("color")),
-        fit_text(5, round(height * 0.88), width - 10, 15, advice("timing"), 10),
+        fit_text(
+            pad,
+            10,
+            inner,
+            div_y - 18,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=ms,
+        ),
+        line(8, div_y, width - 8, div_y),
+        fit_text(
+            pad,
+            lbl_y,
+            inner,
+            lbl_h,
+            advice("label"),
+            label_sz,
+            align="center",
+            color=advice("safe_color"),
+            min_size=ms,
+        ),
+        fit_text(
+            pad,
+            tim_y,
+            inner,
+            height - tim_y - 8,
+            advice("timing"),
+            timing_sz,
+            align="center",
+            min_size=ms,
+        ),
     ]
 
 
 def stacked(width, height):
-    portrait = height > width
-    mid = width // 2
-    hero = 66 if portrait else 43
-    action = 196 if portrait else 131
-    result = [
-        text(12, 10, "오늘 날씨", 16, True),
-        text(width - 12, 12, expression("now().strftime('%H:%M 갱신')"), 12, anchor="rt"),
-        line(12, 32, width - 13, 32),
-        text(mid, hero, current("condition"), 15 if portrait else 12, anchor="mt"),
-        text(mid, hero + 20, current("temperature"), 58 if portrait else 42, True, "mt"),
-        text(
-            mid,
-            hero + (86 if portrait else 65),
-            temperature_range(),
-            17 if portrait else 14,
-            True,
-            "mt",
-        ),
-        line(12, action - 4, width - 13, action - 4),
-        icon(18, action + 10, advice("icon"), 25, color=advice("color")),
-        text(53, action + 8, advice("label"), 22 if portrait else 18, True, color=advice("color")),
+    if width == 200 and height == 200:
+        return [
+            fit_text(8, 10, 184, 74, current("temperature"), 56, align="center", min_size=16),
+            line(12, 92, 188, 92),
+            fit_text(
+                8,
+                100,
+                184,
+                42,
+                advice("label"),
+                28,
+                align="center",
+                color=advice("safe_color"),
+                min_size=16,
+            ),
+            fit_text(
+                8,
+                148,
+                184,
+                42,
+                advice("timing"),
+                24,
+                align="center",
+                min_size=16,
+            ),
+        ]
+    temp_sz = 60 if width < 210 else 70
+    rng_sz = 24 if width < 210 else 28
+    lbl_sz = 28 if width < 210 else 32
+    tim_sz = 24 if width < 210 else 26
+    div_y = round(height * 0.44)
+    rng_y = round(height * 0.27)
+    lbl_y = div_y + 18
+    tim_y = lbl_y + 64
+    return [
         fit_text(
-            53, action + 34, width - 59, 23, advice("timing"), 16 if portrait else 14, align="left"
+            10,
+            14,
+            width - 20,
+            rng_y - 20,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=16,
+        ),
+        fit_text(
+            10,
+            rng_y,
+            width - 20,
+            div_y - rng_y - 10,
+            forecast(0, "range"),
+            rng_sz,
+            align="center",
+            min_size=16,
+        ),
+        line(12, div_y, width - 12, div_y),
+        fit_text(
+            10,
+            lbl_y,
+            width - 20,
+            56,
+            advice("label"),
+            lbl_sz,
+            align="center",
+            color=advice("safe_color"),
+            min_size=16,
+        ),
+        fit_text(
+            10,
+            tim_y,
+            width - 20,
+            height - tim_y - 12,
+            advice("timing"),
+            tim_sz,
+            align="center",
+            min_size=16,
         ),
     ]
-    if portrait:
-        for index, (hour, label) in enumerate(
-            ((7, "07시 출근"), (16, "16시 오후"), (19, "19시 귀가"))
-        ):
-            y = 275 + 41 * index
-            result.extend(
-                [
-                    line(12, y, width - 13, y),
-                    text(13, y + 10, label, 13 if width < 220 else 15, True),
-                    icon(
-                        round(width * 0.45),
-                        y + 8,
-                        hourly(hour, "icon"),
-                        18 if width < 220 else 23,
-                        color=hourly(hour, "color"),
-                    ),
-                    text(
-                        width - (48 if width < 220 else 71),
-                        y + 12,
-                        hourly(hour, "temperature"),
-                        15,
-                        True,
-                        "rt",
-                    ),
-                    text(width - 12, y + 12, hourly(hour, "chance"), 14, anchor="rt"),
-                ]
-            )
-    return result
 
 
 def today(width, height):
-    mid = width // 2
-    separation = height - (80 if height > 200 else 58)
-    result = [
-        text(14, 9, "오늘 날씨", 16, True),
-        text(width - 14, 11, current("date"), 12, anchor="rt"),
-        line(14, 33, width - 15, 33),
-        text(14, 42, current("condition"), 13, True),
-        text(14, 61, current("temperature"), 40, True),
-        text(14, 105, temperature_range(), 14, True),
-        line(mid - 10, 44, mid - 10, separation - 10),
-        icon(mid + 2, 49, advice("icon"), 25, color=advice("color")),
-        text(mid + 36, 48, advice("label"), 21, True, color=advice("color")),
-        text(mid + 3, 83, advice("timing"), 17, True),
-        line(14, separation, width - 15, separation),
+    mid = round(width * 0.46)
+    tall = height >= 210
+    temp_sz = 80 if tall else 68
+    rng_sz = 30 if tall else 26
+    lbl_sz = 36 if tall else 30
+    tim_sz = 28 if tall else 26
+    ic_sz = 42 if tall else 36
+    right_div_y = round(height * 0.48)
+    rng_y = height - 56
+    return [
+        fit_text(
+            10,
+            10,
+            mid - 20,
+            rng_y - 16,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=18,
+        ),
+        fit_text(
+            10,
+            rng_y,
+            mid - 20,
+            44,
+            forecast(0, "range"),
+            rng_sz,
+            align="center",
+            min_size=18,
+        ),
+        line(mid, 12, mid, height - 12),
+        icon(
+            mid + 12,
+            (right_div_y - ic_sz) // 2 + 4,
+            advice("icon"),
+            ic_sz,
+            color=advice("safe_color"),
+        ),
+        fit_text(
+            mid + 14 + ic_sz + 6,
+            10,
+            width - (mid + 14 + ic_sz + 14),
+            right_div_y - 16,
+            advice("label"),
+            lbl_sz,
+            align="left",
+            color="black",
+            min_size=18,
+        ),
+        line(mid + 10, right_div_y, width - 10, right_div_y),
+        fit_text(
+            mid + 10,
+            right_div_y + 10,
+            width - mid - 20,
+            height - right_div_y - 18,
+            advice("timing"),
+            tim_sz,
+            align="center",
+            min_size=18,
+        ),
     ]
-    cell = (width - 28) / 3
-    for index, (hour, label) in enumerate(((7, "07시 출근"), (16, "16시 오후"), (19, "19시 귀가"))):
-        x = round(14 + cell * index)
-        end = round(x + cell)
-        y = separation + (19 if height > 200 else 8)
-        if index:
-            result.append(line(x, y, x, height - 12))
-        result.extend(
-            [
-                text(x + 6, y, label, 12, True),
-                icon(x + 5, y + 18, hourly(hour, "icon"), 22, color=hourly(hour, "color")),
-                text(x + 35, y + 21, hourly(hour, "chance"), 12),
-                text(end - 7, y + 19, hourly(hour, "temperature"), 15, True, "rt"),
-            ]
-        )
-    return result
 
 
 def weekly(width, height):

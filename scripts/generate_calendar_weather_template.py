@@ -109,12 +109,6 @@ TODAY_HILO_FULL = (
     + _finite_int("_day0.get('temperature')", "_hi")
     + "{{ '최저 ' ~ _lo ~ '° / 최고 ' ~ _hi ~ '°' }}"
 )
-TODAY_HILO_COMPACT = (
-    DAY0_PRELUDE
-    + _finite_int("_day0.get('templow')", "_lo")
-    + _finite_int("_day0.get('temperature')", "_hi")
-    + "{{ _lo ~ '°/' ~ _hi ~ '°' }}"
-)
 
 
 def _fc_day(idx: int) -> tuple[str, str, str, str, str]:
@@ -153,14 +147,6 @@ ATTR_WHEN = (
     f"{{% set _ad = state_attr('{CALENDAR}', 'all_day') %}}"
     "{% if _st is not none and _st.tzinfo is not none %}{% set _st = as_local(_st) %}{% endif %}"
     f"{{{{ (_st.strftime('%m/%d') ~ (' 종일' if _ad else ' ' ~ _st.strftime({TF_EXPR}))) if _st is not none else '일정 대기' }}}}"
-)
-ATTR_LOC = (
-    f"{{% set _l = state_attr('{CALENDAR}', 'location') or '' %}}"
-    f"{{{{ _l if _l else ('오늘 일정' if state_attr('{CALENDAR}', 'message') else '') }}}}"
-)
-ATTR_LOC_OR_CLOCK = (
-    f"{{% set _l = state_attr('{CALENDAR}', 'location') or '' %}}"
-    f"{{{{ _l if _l else (now().strftime({TF_EXPR}) ~ ' 갱신') }}}}"
 )
 
 # 4.2"+ Calendar helpers (reads `events` from calendar.get_events with entity-attribute fallback)
@@ -389,101 +375,106 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(DATE_SHORT, 10, 6, 118, 22, 16, color=DATE_COLOR)
-    c.text_fit(CLOCK, 130, 8, 60, 19, 11, align="right")
-    c.line(10, 32, 190, 32)
-
-    c.icon(CURR_ICON, 30, 62, 34, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 54, 38, 74, 36, 28)
-    c.text_fit(CURR_COND, 132, 38, 58, 18, 13, align="right")
-    c.text_fit(TODAY_HILO_COMPACT, 132, 58, 58, 18, 12, align="right")
-    c.text_fit(CURR_HUM, 54, 78, 136, 18, 12)
-    c.line(10, 99, 190, 99)
-
-    c.icon("calendar-today", 20, 116, 16, color=TEXT_INK)
-    c.text_fit("다음 일정", 32, 106, 56, 20, 12, color=TEXT_INK)
-    c.text_fit(ATTR_WHEN, 90, 106, 100, 20, 12, align="right")
-    c.text_fit(ATTR_TITLE, 10, 132, 180, 36, 20, max_lines=2)
-    c.text_fit(ATTR_LOC, 10, 170, 180, 22, 12)
+    c.text_fit(CURR_TEMP, 8, 10, 184, 68, 54, align="center", min_size=16)
+    c.line(12, 82, 188, 82)
+    c.text_fit(ATTR_WHEN, 8, 88, 184, 34, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 8, 126, 184, 64, 26, align="center", max_lines=2, min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(DATE_SHORT, 6, 3, 124, 20, 14, color=DATE_COLOR)
-    c.text_fit(CLOCK, 136, 4, 108, 19, 11, align="right")
-    c.line(6, 25, 244, 25)
-    c.line(112, 29, 112, 124)
-
-    c.icon(CURR_ICON, 25, 56, 30, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 46, 33, 62, 32, 24)
-    c.text_fit(CURR_COND, 6, 74, 102, 21, 13, align="center")
-    c.text_fit(TODAY_HILO_COMPACT, 6, 98, 102, 21, 12, align="center")
-
-    c.text_fit("다음 일정", 118, 30, 56, 20, 12, color=TEXT_INK)
-    c.text_fit(ATTR_WHEN, 176, 30, 68, 20, 11, align="right")
-    c.text_fit(ATTR_TITLE, 118, 56, 126, 36, 19, max_lines=2)
-    c.text_fit(ATTR_LOC, 118, 96, 126, 23, 12)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    mid = 122 if large else 108
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(
+        CURR_TEMP,
+        6,
+        6,
+        mid - 12,
+        56,
+        52 if large else 50,
+        align="center",
+        min_size=ms,
+    )
+    c.line(mid, 10, mid, 60)
+    c.text_fit(
+        ATTR_WHEN,
+        mid + 6,
+        6,
+        vw - mid - 12,
+        56,
+        26,
+        align="center",
+        color=TEXT_INK,
+        min_size=ms,
+    )
+    c.line(6, 66, vw - 6, 66)
+    c.text_fit(
+        ATTR_TITLE,
+        6,
+        72,
+        vw - 12,
+        50,
+        28 if large else 26,
+        align="center",
+        max_lines=1,
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(DATE_SHORT, 6, 5, 116, 22, 14, align="center", color=DATE_COLOR)
-    c.line(6, 31, 122, 31)
-
-    c.icon(CURR_ICON, 27, 63, 28, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 46, 41, 76, 32, 24, align="right")
-    c.text_fit(CURR_COND, 46, 74, 76, 19, 12, align="right")
-    c.text_fit(TODAY_HILO_COMPACT, 6, 96, 116, 21, 12, align="center")
-    c.line(6, 121, 122, 121)
-
-    c.text_fit("다음 일정", 6, 126, 116, 20, 12, align="center", color=TEXT_INK)
-    c.text_fit(ATTR_WHEN, 6, 150, 116, 22, 12, align="center")
-    c.text_fit(ATTR_TITLE, 6, 177, 116, 38, 18, align="center", max_lines=2)
-    c.text_fit(ATTR_LOC_OR_CLOCK, 6, 220, 116, 22, 11, align="center")
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(CURR_TEMP, 6, 12, 116, vh * 0.30, 44, align="center", min_size=ms)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
+    c.text_fit(
+        ATTR_WHEN,
+        6,
+        vh * 0.40,
+        116,
+        40,
+        22,
+        align="center",
+        color=TEXT_INK,
+        min_size=ms,
+    )
+    c.text_fit(
+        ATTR_TITLE,
+        6,
+        vh * 0.56,
+        116,
+        vh * 0.38,
+        22,
+        align="center",
+        max_lines=2,
+        min_size=ms,
+    )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.icon("calendar-today", 18, 17, 18, color=DATE_COLOR)
-    c.text_fit(DATE_LONG, 32, 6, 210, 22, 16, color=DATE_COLOR)
-    c.text_fit(CLOCK, 252, 7, 124, 21, 12, align="right")
-    c.line(8, 33, 376, 33)
-    c.line(166, 38, 166, 178)
-
-    c.icon(CURR_ICON, 34, 68, 38, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 60, 42, 100, 44, 34)
-    c.text_fit(CURR_COND, 10, 94, 150, 24, 16)
-    c.text_fit(TODAY_HILO_FULL, 10, 122, 150, 24, 14)
-    c.text_fit(CURR_HUM, 10, 150, 150, 24, 13)
-
-    c.text_fit("다음 일정", 176, 40, 80, 24, 14, color=TEXT_INK)
-    c.text_fit(ATTR_WHEN, 260, 40, 116, 24, 13, align="right")
-    c.text_fit(ATTR_TITLE, 176, 72, 200, 56, 26, max_lines=2)
-    c.text_fit(ATTR_LOC, 176, 136, 200, 32, 14)
+    c.text_fit(DATE_SHORT, 10, 12, 166, 70, 28, align="center", color=DATE_COLOR, min_size=18)
+    c.line(182, 14, 182, 82)
+    c.text_fit(CURR_TEMP, 190, 8, 184, 76, 64, align="center", min_size=18)
+    c.line(10, 88, 374, 88)
+    c.text_fit(ATTR_WHEN, 10, 94, 364, 36, 26, align="center", color=TEXT_INK, min_size=18)
+    c.text_fit(ATTR_TITLE, 10, 132, 364, 46, 30, align="center", max_lines=1, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.text_fit(DATE_SHORT, 10, 7, 104, 24, 16, color=DATE_COLOR)
-    c.text_fit(CLOCK, 116, 9, 58, 20, 11, align="right")
-    c.line(10, 36, 174, 36)
-
-    c.rect(10, 44, 174, 184, radius=6)
-    c.icon(CURR_ICON, 40, 82, 38, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 68, 56, 98, 42, 32, align="right")
-    c.text_fit(CURR_COND, 18, 108, 148, 22, 15)
-    c.text_fit(TODAY_HILO_FULL, 18, 134, 148, 22, 14)
-    c.text_fit(CURR_HUM, 18, 158, 148, 20, 13)
-
-    c.rect(10, 194, 174, 374, radius=6)
-    c.text_fit("다음 일정", 18, 204, 148, 22, 14, color=TEXT_INK)
-    c.text_fit(ATTR_WHEN, 18, 232, 148, 24, 13)
-    c.text_fit(ATTR_TITLE, 18, 264, 148, 60, 22, max_lines=2)
-    c.text_fit(ATTR_LOC, 18, 332, 148, 30, 13)
+    c.text_fit(DATE_SHORT, 10, 14, 164, 40, 26, align="center", color=DATE_COLOR, min_size=16)
+    c.text_fit(CURR_TEMP, 10, 62, 164, 90, 58, align="center", min_size=16)
+    c.line(12, 168, 172, 168)
+    c.text_fit(ATTR_WHEN, 10, 184, 164, 44, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 10, 240, 164, 126, 28, align="center", max_lines=2, min_size=16)
     return c.items
 
 

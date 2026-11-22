@@ -1843,14 +1843,26 @@ async def test_commute_weather_under_4_inches_alerts_and_metrics(
     with freeze_time(today, real_asyncio=True):
         built_250 = build(TEMPLATES["weather_commute"], 250, 128, "BWR")
         vals_250 = _values(resolve_templates(hass, built_250["payload"], set(), variables))
-        assert short_alert in vals_250
-        assert f"{daily_row['templow']}°" in vals_250
-        assert f"{daily_row['temperature']}°" in vals_250
-        assert "체감 9° · 습도 82%" in vals_250
+        assert {short_alert, f"{daily_row['templow']}°", f"{daily_row['temperature']}°"} <= set(
+            vals_250
+        )
 
         built_296 = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
         vals_296 = _values(resolve_templates(hass, built_296["payload"], set(), variables))
-        assert {short_alert, long_alert, "체감 9°", "습도 82%", "바람 4.2 m/s"} <= set(vals_296)
+        assert {
+            short_alert,
+            long_alert,
+            f"{daily_row['templow']}° / {daily_row['temperature']}°",
+        } <= set(vals_296)
+
+        built_384 = build(TEMPLATES["weather_commute"], 384, 184, "BWR")
+        vals_384 = _values(resolve_templates(hass, built_384["payload"], set(), variables))
+        assert {
+            long_alert,
+            f"{daily_row['templow']}°",
+            f"{daily_row['temperature']}°",
+        } <= set(vals_384)
+        assert any("강수 " in str(v) or "일교차 " in str(v) for v in vals_384)
 
 
 async def test_commute_weather_4_inches_and_above_shows_weekly_forecast(hass):
@@ -1953,10 +1965,11 @@ async def test_commute_weather_handles_unavailable_non_numeric_and_stale_forecas
         for variables in ({}, stale_fc):
             built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
             vals = _values(resolve_templates(hass, built["payload"], set(), variables))
-            assert {"예보 정보 없음", "예보 없음", "예보 대기 중", "weather-cloudy-alert"} <= set(
-                vals
-            )
+            assert {"예보 정보 없음", "예보 없음"} <= set(vals)
             assert "99°" not in vals and "우산 불필요" not in vals
+            built_384 = build(TEMPLATES["weather_commute"], 384, 184, "BWR")
+            vals_384 = _values(resolve_templates(hass, built_384["payload"], set(), variables))
+            assert {"예보 정보 없음", "예보 대기 중"} <= set(vals_384)
 
         built_42 = build(TEMPLATES["weather_commute"], 400, 300, "BWR")
         vals_42 = _values(resolve_templates(hass, built_42["payload"], set(), stale_fc))
@@ -1973,7 +1986,7 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
 
     today = dt_util.start_of_local_day() + timedelta(hours=7, minutes=30)
 
-    def render_296(state_attrs, daily_row):
+    def render_size(state_attrs, daily_row, size=(296, 128)):
         hass.states.async_set("weather.home", "sunny", state_attrs)
         fc = {
             "fc": {
@@ -1984,12 +1997,12 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
                 }
             }
         }
-        built = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
+        built = build(TEMPLATES["weather_commute"], size[0], size[1], "BWR")
         return _values(resolve_templates(hass, built["payload"], set(), fc))
 
     with freeze_time(today, real_asyncio=True):
         # 10°F spread and 7 mph wind are normal in imperial units (not 10°C / 7 m/s).
-        vals_mild_imp = render_296(
+        vals_mild_imp = render_size(
             {
                 "temperature": 60,
                 "temperature_unit": "°F",
@@ -2009,7 +2022,7 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
         assert "일교차 주의" not in vals_mild_imp and "강풍 주의" not in vals_mild_imp
 
         # 18°F spread triggers temperature-gap advisory; 16 mph triggers wind advisory.
-        vals_gap_imp = render_296(
+        vals_gap_imp = render_size(
             {
                 "temperature": 55,
                 "temperature_unit": "°F",
@@ -2027,7 +2040,7 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
         )
         assert {"일교차 주의", "일교차 18°"} <= set(vals_gap_imp)
 
-        vals_wind_imp = render_296(
+        vals_wind_imp = render_size(
             {
                 "temperature": 55,
                 "temperature_unit": "°F",
@@ -2046,7 +2059,7 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
         assert "강풍 주의" in vals_wind_imp
 
         # Positive precipitation in inches (0.04in) and near-integer mm (1.96mm -> 2mm).
-        vals_in = render_296(
+        vals_in = render_size(
             {
                 "temperature": 50,
                 "temperature_unit": "°F",
@@ -2063,10 +2076,11 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
                 "precipitation_probability": 70,
                 "precipitation": 0.04,
             },
+            size=(384, 184),
         )
         assert "강수 70% · 0.04in" in vals_in
 
-        vals_mm = render_296(
+        vals_mm = render_size(
             {
                 "temperature": 11,
                 "temperature_unit": "°C",
@@ -2083,6 +2097,7 @@ async def test_commute_weather_units_and_precipitation_formatting(hass):
                 "precipitation_probability": 70,
                 "precipitation": 1.96,
             },
+            size=(384, 184),
         )
         assert "강수 70% · 2mm" in vals_mm
 
@@ -2324,22 +2339,31 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
 
     bw_items = resolve_templates(
         hass,
-        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        build(TEMPLATES["indoor_climate"], 400, 300, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
     assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
     assert any(
         item.get("value") == "환기 권장" and item.get("color") == "white" for item in bw_items
     )
-
-    # Tiny portrait with CO2 only does not duplicate CO2, and dry air shows humidifier hint.
-    co2_only = _texts(_shown(hass, "indoor_climate", 104, 212, {"co2_sensor": "sensor.co2"}))
-    assert co2_only.count("CO2 1250 ppm") == 1 and not any(
-        t.startswith("CO2 ") and t != "CO2 1250 ppm" for t in co2_only
+    bw_tiny_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
     )
+    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "black" for item in bw_tiny_items
+    )
+
+    # Tiny portrait stays decluttered (no CO2/hint clutter), while 4.2"+ shows CO2 & humidifier advice.
+    co2_tiny = _texts(_shown(hass, "indoor_climate", 104, 212, {"co2_sensor": "sensor.co2"}))
+    assert co2_tiny == ["24°C", "48%", "환기 권장"]
+    co2_panel = _texts(_shown(hass, "indoor_climate", 400, 300, {"co2_sensor": "sensor.co2"}))
+    assert "1250 ppm" in co2_panel and "환기 권장" in co2_panel
     hass.states.async_set("sensor.humidity", "22")
-    dry_tiny = _texts(_shown(hass, "indoor_climate", 104, 212))
-    assert "가습기 사용 권장" in dry_tiny and "적정 20~26°C" not in dry_tiny
+    dry_panel = _texts(_shown(hass, "indoor_climate", 400, 300))
+    assert any("가습기" in t for t in dry_panel)
 
     # Malformed optional entity IDs are treated as unset rather than missing entities.
     for bogus in ("1.2", "sensor.", " sensor.co2 ", "a.b.c"):
@@ -2486,9 +2510,15 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
             hass, small_payload, set(), {"fc": {"weather.home": {"forecast": forecast}}}
         )
     )
-    assert (
-        "14.5°C" in small_texts and "Fallback Meeting" in small_texts and "Room 101" in small_texts
+    assert "14.5°C" in small_texts and "Fallback Meeting" in small_texts
+    med_payload = build(TEMPLATES["calendar_weather"], 384, 184, "BWR")["payload"]
+    med_texts = _texts(
+        resolve_templates(
+            hass, med_payload, set(), {"fc": {"weather.home": {"forecast": forecast}}}
+        )
     )
+    assert "14.5°C" in med_texts and "Fallback Meeting" in med_texts
+    assert not any("갱신" in t for t in med_texts)
     small_elements, _, small_issues = elements_from(
         small_payload, DevicePreset("small", "small", 250, 128, "BWR")
     )
@@ -2496,7 +2526,7 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
     small_saved = await hass.data[KEY].export(
         wolink_entry, {"version": 1, "elements": small_elements, "background": "white"}
     )
-    assert [step["action"] for step in small_saved["setup_actions"]] == ["weather.get_forecasts"]
+    assert small_saved["setup_actions"] == []
 
     # 4.2"+ displays forecast + upcoming events list + badge contrast + all-day formatting.
     large_payload = build(TEMPLATES["calendar_weather"], 800, 480, "BWR")["payload"]
@@ -2852,7 +2882,7 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
     )
     assert "누군가" in unknown_texts and "알 수 없음" in unknown_texts
 
-    # Compact portrait layouts with unset door_sensor/people avoid duplicate clock & orphan icons.
+    # Compact portrait layouts with unset door_sensor/people omit clock chrome and show door fallback.
     hass.states.async_set("person.home", "home", {"friendly_name": "민준"})
     for cw, ch in ((104, 212), (128, 250), (184, 384), (240, 416)):
         compact_items = resolve_templates(
@@ -2860,16 +2890,7 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
         )
         compact_texts = [str(item.get("value", "")) for item in compact_items]
         assert "현관 · 미설정" in compact_texts
-        assert sum(1 for t in compact_texts if "갱신" in t) == 1
-        if (cw, ch) in ((184, 384), (240, 416)):
-            white_icons = [
-                item
-                for item in compact_items
-                if item.get("type") == "icon"
-                and item.get("value") == "account-outline"
-                and item.get("color") == "white"
-            ]
-            assert len(white_icons) == 3
+        assert not any("갱신" in t for t in compact_texts)
 
     # Unavailable door & unset optional people + malformed IDs handled safely.
     hass.states.async_set("person.home", "home", {"friendly_name": "민준"})
@@ -2929,12 +2950,21 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
 
     bw_items = resolve_templates(
         hass,
-        build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        build(TEMPLATES["home_presence"], 400, 300, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
     assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
     assert any(
         item.get("value") == "재실 1/4" and item.get("color") == "white" for item in bw_items
+    )
+    bw_tiny_items = resolve_templates(
+        hass,
+        build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    assert any(
+        item.get("value") == "재실 1/4" and item.get("color") == "black" for item in bw_tiny_items
     )
 
     # Designer preview & apply + full 29-size round-trip pixel parity.
@@ -3104,24 +3134,28 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
     assert "보통" in _texts(_shown(hass, "energy_power", 800, 480, options))
     assert {"1.05 kWh", "0.84 kW"} <= set(_texts(_shown(hass, "energy_power", 800, 480, options)))
     tiny_p_texts = _texts(_shown(hass, "energy_power", 104, 212, options))
-    assert "오늘 1.05kWh" in tiny_p_texts and "태양광 0.84kW" in tiny_p_texts
+    assert tiny_p_texts == ["1800 W", "보통", "오늘 1.05kWh"]
 
     hass.states.async_set("sensor.solar_power", "2.001", {"unit_of_measurement": "kW"})
+    assert "2 kW" in _texts(_shown(hass, "energy_power", 400, 300, options))
     tiny_l_texts = _texts(_shown(hass, "energy_power", 212, 104, options))
-    assert "오늘 1.05kWh · 태양광 2kW" in tiny_l_texts and "부하 60%" in tiny_l_texts
+    assert tiny_l_texts == ["1800 W", "보통", "오늘 1.05kWh"]
 
     hass.states.async_set("sensor.solar_power", "840.4", {"unit_of_measurement": "W"})
-    med_l_items = resolve_templates(
-        hass, build(TEMPLATES["energy_power"], 384, 184, "BWR", options)["payload"], set()
+    med_l_texts = _texts(
+        resolve_templates(
+            hass, build(TEMPLATES["energy_power"], 384, 184, "BWR", options)["payload"], set()
+        )
     )
-    med_l_texts = [str(item.get("value", "")) for item in med_l_items]
-    assert "태양광 840W 발전 중 · 현재 부하 60%" in med_l_texts
-    assert sum(1 for t in med_l_texts if "갱신" in t) == 1
+    assert med_l_texts == ["1800 W", "보통", "오늘 1.05kWh"]
+    panel_solar_texts = _texts(_shown(hass, "energy_power", 400, 300, options))
+    assert "태양광 840W 발전 중 · 현재 부하 60%" in panel_solar_texts
 
-    # Medium compact landscape without optional sensors shows advice without duplicating header clock.
+    # Compact <4" omits timestamp chrome; 4.2"+ shows advice.
     med_l_plain = _texts(_shown(hass, "energy_power", 384, 184))
-    assert sum(1 for t in med_l_plain if "갱신" in t or ":00" in t or ":" in t) == 1
-    assert any("안정적인 전력 사용 중입니다" in t for t in med_l_plain)
+    assert not any("갱신" in t for t in med_l_plain)
+    panel_plain = _texts(_shown(hass, "energy_power", 400, 300))
+    assert any("안정적인 전력 사용 중입니다" in t for t in panel_plain)
 
     # Caution tier (80-99%), BW fallback, budget_watts coercion bounds, & empty/missing unit.
     hass.states.async_set("sensor.power", "2500", {})
@@ -3143,7 +3177,7 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
 
     for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
         p_texts = _texts(_shown(hass, "energy_power", cw, ch))
-        assert sum(1 for t in p_texts if "갱신" in t) == 1
+        assert not any("갱신" in t for t in p_texts)
 
     for bogus in ("1.2", "sensor.", " sensor.power ", "a.b.c"):
         bogus_texts = _texts(
@@ -3333,9 +3367,9 @@ async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, w
     hass.states.async_set("sensor.ev_battery", "100", {"unit_of_measurement": "%"})
     hass.states.async_set("sensor.ev_status", "complete")
     hass.states.async_set("sensor.ev_power", "-0.4", {"unit_of_measurement": "W"})
-    done_texts = _texts(_shown(hass, "ev_charging", 212, 104, options))
-    assert "주행 312km · 충전 0W" in done_texts
-    assert "-0W" not in str(done_texts)
+    done_texts = _texts(_shown(hass, "ev_charging", 384, 184, options))
+    assert "312 km · 0 W" in done_texts
+    assert "-0" not in str(done_texts)
 
     hass.states.async_set("sensor.ev_battery", "65.4", {"unit_of_measurement": "%"})
     hass.states.async_set("sensor.ev_power", "3.05", {"unit_of_measurement": "kW"})
@@ -3346,7 +3380,7 @@ async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, w
     hass.states.async_set("sensor.ev_status", "fault")
     assert "충전 오류" in _texts(_shown(hass, "ev_charging", 384, 184, options))
 
-    # SOC clamping (150 -> 100, -12 -> 0) and single clock on compact layouts.
+    # SOC clamping (150 -> 100, -12 -> 0) and decluttered <4" without clock chrome.
     hass.states.async_set("sensor.ev_battery", "150")
     assert "100%" in _texts(_shown(hass, "ev_charging", 200, 200))
     hass.states.async_set("sensor.ev_battery", "-12")
@@ -3354,7 +3388,7 @@ async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, w
 
     for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
         c_texts = _texts(_shown(hass, "ev_charging", cw, ch))
-        assert sum(1 for t in c_texts if "갱신" in t) == 1
+        assert not any("갱신" in t for t in c_texts)
 
     # Invalid optional entity strings safely display 미설정 and threshold validation bounds apply.
     for bogus in ("1.2", "sensor.", " sensor.ev_range ", "a.b.c"):
@@ -3572,21 +3606,20 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
     assert {"일시정지", "남은 0분", "남은 2분", "남은 1.5시간", "동작 2"} <= set(run_texts)
     assert "-0" not in str(run_texts)
 
-    # Unset slots hide compact icons cleanly ('white') and panel displays 미설정, plus no duplicate clocks.
+    # <4" shows only the highest-priority appliance & status without unset slots or clock chrome.
     hass.states.async_set("sensor.washer_state", "finished", {"friendly_name": "세탁기"})
-    compact_unset = resolve_templates(
-        hass, build(TEMPLATES["appliance_status"], 200, 200, "BWR", {})["payload"], set()
-    )
-    white_icons = [
-        item
-        for item in compact_unset
-        if item.get("type") == "icon" and item.get("color") == "white"
-    ]
-    assert len(white_icons) == 2
+    assert _texts(_shown(hass, "appliance_status", 384, 184, {})) == ["세탁기", "완료됨"]
+
+    hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
+    hass.states.async_set("sensor.washer_remaining", "25", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dryer_state", "complete", {"friendly_name": "건조기"})
+    hass.states.async_set("sensor.dishwasher_state", "idle", {"friendly_name": "식기세척기"})
+    feat_200 = _texts(_shown(hass, "appliance_status", 200, 200, options))
+    assert feat_200 == ["건조기", "완료됨"]
 
     for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
         c_texts = _texts(_shown(hass, "appliance_status", cw, ch, options))
-        assert sum(1 for t in c_texts if "갱신" in t) == 1
+        assert not any("갱신" in t for t in c_texts)
 
     # Bogus optional entity strings and non-finite/boolean states degrade safely without errors.
     for bogus in ("1.2", "sensor.", " sensor.dryer_state ", "a.b.c"):
@@ -3622,7 +3655,7 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
     assert "모두 대기" not in unavail_panel and "모든 가전이 대기 중입니다" not in unavail_panel
 
     unavail_compact = _texts(_shown(hass, "appliance_status", 104, 212, {}))
-    assert "상태 대기" in unavail_compact and "가전 상태 확인 필요" in unavail_compact
+    assert unavail_compact == ["세탁기", "응답 없음"]
 
     hass.states.async_set("sensor.washer_state", "spin_rinse", {"friendly_name": "세탁기"})
     custom_panel = _texts(
@@ -3656,3 +3689,133 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
         assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
+def test_under_4_inch_templates_enforce_readable_font_floors():
+    size_floors = {
+        "200x200": (22, 48, 16, 4),
+        "212x104": (20, 40, 16, 4),
+        "250x122": (20, 40, 16, 4),
+        "250x128": (20, 40, 16, 4),
+        "250x132": (20, 40, 16, 4),
+        "104x212": (18, 34, 14, 4),
+        "122x250": (18, 34, 14, 4),
+        "128x250": (18, 34, 14, 4),
+        "132x250": (18, 34, 14, 4),
+        "296x128": (22, 48, 18, 4),
+        "296x152": (22, 48, 18, 4),
+        "128x296": (20, 40, 15, 4),
+        "152x296": (20, 40, 15, 4),
+        "384x184": (24, 60, 18, 5),
+        "416x240": (24, 60, 18, 5),
+        "184x384": (22, 52, 16, 5),
+        "240x416": (22, 52, 16, 5),
+    }
+    templates = (
+        "weather_outdoor",
+        "weather_commute",
+        "indoor_climate",
+        "calendar_weather",
+        "home_presence",
+        "energy_power",
+        "ev_charging",
+        "appliance_status",
+    )
+    for name in templates:
+        layouts = TEMPLATES[name]["layouts"]
+        for size, (min_sec, min_hero, min_ms, max_cnt) in size_floors.items():
+            texts = [i for i in layouts[size] if i.get("type") in ("text_fit", "text")]
+            assert texts, (name, size)
+            assert len(texts) <= max_cnt, (name, size, len(texts))
+            sizes = [i["size"] for i in texts]
+            assert min(sizes) >= min_sec, (name, size, sizes)
+            assert max(sizes) >= min_hero, (name, size, sizes)
+            fit_mins = [i["min_size"] for i in texts if i.get("type") == "text_fit"]
+            assert fit_mins and min(fit_mins) >= min_ms, (name, size, fit_mins)
+            assert not any("갱신" in str(i.get("value", "")) for i in texts), (name, size)
+            assert not any(i.get("type") == "rectangle" for i in layouts[size]), (name, size)
+
+
+@pytest.mark.parametrize("accent", ["white", "yellow"])
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [(200, 200), (212, 104), (104, 212), (296, 128), (184, 384), (384, 184)],
+)
+async def test_under_4_inch_weather_white_bg_avoids_low_contrast_accent_colors(
+    hass, accent, width, height
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=6, minutes=30)
+
+    def at(hour):
+        return (dt_util.start_of_local_day() + timedelta(hours=hour)).isoformat()
+
+    hass.states.async_set("weather.home", "snowy", {"temperature": -1, "temperature_unit": "°C"})
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": at(12),
+                        "condition": "snowy",
+                        "temperature": 3,
+                        "templow": -4,
+                        "precipitation_probability": 80,
+                        "precipitation": 2,
+                    }
+                ]
+            }
+        },
+        "fc_hourly": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": at(h),
+                        "condition": "snowy",
+                        "temperature": 0,
+                        "precipitation_probability": 80,
+                    }
+                    for h in (7, 19)
+                ]
+            }
+        },
+    }
+
+    def enclosing_fill(rects, item):
+        cx = item["x"] + item.get("width", 0) / 2
+        cy = item["y"] + item.get("height", 0) / 2
+        for rect in rects:
+            if rect["x_start"] <= cx <= rect["x_end"] and rect["y_start"] <= cy <= rect["y_end"]:
+                return rect["fill"]
+        return "white"
+
+    with freeze_time(today, real_asyncio=True):
+        for name in ("weather_outdoor", "weather_commute"):
+            built = build(TEMPLATES[name], width, height, "BWRY", {"accent": accent})
+            rendered = resolve_templates(hass, built["payload"], set(), variables)
+            rects = [
+                item
+                for item in rendered
+                if item.get("type") == "rectangle" and item.get("fill") not in (None, "white")
+            ]
+            for item in rendered:
+                if item.get("type") not in ("text", "text_fit", "icon", "line"):
+                    continue
+                if item.get("type") == "line":
+                    cx = (item["x_start"] + item["x_end"]) / 2
+                    cy = (item["y_start"] + item["y_end"]) / 2
+                    bg = enclosing_fill(rects, {"x": cx, "y": cy})
+                    color = item.get("fill", "black")
+                else:
+                    bg = enclosing_fill(rects, item)
+                    color = item.get("color", "black")
+                if bg == "white":
+                    assert color not in ("white", "yellow"), (name, width, height, accent, item)
+                elif bg == "yellow":
+                    assert color == "black", (name, width, height, accent, item)
+                elif bg == "black":
+                    assert color == "white", (name, width, height, accent, item)
