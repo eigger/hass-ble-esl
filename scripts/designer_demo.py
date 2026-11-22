@@ -120,6 +120,15 @@ STATES["person.home"] = {
     "state": "home",
     "attributes": {"friendly_name": "Alex"},
 }
+STATES["sensor.power"] = {
+    "entity_id": "sensor.power",
+    "state": "1850",
+    "attributes": {
+        "friendly_name": "Home power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+    },
+}
 TEMPLATES = {}
 TAGS = [
     {
