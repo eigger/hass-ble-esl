@@ -3182,3 +3182,224 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
+def test_ev_charging_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["ev_charging"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "ev_charging.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind in ("progress_bar", "rectangle", "line"):
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        all_boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        rect_boxes = [entry for entry in all_boxes if entry[1] == "rectangle"]
+        line_boxes = [entry for entry in all_boxes if entry[1] == "line"]
+        for r1 in range(len(rect_boxes)):
+            for r2 in range(r1 + 1, len(rect_boxes)):
+                i1, _, b1 = rect_boxes[r1]
+                i2, _, b2 = rect_boxes[r2]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+            i1, t1, b1 = fg_boxes[idx]
+            for li, _, lb in line_boxes:
+                lx0, ly0, lx1, ly1 = lb
+                line_box = (lx0, ly0, lx1 + (lx0 == lx1), ly1 + (ly0 == ly1))
+                hits_line = (
+                    b1[0] < line_box[2]
+                    and line_box[0] < b1[2]
+                    and b1[1] < line_box[3]
+                    and line_box[1] < b1[3]
+                )
+                assert not hits_line, f"{size}: element {i1}({t1}) {b1} touches line {li} {lb}"
+            for ri, _, rb in rect_boxes:
+                rw = round(items[ri].get("width", 1))
+                inside = (
+                    b1[0] >= rb[0] + rw
+                    and b1[2] <= rb[2] - rw
+                    and b1[1] >= rb[1] + rw
+                    and b1[3] <= rb[3] - rw
+                )
+                disjoint = b1[2] <= rb[0] or rb[2] <= b1[0] or b1[3] <= rb[1] or rb[3] <= b1[1]
+                assert inside or disjoint, f"{size}: {i1}({t1}) {b1} crosses rect {ri} border {rb}"
+
+
+async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, wolink_entry):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+    from scripts.designer_demo import STATES as DEMO_STATES
+
+    assert "sensor.ev_battery" in DEMO_STATES
+
+    hass.states.async_set("sensor.ev_battery", "78", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.ev_range", "312", {"unit_of_measurement": "km"})
+    hass.states.async_set("sensor.ev_status", "charging")
+    hass.states.async_set("sensor.ev_power", "7.2", {"unit_of_measurement": "kW"})
+    options = {
+        "range_sensor": "sensor.ev_range",
+        "status_sensor": "sensor.ev_status",
+        "power_sensor": "sensor.ev_power",
+        "low_threshold": 20,
+    }
+    chg_items = resolve_templates(
+        hass, build(TEMPLATES["ev_charging"], 800, 480, "BWR", options)["payload"], set()
+    )
+    chg_texts = [str(item.get("value", "")) for item in chg_items]
+    assert {"78%", "312 km", "7.2 kW", "충전 중"} <= set(chg_texts)
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in chg_items)
+    assert any(
+        item.get("value") == "충전 중" and item.get("color") == "white" for item in chg_items
+    )
+    assert any(
+        item.get("type") == "icon" and item.get("value") == "battery-charging" for item in chg_items
+    )
+    render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), chg_items)
+
+    # Low battery alert + BWRY yellow contrast + white accent contrast.
+    hass.states.async_set("sensor.ev_battery", "15", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.ev_status", "disconnected")
+    hass.states.async_set("sensor.ev_power", "-0.04", {"unit_of_measurement": "kW"})
+    low_bwry = resolve_templates(
+        hass,
+        build(TEMPLATES["ev_charging"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("value") == "충전 필요" and item.get("color") == "black" for item in low_bwry
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in low_bwry
+    )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in low_bwry
+    )
+
+    white_items = resolve_templates(
+        hass,
+        build(TEMPLATES["ev_charging"], 400, 300, "BWR", {**options, "accent": "white"})["payload"],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in white_items
+    )
+    assert any(
+        item.get("value") == "충전 필요" and item.get("color") == "white" for item in white_items
+    )
+
+    bw_items = resolve_templates(
+        hass,
+        build(TEMPLATES["ev_charging"], 800, 480, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
+
+    # Decimal SOC (1.05 -> 1.1) and W-unit / zero-normalization + complete/fault states.
+    hass.states.async_set("sensor.ev_battery", "100", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.ev_status", "complete")
+    hass.states.async_set("sensor.ev_power", "-0.4", {"unit_of_measurement": "W"})
+    done_texts = _texts(_shown(hass, "ev_charging", 212, 104, options))
+    assert "주행 312km · 충전 0W" in done_texts
+    assert "-0W" not in str(done_texts)
+
+    hass.states.async_set("sensor.ev_battery", "65.4", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.ev_power", "3.05", {"unit_of_measurement": "kW"})
+    hass.states.async_set("sensor.ev_status", "unknown")
+    inf_texts = _texts(_shown(hass, "ev_charging", 800, 480, options))
+    assert {"65.4%", "3.05 kW", "충전 중"} <= set(inf_texts)
+
+    hass.states.async_set("sensor.ev_status", "fault")
+    assert "충전 오류" in _texts(_shown(hass, "ev_charging", 384, 184, options))
+
+    # SOC clamping (150 -> 100, -12 -> 0) and single clock on compact layouts.
+    hass.states.async_set("sensor.ev_battery", "150")
+    assert "100%" in _texts(_shown(hass, "ev_charging", 200, 200))
+    hass.states.async_set("sensor.ev_battery", "-12")
+    assert "0%" in _texts(_shown(hass, "ev_charging", 200, 200))
+
+    for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
+        c_texts = _texts(_shown(hass, "ev_charging", cw, ch))
+        assert sum(1 for t in c_texts if "갱신" in t) == 1
+
+    # Invalid optional entity strings safely display 미설정 and threshold validation bounds apply.
+    for bogus in ("1.2", "sensor.", " sensor.ev_range ", "a.b.c"):
+        bogus_texts = _texts(
+            _shown(
+                hass,
+                "ev_charging",
+                800,
+                480,
+                {"range_sensor": bogus, "power_sensor": bogus, "status_sensor": bogus},
+            )
+        )
+        assert bogus_texts.count("미설정") == 2
+
+    with pytest.raises(HomeAssistantError, match="low_threshold"):
+        resolve_parameters(TEMPLATES["ev_charging"], {"low_threshold": 2}, "BWR")
+    with pytest.raises(HomeAssistantError, match="low_threshold"):
+        resolve_parameters(TEMPLATES["ev_charging"], {"low_threshold": 80}, "BWR")
+
+    # Non-finite and boolean entity states degrade cleanly.
+    for bad in ("unavailable", "unknown", "nan", "inf", "-inf", "True", "False"):
+        hass.states.async_set("sensor.ev_battery", bad, {"unit_of_measurement": "%"})
+        hass.states.async_set("sensor.ev_range", bad, {"unit_of_measurement": "km"})
+        hass.states.async_set("sensor.ev_power", bad, {"unit_of_measurement": "kW"})
+        bad_rendered = _shown(hass, "ev_charging", 800, 480, options)
+        bad_texts = _texts(bad_rendered)
+        assert "--%" in bad_texts and "-- km" in bad_texts and "-- kW" in bad_texts
+        render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), bad_rendered)
+
+    hass.states.async_set("sensor.ev_battery", "78", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.ev_range", "312", {"unit_of_measurement": "km"})
+    hass.states.async_set("sensor.ev_status", "charging")
+    hass.states.async_set("sensor.ev_power", "7.2", {"unit_of_measurement": "kW"})
+    designer = hass.data[KEY]
+    preview = await designer.preview_design_template(wolink_entry, "ev_charging", options)
+    assert preview["png"].startswith("data:image/png;base64,")
+    applied = await designer.apply_design_template(wolink_entry, "ev_charging", options)
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
+
+    for size in TEMPLATES["ev_charging"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["ev_charging"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == [], size
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size
