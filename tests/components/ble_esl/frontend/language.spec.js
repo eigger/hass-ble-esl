@@ -1,14 +1,17 @@
-import { test, expect } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
+
+const test = base.extend({
+  page: async ({ page, request }, use) => {
+    await request.post("/reset");
+    await use(page);
+  },
+});
 
 const setLanguage = (page, language) =>
   page.evaluate((language) => {
     const panel = window.manager || window.panel;
     panel.hass = { ...panel.hass, locale: { language } };
   }, language);
-
-test.beforeEach(async ({ request }) => {
-  await request.post("/reset");
-});
 
 test("HA locale translates dashboard and automations while preserving authored names", async ({
   page,
@@ -215,23 +218,30 @@ test("locale catalogs match component languages and preserve interpolation token
     .sort();
   expect([...supportedLanguages].sort()).toEqual(componentLanguages);
   const tokens = (text) =>
-    [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+    [...text.matchAll(/\{\w+\}/g)]
+      .map((match) => match[0])
+      .sort()
+      .join(",");
+  const issues = [];
   for (const code of supportedLanguages) {
     expect(Object.keys(messages[code]).sort()).toEqual(
       Object.keys(messages.en).sort(),
     );
     for (const [key, value] of Object.entries(messages[code])) {
-      expect(value.trim(), `${code}: ${key}`).not.toBe("");
-      expect(tokens(value), `${code}: ${key}`).toEqual(tokens(key));
-      expect(value, `${code}: ${key}`).not.toMatch(
-        /__ESL|\n|<script|\[\d{4}\]/,
-      );
-      if (key.includes("{{ template }}"))
-        expect(value).toContain("{{ template }}");
-      if (key.includes("value, entity, entity_id, attributes"))
-        expect(value).toContain("value, entity, entity_id, attributes");
+      const entry = `${code}: ${key}`;
+      if (!value.trim()) issues.push(`${entry} — empty translation`);
+      if (tokens(value) !== tokens(key))
+        issues.push(`${entry} — interpolation tokens differ`);
+      if (/__ESL|\n|<script|\[\d{4}\]/.test(value))
+        issues.push(`${entry} — unexpected markup or placeholder`);
+      if (key.includes("{{ template }}") && !value.includes("{{ template }}"))
+        issues.push(`${entry} — missing template example`);
+      const templateVariables = "value, entity, entity_id, attributes";
+      if (key.includes(templateVariables) && !value.includes(templateVariables))
+        issues.push(`${entry} — missing template variables`);
     }
   }
+  expect(issues).toEqual([]);
   for (const [requested, expected] of [
     ["de-DE", "de"],
     ["fr_CA", "fr"],

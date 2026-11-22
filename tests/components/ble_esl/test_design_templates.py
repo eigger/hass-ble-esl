@@ -30,7 +30,12 @@ from custom_components.ble_esl.esl_ble.base import DevicePreset
 from custom_components.ble_esl.renderer import render_image
 
 TEMPLATES = load_templates()
-SIZES = [(250, 128), (296, 128), (400, 300), (800, 480)]
+# Cover the palette matrix and the largest layout in both orientations.
+RENDER_CASES = [
+    (width, height, colors)
+    for width, height in [(250, 128), (296, 128), (400, 300), (800, 480)]
+    for colors in ("BW", "BWR", "BWRY")
+] + [(1600, 1200, "BWR"), (1200, 1600, "BWR")]
 
 MINIMAL = """
 template: 1
@@ -88,8 +93,7 @@ def stable_template_payloads(hass, imported, elements):
 
 
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
-@pytest.mark.parametrize(("width", "height"), SIZES)
-@pytest.mark.parametrize("colors", ["BW", "BWR", "BWRY"])
+@pytest.mark.parametrize(("width", "height", "colors"), RENDER_CASES)
 async def test_bundled_template_imports_and_draws_exactly(hass, template_id, width, height, colors):
     preset = DevicePreset("test", "test", width, height, colors)
     seed_entities(hass, TEMPLATES[template_id])
@@ -1138,18 +1142,6 @@ async def test_every_automation_option_is_a_valid_home_assistant_automation(hass
             assert await async_validate_config_item(hass, "x", config), (name, option)
 
 
-@pytest.mark.parametrize("size", sorted(TEMPLATES["weather_outdoor"]["layouts"]))
-async def test_outdoor_weather_exact_sizes_use_editable_elements(hass, size):
-    width, height = (int(part) for part in size.split("x"))
-    preset = DevicePreset("outdoor", "outdoor", width, height, "BWR")
-    built = build(TEMPLATES["weather_outdoor"], width, height, "BWR")
-    elements, imported, issues = elements_from(built["payload"], preset)
-    assert not built["scaled"]
-    assert issues == []
-    original, rebuilt = stable_template_payloads(hass, imported, elements)
-    assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
-
-
 async def test_outdoor_weather_reads_dated_forecasts_and_keeps_missing_slots_blank(hass):
     from datetime import timedelta
 
@@ -1324,20 +1316,16 @@ async def test_outdoor_weather_automation_fetches_both_forecasts_once(hass, woli
         assert all(step["continue_on_error"] for step in actions[:2])
 
 
-@pytest.mark.parametrize("template_id", sorted(set(TEMPLATES) - {"weather_outdoor"}))
+@pytest.mark.parametrize("template_id", sorted(TEMPLATES))
 @pytest.mark.parametrize("size", sorted(TEMPLATES["weather_outdoor"]["layouts"]))
-async def test_existing_templates_cover_all_gallery_sizes(hass, template_id, size):
+def test_bundled_templates_import_at_all_gallery_sizes(template_id, size):
     width, height = map(int, size.split("x"))
-    template = TEMPLATES[template_id]
     preset = DevicePreset("gallery", "gallery", width, height, "BWR")
-    seed_entities(hass, template)
-    built = build(template, width, height, "BWR")
+    built = build(TEMPLATES[template_id], width, height, "BWR")
     assert built["layout"] == size and not built["scaled"]
-    elements, imported, issues = elements_from(built["payload"], preset)
+    elements, _, issues = elements_from(built["payload"], preset)
     assert issues == []
     assert len(elements) == len(built["payload"])
-    original, rebuilt = stable_template_payloads(hass, imported, elements)
-    assert different_pixels(hass, preset, original, rebuilt, built["background"]) == 0
 
 
 async def test_large_calendar_adds_end_time_and_optional_details(hass):
