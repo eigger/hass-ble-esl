@@ -282,14 +282,13 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(0, 0, 6, 199, fill=DOOR_TEXT_COLOR, outline=DOOR_TEXT_COLOR, width=1)
-    c.text_fit(BADGE_TEXT, 12, 16, 178, 94, 52, align="center", color="black", min_size=16)
-    c.line(16, 122, 188, 122)
+    c.text_fit(BADGE_TEXT, 10, 16, 180, 94, 52, align="center", color="black", min_size=16)
+    c.line(14, 122, 186, 122)
     c.text_fit(
         DOOR_STATUS_COMPACT,
-        12,
+        10,
         134,
-        178,
+        180,
         52,
         26,
         align="center",
@@ -303,26 +302,24 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    bar_px = 6 if large else 5
     c = Canvas(w, h, vw, 128)
-    c.rect(0, 0, bar_px / c.sx, 127, fill=DOOR_TEXT_COLOR, outline=DOOR_TEXT_COLOR, width=1)
     c.text_fit(
         BADGE_TEXT,
-        12,
         8,
-        vw - 20,
+        8,
+        vw - 16,
         66,
         54 if large else 52,
         align="center",
         color="black",
         min_size=ms,
     )
-    c.line(12, 78, vw - 10, 78)
+    c.line(10, 78, vw - 10, 78)
     c.text_fit(
         DOOR_STATUS_COMPACT,
-        12,
+        8,
         84,
-        vw - 20,
+        vw - 16,
         38,
         28 if large else 26,
         align="center",
@@ -336,18 +333,14 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
-    bar_px = 5 if tall else 4
-    x0 = 11 if tall else 10
-    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=DOOR_TEXT_COLOR, outline=DOOR_TEXT_COLOR, width=1)
-    c.text_fit(BADGE_TEXT, x0, 20, cw, vh * 0.44, 44, align="center", color="black", min_size=ms)
-    c.line(x0 + 2, vh * 0.56, 120, vh * 0.56)
+    c.text_fit(BADGE_TEXT, 6, 20, 116, vh * 0.44, 44, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.56, 118, vh * 0.56)
     c.text_fit(
         DOOR_STATUS_COMPACT,
-        x0,
+        6,
         vh * 0.62,
-        cw,
+        116,
         vh * 0.30,
         22,
         align="center",
@@ -359,15 +352,14 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(0, 0, 8 / c.sx, 183, fill=DOOR_TEXT_COLOR, outline=DOOR_TEXT_COLOR, width=1)
-    c.text_fit(BADGE_TEXT, 16, 10, 356, 78, 64, align="center", color="black", min_size=18)
-    c.text_fit(HOME_SUMMARY, 16, 94, 356, 38, 28, align="center", color="black", min_size=18)
-    c.line(16, 138, 372, 138)
+    c.text_fit(BADGE_TEXT, 10, 10, 364, 78, 64, align="center", color="black", min_size=18)
+    c.text_fit(HOME_SUMMARY, 10, 94, 364, 38, 28, align="center", color="black", min_size=18)
+    c.line(12, 138, 372, 138)
     c.text_fit(
         DOOR_STATUS_COMPACT,
-        16,
+        10,
         144,
-        356,
+        364,
         34,
         26,
         align="center",
@@ -379,17 +371,15 @@ def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    bar_px = 8 if w >= 210 else 6
-    c.rect(0, 0, bar_px / c.sx, 383, fill=DOOR_TEXT_COLOR, outline=DOOR_TEXT_COLOR, width=1)
-    c.text_fit(BADGE_TEXT, 14, 24, 160, 110, 58, align="center", color="black", min_size=16)
-    c.line(18, 154, 170, 154)
-    c.text_fit(HOME_SUMMARY, 14, 174, 160, 88, 26, align="center", color="black", min_size=16)
-    c.line(18, 282, 170, 282)
+    c.text_fit(BADGE_TEXT, 10, 24, 164, 110, 58, align="center", color="black", min_size=16)
+    c.line(16, 154, 168, 154)
+    c.text_fit(HOME_SUMMARY, 10, 174, 164, 88, 26, align="center", color="black", min_size=16)
+    c.line(16, 282, 168, 282)
     c.text_fit(
         DOOR_STATUS_COMPACT,
-        14,
+        10,
         300,
-        160,
+        164,
         60,
         26,
         align="center",

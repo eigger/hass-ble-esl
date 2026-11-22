@@ -55,119 +55,102 @@ parameters:
       ko: 갱신 주기 (분)
 layouts:
   200x200:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 6, y_end: 199, fill: &id001 '{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') }}', outline: *id001, width: 1}
-  - {type: text_fit, value: &id002 '{% set _r = state_attr(''${weather}'', ''temperature'') %}{% set _n = _r | float(none) if is_number(_r) and _r is not boolean else none %}{% set _f = _n if _n is not none and _n == _n and (_n | abs) < 10000 else none %}{% set _r1 = ((_f | round(1)) + 0) if _f is not none else none %}{% set _t = ((0 if _r1 == 0 else _r1) | string | replace(''.0'', '''')) if _r1 is not none else ''--'' %}{{ _t ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°C'') }}', font: '${font}', x: 12, y: 10, width: 178, height: 68, size: 54, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 16, y_start: 82, x_end: 188, y_end: 82, width: 1, fill: black}
-  - {type: text_fit, value: &id003 '{% set _st = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set _ad = state_attr(''${calendar}'', ''all_day'') %}{% if _st is not none and _st.tzinfo is not none %}{% set _st = as_local(_st) %}{% endif %}{{ (_st.strftime(''%m/%d'') ~ ('' 종일'' if _ad else '' '' ~ _st.strftime(((''${time_format}'' | trim) or ''%H:%M'')))) if _st is not none else ''일정 대기'' }}', font: '${font}', x: 12, y: 88, width: 178, height: 34, size: 24, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: &id004 '{{ state_attr(''${calendar}'', ''message'') or ''예정된 일정 없음'' }}', font: '${font}', x: 12, y: 126, width: 178, height: 64, size: 26, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: &id001 '{% set _r = state_attr(''${weather}'', ''temperature'') %}{% set _n = _r | float(none) if is_number(_r) and _r is not boolean else none %}{% set _f = _n if _n is not none and _n == _n and (_n | abs) < 10000 else none %}{% set _r1 = ((_f | round(1)) + 0) if _f is not none else none %}{% set _t = ((0 if _r1 == 0 else _r1) | string | replace(''.0'', '''')) if _r1 is not none else ''--'' %}{{ _t ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°C'') }}', font: '${font}', x: 8, y: 10, width: 184, height: 68, size: 54, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 12, y_start: 82, x_end: 188, y_end: 82, width: 1, fill: black}
+  - {type: text_fit, value: &id002 '{% set _st = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set _ad = state_attr(''${calendar}'', ''all_day'') %}{% if _st is not none and _st.tzinfo is not none %}{% set _st = as_local(_st) %}{% endif %}{{ (_st.strftime(''%m/%d'') ~ ('' 종일'' if _ad else '' '' ~ _st.strftime(((''${time_format}'' | trim) or ''%H:%M'')))) if _st is not none else ''일정 대기'' }}', font: '${font}', x: 8, y: 88, width: 184, height: 34, size: 24, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: &id003 '{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') }}'}
+  - {type: text_fit, value: &id004 '{{ state_attr(''${calendar}'', ''message'') or ''예정된 일정 없음'' }}', font: '${font}', x: 8, y: 126, width: 184, height: 64, size: 26, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   212x104:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 103, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 5, width: 78, height: 45, size: 41, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 93, y_start: 8, x_end: 93, y_end: 49, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 98, y: 5, width: 107, height: 45, size: 21, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 10, y_start: 54, x_end: 205, y_end: 54, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 58, width: 195, height: 41, size: 21, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 5, y: 5, width: 81, height: 45, size: 41, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 92, y_start: 8, x_end: 92, y_end: 49, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 97, y: 5, width: 110, height: 45, size: 21, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 5, y_start: 54, x_end: 207, y_end: 54, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 5, y: 58, width: 202, height: 41, size: 21, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   104x212:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 4, y_end: 211, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 8, y: 10, width: 93, height: 64, size: 37, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 10, y_start: 76, x_end: 98, y_end: 76, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 8, y: 85, width: 93, height: 34, size: 19, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 8, y: 119, width: 93, height: 80, size: 19, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 5, y: 10, width: 94, height: 64, size: 37, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 8, y_start: 76, x_end: 96, y_end: 76, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 5, y: 85, width: 94, height: 34, size: 19, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 5, y: 119, width: 94, height: 80, size: 19, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   250x122:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 121, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 6, width: 92, height: 53, size: 48, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 110, y_start: 10, x_end: 110, y_end: 57, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 116, y: 6, width: 126, height: 53, size: 25, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 12, y_start: 63, x_end: 242, y_end: 63, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 69, width: 230, height: 47, size: 25, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 6, width: 96, height: 53, size: 48, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 108, y_start: 10, x_end: 108, y_end: 57, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 114, y: 6, width: 130, height: 53, size: 25, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 6, y_start: 63, x_end: 244, y_end: 63, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 69, width: 238, height: 47, size: 25, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   122x250:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 4, y_end: 249, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 12, width: 108, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 11, y_start: 90, x_end: 114, y_end: 90, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 100, width: 108, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 140, width: 108, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 12, width: 110, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 90, x_end: 112, y_end: 90, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 100, width: 110, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 140, width: 110, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   250x128:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 127, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 6, width: 92, height: 56, size: 50, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 110, y_start: 10, x_end: 110, y_end: 60, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 116, y: 6, width: 126, height: 56, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 12, y_start: 66, x_end: 242, y_end: 66, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 72, width: 230, height: 50, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 6, width: 96, height: 56, size: 50, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 108, y_start: 10, x_end: 108, y_end: 60, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 114, y: 6, width: 130, height: 56, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 6, y_start: 66, x_end: 244, y_end: 66, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 72, width: 238, height: 50, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   128x250:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 4, y_end: 249, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 12, width: 114, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 12, y_start: 90, x_end: 120, y_end: 90, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 100, width: 114, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 140, width: 114, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 12, width: 116, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 90, x_end: 118, y_end: 90, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 100, width: 116, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 140, width: 116, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   250x132:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 131, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 6, width: 92, height: 58, size: 52, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 110, y_start: 10, x_end: 110, y_end: 62, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 116, y: 6, width: 126, height: 58, size: 27, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 12, y_start: 68, x_end: 242, y_end: 68, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 74, width: 230, height: 52, size: 27, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 6, width: 96, height: 58, size: 52, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 108, y_start: 10, x_end: 108, y_end: 62, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 114, y: 6, width: 130, height: 58, size: 27, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 6, y_start: 68, x_end: 244, y_end: 68, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 74, width: 238, height: 52, size: 27, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   132x250:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 4, y_end: 249, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 12, width: 118, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 12, y_start: 90, x_end: 124, y_end: 90, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 100, width: 118, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 140, width: 118, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 12, width: 120, height: 75, size: 44, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 90, x_end: 122, y_end: 90, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 100, width: 120, height: 40, size: 22, min_size: 14, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 140, width: 120, height: 95, size: 22, min_size: 14, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   296x128:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 6, y_end: 127, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 6, width: 108, height: 56, size: 52, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 126, y_start: 10, x_end: 126, y_end: 60, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 132, y: 6, width: 156, height: 56, size: 26, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 12, y_start: 66, x_end: 288, y_end: 66, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 72, width: 276, height: 50, size: 28, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 6, width: 110, height: 56, size: 52, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 122, y_start: 10, x_end: 122, y_end: 60, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 128, y: 6, width: 162, height: 56, size: 26, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 6, y_start: 66, x_end: 290, y_end: 66, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 72, width: 284, height: 50, size: 28, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   128x296:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 295, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 11, y: 12, width: 113, height: 89, size: 44, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 13, y_start: 107, x_end: 120, y_end: 107, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 11, y: 118, width: 113, height: 40, size: 22, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 11, y: 166, width: 113, height: 112, size: 22, min_size: 15, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 12, width: 116, height: 89, size: 44, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 107, x_end: 118, y_end: 107, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 6, y: 118, width: 116, height: 40, size: 22, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 166, width: 116, height: 112, size: 22, min_size: 15, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   296x152:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 6, y_end: 151, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 12, y: 7, width: 108, height: 67, size: 62, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 126, y_start: 12, x_end: 126, y_end: 71, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 132, y: 7, width: 156, height: 67, size: 31, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: line, x_start: 12, y_start: 78, x_end: 288, y_end: 78, width: 1, fill: black}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 86, width: 276, height: 59, size: 33, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 6, y: 7, width: 110, height: 67, size: 62, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 122, y_start: 12, x_end: 122, y_end: 71, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 128, y: 7, width: 162, height: 67, size: 31, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: line, x_start: 6, y_start: 78, x_end: 290, y_end: 78, width: 1, fill: black}
+  - {type: text_fit, value: *id004, font: '${font}', x: 6, y: 86, width: 284, height: 59, size: 33, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   152x296:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 5, y_end: 295, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id002, font: '${font}', x: 13, y: 12, width: 134, height: 89, size: 44, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 15, y_start: 107, x_end: 142, y_end: 107, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 13, y: 118, width: 134, height: 40, size: 22, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 13, y: 166, width: 134, height: 112, size: 22, min_size: 15, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 7, y: 12, width: 138, height: 89, size: 44, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 12, y_start: 107, x_end: 140, y_end: 107, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 7, y: 118, width: 138, height: 40, size: 22, min_size: 15, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 7, y: 166, width: 138, height: 112, size: 22, min_size: 15, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   384x184:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 8, y_end: 183, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: &id005 '{{ now().strftime(''%m/%d'') ~ '' ('' ~ (''월'',''화'',''수'',''목'',''금'',''토'',''일'')[now().weekday()] ~ '')'' }}', font: '${font}', x: 16, y: 12, width: 162, height: 70, size: 28, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: &id006 '{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if now().weekday() >= 5 else ''black'' }}'}
-  - {type: line, x_start: 184, y_start: 14, x_end: 184, y_end: 82, width: 1, fill: black}
-  - {type: text_fit, value: *id002, font: '${font}', x: 192, y: 8, width: 182, height: 76, size: 64, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 16, y_start: 88, x_end: 374, y_end: 88, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 16, y: 94, width: 358, height: 36, size: 26, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 16, y: 132, width: 358, height: 46, size: 30, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: &id005 '{{ now().strftime(''%m/%d'') ~ '' ('' ~ (''월'',''화'',''수'',''목'',''금'',''토'',''일'')[now().weekday()] ~ '')'' }}', font: '${font}', x: 10, y: 12, width: 166, height: 70, size: 28, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: &id006 '{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if now().weekday() >= 5 else ''black'' }}'}
+  - {type: line, x_start: 182, y_start: 14, x_end: 182, y_end: 82, width: 1, fill: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 190, y: 8, width: 184, height: 76, size: 64, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 88, x_end: 374, y_end: 88, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 94, width: 364, height: 36, size: 26, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 132, width: 364, height: 46, size: 30, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   184x384:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 6, y_end: 383, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id005, font: '${font}', x: 14, y: 14, width: 160, height: 40, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
-  - {type: text_fit, value: *id002, font: '${font}', x: 14, y: 62, width: 160, height: 90, size: 58, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 16, y_start: 168, x_end: 172, y_end: 168, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 184, width: 160, height: 44, size: 24, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 240, width: 160, height: 126, size: 28, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id005, font: '${font}', x: 10, y: 14, width: 164, height: 40, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
+  - {type: text_fit, value: *id001, font: '${font}', x: 10, y: 62, width: 164, height: 90, size: 58, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 12, y_start: 168, x_end: 172, y_end: 168, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 10, y: 184, width: 164, height: 44, size: 24, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 240, width: 164, height: 126, size: 28, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   416x240:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 8, y_end: 239, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id005, font: '${font}', x: 17, y: 16, width: 176, height: 91, size: 37, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
-  - {type: line, x_start: 199, y_start: 18, x_end: 199, y_end: 107, width: 1, fill: black}
-  - {type: text_fit, value: *id002, font: '${font}', x: 208, y: 10, width: 197, height: 100, size: 83, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 17, y_start: 115, x_end: 405, y_end: 115, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 17, y: 123, width: 388, height: 47, size: 34, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 17, y: 172, width: 388, height: 60, size: 39, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id005, font: '${font}', x: 11, y: 16, width: 180, height: 91, size: 37, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
+  - {type: line, x_start: 197, y_start: 18, x_end: 197, y_end: 107, width: 1, fill: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 206, y: 10, width: 199, height: 100, size: 83, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 11, y_start: 115, x_end: 405, y_end: 115, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 11, y: 123, width: 394, height: 47, size: 34, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 11, y: 172, width: 394, height: 60, size: 39, min_size: 18, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   240x416:
-  - {type: rectangle, x_start: 0, y_start: 0, x_end: 8, y_end: 415, fill: *id001, outline: *id001, width: 1}
-  - {type: text_fit, value: *id005, font: '${font}', x: 18, y: 15, width: 209, height: 43, size: 28, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
-  - {type: text_fit, value: *id002, font: '${font}', x: 18, y: 67, width: 209, height: 98, size: 63, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 21, y_start: 182, x_end: 224, y_end: 182, width: 1, fill: black}
-  - {type: text_fit, value: *id003, font: '${font}', x: 18, y: 199, width: 209, height: 48, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: *id004, font: '${font}', x: 18, y: 260, width: 209, height: 136, size: 30, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: text_fit, value: *id005, font: '${font}', x: 13, y: 15, width: 214, height: 43, size: 28, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
+  - {type: text_fit, value: *id001, font: '${font}', x: 13, y: 67, width: 214, height: 98, size: 63, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 16, y_start: 182, x_end: 224, y_end: 182, width: 1, fill: black}
+  - {type: text_fit, value: *id002, font: '${font}', x: 13, y: 199, width: 214, height: 48, size: 26, min_size: 16, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id003}
+  - {type: text_fit, value: *id004, font: '${font}', x: 13, y: 260, width: 214, height: 136, size: 30, min_size: 16, max_lines: 2, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   400x300:
   - {type: icon, value: calendar-today, x: 19, y: 22, size: 14, anchor: mm, color: *id006}
   - {type: text_fit, value: &id011 '{{ now().strftime(''%Y.%m.%d'') ~ '' ('' ~ (''월'',''화'',''수'',''목'',''금'',''토'',''일'')[now().weekday()] ~ '')'' }}', font: '${font}', x: 30, y: 11, width: 180, height: 23, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id006}
@@ -176,7 +159,7 @@ layouts:
   - {type: text_fit, value: &id015 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _cnt = (_evs | length) if _evs else (1 if state_attr(''${calendar}'', ''message'') else 0) %}{{ (''일정 '' ~ _cnt ~ ''건'') if _cnt > 0 else ''일정 없음'' }}', font: '${font}', x: 298, y: 12, width: 86, height: 20, size: 12, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: &id016 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _cnt = (_evs | length) if _evs else (1 if state_attr(''${calendar}'', ''message'') else 0) %}{{ _fg if _cnt > 0 else ''black'' }}'}
   - {type: line, x_start: 12, y_start: 40, x_end: 388, y_end: 40, width: 1, fill: black}
   - {type: rectangle, x_start: 12, y_start: 48, x_end: 234, y_end: 290, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: calendar, x: 24, y: 62, size: 12, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 24, y: 62, size: 12, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 34, y: 52, width: 120, height: 20, size: 12, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: &id038 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{% if _evs %}{% set _ev = _evs[0] %}{% set _tf = ((''${time_format}'' | trim) or ''%H:%M'') %}{% set _sr = (_ev.get(''start'') | default('''')) | string %}{% set _er = (_ev.get(''end'') | default('''')) | string %}{% set _sd = as_datetime(_sr, none) %}{% set _ed = as_datetime(_er, none) %}{% if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif %}{% if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif %}{{ _sd.strftime(''%m/%d'' if _sr | length == 10 else ''%m/%d '' ~ _tf) ~ (('' - '' ~ (_ed - timedelta(days=1)).strftime(''%m/%d'')) if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) else ('' - '' ~ _ed.strftime(_tf if _ed.date() == _sd.date() else ''%m/%d '' ~ _tf) if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '''')) if _sd is not none else '''' }}{% else %}{% set _st = as_datetime(state_attr(''${calendar}'', ''start_time''), none) %}{% set _ad = state_attr(''${calendar}'', ''all_day'') %}{% if _st is not none and _st.tzinfo is not none %}{% set _st = as_local(_st) %}{% endif %}{{ (_st.strftime(''%m/%d'') ~ ('' 종일'' if _ad else '' '' ~ _st.strftime(((''${time_format}'' | trim) or ''%H:%M'')))) if _st is not none else ''일정 대기'' }}{% endif %}', font: '${font}', x: 20, y: 78, width: 116, height: 17, size: 9, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: &id039 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_evs or state_attr(''${calendar}'', ''message'')) else ''black'' }}'}
   - {type: text_fit, value: &id040 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{{ (_evs[0].get(''location'') | default('''', true)) if _evs else (state_attr(''${calendar}'', ''location'') or '''') }}', font: '${font}', x: 138, y: 78, width: 88, height: 17, size: 9, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -195,7 +178,7 @@ layouts:
   - {type: text_fit, value: &id050 '{% set _eco = events[''${calendar}''] if (events is defined and events is mapping and ''${calendar}'' in events and events[''${calendar}''] is mapping) else {} %}{% set _evw = _eco.get(''events'') %}{% set _evs = (_evw | select(''mapping'') | list) if (_evw is sequence and _evw is not string) else [] %}{{ (_evs[3].get(''summary'') | default('''', true)) if _evs | length > 3 else '''' }}', font: '${font}', x: 20, y: 255, width: 206, height: 26, size: 14, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 242, y_start: 48, x_end: 388, y_end: 146, fill: white, outline: black, width: 1, radius: 5}
   - {type: icon, value: &id017 '{{ {''clear-night'': ''weather-night'', ''cloudy'': ''weather-cloudy'', ''exceptional'': ''weather-sunny-alert'', ''fog'': ''weather-fog'', ''hail'': ''weather-hail'', ''lightning'': ''weather-lightning'', ''lightning-rainy'': ''weather-lightning-rainy'', ''partlycloudy'': ''weather-partly-cloudy'', ''pouring'': ''weather-pouring'', ''rainy'': ''weather-rainy'', ''snowy'': ''weather-snowy'', ''snowy-rainy'': ''weather-snowy-rainy'', ''sunny'': ''weather-sunny'', ''windy'': ''weather-windy'', ''windy-variant'': ''weather-windy-variant''}.get(states(''${weather}''), ''weather-cloudy-alert'') }}', x: 267, y: 81, size: 28, anchor: mm, color: &id018 '{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if states(''${weather}'') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'}
-  - {type: text_fit, value: *id002, font: '${font}', x: 287, y: 55, width: 93, height: 40, size: 32, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 287, y: 55, width: 93, height: 40, size: 32, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: &id019 '{{ {''clear-night'': ''맑음'', ''cloudy'': ''흐림'', ''exceptional'': ''특이 기상'', ''fog'': ''안개'', ''hail'': ''우박'', ''lightning'': ''번개'', ''lightning-rainy'': ''뇌우'', ''partlycloudy'': ''구름 많음'', ''pouring'': ''강한 비'', ''rainy'': ''비'', ''snowy'': ''눈'', ''snowy-rainy'': ''진눈깨비'', ''sunny'': ''맑음'', ''windy'': ''강풍'', ''windy-variant'': ''바람''}.get(states(''${weather}''), ''—'') }}', font: '${font}', x: 250, y: 100, width: 69, height: 19, size: 12, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: &id020 '{% set _r = state_attr(''${weather}'', ''humidity'') %}{% set _n = _r | float(none) if is_number(_r) and _r is not boolean else none %}{% set _f = _n if _n is not none and _n == _n and (_n | abs) < 10000 else none %}{% set _hm = ((0 if _f == 0 else (_f | round(0) | int)) | string) if _f is not none else ''--'' %}{{ (''습도 '' ~ _hm ~ ''%'') if _hm != ''--'' else ''습도 --'' }}', font: '${font}', x: 321, y: 100, width: 59, height: 19, size: 11, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: &id021 '{% set _td = now().strftime(''%Y-%m-%d'') %}{% set _fco = fc[''${weather}''] if (fc is defined and fc is mapping and ''${weather}'' in fc and fc[''${weather}''] is mapping) else {} %}{% set _fcw = _fco.get(''forecast'') %}{% set _fcr = (_fcw | select(''mapping'') | list) if (_fcw is sequence and _fcw is not string) else [] %}{% set _ns = namespace(fc=[]) %}{% for _it in _fcr %}{% set _dt = as_datetime((_it.get(''datetime'') | default('''')) | string, none) %}{% if _dt is not none %}{% set _dl = as_local(_dt) if _dt.tzinfo is not none else _dt %}{% if _dl.strftime(''%Y-%m-%d'') >= _td %}{% set _ns.fc = _ns.fc + [_it] %}{% endif %}{% endif %}{% endfor %}{% set _fc = _ns.fc %}{% set _day0 = _fc[0] if _fc else (_fcr[0] if _fcr else {}) %}{% set _r = _day0.get(''templow'') %}{% set _n = _r | float(none) if is_number(_r) and _r is not boolean else none %}{% set _f = _n if _n is not none and _n == _n and (_n | abs) < 10000 else none %}{% set _lo = ((0 if _f == 0 else (_f | round(0) | int)) | string) if _f is not none else ''--'' %}{% set _r = _day0.get(''temperature'') %}{% set _n = _r | float(none) if is_number(_r) and _r is not boolean else none %}{% set _f = _n if _n is not none and _n == _n and (_n | abs) < 10000 else none %}{% set _hi = ((0 if _f == 0 else (_f | round(0) | int)) | string) if _f is not none else ''--'' %}{{ ''최저 '' ~ _lo ~ ''° / 최고 '' ~ _hi ~ ''°'' }}', font: '${font}', x: 250, y: 122, width: 130, height: 19, size: 11, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -225,7 +208,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 18, y: 30, width: 264, height: 16, size: 10, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 12, y_start: 54, x_end: 288, y_end: 192, fill: white, outline: black, width: 1, radius: 5}
   - {type: icon, value: *id017, x: 40, y: 79, size: 25, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 64, y: 58, width: 101, height: 32, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 64, y: 58, width: 101, height: 32, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 169, y: 57, width: 109, height: 16, size: 10, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 169, y: 74, width: 109, height: 16, size: 8, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 64, y: 92, width: 214, height: 16, size: 9, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -247,7 +230,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 216, y: 153, width: 62, height: 17, size: 8, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 216, y: 171, width: 62, height: 16, size: 8, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 12, y_start: 198, x_end: 288, y_end: 392, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: calendar, x: 28, y: 210, size: 11, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 28, y: 210, size: 11, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 40, y: 202, width: 238, height: 17, size: 10, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 22, y: 224, width: 146, height: 16, size: 8, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 171, y: 224, width: 107, height: 16, size: 8, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -272,7 +255,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 483, y: 19, width: 139, height: 32, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: line, x_start: 19, y_start: 64, x_end: 629, y_end: 64, width: 2, fill: black}
   - {type: rectangle, x_start: 19, y_start: 76, x_end: 379, y_end: 464, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: calendar, x: 39, y: 100, size: 19, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 39, y: 100, size: 19, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 55, y: 84, width: 194, height: 32, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 32, y: 124, width: 188, height: 28, size: 15, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 224, y: 124, width: 142, height: 28, size: 14, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -291,7 +274,7 @@ layouts:
   - {type: text_fit, value: *id050, font: '${font}', x: 32, y: 408, width: 334, height: 42, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 392, y_start: 76, x_end: 629, y_end: 234, fill: white, outline: black, width: 1, radius: 8}
   - {type: icon, value: *id017, x: 433, y: 130, size: 45, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 465, y: 88, width: 151, height: 64, size: 52, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 465, y: 88, width: 151, height: 64, size: 52, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 405, y: 160, width: 112, height: 30, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 520, y: 160, width: 96, height: 30, size: 17, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 405, y: 196, width: 211, height: 30, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -321,7 +304,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 28, y: 49, width: 424, height: 26, size: 15, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 20, y_start: 87, x_end: 460, y_end: 311, fill: white, outline: black, width: 1, radius: 8}
   - {type: icon, value: *id017, x: 64, y: 128, size: 40, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 102, y: 94, width: 162, height: 52, size: 37, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 102, y: 94, width: 162, height: 52, size: 37, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 270, y: 92, width: 174, height: 26, size: 16, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 270, y: 120, width: 174, height: 26, size: 14, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 102, y: 149, width: 342, height: 26, size: 15, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -343,7 +326,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 346, y: 248, width: 98, height: 27, size: 13, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 346, y: 277, width: 98, height: 26, size: 13, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 20, y_start: 321, x_end: 460, y_end: 635, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: calendar, x: 44, y: 340, size: 18, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 44, y: 340, size: 18, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 64, y: 327, width: 380, height: 28, size: 16, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 36, y: 363, width: 232, height: 26, size: 13, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 274, y: 363, width: 170, height: 26, size: 12, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -368,7 +351,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 596, y: 19, width: 172, height: 32, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: line, x_start: 24, y_start: 64, x_end: 776, y_end: 64, width: 2, fill: black}
   - {type: rectangle, x_start: 24, y_start: 76, x_end: 468, y_end: 464, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: calendar, x: 48, y: 100, size: 24, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 48, y: 100, size: 24, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 68, y: 84, width: 240, height: 32, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 40, y: 124, width: 232, height: 28, size: 15, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 276, y: 124, width: 176, height: 28, size: 14, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -387,7 +370,7 @@ layouts:
   - {type: text_fit, value: *id050, font: '${font}', x: 40, y: 408, width: 412, height: 42, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 484, y_start: 76, x_end: 776, y_end: 234, fill: white, outline: black, width: 2, radius: 10}
   - {type: icon, value: *id017, x: 534, y: 130, size: 56, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 574, y: 88, width: 186, height: 64, size: 52, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 574, y: 88, width: 186, height: 64, size: 52, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 500, y: 160, width: 138, height: 30, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 642, y: 160, width: 118, height: 30, size: 17, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 500, y: 196, width: 260, height: 30, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -417,7 +400,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 28, y: 61, width: 424, height: 32, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 20, y_start: 108, x_end: 460, y_end: 384, fill: white, outline: black, width: 2, radius: 10}
   - {type: icon, value: *id017, x: 64, y: 158, size: 50, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 102, y: 116, width: 162, height: 64, size: 46, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 102, y: 116, width: 162, height: 64, size: 46, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 270, y: 114, width: 174, height: 32, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 270, y: 148, width: 174, height: 32, size: 17, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 102, y: 184, width: 342, height: 32, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -439,7 +422,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 346, y: 306, width: 98, height: 34, size: 16, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 346, y: 342, width: 98, height: 32, size: 16, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 20, y_start: 396, x_end: 460, y_end: 784, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: calendar, x: 44, y: 420, size: 22, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 44, y: 420, size: 22, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 64, y: 404, width: 380, height: 34, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 36, y: 448, width: 232, height: 32, size: 16, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 274, y: 448, width: 170, height: 32, size: 15, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -464,7 +447,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 715, y: 25, width: 207, height: 43, size: 25, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: line, x_start: 29, y_start: 85, x_end: 931, y_end: 85, width: 2, fill: black}
   - {type: rectangle, x_start: 29, y_start: 101, x_end: 562, y_end: 619, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: calendar, x: 58, y: 133, size: 29, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 58, y: 133, size: 29, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 82, y: 112, width: 288, height: 43, size: 27, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 48, y: 165, width: 278, height: 38, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 331, y: 165, width: 211, height: 38, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -483,7 +466,7 @@ layouts:
   - {type: text_fit, value: *id050, font: '${font}', x: 48, y: 544, width: 494, height: 56, size: 31, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 581, y_start: 101, x_end: 931, y_end: 312, fill: white, outline: black, width: 2, radius: 12}
   - {type: icon, value: *id017, x: 641, y: 173, size: 67, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 689, y: 117, width: 223, height: 86, size: 69, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 689, y: 117, width: 223, height: 86, size: 69, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 600, y: 213, width: 166, height: 40, size: 25, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 770, y: 213, width: 142, height: 40, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 600, y: 261, width: 312, height: 40, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -513,7 +496,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 37, y: 73, width: 566, height: 39, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 27, y_start: 130, x_end: 613, y_end: 461, fill: white, outline: black, width: 2, radius: 12}
   - {type: icon, value: *id017, x: 85, y: 190, size: 60, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 136, y: 139, width: 216, height: 77, size: 55, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 136, y: 139, width: 216, height: 77, size: 55, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 360, y: 137, width: 232, height: 38, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 360, y: 178, width: 232, height: 38, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 136, y: 221, width: 456, height: 38, size: 22, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -535,7 +518,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 461, y: 367, width: 131, height: 41, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 461, y: 410, width: 131, height: 39, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 27, y_start: 475, x_end: 613, y_end: 941, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: calendar, x: 59, y: 504, size: 26, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 59, y: 504, size: 26, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 85, y: 485, width: 507, height: 41, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 48, y: 538, width: 309, height: 38, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 365, y: 538, width: 227, height: 38, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -560,7 +543,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 715, y: 27, width: 207, height: 45, size: 27, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: line, x_start: 29, y_start: 91, x_end: 931, y_end: 91, width: 2, fill: black}
   - {type: rectangle, x_start: 29, y_start: 108, x_end: 562, y_end: 657, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: calendar, x: 58, y: 142, size: 29, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 58, y: 142, size: 29, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 82, y: 119, width: 288, height: 45, size: 28, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 48, y: 176, width: 278, height: 39, size: 21, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 331, y: 176, width: 211, height: 39, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -579,7 +562,7 @@ layouts:
   - {type: text_fit, value: *id050, font: '${font}', x: 48, y: 578, width: 494, height: 60, size: 33, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 581, y_start: 108, x_end: 931, y_end: 332, fill: white, outline: black, width: 2, radius: 12}
   - {type: icon, value: *id017, x: 641, y: 184, size: 67, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 689, y: 125, width: 223, height: 90, size: 74, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 689, y: 125, width: 223, height: 90, size: 74, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 600, y: 227, width: 166, height: 42, size: 27, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 770, y: 227, width: 142, height: 42, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 600, y: 278, width: 312, height: 42, size: 26, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -609,7 +592,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 40, y: 73, width: 600, height: 39, size: 23, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 28, y_start: 130, x_end: 652, y_end: 461, fill: white, outline: black, width: 2, radius: 12}
   - {type: icon, value: *id017, x: 91, y: 190, size: 60, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 144, y: 139, width: 230, height: 77, size: 55, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 144, y: 139, width: 230, height: 77, size: 55, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 382, y: 137, width: 247, height: 38, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 382, y: 178, width: 247, height: 38, size: 20, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 144, y: 221, width: 485, height: 38, size: 22, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -631,7 +614,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 490, y: 367, width: 139, height: 41, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 490, y: 410, width: 139, height: 39, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 28, y_start: 475, x_end: 652, y_end: 941, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: calendar, x: 62, y: 504, size: 26, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 62, y: 504, size: 26, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 91, y: 485, width: 538, height: 41, size: 24, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 51, y: 538, width: 329, height: 38, size: 19, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 388, y: 538, width: 241, height: 38, size: 18, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -656,7 +639,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 1192, y: 48, width: 344, height: 80, size: 48, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: line, x_start: 48, y_start: 160, x_end: 1552, y_end: 160, width: 4, fill: black}
   - {type: rectangle, x_start: 48, y_start: 190, x_end: 936, y_end: 1160, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: calendar, x: 96, y: 250, size: 48, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 96, y: 250, size: 48, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 136, y: 210, width: 480, height: 80, size: 50, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 80, y: 310, width: 464, height: 70, size: 38, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 552, y: 310, width: 352, height: 70, size: 35, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
@@ -675,7 +658,7 @@ layouts:
   - {type: text_fit, value: *id050, font: '${font}', x: 80, y: 1020, width: 824, height: 105, size: 58, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: rectangle, x_start: 968, y_start: 190, x_end: 1552, y_end: 585, fill: white, outline: black, width: 3, radius: 20}
   - {type: icon, value: *id017, x: 1068, y: 325, size: 112, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 1148, y: 220, width: 372, height: 160, size: 130, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 1148, y: 220, width: 372, height: 160, size: 130, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 1000, y: 400, width: 276, height: 75, size: 48, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 1284, y: 400, width: 236, height: 75, size: 42, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 1000, y: 490, width: 520, height: 75, size: 45, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -705,7 +688,7 @@ layouts:
   - {type: text_fit, value: *id015, font: '${font}', x: 70, y: 122, width: 1060, height: 64, size: 38, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id016}
   - {type: rectangle, x_start: 50, y_start: 216, x_end: 1150, y_end: 768, fill: white, outline: black, width: 3, radius: 20}
   - {type: icon, value: *id017, x: 160, y: 316, size: 100, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id002, font: '${font}', x: 255, y: 232, width: 405, height: 128, size: 92, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id001, font: '${font}', x: 255, y: 232, width: 405, height: 128, size: 92, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id019, font: '${font}', x: 675, y: 228, width: 435, height: 64, size: 40, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id020, font: '${font}', x: 675, y: 296, width: 435, height: 64, size: 34, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: text_fit, value: *id021, font: '${font}', x: 255, y: 368, width: 855, height: 64, size: 36, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
@@ -727,7 +710,7 @@ layouts:
   - {type: text_fit, value: *id036, font: '${font}', x: 865, y: 612, width: 245, height: 68, size: 32, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: black}
   - {type: text_fit, value: *id037, font: '${font}', x: 865, y: 684, width: 245, height: 64, size: 32, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   - {type: rectangle, x_start: 50, y_start: 792, x_end: 1150, y_end: 1568, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: calendar, x: 110, y: 840, size: 44, anchor: mm, color: *id001}
+  - {type: icon, value: calendar, x: 110, y: 840, size: 44, anchor: mm, color: *id003}
   - {type: text_fit, value: 다가오는 일정, font: '${font}', x: 160, y: 808, width: 950, height: 68, size: 40, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: *id038, font: '${font}', x: 90, y: 896, width: 580, height: 64, size: 32, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: left, valign: middle, color: *id039}
   - {type: text_fit, value: *id040, font: '${font}', x: 685, y: 896, width: 425, height: 64, size: 30, min_size: 7, max_lines: 1, fit: shrink_ellipsis, align: right, valign: middle, color: black}

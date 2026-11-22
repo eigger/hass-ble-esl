@@ -375,12 +375,11 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(0, 0, 6, 199, fill=STATUS_COLOR, outline=STATUS_COLOR, width=1)
-    c.text_fit(SOC_VAL, 12, 12, 104, 92, 54, align="center", color=SOC_COLOR, min_size=16)
-    c.line(120, 22, 120, 94)
-    c.text_fit(BADGE_TEXT, 124, 22, 66, 72, 24, align="center", color=STATUS_COLOR, min_size=16)
-    c.line(14, 114, 188, 114)
-    c.text_fit(RANGE_VAL, 12, 126, 178, 60, 28, align="center", color="black", min_size=16)
+    c.text_fit(SOC_VAL, 8, 12, 106, 92, 54, align="center", color=SOC_COLOR, min_size=16)
+    c.line(118, 22, 118, 94)
+    c.text_fit(BADGE_TEXT, 122, 22, 70, 72, 24, align="center", color=STATUS_COLOR, min_size=16)
+    c.line(12, 114, 188, 114)
+    c.text_fit(RANGE_VAL, 10, 126, 180, 60, 28, align="center", color="black", min_size=16)
     return c.items
 
 
@@ -388,15 +387,13 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    bar_px = 6 if large else 5
-    split = 154 if large else 132
+    split = 152 if large else 128
     c = Canvas(w, h, vw, 128)
-    c.rect(0, 0, bar_px / c.sx, 127, fill=STATUS_COLOR, outline=STATUS_COLOR, width=1)
     c.text_fit(
         SOC_VAL,
-        12,
         6,
-        split - 18,
+        6,
+        split - 10,
         66,
         54 if large else 52,
         align="center",
@@ -415,12 +412,12 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
         color=STATUS_COLOR,
         min_size=ms,
     )
-    c.line(12, 76, vw - 10, 76)
+    c.line(8, 76, vw - 8, 76)
     c.text_fit(
         RANGE_VAL,
-        12,
+        8,
         82,
-        vw - 20,
+        vw - 16,
         40,
         28 if large else 26,
         align="center",
@@ -434,51 +431,44 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
-    bar_px = 5 if tall else 4
-    x0 = 11 if tall else 10
-    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=STATUS_COLOR, outline=STATUS_COLOR, width=1)
-    c.text_fit(SOC_VAL, x0, 12, cw, vh * 0.30, 44, align="center", color=SOC_COLOR, min_size=ms)
-    c.line(x0 + 2, vh * 0.36, 120, vh * 0.36)
+    c.text_fit(SOC_VAL, 6, 12, 116, vh * 0.30, 44, align="center", color=SOC_COLOR, min_size=ms)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
     c.text_fit(
         BADGE_TEXT,
-        x0,
+        6,
         vh * 0.40,
-        cw,
+        116,
         vh * 0.22,
         22,
         align="center",
         color=STATUS_COLOR,
         min_size=ms,
     )
-    c.line(x0 + 2, vh * 0.64, 120, vh * 0.64)
+    c.line(10, vh * 0.64, 118, vh * 0.64)
     c.text_fit(
-        RANGE_VAL, x0, vh * 0.68, cw, vh * 0.26, 22, align="center", color="black", min_size=ms
+        RANGE_VAL, 6, vh * 0.68, 116, vh * 0.26, 22, align="center", color="black", min_size=ms
     )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(0, 0, 8 / c.sx, 183, fill=STATUS_COLOR, outline=STATUS_COLOR, width=1)
-    c.text_fit(SOC_VAL, 16, 12, 196, 92, 68, align="center", color=SOC_COLOR, min_size=18)
-    c.line(218, 16, 218, 98)
-    c.text_fit(BADGE_TEXT, 226, 14, 148, 88, 30, align="center", color=STATUS_COLOR, min_size=18)
-    c.line(16, 108, 372, 108)
-    c.text_fit(RANGE_PWR_COMPACT, 16, 118, 356, 54, 30, align="center", color="black", min_size=18)
+    c.text_fit(SOC_VAL, 10, 12, 200, 92, 68, align="center", color=SOC_COLOR, min_size=18)
+    c.line(216, 16, 216, 98)
+    c.text_fit(BADGE_TEXT, 224, 14, 150, 88, 30, align="center", color=STATUS_COLOR, min_size=18)
+    c.line(12, 108, 372, 108)
+    c.text_fit(RANGE_PWR_COMPACT, 12, 118, 360, 54, 30, align="center", color="black", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    bar_px = 8 if w >= 210 else 6
-    c.rect(0, 0, bar_px / c.sx, 383, fill=STATUS_COLOR, outline=STATUS_COLOR, width=1)
-    c.text_fit(SOC_VAL, 14, 18, 160, 106, 60, align="center", color=SOC_COLOR, min_size=16)
-    c.line(18, 140, 170, 140)
-    c.text_fit(BADGE_TEXT, 14, 156, 160, 62, 30, align="center", color=STATUS_COLOR, min_size=16)
-    c.line(18, 234, 170, 234)
-    c.text_fit(RANGE_PWR_COMPACT, 14, 254, 160, 110, 28, align="center", color="black", min_size=16)
+    c.text_fit(SOC_VAL, 10, 18, 164, 106, 60, align="center", color=SOC_COLOR, min_size=16)
+    c.line(16, 140, 168, 140)
+    c.text_fit(BADGE_TEXT, 10, 156, 164, 62, 30, align="center", color=STATUS_COLOR, min_size=16)
+    c.line(16, 234, 168, 234)
+    c.text_fit(RANGE_PWR_COMPACT, 10, 254, 164, 110, 28, align="center", color="black", min_size=16)
     return c.items
 
 

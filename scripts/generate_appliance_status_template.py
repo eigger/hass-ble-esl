@@ -416,10 +416,9 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(0, 0, 6, 199, fill=FEAT_COLOR, outline=FEAT_COLOR, width=1)
-    c.text_fit(FEAT_NAME, 12, 16, 178, 58, 34, align="center", color="black", min_size=16)
-    c.line(18, 86, 184, 86)
-    c.text_fit(FEAT_STATUS, 12, 98, 178, 86, 52, align="center", color=FEAT_COLOR, min_size=16)
+    c.text_fit(FEAT_NAME, 10, 16, 180, 58, 34, align="center", color="black", min_size=16)
+    c.line(18, 86, 182, 86)
+    c.text_fit(FEAT_STATUS, 10, 98, 180, 86, 52, align="center", color=FEAT_COLOR, min_size=16)
     return c.items
 
 
@@ -427,33 +426,31 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    bar_px = 6 if large else 5
     c = Canvas(w, h, vw, 128)
-    c.rect(0, 0, bar_px / c.sx, 127, fill=FEAT_COLOR, outline=FEAT_COLOR, width=1)
     c.text_fit(
         FEAT_NAME,
-        12,
         8,
-        vw - 22,
+        8,
+        vw - 16,
         40,
         28 if large else 26,
         align="center",
         color="black",
         min_size=ms,
     )
-    c.line(14, 52, vw - 12, 52)
+    c.line(12, 52, vw - 12, 52)
     if large:
-        c.icon(FEAT_ICON, 76, 90, 30, color=FEAT_COLOR)
+        c.icon(FEAT_ICON, 70, 90, 30, color=FEAT_COLOR)
         c.text_fit(
-            FEAT_STATUS, 96, 58, vw - 108, 62, 50, align="center", color="black", min_size=ms
+            FEAT_STATUS, 94, 58, vw - 104, 62, 50, align="center", color="black", min_size=ms
         )
     else:
-        c.icon(FEAT_ICON, 56, 90, 24, color=FEAT_COLOR)
+        c.icon(FEAT_ICON, 52, 90, 24, color=FEAT_COLOR)
         c.text_fit(
             FEAT_STATUS,
-            76,
+            72,
             58,
-            vw - 88,
+            vw - 82,
             62,
             50,
             align="center",
@@ -467,18 +464,14 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
-    bar_px = 5 if tall else 4
-    x0 = 11 if tall else 10
-    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=FEAT_COLOR, outline=FEAT_COLOR, width=1)
-    c.text_fit(FEAT_NAME, x0, 14, cw, vh * 0.32, 24, align="center", color="black", min_size=ms)
-    c.line(x0 + 2, vh * 0.40, 120, vh * 0.40)
+    c.text_fit(FEAT_NAME, 6, 14, 116, vh * 0.32, 24, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.40, 118, vh * 0.40)
     c.text_fit(
         FEAT_STATUS,
-        x0,
+        6,
         vh * 0.44,
-        cw,
+        116,
         vh * 0.48,
         44,
         align="center",
@@ -490,21 +483,18 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(0, 0, 8 / c.sx, 183, fill=FEAT_COLOR, outline=FEAT_COLOR, width=1)
-    c.text_fit(FEAT_NAME, 16, 12, 356, 52, 38, align="center", color="black", min_size=18)
-    c.line(18, 70, 368, 70)
-    c.icon(FEAT_ICON, 78, 124, 40, color=FEAT_COLOR)
-    c.text_fit(FEAT_STATUS, 108, 82, 260, 84, 62, align="center", color="black", min_size=18)
+    c.text_fit(FEAT_NAME, 10, 12, 364, 52, 38, align="center", color="black", min_size=18)
+    c.line(16, 70, 368, 70)
+    c.icon(FEAT_ICON, 74, 124, 40, color=FEAT_COLOR)
+    c.text_fit(FEAT_STATUS, 106, 82, 262, 84, 62, align="center", color="black", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    bar_px = 8 if w >= 210 else 6
-    c.rect(0, 0, bar_px / c.sx, 383, fill=FEAT_COLOR, outline=FEAT_COLOR, width=1)
-    c.text_fit(FEAT_NAME, 14, 26, 158, 96, 34, align="center", color="black", min_size=16)
-    c.line(18, 144, 170, 144)
-    c.text_fit(FEAT_STATUS, 14, 176, 158, 160, 56, align="center", color=FEAT_COLOR, min_size=16)
+    c.text_fit(FEAT_NAME, 10, 26, 164, 96, 34, align="center", color="black", min_size=16)
+    c.line(16, 144, 168, 144)
+    c.text_fit(FEAT_STATUS, 10, 176, 164, 160, 56, align="center", color=FEAT_COLOR, min_size=16)
     return c.items
 
 

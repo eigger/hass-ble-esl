@@ -350,12 +350,11 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(0, 0, 6, 199, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
-    c.text_fit(TEMP_VAL, 12, 12, 178, 68, 54, align="center", color="black", min_size=16)
-    c.line(16, 84, 188, 84)
-    c.text_fit(HUM_VAL, 12, 88, 178, 50, 44, align="center", color="black", min_size=16)
-    c.line(16, 142, 188, 142)
-    c.text_fit(BADGE_TEXT, 12, 148, 178, 42, 26, align="center", color=ADVICE_COLOR, min_size=16)
+    c.text_fit(TEMP_VAL, 10, 12, 180, 68, 54, align="center", color="black", min_size=16)
+    c.line(14, 84, 186, 84)
+    c.text_fit(HUM_VAL, 10, 88, 180, 50, 44, align="center", color="black", min_size=16)
+    c.line(14, 142, 186, 142)
+    c.text_fit(BADGE_TEXT, 10, 148, 180, 42, 26, align="center", color=ADVICE_COLOR, min_size=16)
     return c.items
 
 
@@ -363,21 +362,19 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    bar_px = 6 if large else 5
-    half = 12 + (vw - 20) // 2
+    half = vw // 2
     c = Canvas(w, h, vw, 128)
-    c.rect(0, 0, bar_px / c.sx, 127, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
-    c.text_fit(TEMP_VAL, 12, 6, half - 16, 68, 52, align="center", color="black", min_size=ms)
+    c.text_fit(TEMP_VAL, 6, 6, half - 10, 68, 52, align="center", color="black", min_size=ms)
     c.line(half, 10, half, 70)
     c.text_fit(
-        HUM_VAL, half + 4, 6, vw - half - 12, 68, 52, align="center", color="black", min_size=ms
+        HUM_VAL, half + 4, 6, vw - half - 10, 68, 52, align="center", color="black", min_size=ms
     )
-    c.line(12, 76, vw - 10, 76)
+    c.line(8, 76, vw - 8, 76)
     c.text_fit(
         BADGE_TEXT,
-        12,
+        8,
         82,
-        vw - 20,
+        vw - 16,
         40,
         28 if large else 26,
         align="center",
@@ -391,59 +388,52 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
-    bar_px = 5 if tall else 4
-    x0 = 11 if tall else 10
-    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
     c.text_fit(
         TEMP_VAL,
-        x0,
+        6,
         12,
-        cw,
+        116,
         vh * 0.30,
         46 if tall else 44,
         align="center",
         color="black",
         min_size=ms,
     )
-    c.line(x0 + 2, vh * 0.36, 120, vh * 0.36)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
     c.text_fit(
         HUM_VAL,
-        x0,
+        6,
         vh * 0.40,
-        cw,
+        116,
         vh * 0.28,
         42 if tall else 38,
         align="center",
         color="black",
         min_size=ms,
     )
-    c.line(x0 + 2, vh - 60, 120, vh - 60)
-    c.text_fit(BADGE_TEXT, x0, vh - 54, cw, 46, 22, align="center", color=ADVICE_COLOR, min_size=ms)
+    c.line(10, vh - 60, 118, vh - 60)
+    c.text_fit(BADGE_TEXT, 6, vh - 54, 116, 46, 22, align="center", color=ADVICE_COLOR, min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(0, 0, 8 / c.sx, 183, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
-    c.text_fit(TEMP_VAL, 16, 12, 172, 96, 66, align="center", color="black", min_size=18)
-    c.line(196, 14, 196, 108)
-    c.text_fit(HUM_VAL, 206, 12, 168, 96, 66, align="center", color="black", min_size=18)
-    c.line(16, 114, 372, 114)
-    c.text_fit(BADGE_TEXT, 16, 122, 356, 52, 34, align="center", color=ADVICE_COLOR, min_size=18)
+    c.text_fit(TEMP_VAL, 10, 12, 174, 96, 66, align="center", color="black", min_size=18)
+    c.line(192, 14, 192, 108)
+    c.text_fit(HUM_VAL, 202, 12, 172, 96, 66, align="center", color="black", min_size=18)
+    c.line(12, 114, 372, 114)
+    c.text_fit(BADGE_TEXT, 12, 122, 360, 52, 34, align="center", color=ADVICE_COLOR, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    bar_px = 8 if w >= 210 else 6
-    c.rect(0, 0, bar_px / c.sx, 383, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
-    c.text_fit(TEMP_VAL, 14, 24, 160, 100, 60, align="center", color="black", min_size=16)
-    c.line(18, 144, 170, 144)
-    c.text_fit(HUM_VAL, 14, 164, 160, 100, 56, align="center", color="black", min_size=16)
-    c.line(18, 284, 170, 284)
-    c.text_fit(BADGE_TEXT, 14, 300, 160, 62, 30, align="center", color=ADVICE_COLOR, min_size=16)
+    c.text_fit(TEMP_VAL, 10, 24, 164, 100, 60, align="center", color="black", min_size=16)
+    c.line(16, 144, 168, 144)
+    c.text_fit(HUM_VAL, 10, 164, 164, 100, 56, align="center", color="black", min_size=16)
+    c.line(16, 284, 168, 284)
+    c.text_fit(BADGE_TEXT, 10, 300, 164, 62, 30, align="center", color=ADVICE_COLOR, min_size=16)
     return c.items
 
 

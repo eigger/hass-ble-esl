@@ -375,11 +375,10 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(0, 0, 6, 199, fill=TEXT_INK, outline=TEXT_INK, width=1)
-    c.text_fit(CURR_TEMP, 12, 10, 178, 68, 54, align="center", min_size=16)
-    c.line(16, 82, 188, 82)
-    c.text_fit(ATTR_WHEN, 12, 88, 178, 34, 24, align="center", color=TEXT_INK, min_size=16)
-    c.text_fit(ATTR_TITLE, 12, 126, 178, 64, 26, align="center", max_lines=2, min_size=16)
+    c.text_fit(CURR_TEMP, 8, 10, 184, 68, 54, align="center", min_size=16)
+    c.line(12, 82, 188, 82)
+    c.text_fit(ATTR_WHEN, 8, 88, 184, 34, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 8, 126, 184, 64, 26, align="center", max_lines=2, min_size=16)
     return c.items
 
 
@@ -387,15 +386,13 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    bar_px = 6 if large else 5
-    mid = 126 if large else 110
+    mid = 122 if large else 108
     c = Canvas(w, h, vw, 128)
-    c.rect(0, 0, bar_px / c.sx, 127, fill=TEXT_INK, outline=TEXT_INK, width=1)
     c.text_fit(
         CURR_TEMP,
-        12,
         6,
-        mid - 18,
+        6,
+        mid - 12,
         56,
         52 if large else 50,
         align="center",
@@ -406,19 +403,19 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
         ATTR_WHEN,
         mid + 6,
         6,
-        vw - mid - 14,
+        vw - mid - 12,
         56,
         26,
         align="center",
         color=TEXT_INK,
         min_size=ms,
     )
-    c.line(12, 66, vw - 8, 66)
+    c.line(6, 66, vw - 6, 66)
     c.text_fit(
         ATTR_TITLE,
-        12,
+        6,
         72,
-        vw - 20,
+        vw - 12,
         50,
         28 if large else 26,
         align="center",
@@ -432,18 +429,14 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
-    bar_px = 5 if tall else 4
-    x0 = 11 if tall else 10
-    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=TEXT_INK, outline=TEXT_INK, width=1)
-    c.text_fit(CURR_TEMP, x0, 12, cw, vh * 0.30, 44, align="center", min_size=ms)
-    c.line(x0 + 2, vh * 0.36, 120, vh * 0.36)
+    c.text_fit(CURR_TEMP, 6, 12, 116, vh * 0.30, 44, align="center", min_size=ms)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
     c.text_fit(
         ATTR_WHEN,
-        x0,
+        6,
         vh * 0.40,
-        cw,
+        116,
         40,
         22,
         align="center",
@@ -452,9 +445,9 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     )
     c.text_fit(
         ATTR_TITLE,
-        x0,
+        6,
         vh * 0.56,
-        cw,
+        116,
         vh * 0.38,
         22,
         align="center",
@@ -466,25 +459,22 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(0, 0, 8 / c.sx, 183, fill=TEXT_INK, outline=TEXT_INK, width=1)
-    c.text_fit(DATE_SHORT, 16, 12, 162, 70, 28, align="center", color=DATE_COLOR, min_size=18)
-    c.line(184, 14, 184, 82)
-    c.text_fit(CURR_TEMP, 192, 8, 182, 76, 64, align="center", min_size=18)
-    c.line(16, 88, 374, 88)
-    c.text_fit(ATTR_WHEN, 16, 94, 358, 36, 26, align="center", color=TEXT_INK, min_size=18)
-    c.text_fit(ATTR_TITLE, 16, 132, 358, 46, 30, align="center", max_lines=1, min_size=18)
+    c.text_fit(DATE_SHORT, 10, 12, 166, 70, 28, align="center", color=DATE_COLOR, min_size=18)
+    c.line(182, 14, 182, 82)
+    c.text_fit(CURR_TEMP, 190, 8, 184, 76, 64, align="center", min_size=18)
+    c.line(10, 88, 374, 88)
+    c.text_fit(ATTR_WHEN, 10, 94, 364, 36, 26, align="center", color=TEXT_INK, min_size=18)
+    c.text_fit(ATTR_TITLE, 10, 132, 364, 46, 30, align="center", max_lines=1, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    bar_px = 8 if w >= 210 else 6
-    c.rect(0, 0, bar_px / c.sx, 383, fill=TEXT_INK, outline=TEXT_INK, width=1)
-    c.text_fit(DATE_SHORT, 14, 14, 160, 40, 26, align="center", color=DATE_COLOR, min_size=16)
-    c.text_fit(CURR_TEMP, 14, 62, 160, 90, 58, align="center", min_size=16)
-    c.line(16, 168, 172, 168)
-    c.text_fit(ATTR_WHEN, 14, 184, 160, 44, 24, align="center", color=TEXT_INK, min_size=16)
-    c.text_fit(ATTR_TITLE, 14, 240, 160, 126, 28, align="center", max_lines=2, min_size=16)
+    c.text_fit(DATE_SHORT, 10, 14, 164, 40, 26, align="center", color=DATE_COLOR, min_size=16)
+    c.text_fit(CURR_TEMP, 10, 62, 164, 90, 58, align="center", min_size=16)
+    c.line(12, 168, 172, 168)
+    c.text_fit(ATTR_WHEN, 10, 184, 164, 44, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 10, 240, 164, 126, 28, align="center", max_lines=2, min_size=16)
     return c.items
 
 
