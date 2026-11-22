@@ -33,7 +33,7 @@ Home Assistant 액션 한 번으로 전자종이 태그에 일정, 날씨, 센�
 | --- | --- | --- | --- | --- |
 | Hipoink | ETAG | 2.13" | BWR | 2.13" |
 | Gicisky | PickSmart | 2.1"–10.2" | BW / BWR / BWRY | 목록의 모든 모델 |
-| Poshiji | XTE | 1.54"–7.5" | BWRY | 2.13", 2.66", 2.9", 4.2" |
+| Poshiji | XTE | 1.54"–7.5" | BWRY | 2.13", 2.66", 2.9", 4.2", 7.5" |
 | Zhsunyco | WOLINK | 1.54"–13.3" | BWR / BWRY | 1.54", 2.66", 2.9", 3.5", 3.7", 4.2" (BWRY) 및 2.9" (BWR) |
 | Zhsunyco | easyTag | 1.54"–10.2" | BW / BWR | 미검증 |
 

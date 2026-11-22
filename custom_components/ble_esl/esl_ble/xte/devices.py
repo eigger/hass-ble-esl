@@ -60,7 +60,7 @@ PRESETS: dict[str, DevicePreset] = {
         _preset("psj-290", 'PSJ-290 2.9" BWRY', 296, 128, device_number=154, rotation=270),
         _preset("psj-350", '3.5" BWRY', 384, 184),
         _preset("psj-370", '3.7" BWRY', 416, 240),
-        _preset("psj-750", '7.5" BWRY', 800, 480),
+        _preset("psj-750", 'PSJ-750 7.5" BWRY', 800, 480, device_number=176),
     )
 }
 

@@ -45,7 +45,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 | 7.5" | 800 × 480 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 7.5" | 800 × 480 | BWR | Zhsunyco | easyTag | ET0750-44B | ⚠️ untested |
 | 7.5" | 800 × 480 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
-| 7.5" | 800 × 480 | BWRY | Poshiji | XTE | — (size only) | ⚠️ untested |
+| 7.5" | 800 × 480 | BWRY | Poshiji | XTE | PSJ-750 | ✅ verified |
 | 10.2" | 960 × 640 | BWRY | Zhsunyco | WOLINK | — | ⚠️ untested |
 | 10.2" | 960 × 640 | BWR | Zhsunyco | easyTag | ET1020-64 | ⚠️ untested |
 | 10.2" | 960 × 640 | BWR | Gicisky | PickSmart | EPD | ✅ verified |
@@ -53,7 +53,7 @@ Sorted by panel size. Colors: **BW** black/white · **BWR** + red · **BWRY** + 
 
 Protocol notes:
 - **ETAG** — Hipoink (Guangdong SID Technology) tags for the Bluetooth Label app, 250 × 122 BWR. The NP61 firmware orientation and acknowledged transfer were verified on hardware; MN50 is derived from the app and untested. See [protocol notes](etag.md).
-- **XTE** — tags sold under the Poshiji brand. PSJ-213, PSJ-266, PSJ-290 and PSJ-420 are verified on hardware by the device owner and are picked automatically from the advertisement. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
+- **XTE** — tags sold under the Poshiji brand. PSJ-213, PSJ-266, PSJ-290 and PSJ-420 are verified on hardware by the device owner, and PSJ-750 by a user report; all five are picked automatically from the advertisement. Other sizes are offered as size-only presets picked by hand until their device numbers are reported. See [setup and protocol notes](xte.md).
 - **WOLINK** — Zhsunyco tags. BWRY presets send 2 bits per pixel. BWR presets send two 1bpp planes (black/white, then red). If a tag comes out upside down, please report it with the LED position. The 5.83" panel is listed as 5.8".
 - **easyTag** — tags sold under the Zhsunyco brand. Model code is printed on the tag.
 - **PickSmart** — Gicisky tags; 2.1" TFT is an LCD (not e-paper). The 3.7" panel is portrait (240 × 416).
