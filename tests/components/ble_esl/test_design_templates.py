@@ -2339,12 +2339,21 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
 
     bw_items = resolve_templates(
         hass,
-        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        build(TEMPLATES["indoor_climate"], 400, 300, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
     assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
     assert any(
         item.get("value") == "환기 권장" and item.get("color") == "white" for item in bw_items
+    )
+    bw_tiny_items = resolve_templates(
+        hass,
+        build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    assert any(
+        item.get("value") == "환기 권장" and item.get("color") == "black" for item in bw_tiny_items
     )
 
     # Tiny portrait stays decluttered (no CO2/hint clutter), while 4.2"+ shows CO2 & humidifier advice.
@@ -2941,12 +2950,21 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
 
     bw_items = resolve_templates(
         hass,
-        build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        build(TEMPLATES["home_presence"], 400, 300, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
     assert any(item.get("type") == "rectangle" and item.get("fill") == "black" for item in bw_items)
     assert any(
         item.get("value") == "재실 1/4" and item.get("color") == "white" for item in bw_items
+    )
+    bw_tiny_items = resolve_templates(
+        hass,
+        build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
+        set(),
+    )
+    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    assert any(
+        item.get("value") == "재실 1/4" and item.get("color") == "black" for item in bw_tiny_items
     )
 
     # Designer preview & apply + full 29-size round-trip pixel parity.
@@ -3116,12 +3134,12 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
     assert "보통" in _texts(_shown(hass, "energy_power", 800, 480, options))
     assert {"1.05 kWh", "0.84 kW"} <= set(_texts(_shown(hass, "energy_power", 800, 480, options)))
     tiny_p_texts = _texts(_shown(hass, "energy_power", 104, 212, options))
-    assert tiny_p_texts == ["1800 W", "오늘 1.05kWh"]
+    assert tiny_p_texts == ["1800 W", "보통", "오늘 1.05kWh"]
 
     hass.states.async_set("sensor.solar_power", "2.001", {"unit_of_measurement": "kW"})
     assert "2 kW" in _texts(_shown(hass, "energy_power", 400, 300, options))
     tiny_l_texts = _texts(_shown(hass, "energy_power", 212, 104, options))
-    assert tiny_l_texts == ["1800 W", "오늘 1.05kWh"]
+    assert tiny_l_texts == ["1800 W", "보통", "오늘 1.05kWh"]
 
     hass.states.async_set("sensor.solar_power", "840.4", {"unit_of_measurement": "W"})
     med_l_texts = _texts(
@@ -3715,6 +3733,7 @@ def test_under_4_inch_templates_enforce_readable_font_floors():
             fit_mins = [i["min_size"] for i in texts if i.get("type") == "text_fit"]
             assert fit_mins and min(fit_mins) >= min_ms, (name, size, fit_mins)
             assert not any("갱신" in str(i.get("value", "")) for i in texts), (name, size)
+            assert not any(i.get("type") == "rectangle" for i in layouts[size]), (name, size)
 
 
 @pytest.mark.parametrize("accent", ["white", "yellow"])

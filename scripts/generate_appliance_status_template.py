@@ -443,9 +443,9 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(FEAT_NAME, 10, 12, 180, 62, 34, align="center", min_size=16)
-    c.rect(10, 84, 190, 188, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
-    c.text_fit(FEAT_STATUS, 16, 98, 168, 76, 50, align="center", color=FEAT_FG, min_size=16)
+    c.text_fit(FEAT_NAME, 10, 16, 180, 58, 34, align="center", color="black", min_size=16)
+    c.line(18, 86, 182, 86)
+    c.text_fit(FEAT_STATUS, 10, 98, 180, 86, 52, align="center", color=FEAT_COLOR, min_size=16)
     return c.items
 
 
@@ -454,19 +454,35 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     vw = 296 if large else 250
     ms = 18 if large else 16
     c = Canvas(w, h, vw, 128)
-    c.text_fit(FEAT_NAME, 8, 6, vw - 16, 40, 28 if large else 26, align="center", min_size=ms)
-    c.rect(8, 50, vw - 8, 122, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
     c.text_fit(
-        FEAT_STATUS,
-        14,
-        56,
-        vw - 28,
-        60,
-        50,
+        FEAT_NAME,
+        8,
+        8,
+        vw - 16,
+        40,
+        28 if large else 26,
         align="center",
-        color=FEAT_FG,
+        color="black",
         min_size=ms,
     )
+    c.line(12, 52, vw - 12, 52)
+    if large:
+        c.icon(FEAT_ICON, 70, 90, 30, color=FEAT_COLOR)
+        c.text_fit(
+            FEAT_STATUS, 96, 58, vw - 108, 62, 50, align="center", color=FEAT_COLOR, min_size=ms
+        )
+    else:
+        c.text_fit(
+            FEAT_STATUS,
+            8,
+            58,
+            vw - 16,
+            62,
+            50,
+            align="center",
+            color=FEAT_COLOR,
+            min_size=ms,
+        )
     return c.items
 
 
@@ -475,17 +491,17 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     vh = 296 if tall else 250
     ms = 15 if tall else 14
     c = Canvas(w, h, 128, vh)
-    c.text_fit(FEAT_NAME, 6, 14, 116, vh * 0.32, 24, align="center", min_size=ms)
-    c.rect(6, vh * 0.40, 122, vh - 12, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
+    c.text_fit(FEAT_NAME, 6, 14, 116, vh * 0.32, 24, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.40, 118, vh * 0.40)
     c.text_fit(
         FEAT_STATUS,
-        10,
+        6,
         vh * 0.44,
-        108,
+        116,
         vh * 0.48,
         44,
         align="center",
-        color=FEAT_FG,
+        color=FEAT_COLOR,
         min_size=ms,
     )
     return c.items
@@ -493,17 +509,18 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.text_fit(FEAT_NAME, 10, 10, 364, 54, 38, align="center", min_size=18)
-    c.rect(10, 70, 374, 174, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
-    c.text_fit(FEAT_STATUS, 18, 82, 348, 80, 62, align="center", color=FEAT_FG, min_size=18)
+    c.text_fit(FEAT_NAME, 10, 12, 364, 52, 38, align="center", color="black", min_size=18)
+    c.line(16, 70, 368, 70)
+    c.icon(FEAT_ICON, 74, 124, 40, color=FEAT_COLOR)
+    c.text_fit(FEAT_STATUS, 106, 82, 262, 84, 62, align="center", color=FEAT_COLOR, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.text_fit(FEAT_NAME, 10, 24, 164, 100, 34, align="center", min_size=16)
-    c.rect(10, 144, 174, 366, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
-    c.text_fit(FEAT_STATUS, 16, 180, 152, 150, 56, align="center", color=FEAT_FG, min_size=16)
+    c.text_fit(FEAT_NAME, 10, 26, 164, 96, 34, align="center", color="black", min_size=16)
+    c.line(16, 144, 168, 144)
+    c.text_fit(FEAT_STATUS, 10, 176, 164, 160, 56, align="center", color=FEAT_COLOR, min_size=16)
     return c.items
 
 

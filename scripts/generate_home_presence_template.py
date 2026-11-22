@@ -287,8 +287,8 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.rect(10, 12, 190, 118, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 16, 24, 168, 82, 52, align="center", color=BADGE_COLOR, min_size=16)
+    c.text_fit(BADGE_TEXT, 10, 16, 180, 94, 52, align="center", color="black", min_size=16)
+    c.line(14, 122, 186, 122)
     c.text_fit(
         DOOR_STATUS_COMPACT,
         10,
@@ -308,24 +308,24 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     vw = 296 if large else 250
     ms = 18 if large else 16
     c = Canvas(w, h, vw, 128)
-    c.rect(8, 8, vw - 8, 76, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
     c.text_fit(
         BADGE_TEXT,
-        14,
-        14,
-        vw - 28,
-        56,
-        52 if large else 50,
+        8,
+        8,
+        vw - 16,
+        66,
+        54 if large else 52,
         align="center",
-        color=BADGE_COLOR,
+        color="black",
         min_size=ms,
     )
+    c.line(10, 78, vw - 10, 78)
     c.text_fit(
         DOOR_STATUS_COMPACT,
         8,
         84,
         vw - 16,
-        36,
+        38,
         28 if large else 26,
         align="center",
         color=DOOR_TEXT_COLOR,
@@ -339,10 +339,8 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     vh = 296 if tall else 250
     ms = 15 if tall else 14
     c = Canvas(w, h, 128, vh)
-    c.rect(6, 12, 122, vh * 0.54, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(
-        BADGE_TEXT, 10, 24, 108, vh * 0.42, 44, align="center", color=BADGE_COLOR, min_size=ms
-    )
+    c.text_fit(BADGE_TEXT, 6, 20, 116, vh * 0.44, 44, align="center", color="black", min_size=ms)
+    c.line(10, vh * 0.56, 118, vh * 0.56)
     c.text_fit(
         DOOR_STATUS_COMPACT,
         6,
@@ -359,10 +357,9 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.rect(10, 8, 374, 92, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 18, 12, 348, 76, 64, align="center", color=BADGE_COLOR, min_size=18)
-    c.text_fit(HOME_SUMMARY, 10, 100, 364, 36, 28, align="center", min_size=18)
-    c.line(10, 140, 374, 140)
+    c.text_fit(BADGE_TEXT, 10, 10, 364, 78, 64, align="center", color="black", min_size=18)
+    c.text_fit(HOME_SUMMARY, 10, 94, 364, 38, 28, align="center", color="black", min_size=18)
+    c.line(12, 138, 372, 138)
     c.text_fit(
         DOOR_STATUS_COMPACT,
         10,
@@ -379,13 +376,20 @@ def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.rect(10, 14, 174, 152, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 16, 36, 152, 94, 58, align="center", color=BADGE_COLOR, min_size=16)
-    c.rect(10, 168, 174, 272, radius=6)
-    c.text_fit(HOME_SUMMARY, 16, 182, 152, 76, 26, align="center", min_size=16)
-    c.rect(10, 286, 174, 370, fill=DOOR_BANNER_FILL, outline=DOOR_BANNER_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 10, 24, 164, 110, 58, align="center", color="black", min_size=16)
+    c.line(16, 154, 168, 154)
+    c.text_fit(HOME_SUMMARY, 10, 174, 164, 88, 26, align="center", color="black", min_size=16)
+    c.line(16, 282, 168, 282)
     c.text_fit(
-        DOOR_STATUS_COMPACT, 16, 302, 152, 52, 26, align="center", color=DOOR_BANNER_FG, min_size=16
+        DOOR_STATUS_COMPACT,
+        10,
+        300,
+        164,
+        60,
+        26,
+        align="center",
+        color=DOOR_TEXT_COLOR,
+        min_size=16,
     )
     return c.items
 

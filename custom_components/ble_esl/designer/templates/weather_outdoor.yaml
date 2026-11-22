@@ -51,7 +51,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: &id002 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''미끄럼 주의'' if e.kind == ''snow'' else (''우산 챙기기'' if e.kind else (''오늘 외출'' if e.covered or e.risk else ''예보 정보 없음'')) }}'
+    value: &id001 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''미끄럼 주의'' if e.kind == ''snow'' else (''우산 챙기기'' if e.kind else (''오늘 외출'' if e.covered or e.risk else ''예보 정보 없음'')) }}'
     font: NotoSansKR-Bold.ttf
     x: 8
     y: 100
@@ -63,7 +63,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: &id001 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if e.kind else ''black'' }}'
+    color: &id002 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if e.kind else ''black'' }}'
   - type: text_fit
     value: &id003 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ (e.start.strftime(''%H'') ~ (''~'' ~ e.end.strftime(''%H'') if e.end != e.start else '''') ~ ''시 '' if e.start else ''오늘 '') ~ (''눈'' if e.kind == ''snow'' else (''비'' if e.kind == ''rain'' else ''강수'')) ~ ('' '' ~ (e.chance | round | int) ~ ''%'' if e.chance is not none else '''') if e.kind else (''강수 '' ~ (e.risk | round | int) ~ ''%'' if e.risk else (''비·눈 예보 없음'' if e.covered else ''—'')) }}'
     font: NotoSansKR-Bold.ttf
@@ -77,7 +77,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   240x416:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -113,7 +112,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 10
     y: 201
@@ -125,7 +124,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -139,7 +138,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   212x104:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -162,7 +160,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 112
     y: 6
@@ -174,7 +172,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 58
@@ -195,7 +193,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   104x212:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -218,7 +215,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 103
@@ -230,7 +227,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -244,7 +241,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   250x122:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -267,7 +263,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 131
     y: 6
@@ -279,7 +275,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 68
@@ -300,7 +296,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   122x250:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -323,7 +318,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 120
@@ -335,7 +330,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -349,7 +344,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   250x128:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -372,7 +366,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 131
     y: 6
@@ -384,7 +378,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 72
@@ -405,7 +399,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   128x250:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -428,7 +421,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 120
@@ -440,7 +433,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -454,7 +447,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   250x132:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -477,7 +469,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 131
     y: 6
@@ -489,7 +481,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 74
@@ -510,7 +502,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   132x250:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -533,7 +524,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 120
@@ -545,7 +536,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -559,7 +550,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   296x128:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -587,9 +577,9 @@ layouts:
     y: 23
     size: 26
     anchor: lt
-    color: *id001
+    color: *id002
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 166
     y: 6
@@ -601,7 +591,7 @@ layouts:
     align: left
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 72
@@ -622,7 +612,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   128x296:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -645,7 +634,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 140
@@ -657,7 +646,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -671,7 +660,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   296x152:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -699,9 +687,9 @@ layouts:
     y: 29
     size: 26
     anchor: lt
-    color: *id001
+    color: *id002
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 166
     y: 6
@@ -713,7 +701,7 @@ layouts:
     align: left
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 8
     y_start: 85
@@ -734,7 +722,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   152x296:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -757,7 +744,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 4
     y: 140
@@ -769,7 +756,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -783,7 +770,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   384x184:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -824,9 +810,9 @@ layouts:
     y: 30
     size: 36
     anchor: lt
-    color: *id001
+    color: *id002
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 233
     y: 10
@@ -838,7 +824,7 @@ layouts:
     align: left
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 187
     y_start: 88
@@ -859,7 +845,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   184x384:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -895,7 +880,7 @@ layouts:
     width: 1
     fill: black
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 10
     y: 187
@@ -907,7 +892,7 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: text_fit
     value: *id003
     font: NotoSansKR-Bold.ttf
@@ -921,7 +906,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   416x240:
   - type: text_fit
     value: '{% set v = state_attr(''${weather}'', ''temperature'') %}{{ (v | float | round(0) | int) ~ (state_attr(''${weather}'', ''temperature_unit'') or ''°'') if is_number(v) and v is not boolean else ''—'' }}'
@@ -962,9 +946,9 @@ layouts:
     y: 40
     size: 42
     anchor: lt
-    color: *id001
+    color: *id002
   - type: text_fit
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 253
     y: 10
@@ -976,7 +960,7 @@ layouts:
     align: left
     valign: middle
     max_lines: 1
-    color: *id001
+    color: *id002
   - type: line
     x_start: 201
     y_start: 115
@@ -997,7 +981,6 @@ layouts:
     align: center
     valign: middle
     max_lines: 1
-    color: *id001
   400x300:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -1061,7 +1044,7 @@ layouts:
     anchor: lt
     color: &id006 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''${accent}'' if e.kind else ''black'' }}'
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 218
     y: 48
@@ -1463,7 +1446,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 164
     y: 64
@@ -1865,7 +1848,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 353
     y: 77
@@ -2267,7 +2250,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 262
     y: 104
@@ -2669,7 +2652,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 293
     y: 69
@@ -3364,7 +3347,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 176
     y: 115
@@ -4059,7 +4042,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 352
     y: 92
@@ -4786,7 +4769,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 234
     y: 138
@@ -5513,7 +5496,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 352
     y: 98
@@ -6240,7 +6223,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 249
     y: 138
@@ -6967,7 +6950,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 586
     y: 172
@@ -7694,7 +7677,7 @@ layouts:
     anchor: lt
     color: *id006
   - type: text
-    value: *id002
+    value: *id001
     font: NotoSansKR-Bold.ttf
     x: 440
     y: 230

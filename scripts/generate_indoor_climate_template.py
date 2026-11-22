@@ -385,11 +385,11 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TEMP_VAL, 10, 10, 180, 68, 54, align="center", color=TEMP_COLOR, min_size=16)
-    c.line(12, 82, 188, 82)
-    c.text_fit(HUM_VAL, 10, 88, 180, 50, 44, align="center", color=HUM_COLOR, min_size=16)
-    c.rect(10, 144, 190, 190, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 16, 148, 168, 38, 24, align="center", color=BADGE_COLOR, min_size=16)
+    c.text_fit(TEMP_VAL, 10, 12, 180, 68, 54, align="center", color="black", min_size=16)
+    c.line(14, 84, 186, 84)
+    c.text_fit(HUM_VAL, 10, 88, 180, 50, 44, align="center", color="black", min_size=16)
+    c.line(14, 142, 186, 142)
+    c.text_fit(BADGE_TEXT, 10, 148, 180, 42, 26, align="center", color=ADVICE_COLOR, min_size=16)
     return c.items
 
 
@@ -399,13 +399,23 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     ms = 18 if large else 16
     half = vw // 2
     c = Canvas(w, h, vw, 128)
-    c.text_fit(TEMP_VAL, 6, 6, half - 10, 68, 52, align="center", color=TEMP_COLOR, min_size=ms)
+    c.text_fit(TEMP_VAL, 6, 6, half - 10, 68, 52, align="center", color="black", min_size=ms)
     c.line(half, 10, half, 70)
     c.text_fit(
-        HUM_VAL, half + 4, 6, vw - half - 10, 68, 52, align="center", color=HUM_COLOR, min_size=ms
+        HUM_VAL, half + 4, 6, vw - half - 10, 68, 52, align="center", color="black", min_size=ms
     )
-    c.rect(6, 78, vw - 6, 122, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 12, 82, vw - 24, 36, 26, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(8, 76, vw - 8, 76)
+    c.text_fit(
+        BADGE_TEXT,
+        8,
+        82,
+        vw - 16,
+        40,
+        28 if large else 26,
+        align="center",
+        color=ADVICE_COLOR,
+        min_size=ms,
+    )
     return c.items
 
 
@@ -422,7 +432,7 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
         vh * 0.30,
         46 if tall else 44,
         align="center",
-        color=TEMP_COLOR,
+        color="black",
         min_size=ms,
     )
     c.line(10, vh * 0.36, 118, vh * 0.36)
@@ -434,32 +444,31 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
         vh * 0.28,
         42 if tall else 38,
         align="center",
-        color=HUM_COLOR,
+        color="black",
         min_size=ms,
     )
-    c.rect(6, vh - 58, 122, vh - 8, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 10, vh - 54, 108, 42, 22, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(10, vh - 60, 118, vh - 60)
+    c.text_fit(BADGE_TEXT, 6, vh - 54, 116, 46, 22, align="center", color=ADVICE_COLOR, min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.text_fit(TEMP_VAL, 10, 12, 174, 96, 66, align="center", color=TEMP_COLOR, min_size=18)
+    c.text_fit(TEMP_VAL, 10, 12, 174, 96, 66, align="center", color="black", min_size=18)
     c.line(192, 14, 192, 108)
-    c.text_fit(HUM_VAL, 202, 12, 172, 96, 66, align="center", color=HUM_COLOR, min_size=18)
-    c.rect(10, 116, 374, 174, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 18, 122, 348, 46, 34, align="center", color=BADGE_COLOR, min_size=18)
+    c.text_fit(HUM_VAL, 202, 12, 172, 96, 66, align="center", color="black", min_size=18)
+    c.line(12, 114, 372, 114)
+    c.text_fit(BADGE_TEXT, 12, 122, 360, 52, 34, align="center", color=ADVICE_COLOR, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.rect(10, 12, 174, 140, radius=6)
-    c.text_fit(TEMP_VAL, 16, 28, 152, 96, 60, align="center", color=TEMP_COLOR, min_size=16)
-    c.rect(10, 150, 174, 278, radius=6)
-    c.text_fit(HUM_VAL, 16, 166, 152, 96, 56, align="center", color=HUM_COLOR, min_size=16)
-    c.rect(10, 290, 174, 372, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 16, 304, 152, 54, 30, align="center", color=BADGE_COLOR, min_size=16)
+    c.text_fit(TEMP_VAL, 10, 24, 164, 100, 60, align="center", color="black", min_size=16)
+    c.line(16, 144, 168, 144)
+    c.text_fit(HUM_VAL, 10, 164, 164, 100, 56, align="center", color="black", min_size=16)
+    c.line(16, 284, 168, 284)
+    c.text_fit(BADGE_TEXT, 10, 300, 164, 62, 30, align="center", color=ADVICE_COLOR, min_size=16)
     return c.items
 
 

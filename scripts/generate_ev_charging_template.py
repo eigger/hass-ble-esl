@@ -418,11 +418,11 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(SOC_VAL, 8, 12, 108, 92, 54, align="center", color=SOC_COLOR, min_size=16)
-    c.rect(120, 22, 192, 88, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 124, 28, 64, 54, 24, align="center", color=BADGE_COLOR, min_size=16)
-    c.line(10, 114, 190, 114)
-    c.text_fit(RANGE_VAL, 10, 126, 180, 60, 28, align="center", min_size=16)
+    c.text_fit(SOC_VAL, 8, 12, 106, 92, 54, align="center", color=SOC_COLOR, min_size=16)
+    c.line(118, 22, 118, 94)
+    c.text_fit(BADGE_TEXT, 122, 22, 70, 72, 24, align="center", color=STATUS_COLOR, min_size=16)
+    c.line(12, 114, 188, 114)
+    c.text_fit(RANGE_VAL, 10, 126, 180, 60, 28, align="center", color="black", min_size=16)
     return c.items
 
 
@@ -443,16 +443,16 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
         color=SOC_COLOR,
         min_size=ms,
     )
-    c.rect(split + 2, 10, vw - 6, 68, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.line(split, 12, split, 68)
     c.text_fit(
         BADGE_TEXT,
         split + 6,
-        14,
-        vw - split - 16,
-        50,
-        26,
+        8,
+        vw - split - 14,
+        62,
+        28 if large else 26,
         align="center",
-        color=BADGE_COLOR,
+        color=STATUS_COLOR,
         min_size=ms,
     )
     c.line(8, 76, vw - 8, 76)
@@ -464,6 +464,7 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
         40,
         28 if large else 26,
         align="center",
+        color="black",
         min_size=ms,
     )
     return c.items
@@ -475,39 +476,42 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     ms = 15 if tall else 14
     c = Canvas(w, h, 128, vh)
     c.text_fit(SOC_VAL, 6, 12, 116, vh * 0.30, 44, align="center", color=SOC_COLOR, min_size=ms)
-    c.rect(6, vh * 0.36, 122, vh * 0.62, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
     c.text_fit(
         BADGE_TEXT,
-        10,
-        vh * 0.39,
-        108,
-        vh * 0.20,
+        6,
+        vh * 0.40,
+        116,
+        vh * 0.22,
         22,
         align="center",
-        color=BADGE_COLOR,
+        color=STATUS_COLOR,
         min_size=ms,
     )
-    c.text_fit(RANGE_VAL, 6, vh * 0.66, 116, vh * 0.28, 22, align="center", min_size=ms)
+    c.line(10, vh * 0.64, 118, vh * 0.64)
+    c.text_fit(
+        RANGE_VAL, 6, vh * 0.68, 116, vh * 0.26, 22, align="center", color="black", min_size=ms
+    )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
     c.text_fit(SOC_VAL, 10, 12, 200, 92, 68, align="center", color=SOC_COLOR, min_size=18)
-    c.rect(218, 18, 374, 92, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 226, 26, 140, 58, 30, align="center", color=BADGE_COLOR, min_size=18)
-    c.line(10, 108, 374, 108)
-    c.text_fit(RANGE_PWR_COMPACT, 10, 118, 364, 54, 30, align="center", min_size=18)
+    c.line(216, 16, 216, 98)
+    c.text_fit(BADGE_TEXT, 224, 14, 150, 88, 30, align="center", color=STATUS_COLOR, min_size=18)
+    c.line(12, 108, 372, 108)
+    c.text_fit(RANGE_PWR_COMPACT, 12, 118, 360, 54, 30, align="center", color="black", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
     c.text_fit(SOC_VAL, 10, 18, 164, 106, 60, align="center", color=SOC_COLOR, min_size=16)
-    c.rect(10, 138, 174, 214, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
-    c.text_fit(BADGE_TEXT, 16, 148, 152, 56, 30, align="center", color=BADGE_COLOR, min_size=16)
-    c.line(12, 234, 172, 234)
-    c.text_fit(RANGE_PWR_COMPACT, 10, 254, 164, 110, 28, align="center", min_size=16)
+    c.line(16, 140, 168, 140)
+    c.text_fit(BADGE_TEXT, 10, 156, 164, 62, 30, align="center", color=STATUS_COLOR, min_size=16)
+    c.line(16, 234, 168, 234)
+    c.text_fit(RANGE_PWR_COMPACT, 10, 254, 164, 110, 28, align="center", color="black", min_size=16)
     return c.items
 
 

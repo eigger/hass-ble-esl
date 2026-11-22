@@ -421,7 +421,6 @@ def compact(width, height):
                 advice("timing"),
                 timing_sz,
                 align="center",
-                color=advice("safe_color"),
                 min_size=ms,
             ),
         ]
@@ -472,7 +471,6 @@ def narrow_portrait(width, height):
             advice("timing"),
             timing_sz,
             align="center",
-            color=advice("safe_color"),
             min_size=ms,
         ),
     ]
@@ -502,7 +500,6 @@ def stacked(width, height):
                 advice("timing"),
                 24,
                 align="center",
-                color=advice("safe_color"),
                 min_size=16,
             ),
         ]
@@ -555,7 +552,6 @@ def stacked(width, height):
             advice("timing"),
             tim_sz,
             align="center",
-            color=advice("safe_color"),
             min_size=16,
         ),
     ]
@@ -620,7 +616,6 @@ def today(width, height):
             advice("timing"),
             tim_sz,
             align="center",
-            color=advice("safe_color"),
             min_size=18,
         ),
     ]
