@@ -1981,6 +1981,104 @@ test("failed automation creation can retry the same ID without losing the name",
   expect(configs[0].id).toBe(configs[1].id);
 });
 
+test("design template: only the design list and options scroll on a small screen", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  await page
+    .getByRole("button", { name: "Browse design gallery", exact: true })
+    .click();
+  await page.setViewportSize({ width: 390, height: 440 });
+  const gallery = page.locator("ble-esl-template-dialog");
+  const title = gallery.getByRole("heading", { name: "Design gallery" });
+  const cancel = gallery.getByRole("button", { name: "Cancel", exact: true });
+  const save = gallery.getByRole("button", { name: "Save as template" });
+  const date = gallery.getByRole("button", { name: /Date label/ });
+
+  async function scrollWithFixedControls(area, controls) {
+    const positions = await Promise.all(
+      controls.map(async (control) => {
+        await expect(control).toBeInViewport({ ratio: 1 });
+        return control.boundingBox();
+      }),
+    );
+    await area.hover();
+    await page.mouse.wheel(0, 1000);
+    await expect
+      .poll(() => area.evaluate((node) => node.scrollTop))
+      .toBeGreaterThan(0);
+    for (const [index, control] of controls.entries()) {
+      await expect(control).toBeInViewport({ ratio: 1 });
+      expect(await control.boundingBox()).toEqual(positions[index]);
+    }
+  }
+
+  await expect(date).toBeVisible();
+  await expect(gallery.locator("img[data-preview][src]").last()).toBeVisible();
+  await scrollWithFixedControls(gallery.locator(".list"), [
+    title,
+    save,
+    cancel,
+  ]);
+  await date.click();
+
+  const apply = gallery.getByRole("button", { name: "Add to display" });
+  await expect(gallery.locator("img[data-form-preview]")).toBeVisible();
+  await scrollWithFixedControls(gallery.locator(".options"), [
+    title,
+    apply,
+    cancel,
+  ]);
+  await cancel.click();
+  await expect(gallery).toHaveCount(0);
+});
+
+test("design template: the gallery and its actions fit in a short viewport", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  await page.evaluate(() => {
+    window.panel.hass = { ...window.panel.hass, locale: { language: "de" } };
+  });
+  await page.getByRole("button", { name: "Designgalerie öffnen" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const title = gallery.getByRole("heading", { name: "Designgalerie" });
+  const cancel = gallery.getByRole("button", { name: "Abbrechen" });
+  const date = gallery.getByRole("button", { name: /Date label/ });
+  await expect(date).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 240 });
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+  await expect(gallery.locator("[data-template]").first()).toBeInViewport();
+  const save = gallery.getByRole("button", { name: "Als Vorlage speichern" });
+  await save.scrollIntoViewIfNeeded();
+  await expect(save).toBeInViewport({ ratio: 1 });
+  await gallery.getByLabel("Name der Design-Vorlage").fill("Small viewport");
+  await save.click();
+  const status = gallery.getByRole("status");
+  await expect(status).toHaveText("Vorlage small_viewport gespeichert.");
+  await expect(status).toBeInViewport({ ratio: 1 });
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+  await date.click();
+
+  await page.setViewportSize({ width: 320, height: 220 });
+  const preview = gallery.locator("img[data-form-preview]");
+  await expect(preview).toBeVisible();
+  const options = gallery.locator(".options");
+  await expect
+    .poll(() => options.evaluate((node) => node.scrollWidth - node.clientWidth))
+    .toBe(0);
+  const font = gallery.getByLabel("Font", { exact: true });
+  await font.scrollIntoViewIfNeeded();
+  await expect(font).toBeInViewport({ ratio: 1 });
+  await expect(title).toBeInViewport({ ratio: 1 });
+  await expect(
+    gallery.getByRole("button", { name: "Zur Anzeige hinzufügen" }),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(cancel).toBeInViewport({ ratio: 1 });
+});
+
 test("design template: gallery applies elements and prefills the automation", async ({
   page,
 }) => {
@@ -2046,6 +2144,55 @@ test("design template: a missing font reports the error and keeps the display", 
   await gallery.getByRole("button", { name: "Add to display" }).click();
   await expect(gallery).toContainText("Font not found");
   await expect(page.locator(".el")).toHaveCount(0);
+});
+
+test("design template: partial placement keeps the issue details in view", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.panel.applyDesignTemplate = async () => ({
+      elements: [{}],
+      issues: Array.from(
+        { length: 12 },
+        (_, index) => `Skipped element ${index + 1}`,
+      ),
+    });
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await expect(gallery.locator("[data-form-preview]")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 300 });
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  await expect(gallery.getByRole("status")).toHaveText("1 placed, 12 skipped.");
+  await expect(
+    gallery.getByText("Skipped element 1", { exact: true }),
+  ).toBeInViewport({ ratio: 1 });
+  await expect(gallery.getByRole("button", { name: "Close" })).toBeInViewport({
+    ratio: 1,
+  });
+});
+
+test("design template: apply errors stay in view on a short screen", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.panel.applyDesignTemplate = async () => {
+      throw new Error("Could not apply this design");
+    };
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await expect(gallery.locator("[data-form-preview]")).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 300 });
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  const status = gallery.getByRole("status");
+  await expect(status).toHaveText("Could not apply this design");
+  await expect(status).toBeInViewport({ ratio: 1 });
+  await expect(gallery.getByRole("button", { name: "Cancel" })).toBeInViewport({
+    ratio: 1,
+  });
 });
 
 test("design template triggers are dropped once the template's elements are gone", async ({
@@ -2141,6 +2288,39 @@ test("design template: an entity default that does not exist gives way to one th
   await expect(gallery.getByLabel("Weather entity")).toHaveValue(
     "weather.mine",
   );
+});
+
+test("design template: loading thumbnails does not move cards during a click", async ({
+  page,
+}) => {
+  const { promise: thumbnailReady, resolve: releaseThumbnail } =
+    Promise.withResolvers();
+  let firstThumbnail = true;
+  await page.route("**/api/designer", async (route) => {
+    const { action } = route.request().postDataJSON();
+    if (action === "preview_design_template" && firstThumbnail) {
+      firstThumbnail = false;
+      await thumbnailReady;
+    }
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const card = gallery.locator("[data-template]").nth(1);
+  const thumbnail = gallery.locator("[data-preview]").first();
+  try {
+    await expect(thumbnail).toBeHidden();
+    await card.hover();
+    const bounds = await card.boundingBox();
+    await page.mouse.down();
+    releaseThumbnail();
+    await expect(thumbnail).toBeVisible();
+    expect(await card.boundingBox()).toEqual(bounds);
+    await page.mouse.up();
+    await expect(gallery.locator(".options")).toBeVisible();
+  } finally {
+    releaseThumbnail();
+  }
 });
 
 test("design template: thumbnails load in the gallery and the form preview follows the parameters", async ({
