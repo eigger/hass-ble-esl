@@ -3154,10 +3154,38 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
     for bad in ("unavailable", "unknown", "nan", "inf", "-inf", "True", "False"):
         hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
         hass.states.async_set("sensor.washer_remaining", bad, {"unit_of_measurement": "min"})
-        bad_rendered = _shown(hass, "appliance_status", 800, 480, options)
+        rem_opts = {"remaining_1": "sensor.washer_remaining"}
+        bad_rendered = _shown(hass, "appliance_status", 800, 480, rem_opts)
         bad_texts = _texts(bad_rendered)
         assert "세탁기" in bad_texts and "동작 중" in bad_texts
+        assert not any(bad in t or "남은 " in t for t in bad_texts)
+        compact_bad = _texts(_shown(hass, "appliance_status", 212, 104, rem_opts))
+        assert not any(bad in t or "남은 " in t or f"동작 · {bad}" in t for t in compact_bad)
         render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), bad_rendered)
+
+    # All-unavailable/missing and custom states never claim all appliances are idle.
+    hass.states.async_set("sensor.washer_state", "unavailable", {"friendly_name": "세탁기"})
+    unavail_panel = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "상태 대기" in unavail_panel and "가전 상태를 확인할 수 없습니다" in unavail_panel
+    assert "모두 대기" not in unavail_panel and "모든 가전이 대기 중입니다" not in unavail_panel
+
+    unavail_compact = _texts(_shown(hass, "appliance_status", 104, 212, {}))
+    assert "상태 대기" in unavail_compact and "가전 상태 확인 필요" in unavail_compact
+
+    hass.states.async_set("sensor.washer_state", "spin_rinse", {"friendly_name": "세탁기"})
+    custom_panel = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "spin_rinse" in custom_panel and "세탁기 상태: spin_rinse" in custom_panel
+
+    hass.states.async_set("sensor.washer_state", "idle", {"friendly_name": "세탁기"})
+    partial_idle = _texts(
+        _shown(hass, "appliance_status", 800, 480, {"appliance_2": "sensor.missing_dryer"})
+    )
+    assert "대기 중" in partial_idle and "대기 중인 가전이 있습니다" in partial_idle
+    assert "모든 가전이 대기 중입니다" not in partial_idle
 
     hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
     hass.states.async_set("sensor.washer_remaining", "25", {"unit_of_measurement": "min"})

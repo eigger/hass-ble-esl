@@ -56,8 +56,8 @@ def _rem_snippet(rem_expr: str) -> str:
         f"{{% set _has_r = _rm is match('{ENTITY_RE}') %}}"
         "{% set _rr = (states(_rm) | string | trim) if _has_r else '' %}"
         "{% set _rrl = _rr | lower %}"
-        "{% set _r_valid = _has_r and _rrl not in ('', 'unknown', 'unavailable', 'none') %}"
-        "{% if _r_valid and is_number(_rr) and _rr is not boolean %}"
+        "{% set _r_valid = _has_r and _rrl not in ('', 'unknown', 'unavailable', 'none', 'nan', 'inf', '-inf', '+inf', 'infinity', '-infinity', '+infinity', 'true', 'false') %}"
+        "{% if _r_valid and is_number(_rr) %}"
         "{% set _rn = _rr | float(none) %}"
         "{% if _rn is not none and _rn == _rn and (_rn | abs) < 1000000 %}"
         "{% set _rnv = [0, _rn] | max %}"
@@ -109,7 +109,8 @@ def _slot(idx: int, *, compact: bool) -> tuple[str, str, str, str, str, str]:
         "'응답 없음' if _sk == 'unavail' else ("
         "_st[:10] if _sk == 'custom' else '미설정')))))) %}"
         "{% set _alert = _sk in ('error', 'done') %}"
-    ) + _rem_snippet(rem_expr)
+    )
+    sel_rem = sel + _rem_snippet(rem_expr)
 
     fallback_name = "" if compact else default_name
     fallback_status = "" if compact else "미설정"
@@ -117,7 +118,7 @@ def _slot(idx: int, *, compact: bool) -> tuple[str, str, str, str, str, str]:
         f"{{{{ ((_ao.name[:12] if (_ao is not none and _ao.name) else '{default_name}')) "
         f"if _has else '{fallback_name}' }}}}"
     )
-    compact_status = sel + (
+    compact_status = sel_rem + (
         "{% if not _has %}"
         + f"'{fallback_status}'"
         + "{% elif _rem_str and _sk in ('run', 'pause') %}"
@@ -125,7 +126,7 @@ def _slot(idx: int, *, compact: bool) -> tuple[str, str, str, str, str, str]:
         + "{% else %}{{ _sl }}{% endif %}"
     )
     panel_status = sel + "{{ _sl if _has else '미설정' }}"
-    subtext = sel + (
+    subtext = sel_rem + (
         "{% set _lc = (_ao.last_changed | default(none)) if _ao is not none else none %}"
         "{% if not _has %}{{ '' if " + ("True" if compact else "False") + " else '선택 입력' }}"
         "{% elif _rem_str and _sk in ('run', 'pause', 'custom') %}"
@@ -148,7 +149,7 @@ def _slot(idx: int, *, compact: bool) -> tuple[str, str, str, str, str, str]:
 
 
 SUMMARY_PRELUDE = (
-    "{% set _ns = namespace(tot=0, err=0, done=0, run=0, pause=0, idle=0, err_name='', done_name='', run_name='') %}"
+    "{% set _ns = namespace(tot=0, err=0, done=0, run=0, pause=0, idle=0, custom=0, err_name='', done_name='', run_name='', custom_name='', custom_state='') %}"
     + "".join(
         f"{{% set _ae = '{ent_expr}' %}}"
         f"{{% if _ae is match('{ENTITY_RE}') %}}"
@@ -170,6 +171,9 @@ SUMMARY_PRELUDE = (
         "{% set _ns.pause = _ns.pause + 1 %}"
         f"{{% elif _stl in {_IDLE_STATES} %}}"
         "{% set _ns.idle = _ns.idle + 1 %}"
+        "{% elif _ao is not none and _stl not in ('', 'unknown', 'unavailable', 'none') %}"
+        "{% set _ns.custom = _ns.custom + 1 %}"
+        "{% if not _ns.custom_name %}{% set _ns.custom_name = _nm %}{% set _ns.custom_state = _st[:10] %}{% endif %}"
         "{% endif %}"
         "{% endif %}"
         for ent_expr, _, _, default_name in APPLIANCES
@@ -185,7 +189,8 @@ BADGE_TEXT = (
     "(('완료 ' ~ _ns.done) if _ns.done > 1 else '완료 알림') if _ns.done > 0 else ("
     "('동작 ' ~ _ns.run) if _ns.run > 0 else ("
     "'일시정지' if _ns.pause > 0 else ("
-    "'모두 대기' if _ns.idle > 0 else '상태 대기'))))) }}"
+    "('모두 대기' if _ns.idle == _ns.tot else '대기 중') if _ns.idle > 0 else ("
+    "_ns.custom_state if _ns.custom > 0 else '상태 대기')))))) }}"
 )
 BADGE_FILL = SUMMARY_PRELUDE + "{{ _ink if _has_alert else 'white' }}"
 BADGE_OUTLINE = SUMMARY_PRELUDE + "{{ _ink if _has_alert else 'black' }}"
@@ -204,7 +209,9 @@ BANNER_TEXT = (
     "(_ns.err_name ~ ' 오류 확인 필요' ~ (' (외 ' ~ (_ns.err - 1) ~ '건)' if _ns.err > 1 else '')) if _ns.err > 0 else ("
     "(_ns.done_name ~ ' 작동 완료 · 확인해 주세요' ~ (' (외 ' ~ (_ns.done - 1) ~ '건)' if _ns.done > 1 else '')) if _ns.done > 0 else ("
     "(_ns.run_name ~ ' 동작 중' ~ (' · 총 ' ~ _ns.run ~ '대 가동' if _ns.run > 1 else '')) if _ns.run > 0 else ("
-    "'일시정지 중인 가전이 있습니다' if _ns.pause > 0 else '모든 가전이 대기 중입니다')))) }}"
+    "'일시정지 중인 가전이 있습니다' if _ns.pause > 0 else ("
+    "('모든 가전이 대기 중입니다' if _ns.idle == _ns.tot else '대기 중인 가전이 있습니다') if _ns.idle > 0 else ("
+    "(_ns.custom_name ~ ' 상태: ' ~ _ns.custom_state) if _ns.custom > 0 else '가전 상태를 확인할 수 없습니다')))))) }}"
 )
 BANNER_COMPACT = (
     SUMMARY_PRELUDE + "{{ "
@@ -212,7 +219,9 @@ BANNER_COMPACT = (
     "(_ns.err_name ~ ' 오류') if _ns.err > 0 else ("
     "(_ns.done_name ~ ' 완료!') if _ns.done > 0 else ("
     "(_ns.run_name ~ ' 동작 중') if _ns.run > 0 else ("
-    "'일시정지 중' if _ns.pause > 0 else ('모두 대기 · ' ~ now().strftime('%H:%M')))))) }}"
+    "'일시정지 중' if _ns.pause > 0 else ("
+    "(('모두 대기' if _ns.idle == _ns.tot else '일부 대기') ~ ' · ' ~ now().strftime('%H:%M')) if _ns.idle > 0 else ("
+    "(_ns.custom_name ~ ' ' ~ _ns.custom_state) if _ns.custom > 0 else ('상태 확인 · ' ~ now().strftime('%H:%M')))))))) }}"
 )
 BANNER_COMPACT_STATIC = (
     SUMMARY_PRELUDE + "{{ "
@@ -220,7 +229,9 @@ BANNER_COMPACT_STATIC = (
     "(_ns.err_name ~ ' 오류') if _ns.err > 0 else ("
     "(_ns.done_name ~ ' 완료!') if _ns.done > 0 else ("
     "(_ns.run_name ~ ' 동작 중') if _ns.run > 0 else ("
-    "'일시정지 중' if _ns.pause > 0 else '모든 가전 대기 중')))) }}"
+    "'일시정지 중' if _ns.pause > 0 else ("
+    "('모든 가전 대기 중' if _ns.idle == _ns.tot else '가전 대기 중') if _ns.idle > 0 else ("
+    "(_ns.custom_name ~ ' ' ~ _ns.custom_state) if _ns.custom > 0 else '가전 상태 확인 필요')))))) }}"
 )
 BANNER_TEXT_COLOR = SUMMARY_PRELUDE + "{{ _tink if _has_alert else 'black' }}"
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
