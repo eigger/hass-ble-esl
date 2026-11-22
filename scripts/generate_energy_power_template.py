@@ -23,7 +23,6 @@ ENTITY_RE = r"^[a-z][a-z0-9_]*[.][a-z0-9_]+$"
 BADGE_INK_EXPR = f"('black' if '{ACCENT}' == 'white' else '{ACCENT}')"
 BADGE_FG_EXPR = "('black' if _ink == 'yellow' else 'white')"
 TEXT_INK_EXPR = f"('black' if '{ACCENT}' in ('yellow', 'white') else '{ACCENT}')"
-TEXT_INK = f"{{{{ {TEXT_INK_EXPR} }}}}"
 
 
 def _finite(entity_expr: str, var: str, set_flag: str | None = None) -> str:
@@ -99,10 +98,6 @@ PWR_HINT = (
     PWR_PRELUDE
     + "{{ ('목표 ' ~ (_bg | round(0) | int) ~ 'W 대비 ' ~ _ratio ~ '%') if _pw is not none else ('목표 최대 ' ~ (_bg | round(0) | int) ~ 'W') }}"
 )
-PWR_HINT_COMPACT = (
-    PWR_PRELUDE
-    + "{{ ('부하 ' ~ _ratio ~ '%') if _pw is not none else ('목표 ' ~ (_bg | round(0) | int) ~ 'W') }}"
-)
 
 BADGE_TEXT = PWR_PRELUDE + "{{ _badge }}"
 BADGE_FILL = PWR_PRELUDE + "{{ _ink if _alert else 'white' }}"
@@ -128,12 +123,6 @@ SOLAR_VAL = (
     + _fmt_power_or_solar("_s", "_su", "_sf")
     + "{{ _sf ~ ' ' ~ _su }}{% else %}{{ ('-- ' ~ _su) if _has_s else '미설정' }}{% endif %}"
 )
-SOLAR_SHORT = (
-    SOLAR_PRELUDE
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{{ '태양광 ' ~ _sf ~ _su }}{% else %}{{ '태양광 --' if _has_s else '태양광 미설정' }}{% endif %}"
-)
 
 ADVICE_TEXT = (
     PWR_PRELUDE
@@ -155,38 +144,6 @@ ADVICE_ICON = (
 )
 ADVICE_COLOR = PWR_PRELUDE + "{{ _tink if _alert else 'black' }}"
 
-COMPACT_FOOTER = (
-    PWR_PRELUDE
-    + ENERGY_PRELUDE
-    + SOLAR_PRELUDE
-    + "{% if _e is not none %}"
-    + _fmt_energy_str("_e", "_ef")
-    + "{% set _es = _ef ~ _eu %}{% else %}{% set _es = '' %}{% endif %}"
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{% set _ss = _sf ~ _su %}{% else %}{% set _ss = '' %}{% endif %}"
-    + "{{ "
-    "('오늘 ' ~ _es ~ ' · 태양광 ' ~ _ss) if (_es and _ss) else ("
-    "('오늘 ' ~ _es ~ ' · 부하 ' ~ _ratio ~ '%') if _es else ("
-    "('태양광 ' ~ _ss ~ ' · 부하 ' ~ _ratio ~ '%') if _ss else ("
-    "('목표 ' ~ (_bg | round(0) | int) ~ 'W 대비 ' ~ _ratio ~ '% · ' ~ now().strftime('%H:%M')) if _pw is not none else '센서 연결 확인'))) }}"
-)
-PORTRAIT_SUMMARY = (
-    PWR_PRELUDE
-    + ENERGY_PRELUDE
-    + SOLAR_PRELUDE
-    + "{% if _e is not none %}"
-    + _fmt_energy_str("_e", "_ef")
-    + "{% set _es = _ef ~ _eu %}{% else %}{% set _es = '' %}{% endif %}"
-    + "{% if _s is not none %}"
-    + _fmt_power_or_solar("_s", "_su", "_sf")
-    + "{% set _ss = _sf ~ _su %}{% else %}{% set _ss = '' %}{% endif %}"
-    + "{{ "
-    "('오늘 ' ~ _es ~ ' · 태양광 ' ~ _ss) if (_es and _ss) else ("
-    "('오늘 ' ~ _es) if _es else ("
-    "('태양광 ' ~ _ss) if _ss else ("
-    "('부하 ' ~ _ratio ~ '% · 목표 ' ~ (_bg | round(0) | int) ~ 'W') if _pw is not none else '센서 연결 확인'))) }}"
-)
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
 
@@ -373,10 +330,11 @@ class Canvas:
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 200, 200)
-    c.text_fit(PWR_VAL, 10, 12, 180, 68, 54, align="center", color="black", min_size=16)
-    c.text_fit(BADGE_TEXT, 10, 82, 180, 34, 24, align="center", color=ADVICE_COLOR, min_size=16)
-    c.line(14, 122, 186, 122)
-    c.text_fit(ENERGY_SHORT, 10, 132, 180, 56, 26, align="center", color="black", min_size=16)
+    c.rect(0, 0, 6, 199, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
+    c.text_fit(PWR_VAL, 12, 12, 178, 68, 54, align="center", color="black", min_size=16)
+    c.text_fit(BADGE_TEXT, 12, 82, 178, 34, 24, align="center", color=ADVICE_COLOR, min_size=16)
+    c.line(16, 122, 188, 122)
+    c.text_fit(ENERGY_SHORT, 12, 132, 178, 56, 26, align="center", color="black", min_size=16)
     return c.items
 
 
@@ -384,37 +342,22 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     large = w >= 296
     vw = 296 if large else 250
     ms = 18 if large else 16
-    split = 186 if large else 160
+    bar_px = 6 if large else 5
     c = Canvas(w, h, vw, 128)
-    c.text_fit(
-        PWR_VAL,
-        8,
-        6,
-        split - 14,
-        66,
-        54 if large else 52,
-        align="center",
-        color="black",
-        min_size=ms,
-    )
-    c.line(split, 12, split, 70)
-    c.text_fit(
-        BADGE_TEXT,
-        split + 6,
-        8,
-        vw - split - 14,
-        62,
-        28 if large else 26,
-        align="center",
-        color=ADVICE_COLOR,
-        min_size=ms,
-    )
-    c.line(8, 76, vw - 8, 76)
+    c.rect(0, 0, bar_px / c.sx, 127, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
+    if large:
+        c.icon("flash", 28, 39, 24, color=ADVICE_COLOR)
+        c.text_fit(PWR_VAL, 44, 6, 148, 66, 54, align="center", color="black", min_size=ms)
+        c.text_fit(BADGE_TEXT, 196, 8, 90, 62, 28, align="center", color=ADVICE_COLOR, min_size=ms)
+    else:
+        c.text_fit(PWR_VAL, 12, 6, 152, 66, 52, align="center", color="black", min_size=ms)
+        c.text_fit(BADGE_TEXT, 168, 8, 74, 62, 26, align="center", color=ADVICE_COLOR, min_size=ms)
+    c.line(12, 76, vw - 10, 76)
     c.text_fit(
         ENERGY_SHORT,
-        8,
+        12,
         82,
-        vw - 16,
+        vw - 20,
         40,
         28 if large else 26,
         align="center",
@@ -428,44 +371,51 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     tall = h >= 296
     vh = 296 if tall else 250
     ms = 15 if tall else 14
+    bar_px = 5 if tall else 4
+    x0 = 11 if tall else 10
+    cw = 128 - x0 - 4
     c = Canvas(w, h, 128, vh)
-    c.text_fit(PWR_VAL, 6, 12, 116, vh * 0.30, 44, align="center", color="black", min_size=ms)
-    c.line(10, vh * 0.36, 118, vh * 0.36)
+    c.rect(0, 0, bar_px / c.sx, vh - 1, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
+    c.text_fit(PWR_VAL, x0, 12, cw, vh * 0.30, 44, align="center", color="black", min_size=ms)
+    c.line(x0 + 2, vh * 0.36, 120, vh * 0.36)
     c.text_fit(
         BADGE_TEXT,
-        6,
+        x0,
         vh * 0.40,
-        116,
+        cw,
         vh * 0.22,
         24,
         align="center",
         color=ADVICE_COLOR,
         min_size=ms,
     )
-    c.line(10, vh * 0.64, 118, vh * 0.64)
+    c.line(x0 + 2, vh * 0.64, 120, vh * 0.64)
     c.text_fit(
-        ENERGY_SHORT, 6, vh * 0.68, 116, vh * 0.26, 22, align="center", color="black", min_size=ms
+        ENERGY_SHORT, x0, vh * 0.68, cw, vh * 0.26, 22, align="center", color="black", min_size=ms
     )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 384, 184)
-    c.text_fit(PWR_VAL, 10, 12, 236, 92, 66, align="center", color="black", min_size=18)
-    c.line(252, 16, 252, 98)
-    c.text_fit(BADGE_TEXT, 258, 14, 116, 88, 32, align="center", color=ADVICE_COLOR, min_size=18)
-    c.line(12, 108, 372, 108)
-    c.text_fit(ENERGY_SHORT, 12, 118, 360, 54, 30, align="center", color="black", min_size=18)
+    c.rect(0, 0, 8 / c.sx, 183, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
+    c.icon("flash", 32, 56, 32, color=ADVICE_COLOR)
+    c.text_fit(PWR_VAL, 52, 12, 200, 92, 66, align="center", color="black", min_size=18)
+    c.text_fit(BADGE_TEXT, 260, 14, 114, 88, 32, align="center", color=ADVICE_COLOR, min_size=18)
+    c.line(16, 108, 372, 108)
+    c.text_fit(ENERGY_SHORT, 16, 118, 356, 54, 30, align="center", color="black", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 184, 384)
-    c.text_fit(PWR_VAL, 10, 20, 164, 106, 58, align="center", color="black", min_size=16)
-    c.line(16, 142, 168, 142)
-    c.text_fit(BADGE_TEXT, 10, 158, 164, 62, 32, align="center", color=ADVICE_COLOR, min_size=16)
-    c.line(16, 236, 168, 236)
-    c.text_fit(ENERGY_SHORT, 10, 256, 164, 108, 28, align="center", color="black", min_size=16)
+    bar_px = 8 if w >= 210 else 6
+    c.rect(0, 0, bar_px / c.sx, 383, fill=ADVICE_COLOR, outline=ADVICE_COLOR, width=1)
+    c.text_fit(PWR_VAL, 14, 20, 160, 106, 58, align="center", color="black", min_size=16)
+    c.line(18, 142, 170, 142)
+    c.text_fit(BADGE_TEXT, 14, 158, 160, 62, 32, align="center", color=ADVICE_COLOR, min_size=16)
+    c.line(18, 236, 170, 236)
+    c.text_fit(ENERGY_SHORT, 14, 256, 160, 108, 28, align="center", color="black", min_size=16)
     return c.items
 
 

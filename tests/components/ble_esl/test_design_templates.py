@@ -2351,7 +2351,9 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
         build(TEMPLATES["indoor_climate"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
-    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    bw_tiny_rects = [item for item in bw_tiny_items if item.get("type") == "rectangle"]
+    assert len(bw_tiny_rects) == 1 and bw_tiny_rects[0]["x_end"] <= 10
+    assert bw_tiny_rects[0]["fill"] == "black"
     assert any(
         item.get("value") == "환기 권장" and item.get("color") == "black" for item in bw_tiny_items
     )
@@ -2962,7 +2964,9 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
         build(TEMPLATES["home_presence"], 212, 104, "BW", {**options, "accent": "red"})["payload"],
         set(),
     )
-    assert not any(item.get("type") == "rectangle" for item in bw_tiny_items)
+    bw_tiny_rects = [item for item in bw_tiny_items if item.get("type") == "rectangle"]
+    assert len(bw_tiny_rects) == 1 and bw_tiny_rects[0]["x_end"] <= 10
+    assert bw_tiny_rects[0]["fill"] == "black"
     assert any(
         item.get("value") == "재실 1/4" and item.get("color") == "black" for item in bw_tiny_items
     )
@@ -3724,6 +3728,7 @@ def test_under_4_inch_templates_enforce_readable_font_floors():
     for name in templates:
         layouts = TEMPLATES[name]["layouts"]
         for size, (min_sec, min_hero, min_ms, max_cnt) in size_floors.items():
+            _, height = (int(part) for part in size.split("x"))
             texts = [i for i in layouts[size] if i.get("type") in ("text_fit", "text")]
             assert texts, (name, size)
             assert len(texts) <= max_cnt, (name, size, len(texts))
@@ -3733,7 +3738,26 @@ def test_under_4_inch_templates_enforce_readable_font_floors():
             fit_mins = [i["min_size"] for i in texts if i.get("type") == "text_fit"]
             assert fit_mins and min(fit_mins) >= min_ms, (name, size, fit_mins)
             assert not any("갱신" in str(i.get("value", "")) for i in texts), (name, size)
-            assert not any(i.get("type") == "rectangle" for i in layouts[size]), (name, size)
+            rects = [i for i in layouts[size] if i.get("type") == "rectangle"]
+            assert len(rects) == 1, (name, size, rects)
+            bar = rects[0]
+            assert bar["x_start"] == 0, (name, size, bar)
+            assert bar["y_start"] == 0, (name, size, bar)
+            assert 3 <= bar["x_end"] <= 10, (name, size, bar)
+            assert bar["y_end"] >= height - 2, (name, size, bar)
+            assert bar.get("radius", 0) == 0, (name, size, bar)
+            for item in layouts[size]:
+                kind = item.get("type")
+                if kind in ("text_fit", "text"):
+                    left = item["x"]
+                elif kind == "icon":
+                    anchor = item.get("anchor", "lt")
+                    left = item["x"] - (item["size"] // 2 if anchor[0] == "m" else 0)
+                elif kind == "line":
+                    left = item["x_start"]
+                else:
+                    continue
+                assert left > bar["x_end"], (name, size, bar, item)
 
 
 @pytest.mark.parametrize("accent", ["white", "yellow"])

@@ -128,15 +128,8 @@ def _text_ink_expr():
     return f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r})"
 
 
-TEXT_INK = expression(_text_ink_expr())
-
-
 def _accent_fg_expr():
     return f"('black' if {ACCENT!r} in ('yellow', 'white') else 'white')"
-
-
-def _safe_accent_fg_expr():
-    return f"('black' if {ACCENT!r} == 'yellow' else 'white')"
 
 
 def _wind_expr(var_name, *, space=True):
@@ -227,25 +220,6 @@ def today_field(key, *, prefix=""):
     raise KeyError(key)
 
 
-def compact_comfort_line():
-    return (
-        tag(f"set _f = {weather_attribute('apparent_temperature')}")
-        + tag(f"set _h = {weather_attribute('humidity')}")
-        + expression(f"'체감 ' ~ {_int_deg_expr('_f')} ~ ' · 습도 ' ~ {_int_pct_expr('_h')}")
-    )
-
-
-def compact_precip_wind_line():
-    return (
-        select_forecast(0)
-        + tag("set _p = row.precipitation_probability | default(none)")
-        + tag(f"set _w = {weather_attribute('wind_speed')}")
-        + expression(
-            f"'강수 ' ~ {_int_pct_expr('_p')} ~ ' · 바람 ' ~ {_wind_expr('_w', space=False)}"
-        )
-    )
-
-
 def commute_alert(key):
     """Derive morning commute action badge, icon, colors, and checklist copy."""
     setup = (
@@ -299,13 +273,11 @@ def commute_alert(key):
     )
     ink = _accent_ink_expr()
     fg = _accent_fg_expr()
-    safe_fg = _safe_accent_fg_expr()
     safe_text = _text_ink_expr()
     outputs = {
         "bg": (setup, f"{ink} if _kind in ('snow', 'rain') else 'white'"),
         "outline": (setup, f"{ink} if _kind in ('snow', 'rain') else 'black'"),
         "fg": (setup, f"{fg} if _kind in ('snow', 'rain') else 'black'"),
-        "safe_fg": (setup, f"{safe_fg} if _kind in ('snow', 'rain') else 'black'"),
         "safe_text_color": (setup, f"{safe_text} if _kind in ('snow', 'rain') else 'black'"),
         "icon": (
             setup,
@@ -536,11 +508,10 @@ def line(x1, y1, x2, y2, *, width=1, color="black"):
     return item
 
 
-def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=None, min_size=None):
+def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4):
     w = x2 - x1
     h = y2 - y1
     ic_size = max(10, min(18, h - 6))
-    compact_pad = text_size is not None or min_size is not None
     return [
         rect(
             x1,
@@ -561,14 +532,13 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=No
         ),
         fit_text(
             x1 + icon_pad + ic_size + 2,
-            y1 + (2 if compact_pad else 1),
-            w - icon_pad - ic_size - (6 if compact_pad else 5),
-            h - (4 if compact_pad else 2),
+            y1 + 1,
+            w - icon_pad - ic_size - 5,
+            h - 2,
             text_value,
-            text_size if text_size is not None else max(9, h - 8),
+            max(9, h - 8),
             align="center",
             color=commute_alert("fg"),
-            min_size=min_size,
         ),
     ]
 
@@ -580,20 +550,35 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=No
 
 def square_200(width, height):
     """1.54" 200x200 minimalist commute briefing."""
+    bw = 6
+    x0 = bw + 6
+    iw = width - x0 - 8
+    lo_w = iw // 2 - 4
+    accent = commute_alert("safe_text_color")
     return [
-        fit_text(8, 10, 184, 68, current("temperature"), 54, align="center", min_size=16),
-        fit_text(8, 84, 88, 36, today_field("low"), 24, align="center", min_size=16),
-        fit_text(104, 84, 88, 36, today_field("high"), 24, align="center", min_size=16),
-        line(12, 128, 188, 128, width=1),
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
+        fit_text(x0, 10, iw, 68, current("temperature"), 54, align="center", min_size=16),
+        fit_text(x0, 84, lo_w, 36, today_field("low"), 24, align="center", min_size=16),
         fit_text(
-            8,
+            x0 + lo_w + 8,
+            84,
+            iw - lo_w - 8,
+            36,
+            today_field("high"),
+            24,
+            align="center",
+            min_size=16,
+        ),
+        line(x0, 128, width - 10, 128, width=1),
+        fit_text(
+            x0,
             136,
-            184,
+            iw,
             54,
             commute_alert("short"),
             28,
             align="center",
-            color=commute_alert("safe_text_color"),
+            color=accent,
             min_size=16,
         ),
     ]
@@ -602,18 +587,22 @@ def square_200(width, height):
 def narrow_portrait(width, height):
     """Narrow portrait tags under 4 inches (104x212 .. 152x296)."""
     tall = height >= 296
+    bw = 5 if tall else 4
     ms = 15 if tall else 14
-    pad = 4
-    inner = width - 2 * pad
+    x0 = bw + 4
+    inner = width - x0 - 4
     temp_sz = (46 if width >= 145 else 42) if tall else (36 if width < 120 else 40)
     hilo_sz = 20 if tall else 18
     alert_sz = 22 if tall else 19
     hilo_y = round(height * 0.36)
     hilo_h = round(height * 0.18)
     box_y = round(height * 0.58)
+    lo_w = inner // 2 - 2
+    accent = commute_alert("safe_text_color")
     return [
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
         fit_text(
-            pad,
+            x0,
             10,
             inner,
             hilo_y - 16,
@@ -621,25 +610,25 @@ def narrow_portrait(width, height):
             temp_sz,
             min_size=ms,
         ),
-        fit_text(pad, hilo_y, inner // 2 - 2, hilo_h, today_field("low"), hilo_sz, min_size=ms),
+        fit_text(x0, hilo_y, lo_w, hilo_h, today_field("low"), hilo_sz, min_size=ms),
         fit_text(
-            width // 2 + 2,
+            x0 + lo_w + 4,
             hilo_y,
-            inner // 2 - 2,
+            inner - lo_w - 4,
             hilo_h,
             today_field("high"),
             hilo_sz,
             min_size=ms,
         ),
-        line(8, box_y - 2, width - 8, box_y - 2, width=1),
+        line(x0 + 2, box_y - 2, width - 6, box_y - 2, width=1),
         fit_text(
-            pad,
+            x0,
             box_y + 4,
             inner,
             height - box_y - 12,
             commute_alert("short"),
             alert_sz,
-            color=commute_alert("safe_text_color"),
+            color=accent,
             min_size=ms,
         ),
     ]
@@ -648,8 +637,9 @@ def narrow_portrait(width, height):
 def tall_portrait_under4(width, height):
     """Tall portrait tags under 4 inches (184x384, 240x416)."""
     tall = width >= 210
-    pad = 10
-    inner = width - 2 * pad
+    bw = 8 if tall else 6
+    x0 = bw + 6
+    inner = width - x0 - 8
     temp_sz = 72 if tall else 62
     hilo_sz = 28 if tall else 24
     lbl_sz = 34 if tall else 28
@@ -658,42 +648,45 @@ def tall_portrait_under4(width, height):
     hilo_y = round(height * 0.34)
     card_top = height - 186
     div_y = card_top + 82
+    lo_w = inner // 2 - 4
+    accent = commute_alert("safe_text_color")
     return [
-        fit_text(pad, 16, inner, hilo_y - 24, current("temperature"), temp_sz, min_size=16),
-        fit_text(pad, hilo_y, inner // 2 - 4, 46, today_field("low"), hilo_sz, min_size=16),
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
+        fit_text(x0, 16, inner, hilo_y - 24, current("temperature"), temp_sz, min_size=16),
+        fit_text(x0, hilo_y, lo_w, 46, today_field("low"), hilo_sz, min_size=16),
         fit_text(
-            width // 2 + 4,
+            x0 + lo_w + 8,
             hilo_y,
-            inner // 2 - 4,
+            inner - lo_w - 8,
             46,
             today_field("high"),
             hilo_sz,
             min_size=16,
         ),
-        line(12, card_top, width - 12, card_top, width=1),
+        line(x0, card_top, width - 8, card_top, width=1),
         icon(
-            pad + 6,
+            x0 + 4,
             card_top + 12 + (60 - ic_sz) // 2,
             commute_alert("icon"),
             ic_sz,
-            color=commute_alert("safe_text_color"),
+            color=accent,
         ),
         fit_text(
-            pad + 10 + ic_sz + 4,
+            x0 + 4 + ic_sz + 6,
             card_top + 12,
-            inner - ic_sz - 14,
+            inner - ic_sz - 12,
             60,
             commute_alert("label"),
             lbl_sz,
             align="left",
-            color=commute_alert("safe_text_color"),
+            color="black",
             min_size=16,
         ),
-        line(pad + 12, div_y, width - pad - 12, div_y, width=1),
+        line(x0 + 6, div_y, width - 10, div_y, width=1),
         fit_text(
-            pad + 8,
+            x0 + 4,
             div_y + 12,
-            inner - 16,
+            inner - 8,
             height - div_y - 30,
             commute_alert("sub"),
             sub_sz,
@@ -705,17 +698,21 @@ def tall_portrait_under4(width, height):
 def compact_landscape(width, height):
     """2.1"/2.13" compact landscape (212x104, 250x122, 250x128, 250x132)."""
     small = width < 230
+    bw = 5
+    x0 = bw + 6
     mid = 114 if small else 136
     div_y = round(height * 0.54)
     temp_sz = 42 if small else 48
     hilo_sz = 22 if small else 24
     alert_sz = 24 if small else 26
     hilo_w = (width - mid - 12) // 2
+    accent = commute_alert("safe_text_color")
     return [
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
         fit_text(
-            6,
+            x0,
             4,
-            mid - 12,
+            mid - x0 - 6,
             div_y - 8,
             current("temperature"),
             temp_sz,
@@ -742,16 +739,16 @@ def compact_landscape(width, height):
             align="center",
             min_size=16,
         ),
-        line(8, div_y, width - 8, div_y, width=1),
+        line(x0, div_y, width - 8, div_y, width=1),
         fit_text(
-            8,
+            x0,
             div_y + 6,
-            width - 16,
+            width - x0 - 8,
             height - div_y - 12,
             commute_alert("short"),
             alert_sz,
             align="center",
-            color=commute_alert("safe_text_color"),
+            color=accent,
             min_size=16,
         ),
     ]
@@ -760,18 +757,22 @@ def compact_landscape(width, height):
 def wide_compact_landscape(width, height):
     """2.66"/2.9" high-legibility 2-zone layout (296x128, 296x152)."""
     tall = height >= 145
-    col1_end = 126
+    bw = 6
+    x0 = bw + 6
+    col1_end = 132
     div_y = round(height * 0.50)
     temp_sz = 56 if tall else 50
     rng_sz = 24
     lbl_sz = 28 if tall else 26
     short_sz = 24 if tall else 22
     ic_sz = 24
+    accent = commute_alert("safe_text_color")
     return [
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
         fit_text(
-            6,
+            x0,
             8,
-            col1_end - 12,
+            col1_end - x0 - 6,
             round(height * 0.54),
             current("temperature"),
             temp_sz,
@@ -779,9 +780,9 @@ def wide_compact_landscape(width, height):
             min_size=18,
         ),
         fit_text(
-            6,
+            x0,
             height - 46,
-            col1_end - 12,
+            col1_end - x0 - 6,
             38,
             today_field("range"),
             rng_sz,
@@ -794,7 +795,7 @@ def wide_compact_landscape(width, height):
             (div_y - ic_sz) // 2 + 2,
             commute_alert("icon"),
             ic_sz,
-            color=commute_alert("safe_text_color"),
+            color=accent,
         ),
         fit_text(
             col1_end + 38,
@@ -804,7 +805,7 @@ def wide_compact_landscape(width, height):
             commute_alert("label"),
             lbl_sz,
             align="left",
-            color=commute_alert("safe_text_color"),
+            color="black",
             min_size=18,
         ),
         line(col1_end + 8, div_y, width - 8, div_y, width=1),
@@ -824,10 +825,12 @@ def wide_compact_landscape(width, height):
 def mid_compact_landscape(width, height):
     """3.5"/3.7" minimalist split briefing (384x184, 416x240)."""
     tall = height >= 210
-    mid = round(width * 0.44)
-    pad = 10
-    right_x = mid + pad
-    right_w = width - right_x - pad
+    bw = 8
+    x0 = bw + 8
+    mid = round(x0 + (width - x0) * 0.43)
+    left_w = mid - x0 - 8
+    right_x = mid + 10
+    right_w = width - right_x - 10
     temp_sz = 76 if tall else 64
     hilo_sz = 30 if tall else 26
     lbl_sz = 36 if tall else 30
@@ -835,12 +838,14 @@ def mid_compact_landscape(width, height):
     ic_sz = 36 if tall else 30
     hilo_y = height - 56
     card_div_y = round(height * 0.50)
-    hilo_w = (mid - 2 * pad) // 2 - 4
+    hilo_w = left_w // 2 - 4
+    accent = commute_alert("safe_text_color")
     return [
+        rect(0, 0, bw, height - 1, fill=accent, outline=accent, width=1),
         fit_text(
-            pad,
+            x0,
             12,
-            mid - 2 * pad,
+            left_w,
             hilo_y - 20,
             current("temperature"),
             temp_sz,
@@ -848,7 +853,7 @@ def mid_compact_landscape(width, height):
             min_size=18,
         ),
         fit_text(
-            pad,
+            x0,
             hilo_y,
             hilo_w,
             44,
@@ -858,9 +863,9 @@ def mid_compact_landscape(width, height):
             min_size=18,
         ),
         fit_text(
-            pad + hilo_w + 8,
+            x0 + hilo_w + 8,
             hilo_y,
-            hilo_w,
+            left_w - hilo_w - 8,
             44,
             today_field("high"),
             hilo_sz,
@@ -873,7 +878,7 @@ def mid_compact_landscape(width, height):
             (card_div_y - ic_sz) // 2 + 4,
             commute_alert("icon"),
             ic_sz,
-            color=commute_alert("safe_text_color"),
+            color=accent,
         ),
         fit_text(
             right_x + ic_sz + 10,
@@ -883,10 +888,10 @@ def mid_compact_landscape(width, height):
             commute_alert("label"),
             lbl_sz,
             align="left",
-            color=commute_alert("safe_text_color"),
+            color="black",
             min_size=18,
         ),
-        line(right_x + 4, card_div_y, width - pad, card_div_y, width=1),
+        line(right_x + 4, card_div_y, width - 10, card_div_y, width=1),
         fit_text(
             right_x + 4,
             card_div_y + 10,

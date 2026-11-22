@@ -358,81 +358,93 @@ def line(x1, y1, x2, y2, width=1, color="black"):
     }
 
 
+def rect(x1, y1, x2, y2, *, fill="black", outline="black", width=1):
+    return {
+        "type": "rectangle",
+        "x_start": int(x1),
+        "y_start": int(y1),
+        "x_end": int(x2),
+        "y_end": int(y2),
+        "fill": fill,
+        "outline": outline,
+        "width": max(1, int(width)),
+    }
+
+
 def compact(width, height):
     large = width >= 296
+    narrow = width < 240
+    bw = 6 if large else 5
+    x0 = bw + (6 if large else 5)
     ms = 18 if large else 16
-    temp_sz = (56 if height >= 150 else 52) if large else (44 if width < 240 else 48)
-    label_sz = 26 if large else (22 if width < 240 else 24)
-    timing_sz = 28 if large else (22 if width < 240 else 25)
-    mid = 124 if large else width // 2
-    div_y = round(height * 0.56)
-    items = [
+    temp_sz = (56 if height >= 150 else 52) if large else (44 if narrow else 48)
+    label_sz = 26 if large else (20 if narrow else 24)
+    timing_sz = 28 if large else (22 if narrow else 25)
+    div_y = round(height * 0.55)
+    if large:
+        mid = round(x0 + (width - x0 - 6) * 0.43)
+        ic_sz = 28
+        ic_x = mid + 4
+        lbl_x = mid + ic_sz + 10
+        lbl_r = 8
+    elif narrow:
+        mid = 82
+        ic_sz = 20
+        ic_x = mid + 2
+        lbl_x = mid + ic_sz + 6
+        lbl_r = 6
+    else:
+        mid = 104
+        ic_sz = 24
+        ic_x = mid + 4
+        lbl_x = mid + ic_sz + 10
+        lbl_r = 8
+    return [
+        rect(
+            0, 0, bw, height - 1, fill=advice("safe_color"), outline=advice("safe_color"), width=1
+        ),
         fit_text(
+            x0,
             6,
-            6,
-            mid - 12,
+            mid - x0 - (2 if narrow else 6),
             div_y - 12,
             current("temperature"),
             temp_sz,
             align="center",
             min_size=ms,
         ),
-        line(mid, 8, mid, div_y - 6),
+        icon(ic_x, (div_y - ic_sz) // 2, advice("icon"), ic_sz, color=advice("safe_color")),
+        fit_text(
+            lbl_x,
+            6,
+            width - lbl_x - lbl_r,
+            div_y - 12,
+            advice("label"),
+            label_sz,
+            align="left",
+            color="black",
+            min_size=ms,
+        ),
+        line(x0, div_y, width - 8, div_y),
+        fit_text(
+            x0,
+            div_y + 6,
+            width - x0 - 8,
+            height - div_y - 12,
+            advice("timing"),
+            timing_sz,
+            align="center",
+            min_size=ms,
+        ),
     ]
-    if large:
-        items.extend(
-            [
-                icon(mid + 10, (div_y - 26) // 2, advice("icon"), 26, color=advice("safe_color")),
-                fit_text(
-                    mid + 42,
-                    6,
-                    width - mid - 48,
-                    div_y - 12,
-                    advice("label"),
-                    label_sz,
-                    align="left",
-                    color=advice("safe_color"),
-                    min_size=ms,
-                ),
-            ]
-        )
-    else:
-        items.append(
-            fit_text(
-                mid + 6,
-                6,
-                width - mid - 12,
-                div_y - 12,
-                advice("label"),
-                label_sz,
-                align="center",
-                color=advice("safe_color"),
-                min_size=ms,
-            )
-        )
-    items.extend(
-        [
-            line(8, div_y, width - 8, div_y),
-            fit_text(
-                8,
-                div_y + 6,
-                width - 16,
-                height - div_y - 12,
-                advice("timing"),
-                timing_sz,
-                align="center",
-                min_size=ms,
-            ),
-        ]
-    )
-    return items
 
 
 def narrow_portrait(width, height):
     tall = height >= 296
+    bw = 5 if tall else 4
     ms = 15 if tall else 14
-    pad = 4
-    inner = width - 2 * pad
+    x0 = bw + 4
+    inner = width - x0 - 4
     temp_sz = (46 if width >= 145 else 42) if tall else (36 if width < 120 else 40)
     label_sz = 22 if tall else 19
     timing_sz = 20 if tall else 18
@@ -441,8 +453,11 @@ def narrow_portrait(width, height):
     lbl_h = round(height * 0.24)
     tim_y = lbl_y + lbl_h + 6
     return [
+        rect(
+            0, 0, bw, height - 1, fill=advice("safe_color"), outline=advice("safe_color"), width=1
+        ),
         fit_text(
-            pad,
+            x0,
             10,
             inner,
             div_y - 18,
@@ -451,9 +466,9 @@ def narrow_portrait(width, height):
             align="center",
             min_size=ms,
         ),
-        line(8, div_y, width - 8, div_y),
+        line(x0 + 2, div_y, width - 6, div_y),
         fit_text(
-            pad,
+            x0,
             lbl_y,
             inner,
             lbl_h,
@@ -464,7 +479,7 @@ def narrow_portrait(width, height):
             min_size=ms,
         ),
         fit_text(
-            pad,
+            x0,
             tim_y,
             inner,
             height - tim_y - 8,
@@ -477,14 +492,21 @@ def narrow_portrait(width, height):
 
 
 def stacked(width, height):
+    bw = 6 if width < 210 else 8
+    x0 = bw + 6
+    iw = width - x0 - 8
+    bar = rect(
+        0, 0, bw, height - 1, fill=advice("safe_color"), outline=advice("safe_color"), width=1
+    )
     if width == 200 and height == 200:
         return [
-            fit_text(8, 10, 184, 74, current("temperature"), 56, align="center", min_size=16),
-            line(12, 92, 188, 92),
+            bar,
+            fit_text(x0, 10, iw, 74, current("temperature"), 56, align="center", min_size=16),
+            line(x0, 92, width - 10, 92),
             fit_text(
-                8,
+                x0,
                 100,
-                184,
+                iw,
                 42,
                 advice("label"),
                 28,
@@ -493,9 +515,9 @@ def stacked(width, height):
                 min_size=16,
             ),
             fit_text(
-                8,
+                x0,
                 148,
-                184,
+                iw,
                 42,
                 advice("timing"),
                 24,
@@ -512,10 +534,11 @@ def stacked(width, height):
     lbl_y = div_y + 18
     tim_y = lbl_y + 64
     return [
+        bar,
         fit_text(
-            10,
+            x0,
             14,
-            width - 20,
+            iw,
             rng_y - 20,
             current("temperature"),
             temp_sz,
@@ -523,20 +546,20 @@ def stacked(width, height):
             min_size=16,
         ),
         fit_text(
-            10,
+            x0,
             rng_y,
-            width - 20,
+            iw,
             div_y - rng_y - 10,
             forecast(0, "range"),
             rng_sz,
             align="center",
             min_size=16,
         ),
-        line(12, div_y, width - 12, div_y),
+        line(x0, div_y, width - 10, div_y),
         fit_text(
-            10,
+            x0,
             lbl_y,
-            width - 20,
+            iw,
             56,
             advice("label"),
             lbl_sz,
@@ -545,9 +568,9 @@ def stacked(width, height):
             min_size=16,
         ),
         fit_text(
-            10,
+            x0,
             tim_y,
-            width - 20,
+            iw,
             height - tim_y - 12,
             advice("timing"),
             tim_sz,
@@ -558,7 +581,9 @@ def stacked(width, height):
 
 
 def today(width, height):
-    mid = round(width * 0.46)
+    bw = 8
+    x0 = bw + 8
+    mid = round(x0 + (width - x0) * 0.45)
     tall = height >= 210
     temp_sz = 80 if tall else 68
     rng_sz = 30 if tall else 26
@@ -568,10 +593,13 @@ def today(width, height):
     right_div_y = round(height * 0.48)
     rng_y = height - 56
     return [
+        rect(
+            0, 0, bw, height - 1, fill=advice("safe_color"), outline=advice("safe_color"), width=1
+        ),
         fit_text(
+            x0,
             10,
-            10,
-            mid - 20,
+            mid - x0 - 8,
             rng_y - 16,
             current("temperature"),
             temp_sz,
@@ -579,9 +607,9 @@ def today(width, height):
             min_size=18,
         ),
         fit_text(
-            10,
+            x0,
             rng_y,
-            mid - 20,
+            mid - x0 - 8,
             44,
             forecast(0, "range"),
             rng_sz,
@@ -604,7 +632,7 @@ def today(width, height):
             advice("label"),
             lbl_sz,
             align="left",
-            color=advice("safe_color"),
+            color="black",
             min_size=18,
         ),
         line(mid + 10, right_div_y, width - 10, right_div_y),
