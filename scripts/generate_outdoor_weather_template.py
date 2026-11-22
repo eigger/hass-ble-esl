@@ -132,6 +132,8 @@ def field_value(key):
         return f"'weather-' ~ {ICONS!r}.get(row.condition | default(''), 'cloudy-alert')"
     if key == "color":
         return f"{ACCENT!r} if row.condition | default('') in {WET!r} else 'black'"
+    if key == "safe_color":
+        return f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r}) if row.condition | default('') in {WET!r} else 'black'"
     if key == "chance":
         return number("row.precipitation_probability | default(none)", "'%'")
     if key == "range":
@@ -257,6 +259,7 @@ def advice(key):
         "icon": "'snowflake' if e.kind == 'snow' else ('umbrella-outline' if e.kind else ('weather-sunny' if e.covered or e.risk else 'weather-cloudy-alert'))",
         "label": "'미끄럼 주의' if e.kind == 'snow' else ('우산 챙기기' if e.kind else ('오늘 외출' if e.covered or e.risk else '예보 정보 없음'))",
         "color": f"{ACCENT!r} if e.kind else 'black'",
+        "safe_color": f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r}) if e.kind else 'black'",
         "timing": (
             "(e.start.strftime('%H') ~ ('~' ~ e.end.strftime('%H') if e.end != e.start else '') ~ '시 ' if e.start else '오늘 ')"
             " ~ ('눈' if e.kind == 'snow' else ('비' if e.kind == 'rain' else '강수'))"
@@ -381,7 +384,7 @@ def compact(width, height):
             6, height - 34, mid - 12, 26, temperature_range(), range_sz, align="center", min_size=ms
         ),
         line(mid, 8, mid, height - 8),
-        icon(mid + 8, 12, advice("icon"), ic_sz, color=advice("color")),
+        icon(mid + 8, 12, advice("icon"), ic_sz, color=advice("safe_color")),
         fit_text(
             lbl_x,
             10,
@@ -390,7 +393,7 @@ def compact(width, height):
             advice("label"),
             label_sz,
             align="left",
-            color=advice("color"),
+            color=advice("safe_color"),
             min_size=ms,
         ),
         line(mid + 6, 46, width - 6, 46),
@@ -402,7 +405,7 @@ def compact(width, height):
             advice("timing"),
             timing_sz,
             align="left",
-            color=advice("color"),
+            color=advice("safe_color"),
             min_size=ms,
         ),
     ]
@@ -445,7 +448,7 @@ def narrow_portrait(width, height):
             advice("icon"),
             26 if compact_h else 32,
             "mt",
-            advice("color"),
+            advice("safe_color"),
         ),
         fit_text(
             pad,
@@ -455,7 +458,7 @@ def narrow_portrait(width, height):
             advice("label"),
             label_sz,
             align="center",
-            color=advice("color"),
+            color=advice("safe_color"),
             min_size=ms,
         ),
         fit_text(
@@ -477,7 +480,7 @@ def stacked(width, height):
             fit_text(10, 12, 180, 64, current("temperature"), 54, align="center", min_size=9),
             fit_text(10, 78, 180, 28, temperature_range(), 18, align="center", min_size=9),
             line(12, 112, 188, 112),
-            icon(20, 122, advice("icon"), 30, color=advice("color")),
+            icon(20, 122, advice("icon"), 30, color=advice("safe_color")),
             fit_text(
                 56,
                 122,
@@ -486,7 +489,7 @@ def stacked(width, height):
                 advice("label"),
                 22,
                 align="left",
-                color=advice("color"),
+                color=advice("safe_color"),
                 min_size=9,
             ),
             fit_text(12, 158, 176, 30, advice("timing"), 16, align="center", min_size=9),
@@ -500,7 +503,7 @@ def stacked(width, height):
         fit_text(12, 48, width - 24, 68, current("temperature"), 58, align="center", min_size=10),
         fit_text(12, 120, width - 24, 28, temperature_range(), 18, align="center", min_size=10),
         line(12, 156, width - 13, 156),
-        icon(18, 166, advice("icon"), 26, color=advice("color")),
+        icon(18, 166, advice("icon"), 26, color=advice("safe_color")),
         fit_text(
             50,
             164,
@@ -509,7 +512,7 @@ def stacked(width, height):
             advice("label"),
             22,
             align="left",
-            color=advice("color"),
+            color=advice("safe_color"),
             min_size=10,
         ),
         fit_text(12, 198, width - 24, 28, advice("timing"), 16, align="center", min_size=10),
@@ -520,7 +523,7 @@ def stacked(width, height):
             [
                 line(12, y, width - 13, y),
                 fit_text(12, y + 8, width - 24, 24, label, 16, align="left", min_size=10),
-                icon(14, y + 36, hourly(hour, "icon"), 22, color=hourly(hour, "color")),
+                icon(14, y + 36, hourly(hour, "icon"), 22, color=hourly(hour, "safe_color")),
                 fit_text(
                     42, y + 34, 60, 26, hourly(hour, "temperature"), 18, align="left", min_size=10
                 ),
@@ -558,7 +561,7 @@ def today(width, height):
             12, range_y, mid - 22, 24, temperature_range(), range_sz, align="left", min_size=10
         ),
         line(mid - 4, 40, mid - 4, sep - 6),
-        icon(mid + 6, 44, advice("icon"), 26, color=advice("color")),
+        icon(mid + 6, 44, advice("icon"), 26, color=advice("safe_color")),
         fit_text(
             mid + 38,
             42,
@@ -567,7 +570,7 @@ def today(width, height):
             advice("label"),
             21,
             align="left",
-            color=advice("color"),
+            color=advice("safe_color"),
             min_size=10,
         ),
         fit_text(
@@ -592,7 +595,7 @@ def today(width, height):
         result.extend(
             [
                 fit_text(x + 6, y, 76, 22, label, 16, align="left", min_size=10),
-                icon(x + 8, y + 26, hourly(hour, "icon"), 22, color=hourly(hour, "color")),
+                icon(x + 8, y + 26, hourly(hour, "icon"), 22, color=hourly(hour, "safe_color")),
                 fit_text(
                     x + 34,
                     y + 26,
@@ -611,7 +614,7 @@ def today(width, height):
                     hourly(hour, "chance"),
                     16,
                     align="right",
-                    color=hourly(hour, "color"),
+                    color=hourly(hour, "safe_color"),
                     min_size=10,
                 ),
             ]

@@ -124,6 +124,13 @@ def _accent_ink_expr():
     return f"('black' if {ACCENT!r} == 'white' else {ACCENT!r})"
 
 
+def _text_ink_expr():
+    return f"('black' if {ACCENT!r} in ('yellow', 'white') else {ACCENT!r})"
+
+
+TEXT_INK = expression(_text_ink_expr())
+
+
 def _accent_fg_expr():
     return f"('black' if {ACCENT!r} in ('yellow', 'white') else 'white')"
 
@@ -196,6 +203,14 @@ def today_field(key, *, prefix=""):
             + tag("set _p = row.precipitation_probability | default(none)")
             + expression(
                 f"{_accent_ink_expr()} if is_number(_p) and _p is not boolean and (_p | float) >= 40 else 'black'"
+            )
+        )
+    if key == "pop_safe_color":
+        return (
+            base
+            + tag("set _p = row.precipitation_probability | default(none)")
+            + expression(
+                f"{_text_ink_expr()} if is_number(_p) and _p is not boolean and (_p | float) >= 40 else 'black'"
             )
         )
     raise KeyError(key)
@@ -510,6 +525,7 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=No
     w = x2 - x1
     h = y2 - y1
     ic_size = max(10, min(18, h - 6))
+    compact_pad = text_size is not None or min_size is not None
     return [
         rect(
             x1,
@@ -530,9 +546,9 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=No
         ),
         fit_text(
             x1 + icon_pad + ic_size + 2,
-            y1 + 2,
-            w - icon_pad - ic_size - 6,
-            h - 4,
+            y1 + (2 if compact_pad else 1),
+            w - icon_pad - ic_size - (6 if compact_pad else 5),
+            h - (4 if compact_pad else 2),
             text_value,
             text_size if text_size is not None else max(9, h - 8),
             align="center",
@@ -559,7 +575,7 @@ def square_200(width, height):
         fit_text(76, 42, 116, 54, current("temperature"), 48, align="right", min_size=9),
         fit_text(8, 102, 88, 28, today_field("low"), 20, align="left", min_size=9),
         fit_text(
-            100, 102, 92, 28, today_field("high"), 20, align="right", color=ACCENT_INK, min_size=9
+            100, 102, 92, 28, today_field("high"), 20, align="right", color=TEXT_INK, min_size=9
         ),
         line(8, 136, 192, 136, width=1),
         fit_text(8, 144, 184, 44, commute_alert("sub"), 17, align="center", min_size=9),
@@ -609,7 +625,7 @@ def narrow_portrait(width, height):
             hilo_h,
             today_field("high"),
             sec_sz + 2,
-            color=ACCENT_INK,
+            color=TEXT_INK,
             min_size=ms,
         ),
         line(pad, div2_y, width - pad, div2_y, width=1),
@@ -649,7 +665,7 @@ def tall_portrait_under4(width, height):
             34,
             today_field("high"),
             24,
-            color=ACCENT_INK,
+            color=TEXT_INK,
             min_size=10,
         ),
         rect(
@@ -663,7 +679,7 @@ def tall_portrait_under4(width, height):
             today_field("pop", prefix="강수 "),
             16,
             align="left",
-            color=today_field("pop_color"),
+            color=today_field("pop_safe_color"),
             min_size=10,
         ),
         fit_text(
@@ -750,7 +766,7 @@ def compact_landscape(width, height):
             today_field("high"),
             17,
             align="left",
-            color=ACCENT_INK,
+            color=TEXT_INK,
             min_size=9,
         ),
         line(mid + 6, div2_y, width - 6, div2_y, width=1),
@@ -762,7 +778,7 @@ def compact_landscape(width, height):
             commute_alert("sub"),
             sec_sz,
             align="left",
-            color=today_field("pop_color"),
+            color=today_field("pop_safe_color"),
             min_size=9,
         ),
     ]
@@ -786,7 +802,7 @@ def wide_compact_landscape(width, height):
             today_field("high"),
             18,
             align="right",
-            color=ACCENT_INK,
+            color=TEXT_INK,
             min_size=10,
         ),
         line(col1_end, 8, col1_end, height - 8, width=1),
@@ -897,7 +913,7 @@ def mid_compact_landscape(width, height):
             today_field("high"),
             round(22 * sy),
             align="right",
-            color=ACCENT_INK,
+            color=TEXT_INK,
             min_size=10,
         ),
         fit_text(
@@ -961,7 +977,7 @@ def mid_compact_landscape(width, height):
             today_field("pop", prefix="• 강수확률 "),
             round(16 * sy),
             align="left",
-            color=today_field("pop_color"),
+            color=today_field("pop_safe_color"),
             min_size=10,
         ),
         fit_text(

@@ -24,6 +24,24 @@ TEXT_INK_EXPR = f"('black' if '{ACCENT}' in ('yellow', 'white') else '{ACCENT}')
 TEXT_INK = f"{{{{ {TEXT_INK_EXPR} }}}}"
 
 COUNT_PRELUDE = (
+    "{% set _ns = namespace(tot=0, home=0) %}"
+    f"{{% for _pe in {PEOPLE!r} %}}"
+    f"{{% if _pe is match('{ENTITY_RE}') %}}"
+    "{% set _po = states[_pe] %}"
+    "{% if _po is not none %}"
+    "{% set _ns.tot = _ns.tot + 1 %}"
+    "{% if (_po.state | string) == 'home' %}{% set _ns.home = _ns.home + 1 %}{% endif %}"
+    "{% endif %}"
+    "{% endif %}"
+    "{% endfor %}"
+    f"{{% set _ink = {BADGE_INK_EXPR} %}}{{% set _fg = {BADGE_FG_EXPR} %}}"
+)
+
+BADGE_TEXT = (
+    COUNT_PRELUDE
+    + "{{ '연결 대기' if _ns.tot == 0 else (('재실 ' ~ _ns.home ~ '/' ~ _ns.tot) if _ns.home > 0 else '전원 외출') }}"
+)
+HOME_SUMMARY = (
     "{% set _ns = namespace(tot=0, home=0, names=[]) %}"
     f"{{% for _pe in {PEOPLE!r} %}}"
     f"{{% if _pe is match('{ENTITY_RE}') %}}"
@@ -37,15 +55,7 @@ COUNT_PRELUDE = (
     "{% endif %}"
     "{% endif %}"
     "{% endfor %}"
-    f"{{% set _ink = {BADGE_INK_EXPR} %}}{{% set _fg = {BADGE_FG_EXPR} %}}"
-)
-
-BADGE_TEXT = (
-    COUNT_PRELUDE
-    + "{{ '연결 대기' if _ns.tot == 0 else (('재실 ' ~ _ns.home ~ '/' ~ _ns.tot) if _ns.home > 0 else '전원 외출') }}"
-)
-HOME_SUMMARY = (
-    COUNT_PRELUDE + "{{ '구성원 센서 연결 대기' if _ns.tot == 0 else ("
+    "{{ '구성원 센서 연결 대기' if _ns.tot == 0 else ("
     "('재실: ' ~ ((_ns.names[:3] | join(', ')) ~ (' 외 ' ~ (_ns.home - 3) ~ '명' if _ns.home > 3 else ''))) if _ns.home > 0 else ("
     "'등록 ' ~ _ns.tot ~ '명 모두 외출')) }}"
 )

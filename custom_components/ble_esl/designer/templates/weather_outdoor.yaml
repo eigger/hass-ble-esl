@@ -69,7 +69,7 @@ layouts:
     y: 122
     size: 30
     anchor: lt
-    color: &id001 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''${accent}'' if e.kind else ''black'' }}'
+    color: &id001 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if e.kind else ''black'' }}'
   - type: text_fit
     value: &id004 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''미끄럼 주의'' if e.kind == ''snow'' else (''우산 챙기기'' if e.kind else (''오늘 외출'' if e.covered or e.risk else ''예보 정보 없음'')) }}'
     font: NotoSansKR-Bold.ttf
@@ -224,7 +224,7 @@ layouts:
     y: 276
     size: 22
     anchor: lt
-    color: &id007 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 7 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id007 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 7 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
     value: &id008 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 7 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
@@ -277,7 +277,7 @@ layouts:
     y: 344
     size: 22
     anchor: lt
-    color: &id011 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 19 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id011 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 19 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
     value: &id012 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 19 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
@@ -1854,7 +1854,7 @@ layouts:
     y: 50
     size: 23
     anchor: lt
-    color: *id001
+    color: &id014 '{% set now_hour = now().replace(minute=0, second=0, microsecond=0) %}{% set e = namespace(kind='''', start=none, end=none, chance=none, hours=[], covered=false, risk=0) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now_hour.date() and t >= now_hour %}{% set condition = i.condition | default('''') %}{% set p = i.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = i.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% if condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none or kind %}{% set e.hours = e.hours + [t.hour] %}{% endif %}{% if e.start is not none and (kind != e.kind or (t - e.end).total_seconds() > 3600) %}{% break %}{% endif %}{% if kind %}{% set e.kind = kind %}{% set e.start = e.start or t %}{% set e.end = t %}{% if p is not none %}{% set e.chance = [e.chance | default(0, true), p] | max %}{% endif %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not e.kind %}{% if e.hours | unique | list | count == 24 - now_hour.hour %}{% set e.covered = true %}{% else %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{% set condition = row.condition | default('''') %}{% set p = row.precipitation_probability | default(none) %}{% set p = p | float if is_number(p) and p is not boolean and 0 <= p | float <= 100 else none %}{% set amount = row.precipitation | default(none) %}{% set kind = ''snow'' if condition in (''snowy'', ''snowy-rainy'') else (''rain'' if condition in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'') else (''wet'' if (p is not none and p >= 50) or (is_number(amount) and amount is not boolean and amount | float > 0) else '''')) %}{% set e.kind = kind %}{% set e.chance = p %}{% if p is not none %}{% set e.risk = [e.risk, p] | max %}{% endif %}{% set e.covered = condition in (''clear-night'', ''exceptional'', ''partlycloudy'', ''cloudy'', ''fog'', ''hail'', ''lightning'', ''lightning-rainy'', ''pouring'', ''rainy'', ''snowy'', ''snowy-rainy'', ''sunny'', ''windy'', ''windy-variant'') or p is not none %}{% endif %}{% endif %}{{ ''${accent}'' if e.kind else ''black'' }}'
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -1862,7 +1862,7 @@ layouts:
     y: 48
     size: 19
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -1900,7 +1900,7 @@ layouts:
     x_end: 62
     y_end: 174
     width: 2
-    fill: &id014 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    fill: &id015 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -1910,14 +1910,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id021 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id022 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 41
     y: 208
     size: 26
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: &id022 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id023 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 16
     y: 243
@@ -1930,13 +1930,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id023 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id024 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=0)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 41
     y: 271
     size: 12
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 67
     y_start: 183
@@ -1953,14 +1953,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id024 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id025 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 94
     y: 208
     size: 26
     anchor: mt
-    color: &id015 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id016 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id025 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id026 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 69
     y: 243
@@ -1973,13 +1973,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id026 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id027 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=1)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 94
     y: 271
     size: 12
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 120
     y_start: 183
@@ -1996,14 +1996,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id027 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id028 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 147
     y: 208
     size: 26
     anchor: mt
-    color: &id016 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id017 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id028 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id029 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 122
     y: 243
@@ -2016,13 +2016,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id029 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id030 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=2)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 147
     y: 271
     size: 12
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 173
     y_start: 183
@@ -2039,14 +2039,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id030 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id031 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 200
     y: 208
     size: 26
     anchor: mt
-    color: &id017 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id018 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id031 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id032 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 175
     y: 243
@@ -2059,13 +2059,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id032 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id033 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=3)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 200
     y: 271
     size: 12
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 227
     y_start: 183
@@ -2082,14 +2082,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id033 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id034 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 253
     y: 208
     size: 26
     anchor: mt
-    color: &id018 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id019 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id034 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id035 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 229
     y: 243
@@ -2102,13 +2102,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id035 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id036 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=4)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 253
     y: 271
     size: 12
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 280
     y_start: 183
@@ -2125,14 +2125,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id036 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id037 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 306
     y: 208
     size: 26
     anchor: mt
-    color: &id019 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id020 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id037 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id038 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 282
     y: 243
@@ -2145,13 +2145,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id038 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id039 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=5)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 306
     y: 271
     size: 12
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 333
     y_start: 183
@@ -2168,14 +2168,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id039 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id040 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 359
     y: 208
     size: 26
     anchor: mt
-    color: &id020 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id021 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text_fit
-    value: &id040 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
+    value: &id041 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((row.templow | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.templow | default(none)) and row.templow | default(none) is not boolean else ''—'') ~ '' / '' ~ ((row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 335
     y: 243
@@ -2188,13 +2188,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: &id041 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id042 '{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == (now().date() + timedelta(days=6)) %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 359
     y: 271
     size: 12
     anchor: mt
-    color: *id020
+    color: *id021
   300x400:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -2256,7 +2256,7 @@ layouts:
     y: 67
     size: 17
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -2264,7 +2264,7 @@ layouts:
     y: 64
     size: 14
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -2302,7 +2302,7 @@ layouts:
     x_end: 47
     y_end: 232
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -2312,14 +2312,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 30
     y: 277
     size: 20
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 12
     y: 324
@@ -2332,13 +2332,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 30
     y: 361
     size: 9
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 50
     y_start: 244
@@ -2355,14 +2355,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 70
     y: 277
     size: 20
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 52
     y: 324
@@ -2375,13 +2375,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 70
     y: 361
     size: 9
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 90
     y_start: 244
@@ -2398,14 +2398,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 110
     y: 277
     size: 20
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 92
     y: 324
@@ -2418,13 +2418,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 110
     y: 361
     size: 9
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 130
     y_start: 244
@@ -2441,14 +2441,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 150
     y: 277
     size: 20
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 132
     y: 324
@@ -2461,13 +2461,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 150
     y: 361
     size: 9
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 170
     y_start: 244
@@ -2484,14 +2484,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 190
     y: 277
     size: 20
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 171
     y: 324
@@ -2504,13 +2504,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 190
     y: 361
     size: 9
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 210
     y_start: 244
@@ -2527,14 +2527,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 230
     y: 277
     size: 20
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 211
     y: 324
@@ -2547,13 +2547,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 230
     y: 361
     size: 9
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 250
     y_start: 244
@@ -2570,14 +2570,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 270
     y: 277
     size: 20
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 251
     y: 324
@@ -2590,13 +2590,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 270
     y: 361
     size: 9
     anchor: mt
-    color: *id020
+    color: *id021
   648x480:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -2658,7 +2658,7 @@ layouts:
     y: 80
     size: 37
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -2666,7 +2666,7 @@ layouts:
     y: 77
     size: 31
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -2704,7 +2704,7 @@ layouts:
     x_end: 101
     y_end: 278
     width: 3
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -2714,14 +2714,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 66
     y: 333
     size: 42
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 26
     y: 389
@@ -2734,13 +2734,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 66
     y: 434
     size: 19
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 109
     y_start: 293
@@ -2757,14 +2757,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 152
     y: 333
     size: 42
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 112
     y: 389
@@ -2777,13 +2777,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 152
     y: 434
     size: 19
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 195
     y_start: 293
@@ -2800,14 +2800,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 238
     y: 333
     size: 42
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 198
     y: 389
@@ -2820,13 +2820,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 238
     y: 434
     size: 19
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 281
     y_start: 293
@@ -2843,14 +2843,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 324
     y: 333
     size: 42
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 284
     y: 389
@@ -2863,13 +2863,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 324
     y: 434
     size: 19
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 367
     y_start: 293
@@ -2886,14 +2886,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 410
     y: 333
     size: 42
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 370
     y: 389
@@ -2906,13 +2906,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 410
     y: 434
     size: 19
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 453
     y_start: 293
@@ -2929,14 +2929,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 496
     y: 333
     size: 42
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 456
     y: 389
@@ -2949,13 +2949,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 496
     y: 434
     size: 19
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 539
     y_start: 293
@@ -2972,14 +2972,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 582
     y: 333
     size: 42
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 542
     y: 389
@@ -2992,13 +2992,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 582
     y: 434
     size: 19
     anchor: mt
-    color: *id020
+    color: *id021
   480x648:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -3060,7 +3060,7 @@ layouts:
     y: 108
     size: 28
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -3068,7 +3068,7 @@ layouts:
     y: 104
     size: 23
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -3106,7 +3106,7 @@ layouts:
     x_end: 75
     y_end: 376
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -3116,14 +3116,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 49
     y: 449
     size: 31
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 19
     y: 525
@@ -3136,13 +3136,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 49
     y: 585
     size: 14
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 81
     y_start: 395
@@ -3159,14 +3159,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 112
     y: 449
     size: 31
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 83
     y: 525
@@ -3179,13 +3179,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 112
     y: 585
     size: 14
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 144
     y_start: 395
@@ -3202,14 +3202,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 176
     y: 449
     size: 31
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 147
     y: 525
@@ -3222,13 +3222,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 176
     y: 585
     size: 14
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 208
     y_start: 395
@@ -3245,14 +3245,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 240
     y: 449
     size: 31
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 211
     y: 525
@@ -3265,13 +3265,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 240
     y: 585
     size: 14
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 272
     y_start: 395
@@ -3288,14 +3288,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 304
     y: 449
     size: 31
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 274
     y: 525
@@ -3308,13 +3308,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 304
     y: 585
     size: 14
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 336
     y_start: 395
@@ -3331,14 +3331,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 368
     y: 449
     size: 31
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 338
     y: 525
@@ -3351,13 +3351,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 368
     y: 585
     size: 14
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 399
     y_start: 395
@@ -3374,14 +3374,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 431
     y: 449
     size: 31
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 402
     y: 525
@@ -3394,13 +3394,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 431
     y: 585
     size: 14
     anchor: mt
-    color: *id020
+    color: *id021
   800x480:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -3462,7 +3462,7 @@ layouts:
     y: 70
     size: 30
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -3470,7 +3470,7 @@ layouts:
     y: 69
     size: 27
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -3563,7 +3563,7 @@ layouts:
     y: 291
     size: 27
     anchor: lt
-    color: *id007
+    color: &id043 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 7 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -3571,7 +3571,7 @@ layouts:
     y: 296
     size: 17
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -3581,7 +3581,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: &id048 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
+    value: &id051 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 212
     y: 239
@@ -3589,20 +3589,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id049 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id052 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 184
     y: 291
     size: 27
     anchor: lt
-    color: &id042 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id044 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
-    value: &id050 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id053 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 10 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 217
     y: 296
     size: 17
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -3612,7 +3612,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: &id051 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
+    value: &id054 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 337
     y: 239
@@ -3620,20 +3620,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id052 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id055 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 309
     y: 291
     size: 27
     anchor: lt
-    color: &id043 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id045 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
-    value: &id053 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id056 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 13 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 342
     y: 296
     size: 17
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -3643,7 +3643,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: &id054 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
+    value: &id057 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 463
     y: 239
@@ -3651,20 +3651,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id055 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id058 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 435
     y: 291
     size: 27
     anchor: lt
-    color: &id044 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id046 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
-    value: &id056 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id059 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 16 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 468
     y: 296
     size: 17
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -3687,7 +3687,7 @@ layouts:
     y: 291
     size: 27
     anchor: lt
-    color: *id011
+    color: &id047 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 19 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -3695,7 +3695,7 @@ layouts:
     y: 296
     size: 17
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -3705,7 +3705,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: &id057 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
+    value: &id060 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.temperature | default(none) | float | round(0) | int) ~ (''°'') if is_number(row.temperature | default(none)) and row.temperature | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 713
     y: 239
@@ -3713,65 +3713,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: &id058 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
+    value: &id061 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''weather-'' ~ {''clear-night'': ''night'', ''exceptional'': ''sunny-alert'', ''partlycloudy'': ''partly-cloudy'', ''cloudy'': ''cloudy'', ''fog'': ''fog'', ''hail'': ''hail'', ''lightning'': ''lightning'', ''lightning-rainy'': ''lightning-rainy'', ''pouring'': ''pouring'', ''rainy'': ''rainy'', ''snowy'': ''snowy'', ''snowy-rainy'': ''snowy-rainy'', ''sunny'': ''sunny'', ''windy'': ''windy'', ''windy-variant'': ''windy-variant''}.get(row.condition | default(''''), ''cloudy-alert'') }}'
     x: 685
     y: 291
     size: 27
     anchor: lt
-    color: &id045 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
+    color: &id048 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ''${accent}'' if row.condition | default('''') in (''rainy'', ''pouring'', ''lightning-rainy'', ''hail'', ''snowy'', ''snowy-rainy'') else ''black'' }}'
   - type: text
-    value: &id059 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
+    value: &id062 '{% set result = namespace(row={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour == 22 %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ (row.precipitation_probability | default(none) | float | round(0) | int) ~ (''%'') if is_number(row.precipitation_probability | default(none)) and row.precipitation_probability | default(none) is not boolean else ''—'' }}'
     font: NotoSansKR-Bold.ttf
     x: 718
     y: 296
     size: 17
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 87
     y: 266
     width: 126
     height: 18
     width_line: 2
-    values: &id060 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''7''], series.values[''10'']] if ''7'' in series.values and ''10'' in series.values else [] }}'
-    min: &id046 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ (series.values.values() | list | min) if series.values else 0 }}'
-    max: &id047 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ (series.values.values() | list | max) if series.values else 1 }}'
+    values: &id063 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''7''], series.values[''10'']] if ''7'' in series.values and ''10'' in series.values else [] }}'
+    min: &id049 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ (series.values.values() | list | min) if series.values else 0 }}'
+    max: &id050 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ (series.values.values() | list | max) if series.values else 1 }}'
   - type: sparkline
     x: 212
     y: 266
     width: 126
     height: 18
     width_line: 2
-    values: &id061 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''10''], series.values[''13'']] if ''10'' in series.values and ''13'' in series.values else [] }}'
-    min: *id046
-    max: *id047
+    values: &id064 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''10''], series.values[''13'']] if ''10'' in series.values and ''13'' in series.values else [] }}'
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 337
     y: 266
     width: 127
     height: 18
     width_line: 2
-    values: &id062 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''13''], series.values[''16'']] if ''13'' in series.values and ''16'' in series.values else [] }}'
-    min: *id046
-    max: *id047
+    values: &id065 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''13''], series.values[''16'']] if ''13'' in series.values and ''16'' in series.values else [] }}'
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 463
     y: 266
     width: 126
     height: 18
     width_line: 2
-    values: &id063 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''16''], series.values[''19'']] if ''16'' in series.values and ''19'' in series.values else [] }}'
-    min: *id046
-    max: *id047
+    values: &id066 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''16''], series.values[''19'']] if ''16'' in series.values and ''19'' in series.values else [] }}'
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 588
     y: 266
     width: 126
     height: 18
     width_line: 2
-    values: &id064 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''19''], series.values[''22'']] if ''19'' in series.values and ''22'' in series.values else [] }}'
-    min: *id046
-    max: *id047
+    values: &id067 '{% set series = namespace(values={}) %}{% for i in (fc_hourly[''${weather}''].forecast | default([], true) if fc_hourly is defined and fc_hourly[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% set v = i.temperature | default(none) %}{% if dt is not none and is_number(v) and v is not boolean %}{% set t = as_local(dt) %}{% if t.date() == now().date() and t.hour in (7, 10, 13, 16, 19, 22) %}{% set series.values = dict(series.values, **{(t.hour | string): (v | float)}) %}{% endif %}{% endif %}{% endfor %}{{ [series.values[''19''], series.values[''22'']] if ''19'' in series.values and ''22'' in series.values else [] }}'
+    min: *id049
+    max: *id050
   - type: line
     x_start: 24
     y_start: 329
@@ -3801,7 +3801,7 @@ layouts:
     x_end: 126
     y_end: 373
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -3811,14 +3811,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 78
     y: 407
     size: 29
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 26
     y: 433
@@ -3831,13 +3831,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 78
     y: 456
     size: 16
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 131
     y_start: 381
@@ -3854,14 +3854,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 185
     y: 407
     size: 29
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 133
     y: 433
@@ -3874,13 +3874,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 185
     y: 456
     size: 16
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 239
     y_start: 381
@@ -3897,14 +3897,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 293
     y: 407
     size: 29
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 241
     y: 433
@@ -3917,13 +3917,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 293
     y: 456
     size: 16
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 346
     y_start: 381
@@ -3940,14 +3940,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 400
     y: 407
     size: 29
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 348
     y: 433
@@ -3960,13 +3960,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 400
     y: 456
     size: 16
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 454
     y_start: 381
@@ -3983,14 +3983,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 507
     y: 407
     size: 29
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 456
     y: 433
@@ -4003,13 +4003,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 507
     y: 456
     size: 16
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 561
     y_start: 381
@@ -4026,14 +4026,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 615
     y: 407
     size: 29
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 563
     y: 433
@@ -4046,13 +4046,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 615
     y: 456
     size: 16
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 669
     y_start: 381
@@ -4069,14 +4069,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 722
     y: 407
     size: 29
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 671
     y: 433
@@ -4089,13 +4089,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 722
     y: 456
     size: 16
     anchor: mt
-    color: *id020
+    color: *id021
   480x800:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -4157,7 +4157,7 @@ layouts:
     y: 117
     size: 18
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -4165,7 +4165,7 @@ layouts:
     y: 115
     size: 16
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -4258,7 +4258,7 @@ layouts:
     y: 485
     size: 16
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -4266,7 +4266,7 @@ layouts:
     y: 493
     size: 10
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -4276,7 +4276,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 127
     y: 398
@@ -4284,20 +4284,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 110
     y: 485
     size: 16
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 130
     y: 493
     size: 10
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -4307,7 +4307,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 202
     y: 398
@@ -4315,20 +4315,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 186
     y: 485
     size: 16
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 205
     y: 493
     size: 10
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -4338,7 +4338,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 278
     y: 398
@@ -4346,20 +4346,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 261
     y: 485
     size: 16
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 281
     y: 493
     size: 10
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -4382,7 +4382,7 @@ layouts:
     y: 485
     size: 16
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -4390,7 +4390,7 @@ layouts:
     y: 493
     size: 10
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -4400,7 +4400,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 428
     y: 398
@@ -4408,65 +4408,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 411
     y: 485
     size: 16
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 431
     y: 493
     size: 10
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 52
     y: 443
     width: 76
     height: 30
     width_line: 1
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 127
     y: 443
     width: 76
     height: 30
     width_line: 1
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 202
     y: 443
     width: 77
     height: 30
     width_line: 1
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 278
     y: 443
     width: 76
     height: 30
     width_line: 1
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 353
     y: 443
     width: 76
     height: 30
     width_line: 1
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 14
     y_start: 548
@@ -4496,7 +4496,7 @@ layouts:
     x_end: 76
     y_end: 622
     width: 1
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -4506,14 +4506,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 47
     y: 678
     size: 17
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 16
     y: 722
@@ -4526,13 +4526,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 47
     y: 760
     size: 10
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 79
     y_start: 635
@@ -4549,14 +4549,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 111
     y: 678
     size: 17
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 80
     y: 722
@@ -4569,13 +4569,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 111
     y: 760
     size: 10
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 143
     y_start: 635
@@ -4592,14 +4592,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 176
     y: 678
     size: 17
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 145
     y: 722
@@ -4612,13 +4612,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 176
     y: 760
     size: 10
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 208
     y_start: 635
@@ -4635,14 +4635,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 240
     y: 678
     size: 17
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 209
     y: 722
@@ -4655,13 +4655,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 240
     y: 760
     size: 10
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 272
     y_start: 635
@@ -4678,14 +4678,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 304
     y: 678
     size: 17
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 273
     y: 722
@@ -4698,13 +4698,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 304
     y: 760
     size: 10
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 337
     y_start: 635
@@ -4721,14 +4721,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 369
     y: 678
     size: 17
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 338
     y: 722
@@ -4741,13 +4741,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 369
     y: 760
     size: 10
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 401
     y_start: 635
@@ -4764,14 +4764,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 433
     y: 678
     size: 17
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 402
     y: 722
@@ -4784,13 +4784,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 433
     y: 760
     size: 10
     anchor: mt
-    color: *id020
+    color: *id021
   960x640:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -4852,7 +4852,7 @@ layouts:
     y: 93
     size: 36
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -4860,7 +4860,7 @@ layouts:
     y: 92
     size: 32
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -4909,7 +4909,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: &id065 '{% set sensor = ''${snowfall_sensor}'' %}{% set snow = states(sensor) if sensor.startswith(''sensor.'') else none %}{% set use_snow = is_number(snow) and (snow | float) > 0 %}{{ ''예상 적설'' if use_snow else ''예상 강수량'' }}'
+    value: &id068 '{% set sensor = ''${snowfall_sensor}'' %}{% set snow = states(sensor) if sensor.startswith(''sensor.'') else none %}{% set use_snow = is_number(snow) and (snow | float) > 0 %}{{ ''예상 적설'' if use_snow else ''예상 강수량'' }}'
     font: NotoSansKR-Bold.ttf
     x: 806
     y: 96
@@ -4917,7 +4917,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: &id066 '{% set sensor = ''${snowfall_sensor}'' %}{% set snow = states(sensor) if sensor.startswith(''sensor.'') else none %}{% set use_snow = is_number(snow) and (snow | float) > 0 %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((snow | float | round(1)) ~ ('' '' ~ (state_attr(sensor, ''unit_of_measurement'') or '''')) if is_number(snow) and snow is not boolean else ''—'') if use_snow else ((row.precipitation | default(none) | float | round(1)) ~ ('' '' ~ (state_attr(''${weather}'', ''precipitation_unit'') or '''')) if is_number(row.precipitation | default(none)) and row.precipitation | default(none) is not boolean else ''—'') }}'
+    value: &id069 '{% set sensor = ''${snowfall_sensor}'' %}{% set snow = states(sensor) if sensor.startswith(''sensor.'') else none %}{% set use_snow = is_number(snow) and (snow | float) > 0 %}{% set result = namespace(row={}) %}{% for i in (fc[''${weather}''].forecast | default([], true) if fc is defined and fc[''${weather}''] is defined else []) %}{% set dt = as_datetime(i.datetime | default(none), none) %}{% if dt is not none %}{% set t = as_local(dt) %}{% if t.date() == now().date() %}{% set result.row = i %}{% break %}{% endif %}{% endif %}{% endfor %}{% set row = result.row %}{{ ((snow | float | round(1)) ~ ('' '' ~ (state_attr(sensor, ''unit_of_measurement'') or '''')) if is_number(snow) and snow is not boolean else ''—'') if use_snow else ((row.precipitation | default(none) | float | round(1)) ~ ('' '' ~ (state_attr(''${weather}'', ''precipitation_unit'') or '''')) if is_number(row.precipitation | default(none)) and row.precipitation | default(none) is not boolean else ''—'') }}'
     font: NotoSansKR-Bold.ttf
     x: 806
     y: 120
@@ -4985,7 +4985,7 @@ layouts:
     y: 388
     size: 32
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -4993,7 +4993,7 @@ layouts:
     y: 395
     size: 20
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -5003,7 +5003,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 254
     y: 319
@@ -5011,20 +5011,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 221
     y: 388
     size: 32
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 260
     y: 395
     size: 20
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -5034,7 +5034,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 405
     y: 319
@@ -5042,20 +5042,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 371
     y: 388
     size: 32
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 411
     y: 395
     size: 20
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -5065,7 +5065,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 555
     y: 319
@@ -5073,20 +5073,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 522
     y: 388
     size: 32
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 561
     y: 395
     size: 20
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -5109,7 +5109,7 @@ layouts:
     y: 388
     size: 32
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -5117,7 +5117,7 @@ layouts:
     y: 395
     size: 20
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -5127,7 +5127,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 856
     y: 319
@@ -5135,65 +5135,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 822
     y: 388
     size: 32
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 862
     y: 395
     size: 20
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 104
     y: 355
     width: 151
     height: 24
     width_line: 2
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 254
     y: 355
     width: 152
     height: 24
     width_line: 2
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 405
     y: 355
     width: 151
     height: 24
     width_line: 2
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 555
     y: 355
     width: 152
     height: 24
     width_line: 2
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 706
     y: 355
     width: 151
     height: 24
     width_line: 2
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 29
     y_start: 439
@@ -5223,7 +5223,7 @@ layouts:
     x_end: 152
     y_end: 497
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -5233,14 +5233,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 93
     y: 543
     size: 35
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 31
     y: 577
@@ -5253,13 +5253,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 93
     y: 608
     size: 19
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 158
     y_start: 508
@@ -5276,14 +5276,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 222
     y: 543
     size: 35
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 160
     y: 577
@@ -5296,13 +5296,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 222
     y: 608
     size: 19
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 287
     y_start: 508
@@ -5319,14 +5319,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 351
     y: 543
     size: 35
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 289
     y: 577
@@ -5339,13 +5339,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 351
     y: 608
     size: 19
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 416
     y_start: 508
@@ -5362,14 +5362,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 480
     y: 543
     size: 35
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 418
     y: 577
@@ -5382,13 +5382,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 480
     y: 608
     size: 19
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 544
     y_start: 508
@@ -5405,14 +5405,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 609
     y: 543
     size: 35
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 547
     y: 577
@@ -5425,13 +5425,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 609
     y: 608
     size: 19
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 673
     y_start: 508
@@ -5448,14 +5448,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 738
     y: 543
     size: 35
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 676
     y: 577
@@ -5468,13 +5468,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 738
     y: 608
     size: 19
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 802
     y_start: 508
@@ -5491,14 +5491,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 867
     y: 543
     size: 35
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 805
     y: 577
@@ -5511,13 +5511,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 867
     y: 608
     size: 19
     anchor: mt
-    color: *id020
+    color: *id021
   640x960:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -5579,7 +5579,7 @@ layouts:
     y: 140
     size: 24
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -5587,7 +5587,7 @@ layouts:
     y: 138
     size: 22
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -5636,7 +5636,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id065
+    value: *id068
     font: NotoSansKR-Bold.ttf
     x: 538
     y: 144
@@ -5644,7 +5644,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id066
+    value: *id069
     font: NotoSansKR-Bold.ttf
     x: 538
     y: 180
@@ -5712,7 +5712,7 @@ layouts:
     y: 582
     size: 22
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -5720,7 +5720,7 @@ layouts:
     y: 592
     size: 14
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -5730,7 +5730,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 170
     y: 478
@@ -5738,20 +5738,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 147
     y: 582
     size: 22
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 174
     y: 592
     size: 14
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -5761,7 +5761,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 270
     y: 478
@@ -5769,20 +5769,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 247
     y: 582
     size: 22
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 274
     y: 592
     size: 14
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -5792,7 +5792,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 370
     y: 478
@@ -5800,20 +5800,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 348
     y: 582
     size: 22
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 374
     y: 592
     size: 14
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -5836,7 +5836,7 @@ layouts:
     y: 582
     size: 22
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -5844,7 +5844,7 @@ layouts:
     y: 592
     size: 14
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -5854,7 +5854,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 571
     y: 478
@@ -5862,65 +5862,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 548
     y: 582
     size: 22
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 575
     y: 592
     size: 14
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 69
     y: 532
     width: 102
     height: 36
     width_line: 2
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 170
     y: 532
     width: 101
     height: 36
     width_line: 2
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 270
     y: 532
     width: 101
     height: 36
     width_line: 2
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 370
     y: 532
     width: 101
     height: 36
     width_line: 2
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 470
     y: 532
     width: 102
     height: 36
     width_line: 2
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 19
     y_start: 658
@@ -5950,7 +5950,7 @@ layouts:
     x_end: 101
     y_end: 746
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -5960,14 +5960,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 62
     y: 814
     size: 23
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 21
     y: 866
@@ -5980,13 +5980,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 62
     y: 912
     size: 13
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 105
     y_start: 762
@@ -6003,14 +6003,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 148
     y: 814
     size: 23
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 107
     y: 866
@@ -6023,13 +6023,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 148
     y: 912
     size: 13
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 191
     y_start: 762
@@ -6046,14 +6046,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 234
     y: 814
     size: 23
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 193
     y: 866
@@ -6066,13 +6066,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 234
     y: 912
     size: 13
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 277
     y_start: 762
@@ -6089,14 +6089,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 320
     y: 814
     size: 23
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 279
     y: 866
@@ -6109,13 +6109,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 320
     y: 912
     size: 13
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 363
     y_start: 762
@@ -6132,14 +6132,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 406
     y: 814
     size: 23
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 365
     y: 866
@@ -6152,13 +6152,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 406
     y: 912
     size: 13
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 449
     y_start: 762
@@ -6175,14 +6175,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 492
     y: 814
     size: 23
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 451
     y: 866
@@ -6195,13 +6195,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 492
     y: 912
     size: 13
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 535
     y_start: 762
@@ -6218,14 +6218,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 578
     y: 814
     size: 23
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 536
     y: 866
@@ -6238,13 +6238,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 578
     y: 912
     size: 13
     anchor: mt
-    color: *id020
+    color: *id021
   960x680:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -6306,7 +6306,7 @@ layouts:
     y: 99
     size: 36
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -6314,7 +6314,7 @@ layouts:
     y: 98
     size: 32
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -6363,7 +6363,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id065
+    value: *id068
     font: NotoSansKR-Bold.ttf
     x: 806
     y: 102
@@ -6371,7 +6371,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id066
+    value: *id069
     font: NotoSansKR-Bold.ttf
     x: 806
     y: 128
@@ -6439,7 +6439,7 @@ layouts:
     y: 412
     size: 32
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -6447,7 +6447,7 @@ layouts:
     y: 419
     size: 20
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -6457,7 +6457,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 254
     y: 339
@@ -6465,20 +6465,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 221
     y: 412
     size: 32
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 260
     y: 419
     size: 20
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -6488,7 +6488,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 405
     y: 339
@@ -6496,20 +6496,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 371
     y: 412
     size: 32
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 411
     y: 419
     size: 20
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -6519,7 +6519,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 555
     y: 339
@@ -6527,20 +6527,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 522
     y: 412
     size: 32
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 561
     y: 419
     size: 20
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -6563,7 +6563,7 @@ layouts:
     y: 412
     size: 32
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -6571,7 +6571,7 @@ layouts:
     y: 419
     size: 20
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -6581,7 +6581,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 856
     y: 339
@@ -6589,65 +6589,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 822
     y: 412
     size: 32
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 862
     y: 419
     size: 20
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 104
     y: 377
     width: 151
     height: 26
     width_line: 2
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 254
     y: 377
     width: 152
     height: 26
     width_line: 2
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 405
     y: 377
     width: 151
     height: 26
     width_line: 2
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 555
     y: 377
     width: 152
     height: 26
     width_line: 2
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 706
     y: 377
     width: 151
     height: 26
     width_line: 2
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 29
     y_start: 466
@@ -6677,7 +6677,7 @@ layouts:
     x_end: 152
     y_end: 528
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -6687,14 +6687,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 93
     y: 577
     size: 35
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 31
     y: 613
@@ -6707,13 +6707,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 93
     y: 646
     size: 19
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 158
     y_start: 540
@@ -6730,14 +6730,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 222
     y: 577
     size: 35
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 160
     y: 613
@@ -6750,13 +6750,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 222
     y: 646
     size: 19
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 287
     y_start: 540
@@ -6773,14 +6773,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 351
     y: 577
     size: 35
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 289
     y: 613
@@ -6793,13 +6793,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 351
     y: 646
     size: 19
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 416
     y_start: 540
@@ -6816,14 +6816,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 480
     y: 577
     size: 35
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 418
     y: 613
@@ -6836,13 +6836,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 480
     y: 646
     size: 19
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 544
     y_start: 540
@@ -6859,14 +6859,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 609
     y: 577
     size: 35
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 547
     y: 613
@@ -6879,13 +6879,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 609
     y: 646
     size: 19
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 673
     y_start: 540
@@ -6902,14 +6902,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 738
     y: 577
     size: 35
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 676
     y: 613
@@ -6922,13 +6922,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 738
     y: 646
     size: 19
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 802
     y_start: 540
@@ -6945,14 +6945,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 867
     y: 577
     size: 35
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 805
     y: 613
@@ -6965,13 +6965,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 867
     y: 646
     size: 19
     anchor: mt
-    color: *id020
+    color: *id021
   680x960:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -7033,7 +7033,7 @@ layouts:
     y: 140
     size: 26
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -7041,7 +7041,7 @@ layouts:
     y: 138
     size: 23
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -7090,7 +7090,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id065
+    value: *id068
     font: NotoSansKR-Bold.ttf
     x: 571
     y: 144
@@ -7098,7 +7098,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id066
+    value: *id069
     font: NotoSansKR-Bold.ttf
     x: 571
     y: 180
@@ -7166,7 +7166,7 @@ layouts:
     y: 582
     size: 23
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -7174,7 +7174,7 @@ layouts:
     y: 592
     size: 14
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -7184,7 +7184,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 180
     y: 478
@@ -7192,20 +7192,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 156
     y: 582
     size: 23
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 184
     y: 592
     size: 14
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -7215,7 +7215,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 287
     y: 478
@@ -7223,20 +7223,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 263
     y: 582
     size: 23
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 291
     y: 592
     size: 14
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -7246,7 +7246,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 393
     y: 478
@@ -7254,20 +7254,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 369
     y: 582
     size: 23
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 398
     y: 592
     size: 14
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -7290,7 +7290,7 @@ layouts:
     y: 582
     size: 23
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -7298,7 +7298,7 @@ layouts:
     y: 592
     size: 14
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -7308,7 +7308,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 606
     y: 478
@@ -7316,65 +7316,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 583
     y: 582
     size: 23
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 611
     y: 592
     size: 14
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 74
     y: 532
     width: 107
     height: 36
     width_line: 2
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 180
     y: 532
     width: 108
     height: 36
     width_line: 2
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 287
     y: 532
     width: 107
     height: 36
     width_line: 2
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 393
     y: 532
     width: 108
     height: 36
     width_line: 2
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 500
     y: 532
     width: 107
     height: 36
     width_line: 2
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 20
     y_start: 658
@@ -7404,7 +7404,7 @@ layouts:
     x_end: 107
     y_end: 746
     width: 2
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -7414,14 +7414,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 66
     y: 814
     size: 25
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 22
     y: 866
@@ -7434,13 +7434,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 66
     y: 912
     size: 14
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 112
     y_start: 762
@@ -7457,14 +7457,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 157
     y: 814
     size: 25
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 113
     y: 866
@@ -7477,13 +7477,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 157
     y: 912
     size: 14
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 203
     y_start: 762
@@ -7500,14 +7500,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 249
     y: 814
     size: 25
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 205
     y: 866
@@ -7520,13 +7520,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 249
     y: 912
     size: 14
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 294
     y_start: 762
@@ -7543,14 +7543,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 340
     y: 814
     size: 25
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 296
     y: 866
@@ -7563,13 +7563,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 340
     y: 912
     size: 14
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 386
     y_start: 762
@@ -7586,14 +7586,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 431
     y: 814
     size: 25
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 387
     y: 866
@@ -7606,13 +7606,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 431
     y: 912
     size: 14
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 477
     y_start: 762
@@ -7629,14 +7629,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 523
     y: 814
     size: 25
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 479
     y: 866
@@ -7649,13 +7649,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 523
     y: 912
     size: 14
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 568
     y_start: 762
@@ -7672,14 +7672,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 614
     y: 814
     size: 25
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 570
     y: 866
@@ -7692,13 +7692,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 614
     y: 912
     size: 14
     anchor: mt
-    color: *id020
+    color: *id021
   1600x1200:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -7760,7 +7760,7 @@ layouts:
     y: 175
     size: 60
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -7768,7 +7768,7 @@ layouts:
     y: 172
     size: 54
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -7817,7 +7817,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id065
+    value: *id068
     font: NotoSansKR-Bold.ttf
     x: 1344
     y: 180
@@ -7825,7 +7825,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id066
+    value: *id069
     font: NotoSansKR-Bold.ttf
     x: 1344
     y: 225
@@ -7893,7 +7893,7 @@ layouts:
     y: 728
     size: 54
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -7901,7 +7901,7 @@ layouts:
     y: 740
     size: 34
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -7911,7 +7911,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 424
     y: 598
@@ -7919,20 +7919,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 368
     y: 728
     size: 54
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 434
     y: 740
     size: 34
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -7942,7 +7942,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 675
     y: 598
@@ -7950,20 +7950,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 619
     y: 728
     size: 54
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 685
     y: 740
     size: 34
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -7973,7 +7973,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 925
     y: 598
@@ -7981,20 +7981,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 869
     y: 728
     size: 54
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 935
     y: 740
     size: 34
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -8017,7 +8017,7 @@ layouts:
     y: 728
     size: 54
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -8025,7 +8025,7 @@ layouts:
     y: 740
     size: 34
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -8035,7 +8035,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 1427
     y: 598
@@ -8043,65 +8043,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 1371
     y: 728
     size: 54
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 1437
     y: 740
     size: 34
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 173
     y: 665
     width: 252
     height: 45
     width_line: 4
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 424
     y: 665
     width: 252
     height: 45
     width_line: 4
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 675
     y: 665
     width: 251
     height: 45
     width_line: 4
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 925
     y: 665
     width: 252
     height: 45
     width_line: 4
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 1176
     y: 665
     width: 252
     height: 45
     width_line: 4
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 48
     y_start: 822
@@ -8131,7 +8131,7 @@ layouts:
     x_end: 253
     y_end: 932
     width: 4
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -8141,14 +8141,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 155
     y: 1018
     size: 58
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 52
     y: 1082
@@ -8161,13 +8161,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 155
     y: 1140
     size: 32
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 263
     y_start: 952
@@ -8184,14 +8184,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 370
     y: 1018
     size: 58
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 267
     y: 1082
@@ -8204,13 +8204,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 370
     y: 1140
     size: 32
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 478
     y_start: 952
@@ -8227,14 +8227,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 585
     y: 1018
     size: 58
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 482
     y: 1082
@@ -8247,13 +8247,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 585
     y: 1140
     size: 32
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 693
     y_start: 952
@@ -8270,14 +8270,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 800
     y: 1018
     size: 58
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 697
     y: 1082
@@ -8290,13 +8290,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 800
     y: 1140
     size: 32
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 907
     y_start: 952
@@ -8313,14 +8313,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 1015
     y: 1018
     size: 58
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 911
     y: 1082
@@ -8333,13 +8333,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 1015
     y: 1140
     size: 32
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 1122
     y_start: 952
@@ -8356,14 +8356,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 1230
     y: 1018
     size: 58
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 1126
     y: 1082
@@ -8376,13 +8376,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 1230
     y: 1140
     size: 32
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 1337
     y_start: 952
@@ -8399,14 +8399,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 1445
     y: 1018
     size: 58
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 1341
     y: 1082
@@ -8419,13 +8419,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 1445
     y: 1140
     size: 32
     anchor: mt
-    color: *id020
+    color: *id021
   1200x1600:
   - type: text
     value: '{{ (state_attr(''${weather}'', ''friendly_name'') or ''날씨'') | truncate(13, true, ''…'') }}'
@@ -8487,7 +8487,7 @@ layouts:
     y: 233
     size: 45
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id004
     font: NotoSansKR-Bold.ttf
@@ -8495,7 +8495,7 @@ layouts:
     y: 230
     size: 40
     anchor: lt
-    color: *id001
+    color: *id014
   - type: text
     value: *id005
     font: NotoSansKR-Bold.ttf
@@ -8544,7 +8544,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id065
+    value: *id068
     font: NotoSansKR-Bold.ttf
     x: 1008
     y: 240
@@ -8552,7 +8552,7 @@ layouts:
     anchor: lt
     color: black
   - type: text
-    value: *id066
+    value: *id069
     font: NotoSansKR-Bold.ttf
     x: 1008
     y: 300
@@ -8620,7 +8620,7 @@ layouts:
     y: 970
     size: 40
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: *id009
     font: NotoSansKR-Bold.ttf
@@ -8628,7 +8628,7 @@ layouts:
     y: 987
     size: 26
     anchor: lt
-    color: *id007
+    color: *id043
   - type: text
     value: 10시
     font: NotoSansKR-Bold.ttf
@@ -8638,7 +8638,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id048
+    value: *id051
     font: NotoSansKR-Bold.ttf
     x: 318
     y: 797
@@ -8646,20 +8646,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id049
+    value: *id052
     x: 276
     y: 970
     size: 40
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
-    value: *id050
+    value: *id053
     font: NotoSansKR-Bold.ttf
     x: 326
     y: 987
     size: 26
     anchor: lt
-    color: *id042
+    color: *id044
   - type: text
     value: 13시
     font: NotoSansKR-Bold.ttf
@@ -8669,7 +8669,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id051
+    value: *id054
     font: NotoSansKR-Bold.ttf
     x: 506
     y: 797
@@ -8677,20 +8677,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id052
+    value: *id055
     x: 464
     y: 970
     size: 40
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
-    value: *id053
+    value: *id056
     font: NotoSansKR-Bold.ttf
     x: 514
     y: 987
     size: 26
     anchor: lt
-    color: *id043
+    color: *id045
   - type: text
     value: 16시
     font: NotoSansKR-Bold.ttf
@@ -8700,7 +8700,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id054
+    value: *id057
     font: NotoSansKR-Bold.ttf
     x: 694
     y: 797
@@ -8708,20 +8708,20 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id055
+    value: *id058
     x: 652
     y: 970
     size: 40
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
-    value: *id056
+    value: *id059
     font: NotoSansKR-Bold.ttf
     x: 702
     y: 987
     size: 26
     anchor: lt
-    color: *id044
+    color: *id046
   - type: text
     value: 19시 귀가
     font: NotoSansKR-Bold.ttf
@@ -8744,7 +8744,7 @@ layouts:
     y: 970
     size: 40
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: *id013
     font: NotoSansKR-Bold.ttf
@@ -8752,7 +8752,7 @@ layouts:
     y: 987
     size: 26
     anchor: lt
-    color: *id011
+    color: *id047
   - type: text
     value: 22시
     font: NotoSansKR-Bold.ttf
@@ -8762,7 +8762,7 @@ layouts:
     anchor: mt
     color: black
   - type: text
-    value: *id057
+    value: *id060
     font: NotoSansKR-Bold.ttf
     x: 1070
     y: 797
@@ -8770,65 +8770,65 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id058
+    value: *id061
     x: 1028
     y: 970
     size: 40
     anchor: lt
-    color: *id045
+    color: *id048
   - type: text
-    value: *id059
+    value: *id062
     font: NotoSansKR-Bold.ttf
     x: 1078
     y: 987
     size: 26
     anchor: lt
-    color: *id045
+    color: *id048
   - type: sparkline
     x: 130
     y: 887
     width: 189
     height: 60
     width_line: 3
-    values: *id060
-    min: *id046
-    max: *id047
+    values: *id063
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 318
     y: 887
     width: 189
     height: 60
     width_line: 3
-    values: *id061
-    min: *id046
-    max: *id047
+    values: *id064
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 506
     y: 887
     width: 189
     height: 60
     width_line: 3
-    values: *id062
-    min: *id046
-    max: *id047
+    values: *id065
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 694
     y: 887
     width: 189
     height: 60
     width_line: 3
-    values: *id063
-    min: *id046
-    max: *id047
+    values: *id066
+    min: *id049
+    max: *id050
   - type: sparkline
     x: 882
     y: 887
     width: 189
     height: 60
     width_line: 3
-    values: *id064
-    min: *id046
-    max: *id047
+    values: *id067
+    min: *id049
+    max: *id050
   - type: line
     x_start: 36
     y_start: 1097
@@ -8858,7 +8858,7 @@ layouts:
     x_end: 190
     y_end: 1243
     width: 3
-    fill: *id014
+    fill: *id015
   - type: text
     value: 오늘
     font: NotoSansKR-Bold.ttf
@@ -8868,14 +8868,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id021
+    value: *id022
     x: 117
     y: 1357
     size: 44
     anchor: mt
-    color: *id014
+    color: *id015
   - type: text_fit
-    value: *id022
+    value: *id023
     font: NotoSansKR-Bold.ttf
     x: 39
     y: 1443
@@ -8888,13 +8888,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id023
+    value: *id024
     font: NotoSansKR-Bold.ttf
     x: 117
     y: 1520
     size: 24
     anchor: mt
-    color: *id014
+    color: *id015
   - type: line
     x_start: 197
     y_start: 1270
@@ -8911,14 +8911,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id024
+    value: *id025
     x: 278
     y: 1357
     size: 44
     anchor: mt
-    color: *id015
+    color: *id016
   - type: text_fit
-    value: *id025
+    value: *id026
     font: NotoSansKR-Bold.ttf
     x: 200
     y: 1443
@@ -8931,13 +8931,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id026
+    value: *id027
     font: NotoSansKR-Bold.ttf
     x: 278
     y: 1520
     size: 24
     anchor: mt
-    color: *id015
+    color: *id016
   - type: line
     x_start: 358
     y_start: 1270
@@ -8954,14 +8954,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id027
+    value: *id028
     x: 439
     y: 1357
     size: 44
     anchor: mt
-    color: *id016
+    color: *id017
   - type: text_fit
-    value: *id028
+    value: *id029
     font: NotoSansKR-Bold.ttf
     x: 361
     y: 1443
@@ -8974,13 +8974,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id029
+    value: *id030
     font: NotoSansKR-Bold.ttf
     x: 439
     y: 1520
     size: 24
     anchor: mt
-    color: *id016
+    color: *id017
   - type: line
     x_start: 519
     y_start: 1270
@@ -8997,14 +8997,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id030
+    value: *id031
     x: 600
     y: 1357
     size: 44
     anchor: mt
-    color: *id017
+    color: *id018
   - type: text_fit
-    value: *id031
+    value: *id032
     font: NotoSansKR-Bold.ttf
     x: 522
     y: 1443
@@ -9017,13 +9017,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id032
+    value: *id033
     font: NotoSansKR-Bold.ttf
     x: 600
     y: 1520
     size: 24
     anchor: mt
-    color: *id017
+    color: *id018
   - type: line
     x_start: 681
     y_start: 1270
@@ -9040,14 +9040,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id033
+    value: *id034
     x: 761
     y: 1357
     size: 44
     anchor: mt
-    color: *id018
+    color: *id019
   - type: text_fit
-    value: *id034
+    value: *id035
     font: NotoSansKR-Bold.ttf
     x: 684
     y: 1443
@@ -9060,13 +9060,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id035
+    value: *id036
     font: NotoSansKR-Bold.ttf
     x: 761
     y: 1520
     size: 24
     anchor: mt
-    color: *id018
+    color: *id019
   - type: line
     x_start: 842
     y_start: 1270
@@ -9083,14 +9083,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id036
+    value: *id037
     x: 922
     y: 1357
     size: 44
     anchor: mt
-    color: *id019
+    color: *id020
   - type: text_fit
-    value: *id037
+    value: *id038
     font: NotoSansKR-Bold.ttf
     x: 845
     y: 1443
@@ -9103,13 +9103,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id038
+    value: *id039
     font: NotoSansKR-Bold.ttf
     x: 922
     y: 1520
     size: 24
     anchor: mt
-    color: *id019
+    color: *id020
   - type: line
     x_start: 1003
     y_start: 1270
@@ -9126,14 +9126,14 @@ layouts:
     anchor: mt
     color: black
   - type: icon
-    value: *id039
+    value: *id040
     x: 1083
     y: 1357
     size: 44
     anchor: mt
-    color: *id020
+    color: *id021
   - type: text_fit
-    value: *id040
+    value: *id041
     font: NotoSansKR-Bold.ttf
     x: 1006
     y: 1443
@@ -9146,13 +9146,13 @@ layouts:
     valign: middle
     max_lines: 1
   - type: text
-    value: *id041
+    value: *id042
     font: NotoSansKR-Bold.ttf
     x: 1083
     y: 1520
     size: 24
     anchor: mt
-    color: *id020
+    color: *id021
 automation:
   triggers:
   - trigger: time_pattern

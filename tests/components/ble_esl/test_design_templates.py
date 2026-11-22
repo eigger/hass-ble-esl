@@ -3732,3 +3732,77 @@ def test_under_4_inch_templates_enforce_readable_font_floors():
             assert max(sizes) >= exp_hero, (name, size, sizes)
             fit_mins = [i["min_size"] for i in texts if i.get("type") == "text_fit"]
             assert fit_mins and min(fit_mins) >= min_ms, (name, size, fit_mins)
+
+
+@pytest.mark.parametrize("accent", ["white", "yellow"])
+@pytest.mark.parametrize(("width", "height"), [(212, 104), (384, 184)])
+async def test_under_4_inch_weather_white_bg_avoids_low_contrast_accent_colors(
+    hass, accent, width, height
+):
+    from datetime import timedelta
+
+    from freezegun import freeze_time
+    from homeassistant.util import dt as dt_util
+
+    today = dt_util.start_of_local_day() + timedelta(hours=6, minutes=30)
+
+    def at(hour):
+        return (dt_util.start_of_local_day() + timedelta(hours=hour)).isoformat()
+
+    hass.states.async_set("weather.home", "snowy", {"temperature": -1, "temperature_unit": "°C"})
+    variables = {
+        "fc": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": at(12),
+                        "condition": "snowy",
+                        "temperature": 3,
+                        "templow": -4,
+                        "precipitation_probability": 80,
+                        "precipitation": 2,
+                    }
+                ]
+            }
+        },
+        "fc_hourly": {
+            "weather.home": {
+                "forecast": [
+                    {
+                        "datetime": at(h),
+                        "condition": "snowy",
+                        "temperature": 0,
+                        "precipitation_probability": 80,
+                    }
+                    for h in (7, 19)
+                ]
+            }
+        },
+    }
+
+    def enclosing_fill(rects, item):
+        cx = item["x"] + item.get("width", 0) / 2
+        cy = item["y"] + item.get("height", 0) / 2
+        for rect in rects:
+            if rect["x_start"] <= cx <= rect["x_end"] and rect["y_start"] <= cy <= rect["y_end"]:
+                return rect["fill"]
+        return "white"
+
+    with freeze_time(today, real_asyncio=True):
+        for name in ("weather_outdoor", "weather_commute"):
+            built = build(TEMPLATES[name], width, height, "BWRY", {"accent": accent})
+            rendered = resolve_templates(hass, built["payload"], set(), variables)
+            rects = [
+                item
+                for item in rendered
+                if item.get("type") == "rectangle" and item.get("fill") not in (None, "white")
+            ]
+            for item in rendered:
+                if item.get("type") not in ("text", "text_fit", "icon"):
+                    continue
+                bg = enclosing_fill(rects, item)
+                color = item.get("color", "black")
+                if bg == "white":
+                    assert color not in ("white", "yellow"), (name, width, height, accent, item)
+                elif bg == "yellow":
+                    assert color == "black", (name, width, height, accent, item)
