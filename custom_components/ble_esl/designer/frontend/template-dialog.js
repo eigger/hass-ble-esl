@@ -250,7 +250,7 @@ export class TemplateDialog extends HTMLElement {
     const hass = this.panel.hass;
     const done = this.done;
     const note = this.note
-      ? `<p class="note" role="status" ${this.issues.length ? 'tabindex="-1" autofocus' : ""}>${esc(t(hass, this.note))}</p>`
+      ? `<p class="note" role="status" tabindex="-1" autofocus>${esc(t(hass, this.note))}</p>`
       : "";
     this.shadowRoot.innerHTML = `<style>
       dialog{width:min(560px,94vw);max-height:90vh;max-height:90dvh;box-sizing:border-box;overflow:hidden;padding:0;border:1px solid var(--divider-color,#cbd3de);border-radius:10px;background:var(--card-background-color,white);color:var(--primary-text-color,#18232f);font:14px system-ui}
@@ -283,6 +283,12 @@ export class TemplateDialog extends HTMLElement {
         .gallery-content{overflow:auto;overscroll-behavior:contain;padding:3px;margin:-3px}
         .list{flex-shrink:0;overflow:visible}
       }
+      @media (max-width:420px){
+        .options + .actions:has([data-mode]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+        .options + .actions button{padding:4px 6px;min-width:0;font-size:12px;overflow-wrap:anywhere}
+        .options + .actions [data-mode=create]{grid-column:span 2}
+        .options + .actions [data-close]{grid-column:3}
+      }
     </style><dialog aria-label="${t(hass, "Design gallery")}"><form method="dialog">
       <h2>${t(hass, "Design gallery")}</h2>
       ${this.chosen ? this.templateOptions(note) : this.gallery(note)}
@@ -300,7 +306,7 @@ export class TemplateDialog extends HTMLElement {
       this.close();
     });
     dialog.showModal();
-    if (!this.issues.length)
+    if (!this.note)
       this.shadowRoot
         .querySelector("[data-param], [data-template], button")
         ?.focus();
@@ -357,6 +363,7 @@ export class TemplateDialog extends HTMLElement {
       this.chosen = this.templates.find(
         (template) => template.id === button.dataset.template,
       );
+      this.note = "";
       this.typed = null;
       this.formPreview = null;
       this.formPreviewNote = "";

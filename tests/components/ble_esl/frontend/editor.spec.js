@@ -2053,6 +2053,11 @@ test("design template: the gallery and its actions fit in a short viewport", asy
   const save = gallery.getByRole("button", { name: "Als Vorlage speichern" });
   await save.scrollIntoViewIfNeeded();
   await expect(save).toBeInViewport({ ratio: 1 });
+  await gallery.getByLabel("Name der Design-Vorlage").fill("Small viewport");
+  await save.click();
+  const status = gallery.getByRole("status");
+  await expect(status).toHaveText("Vorlage small_viewport gespeichert.");
+  await expect(status).toBeInViewport({ ratio: 1 });
   await expect(title).toBeInViewport({ ratio: 1 });
   await expect(cancel).toBeInViewport({ ratio: 1 });
   await date.click();
@@ -2064,6 +2069,9 @@ test("design template: the gallery and its actions fit in a short viewport", asy
   await expect
     .poll(() => options.evaluate((node) => node.scrollWidth - node.clientWidth))
     .toBe(0);
+  const font = gallery.getByLabel("Font", { exact: true });
+  await font.scrollIntoViewIfNeeded();
+  await expect(font).toBeInViewport({ ratio: 1 });
   await expect(title).toBeInViewport({ ratio: 1 });
   await expect(
     gallery.getByRole("button", { name: "Zur Anzeige hinzufügen" }),
@@ -2161,6 +2169,28 @@ test("design template: partial placement keeps the issue details in view", async
     gallery.getByText("Skipped element 1", { exact: true }),
   ).toBeInViewport({ ratio: 1 });
   await expect(gallery.getByRole("button", { name: "Close" })).toBeInViewport({
+    ratio: 1,
+  });
+});
+
+test("design template: apply errors stay in view on a short screen", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.panel.applyDesignTemplate = async () => {
+      throw new Error("Could not apply this design");
+    };
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  await gallery.getByRole("button", { name: /Date label/ }).click();
+  await expect(gallery.locator("[data-form-preview]")).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 300 });
+  await gallery.getByRole("button", { name: "Add to display" }).click();
+  const status = gallery.getByRole("status");
+  await expect(status).toHaveText("Could not apply this design");
+  await expect(status).toBeInViewport({ ratio: 1 });
+  await expect(gallery.getByRole("button", { name: "Cancel" })).toBeInViewport({
     ratio: 1,
   });
 });
