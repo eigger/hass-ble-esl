@@ -221,6 +221,17 @@ PORTRAIT_SUMMARY = (
     "('충전 출력 ' ~ _ps) if _ps else ("
     "('기준 ' ~ (_low | round(0) | int) ~ '% · ' ~ _badge) if _soc is not none else '센서 연결 확인'))) }}"
 )
+RANGE_PWR_COMPACT = (
+    EV_PRELUDE
+    + RANGE_PRELUDE
+    + "{% if _rng is not none %}"
+    + _fmt_num("_rng", 0, "_rf")
+    + "{% set _rs = _rf ~ ' ' ~ _ru %}{% else %}{% set _rs = '' %}{% endif %}"
+    + "{% if _pw is not none %}"
+    + _fmt_power("_pw", "_pu", "_pf")
+    + "{% set _ps = _pf ~ ' ' ~ _pu %}{% else %}{% set _ps = '' %}{% endif %}"
+    + "{{ (_rs ~ ' · ' ~ _ps) if (_rs and _ps) else (_rs if _rs else (_ps if _ps else _badge)) }}"
+)
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
 
@@ -406,103 +417,97 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 6, 108, 24, 17, min_size=ms)
-    c.rect(122, 5, 190, 31, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 125, 7, 62, 22, 15, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(10, 36, 190, 36)
-
-    c.icon(BAT_ICON, 28, 70, 34, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 48, 42, 142, 56, 46, color=SOC_COLOR, min_size=ms)
-    c.progress_bar(10, 104, 190, 118, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(SOC_HINT, 10, 123, 180, 22, 15, align="center", min_size=ms)
-    c.line(10, 150, 190, 150)
-
-    c.text_fit(COMPACT_FOOTER, 10, 156, 180, 34, 16, align="center", min_size=ms)
+    c.text_fit(SOC_VAL, 8, 12, 108, 92, 54, align="center", color=SOC_COLOR, min_size=16)
+    c.rect(120, 22, 192, 88, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 124, 28, 64, 54, 24, align="center", color=BADGE_COLOR, min_size=16)
+    c.line(10, 114, 190, 114)
+    c.text_fit(RANGE_VAL, 10, 126, 180, 60, 28, align="center", min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 128, 22, 16, min_size=ms)
-    c.rect(140, 2, 244, 25, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 144, 4, 96, 19, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 28, 244, 28)
-
-    c.icon(BAT_ICON, 24, 54, 28, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 42, 31, 134, 46, 42, color=SOC_COLOR, min_size=ms)
-    c.text_fit(SOC_HINT_COMPACT, 178, 36, 66, 36, 16, align="right", min_size=ms)
-    c.progress_bar(10, 81, 240, 93, SOC_PCT, fill=BAR_COLOR)
-
-    c.line(6, 97, 244, 97)
-    c.text_fit(COMPACT_FOOTER, 6, 100, 238, 25, 16, align="center", min_size=ms)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    split = 152 if large else 128
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(
+        SOC_VAL,
+        6,
+        6,
+        split - 10,
+        66,
+        54 if large else 52,
+        align="center",
+        color=SOC_COLOR,
+        min_size=ms,
+    )
+    c.rect(split + 2, 10, vw - 6, 68, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(
+        BADGE_TEXT,
+        split + 6,
+        14,
+        vw - split - 16,
+        50,
+        26,
+        align="center",
+        color=BADGE_COLOR,
+        min_size=ms,
+    )
+    c.line(8, 76, vw - 8, 76)
+    c.text_fit(
+        RANGE_VAL,
+        8,
+        82,
+        vw - 16,
+        40,
+        28 if large else 26,
+        align="center",
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 5, 116, 22, 16, align="center", min_size=ms)
-    c.rect(8, 30, 120, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 33, 104, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 63, 122, 63)
-
-    c.icon(BAT_ICON, 64, 84, 30, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 4, 102, 120, 48, 40, align="center", color=SOC_COLOR, min_size=ms)
-    c.progress_bar(10, 154, 118, 168, SOC_PCT, fill=BAR_COLOR)
-    c.line(6, 174, 122, 174)
-
-    c.text_fit(PORTRAIT_SUMMARY, 6, 179, 116, 30, 16, align="center", min_size=ms)
-    c.text_fit(CLOCK, 6, 214, 116, 28, 16, align="center", min_size=ms)
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(SOC_VAL, 6, 12, 116, vh * 0.30, 44, align="center", color=SOC_COLOR, min_size=ms)
+    c.rect(6, vh * 0.36, 122, vh * 0.62, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(
+        BADGE_TEXT,
+        10,
+        vh * 0.39,
+        108,
+        vh * 0.20,
+        22,
+        align="center",
+        color=BADGE_COLOR,
+        min_size=ms,
+    )
+    c.text_fit(RANGE_VAL, 6, vh * 0.66, 116, vh * 0.28, 22, align="center", min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("car-electric", 18, 19, 20, color=SOC_COLOR)
-    c.text_fit(TITLE, 34, 7, 142, 24, 18, min_size=ms)
-    c.rect(180, 5, 286, 32, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 184, 7, 98, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 292, 7, 84, 24, 16, align="right", min_size=ms)
-    c.line(8, 38, 376, 38)
-
-    c.icon(BAT_ICON, 32, 75, 38, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 56, 44, 196, 58, 52, color=SOC_COLOR, min_size=ms)
-    c.text_fit(SOC_HINT, 256, 52, 120, 40, 16, align="right", min_size=ms)
-    c.progress_bar(12, 108, 372, 126, SOC_PCT, fill=BAR_COLOR)
-
-    c.line(8, 136, 376, 136)
-    c.text_fit(RANGE_SHORT, 12, 142, 176, 32, 18, min_size=ms)
-    c.text_fit(PWR_SHORT, 196, 142, 176, 32, 18, align="right", min_size=ms)
+    c.text_fit(SOC_VAL, 10, 12, 200, 92, 68, align="center", color=SOC_COLOR, min_size=18)
+    c.rect(218, 18, 374, 92, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 226, 26, 140, 58, 30, align="center", color=BADGE_COLOR, min_size=18)
+    c.line(10, 108, 374, 108)
+    c.text_fit(RANGE_PWR_COMPACT, 10, 118, 364, 54, 30, align="center", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 26, 20, min_size=ms)
-    c.rect(10, 38, 174, 66, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 40, 156, 24, 16, align="center", color=BADGE_COLOR, min_size=ms)
-
-    c.rect(10, 74, 174, 198, radius=6)
-    c.icon(BAT_ICON, 28, 108, 28, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 46, 80, 122, 54, 48, color=SOC_COLOR, min_size=ms)
-    c.progress_bar(16, 142, 168, 156, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(SOC_HINT, 16, 163, 152, 26, 16, align="center", min_size=ms)
-
-    c.rect(10, 206, 174, 286, radius=6)
-    c.icon("map-marker-distance", 26, 224, 20)
-    c.text_fit("주행 가능 거리", 40, 212, 126, 24, 16, min_size=ms)
-    c.text_fit(RANGE_VAL, 16, 240, 152, 38, 28, min_size=ms)
-
-    c.rect(10, 294, 174, 376, radius=6)
-    c.icon("ev-station", 26, 312, 20)
-    c.text_fit("충전 전력", 40, 300, 126, 24, 16, min_size=ms)
-    c.text_fit(PWR_VAL, 16, 326, 152, 24, 18, min_size=ms)
-    c.text_fit(CLOCK, 16, 352, 152, 20, 15, align="right", min_size=ms)
+    c.text_fit(SOC_VAL, 10, 18, 164, 106, 60, align="center", color=SOC_COLOR, min_size=16)
+    c.rect(10, 138, 174, 214, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 16, 148, 152, 56, 30, align="center", color=BADGE_COLOR, min_size=16)
+    c.line(12, 234, 172, 234)
+    c.text_fit(RANGE_PWR_COMPACT, 10, 254, 164, 110, 28, align="center", min_size=16)
     return c.items
 
 

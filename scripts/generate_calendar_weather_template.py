@@ -388,93 +388,107 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(DATE_SHORT, 10, 6, 114, 24, 17, color=DATE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 126, 7, 64, 22, 15, align="right", min_size=ms)
-    c.line(10, 34, 190, 34)
-
-    c.icon(CURR_ICON, 32, 66, 38, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 56, 38, 134, 48, 46, min_size=ms)
-    c.text_fit(TODAY_HILO_COMPACT, 56, 86, 134, 22, 16, min_size=ms)
-    c.line(10, 112, 190, 112)
-
-    c.text_fit(ATTR_WHEN, 10, 117, 180, 22, 16, color=TEXT_INK, min_size=ms)
-    c.text_fit(ATTR_TITLE, 10, 141, 180, 52, 22, max_lines=2, min_size=ms)
+    c.text_fit(CURR_TEMP, 8, 10, 184, 68, 54, align="center", min_size=16)
+    c.line(12, 82, 188, 82)
+    c.text_fit(ATTR_WHEN, 8, 88, 184, 34, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 8, 126, 184, 64, 26, align="center", max_lines=2, min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(DATE_SHORT, 6, 3, 128, 22, 16, color=DATE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 138, 3, 106, 22, 16, align="right", min_size=ms)
-    c.line(6, 27, 244, 27)
-    c.line(118, 31, 118, 124)
-
-    c.icon(CURR_ICON, 24, 54, 28, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 40, 30, 74, 46, 41, min_size=ms)
-    c.text_fit(TODAY_HILO_COMPACT, 6, 84, 108, 36, 16, align="center", min_size=ms)
-
-    c.text_fit(ATTR_WHEN, 124, 32, 120, 24, 16, color=TEXT_INK, min_size=ms)
-    c.text_fit(ATTR_TITLE, 124, 60, 120, 60, 20, max_lines=2, min_size=ms)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    mid = 122 if large else 108
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(
+        CURR_TEMP,
+        6,
+        6,
+        mid - 12,
+        56,
+        52 if large else 50,
+        align="center",
+        min_size=ms,
+    )
+    c.line(mid, 10, mid, 60)
+    c.text_fit(
+        ATTR_WHEN,
+        mid + 6,
+        6,
+        vw - mid - 12,
+        56,
+        26,
+        align="center",
+        color=TEXT_INK,
+        min_size=ms,
+    )
+    c.line(6, 66, vw - 6, 66)
+    c.text_fit(
+        ATTR_TITLE,
+        6,
+        72,
+        vw - 12,
+        50,
+        28 if large else 26,
+        align="center",
+        max_lines=1,
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(DATE_SHORT, 6, 5, 116, 24, 16, align="center", color=DATE_COLOR, min_size=ms)
-    c.line(6, 33, 122, 33)
-
-    c.icon(CURR_ICON, 26, 62, 28, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 44, 38, 78, 46, 40, align="right", min_size=ms)
-    c.text_fit(TODAY_HILO_COMPACT, 6, 92, 116, 26, 16, align="center", min_size=ms)
-    c.line(6, 122, 122, 122)
-
-    c.text_fit(ATTR_WHEN, 6, 127, 116, 24, 16, align="center", color=TEXT_INK, min_size=ms)
-    c.text_fit(ATTR_TITLE, 6, 155, 116, 56, 19, align="center", max_lines=2, min_size=ms)
-    c.text_fit(CLOCK, 6, 216, 116, 26, 16, align="center", min_size=ms)
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(CURR_TEMP, 6, 12, 116, vh * 0.30, 44, align="center", min_size=ms)
+    c.line(10, vh * 0.36, 118, vh * 0.36)
+    c.text_fit(
+        ATTR_WHEN,
+        6,
+        vh * 0.40,
+        116,
+        40,
+        22,
+        align="center",
+        color=TEXT_INK,
+        min_size=ms,
+    )
+    c.text_fit(
+        ATTR_TITLE,
+        6,
+        vh * 0.56,
+        116,
+        vh * 0.38,
+        22,
+        align="center",
+        max_lines=2,
+        min_size=ms,
+    )
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("calendar-today", 18, 18, 20, color=DATE_COLOR)
-    c.text_fit(DATE_LONG, 34, 6, 224, 24, 18, color=DATE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 264, 6, 112, 24, 16, align="right", min_size=ms)
-    c.line(8, 34, 376, 34)
-    c.line(166, 38, 166, 178)
-
-    c.icon(CURR_ICON, 34, 72, 40, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 58, 42, 102, 54, 48, min_size=ms)
-    c.text_fit(TODAY_HILO_FULL, 10, 108, 150, 30, 17, min_size=ms)
-    c.text_fit(CURR_COND, 10, 142, 150, 30, 17, min_size=ms)
-
-    c.text_fit(ATTR_WHEN, 176, 40, 200, 28, 18, color=TEXT_INK, min_size=ms)
-    c.text_fit(ATTR_TITLE, 176, 72, 200, 74, 26, max_lines=2, min_size=ms)
-    c.text_fit(ATTR_LOC, 176, 148, 200, 28, 16, min_size=ms)
+    c.text_fit(DATE_SHORT, 10, 12, 166, 70, 28, align="center", color=DATE_COLOR, min_size=18)
+    c.line(182, 14, 182, 82)
+    c.text_fit(CURR_TEMP, 190, 8, 184, 76, 64, align="center", min_size=18)
+    c.line(10, 88, 374, 88)
+    c.text_fit(ATTR_WHEN, 10, 94, 364, 36, 26, align="center", color=TEXT_INK, min_size=18)
+    c.text_fit(ATTR_TITLE, 10, 132, 364, 46, 30, align="center", max_lines=1, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(DATE_SHORT, 10, 7, 100, 26, 18, color=DATE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 112, 8, 62, 24, 15, align="right", min_size=ms)
-    c.line(10, 38, 174, 38)
-
-    c.rect(10, 46, 174, 186, radius=6)
-    c.icon(CURR_ICON, 36, 86, 36, color=CURR_ICON_COLOR)
-    c.text_fit(CURR_TEMP, 60, 56, 108, 54, 48, align="right", min_size=ms)
-    c.text_fit(TODAY_HILO_FULL, 18, 120, 148, 28, 17, min_size=ms)
-    c.text_fit(CURR_COND, 18, 150, 148, 26, 16, min_size=ms)
-
-    c.rect(10, 196, 174, 376, radius=6)
-    c.text_fit(ATTR_WHEN, 18, 206, 148, 28, 17, color=TEXT_INK, min_size=ms)
-    c.text_fit(ATTR_TITLE, 18, 240, 148, 92, 24, max_lines=2, min_size=ms)
-    c.text_fit(ATTR_LOC, 18, 338, 148, 28, 16, min_size=ms)
+    c.text_fit(DATE_SHORT, 10, 14, 164, 40, 26, align="center", color=DATE_COLOR, min_size=16)
+    c.text_fit(CURR_TEMP, 10, 62, 164, 90, 58, align="center", min_size=16)
+    c.line(12, 168, 172, 168)
+    c.text_fit(ATTR_WHEN, 10, 184, 164, 44, 24, align="center", color=TEXT_INK, min_size=16)
+    c.text_fit(ATTR_TITLE, 10, 240, 164, 126, 28, align="center", max_lines=2, min_size=16)
     return c.items
 
 

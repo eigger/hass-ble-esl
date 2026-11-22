@@ -359,102 +359,105 @@ def line(x1, y1, x2, y2, width=1, color="black"):
 
 
 def compact(width, height):
-    ms = 10 if width >= 296 else 9
-    small = width < 240
-    mid_band = width >= 296
-    mid = width // 2
-    temp_sz = 34 if small else (42 if mid_band else 38)
-    range_sz = 14 if small else 16
-    label_sz = 16 if small else (20 if mid_band else 18)
-    timing_sz = 13 if small else (16 if mid_band else 14)
-    ic_sz = 24 if small else 28
-    lbl_x = mid + (36 if small else 40)
-    return [
+    large = width >= 296
+    ms = 18 if large else 16
+    temp_sz = (56 if height >= 150 else 52) if large else (44 if width < 240 else 48)
+    label_sz = 26 if large else (22 if width < 240 else 24)
+    timing_sz = 28 if large else (22 if width < 240 else 25)
+    mid = 124 if large else width // 2
+    div_y = round(height * 0.56)
+    items = [
         fit_text(
             6,
-            8,
+            6,
             mid - 12,
-            temp_sz + 14,
+            div_y - 12,
             current("temperature"),
             temp_sz,
             align="center",
             min_size=ms,
         ),
-        fit_text(
-            6, height - 34, mid - 12, 26, temperature_range(), range_sz, align="center", min_size=ms
-        ),
-        line(mid, 8, mid, height - 8),
-        icon(mid + 8, 12, advice("icon"), ic_sz, color=advice("safe_color")),
-        fit_text(
-            lbl_x,
-            10,
-            width - lbl_x - 6,
-            30,
-            advice("label"),
-            label_sz,
-            align="left",
-            color=advice("safe_color"),
-            min_size=ms,
-        ),
-        line(mid + 6, 46, width - 6, 46),
-        fit_text(
-            mid + 6,
-            52,
-            width - mid - 12,
-            height - 60,
-            advice("timing"),
-            timing_sz,
-            align="left",
-            color=advice("safe_color"),
-            min_size=ms,
-        ),
+        line(mid, 8, mid, div_y - 6),
     ]
+    if large:
+        items.extend(
+            [
+                icon(mid + 10, (div_y - 26) // 2, advice("icon"), 26, color=advice("safe_color")),
+                fit_text(
+                    mid + 42,
+                    6,
+                    width - mid - 48,
+                    div_y - 12,
+                    advice("label"),
+                    label_sz,
+                    align="left",
+                    color=advice("safe_color"),
+                    min_size=ms,
+                ),
+            ]
+        )
+    else:
+        items.append(
+            fit_text(
+                mid + 6,
+                6,
+                width - mid - 12,
+                div_y - 12,
+                advice("label"),
+                label_sz,
+                align="center",
+                color=advice("safe_color"),
+                min_size=ms,
+            )
+        )
+    items.extend(
+        [
+            line(8, div_y, width - 8, div_y),
+            fit_text(
+                8,
+                div_y + 6,
+                width - 16,
+                height - div_y - 12,
+                advice("timing"),
+                timing_sz,
+                align="center",
+                color=advice("safe_color"),
+                min_size=ms,
+            ),
+        ]
+    )
+    return items
 
 
 def narrow_portrait(width, height):
-    ms = 10 if height >= 296 or width >= 296 else 9
-    compact_h = height < 240
-    pad = 5
+    tall = height >= 296
+    ms = 15 if tall else 14
+    pad = 4
     inner = width - 2 * pad
-    temp_sz = 34 if compact_h else 42
-    sec_sz = 14 if compact_h else 16
-    label_sz = 16 if compact_h else 19
-    div_y = round(height * 0.46)
+    temp_sz = (46 if width >= 145 else 42) if tall else (36 if width < 120 else 40)
+    label_sz = 22 if tall else 19
+    timing_sz = 20 if tall else 18
+    div_y = round(height * 0.44)
+    lbl_y = div_y + 10
+    lbl_h = round(height * 0.24)
+    tim_y = lbl_y + lbl_h + 6
     return [
         fit_text(
             pad,
             10,
             inner,
-            temp_sz + 14,
+            div_y - 18,
             current("temperature"),
             temp_sz,
             align="center",
             min_size=ms,
         ),
+        line(8, div_y, width - 8, div_y),
         fit_text(
             pad,
-            62 if compact_h else 74,
+            lbl_y,
             inner,
-            28,
-            temperature_range(),
-            sec_sz,
-            align="center",
-            min_size=ms,
-        ),
-        line(8, div_y, width - 9, div_y),
-        icon(
-            width // 2,
-            round(height * 0.50),
-            advice("icon"),
-            26 if compact_h else 32,
-            "mt",
-            advice("safe_color"),
-        ),
-        fit_text(
-            pad,
-            round(height * 0.65),
-            inner,
-            28,
+            lbl_h,
             advice("label"),
             label_sz,
             align="center",
@@ -463,12 +466,13 @@ def narrow_portrait(width, height):
         ),
         fit_text(
             pad,
-            round(height * 0.80),
+            tim_y,
             inner,
-            height - round(height * 0.80) - 6,
+            height - tim_y - 8,
             advice("timing"),
-            sec_sz,
+            timing_sz,
             align="center",
+            color=advice("safe_color"),
             min_size=ms,
         ),
     ]
@@ -477,149 +481,149 @@ def narrow_portrait(width, height):
 def stacked(width, height):
     if width == 200 and height == 200:
         return [
-            fit_text(10, 12, 180, 64, current("temperature"), 54, align="center", min_size=9),
-            fit_text(10, 78, 180, 28, temperature_range(), 18, align="center", min_size=9),
-            line(12, 112, 188, 112),
-            icon(20, 122, advice("icon"), 30, color=advice("safe_color")),
+            fit_text(8, 10, 184, 74, current("temperature"), 56, align="center", min_size=16),
+            line(12, 92, 188, 92),
             fit_text(
-                56,
-                122,
-                134,
-                30,
+                8,
+                100,
+                184,
+                42,
                 advice("label"),
-                22,
-                align="left",
+                28,
+                align="center",
                 color=advice("safe_color"),
-                min_size=9,
+                min_size=16,
             ),
-            fit_text(12, 158, 176, 30, advice("timing"), 16, align="center", min_size=9),
+            fit_text(
+                8,
+                148,
+                184,
+                42,
+                advice("timing"),
+                24,
+                align="center",
+                color=advice("safe_color"),
+                min_size=16,
+            ),
         ]
-    result = [
-        fit_text(12, 8, width // 2 - 14, 24, "오늘 날씨", 18, align="left", min_size=10),
+    temp_sz = 60 if width < 210 else 70
+    rng_sz = 24 if width < 210 else 28
+    lbl_sz = 28 if width < 210 else 32
+    tim_sz = 24 if width < 210 else 26
+    div_y = round(height * 0.44)
+    rng_y = round(height * 0.27)
+    lbl_y = div_y + 18
+    tim_y = lbl_y + 64
+    return [
         fit_text(
-            width // 2, 8, width // 2 - 12, 24, current("date"), 15, align="right", min_size=10
+            10,
+            14,
+            width - 20,
+            rng_y - 20,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=16,
         ),
-        line(12, 36, width - 13, 36),
-        fit_text(12, 48, width - 24, 68, current("temperature"), 58, align="center", min_size=10),
-        fit_text(12, 120, width - 24, 28, temperature_range(), 18, align="center", min_size=10),
-        line(12, 156, width - 13, 156),
-        icon(18, 166, advice("icon"), 26, color=advice("safe_color")),
         fit_text(
-            50,
-            164,
-            width - 62,
-            30,
+            10,
+            rng_y,
+            width - 20,
+            div_y - rng_y - 10,
+            forecast(0, "range"),
+            rng_sz,
+            align="center",
+            min_size=16,
+        ),
+        line(12, div_y, width - 12, div_y),
+        fit_text(
+            10,
+            lbl_y,
+            width - 20,
+            56,
             advice("label"),
-            22,
-            align="left",
+            lbl_sz,
+            align="center",
             color=advice("safe_color"),
-            min_size=10,
+            min_size=16,
         ),
-        fit_text(12, 198, width - 24, 28, advice("timing"), 16, align="center", min_size=10),
+        fit_text(
+            10,
+            tim_y,
+            width - 20,
+            height - tim_y - 12,
+            advice("timing"),
+            tim_sz,
+            align="center",
+            color=advice("safe_color"),
+            min_size=16,
+        ),
     ]
-    for index, (hour, label) in enumerate(((7, "07시 출근"), (19, "19시 귀가"))):
-        y = 240 + 68 * index
-        result.extend(
-            [
-                line(12, y, width - 13, y),
-                fit_text(12, y + 8, width - 24, 24, label, 16, align="left", min_size=10),
-                icon(14, y + 36, hourly(hour, "icon"), 22, color=hourly(hour, "safe_color")),
-                fit_text(
-                    42, y + 34, 60, 26, hourly(hour, "temperature"), 18, align="left", min_size=10
-                ),
-                fit_text(
-                    width - 70,
-                    y + 34,
-                    58,
-                    26,
-                    hourly(hour, "chance"),
-                    16,
-                    align="right",
-                    min_size=10,
-                ),
-            ]
-        )
-    return result
 
 
 def today(width, height):
-    mid = width // 2
-    sep = height - 62
-    temp_sz = 48 if height < 210 else 56
-    temp_h = 54 if height < 210 else 68
-    range_y = 94 if height < 210 else 120
-    range_sz = 16 if height < 210 else 18
-    timing_y = 78 if height < 210 else 96
-    result = [
-        fit_text(12, 6, 160, 24, "오늘 날씨", 18, align="left", min_size=10),
-        fit_text(width - 150, 6, 138, 24, current("date"), 16, align="right", min_size=10),
-        line(12, 34, width - 13, 34),
+    mid = round(width * 0.46)
+    tall = height >= 210
+    temp_sz = 80 if tall else 68
+    rng_sz = 30 if tall else 26
+    lbl_sz = 36 if tall else 30
+    tim_sz = 28 if tall else 26
+    ic_sz = 42 if tall else 36
+    right_div_y = round(height * 0.48)
+    rng_y = height - 56
+    return [
         fit_text(
-            12, 38, mid - 22, temp_h, current("temperature"), temp_sz, align="left", min_size=10
+            10,
+            10,
+            mid - 20,
+            rng_y - 16,
+            current("temperature"),
+            temp_sz,
+            align="center",
+            min_size=18,
         ),
         fit_text(
-            12, range_y, mid - 22, 24, temperature_range(), range_sz, align="left", min_size=10
+            10,
+            rng_y,
+            mid - 20,
+            44,
+            forecast(0, "range"),
+            rng_sz,
+            align="center",
+            min_size=18,
         ),
-        line(mid - 4, 40, mid - 4, sep - 6),
-        icon(mid + 6, 44, advice("icon"), 26, color=advice("safe_color")),
+        line(mid, 12, mid, height - 12),
+        icon(
+            mid + 12,
+            (right_div_y - ic_sz) // 2 + 4,
+            advice("icon"),
+            ic_sz,
+            color=advice("safe_color"),
+        ),
         fit_text(
-            mid + 38,
-            42,
-            width - mid - 50,
-            30,
+            mid + 14 + ic_sz + 6,
+            10,
+            width - (mid + 14 + ic_sz + 14),
+            right_div_y - 16,
             advice("label"),
-            21,
+            lbl_sz,
             align="left",
             color=advice("safe_color"),
-            min_size=10,
+            min_size=18,
         ),
+        line(mid + 10, right_div_y, width - 10, right_div_y),
         fit_text(
-            mid + 6,
-            timing_y,
-            width - mid - 18,
-            32,
+            mid + 10,
+            right_div_y + 10,
+            width - mid - 20,
+            height - right_div_y - 18,
             advice("timing"),
-            16 if height < 210 else 18,
-            align="left",
-            min_size=10,
+            tim_sz,
+            align="center",
+            color=advice("safe_color"),
+            min_size=18,
         ),
-        line(12, sep, width - 13, sep),
     ]
-    cell = (width - 24) / 2
-    for index, (hour, label) in enumerate(((7, "07시 출근"), (19, "19시 귀가"))):
-        x = round(12 + cell * index)
-        end = round(x + cell)
-        y = sep + 6
-        if index:
-            result.append(line(x, y, x, height - 8))
-        result.extend(
-            [
-                fit_text(x + 6, y, 76, 22, label, 16, align="left", min_size=10),
-                icon(x + 8, y + 26, hourly(hour, "icon"), 22, color=hourly(hour, "safe_color")),
-                fit_text(
-                    x + 34,
-                    y + 26,
-                    66,
-                    22,
-                    hourly(hour, "temperature"),
-                    17,
-                    align="left",
-                    min_size=10,
-                ),
-                fit_text(
-                    end - 64,
-                    y + 26,
-                    56,
-                    22,
-                    hourly(hour, "chance"),
-                    16,
-                    align="right",
-                    color=hourly(hour, "safe_color"),
-                    min_size=10,
-                ),
-            ]
-        )
-    return result
 
 
 def weekly(width, height):

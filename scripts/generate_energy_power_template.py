@@ -372,103 +372,71 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 6, 108, 24, 17, min_size=ms)
-    c.rect(122, 5, 190, 31, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 125, 7, 62, 22, 15, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(10, 36, 190, 36)
-
-    c.icon("lightning-bolt", 28, 70, 34, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 48, 42, 142, 56, 46, color=PWR_COLOR, min_size=ms)
-    c.progress_bar(10, 104, 190, 118, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PWR_HINT, 10, 123, 180, 22, 15, align="center", min_size=ms)
-    c.line(10, 150, 190, 150)
-
-    c.text_fit(COMPACT_FOOTER, 10, 156, 180, 34, 16, align="center", min_size=ms)
+    c.text_fit(PWR_VAL, 10, 14, 180, 96, 56, align="center", color=PWR_COLOR, min_size=16)
+    c.line(12, 120, 188, 120)
+    c.text_fit(ENERGY_SHORT, 10, 132, 180, 56, 26, align="center", min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 128, 22, 16, min_size=ms)
-    c.rect(140, 2, 244, 25, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 144, 4, 96, 19, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 28, 244, 28)
-
-    c.icon("lightning-bolt", 24, 54, 28, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 42, 31, 134, 46, 42, color=PWR_COLOR, min_size=ms)
-    c.text_fit(PWR_HINT_COMPACT, 178, 36, 66, 36, 16, align="right", min_size=ms)
-    c.progress_bar(10, 81, 240, 93, PWR_PCT, fill=PWR_BAR_COLOR)
-
-    c.line(6, 97, 244, 97)
-    c.text_fit(COMPACT_FOOTER, 6, 100, 238, 25, 16, align="center", min_size=ms)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(
+        PWR_VAL,
+        8,
+        6,
+        vw - 16,
+        68,
+        54 if large else 52,
+        align="center",
+        color=PWR_COLOR,
+        min_size=ms,
+    )
+    c.line(8, 78, vw - 8, 78)
+    c.text_fit(
+        ENERGY_SHORT,
+        8,
+        84,
+        vw - 16,
+        38,
+        28 if large else 26,
+        align="center",
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 5, 116, 22, 16, align="center", min_size=ms)
-    c.rect(8, 30, 120, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 33, 104, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 63, 122, 63)
-
-    c.icon("lightning-bolt", 64, 84, 30, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 4, 102, 120, 48, 40, align="center", color=PWR_COLOR, min_size=ms)
-    c.progress_bar(10, 154, 118, 168, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.line(6, 174, 122, 174)
-
-    c.text_fit(PORTRAIT_SUMMARY, 6, 179, 116, 30, 16, align="center", min_size=ms)
-    c.text_fit(CLOCK, 6, 214, 116, 28, 16, align="center", min_size=ms)
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(PWR_VAL, 6, 20, 116, vh * 0.44, 44, align="center", color=PWR_COLOR, min_size=ms)
+    c.line(10, vh * 0.56, 118, vh * 0.56)
+    c.text_fit(ENERGY_SHORT, 6, vh * 0.62, 116, vh * 0.30, 22, align="center", min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("flash", 18, 19, 20, color=PWR_COLOR)
-    c.text_fit(TITLE, 34, 7, 142, 24, 18, min_size=ms)
-    c.rect(180, 5, 286, 32, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 184, 7, 98, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 292, 7, 84, 24, 16, align="right", min_size=ms)
-    c.line(8, 38, 376, 38)
-
-    c.icon("lightning-bolt", 32, 75, 38, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 56, 44, 196, 58, 52, color=PWR_COLOR, min_size=ms)
-    c.text_fit(PWR_HINT, 256, 52, 120, 40, 16, align="right", min_size=ms)
-    c.progress_bar(12, 108, 372, 126, PWR_PCT, fill=PWR_BAR_COLOR)
-
-    c.line(8, 136, 376, 136)
-    c.text_fit(ENERGY_SHORT, 12, 142, 176, 32, 18, min_size=ms)
-    c.text_fit(SOLAR_SHORT, 196, 142, 176, 32, 18, align="right", min_size=ms)
+    c.text_fit(PWR_VAL, 10, 12, 232, 92, 66, align="center", color=PWR_COLOR, min_size=18)
+    c.rect(250, 20, 374, 88, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 256, 26, 112, 56, 30, align="center", color=BADGE_COLOR, min_size=18)
+    c.line(10, 108, 374, 108)
+    c.text_fit(ENERGY_SHORT, 10, 118, 364, 54, 30, align="center", min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 26, 20, min_size=ms)
-    c.rect(10, 38, 174, 66, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 40, 156, 24, 16, align="center", color=BADGE_COLOR, min_size=ms)
-
-    c.rect(10, 74, 174, 198, radius=6)
-    c.icon("lightning-bolt", 28, 108, 28, color=PWR_COLOR)
-    c.text_fit(PWR_VAL, 46, 80, 122, 54, 48, color=PWR_COLOR, min_size=ms)
-    c.progress_bar(16, 142, 168, 156, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PWR_HINT, 16, 163, 152, 26, 16, align="center", min_size=ms)
-
-    c.rect(10, 206, 174, 286, radius=6)
-    c.icon("meter-electric", 26, 224, 20)
-    c.text_fit("오늘 전력량", 40, 212, 126, 24, 16, min_size=ms)
-    c.text_fit(ENERGY_VAL, 16, 240, 152, 38, 28, min_size=ms)
-
-    c.rect(10, 294, 174, 376, radius=6)
-    c.icon("solar-power", 26, 312, 20)
-    c.text_fit("태양광 발전", 40, 300, 126, 24, 16, min_size=ms)
-    c.text_fit(SOLAR_VAL, 16, 326, 152, 24, 18, min_size=ms)
-    c.text_fit(CLOCK, 16, 352, 152, 20, 15, align="right", min_size=ms)
+    c.text_fit(PWR_VAL, 10, 20, 164, 106, 58, align="center", color=PWR_COLOR, min_size=16)
+    c.rect(10, 138, 174, 214, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=6)
+    c.text_fit(BADGE_TEXT, 16, 148, 152, 56, 30, align="center", color=BADGE_COLOR, min_size=16)
+    c.line(12, 234, 172, 234)
+    c.text_fit(ENERGY_SHORT, 10, 254, 164, 110, 28, align="center", min_size=16)
     return c.items
 
 

@@ -73,630 +73,485 @@ parameters:
       ko: 갱신 주기 (분)
 layouts:
   200x200:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 10, y: 6, width: 114, height: 24, size: 17, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 126, y: 7, width: 64, height: 22, size: 15, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 10, y_start: 34, x_end: 190, y_end: 106, fill: &id002 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _ink if _ns.home > 0 else ''white'' }}', outline: &id003 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _ink if _ns.home > 0 else ''black'' }}', width: 1, radius: 6}
-  - {type: text_fit, value: &id004 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ ''연결 대기'' if _ns.tot == 0 else ((''재실 '' ~ _ns.home ~ ''/'' ~ _ns.tot) if _ns.home > 0 else ''전원 외출'') }}', font: '${font}', x: 16, y: 42, width: 168, height: 56, size: 46, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: &id005 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _fg if _ns.home > 0 else ''black'' }}'}
-  - {type: text_fit, value: &id006 '{% set _ns = namespace(tot=0, home=0, names=[]) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% set _ns.names = _ns.names + [(_po.name[:8] if _po.name else _pe.split(''.'')[-1][:8])] %}{% endif %}{% endif %}{% endif %}{% endfor %}{{ ''구성원 센서 연결 대기'' if _ns.tot == 0 else ((''재실: '' ~ ((_ns.names[:3] | join('', '')) ~ ('' 외 '' ~ (_ns.home - 3) ~ ''명'' if _ns.home > 3 else ''''))) if _ns.home > 0 else (''등록 '' ~ _ns.tot ~ ''명 모두 외출'')) }}', font: '${font}', x: 10, y: 114, width: 180, height: 32, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 10, y_start: 152, x_end: 190, y_end: 152, width: 1, fill: black}
-  - {type: icon, value: &id007 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''door-open'' if _dopen else (''door-closed'' if _has_d else ''shield-check'') }}', x: 22, y: 174, size: 18, anchor: mm, color: &id001 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _tink if _dopen else ''black'' }}'}
-  - {type: text_fit, value: &id008 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''현관 · 열림 주의'' if _dopen else (''현관 · 닫힘'' if (_has_d and _ds == ''off'') else (''현관 · 대기'' if _has_d else ''현관 · 미설정'')) }}', font: '${font}', x: 36, y: 159, width: 154, height: 30, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 10, y_start: 12, x_end: 190, y_end: 118, fill: &id001 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _ink if _ns.home > 0 else ''white'' }}', outline: &id002 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _ink if _ns.home > 0 else ''black'' }}', width: 1, radius: 6}
+  - {type: text_fit, value: &id003 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ ''연결 대기'' if _ns.tot == 0 else ((''재실 '' ~ _ns.home ~ ''/'' ~ _ns.tot) if _ns.home > 0 else ''전원 외출'') }}', font: '${font}', x: 16, y: 24, width: 168, height: 82, size: 52, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: &id004 '{% set _ns = namespace(tot=0, home=0) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% endif %}{% endif %}{% endif %}{% endfor %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{{ _fg if _ns.home > 0 else ''black'' }}'}
+  - {type: text_fit, value: &id005 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''현관 · 열림 주의'' if _dopen else (''현관 · 닫힘'' if (_has_d and _ds == ''off'') else (''현관 · 대기'' if _has_d else ''현관 · 미설정'')) }}', font: '${font}', x: 10, y: 134, width: 180, height: 52, size: 26, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: &id006 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _tink if _dopen else ''black'' }}'}
   212x104:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 5, y: 2, width: 124, height: 17, size: 13, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 132, y: 2, width: 75, height: 17, size: 13, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 5, y_start: 20, x_end: 207, y_end: 20, width: 1, fill: black}
-  - {type: rectangle, x_start: 7, y_start: 23, x_end: 205, y_end: 62, fill: *id002, outline: *id003, width: 1, radius: 4}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 25, width: 186, height: 34, size: 33, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 5, y: 63, width: 202, height: 17, size: 13, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 5, y_start: 82, x_end: 207, y_end: 82, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 15, y: 93, size: 13, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 25, y: 84, width: 182, height: 18, size: 13, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 7, y_start: 6, x_end: 205, y_end: 62, fill: *id001, outline: *id002, width: 1, radius: 5}
+  - {type: text_fit, value: *id003, font: '${font}', x: 12, y: 11, width: 188, height: 46, size: 41, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 7, y: 68, width: 198, height: 30, size: 21, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   104x212:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 5, y: 4, width: 94, height: 19, size: 14, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 6, y_start: 27, x_end: 98, y_end: 92, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 10, y: 34, width: 84, height: 51, size: 34, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 5, y_start: 98, x_end: 99, y_end: 98, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 5, y: 103, width: 94, height: 30, size: 14, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 5, y_start: 137, x_end: 99, y_end: 137, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 5, y: 142, width: 94, height: 28, size: 14, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 5, y: 176, width: 94, height: 26, size: 14, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 5, y_start: 10, x_end: 99, y_end: 114, fill: *id001, outline: *id002, width: 1, radius: 5}
+  - {type: text_fit, value: *id003, font: '${font}', x: 8, y: 20, width: 88, height: 89, size: 37, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 5, y: 131, width: 94, height: 64, size: 19, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   250x122:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 2, width: 146, height: 20, size: 15, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 156, y: 2, width: 88, height: 20, size: 15, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 24, x_end: 244, y_end: 24, width: 1, fill: black}
-  - {type: rectangle, x_start: 8, y_start: 27, x_end: 242, y_end: 72, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 30, width: 220, height: 40, size: 39, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 74, width: 238, height: 20, size: 15, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 96, x_end: 244, y_end: 96, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 18, y: 110, size: 15, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 30, y: 99, width: 214, height: 20, size: 15, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 8, y_start: 8, x_end: 242, y_end: 72, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 13, width: 222, height: 54, size: 48, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 8, y: 80, width: 234, height: 34, size: 25, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   122x250:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 5, width: 110, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 8, y_start: 32, x_end: 114, y_end: 108, fill: *id002, outline: *id003, width: 1, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 11, y: 40, width: 100, height: 60, size: 40, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 6, y_start: 115, x_end: 116, y_end: 115, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 121, width: 110, height: 36, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 162, x_end: 116, y_end: 162, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 6, y: 168, width: 110, height: 32, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 6, y: 208, width: 110, height: 30, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 6, y_start: 12, x_end: 116, y_end: 135, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 24, width: 102, height: 105, size: 44, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 6, y: 155, width: 110, height: 75, size: 22, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   250x128:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 2, width: 146, height: 21, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 156, y: 2, width: 88, height: 21, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 25, x_end: 244, y_end: 25, width: 1, fill: black}
-  - {type: rectangle, x_start: 8, y_start: 28, x_end: 242, y_end: 76, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 31, width: 220, height: 42, size: 41, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 78, width: 238, height: 21, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 101, x_end: 244, y_end: 101, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 18, y: 115, size: 16, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 30, y: 104, width: 214, height: 21, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 8, y_start: 8, x_end: 242, y_end: 76, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 14, width: 222, height: 56, size: 50, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 8, y: 84, width: 234, height: 36, size: 26, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   128x250:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 5, width: 116, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 8, y_start: 32, x_end: 120, y_end: 108, fill: *id002, outline: *id003, width: 1, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 40, width: 104, height: 60, size: 40, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 6, y_start: 115, x_end: 122, y_end: 115, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 121, width: 116, height: 36, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 162, x_end: 122, y_end: 162, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 6, y: 168, width: 116, height: 32, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 6, y: 208, width: 116, height: 30, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 6, y_start: 12, x_end: 122, y_end: 135, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 24, width: 108, height: 105, size: 44, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 6, y: 155, width: 116, height: 75, size: 22, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   250x132:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 2, width: 146, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 156, y: 2, width: 88, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 26, x_end: 244, y_end: 26, width: 1, fill: black}
-  - {type: rectangle, x_start: 8, y_start: 29, x_end: 242, y_end: 78, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 32, width: 220, height: 43, size: 42, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 80, width: 238, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 104, x_end: 244, y_end: 104, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 18, y: 119, size: 16, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 30, y: 107, width: 214, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 8, y_start: 8, x_end: 242, y_end: 78, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 14, width: 222, height: 58, size: 52, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 8, y: 87, width: 234, height: 37, size: 27, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   132x250:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 5, width: 120, height: 22, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 8, y_start: 32, x_end: 124, y_end: 108, fill: *id002, outline: *id003, width: 1, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 40, width: 108, height: 60, size: 40, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 6, y_start: 115, x_end: 126, y_end: 115, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 121, width: 120, height: 36, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 162, x_end: 126, y_end: 162, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 6, y: 168, width: 120, height: 32, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 6, y: 208, width: 120, height: 30, size: 16, min_size: 9, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 6, y_start: 12, x_end: 126, y_end: 135, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 24, width: 112, height: 105, size: 44, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 6, y: 155, width: 120, height: 75, size: 22, min_size: 14, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   296x128:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 2, width: 173, height: 21, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 185, y: 2, width: 104, height: 21, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 7, y_start: 25, x_end: 289, y_end: 25, width: 1, fill: black}
-  - {type: rectangle, x_start: 9, y_start: 28, x_end: 287, y_end: 76, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 17, y: 31, width: 260, height: 42, size: 41, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 7, y: 78, width: 282, height: 21, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 7, y_start: 101, x_end: 289, y_end: 101, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 21, y: 115, size: 16, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 36, y: 104, width: 253, height: 21, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 8, y_start: 8, x_end: 288, y_end: 76, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 14, width: 268, height: 56, size: 52, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 8, y: 84, width: 280, height: 36, size: 28, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   128x296:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 6, y: 6, width: 116, height: 26, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 8, y_start: 38, x_end: 120, y_end: 128, fill: *id002, outline: *id003, width: 1, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 12, y: 47, width: 104, height: 71, size: 47, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 6, y_start: 136, x_end: 122, y_end: 136, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 6, y: 143, width: 116, height: 43, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 6, y_start: 192, x_end: 122, y_end: 192, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 6, y: 199, width: 116, height: 38, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 6, y: 246, width: 116, height: 36, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 6, y_start: 12, x_end: 122, y_end: 160, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 10, y: 24, width: 108, height: 124, size: 44, min_size: 15, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 6, y: 184, width: 116, height: 88, size: 22, min_size: 15, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   296x152:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 2, width: 173, height: 25, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 185, y: 2, width: 104, height: 25, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 7, y_start: 30, x_end: 289, y_end: 30, width: 1, fill: black}
-  - {type: rectangle, x_start: 9, y_start: 33, x_end: 287, y_end: 90, fill: *id002, outline: *id003, width: 1, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 17, y: 37, width: 260, height: 50, size: 49, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: *id006, font: '${font}', x: 7, y: 93, width: 282, height: 25, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 7, y_start: 120, x_end: 289, y_end: 120, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 21, y: 137, size: 19, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id008, font: '${font}', x: 36, y: 124, width: 253, height: 24, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 8, y_start: 10, x_end: 288, y_end: 90, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 14, y: 17, width: 268, height: 66, size: 62, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 8, y: 100, width: 280, height: 42, size: 33, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   152x296:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 7, y: 6, width: 138, height: 26, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: rectangle, x_start: 10, y_start: 38, x_end: 142, y_end: 128, fill: *id002, outline: *id003, width: 1, radius: 7}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 47, width: 124, height: 71, size: 47, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: line, x_start: 7, y_start: 136, x_end: 145, y_end: 136, width: 1, fill: black}
-  - {type: text_fit, value: *id006, font: '${font}', x: 7, y: 143, width: 138, height: 43, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
-  - {type: line, x_start: 7, y_start: 192, x_end: 145, y_end: 192, width: 1, fill: black}
-  - {type: text_fit, value: *id008, font: '${font}', x: 7, y: 199, width: 138, height: 38, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id001}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 7, y: 246, width: 138, height: 36, size: 19, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 7, y_start: 12, x_end: 145, y_end: 160, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 12, y: 24, width: 128, height: 124, size: 44, min_size: 15, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id005, font: '${font}', x: 7, y: 184, width: 138, height: 88, size: 22, min_size: 15, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   384x184:
-  - {type: icon, value: home-outline, x: 18, y: 18, size: 18, anchor: mm, color: black}
-  - {type: text_fit, value: '${title}', font: '${font}', x: 32, y: 6, width: 144, height: 24, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: rectangle, x_start: 180, y_start: 5, x_end: 290, y_end: 31, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 184, y: 7, width: 102, height: 22, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 296, y: 6, width: 80, height: 24, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 8, y_start: 35, x_end: 376, y_end: 35, width: 1, fill: black}
-  - {type: rectangle, x_start: 10, y_start: 40, x_end: 186, y_end: 88, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: &id009 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 28, y: 64, size: 22, anchor: mm, color: &id010 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ ''white'' if not _has else ((''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'') }}'}
-  - {type: text_fit, value: &id011 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else '''') }}', font: '${font}', x: 44, y: 44, width: 136, height: 20, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id012 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else '''') }}', font: '${font}', x: 44, y: 65, width: 136, height: 20, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: &id013 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
-  - {type: rectangle, x_start: 198, y_start: 40, x_end: 374, y_end: 88, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: &id014 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 216, y: 64, size: 22, anchor: mm, color: &id015 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ ''white'' if not _has else ((''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'') }}'}
-  - {type: text_fit, value: &id016 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else '''') }}', font: '${font}', x: 232, y: 44, width: 136, height: 20, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id017 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else '''') }}', font: '${font}', x: 232, y: 65, width: 136, height: 20, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: &id018 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
-  - {type: rectangle, x_start: 10, y_start: 94, x_end: 186, y_end: 142, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: &id019 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 28, y: 118, size: 22, anchor: mm, color: &id020 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ ''white'' if not _has else ((''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'') }}'}
-  - {type: text_fit, value: &id021 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else '''') }}', font: '${font}', x: 44, y: 98, width: 136, height: 20, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id022 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else '''') }}', font: '${font}', x: 44, y: 119, width: 136, height: 20, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: &id023 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
-  - {type: rectangle, x_start: 198, y_start: 94, x_end: 374, y_end: 142, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: &id024 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 216, y: 118, size: 22, anchor: mm, color: &id025 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ ''white'' if not _has else ((''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'') }}'}
-  - {type: text_fit, value: &id026 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else '''') }}', font: '${font}', x: 232, y: 98, width: 136, height: 20, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id027 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else '''') }}', font: '${font}', x: 232, y: 119, width: 136, height: 20, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: &id028 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
-  - {type: line, x_start: 8, y_start: 147, x_end: 376, y_end: 147, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 20, y: 165, size: 18, anchor: mm, color: *id001}
-  - {type: text_fit, value: &id030 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''현관 출입문 · 열림 주의'' if _dopen else (''현관 출입문 · 닫힘 (안전)'' if (_has_d and _ds == ''off'') else (''현관 출입문 · 확인 필요'' if _has_d else ''현관 센서 · 미설정'')) }}', font: '${font}', x: 34, y: 152, width: 342, height: 26, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 10, y_start: 8, x_end: 374, y_end: 92, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 18, y: 12, width: 348, height: 76, size: 64, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: &id007 '{% set _ns = namespace(tot=0, home=0, names=[]) %}{% for _pe in (''${person_1}'', ''${person_2}'', ''${person_3}'', ''${person_4}'') %}{% if _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] %}{% if _po is not none %}{% set _ns.tot = _ns.tot + 1 %}{% if (_po.state | string) == ''home'' %}{% set _ns.home = _ns.home + 1 %}{% set _ns.names = _ns.names + [(_po.name[:8] if _po.name else _pe.split(''.'')[-1][:8])] %}{% endif %}{% endif %}{% endif %}{% endfor %}{{ ''구성원 센서 연결 대기'' if _ns.tot == 0 else ((''재실: '' ~ ((_ns.names[:3] | join('', '')) ~ ('' 외 '' ~ (_ns.home - 3) ~ ''명'' if _ns.home > 3 else ''''))) if _ns.home > 0 else (''등록 '' ~ _ns.tot ~ ''명 모두 외출'')) }}', font: '${font}', x: 10, y: 100, width: 364, height: 36, size: 28, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 10, y_start: 140, x_end: 374, y_end: 140, width: 1, fill: black}
+  - {type: text_fit, value: *id005, font: '${font}', x: 10, y: 144, width: 364, height: 34, size: 26, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   184x384:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 10, y: 7, width: 164, height: 25, size: 20, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: rectangle, x_start: 10, y_start: 35, x_end: 174, y_end: 62, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 14, y: 37, width: 156, height: 22, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: rectangle, x_start: 10, y_start: 68, x_end: 174, y_end: 124, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id009, x: 28, y: 96, size: 22, anchor: mm, color: *id010}
-  - {type: text_fit, value: *id011, font: '${font}', x: 44, y: 73, width: 122, height: 22, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id012, font: '${font}', x: 44, y: 97, width: 122, height: 23, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id013}
-  - {type: rectangle, x_start: 10, y_start: 130, x_end: 174, y_end: 186, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id014, x: 28, y: 158, size: 22, anchor: mm, color: *id015}
-  - {type: text_fit, value: *id016, font: '${font}', x: 44, y: 135, width: 122, height: 22, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id017, font: '${font}', x: 44, y: 159, width: 122, height: 23, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id018}
-  - {type: rectangle, x_start: 10, y_start: 192, x_end: 174, y_end: 248, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id019, x: 28, y: 220, size: 22, anchor: mm, color: *id020}
-  - {type: text_fit, value: *id021, font: '${font}', x: 44, y: 197, width: 122, height: 22, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id022, font: '${font}', x: 44, y: 221, width: 122, height: 23, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id023}
-  - {type: rectangle, x_start: 10, y_start: 254, x_end: 174, y_end: 310, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id024, x: 28, y: 282, size: 22, anchor: mm, color: *id025}
-  - {type: text_fit, value: *id026, font: '${font}', x: 44, y: 259, width: 122, height: 22, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id027, font: '${font}', x: 44, y: 283, width: 122, height: 23, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 10, y_start: 316, x_end: 174, y_end: 378, fill: &id031 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _ink if _dopen else ''white'' }}', outline: &id032 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _ink if _dopen else ''black'' }}', width: 1, radius: 6}
-  - {type: icon, value: *id007, x: 26, y: 336, size: 18, anchor: mm, color: &id029 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _fg if _dopen else ''black'' }}'}
-  - {type: text_fit, value: *id008, font: '${font}', x: 40, y: 323, width: 126, height: 26, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 18, y: 352, width: 148, height: 21, size: 15, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: *id029}
+  - {type: rectangle, x_start: 10, y_start: 14, x_end: 174, y_end: 152, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 16, y: 36, width: 152, height: 94, size: 58, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: rectangle, x_start: 10, y_start: 168, x_end: 174, y_end: 272, fill: white, outline: black, width: 1, radius: 6}
+  - {type: text_fit, value: *id007, font: '${font}', x: 16, y: 182, width: 152, height: 76, size: 26, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 10, y_start: 286, x_end: 174, y_end: 370, fill: &id008 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _ink if _dopen else ''white'' }}', outline: &id009 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _ink if _dopen else ''black'' }}', width: 1, radius: 6}
+  - {type: text_fit, value: *id005, font: '${font}', x: 16, y: 302, width: 152, height: 52, size: 26, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: &id010 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ _fg if _dopen else ''black'' }}'}
   416x240:
-  - {type: icon, value: home-outline, x: 20, y: 23, size: 20, anchor: mm, color: black}
-  - {type: text_fit, value: '${title}', font: '${font}', x: 35, y: 8, width: 156, height: 31, size: 23, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: rectangle, x_start: 195, y_start: 7, x_end: 314, y_end: 40, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 199, y: 9, width: 111, height: 29, size: 21, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 321, y: 8, width: 86, height: 31, size: 21, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: line, x_start: 9, y_start: 46, x_end: 407, y_end: 46, width: 1, fill: black}
-  - {type: rectangle, x_start: 11, y_start: 52, x_end: 202, y_end: 115, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id009, x: 30, y: 83, size: 24, anchor: mm, color: *id010}
-  - {type: text_fit, value: *id011, font: '${font}', x: 48, y: 57, width: 147, height: 26, size: 22, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id012, font: '${font}', x: 48, y: 85, width: 147, height: 26, size: 23, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id013}
-  - {type: rectangle, x_start: 214, y_start: 52, x_end: 405, y_end: 115, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id014, x: 234, y: 83, size: 24, anchor: mm, color: *id015}
-  - {type: text_fit, value: *id016, font: '${font}', x: 251, y: 57, width: 148, height: 26, size: 22, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id017, font: '${font}', x: 251, y: 85, width: 148, height: 26, size: 23, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id018}
-  - {type: rectangle, x_start: 11, y_start: 123, x_end: 202, y_end: 185, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id019, x: 30, y: 154, size: 24, anchor: mm, color: *id020}
-  - {type: text_fit, value: *id021, font: '${font}', x: 48, y: 128, width: 147, height: 26, size: 22, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id022, font: '${font}', x: 48, y: 155, width: 147, height: 26, size: 23, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id023}
-  - {type: rectangle, x_start: 214, y_start: 123, x_end: 405, y_end: 185, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id024, x: 234, y: 154, size: 24, anchor: mm, color: *id025}
-  - {type: text_fit, value: *id026, font: '${font}', x: 251, y: 128, width: 148, height: 26, size: 22, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id027, font: '${font}', x: 251, y: 155, width: 148, height: 26, size: 23, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id028}
-  - {type: line, x_start: 9, y_start: 192, x_end: 407, y_end: 192, width: 1, fill: black}
-  - {type: icon, value: *id007, x: 22, y: 215, size: 20, anchor: mm, color: *id001}
-  - {type: text_fit, value: *id030, font: '${font}', x: 37, y: 198, width: 370, height: 34, size: 21, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id001}
+  - {type: rectangle, x_start: 11, y_start: 10, x_end: 405, y_end: 120, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 20, y: 16, width: 376, height: 99, size: 83, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: text_fit, value: *id007, font: '${font}', x: 11, y: 130, width: 394, height: 47, size: 37, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: line, x_start: 11, y_start: 183, x_end: 405, y_end: 183, width: 1, fill: black}
+  - {type: text_fit, value: *id005, font: '${font}', x: 11, y: 188, width: 394, height: 44, size: 34, min_size: 18, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id006}
   240x416:
-  - {type: text_fit, value: '${title}', font: '${font}', x: 13, y: 8, width: 214, height: 27, size: 22, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: rectangle, x_start: 13, y_start: 38, x_end: 227, y_end: 67, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 18, y: 40, width: 204, height: 24, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
-  - {type: rectangle, x_start: 13, y_start: 74, x_end: 227, y_end: 134, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id009, x: 37, y: 104, size: 24, anchor: mm, color: *id010}
-  - {type: text_fit, value: *id011, font: '${font}', x: 57, y: 79, width: 160, height: 24, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id012, font: '${font}', x: 57, y: 105, width: 160, height: 25, size: 20, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id013}
-  - {type: rectangle, x_start: 13, y_start: 141, x_end: 227, y_end: 202, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id014, x: 37, y: 171, size: 24, anchor: mm, color: *id015}
-  - {type: text_fit, value: *id016, font: '${font}', x: 57, y: 146, width: 160, height: 24, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id017, font: '${font}', x: 57, y: 172, width: 160, height: 25, size: 20, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id018}
-  - {type: rectangle, x_start: 13, y_start: 208, x_end: 227, y_end: 269, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id019, x: 37, y: 238, size: 24, anchor: mm, color: *id020}
-  - {type: text_fit, value: *id021, font: '${font}', x: 57, y: 213, width: 160, height: 24, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id022, font: '${font}', x: 57, y: 239, width: 160, height: 25, size: 20, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id023}
-  - {type: rectangle, x_start: 13, y_start: 275, x_end: 227, y_end: 336, fill: white, outline: black, width: 1, radius: 6}
-  - {type: icon, value: *id024, x: 37, y: 306, size: 24, anchor: mm, color: *id025}
-  - {type: text_fit, value: *id026, font: '${font}', x: 57, y: 281, width: 160, height: 23, size: 18, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id027, font: '${font}', x: 57, y: 307, width: 160, height: 25, size: 20, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 13, y_start: 342, x_end: 227, y_end: 410, fill: *id031, outline: *id032, width: 1, radius: 6}
-  - {type: icon, value: *id007, x: 34, y: 364, size: 20, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id008, font: '${font}', x: 52, y: 350, width: 165, height: 28, size: 17, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
-  - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 23, y: 381, width: 194, height: 23, size: 16, min_size: 10, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: *id029}
+  - {type: rectangle, x_start: 13, y_start: 15, x_end: 227, y_end: 165, fill: *id001, outline: *id002, width: 1, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 21, y: 39, width: 198, height: 102, size: 63, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
+  - {type: rectangle, x_start: 13, y_start: 182, x_end: 227, y_end: 295, fill: white, outline: black, width: 1, radius: 6}
+  - {type: text_fit, value: *id007, font: '${font}', x: 21, y: 197, width: 198, height: 83, size: 28, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: black}
+  - {type: rectangle, x_start: 13, y_start: 310, x_end: 227, y_end: 401, fill: *id008, outline: *id009, width: 1, radius: 6}
+  - {type: text_fit, value: *id005, font: '${font}', x: 21, y: 327, width: 198, height: 57, size: 28, min_size: 16, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id010}
   400x300:
   - {type: icon, value: home-outline, x: 19, y: 22, size: 14, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 30, y: 11, width: 180, height: 23, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 215, y: 14, width: 72, height: 17, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 294, y_start: 9, x_end: 388, y_end: 34, fill: *id002, outline: *id003, width: 1, radius: 5}
-  - {type: text_fit, value: *id004, font: '${font}', x: 298, y: 12, width: 86, height: 20, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 294, y_start: 9, x_end: 388, y_end: 34, fill: *id001, outline: *id002, width: 1, radius: 5}
+  - {type: text_fit, value: *id003, font: '${font}', x: 298, y: 12, width: 86, height: 20, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 12, y_start: 41, x_end: 388, y_end: 41, width: 1, fill: black}
   - {type: rectangle, x_start: 12, y_start: 49, x_end: 196, y_end: 145, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id009, x: 26, y: 66, size: 14, anchor: mm, color: *id013}
-  - {type: text_fit, value: &id033 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 1'') }}', font: '${font}', x: 37, y: 56, width: 92, height: 21, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id034 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 131, y: 57, width: 57, height: 19, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: &id015 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 26, y: 66, size: 14, anchor: mm, color: &id011 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
+  - {type: text_fit, value: &id016 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 1'') }}', font: '${font}', x: 37, y: 56, width: 92, height: 21, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: &id017 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 131, y: 57, width: 57, height: 19, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 20, y_start: 81, x_end: 188, y_end: 81, width: 1, fill: black}
-  - {type: text_fit, value: &id035 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 21, y: 89, width: 166, height: 47, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: &id018 '{% set _pe = ''${person_1}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 21, y: 89, width: 166, height: 47, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 204, y_start: 49, x_end: 388, y_end: 145, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id014, x: 218, y: 66, size: 14, anchor: mm, color: *id018}
-  - {type: text_fit, value: &id036 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 2'') }}', font: '${font}', x: 229, y: 56, width: 92, height: 21, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id037 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 323, y: 57, width: 57, height: 19, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: &id019 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 218, y: 66, size: 14, anchor: mm, color: &id012 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
+  - {type: text_fit, value: &id020 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 2'') }}', font: '${font}', x: 229, y: 56, width: 92, height: 21, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: &id021 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 323, y: 57, width: 57, height: 19, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 212, y_start: 81, x_end: 380, y_end: 81, width: 1, fill: black}
-  - {type: text_fit, value: &id038 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 213, y: 89, width: 166, height: 47, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: &id022 '{% set _pe = ''${person_2}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 213, y: 89, width: 166, height: 47, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 12, y_start: 152, x_end: 196, y_end: 249, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id019, x: 26, y: 170, size: 14, anchor: mm, color: *id023}
-  - {type: text_fit, value: &id039 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 3'') }}', font: '${font}', x: 37, y: 159, width: 92, height: 22, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id040 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 131, y: 161, width: 57, height: 18, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: &id023 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 26, y: 170, size: 14, anchor: mm, color: &id013 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
+  - {type: text_fit, value: &id024 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 3'') }}', font: '${font}', x: 37, y: 159, width: 92, height: 22, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: &id025 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 131, y: 161, width: 57, height: 18, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 20, y_start: 185, x_end: 188, y_end: 185, width: 1, fill: black}
-  - {type: text_fit, value: &id041 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 21, y: 192, width: 166, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: &id026 '{% set _pe = ''${person_3}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 21, y: 192, width: 166, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 204, y_start: 152, x_end: 388, y_end: 249, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id024, x: 218, y: 170, size: 14, anchor: mm, color: *id028}
-  - {type: text_fit, value: &id042 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 4'') }}', font: '${font}', x: 229, y: 159, width: 92, height: 22, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: &id043 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 323, y: 161, width: 57, height: 18, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: &id027 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''home'' if _st == ''home'' else (''account-off-outline'' if _st == ''not_home'' else (''alert-circle-outline'' if _st in (''unknown'', ''unavailable'') else ''account-outline''))) if _po is not none else ''account-outline'' }}', x: 218, y: 170, size: 14, anchor: mm, color: &id014 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') if (_po is not none and _st == ''home'') else ''black'' }}'}
+  - {type: text_fit, value: &id028 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (_po.name or _pe) if _po is not none else (_pe if _has else ''구성원 4'') }}', font: '${font}', x: 229, y: 159, width: 92, height: 22, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: &id029 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime(''%m/%d %H:%M'')) if _lc is not none else (''선택 입력'' if not _has else '''') }}', font: '${font}', x: 323, y: 161, width: 57, height: 18, size: 9, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 212, y_start: 185, x_end: 380, y_end: 185, width: 1, fill: black}
-  - {type: text_fit, value: &id044 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 213, y: 192, width: 166, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 12, y_start: 258, x_end: 388, y_end: 291, fill: *id031, outline: *id032, width: 1, radius: 4}
-  - {type: icon, value: *id007, x: 25, y: 274, size: 12, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 36, y: 263, width: 343, height: 23, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: &id030 '{% set _pe = ''${person_4}'' %}{% set _has = _pe is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _po = states[_pe] if _has else none %}{% set _st = (_po.state | string) if _po is not none else '''' %}{{ (''재실'' if _st == ''home'' else (''외출'' if _st == ''not_home'' else (''알 수 없음'' if _st in (''unknown'', ''unavailable'') else _st))) if _po is not none else (''엔티티 없음'' if _has else ''미설정'') }}', font: '${font}', x: 213, y: 192, width: 166, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 12, y_start: 258, x_end: 388, y_end: 291, fill: *id008, outline: *id009, width: 1, radius: 4}
+  - {type: icon, value: &id031 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''door-open'' if _dopen else (''door-closed'' if _has_d else ''shield-check'') }}', x: 25, y: 274, size: 12, anchor: mm, color: *id010}
+  - {type: text_fit, value: &id032 '{% set _de = ''${door_sensor}'' %}{% set _has_d = _de is match(''^[a-z][a-z0-9_]*[.][a-z0-9_]+$'') %}{% set _do = states[_de] if _has_d else none %}{% set _ds = (_do.state | string) if _do is not none else '''' %}{% set _dopen = _has_d and _ds == ''on'' %}{% set _ink = (''black'' if ''${accent}'' == ''white'' else ''${accent}'') %}{% set _fg = (''black'' if _ink == ''yellow'' else ''white'') %}{% set _tink = (''black'' if ''${accent}'' in (''yellow'', ''white'') else ''${accent}'') %}{{ ''현관 출입문 · 열림 주의'' if _dopen else (''현관 출입문 · 닫힘 (안전)'' if (_has_d and _ds == ''off'') else (''현관 출입문 · 확인 필요'' if _has_d else ''현관 센서 · 미설정'')) }}', font: '${font}', x: 36, y: 263, width: 343, height: 23, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   300x400:
   - {type: icon, value: home-outline, x: 21, y: 17, size: 12, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 34, y: 8, width: 160, height: 18, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 198, y: 9, width: 90, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 12, y_start: 29, x_end: 288, y_end: 49, fill: *id002, outline: *id003, width: 1, radius: 4}
-  - {type: text_fit, value: *id004, font: '${font}', x: 18, y: 31, width: 264, height: 16, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 12, y_start: 29, x_end: 288, y_end: 49, fill: *id001, outline: *id002, width: 1, radius: 4}
+  - {type: text_fit, value: *id003, font: '${font}', x: 18, y: 31, width: 264, height: 16, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 12, y_start: 54, x_end: 288, y_end: 122, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id009, x: 30, y: 71, size: 15, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 46, y: 61, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 184, y: 62, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 30, y: 71, size: 15, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 46, y: 61, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 184, y: 62, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 22, y_start: 82, x_end: 278, y_end: 82, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 22, y: 87, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 22, y: 87, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 12, y_start: 128, x_end: 288, y_end: 196, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id014, x: 30, y: 145, size: 15, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 46, y: 135, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 184, y: 136, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 30, y: 145, size: 15, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 46, y: 135, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 184, y: 136, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 22, y_start: 156, x_end: 278, y_end: 156, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 22, y: 161, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 22, y: 161, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 12, y_start: 202, x_end: 288, y_end: 270, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id019, x: 30, y: 219, size: 15, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 46, y: 209, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 184, y: 210, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 30, y: 219, size: 15, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 46, y: 209, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 184, y: 210, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 22, y_start: 230, x_end: 278, y_end: 230, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 22, y: 235, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 22, y: 235, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 12, y_start: 276, x_end: 288, y_end: 344, fill: white, outline: black, width: 1, radius: 5}
-  - {type: icon, value: *id024, x: 30, y: 293, size: 15, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 46, y: 283, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 184, y: 284, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 30, y: 293, size: 15, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 46, y: 283, width: 134, height: 18, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 184, y: 284, width: 94, height: 16, size: 8, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 22, y_start: 304, x_end: 278, y_end: 304, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 22, y: 309, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 12, y_start: 355, x_end: 288, y_end: 392, fill: *id031, outline: *id032, width: 1, radius: 4}
-  - {type: icon, value: *id007, x: 30, y: 374, size: 12, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 45, y: 363, width: 233, height: 21, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 22, y: 309, width: 256, height: 30, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 12, y_start: 355, x_end: 288, y_end: 392, fill: *id008, outline: *id009, width: 1, radius: 4}
+  - {type: icon, value: *id031, x: 30, y: 374, size: 12, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 45, y: 363, width: 233, height: 21, size: 10, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   648x480:
   - {type: icon, value: home-outline, x: 31, y: 36, size: 23, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 49, y: 17, width: 291, height: 38, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 348, y: 22, width: 117, height: 28, size: 16, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 476, y_start: 15, x_end: 629, y_end: 55, fill: *id002, outline: *id003, width: 2, radius: 8}
-  - {type: text_fit, value: *id004, font: '${font}', x: 483, y: 19, width: 139, height: 32, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 476, y_start: 15, x_end: 629, y_end: 55, fill: *id001, outline: *id002, width: 2, radius: 8}
+  - {type: text_fit, value: *id003, font: '${font}', x: 483, y: 19, width: 139, height: 32, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 19, y_start: 65, x_end: 629, y_end: 65, width: 2, fill: black}
   - {type: rectangle, x_start: 19, y_start: 78, x_end: 318, y_end: 232, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id009, x: 42, y: 106, size: 23, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 60, y: 89, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 212, y: 91, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 42, y: 106, size: 23, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 60, y: 89, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 212, y: 91, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 32, y_start: 130, x_end: 305, y_end: 130, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 34, y: 142, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 34, y: 142, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 330, y_start: 78, x_end: 629, y_end: 232, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id014, x: 353, y: 106, size: 23, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 371, y: 89, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 523, y: 91, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 353, y: 106, size: 23, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 371, y: 89, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 523, y: 91, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 343, y_start: 130, x_end: 616, y_end: 130, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 345, y: 142, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 345, y: 142, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 19, y_start: 244, x_end: 318, y_end: 398, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id019, x: 42, y: 272, size: 23, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 60, y: 255, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 212, y: 257, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 42, y: 272, size: 23, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 60, y: 255, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 212, y: 257, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 32, y_start: 296, x_end: 305, y_end: 296, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 34, y: 308, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 34, y: 308, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 330, y_start: 244, x_end: 629, y_end: 398, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id024, x: 353, y: 272, size: 23, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 371, y: 255, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 523, y: 257, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 353, y: 272, size: 23, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 371, y: 255, width: 149, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 523, y: 257, width: 93, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 343, y_start: 296, x_end: 616, y_end: 296, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 345, y: 308, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 19, y_start: 412, x_end: 629, y_end: 466, fill: *id031, outline: *id032, width: 1, radius: 6}
-  - {type: icon, value: *id007, x: 40, y: 439, size: 19, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 58, y: 421, width: 556, height: 36, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 345, y: 308, width: 269, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 19, y_start: 412, x_end: 629, y_end: 466, fill: *id008, outline: *id009, width: 1, radius: 6}
+  - {type: icon, value: *id031, x: 40, y: 439, size: 19, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 58, y: 421, width: 556, height: 36, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   480x648:
   - {type: icon, value: home-outline, x: 34, y: 28, size: 19, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 54, y: 14, width: 256, height: 27, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 316, y: 15, width: 144, height: 25, size: 13, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 20, y_start: 47, x_end: 460, y_end: 79, fill: *id002, outline: *id003, width: 2, radius: 6}
-  - {type: text_fit, value: *id004, font: '${font}', x: 28, y: 50, width: 424, height: 26, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 20, y_start: 47, x_end: 460, y_end: 79, fill: *id001, outline: *id002, width: 2, radius: 6}
+  - {type: text_fit, value: *id003, font: '${font}', x: 28, y: 50, width: 424, height: 26, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 20, y_start: 87, x_end: 460, y_end: 198, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id009, x: 48, y: 115, size: 24, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 74, y: 99, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 294, y: 100, width: 150, height: 27, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 48, y: 115, size: 24, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 74, y: 99, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 294, y: 100, width: 150, height: 27, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 133, x_end: 444, y_end: 133, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 36, y: 141, width: 408, height: 49, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 36, y: 141, width: 408, height: 49, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 20, y_start: 207, x_end: 460, y_end: 318, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id014, x: 48, y: 235, size: 24, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 74, y: 219, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 294, y: 220, width: 150, height: 27, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 48, y: 235, size: 24, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 74, y: 219, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 294, y: 220, width: 150, height: 27, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 253, x_end: 444, y_end: 253, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 36, y: 261, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 36, y: 261, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 20, y_start: 327, x_end: 460, y_end: 437, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id019, x: 48, y: 355, size: 24, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 74, y: 339, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 294, y: 339, width: 150, height: 28, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 48, y: 355, size: 24, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 74, y: 339, width: 214, height: 29, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 294, y: 339, width: 150, height: 28, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 373, x_end: 444, y_end: 373, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 36, y: 381, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 36, y: 381, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 20, y_start: 447, x_end: 460, y_end: 557, fill: white, outline: black, width: 1, radius: 8}
-  - {type: icon, value: *id024, x: 48, y: 475, size: 24, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 74, y: 458, width: 214, height: 30, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 294, y: 459, width: 150, height: 28, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 48, y: 475, size: 24, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 74, y: 458, width: 214, height: 30, size: 17, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 294, y: 459, width: 150, height: 28, size: 12, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 492, x_end: 444, y_end: 492, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 36, y: 501, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 20, y_start: 575, x_end: 460, y_end: 635, fill: *id031, outline: *id032, width: 1, radius: 6}
-  - {type: icon, value: *id007, x: 48, y: 605, size: 19, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 72, y: 588, width: 372, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 36, y: 501, width: 408, height: 48, size: 34, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 20, y_start: 575, x_end: 460, y_end: 635, fill: *id008, outline: *id009, width: 1, radius: 6}
+  - {type: icon, value: *id031, x: 48, y: 605, size: 19, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 72, y: 588, width: 372, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   800x480:
   - {type: icon, value: home-outline, x: 38, y: 36, size: 28, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 60, y: 17, width: 360, height: 38, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 430, y: 22, width: 144, height: 28, size: 16, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 588, y_start: 15, x_end: 776, y_end: 55, fill: *id002, outline: *id003, width: 2, radius: 10}
-  - {type: text_fit, value: *id004, font: '${font}', x: 596, y: 19, width: 172, height: 32, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 588, y_start: 15, x_end: 776, y_end: 55, fill: *id001, outline: *id002, width: 2, radius: 10}
+  - {type: text_fit, value: *id003, font: '${font}', x: 596, y: 19, width: 172, height: 32, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 24, y_start: 65, x_end: 776, y_end: 65, width: 2, fill: black}
   - {type: rectangle, x_start: 24, y_start: 78, x_end: 392, y_end: 232, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id009, x: 52, y: 106, size: 28, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 74, y: 89, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 262, y: 91, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 52, y: 106, size: 28, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 74, y: 89, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 262, y: 91, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 40, y_start: 130, x_end: 376, y_end: 130, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 42, y: 142, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 42, y: 142, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 408, y_start: 78, x_end: 776, y_end: 232, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id014, x: 436, y: 106, size: 28, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 458, y: 89, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 646, y: 91, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 436, y: 106, size: 28, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 458, y: 89, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 646, y: 91, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 424, y_start: 130, x_end: 760, y_end: 130, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 426, y: 142, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 426, y: 142, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 24, y_start: 244, x_end: 392, y_end: 398, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id019, x: 52, y: 272, size: 28, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 74, y: 255, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 262, y: 257, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 52, y: 272, size: 28, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 74, y: 255, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 262, y: 257, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 40, y_start: 296, x_end: 376, y_end: 296, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 42, y: 308, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 42, y: 308, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 408, y_start: 244, x_end: 776, y_end: 398, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id024, x: 436, y: 272, size: 28, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 458, y: 255, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 646, y: 257, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 436, y: 272, size: 28, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 458, y: 255, width: 184, height: 34, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 646, y: 257, width: 114, height: 30, size: 14, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 424, y_start: 296, x_end: 760, y_end: 296, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 426, y: 308, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 24, y_start: 412, x_end: 776, y_end: 466, fill: *id031, outline: *id032, width: 2, radius: 8}
-  - {type: icon, value: *id007, x: 50, y: 439, size: 24, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 72, y: 421, width: 686, height: 36, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 426, y: 308, width: 332, height: 76, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 24, y_start: 412, x_end: 776, y_end: 466, fill: *id008, outline: *id009, width: 2, radius: 8}
+  - {type: icon, value: *id031, x: 50, y: 439, size: 24, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 72, y: 421, width: 686, height: 36, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   480x800:
   - {type: icon, value: home-outline, x: 34, y: 34, size: 24, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 54, y: 17, width: 256, height: 34, size: 24, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 316, y: 18, width: 144, height: 32, size: 16, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 20, y_start: 58, x_end: 460, y_end: 98, fill: *id002, outline: *id003, width: 2, radius: 8}
-  - {type: text_fit, value: *id004, font: '${font}', x: 28, y: 62, width: 424, height: 32, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 20, y_start: 58, x_end: 460, y_end: 98, fill: *id001, outline: *id002, width: 2, radius: 8}
+  - {type: text_fit, value: *id003, font: '${font}', x: 28, y: 62, width: 424, height: 32, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 20, y_start: 108, x_end: 460, y_end: 244, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id009, x: 48, y: 142, size: 30, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 74, y: 122, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 294, y: 123, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 48, y: 142, size: 30, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 74, y: 122, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 294, y: 123, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 164, x_end: 444, y_end: 164, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 36, y: 174, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 36, y: 174, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 20, y_start: 256, x_end: 460, y_end: 392, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id014, x: 48, y: 290, size: 30, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 74, y: 270, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 294, y: 271, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 48, y: 290, size: 30, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 74, y: 270, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 294, y: 271, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 312, x_end: 444, y_end: 312, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 36, y: 322, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 36, y: 322, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 20, y_start: 404, x_end: 460, y_end: 540, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id019, x: 48, y: 438, size: 30, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 74, y: 418, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 294, y: 419, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 48, y: 438, size: 30, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 74, y: 418, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 294, y: 419, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 460, x_end: 444, y_end: 460, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 36, y: 470, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 36, y: 470, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 20, y_start: 552, x_end: 460, y_end: 688, fill: white, outline: black, width: 2, radius: 10}
-  - {type: icon, value: *id024, x: 48, y: 586, size: 30, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 74, y: 566, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 294, y: 567, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 48, y: 586, size: 30, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 74, y: 566, width: 214, height: 36, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 294, y: 567, width: 150, height: 34, size: 15, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 36, y_start: 608, x_end: 444, y_end: 608, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 36, y: 618, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 20, y_start: 710, x_end: 460, y_end: 784, fill: *id031, outline: *id032, width: 2, radius: 8}
-  - {type: icon, value: *id007, x: 48, y: 747, size: 24, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 72, y: 726, width: 372, height: 42, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 36, y: 618, width: 408, height: 60, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 20, y_start: 710, x_end: 460, y_end: 784, fill: *id008, outline: *id009, width: 2, radius: 8}
+  - {type: icon, value: *id031, x: 48, y: 747, size: 24, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 72, y: 726, width: 372, height: 42, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   960x640:
   - {type: icon, value: home-outline, x: 46, y: 48, size: 34, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 72, y: 23, width: 432, height: 50, size: 37, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 516, y: 29, width: 173, height: 38, size: 21, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 706, y_start: 20, x_end: 931, y_end: 73, fill: *id002, outline: *id003, width: 2, radius: 12}
-  - {type: text_fit, value: *id004, font: '${font}', x: 715, y: 25, width: 207, height: 43, size: 27, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 706, y_start: 20, x_end: 931, y_end: 73, fill: *id001, outline: *id002, width: 2, radius: 12}
+  - {type: text_fit, value: *id003, font: '${font}', x: 715, y: 25, width: 207, height: 43, size: 27, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 29, y_start: 87, x_end: 931, y_end: 87, width: 2, fill: black}
   - {type: rectangle, x_start: 29, y_start: 104, x_end: 470, y_end: 309, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id009, x: 62, y: 141, size: 34, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 89, y: 119, width: 221, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 314, y: 121, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 62, y: 141, size: 34, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 89, y: 119, width: 221, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 314, y: 121, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 173, x_end: 451, y_end: 173, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 50, y: 189, width: 399, height: 102, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 50, y: 189, width: 399, height: 102, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 490, y_start: 104, x_end: 931, y_end: 309, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id014, x: 523, y: 141, size: 34, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 550, y: 119, width: 220, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 775, y: 121, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 523, y: 141, size: 34, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 550, y: 119, width: 220, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 775, y: 121, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 509, y_start: 173, x_end: 912, y_end: 173, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 511, y: 189, width: 399, height: 102, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 511, y: 189, width: 399, height: 102, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 29, y_start: 325, x_end: 470, y_end: 531, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id019, x: 62, y: 363, size: 34, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 89, y: 340, width: 221, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 314, y: 343, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 62, y: 363, size: 34, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 89, y: 340, width: 221, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 314, y: 343, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 395, x_end: 451, y_end: 395, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 50, y: 411, width: 399, height: 101, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 50, y: 411, width: 399, height: 101, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 490, y_start: 325, x_end: 931, y_end: 531, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id024, x: 523, y: 363, size: 34, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 550, y: 340, width: 220, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 775, y: 343, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 523, y: 363, size: 34, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 550, y: 340, width: 220, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 775, y: 343, width: 137, height: 40, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 509, y_start: 395, x_end: 912, y_end: 395, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 511, y: 411, width: 399, height: 101, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 29, y_start: 549, x_end: 931, y_end: 621, fill: *id031, outline: *id032, width: 2, radius: 10}
-  - {type: icon, value: *id007, x: 60, y: 585, size: 29, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 86, y: 561, width: 824, height: 48, size: 27, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 511, y: 411, width: 399, height: 101, size: 64, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 29, y_start: 549, x_end: 931, y_end: 621, fill: *id008, outline: *id009, width: 2, radius: 10}
+  - {type: icon, value: *id031, x: 60, y: 585, size: 29, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 86, y: 561, width: 824, height: 48, size: 27, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   640x960:
   - {type: icon, value: home-outline, x: 45, y: 41, size: 29, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 72, y: 20, width: 341, height: 41, size: 29, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 421, y: 22, width: 192, height: 38, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 27, y_start: 70, x_end: 613, y_end: 118, fill: *id002, outline: *id003, width: 2, radius: 10}
-  - {type: text_fit, value: *id004, font: '${font}', x: 37, y: 74, width: 566, height: 39, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 27, y_start: 70, x_end: 613, y_end: 118, fill: *id001, outline: *id002, width: 2, radius: 10}
+  - {type: text_fit, value: *id003, font: '${font}', x: 37, y: 74, width: 566, height: 39, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 27, y_start: 130, x_end: 613, y_end: 293, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id009, x: 64, y: 170, size: 36, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 99, y: 146, width: 285, height: 44, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 392, y: 148, width: 200, height: 40, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 64, y: 170, size: 36, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 99, y: 146, width: 285, height: 44, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 392, y: 148, width: 200, height: 40, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 197, x_end: 592, y_end: 197, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 48, y: 209, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 48, y: 209, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 27, y_start: 307, x_end: 613, y_end: 470, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id014, x: 64, y: 348, size: 36, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 99, y: 324, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 392, y: 325, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 64, y: 348, size: 36, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 99, y: 324, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 392, y: 325, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 374, x_end: 592, y_end: 374, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 48, y: 386, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 48, y: 386, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 27, y_start: 485, x_end: 613, y_end: 648, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id019, x: 64, y: 526, size: 36, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 99, y: 502, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 392, y: 503, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 64, y: 526, size: 36, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 99, y: 502, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 392, y: 503, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 552, x_end: 592, y_end: 552, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 48, y: 564, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 48, y: 564, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 27, y_start: 662, x_end: 613, y_end: 826, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id024, x: 64, y: 703, size: 36, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 99, y: 679, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 392, y: 680, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 64, y: 703, size: 36, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 99, y: 679, width: 285, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 392, y: 680, width: 200, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 730, x_end: 592, y_end: 730, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 48, y: 742, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 27, y_start: 852, x_end: 613, y_end: 941, fill: *id031, outline: *id032, width: 2, radius: 10}
-  - {type: icon, value: *id007, x: 64, y: 896, size: 29, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 96, y: 871, width: 496, height: 51, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 48, y: 742, width: 544, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 27, y_start: 852, x_end: 613, y_end: 941, fill: *id008, outline: *id009, width: 2, radius: 10}
+  - {type: icon, value: *id031, x: 64, y: 896, size: 29, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 96, y: 871, width: 496, height: 51, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   960x680:
   - {type: icon, value: home-outline, x: 46, y: 51, size: 34, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 72, y: 24, width: 432, height: 54, size: 40, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 516, y: 31, width: 173, height: 40, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 706, y_start: 21, x_end: 931, y_end: 78, fill: *id002, outline: *id003, width: 2, radius: 12}
-  - {type: text_fit, value: *id004, font: '${font}', x: 715, y: 27, width: 207, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 706, y_start: 21, x_end: 931, y_end: 78, fill: *id001, outline: *id002, width: 2, radius: 12}
+  - {type: text_fit, value: *id003, font: '${font}', x: 715, y: 27, width: 207, height: 45, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 29, y_start: 92, x_end: 931, y_end: 92, width: 2, fill: black}
   - {type: rectangle, x_start: 29, y_start: 110, x_end: 470, y_end: 329, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id009, x: 62, y: 150, size: 34, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 89, y: 126, width: 221, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 314, y: 129, width: 137, height: 42, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 62, y: 150, size: 34, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 89, y: 126, width: 221, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 314, y: 129, width: 137, height: 42, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 184, x_end: 451, y_end: 184, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 50, y: 201, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 50, y: 201, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 490, y_start: 110, x_end: 931, y_end: 329, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id014, x: 523, y: 150, size: 34, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 550, y: 126, width: 220, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 775, y: 129, width: 137, height: 42, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 523, y: 150, size: 34, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 550, y: 126, width: 220, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 775, y: 129, width: 137, height: 42, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 509, y_start: 184, x_end: 912, y_end: 184, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 511, y: 201, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 511, y: 201, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 29, y_start: 346, x_end: 470, y_end: 564, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id019, x: 62, y: 385, size: 34, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 89, y: 361, width: 221, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 314, y: 364, width: 137, height: 43, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 62, y: 385, size: 34, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 89, y: 361, width: 221, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 314, y: 364, width: 137, height: 43, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 48, y_start: 419, x_end: 451, y_end: 419, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 50, y: 436, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 50, y: 436, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 490, y_start: 346, x_end: 931, y_end: 564, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id024, x: 523, y: 385, size: 34, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 550, y: 361, width: 220, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 775, y: 364, width: 137, height: 43, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 523, y: 385, size: 34, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 550, y: 361, width: 220, height: 48, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 775, y: 364, width: 137, height: 43, size: 20, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 509, y_start: 419, x_end: 912, y_end: 419, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 511, y: 436, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 29, y_start: 584, x_end: 931, y_end: 660, fill: *id031, outline: *id032, width: 2, radius: 10}
-  - {type: icon, value: *id007, x: 60, y: 622, size: 29, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 86, y: 596, width: 824, height: 51, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 511, y: 436, width: 399, height: 108, size: 68, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 29, y_start: 584, x_end: 931, y_end: 660, fill: *id008, outline: *id009, width: 2, radius: 10}
+  - {type: icon, value: *id031, x: 60, y: 622, size: 29, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 86, y: 596, width: 824, height: 51, size: 28, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   680x960:
   - {type: icon, value: home-outline, x: 48, y: 41, size: 29, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 76, y: 20, width: 363, height: 41, size: 29, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 448, y: 22, width: 204, height: 38, size: 19, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 28, y_start: 70, x_end: 652, y_end: 118, fill: *id002, outline: *id003, width: 2, radius: 10}
-  - {type: text_fit, value: *id004, font: '${font}', x: 40, y: 74, width: 600, height: 39, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 28, y_start: 70, x_end: 652, y_end: 118, fill: *id001, outline: *id002, width: 2, radius: 10}
+  - {type: text_fit, value: *id003, font: '${font}', x: 40, y: 74, width: 600, height: 39, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 28, y_start: 130, x_end: 652, y_end: 293, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id009, x: 68, y: 170, size: 36, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 105, y: 146, width: 303, height: 44, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 416, y: 148, width: 213, height: 40, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 68, y: 170, size: 36, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 105, y: 146, width: 303, height: 44, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 416, y: 148, width: 213, height: 40, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 51, y_start: 197, x_end: 629, y_end: 197, width: 1, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 51, y: 209, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 51, y: 209, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 28, y_start: 307, x_end: 652, y_end: 470, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id014, x: 68, y: 348, size: 36, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 105, y: 324, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 416, y: 325, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 68, y: 348, size: 36, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 105, y: 324, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 416, y: 325, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 51, y_start: 374, x_end: 629, y_end: 374, width: 1, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 51, y: 386, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 51, y: 386, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 28, y_start: 485, x_end: 652, y_end: 648, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id019, x: 68, y: 526, size: 36, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 105, y: 502, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 416, y: 503, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 68, y: 526, size: 36, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 105, y: 502, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 416, y: 503, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 51, y_start: 552, x_end: 629, y_end: 552, width: 1, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 51, y: 564, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 51, y: 564, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 28, y_start: 662, x_end: 652, y_end: 826, fill: white, outline: black, width: 2, radius: 12}
-  - {type: icon, value: *id024, x: 68, y: 703, size: 36, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 105, y: 679, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 416, y: 680, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 68, y: 703, size: 36, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 105, y: 679, width: 303, height: 43, size: 25, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 416, y: 680, width: 213, height: 41, size: 18, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 51, y_start: 730, x_end: 629, y_end: 730, width: 1, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 51, y: 742, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 28, y_start: 852, x_end: 652, y_end: 941, fill: *id031, outline: *id032, width: 2, radius: 10}
-  - {type: icon, value: *id007, x: 68, y: 896, size: 29, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 102, y: 871, width: 527, height: 51, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 51, y: 742, width: 578, height: 72, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 28, y_start: 852, x_end: 652, y_end: 941, fill: *id008, outline: *id009, width: 2, radius: 10}
+  - {type: icon, value: *id031, x: 68, y: 896, size: 29, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 102, y: 871, width: 527, height: 51, size: 23, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   1600x1200:
   - {type: icon, value: home-outline, x: 76, y: 90, size: 56, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 120, y: 42, width: 720, height: 96, size: 70, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 860, y: 55, width: 288, height: 70, size: 40, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 1176, y_start: 38, x_end: 1552, y_end: 138, fill: *id002, outline: *id003, width: 4, radius: 20}
-  - {type: text_fit, value: *id004, font: '${font}', x: 1192, y: 48, width: 344, height: 80, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 1176, y_start: 38, x_end: 1552, y_end: 138, fill: *id001, outline: *id002, width: 4, radius: 20}
+  - {type: text_fit, value: *id003, font: '${font}', x: 1192, y: 48, width: 344, height: 80, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: line, x_start: 48, y_start: 162, x_end: 1552, y_end: 162, width: 4, fill: black}
   - {type: rectangle, x_start: 48, y_start: 195, x_end: 784, y_end: 580, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id009, x: 104, y: 265, size: 56, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 148, y: 222, width: 368, height: 86, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 524, y: 228, width: 228, height: 74, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 104, y: 265, size: 56, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 148, y: 222, width: 368, height: 86, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 524, y: 228, width: 228, height: 74, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 80, y_start: 325, x_end: 752, y_end: 325, width: 2, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 84, y: 355, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 84, y: 355, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 816, y_start: 195, x_end: 1552, y_end: 580, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id014, x: 872, y: 265, size: 56, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 916, y: 222, width: 368, height: 86, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 1292, y: 228, width: 228, height: 74, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 872, y: 265, size: 56, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 916, y: 222, width: 368, height: 86, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 1292, y: 228, width: 228, height: 74, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 848, y_start: 325, x_end: 1520, y_end: 325, width: 2, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 852, y: 355, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 852, y: 355, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 48, y_start: 610, x_end: 784, y_end: 995, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id019, x: 104, y: 680, size: 56, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 148, y: 638, width: 368, height: 84, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 524, y: 642, width: 228, height: 76, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 104, y: 680, size: 56, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 148, y: 638, width: 368, height: 84, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 524, y: 642, width: 228, height: 76, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 80, y_start: 740, x_end: 752, y_end: 740, width: 2, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 84, y: 770, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 84, y: 770, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 816, y_start: 610, x_end: 1552, y_end: 995, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id024, x: 872, y: 680, size: 56, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 916, y: 638, width: 368, height: 84, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 1292, y: 642, width: 228, height: 76, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 872, y: 680, size: 56, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 916, y: 638, width: 368, height: 84, size: 52, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 1292, y: 642, width: 228, height: 76, size: 35, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 848, y_start: 740, x_end: 1520, y_end: 740, width: 2, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 852, y: 770, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 48, y_start: 1030, x_end: 1552, y_end: 1165, fill: *id031, outline: *id032, width: 3, radius: 16}
-  - {type: icon, value: *id007, x: 100, y: 1098, size: 48, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 144, y: 1052, width: 1372, height: 90, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 852, y: 770, width: 664, height: 190, size: 120, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 48, y_start: 1030, x_end: 1552, y_end: 1165, fill: *id008, outline: *id009, width: 3, radius: 16}
+  - {type: icon, value: *id031, x: 100, y: 1098, size: 48, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 144, y: 1052, width: 1372, height: 90, size: 50, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
   1200x1600:
   - {type: icon, value: home-outline, x: 85, y: 68, size: 48, anchor: mm, color: black}
   - {type: text_fit, value: '${title}', font: '${font}', x: 135, y: 34, width: 640, height: 68, size: 48, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
   - {type: text_fit, value: '{{ now().strftime(''%H:%M 갱신'') }}', font: '${font}', x: 790, y: 36, width: 360, height: 64, size: 32, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
-  - {type: rectangle, x_start: 50, y_start: 116, x_end: 1150, y_end: 196, fill: *id002, outline: *id003, width: 4, radius: 16}
-  - {type: text_fit, value: *id004, font: '${font}', x: 70, y: 124, width: 1060, height: 64, size: 38, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id005}
+  - {type: rectangle, x_start: 50, y_start: 116, x_end: 1150, y_end: 196, fill: *id001, outline: *id002, width: 4, radius: 16}
+  - {type: text_fit, value: *id003, font: '${font}', x: 70, y: 124, width: 1060, height: 64, size: 38, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id004}
   - {type: rectangle, x_start: 50, y_start: 216, x_end: 1150, y_end: 488, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id009, x: 120, y: 284, size: 60, anchor: mm, color: *id013}
-  - {type: text_fit, value: *id033, font: '${font}', x: 185, y: 244, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id034, font: '${font}', x: 735, y: 246, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id015, x: 120, y: 284, size: 60, anchor: mm, color: *id011}
+  - {type: text_fit, value: *id016, font: '${font}', x: 185, y: 244, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id017, font: '${font}', x: 735, y: 246, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 90, y_start: 328, x_end: 1110, y_end: 328, width: 2, fill: black}
-  - {type: text_fit, value: *id035, font: '${font}', x: 90, y: 348, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
+  - {type: text_fit, value: *id018, font: '${font}', x: 90, y: 348, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id011}
   - {type: rectangle, x_start: 50, y_start: 512, x_end: 1150, y_end: 784, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id014, x: 120, y: 580, size: 60, anchor: mm, color: *id018}
-  - {type: text_fit, value: *id036, font: '${font}', x: 185, y: 540, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id037, font: '${font}', x: 735, y: 542, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id019, x: 120, y: 580, size: 60, anchor: mm, color: *id012}
+  - {type: text_fit, value: *id020, font: '${font}', x: 185, y: 540, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id021, font: '${font}', x: 735, y: 542, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 90, y_start: 624, x_end: 1110, y_end: 624, width: 2, fill: black}
-  - {type: text_fit, value: *id038, font: '${font}', x: 90, y: 644, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id018}
+  - {type: text_fit, value: *id022, font: '${font}', x: 90, y: 644, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id012}
   - {type: rectangle, x_start: 50, y_start: 808, x_end: 1150, y_end: 1080, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id019, x: 120, y: 876, size: 60, anchor: mm, color: *id023}
-  - {type: text_fit, value: *id039, font: '${font}', x: 185, y: 836, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id040, font: '${font}', x: 735, y: 838, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id023, x: 120, y: 876, size: 60, anchor: mm, color: *id013}
+  - {type: text_fit, value: *id024, font: '${font}', x: 185, y: 836, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id025, font: '${font}', x: 735, y: 838, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 90, y_start: 920, x_end: 1110, y_end: 920, width: 2, fill: black}
-  - {type: text_fit, value: *id041, font: '${font}', x: 90, y: 940, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id023}
+  - {type: text_fit, value: *id026, font: '${font}', x: 90, y: 940, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id013}
   - {type: rectangle, x_start: 50, y_start: 1104, x_end: 1150, y_end: 1376, fill: white, outline: black, width: 3, radius: 20}
-  - {type: icon, value: *id024, x: 120, y: 1172, size: 60, anchor: mm, color: *id028}
-  - {type: text_fit, value: *id042, font: '${font}', x: 185, y: 1132, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
-  - {type: text_fit, value: *id043, font: '${font}', x: 735, y: 1134, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
+  - {type: icon, value: *id027, x: 120, y: 1172, size: 60, anchor: mm, color: *id014}
+  - {type: text_fit, value: *id028, font: '${font}', x: 185, y: 1132, width: 535, height: 72, size: 42, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: black}
+  - {type: text_fit, value: *id029, font: '${font}', x: 735, y: 1134, width: 375, height: 68, size: 30, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: right, valign: middle, color: black}
   - {type: line, x_start: 90, y_start: 1216, x_end: 1110, y_end: 1216, width: 2, fill: black}
-  - {type: text_fit, value: *id044, font: '${font}', x: 90, y: 1236, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id028}
-  - {type: rectangle, x_start: 50, y_start: 1420, x_end: 1150, y_end: 1568, fill: *id031, outline: *id032, width: 3, radius: 16}
-  - {type: icon, value: *id007, x: 120, y: 1494, size: 48, anchor: mm, color: *id029}
-  - {type: text_fit, value: *id030, font: '${font}', x: 180, y: 1452, width: 930, height: 84, size: 38, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id029}
+  - {type: text_fit, value: *id030, font: '${font}', x: 90, y: 1236, width: 1020, height: 120, size: 84, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: center, valign: middle, color: *id014}
+  - {type: rectangle, x_start: 50, y_start: 1420, x_end: 1150, y_end: 1568, fill: *id008, outline: *id009, width: 3, radius: 16}
+  - {type: icon, value: *id031, x: 120, y: 1494, size: 48, anchor: mm, color: *id010}
+  - {type: text_fit, value: *id032, font: '${font}', x: 180, y: 1452, width: 930, height: 84, size: 38, min_size: 7, max_lines: 1, line_spacing: 0, fit: shrink_ellipsis, align: left, valign: middle, color: *id010}
 automation:
   triggers:
   - trigger: time_pattern

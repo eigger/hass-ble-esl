@@ -279,6 +279,12 @@ FEAT_STATUS = (
 )
 FEAT_ICON = FEAT_PRELUDE + "{{ _ns.icon }}"
 FEAT_COLOR = FEAT_PRELUDE + f"{{{{ {TEXT_INK_EXPR} if _ns.alert else 'black' }}}}"
+FEAT_INK_PRELUDE = (
+    FEAT_PRELUDE + f"{{% set _ink = {BADGE_INK_EXPR} %}}{{% set _fg = {BADGE_FG_EXPR} %}}"
+)
+FEAT_FILL = FEAT_INK_PRELUDE + "{{ _ink if _ns.alert else 'white' }}"
+FEAT_OUTLINE = FEAT_INK_PRELUDE + "{{ _ink if _ns.alert else 'black' }}"
+FEAT_FG = FEAT_INK_PRELUDE + "{{ _fg if _ns.alert else 'black' }}"
 
 
 class FlowElement(dict):
@@ -436,112 +442,68 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 6, 104, 24, 17, min_size=ms)
-    c.rect(118, 5, 190, 31, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 121, 7, 66, 22, 15, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(10, 36, 190, 36)
-
-    c.text_fit(FEAT_NAME, 10, 42, 180, 26, 20, align="center", min_size=ms)
-    c.icon(FEAT_ICON, 28, 102, 34, color=FEAT_COLOR)
-    c.text_fit(FEAT_STATUS, 52, 74, 138, 56, 36, color=FEAT_COLOR, min_size=ms)
-
-    c.line(10, 142, 190, 142)
-    c.icon(BANNER_ICON, 20, 170, 18, color=BANNER_TEXT_COLOR)
-    c.text_fit(BANNER_COMPACT, 36, 154, 154, 34, 16, color=BANNER_TEXT_COLOR, min_size=ms)
+    c.text_fit(FEAT_NAME, 10, 12, 180, 62, 34, align="center", min_size=16)
+    c.rect(10, 84, 190, 188, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
+    c.text_fit(FEAT_STATUS, 16, 98, 168, 76, 50, align="center", color=FEAT_FG, min_size=16)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 120, 22, 16, min_size=ms)
-    c.rect(130, 2, 244, 25, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 134, 4, 106, 19, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 28, 244, 28)
-
-    c.text_fit(FEAT_NAME, 10, 31, 230, 22, 16, align="center", min_size=ms)
-    c.icon(FEAT_ICON, 28, 72, 26, color=FEAT_COLOR)
-    c.text_fit(FEAT_STATUS, 48, 53, 194, 38, 29, color=FEAT_COLOR, min_size=ms)
-
-    c.line(6, 95, 244, 95)
-    c.icon(BANNER_ICON, 18, 112, 16, color=BANNER_TEXT_COLOR)
-    c.text_fit(BANNER_COMPACT, 30, 100, 214, 24, 16, color=BANNER_TEXT_COLOR, min_size=ms)
+    large = w >= 296
+    vw = 296 if large else 250
+    ms = 18 if large else 16
+    c = Canvas(w, h, vw, 128)
+    c.text_fit(FEAT_NAME, 8, 6, vw - 16, 40, 28 if large else 26, align="center", min_size=ms)
+    c.rect(8, 50, vw - 8, 122, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
+    c.text_fit(
+        FEAT_STATUS,
+        14,
+        56,
+        vw - 28,
+        60,
+        50,
+        align="center",
+        color=FEAT_FG,
+        min_size=ms,
+    )
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
-    c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 5, 116, 22, 16, align="center", min_size=ms)
-    c.rect(8, 30, 120, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 33, 104, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.line(6, 63, 122, 63)
-
-    c.text_fit(FEAT_NAME, 6, 70, 116, 26, 17, align="center", min_size=ms)
-    c.icon(FEAT_ICON, 64, 114, 28, color=FEAT_COLOR)
-    c.text_fit(FEAT_STATUS, 6, 134, 116, 40, 28, align="center", color=FEAT_COLOR, min_size=ms)
-
-    c.line(6, 180, 122, 180)
+    tall = h >= 296
+    vh = 296 if tall else 250
+    ms = 15 if tall else 14
+    c = Canvas(w, h, 128, vh)
+    c.text_fit(FEAT_NAME, 6, 14, 116, vh * 0.32, 24, align="center", min_size=ms)
+    c.rect(6, vh * 0.40, 122, vh - 12, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
     c.text_fit(
-        BANNER_COMPACT_STATIC,
-        6,
-        185,
-        116,
-        26,
-        16,
+        FEAT_STATUS,
+        10,
+        vh * 0.44,
+        108,
+        vh * 0.48,
+        44,
         align="center",
-        color=BANNER_TEXT_COLOR,
+        color=FEAT_FG,
         min_size=ms,
     )
-    c.text_fit(CLOCK, 6, 214, 116, 26, 16, align="center", min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("washing-machine", 18, 18, 20)
-    c.text_fit(TITLE, 34, 6, 140, 24, 18, min_size=ms)
-    c.rect(178, 5, 288, 32, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 182, 7, 102, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-    c.text_fit(CLOCK, 294, 7, 82, 22, 16, align="right", min_size=ms)
-    c.line(8, 35, 376, 35)
-
-    xs = (10, 134, 258)
-    for idx, left in enumerate(xs):
-        c.rect(left, 41, left + 116, 141, radius=6)
-        name, status, _, icon, color, icon_color = _slot(idx, compact=True)
-        c.icon(icon, left + 58, 62, 26, color=icon_color)
-        c.text_fit(name, left + 7, 81, 102, 24, 17, align="center", min_size=ms)
-        c.text_fit(status, left + 7, 107, 102, 28, 20, align="center", color=color, min_size=ms)
-
-    c.line(8, 147, 376, 147)
-    c.icon(BANNER_ICON, 20, 165, 18, color=BANNER_TEXT_COLOR)
-    c.text_fit(BANNER_TEXT, 34, 152, 342, 26, 16, color=BANNER_TEXT_COLOR, min_size=ms)
+    c.text_fit(FEAT_NAME, 10, 10, 364, 54, 38, align="center", min_size=18)
+    c.rect(10, 70, 374, 174, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
+    c.text_fit(FEAT_STATUS, 18, 82, 348, 80, 62, align="center", color=FEAT_FG, min_size=18)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
-    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 26, 20, min_size=ms)
-    c.rect(10, 37, 174, 65, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 39, 156, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
-
-    for idx in range(3):
-        top = 72 + idx * 78
-        c.rect(10, top, 174, top + 70, radius=6)
-        name, status, _, icon, color, icon_color = _slot(idx, compact=True)
-        c.icon(icon, 28, top + 35, 24, color=icon_color)
-        c.text_fit(name, 46, top + 8, 120, 24, 17, min_size=ms)
-        c.text_fit(status, 46, top + 36, 120, 28, 20, color=color, min_size=ms)
-
-    c.rect(10, 310, 174, 376, fill=BANNER_FILL, outline=BANNER_OUTLINE, radius=6)
-    c.icon(BANNER_ICON, 26, 333, 18, color=BANNER_FG)
-    c.text_fit(BANNER_COMPACT_STATIC, 40, 320, 126, 26, 16, color=BANNER_FG, min_size=ms)
-    c.text_fit(CLOCK, 18, 349, 148, 22, 15, align="right", color=BANNER_FG, min_size=ms)
+    c.text_fit(FEAT_NAME, 10, 24, 164, 100, 34, align="center", min_size=16)
+    c.rect(10, 144, 174, 366, fill=FEAT_FILL, outline=FEAT_OUTLINE, radius=6)
+    c.text_fit(FEAT_STATUS, 16, 180, 152, 150, 56, align="center", color=FEAT_FG, min_size=16)
     return c.items
 
 
