@@ -206,20 +206,20 @@ COMPACT_FOOTER = (
     "('충전 출력 ' ~ _ps ~ ' · 기준 ' ~ (_low | round(0) | int) ~ '%') if _ps else ("
     "('저잔량 기준 ' ~ (_low | round(0) | int) ~ '% · ' ~ now().strftime('%H:%M')) if _soc is not none else '배터리 센서 확인'))) }}"
 )
-PORTRAIT_LINE_1 = (
+PORTRAIT_SUMMARY = (
     EV_PRELUDE
     + RANGE_PRELUDE
     + "{% if _rng is not none %}"
     + _fmt_num("_rng", 0, "_rf")
-    + "{{ '주행 ' ~ _rf ~ _ru }}"
-    "{% else %}{{ '주행 --' if _has_rng else (('기준 ' ~ (_low | round(0) | int) ~ '%') if _soc is not none else '센서 연결 확인') }}{% endif %}"
-)
-PORTRAIT_LINE_2 = (
-    EV_PRELUDE
+    + "{% set _rs = _rf ~ _ru %}{% else %}{% set _rs = '' %}{% endif %}"
     + "{% if _pw is not none %}"
     + _fmt_power("_pw", "_pu", "_pf")
-    + "{{ '충전 ' ~ _pf ~ _pu }}"
-    "{% else %}{{ '충전 --' if _has_pw else (('상태 ' ~ _badge) if _soc is not none else '잔량 --') }}{% endif %}"
+    + "{% set _ps = _pf ~ _pu %}{% else %}{% set _ps = '' %}{% endif %}"
+    + "{{ "
+    "('주행 ' ~ _rs ~ ' · 충전 ' ~ _ps) if (_rs and _ps) else ("
+    "('예상 주행 ' ~ _rs) if _rs else ("
+    "('충전 출력 ' ~ _ps) if _ps else ("
+    "('기준 ' ~ (_low | round(0) | int) ~ '% · ' ~ _badge) if _soc is not none else '센서 연결 확인'))) }}"
 )
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
@@ -406,104 +406,103 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 7, 110, 21, 15)
-    c.rect(124, 6, 190, 29, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 127, 8, 60, 19, 12, align="center", color=BADGE_COLOR)
-    c.line(10, 34, 190, 34)
+    c.text_fit(TITLE, 10, 6, 108, 24, 17, min_size=ms)
+    c.rect(122, 5, 190, 31, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 125, 7, 62, 22, 15, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(10, 36, 190, 36)
 
-    c.icon(BAT_ICON, 26, 66, 30, color=SOC_COLOR)
-    c.text_fit("배터리 잔량", 46, 40, 144, 17, 12)
-    c.text_fit(SOC_VAL, 46, 58, 144, 42, 34, color=SOC_COLOR)
-    c.progress_bar(10, 106, 190, 118, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(SOC_HINT, 10, 122, 180, 18, 11, align="center")
-    c.line(10, 144, 190, 144)
+    c.icon(BAT_ICON, 28, 70, 34, color=SOC_COLOR)
+    c.text_fit(SOC_VAL, 48, 42, 142, 56, 46, color=SOC_COLOR, min_size=ms)
+    c.progress_bar(10, 104, 190, 118, SOC_PCT, fill=BAR_COLOR)
+    c.text_fit(SOC_HINT, 10, 123, 180, 22, 15, align="center", min_size=ms)
+    c.line(10, 150, 190, 150)
 
-    c.text_fit(RANGE_SHORT, 10, 148, 180, 20, 12, align="center")
-    c.text_fit(PWR_SHORT, 10, 171, 180, 20, 12, align="center")
+    c.text_fit(COMPACT_FOOTER, 10, 156, 180, 34, 16, align="center", min_size=ms)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 130, 19, 13)
-    c.rect(140, 1, 244, 23, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 144, 3, 96, 17, 11, align="center", color=BADGE_COLOR)
-    c.line(6, 25, 244, 25)
+    c.text_fit(TITLE, 6, 3, 128, 22, 16, min_size=ms)
+    c.rect(140, 2, 244, 25, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
+    c.text_fit(BADGE_TEXT, 144, 4, 96, 19, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(6, 28, 244, 28)
 
     c.icon(BAT_ICON, 24, 54, 28, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 44, 31, 130, 42, 32, color=SOC_COLOR)
-    c.text_fit(SOC_HINT_COMPACT, 178, 34, 66, 36, 12, align="right")
-    c.progress_bar(10, 79, 240, 92, SOC_PCT, fill=BAR_COLOR)
+    c.text_fit(SOC_VAL, 42, 31, 134, 46, 42, color=SOC_COLOR, min_size=ms)
+    c.text_fit(SOC_HINT_COMPACT, 178, 36, 66, 36, 16, align="right", min_size=ms)
+    c.progress_bar(10, 81, 240, 93, SOC_PCT, fill=BAR_COLOR)
 
-    c.line(6, 98, 244, 98)
-    c.text_fit(COMPACT_FOOTER, 6, 102, 238, 22, 11, align="center")
+    c.line(6, 97, 244, 97)
+    c.text_fit(COMPACT_FOOTER, 6, 100, 238, 25, 16, align="center", min_size=ms)
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 4, 116, 20, 14, align="center")
-    c.rect(8, 27, 120, 52, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 30, 104, 18, 12, align="center", color=BADGE_COLOR)
-    c.line(6, 56, 122, 56)
+    c.text_fit(TITLE, 6, 5, 116, 22, 16, align="center", min_size=ms)
+    c.rect(8, 30, 120, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
+    c.text_fit(BADGE_TEXT, 12, 33, 104, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(6, 63, 122, 63)
 
-    c.icon(BAT_ICON, 64, 76, 24, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 6, 94, 116, 36, 26, align="center", color=SOC_COLOR)
-    c.progress_bar(10, 134, 118, 146, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(PORTRAIT_LINE_1, 6, 152, 116, 20, 12, align="center")
-    c.line(6, 176, 122, 176)
+    c.icon(BAT_ICON, 64, 84, 30, color=SOC_COLOR)
+    c.text_fit(SOC_VAL, 4, 102, 120, 48, 40, align="center", color=SOC_COLOR, min_size=ms)
+    c.progress_bar(10, 154, 118, 168, SOC_PCT, fill=BAR_COLOR)
+    c.line(6, 174, 122, 174)
 
-    c.text_fit(PORTRAIT_LINE_2, 6, 182, 116, 20, 11, align="center")
-    c.text_fit(CLOCK, 6, 214, 116, 20, 10, align="center")
+    c.text_fit(PORTRAIT_SUMMARY, 6, 179, 116, 30, 16, align="center", min_size=ms)
+    c.text_fit(CLOCK, 6, 214, 116, 28, 16, align="center", min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("car-electric", 18, 17, 18, color=SOC_COLOR)
-    c.text_fit(TITLE, 32, 6, 144, 22, 16)
-    c.rect(182, 5, 294, 30, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 186, 7, 104, 21, 13, align="center", color=BADGE_COLOR)
-    c.text_fit(CLOCK, 300, 7, 76, 22, 12, align="right")
-    c.line(8, 34, 376, 34)
+    c.icon("car-electric", 18, 19, 20, color=SOC_COLOR)
+    c.text_fit(TITLE, 34, 7, 142, 24, 18, min_size=ms)
+    c.rect(180, 5, 286, 32, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 184, 7, 98, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.text_fit(CLOCK, 292, 7, 84, 24, 16, align="right", min_size=ms)
+    c.line(8, 38, 376, 38)
 
-    c.icon(BAT_ICON, 30, 70, 34, color=SOC_COLOR)
-    c.text_fit(SOC_VAL, 52, 42, 198, 52, 42, color=SOC_COLOR)
-    c.text_fit(SOC_HINT, 256, 50, 120, 32, 13, align="right")
-    c.progress_bar(12, 102, 372, 118, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(RANGE_SHORT, 12, 124, 176, 20, 13)
-    c.text_fit(PWR_SHORT, 196, 124, 176, 20, 13, align="right")
+    c.icon(BAT_ICON, 32, 75, 38, color=SOC_COLOR)
+    c.text_fit(SOC_VAL, 56, 44, 196, 58, 52, color=SOC_COLOR, min_size=ms)
+    c.text_fit(SOC_HINT, 256, 52, 120, 40, 16, align="right", min_size=ms)
+    c.progress_bar(12, 108, 372, 126, SOC_PCT, fill=BAR_COLOR)
 
-    c.line(8, 149, 376, 149)
-    c.icon(STATUS_ICON, 20, 166, 17, color=STATUS_COLOR)
-    c.text_fit(STATUS_DETAIL, 34, 154, 342, 24, 13)
+    c.line(8, 136, 376, 136)
+    c.text_fit(RANGE_SHORT, 12, 142, 176, 32, 18, min_size=ms)
+    c.text_fit(PWR_SHORT, 196, 142, 176, 32, 18, align="right", min_size=ms)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 24, 18)
-    c.rect(10, 35, 174, 59, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 37, 156, 20, 13, align="center", color=BADGE_COLOR)
+    c.text_fit(TITLE, 10, 8, 164, 26, 20, min_size=ms)
+    c.rect(10, 38, 174, 66, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 14, 40, 156, 24, 16, align="center", color=BADGE_COLOR, min_size=ms)
 
-    c.rect(10, 66, 174, 196, radius=6)
-    c.icon(BAT_ICON, 26, 86, 20, color=SOC_COLOR)
-    c.text_fit("배터리 잔량", 40, 74, 126, 22, 14)
-    c.text_fit(SOC_VAL, 16, 104, 152, 46, 36, color=SOC_COLOR)
-    c.progress_bar(16, 154, 168, 166, SOC_PCT, fill=BAR_COLOR)
-    c.text_fit(SOC_HINT, 16, 170, 152, 20, 12)
+    c.rect(10, 74, 174, 198, radius=6)
+    c.icon(BAT_ICON, 28, 108, 28, color=SOC_COLOR)
+    c.text_fit(SOC_VAL, 46, 80, 122, 54, 48, color=SOC_COLOR, min_size=ms)
+    c.progress_bar(16, 142, 168, 156, SOC_PCT, fill=BAR_COLOR)
+    c.text_fit(SOC_HINT, 16, 163, 152, 26, 16, align="center", min_size=ms)
 
-    c.rect(10, 204, 174, 286, radius=6)
-    c.icon("map-marker-distance", 25, 224, 18)
-    c.text_fit("주행 가능 거리", 38, 212, 128, 22, 14)
-    c.text_fit(RANGE_VAL, 16, 242, 152, 34, 26)
+    c.rect(10, 206, 174, 286, radius=6)
+    c.icon("map-marker-distance", 26, 224, 20)
+    c.text_fit("주행 가능 거리", 40, 212, 126, 24, 16, min_size=ms)
+    c.text_fit(RANGE_VAL, 16, 240, 152, 38, 28, min_size=ms)
 
     c.rect(10, 294, 174, 376, radius=6)
-    c.icon("ev-station", 25, 314, 18)
-    c.text_fit("충전 전력", 38, 302, 128, 22, 14)
-    c.text_fit(PWR_VAL, 16, 330, 152, 24, 18)
-    c.text_fit(CLOCK, 16, 354, 152, 18, 11, align="right")
+    c.icon("ev-station", 26, 312, 20)
+    c.text_fit("충전 전력", 40, 300, 126, 24, 16, min_size=ms)
+    c.text_fit(PWR_VAL, 16, 326, 152, 24, 18, min_size=ms)
+    c.text_fit(CLOCK, 16, 352, 152, 20, 15, align="right", min_size=ms)
     return c.items
 
 

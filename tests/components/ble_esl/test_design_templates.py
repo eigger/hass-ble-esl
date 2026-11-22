@@ -1846,11 +1846,25 @@ async def test_commute_weather_under_4_inches_alerts_and_metrics(
         assert short_alert in vals_250
         assert f"{daily_row['templow']}°" in vals_250
         assert f"{daily_row['temperature']}°" in vals_250
-        assert "체감 9° · 습도 82%" in vals_250
+        assert any("강수 " in str(v) or "일교차 " in str(v) for v in vals_250)
 
         built_296 = build(TEMPLATES["weather_commute"], 296, 128, "BWR")
         vals_296 = _values(resolve_templates(hass, built_296["payload"], set(), variables))
-        assert {short_alert, long_alert, "체감 9°", "습도 82%", "바람 4.2 m/s"} <= set(vals_296)
+        assert {
+            short_alert,
+            long_alert,
+            f"{daily_row['templow']}°",
+            f"{daily_row['temperature']}°",
+        } <= set(vals_296)
+
+        built_384 = build(TEMPLATES["weather_commute"], 384, 184, "BWR")
+        vals_384 = _values(resolve_templates(hass, built_384["payload"], set(), variables))
+        assert {
+            long_alert,
+            "체감 9° · 습도 82%",
+            f"{daily_row['templow']}°",
+            f"{daily_row['temperature']}°",
+        } <= set(vals_384)
 
 
 async def test_commute_weather_4_inches_and_above_shows_weekly_forecast(hass):
@@ -2486,9 +2500,14 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
             hass, small_payload, set(), {"fc": {"weather.home": {"forecast": forecast}}}
         )
     )
-    assert (
-        "14.5°C" in small_texts and "Fallback Meeting" in small_texts and "Room 101" in small_texts
+    assert "14.5°C" in small_texts and "Fallback Meeting" in small_texts
+    med_payload = build(TEMPLATES["calendar_weather"], 384, 184, "BWR")["payload"]
+    med_texts = _texts(
+        resolve_templates(
+            hass, med_payload, set(), {"fc": {"weather.home": {"forecast": forecast}}}
+        )
     )
+    assert "14.5°C" in med_texts and "Fallback Meeting" in med_texts and "Room 101" in med_texts
     small_elements, _, small_issues = elements_from(
         small_payload, DevicePreset("small", "small", 250, 128, "BWR")
     )
@@ -3104,7 +3123,7 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
     assert "보통" in _texts(_shown(hass, "energy_power", 800, 480, options))
     assert {"1.05 kWh", "0.84 kW"} <= set(_texts(_shown(hass, "energy_power", 800, 480, options)))
     tiny_p_texts = _texts(_shown(hass, "energy_power", 104, 212, options))
-    assert "오늘 1.05kWh" in tiny_p_texts and "태양광 0.84kW" in tiny_p_texts
+    assert "오늘 1.05kWh · 태양광 0.84kW" in tiny_p_texts
 
     hass.states.async_set("sensor.solar_power", "2.001", {"unit_of_measurement": "kW"})
     tiny_l_texts = _texts(_shown(hass, "energy_power", 212, 104, options))
@@ -3115,13 +3134,16 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         hass, build(TEMPLATES["energy_power"], 384, 184, "BWR", options)["payload"], set()
     )
     med_l_texts = [str(item.get("value", "")) for item in med_l_items]
-    assert "태양광 840W 발전 중 · 현재 부하 60%" in med_l_texts
+    assert {"오늘 1.05kWh", "태양광 840W", "목표 3000W 대비 60%"} <= set(med_l_texts)
     assert sum(1 for t in med_l_texts if "갱신" in t) == 1
+    panel_solar_texts = _texts(_shown(hass, "energy_power", 400, 300, options))
+    assert "태양광 840W 발전 중 · 현재 부하 60%" in panel_solar_texts
 
-    # Medium compact landscape without optional sensors shows advice without duplicating header clock.
+    # Medium compact landscape without optional sensors avoids duplicating header clock; 4.2"+ shows advice.
     med_l_plain = _texts(_shown(hass, "energy_power", 384, 184))
     assert sum(1 for t in med_l_plain if "갱신" in t or ":00" in t or ":" in t) == 1
-    assert any("안정적인 전력 사용 중입니다" in t for t in med_l_plain)
+    panel_plain = _texts(_shown(hass, "energy_power", 400, 300))
+    assert any("안정적인 전력 사용 중입니다" in t for t in panel_plain)
 
     # Caution tier (80-99%), BW fallback, budget_watts coercion bounds, & empty/missing unit.
     hass.states.async_set("sensor.power", "2500", {})
@@ -3572,10 +3594,10 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
     assert {"일시정지", "남은 0분", "남은 2분", "남은 1.5시간", "동작 2"} <= set(run_texts)
     assert "-0" not in str(run_texts)
 
-    # Unset slots hide compact icons cleanly ('white') and panel displays 미설정, plus no duplicate clocks.
+    # Unset slots hide compact icons cleanly ('white') on 3.5"/3.7", while <3" shows priority device.
     hass.states.async_set("sensor.washer_state", "finished", {"friendly_name": "세탁기"})
     compact_unset = resolve_templates(
-        hass, build(TEMPLATES["appliance_status"], 200, 200, "BWR", {})["payload"], set()
+        hass, build(TEMPLATES["appliance_status"], 384, 184, "BWR", {})["payload"], set()
     )
     white_icons = [
         item
@@ -3583,6 +3605,13 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
         if item.get("type") == "icon" and item.get("color") == "white"
     ]
     assert len(white_icons) == 2
+
+    hass.states.async_set("sensor.washer_state", "running", {"friendly_name": "세탁기"})
+    hass.states.async_set("sensor.washer_remaining", "25", {"unit_of_measurement": "min"})
+    hass.states.async_set("sensor.dryer_state", "complete", {"friendly_name": "건조기"})
+    hass.states.async_set("sensor.dishwasher_state", "idle", {"friendly_name": "식기세척기"})
+    feat_200 = _texts(_shown(hass, "appliance_status", 200, 200, options))
+    assert {"건조기", "완료됨", "완료 알림"} <= set(feat_200)
 
     for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
         c_texts = _texts(_shown(hass, "appliance_status", cw, ch, options))
@@ -3656,3 +3685,50 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
         assert issues == [], size
         original, rebuilt = stable_template_payloads(hass, imported, elements)
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
+def test_under_4_inch_templates_enforce_readable_font_floors():
+    size_floors = {
+        "200x200": (15, 44, 9),
+        "212x104": (13, 32, 9),
+        "104x212": (13, 32, 9),
+        "296x128": (15, 40, 10),
+        "128x296": (15, 40, 10),
+        "384x184": (15, 46, 10),
+        "184x384": (15, 46, 10),
+        "416x240": (15, 46, 10),
+        "240x416": (15, 46, 10),
+    }
+    templates = (
+        "weather_outdoor",
+        "weather_commute",
+        "indoor_climate",
+        "calendar_weather",
+        "home_presence",
+        "energy_power",
+        "ev_charging",
+        "appliance_status",
+    )
+    for name in templates:
+        layouts = TEMPLATES[name]["layouts"]
+        for size, (min_sec, min_hero, min_ms) in size_floors.items():
+            texts = [i for i in layouts[size] if i.get("type") in ("text_fit", "text")]
+            assert texts, (name, size)
+            sizes = [i["size"] for i in texts]
+            assert min(sizes) >= min_sec, (name, size, sizes)
+            exp_hero = min_hero
+            if name == "appliance_status":
+                exp_hero = (
+                    32
+                    if size == "200x200"
+                    else (
+                        22
+                        if size in ("212x104", "104x212")
+                        else (28 if size in ("296x128", "128x296") else 18)
+                    )
+                )
+            elif name == "home_presence" and size in ("384x184", "184x384", "416x240", "240x416"):
+                exp_hero = 18
+            assert max(sizes) >= exp_hero, (name, size, sizes)
+            fit_mins = [i["min_size"] for i in texts if i.get("type") == "text_fit"]
+            assert fit_mins and min(fit_mins) >= min_ms, (name, size, fit_mins)

@@ -384,125 +384,110 @@ class Canvas:
 
 
 def _square_200(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 200, 200)
-    c.text_fit(TITLE, 10, 7, 114, 21, 16)
-    c.rect(128, 6, 190, 29, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 131, 8, 56, 19, 12, align="center", color=BADGE_COLOR)
-    c.line(10, 34, 190, 34)
+    c.text_fit(TITLE, 10, 6, 108, 24, 17, min_size=ms)
+    c.rect(122, 5, 190, 31, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 125, 7, 62, 22, 15, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(10, 36, 190, 36)
 
-    c.icon("thermometer", 24, 67, 28, color=TEMP_COLOR)
-    c.text_fit("실내 온도", 44, 41, 86, 16, 12)
-    c.text_fit(TEMP_CHIP, 134, 41, 56, 16, 12, align="right", color=TEMP_COLOR)
-    c.text_fit(TEMP_VAL, 44, 58, 146, 38, 32, color=TEMP_COLOR)
-    c.line(10, 100, 190, 100)
+    c.icon("thermometer", 28, 69, 34, color=TEMP_COLOR)
+    c.text_fit(TEMP_VAL, 50, 42, 140, 52, 46, color=TEMP_COLOR, min_size=ms)
+    c.line(10, 99, 190, 99)
 
-    c.icon("water-percent", 24, 130, 26, color=HUM_COLOR)
-    c.text_fit("실내 습도", 44, 106, 86, 16, 12)
-    c.text_fit(HUM_CHIP, 134, 106, 56, 16, 12, align="right", color=HUM_COLOR)
-    c.text_fit(HUM_VAL, 44, 123, 146, 32, 26, color=HUM_COLOR)
-    c.line(10, 160, 190, 160)
+    c.icon("water-percent", 28, 130, 30, color=HUM_COLOR)
+    c.text_fit(HUM_VAL, 50, 105, 140, 46, 40, color=HUM_COLOR, min_size=ms)
+    c.line(10, 158, 190, 158)
 
-    c.text_fit(COMPACT_FOOTER, 10, 165, 180, 26, 12, align="center")
+    c.text_fit(COMPACT_FOOTER, 10, 163, 180, 30, 16, align="center", min_size=ms)
     return c.items
 
 
 def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 250, 128)
-    c.text_fit(TITLE, 6, 3, 130, 19, 13)
-    c.rect(140, 1, 244, 23, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 144, 3, 96, 19, 11, align="center", color=BADGE_COLOR)
-    c.line(6, 25, 244, 25)
-    c.line(128, 29, 128, 97)
+    c.text_fit(TITLE, 6, 3, 128, 22, 16, min_size=ms)
+    c.rect(140, 2, 244, 25, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
+    c.text_fit(BADGE_TEXT, 144, 4, 96, 19, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(6, 28, 244, 28)
+    c.line(128, 32, 128, 92)
 
-    c.icon("thermometer", 20, 63, 22, color=TEMP_COLOR)
-    c.text_fit("온도", 34, 30, 88, 19, 12)
-    c.text_fit(TEMP_VAL, 34, 50, 88, 43, 28, color=TEMP_COLOR)
+    c.icon("thermometer", 22, 62, 26, color=TEMP_COLOR)
+    c.text_fit(TEMP_VAL, 38, 34, 86, 54, 41, color=TEMP_COLOR, min_size=ms)
 
-    c.icon("water-percent", 143, 63, 20, color=HUM_COLOR)
-    c.text_fit("습도", 156, 30, 86, 19, 12)
-    c.text_fit(HUM_VAL, 156, 50, 86, 43, 28, color=HUM_COLOR)
+    c.icon("water-percent", 144, 62, 24, color=HUM_COLOR)
+    c.text_fit(HUM_VAL, 160, 34, 84, 54, 38, color=HUM_COLOR, min_size=ms)
 
-    c.line(6, 100, 244, 100)
-    c.text_fit(COMPACT_FOOTER, 6, 103, 238, 22, 11, align="center")
+    c.line(6, 96, 244, 96)
+    c.text_fit(COMPACT_FOOTER, 6, 100, 238, 24, 16, align="center", min_size=ms)
     return c.items
 
 
 def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 128, 250)
-    c.text_fit(TITLE, 6, 4, 116, 20, 14, align="center")
-    c.rect(8, 27, 120, 52, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 30, 104, 19, 12, align="center", color=BADGE_COLOR)
-    c.line(6, 56, 122, 56)
+    c.text_fit(TITLE, 6, 5, 116, 22, 16, align="center", min_size=ms)
+    c.rect(8, 30, 120, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
+    c.text_fit(BADGE_TEXT, 12, 33, 104, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.line(6, 63, 122, 63)
 
-    c.icon("thermometer", 18, 71, 18, color=TEMP_COLOR)
-    c.text_fit("실내 온도", 30, 61, 92, 20, 12)
-    c.text_fit(TEMP_VAL, 6, 83, 116, 35, 26, align="center", color=TEMP_COLOR)
-    c.line(6, 122, 122, 122)
+    c.icon("thermometer", 22, 88, 24, color=TEMP_COLOR)
+    c.text_fit(TEMP_VAL, 36, 66, 86, 46, 40, align="right", color=TEMP_COLOR, min_size=ms)
+    c.line(6, 116, 122, 116)
 
-    c.icon("water-percent", 18, 137, 18, color=HUM_COLOR)
-    c.text_fit("실내 습도", 30, 127, 92, 20, 12)
-    c.text_fit(HUM_VAL, 6, 149, 116, 34, 24, align="center", color=HUM_COLOR)
-    c.line(6, 188, 122, 188)
+    c.icon("water-percent", 22, 141, 22, color=HUM_COLOR)
+    c.text_fit(HUM_VAL, 36, 120, 86, 44, 36, align="right", color=HUM_COLOR, min_size=ms)
+    c.line(6, 168, 122, 168)
 
-    c.text_fit(PORTRAIT_LINE_1, 6, 193, 116, 23, 12, align="center")
-    c.text_fit(PORTRAIT_LINE_2, 6, 219, 116, 23, 11, align="center")
+    c.text_fit(PORTRAIT_LINE_1, 6, 174, 116, 32, 16, align="center", min_size=ms)
+    c.text_fit(PORTRAIT_LINE_2, 6, 212, 116, 30, 16, align="center", min_size=ms)
     return c.items
 
 
 def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 384, 184)
-    c.icon("home-outline", 18, 18, 18)
-    c.text_fit(TITLE, 32, 7, 152, 22, 16)
-    c.rect(190, 5, 302, 30, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 194, 7, 104, 21, 13, align="center", color=BADGE_COLOR)
-    c.text_fit(CLOCK, 308, 7, 68, 22, 12, align="right")
-    c.line(8, 34, 376, 34)
-    c.line(192, 39, 192, 141)
+    c.icon("home-outline", 18, 19, 20)
+    c.text_fit(TITLE, 34, 7, 146, 24, 18, min_size=ms)
+    c.rect(184, 5, 290, 32, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 188, 7, 98, 22, 16, align="center", color=BADGE_COLOR, min_size=ms)
+    c.text_fit(CLOCK, 296, 7, 80, 24, 16, align="right", min_size=ms)
+    c.line(8, 38, 376, 38)
+    c.line(192, 44, 192, 130)
 
-    c.icon("thermometer", 22, 53, 20, color=TEMP_COLOR)
-    c.text_fit("실내 온도", 36, 42, 76, 21, 14)
-    c.text_fit(TEMP_CHIP, 116, 42, 68, 21, 13, align="right", color=TEMP_COLOR)
-    c.text_fit(TEMP_VAL, 10, 68, 174, 50, 42, color=TEMP_COLOR)
-    c.text_fit(TEMP_HINT, 10, 121, 174, 19, 12)
+    c.icon("thermometer", 32, 87, 36, color=TEMP_COLOR)
+    c.text_fit(TEMP_VAL, 54, 50, 132, 74, 54, color=TEMP_COLOR, min_size=ms)
 
-    c.icon("water-percent", 214, 53, 20, color=HUM_COLOR)
-    c.text_fit("실내 습도", 228, 42, 76, 21, 14)
-    c.text_fit(HUM_CHIP, 308, 42, 66, 21, 13, align="right", color=HUM_COLOR)
-    c.text_fit(HUM_VAL, 200, 68, 174, 50, 42, color=HUM_COLOR)
-    c.text_fit("적정 40 ~ 60%", 200, 121, 174, 19, 12)
+    c.icon("water-percent", 224, 87, 34, color=HUM_COLOR)
+    c.text_fit(HUM_VAL, 246, 50, 130, 74, 54, color=HUM_COLOR, min_size=ms)
 
-    c.line(8, 146, 376, 146)
-    c.icon(ADVICE_ICON, 20, 165, 18, color=ADVICE_COLOR)
-    c.text_fit(COMPACT_FOOTER, 34, 152, 342, 24, 13)
+    c.line(8, 136, 376, 136)
+    c.icon(ADVICE_ICON, 20, 159, 20, color=ADVICE_COLOR)
+    c.text_fit(COMPACT_FOOTER, 36, 143, 340, 32, 18, min_size=ms)
     return c.items
 
 
 def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
+    ms = 10 if max(w, h) >= 296 else 9
     c = Canvas(w, h, 184, 384)
-    c.text_fit(TITLE, 10, 8, 164, 24, 18)
-    c.rect(10, 35, 174, 59, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
-    c.text_fit(BADGE_TEXT, 14, 37, 156, 20, 13, align="center", color=BADGE_COLOR)
+    c.text_fit(TITLE, 10, 8, 164, 26, 20, min_size=ms)
+    c.rect(10, 38, 174, 66, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=5)
+    c.text_fit(BADGE_TEXT, 14, 40, 156, 24, 16, align="center", color=BADGE_COLOR, min_size=ms)
 
-    c.rect(10, 66, 174, 158, radius=6)
-    c.icon("thermometer", 25, 82, 18, color=TEMP_COLOR)
-    c.text_fit("실내 온도", 38, 72, 72, 20, 13)
-    c.text_fit(TEMP_CHIP, 114, 72, 54, 20, 12, align="right", color=TEMP_COLOR)
-    c.text_fit(TEMP_VAL, 16, 95, 152, 42, 34, color=TEMP_COLOR)
-    c.progress_bar(16, 141, 168, 151, TEMP_PCT, fill=TEMP_BAR_COLOR)
+    c.rect(10, 74, 174, 164, radius=6)
+    c.icon("thermometer", 28, 108, 28, color=TEMP_COLOR)
+    c.text_fit(TEMP_VAL, 46, 80, 122, 54, 48, color=TEMP_COLOR, min_size=ms)
+    c.progress_bar(16, 142, 168, 156, TEMP_PCT, fill=TEMP_BAR_COLOR)
 
-    c.rect(10, 166, 174, 258, radius=6)
-    c.icon("water-percent", 25, 182, 18, color=HUM_COLOR)
-    c.text_fit("실내 습도", 38, 172, 72, 20, 13)
-    c.text_fit(HUM_CHIP, 114, 172, 54, 20, 12, align="right", color=HUM_COLOR)
-    c.text_fit(HUM_VAL, 16, 195, 152, 42, 34, color=HUM_COLOR)
-    c.progress_bar(16, 241, 168, 251, HUM_PCT, fill=HUM_BAR_COLOR)
+    c.rect(10, 172, 174, 262, radius=6)
+    c.icon("water-percent", 28, 206, 28, color=HUM_COLOR)
+    c.text_fit(HUM_VAL, 46, 178, 122, 54, 48, color=HUM_COLOR, min_size=ms)
+    c.progress_bar(16, 240, 168, 254, HUM_PCT, fill=HUM_BAR_COLOR)
 
-    c.rect(10, 266, 174, 376, radius=6)
-    c.icon("air-filter", 25, 282, 17)
-    c.text_fit("공기질 · 상태", 38, 272, 130, 20, 13)
-    c.text_fit(CO2_SHORT_LINE, 16, 297, 152, 22, 13, color=CO2_COLOR)
-    c.text_fit(PM25_SHORT_LINE, 16, 322, 152, 22, 13, color=PM25_COLOR)
-    c.text_fit(CLOCK, 16, 349, 152, 21, 12, align="right")
+    c.rect(10, 270, 174, 376, radius=6)
+    c.text_fit(CO2_SHORT_LINE, 16, 280, 152, 28, 16, color=CO2_COLOR, min_size=ms)
+    c.text_fit(PM25_SHORT_LINE, 16, 312, 152, 28, 16, color=PM25_COLOR, min_size=ms)
+    c.text_fit(CLOCK, 16, 346, 152, 22, 15, align="right", min_size=ms)
     return c.items
 
 

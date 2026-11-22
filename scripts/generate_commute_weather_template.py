@@ -506,7 +506,7 @@ def line(x1, y1, x2, y2, *, width=1, color="black"):
     return item
 
 
-def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4):
+def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4, text_size=None, min_size=None):
     w = x2 - x1
     h = y2 - y1
     ic_size = max(10, min(18, h - 6))
@@ -530,13 +530,14 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4):
         ),
         fit_text(
             x1 + icon_pad + ic_size + 2,
-            y1 + 1,
-            w - icon_pad - ic_size - 5,
-            h - 2,
+            y1 + 2,
+            w - icon_pad - ic_size - 6,
+            h - 4,
             text_value,
-            max(9, h - 8),
+            text_size if text_size is not None else max(9, h - 8),
             align="center",
             color=commute_alert("fg"),
+            min_size=min_size,
         ),
     ]
 
@@ -547,76 +548,72 @@ def alert_pill(x1, y1, x2, y2, text_value, *, radius=4, icon_pad=4):
 
 
 def square_200(width, height):
-    """1.54" 200x200 square commute briefing."""
+    """1.54" 200x200 high-legibility commute briefing."""
     return [
-        fit_text(8, 6, 86, 24, current("date"), 14, align="left"),
-        *alert_pill(98, 6, 192, 30, commute_alert("short"), radius=4, icon_pad=4),
-        line(8, 35, 192, 35, width=1),
-        icon(14, 48, current("icon"), 64),
-        fit_text(82, 42, 110, 56, current("temperature"), 48, align="right"),
-        fit_text(82, 98, 110, 22, current("condition"), 15, align="right"),
-        line(8, 128, 192, 128, width=1),
-        fit_text(8, 134, 46, 28, today_field("low"), 18, align="left"),
-        fit_text(54, 134, 48, 28, today_field("high"), 18, align="left", color=ACCENT_INK),
-        fit_text(106, 134, 86, 28, current("feels", prefix="체감 "), 13, align="right"),
-        line(8, 166, 192, 166, width=1),
-        fit_text(8, 171, 88, 23, current("humidity", prefix="습도 "), 12, align="left"),
-        fit_text(
-            98,
-            171,
-            94,
-            23,
-            today_field("pop", prefix="강수 "),
-            12,
-            align="right",
-            color=today_field("pop_color"),
+        fit_text(8, 6, 84, 26, current("date"), 16, align="left", min_size=9),
+        *alert_pill(
+            96, 5, 192, 33, commute_alert("short"), radius=4, icon_pad=4, text_size=15, min_size=9
         ),
+        line(8, 38, 192, 38, width=1),
+        icon(14, 42, current("icon"), 56),
+        fit_text(76, 42, 116, 54, current("temperature"), 48, align="right", min_size=9),
+        fit_text(8, 102, 88, 28, today_field("low"), 20, align="left", min_size=9),
+        fit_text(
+            100, 102, 92, 28, today_field("high"), 20, align="right", color=ACCENT_INK, min_size=9
+        ),
+        line(8, 136, 192, 136, width=1),
+        fit_text(8, 144, 184, 44, commute_alert("sub"), 17, align="center", min_size=9),
     ]
 
 
 def narrow_portrait(width, height):
     """Narrow portrait tags under 4 inches (104x212 .. 152x296)."""
-    pad = 6
+    ms = 10 if height >= 296 or width >= 296 else 9
+    pad = 5 if width < 120 else 6
     inner = width - 2 * pad
     compact = height < 240
-    pill_y = 24
-    pill_h = 20 if compact else 24
-    hero_y = pill_y + pill_h + 4
-    ic_sz = max(28, min(50, width // 3))
-    temp_y = hero_y + ic_sz + 2
-    temp_h = 30 if compact else 40
-    cond_y = temp_y + temp_h
-    cond_h = 18 if compact else 20
-    div_y = cond_y + cond_h + 3
-    row_h = (height - div_y - 8) // 4
+    sec_sz = 14 if compact else 16
+    temp_sz = 34 if compact else 42
+    pill_top = 26 if compact else 30
+    pill_bot = pill_top + (22 if compact else 28)
+    ic_sz = 30 if compact else 46
+    ic_y = pill_bot + 4
+    temp_y = ic_y + ic_sz + 3
+    temp_h = temp_sz + 4
+    div1_y = temp_y + temp_h + 3
+    hilo_y = div1_y + 4
+    hilo_h = 28 if compact else 36
+    div2_y = hilo_y + hilo_h + 3
+    sub_y = div2_y + 4
     return [
-        fit_text(pad, 4, inner, 18, current("short_date"), 13),
-        *alert_pill(pad, pill_y, width - pad, pill_y + pill_h, commute_alert("short"), radius=4),
-        icon(width // 2, hero_y, current("icon"), ic_sz, anchor="mt"),
-        fit_text(pad, temp_y, inner, temp_h, current("temperature"), temp_h - 4),
-        fit_text(pad, cond_y, inner, cond_h, current("condition"), 13),
-        line(pad, div_y, width - pad, div_y, width=1),
-        fit_text(pad, div_y + 4, inner // 2 - 2, row_h, today_field("low"), 15),
+        fit_text(pad, 3, inner, 21 if compact else 25, current("short_date"), sec_sz, min_size=ms),
+        *alert_pill(
+            pad,
+            pill_top,
+            width - pad,
+            pill_bot,
+            commute_alert("short"),
+            radius=4,
+            icon_pad=3,
+            text_size=sec_sz,
+            min_size=ms,
+        ),
+        icon(width // 2, ic_y, current("icon"), ic_sz, anchor="mt"),
+        fit_text(pad, temp_y, inner, temp_h, current("temperature"), temp_sz, min_size=ms),
+        line(pad, div1_y, width - pad, div1_y, width=1),
+        fit_text(pad, hilo_y, inner // 2 - 2, hilo_h, today_field("low"), sec_sz + 2, min_size=ms),
         fit_text(
             width // 2 + 2,
-            div_y + 4,
+            hilo_y,
             inner // 2 - 2,
-            row_h,
+            hilo_h,
             today_field("high"),
-            15,
+            sec_sz + 2,
             color=ACCENT_INK,
+            min_size=ms,
         ),
-        fit_text(pad, div_y + 4 + row_h, inner, row_h, current("feels", prefix="체감 "), 12),
-        fit_text(pad, div_y + 4 + row_h * 2, inner, row_h, current("humidity", prefix="습도 "), 12),
-        fit_text(
-            pad,
-            div_y + 4 + row_h * 3,
-            inner,
-            row_h,
-            today_field("pop", prefix="강수 "),
-            12,
-            color=today_field("pop_color"),
-        ),
+        line(pad, div2_y, width - pad, div2_y, width=1),
+        fit_text(pad, sub_y, inner, height - sub_y - 4, commute_alert("sub"), sec_sz, min_size=ms),
     ]
 
 
@@ -624,68 +621,70 @@ def tall_portrait_under4(width, height):
     """Tall portrait tags under 4 inches (184x384, 240x416)."""
     pad = 10
     inner = width - 2 * pad
-    ic_sz = 48 if width < 210 else 64
-    temp_y = 74 + ic_sz + 4
-    temp_h = 44 if width < 210 else 52
-    cond_y = temp_y + temp_h
-    div_y = height - 178
+    ic_sz = 54 if width < 210 else 66
+    temp_y = 84 + ic_sz + 6
+    div_y = height - 168
+    box_top = height - 118
     return [
-        fit_text(pad, 8, inner, 24, current("date"), 16, align="left"),
-        *alert_pill(pad, 36, width - pad, 66, commute_alert("label"), radius=5, icon_pad=6),
-        icon(width // 2, 74, current("icon"), ic_sz, anchor="mt"),
-        fit_text(pad, temp_y, inner, temp_h, current("temperature"), temp_h - 4),
-        fit_text(pad, cond_y, inner, 22, current("condition"), 15),
+        fit_text(pad, 8, inner, 26, current("date"), 18, align="left", min_size=10),
+        *alert_pill(
+            pad,
+            38,
+            width - pad,
+            74,
+            commute_alert("label"),
+            radius=5,
+            icon_pad=6,
+            text_size=18,
+            min_size=10,
+        ),
+        icon(width // 2, 84, current("icon"), ic_sz, anchor="mt"),
+        fit_text(pad, temp_y, inner, 58, current("temperature"), 50, min_size=10),
         line(pad, div_y, width - pad, div_y, width=1),
-        fit_text(pad, height - 170, inner // 2 - 4, 30, today_field("low"), 20),
+        fit_text(pad, div_y + 8, inner // 2 - 4, 34, today_field("low"), 24, min_size=10),
         fit_text(
             width // 2 + 4,
-            height - 170,
+            div_y + 8,
             inner // 2 - 4,
-            30,
+            34,
             today_field("high"),
-            20,
+            24,
             color=ACCENT_INK,
+            min_size=10,
         ),
         rect(
-            pad,
-            height - 134,
-            width - pad,
-            height - 12,
-            fill="white",
-            outline="black",
-            width=1,
-            radius=5,
+            pad, box_top, width - pad, height - 12, fill="white", outline="black", width=1, radius=6
         ),
         fit_text(
             pad + 8,
-            height - 128,
+            box_top + 6,
             inner - 16,
-            26,
-            current("feels", prefix="체감온도  "),
-            14,
-            align="left",
-        ),
-        fit_text(
-            pad + 8,
-            height - 99,
-            inner - 16,
-            26,
-            current("humidity", prefix="습도  "),
-            14,
-            align="left",
-        ),
-        fit_text(
-            pad + 8,
-            height - 70,
-            inner - 16,
-            26,
-            today_field("pop", prefix="강수확률  "),
-            14,
+            28,
+            today_field("pop", prefix="강수 "),
+            16,
             align="left",
             color=today_field("pop_color"),
+            min_size=10,
         ),
         fit_text(
-            pad + 8, height - 41, inner - 16, 26, current("wind", prefix="바람  "), 14, align="left"
+            pad + 8,
+            box_top + 38,
+            inner - 16,
+            28,
+            current("feels", prefix="체감 "),
+            16,
+            align="left",
+            min_size=10,
+        ),
+        fit_text(
+            pad + 8,
+            box_top + 70,
+            inner - 16,
+            28,
+            commute_alert("check2"),
+            15,
+            align="left",
+            min_size=10,
         ),
     ]
 
@@ -693,174 +692,159 @@ def tall_portrait_under4(width, height):
 def compact_landscape(width, height):
     """2.1"/2.13" compact landscape (212x104, 250x122, 250x128, 250x132)."""
     small = width < 230
-    mid = round(width * (0.40 if small else 0.42))
-    ic_sz = 38 if small else 48
-    pill_w = 66 if small else 84
+    mid = 88 if small else 104
+    ic_sz = 34 if small else 44
+    pill_w = 66 if small else 78
+    sec_sz = 13 if small else 14
+    temp_sz = 32 if small else 36
+    hilo_y = 32 if small else 38
+    div2_y = 64 if small else 74
     return [
         icon(mid // 2, 6, current("icon"), ic_sz, anchor="mt"),
         fit_text(
-            4, ic_sz + 8, mid - 8, height - ic_sz - 30, current("temperature"), 28 if small else 34
+            4,
+            ic_sz + 8,
+            mid - 8,
+            height - ic_sz - 12,
+            current("temperature"),
+            temp_sz,
+            min_size=9,
         ),
-        fit_text(4, height - 22, mid - 8, 18, current("condition"), 12),
         line(mid, 6, mid, height - 6, width=1),
         fit_text(
-            mid + 6, 5, width - mid - pill_w - 14, 22, current("short_date"), 12, align="left"
+            mid + 6,
+            4,
+            width - mid - pill_w - 14,
+            22,
+            current("short_date"),
+            sec_sz,
+            align="left",
+            min_size=9,
         ),
         *alert_pill(
             width - pill_w - 6,
-            5,
+            4,
             width - 6,
-            26 if small else 28,
+            26 if small else 30,
             commute_alert("short"),
             radius=4,
             icon_pad=3,
+            text_size=sec_sz,
+            min_size=9,
         ),
         fit_text(
             mid + 6,
-            30 if small else 35,
+            hilo_y,
             (width - mid - 16) // 2,
-            24,
+            28,
             today_field("low"),
-            16,
+            17,
             align="left",
+            min_size=9,
         ),
         fit_text(
             mid + 6 + (width - mid - 12) // 2,
-            30 if small else 35,
+            hilo_y,
             (width - mid - 16) // 2,
-            24,
+            28,
             today_field("high"),
-            16,
+            17,
             align="left",
             color=ACCENT_INK,
+            min_size=9,
         ),
-        line(mid + 6, 57 if small else 63, width - 6, 57 if small else 63, width=1),
+        line(mid + 6, div2_y, width - 6, div2_y, width=1),
         fit_text(
             mid + 6,
-            61 if small else 69,
+            div2_y + 4,
             width - mid - 12,
-            20,
-            compact_comfort_line(),
-            11 if small else 12,
-            align="left",
-        ),
-        fit_text(
-            mid + 6,
-            82 if small else 94,
-            width - mid - 12,
-            20,
-            compact_precip_wind_line(),
-            11 if small else 12,
+            height - div2_y - 8,
+            commute_alert("sub"),
+            sec_sz,
             align="left",
             color=today_field("pop_color"),
+            min_size=9,
         ),
     ]
 
 
 def wide_compact_landscape(width, height):
-    """2.66"/2.9" 3-column layout (296x128, 296x152)."""
-    col1_end = 90
-    col2_end = 190
-    card_x = 196
+    """2.66"/2.9" high-legibility 2-zone layout (296x128, 296x152)."""
+    col1_end = 104
+    card_x = 112
     card_w = width - card_x - 6
-    ic_sz = 46 if height <= 132 else 54
-    step_y = (height - 62) // 3
     return [
-        fit_text(6, 5, col1_end - 10, 18, current("date"), 12, align="left"),
-        icon(col1_end // 2, 24, current("icon"), ic_sz, anchor="mt"),
-        fit_text(6, height - 48, col1_end - 10, 26, current("temperature"), 24),
-        fit_text(6, height - 22, col1_end - 10, 18, current("condition"), 12),
+        fit_text(6, 5, col1_end - 10, 22, current("date"), 15, align="left", min_size=10),
+        icon(6, 38, current("icon"), 32),
+        fit_text(42, 32, col1_end - 44, 50, current("temperature"), 40, align="right", min_size=10),
+        fit_text(6, height - 38, 46, 28, today_field("low"), 18, align="left", min_size=10),
+        fit_text(
+            54,
+            height - 38,
+            46,
+            28,
+            today_field("high"),
+            18,
+            align="right",
+            color=ACCENT_INK,
+            min_size=10,
+        ),
         line(col1_end, 8, col1_end, height - 8, width=1),
-        fit_text(col1_end + 6, 6, col2_end - col1_end - 10, 16, "오늘 기온", 11, align="left"),
-        fit_text(col1_end + 6, 23, 42, 24, today_field("low"), 17, align="left"),
-        fit_text(
-            col1_end + 50, 23, 42, 24, today_field("high"), 17, align="left", color=ACCENT_INK
-        ),
-        line(col1_end + 6, 50, col2_end - 6, 50, width=1),
-        fit_text(
-            col1_end + 6,
-            55,
-            col2_end - col1_end - 10,
-            21,
-            current("feels", prefix="체감 "),
-            12,
-            align="left",
-        ),
-        fit_text(
-            col1_end + 6,
-            55 + step_y,
-            col2_end - col1_end - 10,
-            21,
-            current("humidity", prefix="습도 "),
-            12,
-            align="left",
-        ),
-        fit_text(
-            col1_end + 6,
-            55 + 2 * step_y,
-            col2_end - col1_end - 10,
-            21,
-            current("wind", prefix="바람 "),
-            12,
-            align="left",
-        ),
         rect(
             card_x,
-            8,
+            6,
             width - 6,
-            height - 8,
+            height - 6,
             fill=commute_alert("bg"),
             outline=commute_alert("outline"),
             width=1,
             radius=6,
         ),
         icon(
-            card_x + card_w // 2,
+            card_x + 8,
             13,
             commute_alert("icon"),
             24,
-            anchor="mt",
             color=commute_alert("fg"),
         ),
         fit_text(
-            card_x + 4,
-            40,
-            card_w - 8,
-            24,
-            commute_alert("short"),
-            16,
-            color=commute_alert("fg"),
-            min_size=7,
-        ),
-        line(card_x + 8, height - 52, width - 14, height - 52, width=1, color=commute_alert("fg")),
-        fit_text(
-            card_x + 4,
-            height - 49,
-            card_w - 8,
-            18,
-            commute_alert("label"),
+            card_x + 36,
             12,
+            card_w - 42,
+            26,
+            commute_alert("label"),
+            18,
+            align="left",
             color=commute_alert("fg"),
-            min_size=7,
+            min_size=10,
+        ),
+        line(card_x + 8, 44, width - 14, 44, width=1, color=commute_alert("fg")),
+        fit_text(
+            card_x + 6,
+            50,
+            card_w - 12,
+            28,
+            commute_alert("short"),
+            18,
+            color=commute_alert("fg"),
+            min_size=10,
         ),
         fit_text(
-            card_x + 4,
-            height - 29,
-            card_w - 8,
-            18,
+            card_x + 6,
+            height - 42,
+            card_w - 12,
+            30,
             commute_alert("sub"),
-            10,
+            15,
             color=commute_alert("fg"),
-            min_size=7,
+            min_size=10,
         ),
     ]
 
 
 def mid_compact_landscape(width, height):
-    """3.5"/3.7" split layout: today hero + commute banner + 3-day mini preview (384x184, 416x240)."""
-    sx, sy = width / 416, height / 240
-    mid = round(198 * sx)
-    pad = round(12 * sx)
+    """3.5"/3.7" clean split briefing without tiny forecast grid (384x184, 416x240)."""
+    sx, sy = width / 384, height / 184
 
     def rx(v):
         return round(v * sx)
@@ -868,250 +852,129 @@ def mid_compact_landscape(width, height):
     def ry(v):
         return round(v * sy)
 
-    left_inner = mid - 2 * pad
-    half_w = left_inner // 2 - 8
-    right_col_x = pad + left_inner // 2 + 2
-    box_top = ry(108)
-    box_bot = height - ry(12)
-    avail = (box_bot - 2) - (box_top + 2)
-    wd_h = max(15, round(avail * 0.16))
-    pop_h = max(15, round(avail * 0.15))
-    hi_h = max(15, round(avail * 0.17))
-    lo_h = max(15, round(avail * 0.15))
-    ic_sz = max(20, min(32, avail - (wd_h + pop_h + hi_h + lo_h + 6)))
-    wd_y = box_top + 2
-    ic_y = wd_y + wd_h + 1
-    pop_y = ic_y + ic_sz + 1
-    hi_y = pop_y + pop_h + 1
-    lo_y = hi_y + hi_h + 1
-
-    items = [
+    mid = rx(182)
+    pad = rx(10)
+    right_x = mid + pad
+    right_w = width - right_x - pad
+    return [
         fit_text(
             pad,
-            ry(10),
-            left_inner,
-            max(16, ry(24)),
+            ry(8),
+            mid - 2 * pad,
+            ry(26),
             current("date"),
-            round(16 * sy),
+            round(18 * sy),
             align="left",
-            min_size=7,
+            min_size=10,
         ),
-        icon(pad, ry(42), current("icon"), round(58 * min(sx, sy))),
+        icon(pad, ry(46), current("icon"), round(44 * min(sx, sy))),
         fit_text(
-            pad + rx(58),
-            ry(38),
-            mid - pad - rx(66),
-            ry(48),
+            pad + rx(52),
+            ry(42),
+            mid - 2 * pad - rx(52),
+            ry(56),
             current("temperature"),
-            round(42 * sy),
+            round(48 * sy),
             align="right",
-            min_size=7,
+            min_size=10,
         ),
-        fit_text(
-            pad + rx(58),
-            ry(88),
-            mid - pad - rx(66),
-            max(15, ry(20)),
-            current("condition"),
-            round(14 * sy),
-            align="right",
-            min_size=7,
-        ),
-        line(pad, ry(118), mid - pad, ry(118), width=1),
+        line(pad, ry(106), mid - pad, ry(106), width=1),
         fit_text(
             pad,
-            ry(124),
-            left_inner // 2 - 4,
-            max(18, ry(26)),
+            ry(114),
+            (mid - 2 * pad) // 2 - 4,
+            ry(30),
             today_field("low"),
-            round(17 * sy),
+            round(22 * sy),
             align="left",
-            min_size=7,
+            min_size=10,
         ),
         fit_text(
-            pad + left_inner // 2 + 4,
-            ry(124),
-            left_inner // 2 - 4,
-            max(18, ry(26)),
+            pad + (mid - 2 * pad) // 2 + 4,
+            ry(114),
+            (mid - 2 * pad) // 2 - 4,
+            ry(30),
             today_field("high"),
-            round(17 * sy),
+            round(22 * sy),
             align="right",
             color=ACCENT_INK,
-            min_size=7,
+            min_size=10,
         ),
-        rect(
+        fit_text(
             pad,
-            ry(156),
-            mid - pad,
-            box_bot,
-            fill="white",
-            outline="black",
-            width=1,
-            radius=5,
-        ),
-        fit_text(
-            pad + 6,
-            ry(162),
-            half_w,
-            max(16, ry(28)),
-            current("feels", prefix="체감 "),
-            round(13 * sy),
+            ry(150),
+            mid - 2 * pad,
+            ry(26),
+            compact_comfort_line(),
+            round(16 * sy),
             align="left",
-            min_size=7,
+            min_size=10,
         ),
-        fit_text(
-            right_col_x,
-            ry(162),
-            half_w,
-            max(16, ry(28)),
-            current("humidity", prefix="습도 "),
-            round(13 * sy),
-            align="right",
-            min_size=7,
-        ),
-        fit_text(
-            pad + 6,
-            ry(194),
-            half_w,
-            max(16, ry(28)),
-            current("wind", prefix="바람 "),
-            round(12 * sy),
-            align="left",
-            min_size=7,
-        ),
-        fit_text(
-            right_col_x,
-            ry(194),
-            half_w,
-            max(16, ry(28)),
-            today_field("pop", prefix="강수 "),
-            round(13 * sy),
-            align="right",
-            color=today_field("pop_color"),
-            min_size=7,
-        ),
-        line(mid, ry(10), mid, height - ry(10), width=1),
+        line(mid, ry(8), mid, height - ry(8), width=1),
         rect(
-            mid + pad,
-            ry(10),
+            right_x,
+            ry(8),
             width - pad,
-            ry(80),
+            ry(88),
             fill=commute_alert("bg"),
             outline=commute_alert("outline"),
             width=1,
             radius=6,
         ),
         icon(
-            mid + pad + rx(8),
-            ry(28),
+            right_x + rx(8),
+            ry(18),
             commute_alert("icon"),
-            round(28 * min(sx, sy)),
+            round(26 * min(sx, sy)),
             color=commute_alert("fg"),
         ),
         fit_text(
-            mid + pad + rx(42),
-            ry(15),
-            width - mid - 2 * pad - rx(46),
-            max(18, ry(28)),
+            right_x + rx(40),
+            ry(16),
+            right_w - rx(48),
+            ry(32),
             commute_alert("label"),
-            round(17 * sy),
+            round(20 * sy),
             align="left",
             color=commute_alert("fg"),
-            min_size=7,
+            min_size=10,
         ),
         fit_text(
-            mid + pad + rx(42),
-            ry(47),
-            width - mid - 2 * pad - rx(46),
-            max(16, ry(26)),
+            right_x + rx(8),
+            ry(54),
+            right_w - rx(16),
+            ry(26),
             commute_alert("sub"),
-            round(12 * sy),
+            round(16 * sy),
             align="left",
             color=commute_alert("fg"),
-            min_size=7,
-        ),
-        fit_text(
-            mid + pad,
-            ry(86),
-            width - mid - 2 * pad,
-            max(15, ry(18)),
-            "향후 3일 미니 예보",
-            round(12 * sy),
-            align="left",
-            min_size=7,
+            min_size=10,
         ),
         rect(
-            mid + pad,
-            box_top,
-            width - pad,
-            box_bot,
-            fill="white",
-            outline="black",
-            width=1,
-            radius=5,
+            right_x, ry(96), width - pad, ry(176), fill="white", outline="black", width=1, radius=6
+        ),
+        fit_text(
+            right_x + rx(8),
+            ry(104),
+            right_w - rx(16),
+            ry(28),
+            today_field("pop", prefix="• 강수확률 "),
+            round(16 * sy),
+            align="left",
+            color=today_field("pop_color"),
+            min_size=10,
+        ),
+        fit_text(
+            right_x + rx(8),
+            ry(138),
+            right_w - rx(16),
+            ry(28),
+            commute_alert("check2"),
+            round(16 * sy),
+            align="left",
+            min_size=10,
         ),
     ]
-    box_x = mid + pad
-    box_w = (width - pad) - box_x
-    col_w = box_w / 3
-    for idx in range(3):
-        day_offset = idx + 1
-        x0 = round(box_x + idx * col_w)
-        x1 = round(box_x + (idx + 1) * col_w)
-        cx = (x0 + x1) // 2
-        if idx > 0:
-            items.append(line(x0, box_top + 4, x0, box_bot - 4, width=1))
-        items.extend(
-            [
-                fit_text(
-                    x0 + 2,
-                    wd_y,
-                    x1 - x0 - 4,
-                    wd_h,
-                    forecast_day(day_offset, "weekday"),
-                    round(13 * sy),
-                    color=forecast_day(day_offset, "day_color"),
-                    min_size=7,
-                ),
-                icon(
-                    cx,
-                    ic_y,
-                    forecast_day(day_offset, "icon"),
-                    ic_sz,
-                    anchor="mt",
-                    color=forecast_day(day_offset, "wet_color"),
-                ),
-                fit_text(
-                    x0 + 2,
-                    pop_y,
-                    x1 - x0 - 4,
-                    pop_h,
-                    forecast_day(day_offset, "pop"),
-                    round(12 * sy),
-                    color=forecast_day(day_offset, "wet_color"),
-                    min_size=7,
-                ),
-                fit_text(
-                    x0 + 2,
-                    hi_y,
-                    x1 - x0 - 4,
-                    hi_h,
-                    forecast_day(day_offset, "high"),
-                    round(14 * sy),
-                    min_size=7,
-                ),
-                fit_text(
-                    x0 + 2,
-                    lo_y,
-                    x1 - x0 - 4,
-                    lo_h,
-                    forecast_day(day_offset, "low"),
-                    round(12 * sy),
-                    min_size=7,
-                ),
-            ]
-        )
-    return items
 
 
 # ---------------------------------------------------------------------------
