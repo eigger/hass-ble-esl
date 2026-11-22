@@ -1,5 +1,4 @@
 export const LOADING_STEPS = Object.freeze([
-  ["fonts", "fonts"],
   ["icons", "icons"],
   ["templates", "tile styles"],
   ["specs", "component specs"],

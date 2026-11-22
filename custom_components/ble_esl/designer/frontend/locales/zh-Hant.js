@@ -168,6 +168,9 @@ export default {
   "Live preview": "即時預覽",
   "Loading ESLs…": "正在載入ESL…",
   "Loading automations…": "載入自動化…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "部分編輯器字型無法使用，正在使用替代字型。",
+  "Retry fonts": "重試字型",
   "Loading designer": "載入設計器",
   "Loading image…": "正在載入影像…",
   "Loading…": "載入中…",

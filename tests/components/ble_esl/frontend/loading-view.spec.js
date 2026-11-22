@@ -27,11 +27,11 @@ test("loading view keeps step order, progress, translation, and safe errors", as
           })[char],
       );
     const loading = { error: null, steps: createLoadingSteps() };
-    const completed = completeLoadingStep(loading, "fonts");
+    const completed = completeLoadingStep(loading, "icons");
     const unknownStepAccepted = completeLoadingStep(loading, "unknown");
     const progress = renderLoadingContent(loading, { translate, escapeHtml });
     loading.error = '<offline & "retry">';
-    const errorStepAccepted = completeLoadingStep(loading, "icons");
+    const errorStepAccepted = completeLoadingStep(loading, "templates");
     const error = renderLoadingContent(loading, { translate, escapeHtml });
     return {
       steps: loading.steps,
@@ -45,15 +45,14 @@ test("loading view keeps step order, progress, translation, and safe errors", as
   });
 
   expect(view.steps.map(({ key, label, done }) => [key, label, done])).toEqual([
-    ["fonts", "fonts", true],
-    ["icons", "icons", false],
+    ["icons", "icons", true],
     ["templates", "tile styles", false],
     ["specs", "component specs", false],
     ["tags", "devices", false],
   ]);
-  expect(view.progress).toContain("Loading icons… (1/5)");
+  expect(view.progress).toContain("Loading tile styles… (1/4)");
   expect(view.progress).toContain(
-    'aria-label="Loading designer" max="5" value="1"',
+    'aria-label="Loading designer" max="4" value="1"',
   );
   expect(view.error).toContain("&lt;offline &amp; &quot;retry&quot;&gt;");
   expect(view.error).toContain('<button data-action="reload">Retry</button>');

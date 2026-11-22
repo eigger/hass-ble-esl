@@ -180,6 +180,9 @@ export default {
   "Live preview": "Vista previa en vivo",
   "Loading ESLs…": "Cargando ESLs…",
   "Loading automations…": "Cargando automatizaciones…",
+  "Some editor fonts are unavailable; fallback fonts are in use.":
+    "Algunas fuentes del editor no están disponibles; se usan fuentes alternativas.",
+  "Retry fonts": "Reintentar fuentes",
   "Loading designer": "Cargando diseñador",
   "Loading image…": "Cargando imagen…",
   "Loading…": "Cargando…",

@@ -179,26 +179,56 @@ const shapeTypes = [
   "line",
 ];
 const toolIcon = materialIcon;
-let fontsLoading;
-// Started at import so the download overlaps the panel's other requests; a
-// failure is forgotten so that Retry downloads the fonts again.
-function loadFonts() {
-  fontsLoading ||= Promise.all(
-    [
-      ["LabelMDI", "materialdesignicons-webfont.ttf"],
-      ["LabelText", "NotoSansKR-Regular.ttf"],
-    ].map(([family, file]) =>
-      new FontFace(family, `url(/ble_esl_designer_fonts/${file})`)
-        .load()
-        .then((font) => document.fonts.add(font)),
-    ),
-  ).catch((error) => {
-    fontsLoading = undefined;
-    throw error;
-  });
-  return fontsLoading;
+// Browser-only fonts must never hold up the editor. Abort a stalled download
+// before retrying: repeated FontFace URL loads may share one stuck request.
+const optionalFonts = [
+  { family: "LabelMDI", file: "materialdesignicons-webfont.ttf" },
+  { family: "LabelText", file: "NotoSansKR-Regular.ttf" },
+];
+function loadOptionalFonts() {
+  for (const face of optionalFonts) {
+    if (face.loaded || face.loading) continue;
+    face.loading = true;
+    window.dispatchEvent(new Event("ble-esl-fonts-change"));
+    (async () => {
+      for (let attempt = 0; attempt < 3 && !face.loaded; attempt++) {
+        const controller = new AbortController();
+        let timer;
+        try {
+          const timeout = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+              controller.abort();
+              reject(new Error("Font download timed out"));
+            }, 5000);
+          });
+          const download = (async () => {
+            const response = await fetch(
+              `/ble_esl_designer_fonts/${face.file}`,
+              {
+                signal: controller.signal,
+              },
+            );
+            if (!response.ok)
+              throw new Error(`Font download failed: ${response.status}`);
+            const data = await response.arrayBuffer();
+            return new FontFace(face.family, data).load();
+          })();
+          const font = await Promise.race([download, timeout]);
+          document.fonts.add(font);
+          face.loaded = true;
+        } catch {
+          // The next attempt starts a new, independently cancellable request.
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      face.loading = false;
+      face.failed = !face.loaded;
+      window.dispatchEvent(new Event("ble-esl-fonts-change"));
+    })();
+  }
 }
-loadFonts().catch(() => {});
+loadOptionalFonts();
 const loadingStyle = `.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:64px 24px;color:var(--secondary-text-color,#637083)}.loading p{margin:0}.loading progress{width:min(360px,80%);height:8px;accent-color:var(--primary-color,#166d75)}.loading .error{color:#c33}@keyframes spin{to{transform:rotate(360deg)}}.spinning ha-icon{animation:spin 1s linear infinite}`;
 const style = `
 .mdi{font-family:LabelMDI;line-height:1;display:inline-block;font-weight:normal;font-style:normal}.icon-popover{margin-top:8px}.icon-popover .icon-picker{margin-top:8px}.icon-choice{display:flex;align-items:center;gap:8px;width:100%;text-align:left}.toolbar .icon-button{border:1px solid var(--divider-color,#cbd3de)}:host{display:block;color:var(--primary-text-color,#18232f);background:var(--primary-background-color,#f5f7fa);font:14px system-ui;height:100%;overflow:auto}*{box-sizing:border-box}header{display:flex;align-items:center;gap:14px;box-sizing:border-box;min-height:var(--header-height,56px);padding:0 12px 0 24px;background:var(--card-background-color,white);border-bottom:1px solid var(--divider-color,#e0e5eb)}h1{font-size:20px;font-weight:400;margin:0}header span{color:var(--secondary-text-color,#637083)}.version{display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--secondary-text-color,#64748b);background:var(--secondary-background-color,#f1f5f9);padding:2px 7px;border-radius:9999px;line-height:1.3;border:1px solid var(--divider-color,#dde3e8)}button,input,select,textarea{font:inherit;color:inherit;background:var(--card-background-color,white);border:1px solid var(--divider-color,#cbd3de);border-radius:6px;padding:8px}button{cursor:pointer}${buttonHover(":not(.danger)")}button:disabled{opacity:.45;cursor:default}button.primary{background:var(--primary-color,#166d75);color:var(--text-primary-color,white);border-color:var(--primary-color,#166d75)}${primaryHover}button:focus-visible,input:focus-visible,select:focus-visible,.el:focus-visible{outline:2px solid #167c88;outline-offset:2px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 24px}.toolbar select{max-width:360px}
@@ -685,6 +715,8 @@ export class BleEslDesigner extends HTMLElement {
       )
         event.preventDefault();
     };
+    this.fontsChanged = () => this.renderFontStatus();
+    window.addEventListener("ble-esl-fonts-change", this.fontsChanged);
     window.addEventListener("beforeunload", this.beforeUnload);
     this.render();
     if (this.hass && !this.started) this.boot();
@@ -808,11 +840,20 @@ export class BleEslDesigner extends HTMLElement {
     // An instance that never loaded must not wipe drafts it never restored.
     if (this.ready) this.persistDrafts();
     clearTimeout(this.noticeTimer);
+    window.removeEventListener("ble-esl-fonts-change", this.fontsChanged);
     window.removeEventListener("beforeunload", this.beforeUnload);
     this.invalidatePreview();
     this.gestureCancel?.();
     this.gesture = null;
     this.resizeObserver.disconnect();
+  }
+  renderFontStatus() {
+    const node = this.shadowRoot.querySelector(".font-status");
+    if (!node) return;
+    const failed = optionalFonts.some((face) => face.failed && !face.loaded);
+    node.hidden = !failed;
+    const button = node.querySelector("button");
+    button.disabled = optionalFonts.some((face) => face.failed && face.loading);
   }
   async boot() {
     this.started = true;
@@ -847,9 +888,8 @@ export class BleEslDesigner extends HTMLElement {
           if (run === this.bootRun) this.stepDone(key);
           return value;
         });
-      // Fonts and icons are fetched once; Refresh only re-reads the tags.
-      const [, icons, templates, specs, tags] = await Promise.all([
-        step("fonts", initial && loadFonts()),
+      // Icons are fetched once; Refresh only re-reads the tags.
+      const [icons, templates, specs, tags] = await Promise.all([
         step(
           "icons",
           initial &&
@@ -1487,7 +1527,8 @@ export class BleEslDesigner extends HTMLElement {
         renderTagOptions,
         sendHint: (item) => this.sendHint(item),
       },
-    )}<div class="editor-content"><div class="status" role="status"></div>${workspaceMarkup}</div>`;
+    )}<div class="font-status" role="status" hidden style="padding:4px 24px 12px">${t(this.hass, "Some editor fonts are unavailable; fallback fonts are in use.")} <button data-action="retry-fonts">${t(this.hass, "Retry fonts")}</button></div><div class="editor-content"><div class="status" role="status"></div>${workspaceMarkup}</div>`;
+    this.renderFontStatus();
     const saveButton = this.shadowRoot.querySelector('[data-action="save"]');
     if (this._automationSaveMode && saveButton) {
       const label = t(this.hass, "Save to automation");
@@ -2822,6 +2863,9 @@ export class BleEslDesigner extends HTMLElement {
           )
         )
           this.discardDraft();
+      } else if (action === "retry-fonts") {
+        loadOptionalFonts();
+        return;
       } else if (action === "reload") {
         // Retry after a failed first load shows the error instead.
         if (this.refreshing || (this.loading && !this.loading.error)) return;
