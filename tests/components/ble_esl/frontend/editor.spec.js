@@ -2290,6 +2290,39 @@ test("design template: an entity default that does not exist gives way to one th
   );
 });
 
+test("design template: loading thumbnails does not move cards during a click", async ({
+  page,
+}) => {
+  const { promise: thumbnailReady, resolve: releaseThumbnail } =
+    Promise.withResolvers();
+  let firstThumbnail = true;
+  await page.route("**/api/designer", async (route) => {
+    const { action } = route.request().postDataJSON();
+    if (action === "preview_design_template" && firstThumbnail) {
+      firstThumbnail = false;
+      await thumbnailReady;
+    }
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Browse design gallery" }).click();
+  const gallery = page.locator("ble-esl-template-dialog");
+  const card = gallery.locator("[data-template]").nth(1);
+  const thumbnail = gallery.locator("[data-preview]").first();
+  try {
+    await expect(thumbnail).toBeHidden();
+    await card.hover();
+    const bounds = await card.boundingBox();
+    await page.mouse.down();
+    releaseThumbnail();
+    await expect(thumbnail).toBeVisible();
+    expect(await card.boundingBox()).toEqual(bounds);
+    await page.mouse.up();
+    await expect(gallery.locator(".options")).toBeVisible();
+  } finally {
+    releaseThumbnail();
+  }
+});
+
 test("design template: thumbnails load in the gallery and the form preview follows the parameters", async ({
   page,
 }) => {

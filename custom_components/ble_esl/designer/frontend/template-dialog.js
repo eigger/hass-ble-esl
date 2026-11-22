@@ -248,6 +248,7 @@ export class TemplateDialog extends HTMLElement {
     const nameInput = this.shadowRoot.querySelector("[data-save-name]");
     if (nameInput) this.saveName = nameInput.value;
     const hass = this.panel.hass;
+    const { width, height } = this.panel.tag;
     const done = this.done;
     const note = this.note
       ? `<p class="note" role="status" tabindex="-1" autofocus>${esc(t(hass, this.note))}</p>`
@@ -267,6 +268,8 @@ export class TemplateDialog extends HTMLElement {
       .list{display:grid;gap:8px}
       .card{display:flex;flex-direction:column;gap:2px;text-align:left}
       .thumb,.preview{max-width:100%;box-sizing:border-box;border:1px solid var(--divider-color,#cbd3de);border-radius:4px;image-rendering:pixelated;background:white;align-self:flex-start}
+      .thumb{display:block;width:${width}px;height:auto;aspect-ratio:${width}/${height};object-fit:contain}
+      .thumb[hidden]{visibility:hidden}
       .fields{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
       .fields input,.fields select{min-width:0}
       label{display:grid;gap:4px;font-size:13px}
