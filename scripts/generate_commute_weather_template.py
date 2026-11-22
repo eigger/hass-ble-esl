@@ -135,6 +135,10 @@ def _accent_fg_expr():
     return f"('black' if {ACCENT!r} in ('yellow', 'white') else 'white')"
 
 
+def _safe_accent_fg_expr():
+    return f"('black' if {ACCENT!r} == 'yellow' else 'white')"
+
+
 def _wind_expr(var_name, *, space=True):
     sep = "' ' ~ " if space else ""
     return (
@@ -295,10 +299,12 @@ def commute_alert(key):
     )
     ink = _accent_ink_expr()
     fg = _accent_fg_expr()
+    safe_fg = _safe_accent_fg_expr()
     outputs = {
         "bg": (setup, f"{ink} if _kind in ('snow', 'rain') else 'white'"),
         "outline": (setup, f"{ink} if _kind in ('snow', 'rain') else 'black'"),
         "fg": (setup, f"{fg} if _kind in ('snow', 'rain') else 'black'"),
+        "safe_fg": (setup, f"{safe_fg} if _kind in ('snow', 'rain') else 'black'"),
         "icon": (
             setup,
             "'snowflake' if _kind == 'snow' else ('umbrella' if _kind == 'rain' "
@@ -596,7 +602,7 @@ def square_200(width, height):
             commute_alert("short"),
             26,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=16,
         ),
     ]
@@ -652,7 +658,7 @@ def narrow_portrait(width, height):
             height - box_y - 20,
             commute_alert("short"),
             alert_sz,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=ms,
         ),
     ]
@@ -700,7 +706,7 @@ def tall_portrait_under4(width, height):
             60,
             commute_alert("label"),
             lbl_sz,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=16,
         ),
         line(
@@ -709,7 +715,7 @@ def tall_portrait_under4(width, height):
             width - pad - 12,
             div_y,
             width=1,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
         ),
         fit_text(
             pad + 8,
@@ -718,7 +724,7 @@ def tall_portrait_under4(width, height):
             height - div_y - 30,
             commute_alert("sub"),
             sub_sz,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=16,
         ),
     ]
@@ -783,7 +789,7 @@ def compact_landscape(width, height):
             commute_alert("short"),
             alert_sz,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=16,
         ),
     ]
@@ -839,7 +845,7 @@ def wide_compact_landscape(width, height):
             commute_alert("label"),
             lbl_sz,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=18,
         ),
         line(
@@ -848,7 +854,7 @@ def wide_compact_landscape(width, height):
             width - 18,
             div_y,
             width=1,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
         ),
         fit_text(
             card_x + 8,
@@ -858,7 +864,7 @@ def wide_compact_landscape(width, height):
             commute_alert("short"),
             short_sz,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=18,
         ),
     ]
@@ -928,7 +934,7 @@ def mid_compact_landscape(width, height):
             commute_alert("label"),
             lbl_sz,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=18,
         ),
         line(
@@ -937,7 +943,7 @@ def mid_compact_landscape(width, height):
             width - pad - 14,
             card_div_y,
             width=1,
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
         ),
         fit_text(
             right_x + 10,
@@ -947,7 +953,7 @@ def mid_compact_landscape(width, height):
             commute_alert("sub"),
             sub_sz,
             align="center",
-            color=commute_alert("fg"),
+            color=commute_alert("safe_fg"),
             min_size=18,
         ),
     ]

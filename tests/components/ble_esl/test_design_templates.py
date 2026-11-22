@@ -3718,7 +3718,10 @@ def test_under_4_inch_templates_enforce_readable_font_floors():
 
 
 @pytest.mark.parametrize("accent", ["white", "yellow"])
-@pytest.mark.parametrize(("width", "height"), [(212, 104), (384, 184)])
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [(200, 200), (212, 104), (104, 212), (296, 128), (184, 384), (384, 184)],
+)
 async def test_under_4_inch_weather_white_bg_avoids_low_contrast_accent_colors(
     hass, accent, width, height
 ):
@@ -3781,11 +3784,19 @@ async def test_under_4_inch_weather_white_bg_avoids_low_contrast_accent_colors(
                 if item.get("type") == "rectangle" and item.get("fill") not in (None, "white")
             ]
             for item in rendered:
-                if item.get("type") not in ("text", "text_fit", "icon"):
+                if item.get("type") not in ("text", "text_fit", "icon", "line"):
                     continue
-                bg = enclosing_fill(rects, item)
-                color = item.get("color", "black")
+                if item.get("type") == "line":
+                    cx = (item["x_start"] + item["x_end"]) / 2
+                    cy = (item["y_start"] + item["y_end"]) / 2
+                    bg = enclosing_fill(rects, {"x": cx, "y": cy})
+                    color = item.get("fill", "black")
+                else:
+                    bg = enclosing_fill(rects, item)
+                    color = item.get("color", "black")
                 if bg == "white":
                     assert color not in ("white", "yellow"), (name, width, height, accent, item)
                 elif bg == "yellow":
                     assert color == "black", (name, width, height, accent, item)
+                elif bg == "black":
+                    assert color == "white", (name, width, height, accent, item)
