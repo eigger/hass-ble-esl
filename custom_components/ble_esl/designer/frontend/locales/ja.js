@@ -646,4 +646,6 @@ export default {
     "ボタンでテキスト・図形・アイコン・画像を追加できます。エンティティに追従するものは、上でセンサーを選ぶか、下の要素を使います。",
   "This design reads the weather forecast from {variable}, but the automation has no step that sets it. Add the Weather: Get forecasts step before the write action? Cancel saves without it.":
     "このデザインは {variable} から天気予報を読み取りますが、オートメーションにはそれを設定するステップがありません。書き込みアクションの前に「天気: 予報を取得」ステップを追加しますか？キャンセルすると追加せずに保存します。",
+  "This design reads calendar events from {variable}, but the automation has no step that sets it. Add the Calendar: Get events step before the write action? Cancel saves without it.":
+    "このデザインは {variable} からカレンダー予定を読み取りますが、オートメーションにはそれを設定するステップがありません。書き込みアクションの前に「カレンダー: 予定を取得」ステップを追加しますか？キャンセルすると追加せずに保存します。",
 };

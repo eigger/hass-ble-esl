@@ -254,6 +254,51 @@ test("a design that reads the forecast offers to add the step that fetches it", 
   expect(saved.actions.length).toBe(original.actions.length + 1);
 });
 
+test("a design that reads calendar events offers to add the step that fetches them", async ({
+  page,
+  request,
+}) => {
+  const original = await automation(request, "temperature");
+  await page
+    .locator('[data-action="edit"][data-entry="demo-writable"]')
+    .click();
+  await page.waitForFunction(() => window.manager.editor?.specs?.types);
+  await page.evaluate(() => {
+    const editor = window.manager.editor;
+    editor.addSpec("text");
+    editor.element.spec.value =
+      "{{ events['calendar.home'].events[0].summary }}";
+    editor.edited();
+  });
+  const messages = [];
+  page.on("dialog", (dialog) => {
+    messages.push(dialog.message());
+    dialog.accept();
+  });
+  await page
+    .getByRole("button", { name: "Save to existing automation…", exact: true })
+    .click();
+  const chooser = page.getByRole("dialog", {
+    name: "Choose the automation to save to:",
+  });
+  await chooser.getByRole("radio", { name: "Temperature display" }).check();
+  await chooser.getByRole("button", { name: "Continue" }).click();
+  await expect(page.locator(".message")).toContainText(
+    "Saved to Temperature display.",
+  );
+  expect(messages.some((message) => message.includes("events"))).toBe(true);
+  const saved = await automation(request, "temperature");
+  const names = saved.actions.map((action) => action.action || action.service);
+  const write = names.indexOf("ble_esl.write");
+  expect(names[write - 1]).toBe("calendar.get_events");
+  expect(saved.actions[write - 1]).toMatchObject({
+    target: { entity_id: ["calendar.home"] },
+    data: { duration: { days: 7 } },
+    response_variable: "events",
+  });
+  expect(saved.actions.length).toBe(original.actions.length + 1);
+});
+
 test("saving into an automation keeps the design's orientation", async ({
   page,
   request,
