@@ -1,5 +1,6 @@
 template: 1
 id: color_check
+categories: [labels]
 name:
   en: Color check
   ko: 색상 점검

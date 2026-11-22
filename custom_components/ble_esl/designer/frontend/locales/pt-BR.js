@@ -184,6 +184,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Algumas fontes do editor estão indisponíveis; fontes alternativas estão em uso.",
   "Retry fonts": "Tentar fontes novamente",
+  "No templates in this category.": "Não há modelos nesta categoria.",
+  "Template categories": "Categorias de modelos",
+  All: "Todos",
+  Weather: "Clima",
+  Schedule: "Agenda",
+  "Smart home": "Casa inteligente",
+  Labels: "Etiquetas",
   "Loading designer": "Carregando designer",
   "Loading image…": "Carregando imagem…",
   "Loading…": "Carregando…",

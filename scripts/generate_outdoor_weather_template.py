@@ -833,6 +833,7 @@ def generate():
     data = {
         "template": 1,
         "id": "weather_outdoor",
+        "categories": ["weather"],
         "name": {"en": "Outdoor weather", "ko": "외출 날씨"},
         "description": {
             "en": "Korean weather dashboard with precipitation timing, today's temperatures, and a weekly outlook on larger tags.",

@@ -506,6 +506,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "energy_power",
+        "categories": ["smart_home"],
         "name": {"en": "Energy & power", "ko": "에너지 · 전력 모니터"},
         "description": {
             "en": "Live home power load against a target budget, plus optional daily energy and solar generation.",

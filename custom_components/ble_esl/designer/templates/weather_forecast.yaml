@@ -1,5 +1,6 @@
 template: 1
 id: weather_forecast
+categories: [weather]
 name:
   en: Weather forecast
   ko: 날씨 예보

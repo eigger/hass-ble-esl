@@ -1,5 +1,8 @@
 # Design templates
 
+The gallery filters templates by Weather, Schedule, Smart home, and Labels. A template may appear in more than one category; uncategorized templates remain in All. In YAML, `categories` is optional, for example `categories: [weather, schedule]`. Allowed values are `weather`, `schedule`, `smart_home`, and `labels`.
+
+
 **English** | **[한국어](ko/design-templates.md)**
 
 ## Using a template

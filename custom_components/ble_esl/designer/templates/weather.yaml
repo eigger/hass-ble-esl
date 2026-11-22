@@ -1,5 +1,6 @@
 template: 1
 id: weather_now
+categories: [weather]
 name:
   en: Weather now
   ko: 현재 날씨

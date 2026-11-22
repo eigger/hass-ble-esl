@@ -1,5 +1,6 @@
 template: 1
 id: wifi
+categories: [labels]
 name:
   en: Wi-Fi QR code
   ko: Wi-Fi QR 코드

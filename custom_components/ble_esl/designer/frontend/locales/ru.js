@@ -182,6 +182,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Некоторые шрифты редактора недоступны; используются запасные шрифты.",
   "Retry fonts": "Повторить загрузку шрифтов",
+  "No templates in this category.": "В этой категории нет шаблонов.",
+  "Template categories": "Категории шаблонов",
+  All: "Все",
+  Weather: "Погода",
+  Schedule: "Расписание",
+  "Smart home": "Умный дом",
+  Labels: "Этикетки",
   "Loading designer": "Загрузка конструктора",
   "Loading image…": "Загрузка изображения…",
   "Loading…": "Загрузка…",

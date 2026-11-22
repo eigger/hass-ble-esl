@@ -289,6 +289,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "일부 편집기 글꼴을 사용할 수 없어 대체 글꼴을 사용합니다.",
   "Retry fonts": "글꼴 다시 불러오기",
+  "No templates in this category.": "이 분류에 템플릿이 없습니다.",
+  "Template categories": "템플릿 분류",
+  All: "전체",
+  Weather: "날씨",
+  Schedule: "일정",
+  "Smart home": "스마트 홈",
+  Labels: "라벨",
   "Loading designer": "디자이너 불러오는 중",
   "Loading image…": "이미지 불러오는 중…",
   "Loading…": "불러오는 중…",

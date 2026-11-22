@@ -182,6 +182,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Einige Editor-Schriftarten sind nicht verfügbar; Ersatzschriftarten werden verwendet.",
   "Retry fonts": "Schriftarten erneut laden",
+  "No templates in this category.": "Keine Vorlagen in dieser Kategorie.",
+  "Template categories": "Vorlagenkategorien",
+  All: "Alle",
+  Weather: "Wetter",
+  Schedule: "Termine",
+  "Smart home": "Smart Home",
+  Labels: "Etiketten",
   "Loading designer": "Designer wird geladen",
   "Loading image…": "Bild wird geladen…",
   "Loading…": "Laden…",

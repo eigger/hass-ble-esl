@@ -2014,7 +2014,7 @@ test("design template: only the design list and options scroll on a small screen
   }
 
   await expect(date).toBeVisible();
-  await expect(gallery.locator("img[data-preview][src]").last()).toBeVisible();
+  await expect(gallery.locator("img[data-preview][src]").first()).toBeVisible();
   await scrollWithFixedControls(gallery.locator(".list"), [
     title,
     save,

@@ -1,5 +1,6 @@
 template: 1
 id: date_weather
+categories: [schedule, weather]
 name:
   en: Date and weather
   ko: 날짜와 날씨

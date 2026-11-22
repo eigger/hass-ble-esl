@@ -182,6 +182,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Certaines polices de l’éditeur sont indisponibles ; des polices de remplacement sont utilisées.",
   "Retry fonts": "Réessayer les polices",
+  "No templates in this category.": "Aucun modèle dans cette catégorie.",
+  "Template categories": "Catégories de modèles",
+  All: "Tous",
+  Weather: "Météo",
+  Schedule: "Agenda",
+  "Smart home": "Maison connectée",
+  Labels: "Étiquettes",
   "Loading designer": "Concepteur de chargement",
   "Loading image…": "Chargement de l'image…",
   "Loading…": "Chargement…",

@@ -184,6 +184,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "Alcuni caratteri dell’editor non sono disponibili; vengono usati caratteri alternativi.",
   "Retry fonts": "Riprova caratteri",
+  "No templates in this category.": "Nessun modello in questa categoria.",
+  "Template categories": "Categorie dei modelli",
+  All: "Tutti",
+  Weather: "Meteo",
+  Schedule: "Agenda",
+  "Smart home": "Casa intelligente",
+  Labels: "Etichette",
   "Loading designer": "Caricamento progettista",
   "Loading image…": "Caricamento immagine…",
   "Loading…": "Caricamento in corso...",

@@ -183,6 +183,13 @@ export default {
   "Some editor fonts are unavailable; fallback fonts are in use.":
     "一部の編集用フォントを使用できないため、代替フォントを使用しています。",
   "Retry fonts": "フォントを再試行",
+  "No templates in this category.": "このカテゴリにテンプレートはありません。",
+  "Template categories": "テンプレートのカテゴリ",
+  All: "すべて",
+  Weather: "天気",
+  Schedule: "予定",
+  "Smart home": "スマートホーム",
+  Labels: "ラベル",
   "Loading designer": "デザイナーを読み込み中",
   "Loading image…": "画像を読み込み中…",
   "Loading…": "読み込み中…",

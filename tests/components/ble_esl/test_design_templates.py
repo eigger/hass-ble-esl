@@ -14,6 +14,7 @@ from custom_components.ble_esl.designer.design_templates import (
     build,
     choose_layout,
     coerce_value,
+    describe,
     load_templates,
     parse_template,
     resolve_parameters,
@@ -48,6 +49,17 @@ def test_every_bundled_template_loads():
     files = sorted(TEMPLATE_DIR.glob("*.yaml"))
     assert files
     assert len(TEMPLATES) == len(files)
+
+
+def test_categories_in_gallery_and_legacy_templates():
+    assert len(TEMPLATES) == 19
+    assert all(template["categories"] for template in TEMPLATES.values())
+    for key in ("calendar_weather", "date_weather"):
+        assert set(describe(TEMPLATES[key], 250, 128)["categories"]) == {"weather", "schedule"}
+    legacy = parse_template(MINIMAL)
+    assert describe(legacy, 250, 128)["categories"] == []
+    with pytest.raises(vol.Invalid):
+        parse_template(MINIMAL + "\ncategories: [unknown]\n")
 
 
 def seed_entities(hass, template):

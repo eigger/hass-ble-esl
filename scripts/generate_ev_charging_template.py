@@ -567,6 +567,7 @@ def generate() -> str:
     data = {
         "template": 1,
         "id": "ev_charging",
+        "categories": ["smart_home"],
         "name": {"en": "EV & battery charging", "ko": "전기차 · 배터리 충전"},
         "description": {
             "en": "EV battery level with low-charge alert, charging status badge, and optional range and power sensors.",
