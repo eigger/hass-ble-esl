@@ -62,6 +62,10 @@ DOOR_COMPACT_TEXT = (
     DOOR_PRELUDE
     + "{{ '현관 · 열림 주의' if _dopen else ('현관 · 닫힘' if (_has_d and _ds == 'off') else ('현관 · 대기' if _has_d else now().strftime('%H:%M 갱신'))) }}"
 )
+DOOR_STATUS_COMPACT = (
+    DOOR_PRELUDE
+    + "{{ '현관 · 열림 주의' if _dopen else ('현관 · 닫힘' if (_has_d and _ds == 'off') else ('현관 · 대기' if _has_d else '현관 · 미설정')) }}"
+)
 DOOR_ICON = (
     DOOR_PRELUDE + "{{ 'door-open' if _dopen else ('door-closed' if _has_d else 'shield-check') }}"
 )
@@ -95,12 +99,18 @@ def _person(idx: int, *, compact: bool) -> tuple[str, str, str, str, str]:
         "if _po is not none else 'account-outline' }}"
     )
     color = sel + f"{{{{ {TEXT_INK_EXPR} if (_po is not none and _st == 'home') else 'black' }}}}"
+    icon_color = (
+        sel
+        + f"{{{{ 'white' if not _has else ({TEXT_INK_EXPR} if (_po is not none and _st == 'home') else 'black') }}}}"
+        if compact
+        else color
+    )
     since = sel + (
         "{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}"
         "{{ ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime('%m/%d %H:%M')) "
         "if _lc is not none else ('선택 입력' if not _has else '') }}"
     )
-    return name, status, icon, color, since
+    return name, status, icon, color, icon_color, since
 
 
 class FlowElement(dict):
@@ -174,6 +184,7 @@ class Canvas:
                     "size": max(min_size, round(size * self.sy)),
                     "min_size": min_size,
                     "max_lines": 1,
+                    "line_spacing": 0,
                     "fit": "shrink_ellipsis",
                     "align": align,
                     "valign": valign,
@@ -267,8 +278,8 @@ def _square_200(w: int, h: int) -> list[FlowElement]:
         top = 40 + idx * 30
         if idx:
             c.line(10, top - 2, 190, top - 2)
-        name, status, icon, color, _ = _person(idx, compact=True)
-        c.icon(icon, 21, top + 13, 18, color=color)
+        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
+        c.icon(icon, 21, top + 13, 18, color=icon_color)
         c.text_fit(name, 36, top + 2, 86, 22, 14)
         c.text_fit(status, 126, top + 2, 64, 22, 14, align="right", color=color)
 
@@ -282,17 +293,17 @@ def _tiny_landscape(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 250, 128)
     c.text_fit(TITLE, 6, 3, 120, 19, 13)
     c.rect(130, 1, 244, 23, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 134, 3, 106, 19, 11, align="center", color=BADGE_COLOR)
+    c.text_fit(BADGE_TEXT, 134, 3, 106, 17, 11, align="center", color=BADGE_COLOR)
     c.line(6, 25, 244, 25)
     c.line(125, 28, 125, 97)
     c.line(6, 62, 244, 62)
 
     coords = ((6, 27), (129, 27), (6, 64), (129, 64))
     for idx, (left, top) in enumerate(coords):
-        name, status, icon, color, _ = _person(idx, compact=True)
-        c.icon(icon, left + 12, top + 16, 16, color=color)
-        c.text_fit(name, left + 25, top + 1, 89, 16, 12)
-        c.text_fit(status, left + 25, top + 18, 89, 16, 12, color=color)
+        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
+        c.icon(icon, left + 12, top + 16, 16, color=icon_color)
+        c.text_fit(name, left + 25, top + 1, 89, 15, 12)
+        c.text_fit(status, left + 25, top + 17, 89, 15, 12, color=color)
 
     c.line(6, 100, 244, 100)
     c.icon(DOOR_ICON, 17, 114, 15, color=DOOR_TEXT_COLOR)
@@ -304,19 +315,19 @@ def _tiny_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 128, 250)
     c.text_fit(TITLE, 6, 4, 116, 20, 14, align="center")
     c.rect(8, 27, 120, 52, fill=BADGE_FILL, outline=BADGE_OUTLINE, radius=4)
-    c.text_fit(BADGE_TEXT, 12, 30, 104, 19, 12, align="center", color=BADGE_COLOR)
+    c.text_fit(BADGE_TEXT, 12, 30, 104, 18, 12, align="center", color=BADGE_COLOR)
     c.line(6, 56, 122, 56)
 
     for idx in range(4):
         top = 60 + idx * 35
         if idx:
             c.line(6, top - 2, 122, top - 2)
-        name, status, _, color, _ = _person(idx, compact=True)
-        c.text_fit(name, 6, top, 116, 16, 12, align="center")
-        c.text_fit(status, 6, top + 17, 116, 16, 12, align="center", color=color)
+        name, status, _, color, _, _ = _person(idx, compact=True)
+        c.text_fit(name, 6, top, 116, 15, 12, align="center")
+        c.text_fit(status, 6, top + 16, 116, 15, 12, align="center", color=color)
 
     c.line(6, 200, 122, 200)
-    c.text_fit(DOOR_COMPACT_TEXT, 6, 204, 116, 20, 11, align="center", color=DOOR_TEXT_COLOR)
+    c.text_fit(DOOR_STATUS_COMPACT, 6, 204, 116, 20, 11, align="center", color=DOOR_TEXT_COLOR)
     c.text_fit(CLOCK, 6, 226, 116, 20, 10, align="center")
     return c.items
 
@@ -333,8 +344,8 @@ def _medium_compact_landscape(w: int, h: int) -> list[FlowElement]:
     cards = ((10, 40), (198, 40), (10, 94), (198, 94))
     for idx, (left, top) in enumerate(cards):
         c.rect(left, top, left + 176, top + 48, radius=5)
-        name, status, icon, color, _ = _person(idx, compact=True)
-        c.icon(icon, left + 18, top + 24, 22, color=color)
+        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
+        c.icon(icon, left + 18, top + 24, 22, color=icon_color)
         c.text_fit(name, left + 34, top + 5, 136, 19, 13)
         c.text_fit(status, left + 34, top + 26, 136, 19, 14, color=color)
 
@@ -353,14 +364,14 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     for idx in range(4):
         top = 66 + idx * 62
         c.rect(10, top, 174, top + 55, radius=6)
-        name, status, icon, color, _ = _person(idx, compact=True)
-        c.icon(icon, 28, top + 27, 22, color=color)
+        name, status, icon, color, icon_color, _ = _person(idx, compact=True)
+        c.icon(icon, 28, top + 27, 22, color=icon_color)
         c.text_fit(name, 44, top + 6, 122, 20, 14)
         c.text_fit(status, 44, top + 29, 122, 21, 15, color=color)
 
     c.rect(10, 316, 174, 376, fill=DOOR_BANNER_FILL, outline=DOOR_BANNER_OUTLINE, radius=6)
     c.icon(DOOR_ICON, 26, 338, 18, color=DOOR_BANNER_FG)
-    c.text_fit(DOOR_COMPACT_TEXT, 40, 326, 126, 24, 13, color=DOOR_BANNER_FG)
+    c.text_fit(DOOR_STATUS_COMPACT, 40, 326, 126, 24, 13, color=DOOR_BANNER_FG)
     c.text_fit(CLOCK, 18, 352, 148, 19, 11, align="right", color=DOOR_BANNER_FG)
     return c.items
 
@@ -378,7 +389,7 @@ def _panel_landscape(w: int, h: int) -> list[FlowElement]:
     for idx, (left, top) in enumerate(cards):
         right = left + 368
         c.rect(left, top, right, top + 154, width=1.5, radius=10)
-        name, status, icon, color, since = _person(idx, compact=False)
+        name, status, icon, color, _, since = _person(idx, compact=False)
         c.icon(icon, left + 28, top + 28, 28, color=color)
         c.text_fit(name, left + 50, top + 11, 184, 34, 21)
         c.text_fit(since, left + 238, top + 13, 114, 30, 14, align="right")
@@ -405,13 +416,13 @@ def _panel_portrait(w: int, h: int) -> list[FlowElement]:
     c.icon("home-outline", 34, 34, 24)
     c.text_fit(TITLE, 54, 17, 256, 34, 24)
     c.text_fit(CLOCK, 316, 18, 144, 32, 16, align="right")
-    c.rect(20, 58, 460, 96, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
-    c.text_fit(BADGE_TEXT, 28, 61, 424, 32, 19, align="center", color=BADGE_COLOR)
+    c.rect(20, 58, 460, 98, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
+    c.text_fit(BADGE_TEXT, 28, 62, 424, 32, 19, align="center", color=BADGE_COLOR)
 
     for idx in range(4):
         top = 108 + idx * 148
         c.rect(20, top, 460, top + 136, width=1.5, radius=10)
-        name, status, icon, color, since = _person(idx, compact=False)
+        name, status, icon, color, _, since = _person(idx, compact=False)
         c.icon(icon, 48, top + 34, 30, color=color)
         c.text_fit(name, 74, top + 14, 214, 36, 21)
         c.text_fit(since, 294, top + 15, 150, 34, 15, align="right")
