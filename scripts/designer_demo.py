@@ -647,6 +647,8 @@ async def reset(request):
     AUTOMATION_CONFIGS.clear()
     AUTOMATION_CONFIGS.update(deepcopy(DEFAULT_AUTOMATION_CONFIGS))
     TEMPLATES.clear()
+    DESIGN_TEMPLATES.clear()
+    DESIGN_TEMPLATES.update(load_all())
     AUTOMATION_LINKS.clear()
     AUTOMATION_LINKS["demo-writable"] = [
         "automation.morning",
