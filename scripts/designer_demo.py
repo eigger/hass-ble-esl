@@ -120,6 +120,20 @@ STATES["person.home"] = {
     "state": "home",
     "attributes": {"friendly_name": "Alex"},
 }
+STATES["sensor.power"] = {
+    "entity_id": "sensor.power",
+    "state": "1850",
+    "attributes": {
+        "friendly_name": "Home power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+    },
+}
+STATES["sensor.ev_battery"] = {
+    "entity_id": "sensor.ev_battery",
+    "state": "78",
+    "attributes": {"unit_of_measurement": "%", "friendly_name": "EV Battery"},
+}
 STATES["sensor.washer_state"] = {
     "entity_id": "sensor.washer_state",
     "state": "running",
