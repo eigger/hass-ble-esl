@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- XTE device number 176 is the Poshiji PSJ-750 7.5" BWRY tag (800×480, no rotation), verified on a real tag from a user report (#360). It is now picked automatically from the advertisement; the `psj-750` preset key is unchanged, so existing config entries keep working.
+
 ## 1.10.3
 
 ### Fixed

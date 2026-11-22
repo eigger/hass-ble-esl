@@ -22,7 +22,7 @@ weather and temperature are the photographed screen contents, not live data.
 
 One listing covers the sizes from 2.13" to 4.2"; pick the size option you
 want. The 2.13" (PSJ-213), 2.66" (PSJ-266), 2.9" (PSJ-290) and 4.2" (PSJ-420) are
-verified on real tags; the other sizes are size-only presets (see the catalog
+verified on real tags, and the 7.5" (PSJ-750, sold separately) is verified from a user report; the other sizes are size-only presets (see the catalog
 below) — check **BWRY, BLE** with the seller and do not assume every option
 uses this protocol. Current price, availability, accessories and seller
 warranty are not recorded here.
@@ -139,10 +139,10 @@ Catalog (`esl_ble/xte/devices.py`):
 | PSJ-290 | 154 | 296×128 landscape | 128×296 portrait (`rotation: 270`) | verified (owner, real tag) |
 | psj-350 | — | 384×184 | 384×184 landscape | estimated (size only, manual pick) |
 | psj-370 | — | 416×240 | 416×240 landscape | estimated (size only, manual pick) |
-| psj-750 | — | 800×480 | 800×480 landscape | estimated (size only, manual pick; 7.5" is sold under the brand but not confirmed to be XTE) |
+| PSJ-750 | 176 | 800×480 landscape | 800×480 | verified (user report, real tag) |
 
 The 2.66" and 2.9" scan along their short edge like the PSJ-213 (portrait
-buffer, turned 270° rather than 90°); the square 1.54" and the larger sizes are left
+buffer, turned 270° rather than 90°); the square 1.54" and the larger sizes (the PSJ-750 confirmed) are left
 unrotated like the PSJ-420. If a manually picked size displays as diagonal
 stripes (shear), the orientation assumption is wrong for that panel; on the
 square 1.54" a wrong assumption shows instead as the picture lying on its

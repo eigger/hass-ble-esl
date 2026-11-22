@@ -125,7 +125,6 @@ def test_size_only_presets_pack_at_their_resolution():
         "psj-154": (200, 200),  # square: no rotation
         "psj-350": (384, 184),  # larger: landscape like the PSJ-420
         "psj-370": (416, 240),
-        "psj-750": (800, 480),
     }
     for key, (buf_w, buf_h) in expected_buffers.items():
         preset = devices.PRESETS[key]
@@ -151,7 +150,7 @@ def test_catalog_entries_are_complete_and_disjoint():
         record = b"\xfd\x02\x40\x02" + number.to_bytes(2, "big") + b"\x64\x06"
         assert preset_for_advertisement(record) is preset
         device_numbers[number] = key
-    assert {"psj-420", "psj-213", "psj-290", "psj-266"} <= set(device_numbers.values())
+    assert {"psj-420", "psj-213", "psj-290", "psj-266", "psj-750"} <= set(device_numbers.values())
 
 
 def test_captured_small_models_pack_in_a_rotated_buffer():
@@ -165,6 +164,20 @@ def test_captured_small_models_pack_in_a_rotated_buffer():
         assert buffer_size(preset) == (buf_w, buf_h)
         obj = writer.prepare(preset, Image.new("RGB", (preset.width, preset.height)), "")
         assert obj[25:33] == buf_w.to_bytes(4, "big") + buf_h.to_bytes(4, "big")
+
+
+def test_psj_750_is_captured_and_resolved_from_its_device_number():
+    """Device number 176 is the 7.5" tag: unrotated 800x480, picked from the advertisement."""
+    preset = devices.PRESETS["psj-750"]
+    assert preset.extra["device_number"] == 176
+    assert "rotation" not in preset.extra
+    assert buffer_size(preset) == (800, 480)
+    assert preset.display_name == 'PSJ-750 7.5" BWRY'
+    info = advertisement(payload=bytes.fromhex("fd02400200b064060102ffff1c"))
+    assert esl_ble.detect(info) is esl_ble.get("xte")
+    assert esl_ble.get("xte").parse_advertisement(info).model_key == "psj-750"
+    obj = writer.prepare(preset, Image.new("RGB", (800, 480), "white"), "")
+    assert obj[25:33] == (800).to_bytes(4, "big") + (480).to_bytes(4, "big")
 
 
 def test_new_model_is_one_catalog_entry(monkeypatch):
