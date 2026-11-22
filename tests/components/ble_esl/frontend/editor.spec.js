@@ -1981,6 +1981,58 @@ test("failed automation creation can retry the same ID without losing the name",
   expect(configs[0].id).toBe(configs[1].id);
 });
 
+test("design template: only the design list and options scroll on a small screen", async ({
+  page,
+}) => {
+  await page.locator('[data-add="rectangle"]').click();
+  await page
+    .getByRole("button", { name: "Browse design gallery", exact: true })
+    .click();
+  await page.setViewportSize({ width: 390, height: 440 });
+  const gallery = page.locator("ble-esl-template-dialog");
+  const title = gallery.getByRole("heading", { name: "Design gallery" });
+  const cancel = gallery.getByRole("button", { name: "Cancel", exact: true });
+  const save = gallery.getByRole("button", { name: "Save as template" });
+  const date = gallery.getByRole("button", { name: /Date label/ });
+
+  async function scrollWithFixedControls(area, controls) {
+    const positions = await Promise.all(
+      controls.map(async (control) => {
+        await expect(control).toBeInViewport({ ratio: 1 });
+        return control.boundingBox();
+      }),
+    );
+    await area.hover();
+    await page.mouse.wheel(0, 1000);
+    await expect
+      .poll(() => area.evaluate((node) => node.scrollTop))
+      .toBeGreaterThan(0);
+    for (const [index, control] of controls.entries()) {
+      await expect(control).toBeInViewport({ ratio: 1 });
+      expect(await control.boundingBox()).toEqual(positions[index]);
+    }
+  }
+
+  await expect(date).toBeVisible();
+  await expect(gallery.locator("img[data-preview][src]").last()).toBeVisible();
+  await scrollWithFixedControls(gallery.locator(".list"), [
+    title,
+    save,
+    cancel,
+  ]);
+  await date.click();
+
+  const apply = gallery.getByRole("button", { name: "Add to display" });
+  await expect(gallery.locator("img[data-form-preview]")).toBeVisible();
+  await scrollWithFixedControls(gallery.locator(".options"), [
+    title,
+    apply,
+    cancel,
+  ]);
+  await cancel.click();
+  await expect(gallery).toHaveCount(0);
+});
+
 test("design template: gallery applies elements and prefills the automation", async ({
   page,
 }) => {
