@@ -2955,6 +2955,235 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
         assert different_pixels(hass, preset, original, rebuilt) == 0, size
 
 
+def test_energy_power_covers_all_29_sizes_without_overlap():
+    template = TEMPLATES["energy_power"]
+    assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
+    assert len((TEMPLATE_DIR / "energy_power.yaml").read_bytes()) < 256 * 1024
+
+    def _box(item):
+        kind = item["type"]
+        if kind == "text_fit":
+            return (item["x"], item["y"], item["x"] + item["width"], item["y"] + item["height"])
+        if kind in ("progress_bar", "rectangle", "line"):
+            return (item["x_start"], item["y_start"], item["x_end"], item["y_end"])
+        if kind == "icon":
+            size = item["size"]
+            return (
+                item["x"] - size // 2,
+                item["y"] - size // 2,
+                item["x"] + size - size // 2,
+                item["y"] + size - size // 2,
+            )
+        return None
+
+    for size, items in template["layouts"].items():
+        assert len(items) <= 100, size
+        width, height = (int(part) for part in size.split("x"))
+        all_boxes = [
+            (index, item["type"], box)
+            for index, item in enumerate(items)
+            if (box := _box(item)) is not None
+        ]
+        for index, kind, box in all_boxes:
+            if kind == "line":
+                assert 0 <= box[0] <= box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] <= box[3] <= height, (size, index, kind, box)
+            else:
+                assert 0 <= box[0] < box[2] <= width, (size, index, kind, box)
+                assert 0 <= box[1] < box[3] <= height, (size, index, kind, box)
+        fg_boxes = [entry for entry in all_boxes if entry[1] not in ("rectangle", "line")]
+        rect_boxes = [entry for entry in all_boxes if entry[1] == "rectangle"]
+        line_boxes = [entry for entry in all_boxes if entry[1] == "line"]
+        for r1 in range(len(rect_boxes)):
+            for r2 in range(r1 + 1, len(rect_boxes)):
+                i1, _, b1 = rect_boxes[r1]
+                i2, _, b2 = rect_boxes[r2]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+        for idx in range(len(fg_boxes)):
+            for jdx in range(idx + 1, len(fg_boxes)):
+                i1, t1, b1 = fg_boxes[idx]
+                i2, t2, b2 = fg_boxes[jdx]
+                overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
+                assert not overlaps, f"{size}: element {i1}({t1}) {b1} overlaps {i2}({t2}) {b2}"
+            i1, t1, b1 = fg_boxes[idx]
+            for li, _, lb in line_boxes:
+                lx0, ly0, lx1, ly1 = lb
+                line_box = (lx0, ly0, lx1 + (lx0 == lx1), ly1 + (ly0 == ly1))
+                hits_line = (
+                    b1[0] < line_box[2]
+                    and line_box[0] < b1[2]
+                    and b1[1] < line_box[3]
+                    and line_box[1] < b1[3]
+                )
+                assert not hits_line, f"{size}: element {i1}({t1}) {b1} touches line {li} {lb}"
+            for ri, _, rb in rect_boxes:
+                rw = round(items[ri].get("width", 1))
+                inside = (
+                    b1[0] >= rb[0] + rw
+                    and b1[2] <= rb[2] - rw
+                    and b1[1] >= rb[1] + rw
+                    and b1[3] <= rb[3] - rw
+                )
+                disjoint = b1[2] <= rb[0] or rb[2] <= b1[0] or b1[3] <= rb[1] or rb[3] <= b1[1]
+                assert inside or disjoint, f"{size}: {i1}({t1}) {b1} crosses rect {ri} border {rb}"
+
+
+async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, wolink_entry):
+    from custom_components.ble_esl.designer.specs import resolve_templates
+    from scripts.designer_demo import STATES as DEMO_STATES
+
+    assert "sensor.power" in DEMO_STATES
+
+    hass.states.async_set("sensor.power", "1250", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.energy_today", "10.5", {"unit_of_measurement": "kWh"})
+    hass.states.async_set("sensor.solar_power", "840", {"unit_of_measurement": "W"})
+    options = {
+        "today_energy_sensor": "sensor.energy_today",
+        "solar_sensor": "sensor.solar_power",
+        "budget_watts": 3000,
+    }
+    normal_texts = _texts(_shown(hass, "energy_power", 800, 480, options))
+    assert {"1250 W", "10.5 kWh", "840 W", "여유"} <= set(normal_texts)
+
+    # kW conversion into budget percentage & overload alert + BW/BWR/BWRY contrast.
+    hass.states.async_set("sensor.power", "3.2", {"unit_of_measurement": "kW"})
+    kw_items = resolve_templates(
+        hass, build(TEMPLATES["energy_power"], 800, 480, "BWR", options)["payload"], set()
+    )
+    kw_texts = [str(item.get("value", "")) for item in kw_items]
+    assert "3.2 kW" in kw_texts and "과부하" in kw_texts and "목표 3000W 대비 107%" in kw_texts
+    assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in kw_items)
+    assert any(item.get("value") == "과부하" and item.get("color") == "white" for item in kw_items)
+    render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), kw_items)
+
+    bwry_items = resolve_templates(
+        hass,
+        build(TEMPLATES["energy_power"], 400, 300, "BWRY", {**options, "accent": "yellow"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in bwry_items
+    )
+    assert any(
+        item.get("value") == "과부하" and item.get("color") == "black" for item in bwry_items
+    )
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        for item in bwry_items
+    )
+
+    white_items = resolve_templates(
+        hass,
+        build(TEMPLATES["energy_power"], 400, 300, "BWR", {**options, "accent": "white"})[
+            "payload"
+        ],
+        set(),
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in white_items
+    )
+    assert any(
+        item.get("value") == "과부하" and item.get("color") == "white" for item in white_items
+    )
+
+    # Negative export power and near-zero values never render as "-0".
+    hass.states.async_set("sensor.power", "-0.04", {"unit_of_measurement": "kW"})
+    export_texts = _texts(_shown(hass, "energy_power", 400, 300))
+    assert "-0.04 kW" in export_texts and "발전 여유" in export_texts
+    hass.states.async_set("sensor.power", "-0.4", {"unit_of_measurement": "W"})
+    nz_texts = _texts(_shown(hass, "energy_power", 400, 300))
+    assert "0 W" in nz_texts and "-0 W" not in nz_texts
+
+    # Solar kW/fractional W formatting consistency across compact portrait, tiny/medium landscape, & panels.
+    hass.states.async_set("sensor.power", "1800", {"unit_of_measurement": "W"})  # 보통 (50-80%)
+    hass.states.async_set("sensor.energy_today", "1.05", {"unit_of_measurement": "kWh"})
+    hass.states.async_set("sensor.solar_power", "0.84", {"unit_of_measurement": "kW"})
+    assert "보통" in _texts(_shown(hass, "energy_power", 800, 480, options))
+    assert {"1.05 kWh", "0.84 kW"} <= set(_texts(_shown(hass, "energy_power", 800, 480, options)))
+    tiny_p_texts = _texts(_shown(hass, "energy_power", 104, 212, options))
+    assert "오늘 1.05kWh" in tiny_p_texts and "태양광 0.84kW" in tiny_p_texts
+
+    hass.states.async_set("sensor.solar_power", "2.001", {"unit_of_measurement": "kW"})
+    tiny_l_texts = _texts(_shown(hass, "energy_power", 212, 104, options))
+    assert "오늘 1.05kWh · 태양광 2kW" in tiny_l_texts and "부하 60%" in tiny_l_texts
+
+    hass.states.async_set("sensor.solar_power", "840.4", {"unit_of_measurement": "W"})
+    med_l_items = resolve_templates(
+        hass, build(TEMPLATES["energy_power"], 384, 184, "BWR", options)["payload"], set()
+    )
+    med_l_texts = [str(item.get("value", "")) for item in med_l_items]
+    assert "태양광 840W 발전 중 · 현재 부하 60%" in med_l_texts
+    assert sum(1 for t in med_l_texts if "갱신" in t) == 1
+
+    # Medium compact landscape without optional sensors shows advice without duplicating header clock.
+    med_l_plain = _texts(_shown(hass, "energy_power", 384, 184))
+    assert sum(1 for t in med_l_plain if "갱신" in t or ":00" in t or ":" in t) == 1
+    assert any("안정적인 전력 사용 중입니다" in t for t in med_l_plain)
+
+    # Caution tier (80-99%), BW fallback, budget_watts coercion bounds, & empty/missing unit.
+    hass.states.async_set("sensor.power", "2500", {})
+    caution_bw = resolve_templates(
+        hass, build(TEMPLATES["energy_power"], 800, 480, "BW", {"accent": "red"})["payload"], set()
+    )
+    assert any(
+        item.get("type") == "rectangle" and item.get("fill") == "black" for item in caution_bw
+    )
+    assert any(item.get("value") == "주의" and item.get("color") == "white" for item in caution_bw)
+    assert any(
+        item.get("type") == "progress_bar" and item.get("progress") == 83 for item in caution_bw
+    )
+
+    with pytest.raises(HomeAssistantError, match="budget_watts"):
+        resolve_parameters(TEMPLATES["energy_power"], {"budget_watts": 50}, "BWR")
+    with pytest.raises(HomeAssistantError, match="budget_watts"):
+        resolve_parameters(TEMPLATES["energy_power"], {"budget_watts": 60000}, "BWR")
+
+    for cw, ch in ((104, 212), (184, 384), (384, 184), (416, 240)):
+        p_texts = _texts(_shown(hass, "energy_power", cw, ch))
+        assert sum(1 for t in p_texts if "갱신" in t) == 1
+
+    for bogus in ("1.2", "sensor.", " sensor.power ", "a.b.c"):
+        bogus_texts = _texts(
+            _shown(
+                hass,
+                "energy_power",
+                800,
+                480,
+                {"today_energy_sensor": bogus, "solar_sensor": bogus},
+            )
+        )
+        assert bogus_texts.count("미설정") == 2
+
+    for bad in ("unavailable", "unknown", "nan", "inf", "-inf", "True", "False"):
+        hass.states.async_set("sensor.power", bad, {"unit_of_measurement": "W"})
+        hass.states.async_set("sensor.energy_today", bad)
+        hass.states.async_set("sensor.solar_power", bad)
+        bad_rendered = _shown(hass, "energy_power", 800, 480, options)
+        bad_texts = _texts(bad_rendered)
+        assert "-- W" in bad_texts and "센서 대기" in bad_texts
+        render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), bad_rendered)
+
+    hass.states.async_set("sensor.power", "1850", {"unit_of_measurement": "W"})
+    hass.states.async_set("sensor.energy_today", "10.5", {"unit_of_measurement": "kWh"})
+    hass.states.async_set("sensor.solar_power", "840", {"unit_of_measurement": "W"})
+    designer = hass.data[KEY]
+    applied = await designer.apply_design_template(wolink_entry, "energy_power", options)
+    assert applied["issues"] == [] and applied["different_pixels"] == 0
+
+    for size in TEMPLATES["energy_power"]["layouts"]:
+        w, h = (int(part) for part in size.split("x"))
+        preset = DevicePreset("test", "test", w, h, "BWR")
+        elements, imported, issues = elements_from(
+            build(TEMPLATES["energy_power"], w, h, "BWR", options)["payload"], preset
+        )
+        assert issues == [], size
+        original, rebuilt = stable_template_payloads(hass, imported, elements)
+        assert different_pixels(hass, preset, original, rebuilt) == 0, size
+
+
 def test_ev_charging_covers_all_29_sizes_without_overlap():
     template = TEMPLATES["ev_charging"]
     assert set(template["layouts"]) == set(TEMPLATES["weather_outdoor"]["layouts"])
