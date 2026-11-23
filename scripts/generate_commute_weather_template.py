@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate the built-in morning commute & weekly weather template at every supported size."""
+"""Regenerate the built-in outing weather template at every supported size."""
 
 from pathlib import Path
 import sys
@@ -129,7 +129,7 @@ def _text_ink_expr():
 
 
 def _accent_fg_expr():
-    return f"('black' if {ACCENT!r} in ('yellow', 'white') else 'white')"
+    return f"('black' if {ACCENT!r} == 'yellow' else 'white')"
 
 
 def _wind_expr(var_name, *, space=True):
@@ -266,11 +266,6 @@ def commute_alert(key):
         f"set _fstr = {_int_deg_expr('_f')}"
     )
     extra_sub = extra_comfort + _precip_amount_setup("_amtv")
-    extra_check3 = (
-        extra_sub
-        + tag(f"set _h = {weather_attribute('humidity')}")
-        + tag(f"set _hstr = {_int_pct_expr('_h')}")
-    )
     ink = _accent_ink_expr()
     fg = _accent_fg_expr()
     safe_text = _text_ink_expr()
@@ -306,134 +301,9 @@ def commute_alert(key):
             "else (('강풍 · 체감 ' ~ _fstr) if _kind == 'wind' "
             "else (('강수확률 ' ~ _pv ~ '%' if _pv is not none else '비·눈 없음') if _kind == 'ok' else '예보 대기 중'))))",
         ),
-        "check1": (
-            setup,
-            "('• 눈 예보 · 미끄럼 주의' ~ (' (' ~ _pv ~ '%)' if _pv is not none else '')) if _kind == 'snow' "
-            "else (('• 우산 필수' ~ (' (' ~ _pv ~ '%)' if _pv is not none else '')) if _kind == 'rain' "
-            "else (('• 우산 불필요' ~ (' (강수 ' ~ _pv ~ '%)' if _pv is not none else '')) if _kind == 'ok' else '• 예보 정보 없음'))",
-        ),
-        "check2": (
-            setup,
-            "'• 두꺼운 방한 외투 · 장갑' if _kind == 'snow' "
-            "else ('• 방수 겉옷 추천' if _kind == 'rain' "
-            "else (('• 일교차 ' ~ _gap ~ '° · 겉옷 챙기기') if _kind == 'gap' "
-            "else ('• 방풍 재킷 추천' if _kind == 'wind' "
-            "else ('• 가벼운 외출복 추천' if _kind == 'ok' else '• 날씨 예보를 기다리는 중'))))",
-        ),
-        "check3": (
-            setup + extra_check3,
-            "('• 강수량 ' ~ _amt_str ~ ' · ' if _amt_str else '• ') ~ '체감 ' ~ _fstr ~ ' · 습도 ' ~ _hstr",
-        ),
     }
     prefix, expr = outputs[key]
     return prefix + expression(expr)
-
-
-def forecast_day(day_offset, key):
-    date_expr = f"(now().date() + timedelta(days={day_offset}))"
-    ink = _accent_ink_expr()
-    fg = _accent_fg_expr()
-    if key == "weekday":
-        return expression(f"{DAYS!r}[{date_expr}.weekday()]")
-    if key == "date":
-        return expression(f"{date_expr}.strftime('%m/%d')")
-    if key == "day_color":
-        return expression(f"{ink} if {date_expr}.weekday() >= 5 else 'black'")
-    prefix = select_forecast(day_offset)
-    if key == "icon":
-        return prefix + expression(
-            f"'weather-' ~ {ICONS!r}.get(row.condition | default('', true), 'cloudy-alert')"
-        )
-    if key == "cond_text":
-        return prefix + expression(f"{CONDITIONS!r}.get(row.condition | default('', true), '—')")
-    if key == "high":
-        return (
-            prefix
-            + tag("set _v = row.temperature | default(none)")
-            + expression(_int_deg_expr("_v"))
-        )
-    if key == "low":
-        return (
-            prefix + tag("set _v = row.templow | default(none)") + expression(_int_deg_expr("_v"))
-        )
-    if key == "pop":
-        return (
-            prefix
-            + tag("set _p = row.precipitation_probability | default(none)")
-            + expression(_int_pct_expr("_p"))
-        )
-    if key == "wet_color":
-        return (
-            prefix
-            + tag("set _c = row.condition | default('')")
-            + tag("set _p = row.precipitation_probability | default(none)")
-            + expression(
-                f"{ink} if (_c in {WET!r}) or (is_number(_p) and _p is not boolean and (_p | float) >= 40) else 'black'"
-            )
-        )
-    if key == "pop_bg":
-        return (
-            prefix
-            + tag("set _p = row.precipitation_probability | default(none)")
-            + expression(
-                f"{ink} if is_number(_p) and _p is not boolean and (_p | float) >= 40 else 'white'"
-            )
-        )
-    if key == "pop_fg":
-        return (
-            prefix
-            + tag("set _p = row.precipitation_probability | default(none)")
-            + expression(
-                f"{fg} if is_number(_p) and _p is not boolean and (_p | float) >= 40 else 'black'"
-            )
-        )
-    raise KeyError(key)
-
-
-def weekly_summary(days_count):
-    return (
-        tag(
-            f"set _list = fc[{WEATHER}].forecast | default([], true) "
-            f"if fc is defined and fc[{WEATHER}] is defined else []"
-        )
-        + tag("set _ns = namespace(items=[], has_dt=false)")
-        + tag("for _i in _list")
-        + tag("if as_datetime(_i.datetime | default(none), none) is not none")
-        + tag("set _ns.has_dt = true")
-        + tag("break")
-        + tag("endif")
-        + tag("endfor")
-        + tag(f"for _off in range(1, {days_count + 1})")
-        + tag("set _target = now().date() + timedelta(days=_off)")
-        + tag("set _row = namespace(v={})")
-        + tag("if _ns.has_dt")
-        + tag("for _i in _list")
-        + tag("set _dt = as_datetime(_i.datetime | default(none), none)")
-        + tag("if _dt is not none and as_local(_dt).date() == _target")
-        + tag("set _row.v = _i")
-        + tag("break")
-        + tag("endif")
-        + tag("endfor")
-        + tag("elif _list | length > _off")
-        + tag("set _row.v = _list[_off]")
-        + tag("endif")
-        + tag("set _r = _row.v")
-        + tag("set _p = _r.precipitation_probability | default(none)")
-        + tag(
-            "set _pv = (_p | float | round(0) | int) if is_number(_p) and _p is not boolean else none"
-        )
-        + tag("set _c = _r.condition | default('')")
-        + tag(f"if (_c in {WET!r}) or (_pv is not none and _pv >= 40)")
-        + tag(
-            f"set _lbl = {DAYS!r}[_target.weekday()] ~ ('(' ~ _pv ~ '%)' if _pv is not none else '')"
-        )
-        + tag("set _ns.items = _ns.items + [_lbl]")
-        + tag("endif")
-        + tag("endfor")
-        + expression(
-            "'주간 비·눈: ' ~ (_ns.items[:3] | join(' · ')) if _ns.items else '주간 비·눈 예보 없음'"
-        )
-    )
 
 
 def fit_text(
@@ -875,747 +745,585 @@ def mid_compact_landscape(width, height):
 # ---------------------------------------------------------------------------
 
 
-def weekly_columns(start_x, top_y, total_w, bottom_y, count, *, show_dates=False, show_cond=False):
-    """Build equal-width daily forecast columns for 5, 6, or 7 days within exact vertical bounds."""
-    items = []
-    col_w = total_w / count
-    avail_h = bottom_y - top_y
-    day_h = max(14, round(avail_h * 0.11))
-    date_h = max(12, round(avail_h * 0.08)) if show_dates else 0
-    pop_h = max(16, round(avail_h * 0.12))
-    hi_h = max(16, round(avail_h * 0.15))
-    lo_h = max(14, round(avail_h * 0.12))
-    cond_h = max(13, round(avail_h * 0.10)) if show_cond else 0
-    gap = max(2, round(avail_h * 0.02))
-    num_gaps = 6 if show_cond else 5
-    if show_dates:
-        num_gaps += 1
-    fixed_h = day_h + date_h + pop_h + hi_h + lo_h + cond_h + num_gaps * gap + 4
-    ic_sz = max(20, min(round(col_w * 0.65), avail_h - fixed_h))
+# ---------------------------------------------------------------------------
+# Outing briefing: verdict banner + hourly forecast (4" class and smaller wide tags)
+# ---------------------------------------------------------------------------
 
-    used_h = fixed_h + ic_sz
-    extra_gap = max(0, (avail_h - used_h) // 4)
-    y = top_y + 2
-    day_y = y
-    y += day_h + (gap if show_dates else 0)
-    date_y = y
-    y += (date_h + gap + extra_gap) if show_dates else (gap + extra_gap)
-    ic_y = y
-    y += ic_sz + gap + extra_gap
-    pop_y = y
-    y += pop_h + gap + extra_gap
-    hi_y = y
-    y += hi_h + gap
-    lo_y = y
-    y += lo_h + gap
-    cond_y = y
+HOUR_STEP = 3
 
-    for idx in range(count):
-        day_offset = idx + 1
-        x0 = round(start_x + idx * col_w)
-        x1 = round(start_x + (idx + 1) * col_w)
-        w = x1 - x0
-        cx = (x0 + x1) // 2
-        if idx > 0:
-            items.append(line(x0, top_y + 2, x0, bottom_y - 2, width=1))
+
+def hourly_rows():
+    return (
+        f"fc_hourly[{WEATHER}].forecast | default([], true) "
+        f"if fc_hourly is defined and fc_hourly[{WEATHER}] is defined else []"
+    )
+
+
+def hour_slot(slot):
+    """Statements that set ``_t0`` (the slot's hour) and ``row`` (its hourly forecast, or empty)."""
+    return (
+        tag(
+            f"set _t0 = now().replace(minute=0, second=0, microsecond=0) + timedelta(hours={slot * HOUR_STEP})"
+        )
+        + tag(f"set _hf = {hourly_rows()}")
+        + tag("set _hn = namespace(r={})")
+        + tag("for i in _hf")
+        + tag("set t = as_datetime(i.datetime | default(none), none)")
+        + tag("if t is not none and as_local(t).replace(minute=0, second=0, microsecond=0) == _t0")
+        + tag("set _hn.r = i")
+        + tag("break")
+        + tag("endif")
+        + tag("endfor")
+        + tag("set row = _hn.r")
+    )
+
+
+def hourly(slot, key):
+    prefix = hour_slot(slot)
+    if key == "label":
+        return prefix + expression("_t0.strftime('%H') ~ '시'")
+    if key == "icon":
+        return prefix + expression(
+            f"'weather-' ~ {ICONS!r}.get(row.condition | default('', true), 'cloudy-alert')"
+        )
+    if key == "temp":
+        return (
+            prefix
+            + tag("set _v = row.temperature | default(none)")
+            + expression(_int_deg_expr("_v"))
+        )
+    if key == "pop":
+        return (
+            prefix
+            + tag("set _p = row.precipitation_probability | default(none)")
+            + expression(_int_pct_expr("_p"))
+        )
+    if key == "pop_color":
+        return (
+            prefix
+            + tag("set _p = row.precipitation_probability | default(none)")
+            + expression(
+                f"{_text_ink_expr()} if is_number(_p) and _p is not boolean and (_p | float) >= 50 else 'black'"
+            )
+        )
+    raise KeyError(key)
+
+
+def hourly_series(count):
+    """Statements that collect the slots' temperatures as ``_hs.vals`` (``none`` where missing)."""
+    return (
+        tag(f"set _hf = {hourly_rows()}")
+        + tag("set _hs = namespace(vals=[])")
+        + tag(f"for _k in range({count})")
+        + tag(
+            f"set _tt = now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=_k * {HOUR_STEP})"
+        )
+        + tag("set _hm = namespace(v=none)")
+        + tag("for i in _hf")
+        + tag("set t = as_datetime(i.datetime | default(none), none)")
+        + tag("if t is not none and as_local(t).replace(minute=0, second=0, microsecond=0) == _tt")
+        + tag("set _x = i.temperature | default(none)")
+        + tag("if is_number(_x) and _x is not boolean")
+        + tag("set _hm.v = _x | float")
+        + tag("endif")
+        + tag("break")
+        + tag("endif")
+        + tag("endfor")
+        + tag("set _hs.vals = _hs.vals + [_hm.v]")
+        + tag("endfor")
+        + tag("set _nums = _hs.vals | reject('none') | list")
+    )
+
+
+def hourly_trend(count, key):
+    prefix = hourly_series(count)
+    if key == "values":
+        return prefix + expression(f"_nums if _nums | length == {count} else []")
+    if key == "min":
+        return prefix + expression("(_nums | min) - 1 if _nums else 0")
+    return prefix + expression("(_nums | max) + 1 if _nums else 1")
+
+
+def hourly_level(count, slot):
+    """How warm one slot is, 15 to 100 percent between the coldest and warmest slot."""
+    return hourly_series(count) + expression(
+        f"(15 + 85 * (_hs.vals[{slot}] - (_nums | min)) / ([(_nums | max) - (_nums | min), 1] | max)) "
+        f"| round(0) | int if _hs.vals[{slot}] is not none else 0"
+    )
+
+
+def outing_sunset():
+    return tag("set _s = as_datetime(state_attr('sun.sun', 'next_setting'), none)") + expression(
+        "as_local(_s).strftime('%H:%M') if _s is not none and as_local(_s).date() == now().date() else '—'"
+    )
+
+
+def compact_wind():
+    return tag(f"set _v = {weather_attribute('wind_speed')}") + expression(
+        _wind_expr("_v", space=False)
+    )
+
+
+def banner(x1, y1, x2, y2, icon_size, label_size, *, radius, sub_size=0, sub_value=None):
+    """The verdict banner: one big line, optionally a smaller line under it."""
+    height = y2 - y1
+    pad = 10
+    text_x = x1 + pad + icon_size + 10
+    items = [
+        rect(
+            x1,
+            y1,
+            x2,
+            y2,
+            fill=commute_alert("bg"),
+            outline=commute_alert("outline"),
+            radius=radius,
+        ),
+        icon(
+            x1 + pad,
+            y1 + (height - icon_size) // 2,
+            commute_alert("icon"),
+            icon_size,
+            color=commute_alert("fg"),
+        ),
+    ]
+    if sub_value is None:
         items.append(
             fit_text(
-                x0 + 2,
-                day_y,
-                w - 4,
-                day_h,
-                forecast_day(day_offset, "weekday"),
-                max(12, day_h - 2),
-                color=forecast_day(day_offset, "day_color"),
+                text_x,
+                y1 + 2,
+                x2 - pad - text_x,
+                height - 4,
+                commute_alert("label"),
+                label_size,
+                align="left",
+                color=commute_alert("fg"),
+                min_size=14,
             )
         )
-        if show_dates:
-            items.append(
-                fit_text(
-                    x0 + 2,
-                    date_y,
-                    w - 4,
-                    date_h,
-                    forecast_day(day_offset, "date"),
-                    max(10, date_h - 2),
-                )
-            )
+        return items
+    top = y1 + (height - round(label_size * 1.3) - round(sub_size * 1.45)) // 2
+    items += [
+        fit_text(
+            text_x,
+            top,
+            x2 - pad - text_x,
+            round(label_size * 1.3),
+            commute_alert("label"),
+            label_size,
+            align="left",
+            color=commute_alert("fg"),
+            min_size=14,
+        ),
+        fit_text(
+            text_x,
+            top + round(label_size * 1.3),
+            x2 - pad - text_x,
+            round(sub_size * 1.45),
+            sub_value,
+            sub_size,
+            align="left",
+            color=commute_alert("fg"),
+            min_size=14,
+        ),
+    ]
+    return items
+
+
+def hourly_trend_line(x1, x2, y, height, count):
+    return {
+        "type": "sparkline",
+        "x": int(x1),
+        "y": int(y),
+        "width": int(x2 - x1 + 1),
+        "height": int(height),
+        "values": hourly_trend(count, "values"),
+        "min": hourly_trend(count, "min"),
+        "max": hourly_trend(count, "max"),
+        "width_line": 3,
+        "dot_last": False,
+    }
+
+
+def outing_landscape(width, height):
+    """4" landscape (400x300): title, verdict banner, six hours with a trend line, readings."""
+    items = [
+        fit_text(14, 4, 150, 34, "오늘 외출", 22, align="left"),
+        fit_text(
+            166,
+            6,
+            width - 14 - 166,
+            30,
+            tag(f"set _n = {weather_attribute('friendly_name')} or ''")
+            + expression(
+                "now().strftime('%m/%d') ~ ' ' ~ "
+                + repr(DAYS)
+                + "[now().weekday()] ~ (' · ' ~ _n if _n else '')"
+            ),
+            17,
+            align="right",
+            min_size=14,
+        ),
+        *banner(
+            10, 42, width - 11, 106, 40, 28, radius=8, sub_size=17, sub_value=commute_alert("sub")
+        ),
+    ]
+    centres = [40 + index * 64 for index in range(6)]
+    for slot, centre in enumerate(centres):
+        items += [
+            fit_text(centre - 30, 112, 60, 24, hourly(slot, "label"), 16, min_size=14),
+            icon(centre - 14, 138, hourly(slot, "icon"), 28),
+            fit_text(centre - 30, 206, 60, 30, hourly(slot, "temp"), 20, min_size=16),
+            fit_text(
+                centre - 30,
+                236,
+                60,
+                26,
+                hourly(slot, "pop"),
+                17,
+                color=hourly(slot, "pop_color"),
+                min_size=14,
+            ),
+        ]
+    items.append(hourly_trend_line(centres[0], centres[-1], 174, 28, 6))
+    items.append(line(10, 264, width - 10, 264, width=2))
+    readings = (
+        ("thermometer", current("feels", prefix="체감 ")),
+        ("water-percent", current("humidity")),
+        ("weather-windy", compact_wind()),
+        ("weather-sunset-down", outing_sunset()),
+    )
+    for index, (glyph, value) in enumerate(readings):
+        x = 12 + index * 96
+        items += [
+            icon(x, 274, glyph, 20),
+            fit_text(x + 24, 270, 68, 28, value, 17, align="left", min_size=14),
+        ]
+    return items
+
+
+def outing_portrait(width, height):
+    """4" portrait (300x400): the same briefing stacked, hours as a list."""
+    items = [
+        fit_text(12, 4, 120, 34, "오늘 외출", 21, align="left"),
+        fit_text(
+            134,
+            6,
+            width - 12 - 134,
+            30,
+            tag(f"set _n = {weather_attribute('friendly_name')} or ''")
+            + expression(
+                "now().strftime('%m/%d') ~ ' ' ~ "
+                + repr(DAYS)
+                + "[now().weekday()] ~ (' · ' ~ _n if _n else '')"
+            ),
+            16,
+            align="right",
+            min_size=14,
+        ),
+        *banner(
+            8, 42, width - 9, 110, 36, 26, radius=8, sub_size=16, sub_value=commute_alert("sub")
+        ),
+    ]
+    top = 118
+    pitch = 36
+    for slot in range(6):
+        y = top + slot * pitch
+        items += [
+            fit_text(10, y, 50, pitch - 2, hourly(slot, "label"), 18, align="left", min_size=14),
+            icon(62, y + 4, hourly(slot, "icon"), 26),
+            fit_text(94, y, 56, pitch - 2, hourly(slot, "temp"), 20, min_size=16),
+            fit_text(
+                152,
+                y,
+                52,
+                pitch - 2,
+                hourly(slot, "pop"),
+                17,
+                color=hourly(slot, "pop_color"),
+                min_size=14,
+            ),
+            {
+                "type": "progress_bar",
+                "x_start": 212,
+                "y_start": y + 10,
+                "x_end": width - 12,
+                "y_end": y + 22,
+                "progress": hourly_level(6, slot),
+                "fill": "black",
+                "background": "white",
+                "outline": "black",
+                "radius": 4,
+            },
+        ]
+    items.append(line(10, 336, width - 10, 336, width=2))
+    readings = (
+        ("thermometer", current("feels", prefix="체감 ")),
+        ("water-percent", current("humidity")),
+        ("weather-windy", compact_wind()),
+        ("weather-sunset-down", outing_sunset()),
+    )
+    for index, (glyph, value) in enumerate(readings):
+        x = 12 + (index % 2) * 144
+        y = 342 + (index // 2) * 29
+        items += [
+            icon(x, y + 4, glyph, 20),
+            fit_text(x + 24, y, 112, 28, value, 17, align="left", min_size=14),
+        ]
+    return items
+
+
+def outing_wide(width, height):
+    """Wide, short tags (296 wide and up): the verdict banner above four hours."""
+    pad = 6
+    banner_height = round(height * 0.4)
+    ic = min(banner_height - 14, 36)
+    items = banner(
+        pad,
+        pad,
+        width - pad - 1,
+        pad + banner_height,
+        ic,
+        min(banner_height - 16, 26),
+        radius=6,
+    )
+    top = pad + banner_height + 4
+    room = height - top - 2
+    hour_height = 18 if room < 80 else (20 if room < 120 else 22)
+    temp_height = 24 if room < 80 else (28 if room < 120 else 30)
+    pop_height = 20 if room >= 96 else 0
+    icon_size = min(room - hour_height - temp_height - pop_height, 40)
+    column = (width - 2 * pad) / 4
+    for slot in range(4):
+        left = pad + slot * column
+        centre = left + column / 2
+        y = top
         items.append(
-            icon(
-                cx,
-                ic_y,
-                forecast_day(day_offset, "icon"),
-                ic_sz,
-                anchor="mt",
-                color=forecast_day(day_offset, "wet_color"),
+            fit_text(
+                left,
+                y,
+                column,
+                hour_height,
+                hourly(slot, "label"),
+                min(16, hour_height - 4),
+                min_size=14,
             )
         )
-        pill_pad = max(4, round(w * 0.12))
-        items.extend(
-            [
-                rect(
-                    x0 + pill_pad,
-                    pop_y,
-                    x1 - pill_pad,
-                    pop_y + pop_h,
-                    fill=forecast_day(day_offset, "pop_bg"),
-                    outline=forecast_day(day_offset, "wet_color"),
-                    width=1,
-                    radius=3,
-                ),
-                fit_text(
-                    x0 + pill_pad + 2,
-                    pop_y + 1,
-                    w - 2 * pill_pad - 4,
-                    pop_h - 2,
-                    forecast_day(day_offset, "pop"),
-                    max(10, pop_h - 4),
-                    color=forecast_day(day_offset, "pop_fg"),
-                ),
-                fit_text(
-                    x0 + 2, hi_y, w - 4, hi_h, forecast_day(day_offset, "high"), max(13, hi_h - 2)
-                ),
-                fit_text(
-                    x0 + 2, lo_y, w - 4, lo_h, forecast_day(day_offset, "low"), max(11, lo_h - 2)
-                ),
-            ]
+        y += hour_height
+        items.append(icon(centre - icon_size / 2, y, hourly(slot, "icon"), icon_size))
+        y += icon_size
+        items.append(
+            fit_text(
+                left,
+                y,
+                column,
+                temp_height,
+                hourly(slot, "temp"),
+                min(20, temp_height - 4),
+                min_size=14,
+            )
         )
-        if show_cond:
+        if pop_height:
             items.append(
                 fit_text(
-                    x0 + 2,
-                    cond_y,
-                    w - 4,
-                    cond_h,
-                    forecast_day(day_offset, "cond_text"),
-                    max(10, cond_h - 3),
+                    left,
+                    y + temp_height,
+                    column,
+                    pop_height,
+                    hourly(slot, "pop"),
+                    14,
+                    color=hourly(slot, "pop_color"),
+                    min_size=14,
                 )
             )
     return items
 
 
-def weekly_5day_landscape(width, height):
-    """4.2" & 5.8" landscape (400x300, 648x480): today commute summary + 5-day forecast."""
-    sx, sy = width / 400, height / 300
-
-    def rx(v):
-        return round(v * sx)
-
-    def ry(v):
-        return round(v * sy)
-
-    pad = rx(10)
+def outing_header(width, sx, sy, s, *, stacked):
+    place = tag(f"set _n = {weather_attribute('friendly_name')} or ''") + expression(
+        "now().strftime('%m/%d') ~ ' ' ~ "
+        + repr(DAYS)
+        + "[now().weekday()] ~ (' · ' ~ _n if _n else '') ~ now().strftime('  %H:%M')"
+    )
+    if stacked:
+        return [
+            fit_text(20 * sx, 10 * sy, 440 * sx, 46 * s, "오늘 외출", 36 * s, align="left"),
+            fit_text(
+                20 * sx, 56 * sy, 440 * sx, 36 * s, place, 24 * s, align="left", min_size=18 * s
+            ),
+        ]
     return [
-        fit_text(pad, ry(8), rx(220), ry(26), current("date"), round(16 * sy), align="left"),
-        *alert_pill(
-            rx(238), ry(8), width - pad, ry(33), commute_alert("label"), radius=4, icon_pad=rx(4)
-        ),
-        icon(rx(14), ry(46), current("icon"), round(62 * min(sx, sy))),
+        fit_text(24 * sx, 10 * sy, 300 * sx, 50 * s, "오늘 외출", 34 * s, align="left"),
         fit_text(
-            rx(80), ry(44), rx(96), ry(54), current("temperature"), round(44 * sy), align="right"
-        ),
-        fit_text(
-            rx(80), ry(98), rx(96), ry(22), current("condition"), round(14 * sy), align="right"
-        ),
-        line(rx(182), ry(44), rx(182), ry(124), width=1),
-        fit_text(rx(190), ry(44), rx(92), ry(22), today_field("low"), round(15 * sy), align="left"),
-        fit_text(
-            rx(190),
-            ry(67),
-            rx(92),
-            ry(22),
-            today_field("high"),
-            round(15 * sy),
-            align="left",
-            color=ACCENT_INK,
-        ),
-        fit_text(
-            rx(190),
-            ry(92),
-            rx(92),
-            ry(22),
-            current("feels", prefix="체감 "),
-            round(13 * sy),
-            align="left",
-        ),
-        rect(
-            rx(288), ry(44), width - pad, ry(124), fill="white", outline="black", width=1, radius=5
-        ),
-        fit_text(
-            rx(294),
-            ry(48),
-            rx(92),
-            ry(23),
-            today_field("pop", prefix="강수 "),
-            round(12 * sy),
-            align="left",
-            color=today_field("pop_color"),
-        ),
-        fit_text(
-            rx(294),
-            ry(73),
-            rx(92),
-            ry(23),
-            current("humidity", prefix="습도 "),
-            round(12 * sy),
-            align="left",
-        ),
-        fit_text(
-            rx(294),
-            ry(98),
-            rx(92),
-            ry(23),
-            current("wind", prefix="바람 "),
-            round(12 * sy),
-            align="left",
-        ),
-        line(pad, ry(136), width - pad, ry(136), width=max(1, round(2 * sy))),
-        fit_text(
-            pad, ry(141), rx(200), ry(20), "주간 날씨 예보 (5일)", round(13 * sy), align="left"
-        ),
-        fit_text(
-            rx(210),
-            ry(141),
-            width - pad - rx(210),
-            ry(20),
-            "주말·강수 40%↑ 강조",
-            round(11 * sy),
+            330 * sx,
+            14 * sy,
+            width - 24 * sx - 330 * sx,
+            42 * s,
+            place,
+            26 * s,
             align="right",
-        ),
-        *weekly_columns(pad, ry(164), width - 2 * pad, height - ry(8), 5, show_dates=width >= 600),
-    ]
-
-
-def weekly_5day_portrait(width, height):
-    """4.2" & 5.8" portrait (300x400, 480x648): today commute summary + 5-day forecast."""
-    sx, sy = width / 300, height / 400
-
-    def rx(v):
-        return round(v * sx)
-
-    def ry(v):
-        return round(v * sy)
-
-    pad = rx(10)
-    inner = width - 2 * pad
-    return [
-        fit_text(pad, ry(10), rx(140), ry(24), current("date"), round(16 * sy), align="left"),
-        *alert_pill(
-            rx(154), ry(10), width - pad, ry(35), commute_alert("label"), radius=4, icon_pad=rx(4)
-        ),
-        icon(rx(16), ry(48), current("icon"), round(64 * min(sx, sy))),
-        fit_text(
-            rx(88), ry(44), rx(196), ry(52), current("temperature"), round(44 * sy), align="right"
-        ),
-        fit_text(
-            rx(88), ry(96), rx(196), ry(22), current("condition"), round(14 * sy), align="right"
-        ),
-        fit_text(
-            pad, ry(124), inner // 2 - 4, ry(26), today_field("low"), round(16 * sy), align="left"
-        ),
-        fit_text(
-            pad + inner // 2 + 4,
-            ry(124),
-            inner // 2 - 4,
-            ry(26),
-            today_field("high"),
-            round(16 * sy),
-            align="right",
-            color=ACCENT_INK,
-        ),
-        rect(pad, ry(154), width - pad, ry(186), fill="white", outline="black", width=1, radius=4),
-        fit_text(
-            pad + 6,
-            ry(158),
-            inner // 3 - 8,
-            ry(24),
-            current("feels", prefix="체감 "),
-            round(12 * sy),
-            align="left",
-        ),
-        fit_text(
-            pad + inner // 3 + 2,
-            ry(158),
-            inner // 3 - 4,
-            ry(24),
-            current("humidity", prefix="습도 "),
-            round(12 * sy),
-        ),
-        fit_text(
-            pad + 2 * (inner // 3) + 2,
-            ry(158),
-            inner // 3 - 8,
-            ry(24),
-            today_field("pop", prefix="강수 "),
-            round(12 * sy),
-            align="right",
-            color=today_field("pop_color"),
-        ),
-        line(pad, ry(196), width - pad, ry(196), width=max(1, round(2 * sy))),
-        fit_text(pad, ry(202), inner, ry(22), "주간 날씨 예보 (5일)", round(14 * sy), align="left"),
-        *weekly_columns(pad, ry(226), inner, height - ry(10), 5, show_dates=height >= 600),
-    ]
-
-
-def dashboard_6day_landscape(width, height):
-    """7.5" landscape (800x480): left today commute dashboard + right 6-day forecast."""
-    left_w = 286
-    div_x = 304
-    right_x = 322
-    pad = 16
-    return [
-        fit_text(pad, 14, 150, 28, current("date"), 20, align="left"),
-        rect(176, 14, left_w, 40, fill="white", outline="black", width=1, radius=4),
-        fit_text(180, 16, left_w - 184, 22, "오늘 출근 브리핑", 12),
-        icon(pad + 4, 58, current("icon"), 84),
-        fit_text(104, 54, left_w - 104, 68, current("temperature"), 60, align="right"),
-        fit_text(104, 122, left_w - 104, 24, current("condition"), 18, align="right"),
-        fit_text(pad, 154, 128, 26, today_field("low"), 17, align="left"),
-        fit_text(146, 154, 140, 26, today_field("high"), 17, align="right", color=ACCENT_INK),
-        rect(pad, 190, 146, 232, fill="white", outline="black", width=1, radius=5),
-        fit_text(pad + 8, 194, 116, 34, current("feels", prefix="체감  "), 14, align="left"),
-        rect(156, 190, left_w, 232, fill="white", outline="black", width=1, radius=5),
-        fit_text(
-            164,
-            194,
-            114,
-            34,
-            today_field("pop", prefix="강수  "),
-            14,
-            align="left",
-            color=today_field("pop_color"),
-        ),
-        rect(pad, 240, 146, 282, fill="white", outline="black", width=1, radius=5),
-        fit_text(pad + 8, 244, 116, 34, current("humidity", prefix="습도  "), 14, align="left"),
-        rect(156, 240, left_w, 282, fill="white", outline="black", width=1, radius=5),
-        fit_text(164, 244, 114, 34, current("wind", prefix="바람  "), 13, align="left"),
-        rect(
-            pad,
-            298,
-            left_w,
-            height - 16,
-            fill="white",
-            outline=commute_alert("outline"),
-            width=2,
-            radius=6,
-        ),
-        rect(
-            pad,
-            298,
-            left_w,
-            334,
-            fill=commute_alert("bg"),
-            outline=commute_alert("outline"),
-            width=1,
-            radius=6,
-        ),
-        icon(pad + 10, 305, commute_alert("icon"), 22, color=commute_alert("fg")),
-        fit_text(
-            pad + 38,
-            302,
-            left_w - pad - 44,
-            28,
-            commute_alert("label"),
-            16,
-            align="left",
-            color=commute_alert("fg"),
-        ),
-        fit_text(pad + 10, 346, left_w - pad - 18, 32, commute_alert("check1"), 14, align="left"),
-        fit_text(pad + 10, 384, left_w - pad - 18, 32, commute_alert("check2"), 14, align="left"),
-        fit_text(pad + 10, 422, left_w - pad - 18, 32, commute_alert("check3"), 13, align="left"),
-        line(div_x, 16, div_x, height - 16, width=2),
-        fit_text(right_x, 14, 190, 30, "주간 예보 (6일)", 20, align="left"),
-        rect(522, 14, width - pad, 42, fill="white", outline=ACCENT_INK, width=1, radius=4),
-        fit_text(528, 16, width - pad - 534, 24, weekly_summary(6), 13, color=ACCENT_INK),
-        line(right_x, 54, width - pad, 54, width=1),
-        *weekly_columns(
-            right_x, 62, width - right_x - pad, height - 16, 6, show_dates=True, show_cond=True
+            min_size=20 * s,
         ),
     ]
 
 
-def dashboard_6day_portrait(width, height):
-    """7.5" portrait (480x800): top today commute dashboard + bottom 6-day forecast."""
-    pad = 16
-    inner = width - 2 * pad
-    return [
-        fit_text(pad, 14, 200, 30, current("date"), 22, align="left"),
-        *alert_pill(240, 14, width - pad, 44, commute_alert("label"), radius=5, icon_pad=6),
-        icon(pad + 6, 58, current("icon"), 92),
-        fit_text(120, 54, 150, 74, current("temperature"), 64, align="right"),
-        fit_text(120, 128, 150, 24, current("condition"), 18, align="right"),
-        fit_text(286, 60, 178, 28, today_field("low"), 18, align="left"),
-        fit_text(286, 90, 178, 28, today_field("high"), 18, align="left", color=ACCENT_INK),
-        fit_text(286, 122, 178, 26, current("feels", prefix="체감  "), 15, align="left"),
-        rect(pad, 166, 156, 206, fill="white", outline="black", width=1, radius=4),
-        fit_text(
-            pad + 8,
-            170,
-            126,
-            32,
-            today_field("pop", prefix="강수  "),
-            14,
-            align="left",
-            color=today_field("pop_color"),
-        ),
-        rect(166, 166, 314, 206, fill="white", outline="black", width=1, radius=4),
-        fit_text(174, 170, 132, 32, current("humidity", prefix="습도  "), 14, align="left"),
-        rect(324, 166, width - pad, 206, fill="white", outline="black", width=1, radius=4),
-        fit_text(332, 170, 124, 32, current("wind", prefix="바람  "), 13, align="left"),
-        rect(
-            pad,
-            218,
-            width - pad,
-            342,
-            fill="white",
-            outline=commute_alert("outline"),
-            width=1,
-            radius=6,
-        ),
-        fit_text(pad + 12, 226, inner - 24, 30, commute_alert("check1"), 15, align="left"),
-        fit_text(pad + 12, 264, inner - 24, 30, commute_alert("check2"), 15, align="left"),
-        fit_text(pad + 12, 302, inner - 24, 30, commute_alert("check3"), 14, align="left"),
-        line(pad, 360, width - pad, 360, width=2),
-        fit_text(pad, 372, 180, 28, "주간 예보 (6일)", 20, align="left"),
-        rect(206, 372, width - pad, 400, fill="white", outline=ACCENT_INK, width=1, radius=4),
-        fit_text(212, 374, width - pad - 218, 24, weekly_summary(6), 13, color=ACCENT_INK),
-        *weekly_columns(pad, 410, inner, height - 16, 6, show_dates=True, show_cond=True),
-    ]
+def outing_readings():
+    return (
+        ("thermometer", "체감", current("feels")),
+        ("water-percent", "습도", current("humidity")),
+        ("weather-windy", "바람", current("wind")),
+        ("weather-sunset-down", "일몰", outing_sunset()),
+    )
 
 
-def dashboard_7day_landscape(width, height):
-    """10.2"+ landscape (960x640, 960x680, 1600x1200): top hero + bottom 7-day forecast."""
-    sx, sy = width / 960, height / 640
-
-    def rx(v):
-        return round(v * sx)
-
-    def ry(v):
-        return round(v * sy)
-
-    pad = rx(20)
-    return [
-        fit_text(pad, ry(16), rx(320), ry(30), current("full_date"), round(22 * sy), align="left"),
-        fit_text(
-            pad,
-            ry(46),
-            rx(320),
-            ry(22),
-            "아침 출근 · 주간 날씨 브리핑",
-            round(14 * sy),
-            align="left",
-        ),
-        icon(pad + rx(4), ry(80), current("icon"), round(100 * min(sx, sy))),
-        fit_text(
-            rx(136), ry(76), rx(144), ry(82), current("temperature"), round(72 * sy), align="right"
-        ),
-        fit_text(
-            rx(284), ry(110), rx(72), ry(36), current("condition"), round(22 * sy), align="left"
-        ),
-        line(rx(364), ry(20), rx(364), ry(204), width=max(1, round(2 * sx))),
-        fit_text(
-            rx(382), ry(18), rx(122), ry(30), today_field("low"), round(20 * sy), align="left"
-        ),
-        fit_text(
-            rx(512),
-            ry(18),
-            rx(122),
-            ry(30),
-            today_field("high"),
-            round(20 * sy),
-            align="left",
-            color=ACCENT_INK,
-        ),
-        fit_text(
-            rx(382),
-            ry(52),
-            rx(252),
-            ry(26),
-            current("feels", prefix="체감온도  "),
-            round(16 * sy),
-            align="left",
-        ),
-        rect(rx(382), ry(88), rx(504), ry(140), fill="white", outline="black", width=1, radius=6),
-        fit_text(
-            rx(392),
-            ry(92),
-            rx(102),
-            ry(44),
-            today_field("pop", prefix="강수 "),
-            round(16 * sy),
-            align="left",
-            color=today_field("pop_color"),
-        ),
-        rect(rx(514), ry(88), rx(636), ry(140), fill="white", outline="black", width=1, radius=6),
-        fit_text(
-            rx(524),
-            ry(92),
-            rx(102),
-            ry(44),
-            current("humidity", prefix="습도 "),
-            round(16 * sy),
-            align="left",
-        ),
-        rect(rx(382), ry(150), rx(636), ry(202), fill="white", outline="black", width=1, radius=6),
-        fit_text(
-            rx(392),
-            ry(154),
-            rx(234),
-            ry(44),
-            current("wind", prefix="바람  "),
-            round(16 * sy),
-            align="left",
-        ),
-        rect(
-            rx(656),
-            ry(18),
-            width - pad,
-            ry(204),
-            fill="white",
-            outline=commute_alert("outline"),
-            width=max(1, round(2 * sx)),
-            radius=8,
-        ),
-        rect(
-            rx(656),
-            ry(18),
-            width - pad,
-            ry(62),
-            fill=commute_alert("bg"),
-            outline=commute_alert("outline"),
-            width=1,
-            radius=8,
-        ),
-        icon(
-            rx(670),
-            ry(27),
-            commute_alert("icon"),
-            round(26 * min(sx, sy)),
-            color=commute_alert("fg"),
-        ),
-        fit_text(
-            rx(704),
-            ry(22),
-            width - pad - rx(712),
-            ry(36),
-            commute_alert("label"),
-            round(18 * sy),
-            align="left",
-            color=commute_alert("fg"),
-        ),
-        fit_text(
-            rx(670),
-            ry(76),
-            width - pad - rx(682),
-            ry(34),
-            commute_alert("check1"),
-            round(15 * sy),
-            align="left",
-        ),
-        fit_text(
-            rx(670),
-            ry(118),
-            width - pad - rx(682),
-            ry(34),
-            commute_alert("check2"),
-            round(15 * sy),
-            align="left",
-        ),
-        fit_text(
-            rx(670),
-            ry(160),
-            width - pad - rx(682),
-            ry(34),
-            commute_alert("check3"),
-            round(14 * sy),
-            align="left",
-        ),
-        line(pad, ry(220), width - pad, ry(220), width=max(1, round(2 * sy))),
-        fit_text(pad, ry(232), rx(260), ry(32), "7일 주간 예보", round(22 * sy), align="left"),
-        rect(
-            rx(610),
-            ry(230),
-            width - pad,
-            ry(264),
-            fill="white",
-            outline=ACCENT_INK,
-            width=1,
-            radius=5,
-        ),
-        fit_text(
-            rx(618),
-            ry(232),
-            width - pad - rx(626),
-            ry(30),
-            weekly_summary(7),
-            round(15 * sy),
-            color=ACCENT_INK,
-        ),
-        line(pad, ry(274), width - pad, ry(274), width=1),
-        *weekly_columns(
-            pad, ry(284), width - 2 * pad, height - ry(16), 7, show_dates=True, show_cond=True
-        ),
-    ]
+def outing_large_landscape(width, height):
+    """7.5" and up landscape: banner, eight hours with a trend line and four readings."""
+    sx, sy = width / 800, height / 480
+    s = min(sx, sy)
+    items = outing_header(width, sx, sy, s, stacked=False)
+    items += banner(
+        16 * sx,
+        70 * sy,
+        width - 17 * sx,
+        164 * sy,
+        round(64 * s),
+        round(44 * s),
+        radius=round(12 * s),
+        sub_size=round(24 * s),
+        sub_value=commute_alert("sub"),
+    )
+    centres = [(70 + 94 * index) * sx for index in range(8)]
+    for slot, centre in enumerate(centres):
+        half = 47 * sx - 2
+        items += [
+            fit_text(
+                centre - half,
+                174 * sy,
+                2 * half,
+                34 * s,
+                hourly(slot, "label"),
+                22 * s,
+                min_size=18 * s,
+            ),
+            icon(centre - 20 * s, 212 * sy, hourly(slot, "icon"), 40 * s),
+            fit_text(
+                centre - half,
+                316 * sy,
+                2 * half,
+                42 * s,
+                hourly(slot, "temp"),
+                28 * s,
+                min_size=22 * s,
+            ),
+            fit_text(
+                centre - half,
+                358 * sy,
+                2 * half,
+                34 * s,
+                hourly(slot, "pop"),
+                22 * s,
+                color=hourly(slot, "pop_color"),
+                min_size=18 * s,
+            ),
+        ]
+    trend = hourly_trend_line(centres[0], centres[-1], 262 * sy, 50 * sy, 8)
+    trend["width_line"] = max(2, round(4 * s))
+    items.append(trend)
+    items.append(rect(16 * sx, 392 * sy, width - 17 * sx, 392 * sy + max(2, 2 * s), fill="black"))
+    for index, (glyph, label, value) in enumerate(outing_readings()):
+        x = (30 + 192 * index) * sx
+        if index:
+            items.append(line(x - 12 * sx, 408 * sy, x - 12 * sx, 466 * sy))
+        items += [
+            icon(x, 419 * sy, glyph, 34 * s),
+            fit_text(
+                x + 42 * s, 402 * sy, 134 * sx, 32 * s, label, 20 * s, align="left", min_size=18 * s
+            ),
+            fit_text(
+                x + 42 * s, 436 * sy, 134 * sx, 42 * s, value, 28 * s, align="left", min_size=22 * s
+            ),
+        ]
+    return items
 
 
-def dashboard_7day_portrait(width, height):
-    """10.2"+ portrait (640x960, 680x960, 1200x1600): top hero + bottom 7-day forecast."""
-    sx, sy = width / 640, height / 960
-
-    def rx(v):
-        return round(v * sx)
-
-    def ry(v):
-        return round(v * sy)
-
-    pad = rx(20)
-    inner = width - 2 * pad
-    return [
-        fit_text(pad, ry(18), rx(340), ry(32), current("full_date"), round(24 * sy), align="left"),
-        fit_text(
-            pad,
-            ry(50),
-            rx(340),
-            ry(22),
-            "아침 출근 · 주간 날씨 브리핑",
-            round(15 * sy),
-            align="left",
-        ),
-        icon(pad + rx(6), ry(88), current("icon"), round(106 * min(sx, sy))),
-        fit_text(
-            rx(142), ry(84), rx(174), ry(86), current("temperature"), round(74 * sy), align="right"
-        ),
-        fit_text(
-            rx(142), ry(170), rx(174), ry(28), current("condition"), round(22 * sy), align="right"
-        ),
-        fit_text(
-            rx(346), ry(90), rx(130), ry(32), today_field("low"), round(22 * sy), align="left"
-        ),
-        fit_text(
-            rx(484),
-            ry(90),
-            rx(130),
-            ry(32),
-            today_field("high"),
-            round(22 * sy),
-            align="left",
-            color=ACCENT_INK,
-        ),
-        fit_text(
-            rx(346),
-            ry(128),
-            rx(268),
-            ry(28),
-            current("feels", prefix="체감온도  "),
-            round(17 * sy),
-            align="left",
-        ),
-        fit_text(
-            rx(346),
-            ry(158),
-            rx(268),
-            ry(28),
-            current("humidity", prefix="습도  "),
-            round(17 * sy),
-            align="left",
-        ),
-        fit_text(
-            rx(346),
-            ry(188),
-            rx(268),
-            ry(28),
-            current("wind", prefix="바람  "),
-            round(16 * sy),
-            align="left",
-        ),
-        rect(
-            pad,
-            ry(230),
-            width - pad,
-            ry(412),
-            fill="white",
-            outline=commute_alert("outline"),
-            width=max(1, round(2 * sx)),
-            radius=8,
-        ),
-        rect(
-            pad,
-            ry(230),
-            width - pad,
-            ry(278),
-            fill=commute_alert("bg"),
-            outline=commute_alert("outline"),
-            width=1,
-            radius=8,
-        ),
-        icon(
-            pad + rx(14),
-            ry(240),
-            commute_alert("icon"),
-            round(28 * min(sx, sy)),
-            color=commute_alert("fg"),
-        ),
-        fit_text(
-            pad + rx(50),
-            ry(236),
-            inner - rx(64),
-            ry(36),
-            commute_alert("label"),
-            round(20 * sy),
-            align="left",
-            color=commute_alert("fg"),
-        ),
-        fit_text(
-            pad + rx(14),
-            ry(290),
-            inner - rx(28),
-            ry(34),
-            commute_alert("check1"),
-            round(17 * sy),
-            align="left",
-        ),
-        fit_text(
-            pad + rx(14),
-            ry(330),
-            inner - rx(28),
-            ry(34),
-            commute_alert("check2"),
-            round(17 * sy),
-            align="left",
-        ),
-        fit_text(
-            pad + rx(14),
-            ry(370),
-            inner - rx(28),
-            ry(34),
-            commute_alert("check3"),
-            round(16 * sy),
-            align="left",
-        ),
-        line(pad, ry(432), width - pad, ry(432), width=max(1, round(2 * sy))),
-        fit_text(pad, ry(446), rx(200), ry(32), "7일 주간 예보", round(22 * sy), align="left"),
-        rect(
-            rx(236),
-            ry(444),
-            width - pad,
-            ry(480),
-            fill="white",
-            outline=ACCENT_INK,
-            width=1,
-            radius=5,
-        ),
-        fit_text(
-            rx(244),
-            ry(446),
-            width - pad - rx(252),
-            ry(32),
-            weekly_summary(7),
-            round(15 * sy),
-            color=ACCENT_INK,
-        ),
-        line(pad, ry(492), width - pad, ry(492), width=1),
-        *weekly_columns(pad, ry(504), inner, height - ry(18), 7, show_dates=True, show_cond=True),
-    ]
+def outing_large_portrait(width, height):
+    """7.5" and up portrait: banner, eight hours as rows with a warmth bar, readings in a grid."""
+    sx, sy = width / 480, height / 800
+    s = min(sx, sy)
+    items = outing_header(width, sx, sy, s, stacked=True)
+    items += banner(
+        16 * sx,
+        100 * sy,
+        width - 17 * sx,
+        220 * sy,
+        round(64 * s),
+        round(40 * s),
+        radius=round(12 * s),
+        sub_size=round(22 * s),
+        sub_value=commute_alert("sub"),
+    )
+    pitch = 48 * sy
+    for slot in range(8):
+        y = 234 * sy + slot * pitch
+        items += [
+            fit_text(
+                20 * sx,
+                y,
+                80 * sx,
+                pitch - 2,
+                hourly(slot, "label"),
+                24 * s,
+                align="left",
+                min_size=18 * s,
+            ),
+            icon(108 * sx, y + (pitch - 36 * s) / 2, hourly(slot, "icon"), 36 * s),
+            fit_text(
+                156 * sx, y, 76 * sx, pitch - 2, hourly(slot, "temp"), 28 * s, min_size=22 * s
+            ),
+            fit_text(
+                236 * sx,
+                y,
+                72 * sx,
+                pitch - 2,
+                hourly(slot, "pop"),
+                24 * s,
+                color=hourly(slot, "pop_color"),
+                min_size=18 * s,
+            ),
+            {
+                "type": "progress_bar",
+                "x_start": int(320 * sx),
+                "y_start": int(y + pitch / 2 - 8 * s),
+                "x_end": int(width - 20 * sx),
+                "y_end": int(y + pitch / 2 + 8 * s),
+                "progress": hourly_level(8, slot),
+                "fill": "black",
+                "background": "white",
+                "outline": "black",
+                "radius": int(6 * s),
+            },
+        ]
+    items.append(rect(16 * sx, 626 * sy, width - 17 * sx, 626 * sy + max(2, 2 * s), fill="black"))
+    for index, (glyph, label, value) in enumerate(outing_readings()):
+        x = (20 + (index % 2) * 232) * sx
+        y = (640 + (index // 2) * 80) * sy
+        if index % 2:
+            items.append(line(x - 14 * sx, y, x - 14 * sx, y + 64 * sy))
+        items += [
+            icon(x, y + 14 * sy, glyph, 34 * s),
+            fit_text(x + 46 * s, y, 170 * sx, 30 * s, label, 20 * s, align="left", min_size=18 * s),
+            fit_text(
+                x + 46 * s,
+                y + 30 * sy,
+                170 * sx,
+                42 * s,
+                value,
+                28 * s,
+                align="left",
+                min_size=22 * s,
+            ),
+        ]
+    return items
 
 
 class FlowElement(dict):
@@ -1642,14 +1350,11 @@ def generate():
         (narrow_portrait, ((104, 212), (122, 250), (128, 250), (132, 250), (128, 296), (152, 296))),
         (tall_portrait_under4, ((184, 384), (240, 416))),
         (compact_landscape, ((212, 104), (250, 122), (250, 128), (250, 132))),
-        (wide_compact_landscape, ((296, 128), (296, 152))),
-        (mid_compact_landscape, ((384, 184), (416, 240))),
-        (weekly_5day_landscape, ((400, 300), (648, 480))),
-        (weekly_5day_portrait, ((300, 400), (480, 648))),
-        (dashboard_6day_landscape, ((800, 480),)),
-        (dashboard_6day_portrait, ((480, 800),)),
-        (dashboard_7day_landscape, ((960, 640), (960, 680), (1600, 1200))),
-        (dashboard_7day_portrait, ((640, 960), (680, 960), (1200, 1600))),
+        (outing_wide, ((296, 128), (296, 152), (384, 184), (416, 240))),
+        (outing_landscape, ((400, 300),)),
+        (outing_portrait, ((300, 400),)),
+        (outing_large_landscape, ((648, 480), (800, 480), (960, 640), (960, 680), (1600, 1200))),
+        (outing_large_portrait, ((480, 648), (480, 800), (640, 960), (680, 960), (1200, 1600))),
     )
     for builder, resolutions in profiles:
         for width, height in resolutions:
@@ -1667,15 +1372,17 @@ def generate():
         "template": 1,
         "id": "weather_commute",
         "categories": ["weather"],
-        "name": {"en": "Commute weather", "ko": "출근 날씨 브리핑"},
+        "name": {"en": "Outing weather", "ko": "외출 날씨 브리핑"},
         "description": {
             "en": (
-                "Morning commute briefing with rain/snow alerts, min/max & feels-like "
-                "temperatures on tags under 4 inches, plus 5-7 day weekly forecasts on 4 inches and above."
+                "Outing briefing with an umbrella, snow, temperature-gap or wind verdict and an "
+                "hourly forecast on 4-inch tags, a compact version on smaller tags and the weekly "
+                "forecast on the largest. The automation fetches the daily and hourly forecasts."
             ),
             "ko": (
-                "4인치 미만은 비·눈 우산 알림, 최저·최고·체감온도 중심의 출근 브리핑을, "
-                "4인치 이상은 오늘 요약과 5~7일 주간 예보를 표시합니다."
+                "4인치 태그에는 우산·눈·일교차·강풍 판정과 시간대별 예보를, 더 작은 태그에는 "
+                "간단한 브리핑을, 가장 큰 태그에는 주간 예보를 표시합니다. "
+                "자동화가 일별·시간별 예보를 가져옵니다."
             ),
         },
         "background": "white",
@@ -1711,10 +1418,11 @@ def generate():
                 {
                     "action": "weather.get_forecasts",
                     "target": {"entity_id": "${weather}"},
-                    "data": {"type": "daily"},
-                    "response_variable": "fc",
+                    "data": {"type": kind},
+                    "response_variable": variable,
                     "continue_on_error": True,
                 }
+                for kind, variable in (("daily", "fc"), ("hourly", "fc_hourly"))
             ],
             "mode": "single",
         },

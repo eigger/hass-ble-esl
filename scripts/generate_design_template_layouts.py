@@ -96,6 +96,68 @@ class Layout:
             }
         )
 
+    def fit(self, x, y, width, height, value, size, *, align="center", color=BLACK, min_size=None):
+        """A one-line text box in pixels that shrinks to fit instead of clipping."""
+        self.items.append(
+            {
+                "type": "text_fit",
+                "value": value,
+                "font": FONT,
+                "x": round(x),
+                "y": round(y),
+                "width": max(1, round(width)),
+                "height": max(1, round(height)),
+                "size": max(7, round(size)),
+                "min_size": max(7, round(min_size if min_size is not None else size * 0.6)),
+                "max_lines": 1,
+                "align": align,
+                "valign": "middle",
+                "fit": "shrink",
+                "color": color,
+            }
+        )
+
+    def glyph(self, x, y, value, size, *, color=BLACK):
+        """An icon centred on a pixel position."""
+        self.items.append(
+            {
+                "type": "icon",
+                "value": value,
+                "x": round(x),
+                "y": round(y),
+                "size": max(8, round(size)),
+                "anchor": "mm",
+                "color": color,
+            }
+        )
+
+    def stroke(self, x1, y1, x2, y2, width=1, color=BLACK):
+        self.items.append(
+            {
+                "type": "line",
+                "x_start": round(x1),
+                "y_start": round(y1),
+                "x_end": round(x2),
+                "y_end": round(y2),
+                "width": max(1, round(width)),
+                "fill": color,
+            }
+        )
+
+    def block(self, x1, y1, x2, y2, *, fill, outline=None, radius=0):
+        item = {
+            "type": "rectangle",
+            "x_start": round(x1),
+            "y_start": round(y1),
+            "x_end": round(x2),
+            "y_end": round(y2),
+            "fill": fill,
+            "outline": outline or fill,
+        }
+        if radius:
+            item["radius"] = round(radius)
+        self.items.append(item)
+
     def rule(self, x1, y1, x2, y2, *, width=None, color=BLACK):
         self.items.append(
             {
@@ -490,35 +552,893 @@ def conditions(layout, *, bottom=96):
     )
 
 
-def current_weather_layout(layout, base):
-    date, name, temperature, unit, state, humidity, updated = values(base, "text")
-    weather_icon = values(base, "icon")[0]
-    header_date = date + "  " + updated if layout.detail else date
-    if layout.square:
-        layout.text((4, 3, 96, 15), name, 12)
-        layout.text((4, 16, 96, 25), header_date, 8)
-        if layout.detail:
-            layout.icon(23, 45, weather_icon, 26)
-            layout.text((38, 28, 94, 53), temperature + unit, 29)
-            layout.text((38, 54, 94, 66), state, 11)
+ACCENT_INK = "{{ 'black' if '${accent}' in ('yellow', 'white') else '${accent}' }}"
+CONDITION_ICON = (
+    "weather-{{ {'clear-night': 'night', 'exceptional': 'sunny-alert', 'partlycloudy': "
+    "'partly-cloudy', 'unknown': 'cloudy-alert', 'unavailable': 'cloudy-alert'}"
+    ".get(states('${weather}'), states('${weather}')) }}"
+)
+
+
+def whole_degrees(variable):
+    return (
+        f"((({variable} | float | round(0) | int) ~ '°') "
+        f"if is_number({variable}) and {variable} is not boolean else '{DASH}')"
+    )
+
+
+def current_value(name):
+    """Jinja for one weather entity attribute, as it reads on the tag."""
+    if name == "temperature":
+        return (
+            tag(f"set t = {attribute('weather', 'temperature')}")
+            + tag(
+                "set r = t | round(0) | int if t is number and t is not boolean "
+                "and t == t and t | abs < 100000 else none"
+            )
+            + template(f"'{DASH}' if r is none else r ~ '°'")
+        )
+    if name == "feels":
+        return tag(f"set v = {attribute('weather', 'apparent_temperature')}") + template(
+            whole_degrees("v")
+        )
+    if name == "humidity":
+        return number_metric("humidity")
+    if name == "wind":
+        unit = f"({attribute('weather', 'wind_speed_unit')} or '')"
+        return tag(f"set v = {attribute('weather', 'wind_speed')}") + template(
+            f"((v | float | round(1) | string | regex_replace('[.]0$', '')) ~ {unit}) "
+            f"if is_number(v) and v is not boolean else '{DASH}'"
+        )
+    if name == "location":
+        return template(f"{attribute('weather', 'friendly_name')} or ''")
+    if name == "date":
+        return template("now().strftime('${date_format}')")
+    if name == "time":
+        return template("now().strftime('%H:%M')")
+    if name == "footer":
+        return tag(f"set n = {attribute('weather', 'friendly_name')} or ''") + template(
+            "(n ~ ' · ' if n else '') ~ now().strftime('${date_format}')"
+        )
+    if name == "state":
+        return template("state_translated('${weather}')")
+    raise KeyError(name)
+
+
+def today_value(name):
+    """Today's forecast for the weather entity, or a dash while no forecast was fetched."""
+    entity = "'${weather}'"
+    row = (
+        tag(
+            f"set f = fc[{entity}].forecast | default([], true) "
+            f"if fc is defined and fc[{entity}] is defined else []"
+        )
+        + tag("set n = namespace(r={}, dated=false)")
+        + tag("for i in f")
+        + tag("set t = as_datetime(i.datetime | default(none), none)")
+        + tag("if t is not none")
+        + tag("set n.dated = true")
+        + tag("if as_local(t).date() == now().date()")
+        + tag("set n.r = i")
+        + tag("break")
+        + tag("endif")
+        + tag("endif")
+        + tag("endfor")
+        + tag("if not n.dated and f | length > 0")
+        + tag("set n.r = f[0]")
+        + tag("endif")
+        + tag("set row = n.r")
+    )
+    field = {
+        "high": "temperature",
+        "low": "templow",
+        "chance": "precipitation_probability",
+    }[name]
+    unit = "%" if name == "chance" else "°"
+    return (
+        row
+        + tag(f"set v = row.{field} | default(none)")
+        + template(
+            f"((v | float | round(0) | int) ~ '{unit}') "
+            f"if is_number(v) and v is not boolean else '{DASH}'"
+        )
+    )
+
+
+READINGS = (
+    ("thermometer", "feels", "Feels like"),
+    ("water-percent", "humidity", "Humidity"),
+    ("weather-windy", "wind", "Wind"),
+)
+
+
+def landscape_now(layout):
+    """Header bar, big temperature next to the condition icon and three readings."""
+    width, height = layout.width, layout.height
+    sx, sy = width / 400, height / 300
+    s = min(sx, sy)
+
+    def X(value):
+        return value * sx
+
+    def Y(value):
+        return value * sy
+
+    def S(value):
+        return value * s
+
+    value = current_value
+    layout.block(0, 0, width - 1, Y(38) - 1, fill=BLACK)
+    layout.glyph(S(20), Y(19), "map-marker", S(20), color="white")
+    layout.fit(
+        S(34),
+        Y(19) - S(15),
+        X(250) - S(34),
+        S(30),
+        value("location"),
+        S(18),
+        align="left",
+        color="white",
+    )
+    layout.fit(
+        X(256),
+        Y(19) - S(15),
+        width - S(14) - X(256),
+        S(30),
+        value("date"),
+        S(17),
+        align="right",
+        color="white",
+    )
+    layout.glyph(X(90), Y(124), CONDITION_ICON, S(120))
+    layout.fit(
+        X(172),
+        Y(90) - S(64),
+        width - S(12) - X(172),
+        S(128),
+        value("temperature"),
+        S(88),
+        align="right",
+    )
+    layout.fit(
+        X(172),
+        Y(161) - S(17),
+        width - S(14) - X(172),
+        S(34),
+        value("state"),
+        S(22),
+        align="right",
+        min_size=S(16),
+    )
+    layout.glyph(X(286), Y(191), "arrow-up-thin", S(20), color=ACCENT_INK)
+    layout.fit(
+        X(298),
+        Y(191) - S(14),
+        X(40),
+        S(28),
+        today_value("high"),
+        S(19),
+        align="left",
+        color=ACCENT_INK,
+        min_size=S(16),
+    )
+    layout.glyph(X(348), Y(191), "arrow-down-thin", S(20))
+    layout.fit(
+        X(360),
+        Y(191) - S(14),
+        width - S(10) - X(360),
+        S(28),
+        today_value("low"),
+        S(19),
+        align="left",
+        min_size=S(16),
+    )
+    layout.stroke(S(14), Y(212), width - S(14), Y(212), S(2))
+    cell = (width - 2 * S(14)) / 3
+    for index, (glyph, key, label) in enumerate(READINGS):
+        left = S(14) + index * cell
+        if index:
+            layout.stroke(left, Y(226), left, Y(288))
+        layout.glyph(left + S(26), Y(248), glyph, S(26))
+        layout.fit(
+            left + S(46),
+            Y(248) - S(16),
+            cell - S(52),
+            S(32),
+            value(key),
+            S(26),
+            align="left",
+            min_size=S(17),
+        )
+        layout.fit(left + S(46), Y(279) - S(11), cell - S(52), S(22), label, S(16), align="left")
+
+
+def portrait_now(layout):
+    """The same design stacked for tall tags."""
+    width, height = layout.width, layout.height
+    sx, sy = width / 300, height / 400
+    s = max(1, min(sx, sy))
+
+    def X(value):
+        return value * sx
+
+    def Y(value):
+        return value * sy
+
+    def S(value):
+        return value * s
+
+    value = current_value
+    layout.block(0, 0, width - 1, Y(36) - 1, fill=BLACK)
+    layout.glyph(S(18), Y(18), "map-marker", S(20), color="white")
+    layout.fit(
+        S(32),
+        Y(18) - S(15),
+        X(160) - S(32),
+        S(30),
+        value("location"),
+        S(17),
+        align="left",
+        color="white",
+    )
+    layout.fit(
+        X(166),
+        Y(18) - S(15),
+        width - S(12) - X(166),
+        S(30),
+        value("date"),
+        S(16),
+        align="right",
+        color="white",
+    )
+    layout.glyph(X(150), Y(100), CONDITION_ICON, S(112))
+    layout.fit(S(12), Y(184) - S(46), width - 2 * S(12), S(92), value("temperature"), S(80))
+    layout.fit(
+        S(12), Y(238) - S(16), width - 2 * S(12), S(32), value("state"), S(22), min_size=S(16)
+    )
+    layout.glyph(X(96), Y(270), "arrow-up-thin", S(20), color=ACCENT_INK)
+    layout.fit(
+        X(108),
+        Y(270) - S(14),
+        X(48),
+        S(28),
+        today_value("high"),
+        S(19),
+        align="left",
+        color=ACCENT_INK,
+        min_size=S(16),
+    )
+    layout.glyph(X(176), Y(270), "arrow-down-thin", S(20))
+    layout.fit(
+        X(188),
+        Y(270) - S(14),
+        X(48),
+        S(28),
+        today_value("low"),
+        S(19),
+        align="left",
+        min_size=S(16),
+    )
+    layout.stroke(S(14), Y(296), width - S(14), Y(296), S(2))
+    cell = (width - 2 * S(8)) / 3
+    for index, (glyph, key, label) in enumerate(READINGS):
+        left = S(8) + index * cell
+        if index:
+            layout.stroke(left, Y(310), left, Y(388))
+        layout.glyph(left + cell / 2, Y(330), glyph, S(26))
+        layout.fit(
+            left + S(4), Y(356) - S(14), cell - S(8), S(28), value(key), S(20), min_size=S(16)
+        )
+        layout.fit(left + S(4), Y(380) - S(11), cell - S(8), S(22), label, S(16))
+
+
+def compact_now(layout):
+    """Wide, short tags: icon, big temperature, condition, high/low and a footer bar."""
+    width, height = layout.width, layout.height
+    s = min(width / 296, height / 128)
+    footer = round(26 * s)
+    sx = width / 296
+    sy = (height - footer) / 102
+
+    def X(value):
+        return value * sx
+
+    def Y(value):
+        return value * sy
+
+    def S(value):
+        return value * s
+
+    value = current_value
+    top = height - footer
+    layout.block(0, top, width - 1, height - 1, fill=BLACK)
+    layout.fit(
+        S(10),
+        top,
+        X(206),
+        footer,
+        value("footer"),
+        S(15),
+        align="left",
+        color="white",
+        min_size=14,
+    )
+    layout.fit(
+        X(222),
+        top,
+        width - S(10) - X(222),
+        footer,
+        value("time"),
+        S(14),
+        align="right",
+        color="white",
+    )
+    layout.glyph(X(44), Y(60), CONDITION_ICON, S(72))
+    layout.fit(X(84), Y(42) - S(40), X(108), S(80), value("temperature"), S(64))
+    layout.fit(
+        X(194),
+        Y(25) - S(15),
+        width - S(10) - X(194),
+        S(30),
+        value("state"),
+        S(20),
+        align="right",
+        min_size=14,
+    )
+    layout.glyph(X(203), Y(56), "arrow-up-thin", S(18), color=ACCENT_INK)
+    layout.fit(
+        X(213),
+        Y(56) - S(13),
+        X(33),
+        S(26),
+        today_value("high"),
+        S(17),
+        align="left",
+        color=ACCENT_INK,
+        min_size=14,
+    )
+    layout.glyph(X(257), Y(56), "arrow-down-thin", S(18))
+    layout.fit(
+        X(267),
+        Y(56) - S(13),
+        width - S(6) - X(267),
+        S(26),
+        today_value("low"),
+        S(17),
+        align="left",
+        min_size=14,
+    )
+    layout.glyph(X(226), Y(86), "umbrella", S(16))
+    layout.fit(
+        X(236),
+        Y(86) - S(12),
+        width - S(10) - X(236),
+        S(24),
+        today_value("chance"),
+        S(16),
+        align="left",
+        min_size=14,
+    )
+
+
+def small_wide_now(layout):
+    """Under 296 wide: icon and temperature, with condition and high/low stacked beside them."""
+    width, height = layout.width, layout.height
+    value = current_value
+    footer = 26
+    body = height - footer
+    layout.block(0, body, width - 1, height - 1, fill=BLACK)
+    layout.fit(
+        6,
+        body,
+        width * 0.62,
+        footer,
+        value("footer"),
+        15,
+        align="left",
+        color="white",
+        min_size=14,
+    )
+    layout.fit(
+        width * 0.62 + 8,
+        body,
+        width - width * 0.62 - 14,
+        footer,
+        value("time"),
+        14,
+        align="right",
+        color="white",
+    )
+    icon = min(body * 0.62, width * 0.27)
+    layout.glyph(6 + icon / 2, body / 2, CONDITION_ICON, icon)
+    split = 6 + icon + 2
+    column = width * 0.60
+    layout.fit(
+        split,
+        body / 2 - body * 0.36,
+        column - split,
+        body * 0.72,
+        value("temperature"),
+        min(body * 0.58, 56),
+    )
+    rows = (body * 0.22, body * 0.5, body * 0.78)
+    layout.fit(
+        column + 2,
+        rows[0] - 11,
+        width - column - 8,
+        22,
+        value("state"),
+        16,
+        align="left",
+        min_size=14,
+    )
+    for centre, glyph, key, color in (
+        (rows[1], "arrow-up-thin", "high", ACCENT_INK),
+        (rows[2], "arrow-down-thin", "low", BLACK),
+    ):
+        layout.glyph(column + 12, centre, glyph, 20, color=color)
+        layout.fit(
+            column + 26,
+            centre - 11,
+            width - column - 32,
+            22,
+            today_value(key),
+            18,
+            align="left",
+            color=color,
+            min_size=14,
+        )
+
+
+def tiny_now(layout):
+    """The smallest portrait tags: icon, temperature and today's high and low."""
+    width, height = layout.width, layout.height
+    value = current_value
+    icon = min(width * 0.62, height * 0.27)
+    layout.glyph(width / 2, height * 0.17, CONDITION_ICON, icon)
+    layout.fit(
+        2,
+        height * 0.33,
+        width - 4,
+        height * 0.2,
+        value("temperature"),
+        min(height * 0.17, width * 0.4),
+    )
+    for centre, glyph, key, color in (
+        (height * 0.67, "arrow-up-thin", "high", ACCENT_INK),
+        (height * 0.83, "arrow-down-thin", "low", BLACK),
+    ):
+        layout.glyph(width * 0.24, centre, glyph, 20, color=color)
+        layout.fit(
+            width * 0.24 + 12,
+            centre - 14,
+            width * 0.76 - 16,
+            28,
+            today_value(key),
+            20,
+            align="left",
+            color=color,
+            min_size=14,
+        )
+
+
+def square_now(layout):
+    """200x200: icon beside the temperature, condition, high/low and a footer bar."""
+    width, height = layout.width, layout.height
+    value = current_value
+    footer = 28
+    top = height - footer
+    layout.block(0, top, width - 1, height - 1, fill=BLACK)
+    layout.fit(
+        8, top, width * 0.62, footer, value("footer"), 15, align="left", color="white", min_size=14
+    )
+    layout.fit(
+        width * 0.62 + 10,
+        top,
+        width * 0.38 - 18,
+        footer,
+        value("time"),
+        14,
+        align="right",
+        color="white",
+    )
+    layout.glyph(width * 0.23, height * 0.27, CONDITION_ICON, width * 0.34)
+    layout.fit(width * 0.42, height * 0.07, width * 0.55, height * 0.4, value("temperature"), 60)
+    layout.fit(8, height * 0.5, width - 16, 30, value("state"), 22, min_size=16)
+    centre = height * 0.74
+    layout.glyph(width * 0.2, centre, "arrow-up-thin", 24, color=ACCENT_INK)
+    layout.fit(
+        width * 0.2 + 14,
+        centre - 16,
+        width * 0.3 - 8,
+        32,
+        today_value("high"),
+        24,
+        align="left",
+        color=ACCENT_INK,
+        min_size=16,
+    )
+    layout.glyph(width * 0.6, centre, "arrow-down-thin", 24)
+    layout.fit(
+        width * 0.6 + 14,
+        centre - 16,
+        width * 0.4 - 22,
+        32,
+        today_value("low"),
+        24,
+        align="left",
+        min_size=16,
+    )
+
+
+def narrow_portrait_now(layout):
+    """Narrow tall tags: hero on top, then the readings as a short list."""
+    width, height = layout.width, layout.height
+    value = current_value
+    layout.glyph(width / 2, height * 0.115, CONDITION_ICON, min(width * 0.62, height * 0.18))
+    layout.fit(
+        4,
+        height * 0.21,
+        width - 8,
+        height * 0.13,
+        value("temperature"),
+        min(height * 0.12, width * 0.36),
+    )
+    layout.fit(4, height * 0.37, width - 8, 26, value("state"), 18, min_size=16)
+    half = width / 2
+    centre = height * 0.52
+    for left, glyph, key, color in (
+        (0, "arrow-up-thin", "high", ACCENT_INK),
+        (half, "arrow-down-thin", "low", BLACK),
+    ):
+        layout.glyph(left + 14, centre, glyph, 20, color=color)
+        layout.fit(
+            left + 26,
+            centre - 14,
+            half - 30,
+            28,
+            today_value(key),
+            19,
+            align="left",
+            color=color,
+            min_size=16,
+        )
+    layout.stroke(10, height * 0.585, width - 10, height * 0.585, 2)
+    rows = [(glyph, key) for glyph, key, _ in READINGS]
+    for index, (glyph, key) in enumerate(rows):
+        centre = height * (0.68 + 0.11 * index)
+        layout.glyph(24, centre, glyph, 26)
+        layout.fit(44, centre - 16, width - 50, 32, value(key), 22, align="left", min_size=16)
+
+
+STEP_HOURS = 3
+
+
+def hourly_value(slot, key):
+    """One three-hourly slot from the hourly forecast, or a dash while none was fetched."""
+    entity = "'${weather}'"
+    row = (
+        tag(
+            f"set t0 = now().replace(minute=0, second=0, microsecond=0) + timedelta(hours={slot * STEP_HOURS})"
+        )
+        + tag(
+            f"set f = fc_hourly[{entity}].forecast | default([], true) "
+            f"if fc_hourly is defined and fc_hourly[{entity}] is defined else []"
+        )
+        + tag("set n = namespace(r={})")
+        + tag("for i in f")
+        + tag("set t = as_datetime(i.datetime | default(none), none)")
+        + tag("if t is not none and as_local(t).replace(minute=0, second=0, microsecond=0) == t0")
+        + tag("set n.r = i")
+        + tag("break")
+        + tag("endif")
+        + tag("endfor")
+        + tag("set row = n.r")
+    )
+    if key == "label":
+        return row + template("t0.strftime('%H:00')")
+    if key == "icon":
+        return row + template(
+            "'weather-' ~ {'clear-night': 'night', 'exceptional': 'sunny-alert', "
+            "'partlycloudy': 'partly-cloudy'}.get(row.condition | default('', true), "
+            "row.condition | default('', true)) if row.condition | default('', true) else 'weather-cloudy-alert'"
+        )
+    if key == "temp":
+        return (
+            row
+            + tag("set v = row.temperature | default(none)")
+            + template(
+                f"((v | float | round(0) | int) ~ '°') if is_number(v) and v is not boolean else '{DASH}'"
+            )
+        )
+    if key == "chance":
+        return (
+            row
+            + tag("set v = row.precipitation_probability | default(none)")
+            + template(
+                f"((v | float | round(0) | int) ~ '%') if is_number(v) and v is not boolean else '{DASH}'"
+            )
+        )
+    return (
+        row
+        + tag("set v = row.precipitation_probability | default(none)")
+        + template(
+            f"{ACCENT_INK[3:-3]} if is_number(v) and v is not boolean and (v | float) >= 50 else 'black'"
+        )
+    )
+
+
+STATS = (
+    ("thermometer", "feels", "Feels like"),
+    ("water-percent", "humidity", "Humidity"),
+    ("weather-windy", "wind", "Wind"),
+    ("umbrella-outline", "chance", "Precip."),
+)
+
+
+def stat_value(key):
+    return today_value("chance") if key == "chance" else current_value(key)
+
+
+def hour_strip(layout, slots, centres, top, sizes, s):
+    """Hour, icon, temperature and chance of rain for each slot at the given x centres."""
+    hour, glyph, temp, chance = sizes
+    for slot, centre in zip(range(slots), centres, strict=True):
+        pitch = centres[1] - centres[0]
+        left = centre - pitch / 2 + 2
+        width = pitch - 4
+        layout.fit(
+            left, top, width, hour * 1.35, hourly_value(slot, "label"), hour, min_size=hour * 0.7
+        )
+        y = top + hour * 1.35 + glyph * 0.5
+        layout.glyph(centre, y, hourly_value(slot, "icon"), glyph)
+        y += glyph * 0.5
+        layout.fit(
+            left, y, width, temp * 1.35, hourly_value(slot, "temp"), temp, min_size=temp * 0.7
+        )
+        y += temp * 1.35
+        layout.fit(
+            left,
+            y,
+            width,
+            chance * 1.35,
+            hourly_value(slot, "chance"),
+            chance,
+            color=hourly_value(slot, "color"),
+            min_size=chance * 0.7,
+        )
+
+
+def large_landscape_now(layout):
+    """7.5 inch and up: header, hero with a stat list, then eight three-hourly slots."""
+    width, height = layout.width, layout.height
+    sx, sy = width / 800, height / 480
+    s = min(sx, sy)
+
+    def X(value):
+        return value * sx
+
+    def Y(value):
+        return value * sy
+
+    def S(value):
+        return value * s
+
+    value = current_value
+    layout.block(0, 0, width - 1, Y(56) - 1, fill=BLACK)
+    layout.glyph(S(30), Y(28), "map-marker", S(30), color="white")
+    layout.fit(
+        S(50),
+        Y(28) - S(22),
+        X(400) - S(50),
+        S(44),
+        value("location"),
+        S(28),
+        align="left",
+        color="white",
+    )
+    layout.fit(
+        X(410),
+        Y(28) - S(20),
+        width - S(24) - X(410),
+        S(40),
+        tag("set d = now().strftime('${date_format}')")
+        + template("d ~ '  ' ~ now().strftime('%H:%M')"),
+        S(26),
+        align="right",
+        color="white",
+        min_size=S(20),
+    )
+    layout.glyph(X(130), Y(176), CONDITION_ICON, S(190))
+    layout.fit(X(236), Y(130) - S(115), X(280), S(230), value("temperature"), S(156), align="left")
+    layout.fit(
+        X(244), Y(268) - S(24), X(270), S(48), value("state"), S(36), align="left", min_size=S(24)
+    )
+    layout.glyph(X(262), Y(310), "arrow-up-thin", S(34), color=ACCENT_INK)
+    layout.fit(
+        X(282),
+        Y(310) - S(24),
+        X(90),
+        S(48),
+        today_value("high"),
+        S(30),
+        align="left",
+        color=ACCENT_INK,
+        min_size=S(22),
+    )
+    layout.glyph(X(392), Y(310), "arrow-down-thin", S(34))
+    layout.fit(
+        X(412),
+        Y(310) - S(24),
+        X(100),
+        S(48),
+        today_value("low"),
+        S(30),
+        align="left",
+        min_size=S(22),
+    )
+    layout.stroke(X(520), Y(78), X(520), Y(322), S(2))
+    for index, (glyph, key, label) in enumerate(STATS):
+        centre = Y(104 + index * 62)
+        if index:
+            layout.stroke(X(544), centre - Y(31), width - S(24), centre - Y(31), 1)
+        layout.glyph(X(560), centre, glyph, S(32))
+        layout.fit(
+            X(584), centre - S(18), X(104), S(36), label, S(22), align="left", min_size=S(18)
+        )
+        layout.fit(
+            X(694),
+            centre - S(20),
+            width - S(24) - X(694),
+            S(40),
+            stat_value(key),
+            S(30),
+            align="right",
+            min_size=S(22),
+        )
+    layout.block(0, Y(336), width - 1, Y(336) + max(1, S(2)), fill=BLACK)
+    centres = [X(50 + 100 * index) for index in range(8)]
+    hour_strip(layout, 8, centres, Y(342), (S(22), S(36), S(28), S(22)), s)
+
+
+def large_portrait_now(layout):
+    """The same blocks stacked: header, hero, a 2x2 stat grid and two rows of four hours."""
+    width, height = layout.width, layout.height
+    sx, sy = width / 480, height / 800
+    s = min(sx, sy)
+
+    def X(value):
+        return value * sx
+
+    def Y(value):
+        return value * sy
+
+    def S(value):
+        return value * s
+
+    value = current_value
+    layout.block(0, 0, width - 1, Y(52) - 1, fill=BLACK)
+    layout.glyph(S(26), Y(26), "map-marker", S(26), color="white")
+    layout.fit(
+        S(44),
+        Y(26) - S(20),
+        X(230) - S(44),
+        S(40),
+        value("location"),
+        S(24),
+        align="left",
+        color="white",
+    )
+    layout.fit(
+        X(236),
+        Y(26) - S(18),
+        width - S(16) - X(236),
+        S(36),
+        tag("set d = now().strftime('${date_format}')")
+        + template("d ~ '  ' ~ now().strftime('%H:%M')"),
+        S(22),
+        align="right",
+        color="white",
+        min_size=S(18),
+    )
+    layout.glyph(X(110), Y(150), CONDITION_ICON, S(150))
+    layout.fit(X(200), Y(130) - S(80), X(260), S(160), value("temperature"), S(120), align="left")
+    layout.fit(
+        X(206), Y(212) - S(22), X(250), S(44), value("state"), S(30), align="left", min_size=S(22)
+    )
+    layout.glyph(X(222), Y(256), "arrow-up-thin", S(30), color=ACCENT_INK)
+    layout.fit(
+        X(240),
+        Y(256) - S(22),
+        X(90),
+        S(44),
+        today_value("high"),
+        S(28),
+        align="left",
+        color=ACCENT_INK,
+        min_size=S(22),
+    )
+    layout.glyph(X(344), Y(256), "arrow-down-thin", S(30))
+    layout.fit(
+        X(362),
+        Y(256) - S(22),
+        X(100),
+        S(44),
+        today_value("low"),
+        S(28),
+        align="left",
+        min_size=S(22),
+    )
+    layout.stroke(S(16), Y(296), width - S(16), Y(296), S(2))
+    for index, (glyph, key, label) in enumerate(STATS):
+        left = (index % 2) * width / 2
+        top = Y(304) + (index // 2) * Y(76)
+        if index % 2:
+            layout.stroke(left, top + Y(6), left, top + Y(70))
+        layout.glyph(left + S(34), top + Y(38), glyph, S(34))
+        layout.fit(
+            left + S(62),
+            top + Y(4),
+            width / 2 - S(72),
+            S(32),
+            label,
+            S(20),
+            align="left",
+            min_size=S(18),
+        )
+        layout.fit(
+            left + S(62),
+            top + Y(36),
+            width / 2 - S(72),
+            S(40),
+            stat_value(key),
+            S(28),
+            align="left",
+            min_size=S(20),
+        )
+    layout.stroke(S(16), Y(456), width - S(16), Y(456), S(2))
+    centres = [width * (0.125 + 0.25 * index) for index in range(4)]
+    hour_strip_rows = ((Y(470), 0), (Y(630), 4))
+    for top, offset in hour_strip_rows:
+        for index, centre in enumerate(centres):
+            slot = offset + index
+            left = centre - width * 0.125 + 2
+            wide = width * 0.25 - 4
+            layout.fit(left, top, wide, S(32), hourly_value(slot, "label"), S(22), min_size=S(18))
+            layout.glyph(centre, top + S(52), hourly_value(slot, "icon"), S(40))
+            layout.fit(
+                left, top + S(72), wide, S(40), hourly_value(slot, "temp"), S(28), min_size=S(22)
+            )
+            layout.fit(
+                left,
+                top + S(112),
+                wide,
+                S(30),
+                hourly_value(slot, "chance"),
+                S(20),
+                color=hourly_value(slot, "color"),
+                min_size=S(18),
+            )
+
+
+def current_weather_layout(layout, _base):
+    width, height = layout.width, layout.height
+    if min(width, height) >= 480:
+        (large_portrait_now if height > width else large_landscape_now)(layout)
+        return
+    if height > width:
+        if width <= 132 and height <= 250:
+            tiny_now(layout)
+        elif width < 240:
+            narrow_portrait_now(layout)
         else:
-            layout.icon(50, 37, weather_icon, 22)
-            layout.text((5, 50, 95, 71), temperature + unit, 30)
-            layout.text((5, 72, 95, 83), state, 11)
+            portrait_now(layout)
+    elif width / height >= 1.7:
+        (compact_now if width >= 296 else small_wide_now)(layout)
+    elif width / height >= 1.2:
+        landscape_now(layout)
     else:
-        layout.text((5, 3, 49, 18), header_date, 12, align="left")
-        layout.text((50, 3, 95, 18), name, 13, align="right")
-        layout.rule(5, 19, 95, 19)
-        layout.icon(21, 48 if layout.detail else 49, weather_icon, 38)
-        layout.text((38, 22, 95, 53 if layout.detail else 59), temperature + unit, 41)
-        layout.text((38, 54 if layout.detail else 60, 95, 66 if layout.detail else 81), state, 15)
-    if layout.detail:
-        layout.rule(5, 68, 95, 68)
-        conditions(layout)
-    else:
-        layout.rule(5, 84, 95, 84)
-        layout.text((5, 86, 48, 98), humidity, 10, align="left")
-        layout.text((51, 86, 95, 98), updated, 10, align="right")
+        square_now(layout)
 
 
 def date_weather_layout(layout, base):
@@ -553,7 +1473,7 @@ def date_weather_layout(layout, base):
             conditions(layout)
 
 
-def forecast_layout(layout, base):
+def legacy_forecast_layout(layout, base):
     # Reuse the existing forecast parsing, condition mapping and fallbacks.
     day, high, low = values(base, "text")[:3]
     glyph = values(base, "icon")[0]
@@ -622,6 +1542,585 @@ def forecast_layout(layout, base):
                 layout.text((left, 82, right, 96), field(low), 10)
 
 
+BAR_POINTS = 40
+
+
+def forecast_pieces(base):
+    """Jinja building blocks over the base layout's forecast parsing."""
+    day, _high, low = values(base, "text")[:3]
+    glyph = values(base, "icon")[0]
+    prefix = low.split("{{", 1)[0]
+
+    def at(text, slot):
+        return text.replace("f[1]", f"f[{slot}]").replace("length > 1", f"length > {slot}")
+
+    def row(slot):
+        return at(prefix, slot)
+
+    def number(slot, field, suffix):
+        return row(slot) + template(
+            f"((d.{field} | round(0) | int) ~ '{suffix}') "
+            f"if is_number(d.{field} | default(none)) and d.{field} is not boolean else '{DASH}'"
+        )
+
+    def chance_color(slot):
+        return row(slot) + template(
+            "(" + ACCENT_INK[3:-3] + ") if is_number(d.precipitation_probability | default(none)) "
+            "and d.precipitation_probability is not boolean and d.precipitation_probability >= 50 "
+            "else 'black'"
+        )
+
+    def range_values(slot, days):
+        scan = (
+            tag("set ns = namespace(lo=none, hi=none)")
+            + tag(f"for k in range(1, {days + 1})")
+            + tag("set r = f[k] if f | length > k else {}")
+            + tag("set a = r.templow | default(none)")
+            + tag("set b = r.temperature | default(none)")
+            + tag("if is_number(a) and a is not boolean")
+            + tag("set ns.lo = a if ns.lo is none or a < ns.lo else ns.lo")
+            + tag("endif")
+            + tag("if is_number(b) and b is not boolean")
+            + tag("set ns.hi = b if ns.hi is none or b > ns.hi else ns.hi")
+            + tag("endif")
+            + tag("endfor")
+        )
+        last = BAR_POINTS - 1
+        return (
+            row(slot)
+            + scan
+            + tag("set lo = d.templow | default(none)")
+            + tag("set hi = d.temperature | default(none)")
+            + tag(
+                "set ok = ns.lo is not none and ns.hi is not none and is_number(lo) and is_number(hi) "
+                "and lo is not boolean and hi is not boolean"
+            )
+            + tag("set span = [ns.hi - ns.lo, 1] | max if ok else 1")
+            + tag(f"set a = ((lo - ns.lo) / span * {last}) | round(0) | int if ok else 0")
+            + tag(f"set b = ((hi - ns.lo) / span * {last}) | round(0) | int if ok else 0")
+            + template(
+                f"[0] * a + [1] * (b - a + 1) + [0] * ({last} - b) if ok else [0] * {BAR_POINTS}"
+            )
+        )
+
+    return {
+        "row": row,
+        "day": lambda slot: at(day, slot),
+        "glyph": lambda slot: at(glyph, slot),
+        "high": lambda slot: number(slot, "temperature", "°"),
+        "low": lambda slot: number(slot, "templow", "°"),
+        "chance": lambda slot: number(slot, "precipitation_probability", "%"),
+        "chance_color": chance_color,
+        "range": range_values,
+    }
+
+
+def sparkline_bar(layout, pieces, slot, days, x0, x1, centre, height):
+    """A rounded track with a filled segment from the day's low to its high."""
+    layout.block(
+        x0,
+        centre - height / 2,
+        x1,
+        centre + height / 2,
+        fill="white",
+        outline=BLACK,
+        radius=height / 2,
+    )
+    layout.items.append(
+        {
+            "type": "sparkline",
+            "x": round(x0 + 2),
+            "y": round(centre - height / 2 + 2),
+            "width": round(x1 - x0 - 3),
+            "height": max(2, round(height - 4)),
+            "values": pieces["range"](slot, days),
+            "min": 0,
+            "max": 1,
+            "color": "white",
+            "fill": BLACK,
+            "width_line": 1,
+        }
+    )
+
+
+def forecast_list(layout, base):
+    """Today on top, then one row per coming day with a temperature range bar."""
+    pieces = forecast_pieces(base)
+    width, height = layout.width, layout.height
+    portrait = height > width
+    value = current_value
+    accent = ACCENT_INK
+    today = pieces["row"](0)
+    condition = (
+        today
+        + tag("set p = d.precipitation_probability | default(none)")
+        + template(
+            "state_translated('${weather}') ~ ((' · ' ~ (p | round(0) | int) ~ '%') "
+            "if is_number(p) and p is not boolean else '')"
+        )
+    )
+    today_high = pieces["high"](0)
+    today_low = pieces["low"](0)
+    if portrait:
+        sx, sy = width / 300, height / 400
+        s = max(1, min(sx, sy))
+        days = 6
+        rows_top = 124 * sy
+        rule_y = 118 * sy
+        layout.fit(10 * sx, 4 * sy, 136 * sx, 28 * s, value("location"), 18 * s, align="left")
+        layout.fit(
+            150 * sx,
+            4 * sy,
+            140 * sx,
+            28 * s,
+            template("now().strftime('%m/%d %a')"),
+            17 * s,
+            align="right",
+        )
+        layout.glyph(44 * sx, 74 * sy, CONDITION_ICON, 72 * s)
+        layout.fit(84 * sx, 36 * sy, 122 * sx, 66 * s, value("temperature"), 60 * s)
+        layout.fit(84 * sx, 92 * sy, 210 * sx, 24 * s, condition, 17 * s, align="left", min_size=14)
+        layout.glyph(218 * sx, 56 * sy, "arrow-up-thin", 20 * s, color=accent)
+        layout.fit(
+            230 * sx,
+            42 * sy,
+            64 * sx,
+            28 * s,
+            today_high,
+            20 * s,
+            align="left",
+            color=accent,
+            min_size=16,
+        )
+        layout.glyph(218 * sx, 84 * sy, "arrow-down-thin", 20 * s)
+        layout.fit(230 * sx, 70 * sy, 64 * sx, 28 * s, today_low, 20 * s, align="left", min_size=16)
+        columns = {
+            "day": (0.073, 0.0),
+            "icon": 0.2,
+            "pop": 0.375,
+            "low": 0.5,
+            "bar": (0.527, 0.78),
+            "high": 0.8,
+        }
+        show_pop = width >= 300
+        if not show_pop:
+            columns.update(day=(0.085, 0.0), icon=0.265, low=0.50, bar=(0.53, 0.785), high=0.80)
+        font_day, font_value = 19 * s, 19 * s
+    else:
+        sx, sy = width / 400, height / 300
+        s = max(1, min(sx, sy))
+        days = 5
+        rows_top = 118 * sy
+        rule_y = 114 * sy
+        layout.glyph(50 * sx, 56 * sy, CONDITION_ICON, 84 * s)
+        layout.fit(98 * sx, 2 * sy, 150 * sx, 84 * s, value("temperature"), 70 * s, align="left")
+        layout.fit(98 * sx, 87 * sy, 170 * sx, 26 * s, condition, 18 * s, align="left", min_size=16)
+        layout.fit(250 * sx, 4 * sy, 140 * sx, 30 * s, value("location"), 20 * s, align="right")
+        layout.fit(
+            250 * sx,
+            34 * sy,
+            140 * sx,
+            26 * s,
+            template("now().strftime('%m/%d %a')"),
+            17 * s,
+            align="right",
+        )
+        layout.glyph(284 * sx, 95 * sy, "arrow-up-thin", 20 * s, color=accent)
+        layout.fit(
+            294 * sx,
+            81 * sy,
+            37 * sx,
+            28 * s,
+            today_high,
+            20 * s,
+            align="left",
+            color=accent,
+            min_size=16,
+        )
+        layout.glyph(342 * sx, 95 * sy, "arrow-down-thin", 20 * s)
+        layout.fit(352 * sx, 81 * sy, 44 * sx, 28 * s, today_low, 20 * s, align="left", min_size=16)
+        columns = {
+            "day": (0.055, 0.0),
+            "icon": 0.17,
+            "pop": 0.335,
+            "low": 0.465,
+            "bar": (0.49, 0.815),
+            "high": 0.835,
+        }
+        show_pop = True
+        font_day, font_value = 22 * s, 19 * s
+    layout.block(0, rule_y, width - 1, rule_y + max(2, 2 * s), fill=BLACK)
+    pitch = (height - rows_top) / days
+    for index in range(days):
+        slot = index + 1
+        centre = rows_top + (index + 0.5) * pitch
+        if index:
+            layout.stroke(width * 0.035, centre - pitch / 2, width * 0.965, centre - pitch / 2)
+        box = min(pitch - 2, 32 * s)
+        day_x = columns["day"][0] * width
+        layout.fit(
+            day_x - 20 * s,
+            centre - box / 2,
+            40 * s,
+            box,
+            pieces["day"](slot),
+            font_day,
+            min_size=14,
+        )
+        layout.glyph(columns["icon"] * width, centre, pieces["glyph"](slot), min(30 * s, pitch - 4))
+        if show_pop:
+            layout.fit(
+                columns["pop"] * width - 38 * s,
+                centre - box / 2,
+                38 * s,
+                box,
+                pieces["chance"](slot),
+                font_value * 0.95,
+                align="right",
+                color=pieces["chance_color"](slot),
+                min_size=14,
+            )
+        layout.fit(
+            columns["low"] * width - 38 * s,
+            centre - box / 2,
+            38 * s,
+            box,
+            pieces["low"](slot),
+            font_value,
+            align="right",
+            min_size=14,
+        )
+        sparkline_bar(
+            layout,
+            pieces,
+            slot,
+            days,
+            columns["bar"][0] * width,
+            columns["bar"][1] * width,
+            centre,
+            12 * s,
+        )
+        layout.fit(
+            columns["high"] * width,
+            centre - box / 2,
+            width * 0.985 - columns["high"] * width,
+            box,
+            pieces["high"](slot),
+            font_value * 1.05,
+            align="left",
+            min_size=14,
+        )
+
+
+def forecast_columns(layout, base):
+    """Wide, short tags: the coming days side by side."""
+    pieces = forecast_pieces(base)
+    width, height = layout.width, layout.height
+    s = max(1, min(width / 296, height / 128))
+    count = 3 if width < 330 else 4
+    pad = 6
+    column = (width - 2 * pad) / count
+    bands = (0.0, 0.2, 0.5, 0.75, 0.98)
+    top = lambda band: height * bands[band]  # noqa: E731
+    for index in range(count):
+        slot = index + 1
+        left = pad + index * column
+        if index:
+            layout.stroke(left, height * 0.08, left, height * 0.92)
+        for band, key, want, color in (
+            (0, "day", 16 * s, BLACK),
+            (2, "high", 22 * s, BLACK),
+            (3, "low", 18 * s, BLACK),
+        ):
+            box = top(band + 1) - top(band)
+            size = max(14, min(want, box / 1.45))
+            layout.fit(
+                left + 2,
+                top(band),
+                column - 4,
+                box,
+                pieces[key](slot),
+                size,
+                color=color,
+                min_size=14,
+            )
+        glyph = min(column - 12, (top(2) - top(1)) - 2, 44 * s)
+        layout.glyph(left + column / 2, (top(1) + top(2)) / 2, pieces["glyph"](slot), glyph)
+
+
+def forecast_large(layout, base):
+    """7.5 inch and up: a black panel for today beside (or above) one row per coming day."""
+    pieces = forecast_pieces(base)
+    width, height = layout.width, layout.height
+    portrait = height > width
+    value = current_value
+    accent = ACCENT_INK
+    condition = value("state")
+    today_high = pieces["high"](0)
+    today_low = pieces["low"](0)
+    date_text = template("now().strftime('%m/%d %a')")
+    days = 7
+    if portrait:
+        sx, sy = width / 480, height / 800
+        s = min(sx, sy)
+        panel = 282 * sy
+        layout.block(0, 0, width - 1, panel, fill=BLACK)
+        layout.fit(
+            24 * sx,
+            14 * sy,
+            270 * sx,
+            40 * s,
+            value("location"),
+            26 * s,
+            align="left",
+            color="white",
+        )
+        layout.fit(
+            24 * sx,
+            54 * sy,
+            270 * sx,
+            34 * s,
+            date_text,
+            22 * s,
+            align="left",
+            color="white",
+            min_size=18 * s,
+        )
+        layout.glyph(110 * sx, 158 * sy, CONDITION_ICON, 120 * s, color="white")
+        layout.fit(
+            196 * sx,
+            70 * sy,
+            260 * sx,
+            130 * s,
+            value("temperature"),
+            100 * s,
+            align="left",
+            color="white",
+        )
+        layout.fit(
+            200 * sx,
+            190 * sy,
+            250 * sx,
+            36 * s,
+            condition,
+            28 * s,
+            align="left",
+            color="white",
+            min_size=22 * s,
+        )
+        layout.glyph(214 * sx, 252 * sy, "arrow-up-thin", 26 * s, color=accent)
+        layout.fit(
+            230 * sx,
+            234 * sy,
+            90 * sx,
+            36 * s,
+            today_high,
+            26 * s,
+            align="left",
+            color=accent,
+            min_size=22 * s,
+        )
+        layout.glyph(332 * sx, 252 * sy, "arrow-down-thin", 26 * s, color="white")
+        layout.fit(
+            348 * sx,
+            234 * sy,
+            100 * sx,
+            36 * s,
+            today_low,
+            26 * s,
+            align="left",
+            color="white",
+            min_size=22 * s,
+        )
+        top = panel + 4 * sy
+        left, right = 12 * sx, width - 12 * sx
+        columns = {
+            "day": 0.061,
+            "icon": 0.193,
+            "pop": 0.452,
+            "low": 0.583,
+            "bar": (0.60, 0.80),
+            "high": 0.83,
+        }
+        scale = s
+    else:
+        sx, sy = width / 800, height / 480
+        s = min(sx, sy)
+        layout.block(0, 0, 300 * sx, height - 1, fill=BLACK)
+        layout.fit(
+            24 * sx,
+            14 * sy,
+            260 * sx,
+            44 * s,
+            value("location"),
+            30 * s,
+            align="left",
+            color="white",
+        )
+        layout.fit(
+            24 * sx,
+            60 * sy,
+            260 * sx,
+            36 * s,
+            date_text,
+            24 * s,
+            align="left",
+            color="white",
+            min_size=20 * s,
+        )
+        layout.glyph(150 * sx, 180 * sy, CONDITION_ICON, 150 * s, color="white")
+        layout.fit(
+            10 * sx, 232 * sy, 280 * sx, 130 * s, value("temperature"), 110 * s, color="white"
+        )
+        layout.fit(
+            10 * sx, 366 * sy, 280 * sx, 44 * s, condition, 32 * s, color="white", min_size=24 * s
+        )
+        layout.glyph(100 * sx, 438 * sy, "arrow-up-thin", 30 * s, color=accent)
+        layout.fit(
+            118 * sx,
+            416 * sy,
+            80 * sx,
+            44 * s,
+            today_high,
+            28 * s,
+            align="left",
+            color=accent,
+            min_size=22 * s,
+        )
+        layout.glyph(214 * sx, 438 * sy, "arrow-down-thin", 30 * s, color="white")
+        layout.fit(
+            232 * sx,
+            416 * sy,
+            66 * sx,
+            44 * s,
+            today_low,
+            28 * s,
+            align="left",
+            color="white",
+            min_size=22 * s,
+        )
+        top = 0
+        left, right = 320 * sx, width - 16 * sx
+        columns = {
+            "day": 0.052,
+            "icon": 0.172,
+            "pop": 0.397,
+            "low": 0.539,
+            "bar": (0.565, 0.832),
+            "high": 0.858,
+        }
+        scale = s
+    area = right - left
+    pitch = (height - top) / days
+    for index in range(days):
+        slot = index + 1
+        centre = top + (index + 0.5) * pitch
+        if index:
+            layout.stroke(left, centre - pitch / 2, right, centre - pitch / 2)
+        box = min(pitch - 4, 40 * scale)
+
+        def at(key):
+            return left + columns[key] * area
+
+        layout.fit(
+            at("day") - 26 * scale,
+            centre - box / 2,
+            52 * scale,
+            box,
+            pieces["day"](slot),
+            30 * scale,
+            min_size=18 * scale,
+        )
+        layout.glyph(at("icon"), centre, pieces["glyph"](slot), min(42 * scale, pitch - 6))
+        layout.fit(
+            at("pop") - 66 * scale,
+            centre - box / 2,
+            66 * scale,
+            box,
+            pieces["chance"](slot),
+            26 * scale,
+            align="right",
+            color=pieces["chance_color"](slot),
+            min_size=18 * scale,
+        )
+        layout.fit(
+            at("low") - 58 * scale,
+            centre - box / 2,
+            58 * scale,
+            box,
+            pieces["low"](slot),
+            28 * scale,
+            align="right",
+            min_size=18 * scale,
+        )
+        sparkline_bar(
+            layout,
+            pieces,
+            slot,
+            days,
+            left + columns["bar"][0] * area,
+            left + columns["bar"][1] * area,
+            centre,
+            16 * scale,
+        )
+        layout.fit(
+            at("high"),
+            centre - box / 2,
+            right - at("high"),
+            box,
+            pieces["high"](slot),
+            30 * scale,
+            align="left",
+            min_size=18 * scale,
+        )
+
+
+def forecast_stacked(layout, base):
+    """Narrow tall tags: a few days, each with its weekday, icon, high and low."""
+    pieces = forecast_pieces(base)
+    width, height = layout.width, layout.height
+    count = 4 if height >= 380 else 3
+    pad = 6
+    pitch = (height - 2 * pad) / count
+    for index in range(count):
+        slot = index + 1
+        top = pad + index * pitch
+        if index:
+            layout.stroke(pad, top, width - pad, top)
+        layout.fit(pad, top + 2, width - 2 * pad, 22, pieces["day"](slot), 16, min_size=14)
+        icon_size = min(32, pitch - 30, (width - 2 * pad) * 0.4)
+        layout.glyph(
+            pad + icon_size / 2 + 2, top + 24 + (pitch - 24) / 2, pieces["glyph"](slot), icon_size
+        )
+        left = pad + icon_size + 6
+        room = (pitch - 26) / 2
+        layout.fit(
+            left, top + 24, width - pad - left, room + 2, pieces["high"](slot), 20, min_size=14
+        )
+        layout.fit(
+            left, top + 24 + room, width - pad - left, room, pieces["low"](slot), 16, min_size=14
+        )
+
+
+def forecast_layout(layout, base):
+    width, height = layout.width, layout.height
+    if height > width and width < 240:
+        forecast_stacked(layout, base)
+        return
+    if min(width, height) >= 480:
+        forecast_large(layout, base)
+        return
+    if height <= width and width / height >= 1.7:
+        forecast_columns(layout, base)
+        return
+    stacked = height > width and width >= 240
+    lists = height <= width and width / height < 1.7 and min(width, height) >= 300
+    if stacked or lists:
+        forecast_list(layout, base)
+        return
+    legacy_forecast_layout(layout, base)
+
+
 BUILDERS = {
     "calendar_next": calendar_layout,
     "color_check": color_layout,
@@ -664,16 +2163,17 @@ def generate(path, sizes):
         prefix, _, rest = original.partition("  # BEGIN SIZE PARAMETERS\n")
         original = prefix + rest.partition("  # END SIZE PARAMETERS\n")[2]
     data = yaml.safe_load(original)
-    base_key = "400x300" if data["id"] == "weather_now" else "250x128"
-    base = data["layouts"][base_key]
+    written = data["layouts"] or {}
+    base = written.get("250x128")
     builder = BUILDERS[data["id"]]
     layouts = {}
     for size in sizes:
-        if size in data["layouts"]:
+        if size in written:
             continue
         width, height = map(int, size.split("x"))
         layout = Layout(width, height)
         builder(layout, base)
+        items = layout.items
         layouts[size] = [
             FlowElement(
                 {
@@ -681,7 +2181,7 @@ def generate(path, sizes):
                     for key, value in item.items()
                 }
             )
-            for item in layout.items
+            for item in items
         ]
     generated = yaml.dump(
         layouts, Dumper=ElementDumper, sort_keys=False, allow_unicode=True, width=6000
