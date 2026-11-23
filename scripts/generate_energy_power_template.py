@@ -4,6 +4,7 @@
 from pathlib import Path
 import sys
 
+from _panel_blocks import PanelBlocks
 import yaml
 
 DESTINATION = (
@@ -144,6 +145,14 @@ ADVICE_ICON = (
 )
 ADVICE_COLOR = PWR_PRELUDE + "{{ _tink if _alert else 'black' }}"
 
+BUDGET_TXT = PWR_PRELUDE + "{{ '목표 ' ~ (_bg | round(0) | int) ~ ' W' }}"
+PCT_TXT = PWR_PRELUDE + "{{ (_ratio ~ '%') if _pw is not none else '--%' }}"
+BADGE = (BADGE_TEXT, BADGE_FILL, BADGE_OUTLINE, BADGE_COLOR)
+STATS = [
+    ("lightning-bolt-circle", "오늘 사용량", ENERGY_VAL, "black"),
+    ("solar-power", "태양광 발전", SOLAR_VAL, "black"),
+]
+
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
 
@@ -164,7 +173,7 @@ class TemplateDumper(yaml.SafeDumper):
 TemplateDumper.add_representer(FlowElement, TemplateDumper.represent_flow)
 
 
-class Canvas:
+class Canvas(PanelBlocks):
     """Accumulate scaled elements for one display resolution."""
 
     def __init__(self, width: int, height: int, vw: int, vh: int):
@@ -409,93 +418,109 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     return c.items
 
 
-def _panel_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 800, 480)
-    c.icon("flash", 38, 36, 28, color=PWR_COLOR)
-    c.text_fit(TITLE, 60, 17, 360, 38, 28)
-    c.text_fit(CLOCK, 430, 22, 144, 28, 16, align="right")
-    c.rect(588, 15, 776, 55, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=10)
-    c.text_fit(BADGE_TEXT, 596, 19, 172, 32, 20, align="center", color=BADGE_COLOR)
-    c.line(24, 65, 776, 65, width=2)
-
-    # Top full-width current power & load bar card
-    c.rect(24, 78, 776, 244, width=1.5, radius=10)
-    c.icon("lightning-bolt", 54, 108, 30, color=PWR_COLOR)
-    c.text_fit("현재 실시간 전력", 76, 90, 260, 34, 22)
-    c.text_fit(PWR_HINT, 356, 92, 400, 30, 18, align="right")
-    c.text_fit(PWR_VAL, 42, 126, 714, 72, 60, color=PWR_COLOR)
-    c.progress_bar(42, 204, 758, 226, PWR_PCT, fill=PWR_BAR_COLOR)
-
-    # Bottom 2 cards: Today energy + Solar generation
-    c.rect(24, 256, 392, 402, width=1.5, radius=10)
-    c.icon("meter-electric", 52, 284, 26)
-    c.text_fit("오늘 누적 사용량", 72, 267, 298, 32, 20)
-    c.text_fit(ENERGY_VAL, 42, 310, 332, 68, 48)
-
-    c.rect(408, 256, 776, 402, width=1.5, radius=10)
-    c.icon("solar-power", 436, 284, 26)
-    c.text_fit("태양광 발전 전력", 456, 267, 298, 32, 20)
-    c.text_fit(SOLAR_VAL, 426, 310, 332, 68, 48)
-
-    c.rect(24, 414, 776, 466, width=1.5, radius=8)
-    c.icon(ADVICE_ICON, 48, 440, 22, color=ADVICE_COLOR)
-    c.text_fit(ADVICE_TEXT, 68, 422, 692, 36, 18)
+def _panel_43(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 400, 300)
+    c.header("flash", TITLE, BADGE)
+    c.text_fit(PWR_VAL, 16, 48, 244, 88, 66, color=PWR_COLOR, min_size=c.ms(30))
+    c.text_fit(BUDGET_TXT, 264, 58, 122, 28, 17, align="right", min_size=c.ms(14))
+    c.text_fit(PCT_TXT, 264, 86, 122, 46, 30, align="right", color=PWR_COLOR, min_size=c.ms(20))
+    c.progress_bar(16, 142, 384, 164, PWR_PCT, fill=PWR_BAR_COLOR)
+    c.stat_cells(STATS, 178, 292, value=34)
     return c.items
 
 
-def _panel_portrait(w: int, h: int) -> list[FlowElement]:
+def _panel_34(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 300, 400)
+    c.header("flash", TITLE, BADGE, pill_w=104)
+    c.text_fit(PWR_VAL, 14, 50, 272, 74, 58, color=PWR_COLOR, min_size=c.ms(28))
+    c.text_fit(BUDGET_TXT, 14, 131, 150, 28, 17, min_size=c.ms(14))
+    c.text_fit(PCT_TXT, 170, 128, 116, 34, 26, align="right", color=PWR_COLOR, min_size=c.ms(18))
+    c.progress_bar(14, 168, 286, 190, PWR_PCT, fill=PWR_BAR_COLOR)
+    for index, (icon, caption, value, color) in enumerate(STATS):
+        top = 204 + index * 98
+        if index:
+            c.line(14, top - 3, 286, top - 3)
+        c.icon(icon, 28, top + 20, 24)
+        c.text_fit(caption, 46, top + 6, 238, 28, 18, min_size=c.ms(15))
+        c.text_fit(value, 14, top + 38, 272, 52, 36, color=color, min_size=c.ms(22))
+    return c.items
+
+
+def _large_landscape(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 800, 480)
+    c.header(
+        "flash",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=190,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
+    )
+    c.text_fit(PWR_VAL, 28, 78, 520, 120, 104, color=PWR_COLOR, min_size=c.ms(40))
+    c.text_fit(PCT_TXT, 556, 82, 216, 84, 76, align="right", color=PWR_COLOR, min_size=c.ms(30))
+    c.text_fit(BUDGET_TXT, 556, 168, 216, 36, 26, align="right", min_size=c.ms(20))
+    c.progress_bar(28, 214, 772, 248, PWR_PCT, fill=PWR_BAR_COLOR)
+    c.stat_cells(STATS, 268, 408, x0=24, x1=776, label=26, value=58, icon_size=34)
+    c.line(24, 420, 776, 420, 2)
+    c.icon(ADVICE_ICON, 46, 448, 30, color=ADVICE_COLOR)
+    c.text_fit(ADVICE_TEXT, 74, 430, 700, 38, 24, color=ADVICE_COLOR, min_size=c.ms(18))
+    return c.items
+
+
+def _large_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 480, 800)
-    c.icon("flash", 34, 34, 24, color=PWR_COLOR)
-    c.text_fit(TITLE, 54, 17, 256, 34, 24)
-    c.text_fit(CLOCK, 316, 18, 144, 32, 16, align="right")
-    c.rect(20, 58, 460, 98, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
-    c.text_fit(BADGE_TEXT, 28, 62, 424, 32, 19, align="center", color=BADGE_COLOR)
-
-    c.rect(20, 110, 460, 334, width=1.5, radius=10)
-    c.icon("lightning-bolt", 46, 138, 28, color=PWR_COLOR)
-    c.text_fit("현재 실시간 전력", 68, 120, 376, 34, 21)
-    c.text_fit(PWR_VAL, 36, 162, 408, 84, 62, color=PWR_COLOR)
-    c.progress_bar(36, 256, 444, 276, PWR_PCT, fill=PWR_BAR_COLOR)
-    c.text_fit(PWR_HINT, 36, 286, 408, 34, 17)
-
-    c.rect(20, 348, 460, 524, width=1.5, radius=10)
-    c.icon("meter-electric", 46, 376, 26)
-    c.text_fit("오늘 누적 사용량", 68, 358, 376, 34, 21)
-    c.text_fit(ENERGY_VAL, 36, 404, 408, 92, 52)
-
-    c.rect(20, 538, 460, 714, width=1.5, radius=10)
-    c.icon("solar-power", 46, 566, 26)
-    c.text_fit("태양광 발전 전력", 68, 548, 376, 34, 21)
-    c.text_fit(SOLAR_VAL, 36, 594, 408, 92, 52)
-
-    c.rect(20, 728, 460, 784, width=1.5, radius=8)
-    c.icon(ADVICE_ICON, 46, 756, 22, color=ADVICE_COLOR)
-    c.text_fit(ADVICE_TEXT, 66, 738, 380, 36, 17)
+    c.header(
+        "flash",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=170,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
+    )
+    c.text_fit(PWR_VAL, 24, 84, 432, 130, 104, color=PWR_COLOR, min_size=c.ms(40))
+    c.text_fit(BUDGET_TXT, 24, 220, 220, 40, 26, min_size=c.ms(20))
+    c.text_fit(PCT_TXT, 250, 214, 206, 50, 36, align="right", color=PWR_COLOR, min_size=c.ms(24))
+    c.progress_bar(24, 274, 456, 308, PWR_PCT, fill=PWR_BAR_COLOR)
+    for index, (icon, caption, value, color) in enumerate(STATS):
+        top = 334 + index * 158
+        if index:
+            c.line(24, top - 4, 456, top - 4, 2)
+        c.icon(icon, 44, top + 28, 38)
+        c.text_fit(caption, 76, top + 8, 380, 44, 28, min_size=c.ms(22))
+        c.text_fit(value, 24, top + 62, 432, 84, 64, color=color, min_size=c.ms(30))
+    c.line(24, 654, 456, 654, 2)
+    c.icon(ADVICE_ICON, 44, 702, 34, color=ADVICE_COLOR)
+    c.text_fit(ADVICE_TEXT, 72, 672, 384, 60, 26, color=ADVICE_COLOR, min_size=c.ms(20))
     return c.items
 
 
 def generate() -> str:
     layouts: dict[str, list[FlowElement]] = {}
     profiles = (
-        (_square_200, ((200, 200),)),
-        (_tiny_landscape, ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152))),
-        (_medium_compact_landscape, ((384, 184), (416, 240))),
+        (_square_200, _square_200, ((200, 200),)),
         (
-            _panel_landscape,
-            ((400, 300), (648, 480), (800, 480), (960, 640), (960, 680), (1600, 1200)),
+            _tiny_landscape,
+            _tiny_portrait,
+            ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152)),
         ),
+        (_medium_compact_landscape, _medium_compact_portrait, ((384, 184), (416, 240))),
+        (_panel_43, _panel_34, ((400, 300), (648, 480), (1600, 1200))),
+        (_large_landscape, _large_portrait, ((800, 480), (960, 640), (960, 680))),
     )
-    portrait_map = {
-        _tiny_landscape: _tiny_portrait,
-        _medium_compact_landscape: _medium_compact_portrait,
-        _panel_landscape: _panel_portrait,
-    }
-    for builder, sizes in profiles:
+    for landscape, portrait_builder, sizes in profiles:
         for width, height in sizes:
-            layouts[f"{width}x{height}"] = builder(width, height)
+            layouts[f"{width}x{height}"] = landscape(width, height)
             portrait = f"{height}x{width}"
             if width > height and portrait not in layouts:
-                layouts[portrait] = portrait_map[builder](height, width)
+                layouts[portrait] = portrait_builder(height, width)
 
     for items in layouts.values():
         for item in items:

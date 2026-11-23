@@ -4,6 +4,7 @@
 from pathlib import Path
 import sys
 
+from _panel_blocks import PanelBlocks
 import yaml
 
 DESTINATION = (
@@ -169,6 +170,18 @@ ADVICE_ICON = (
 )
 ADVICE_COLOR = STATUS_PRELUDE + "{{ _tink if _alert else 'black' }}"
 
+
+TEMP_RANGE = TEMP_PRELUDE + "{{ '68–79°F' if _is_f else '20–26°C' }}"  # noqa: RUF001
+HUM_RANGE = "40–60%"  # noqa: RUF001
+BADGE = (BADGE_TEXT, BADGE_FILL, BADGE_OUTLINE, BADGE_COLOR)
+# icon, label, value, value colour, chip, range, bar percent, bar colour
+METRICS = [
+    ("thermometer", "온도", TEMP_VAL, TEMP_COLOR, TEMP_CHIP, TEMP_RANGE, TEMP_PCT, TEMP_BAR_COLOR),
+    ("water-percent", "습도", HUM_VAL, HUM_COLOR, HUM_CHIP, HUM_RANGE, HUM_PCT, HUM_BAR_COLOR),
+    ("molecule-co2", "CO2", CO2_VAL, CO2_COLOR, CO2_CHIP, "", CO2_PCT, CO2_BAR_COLOR),
+    ("blur", "PM2.5", PM25_VAL, PM25_COLOR, PM25_CHIP, "", PM25_PCT, PM25_BAR_COLOR),
+]
+
 CLOCK = "{{ now().strftime('%H:%M 갱신') }}"
 
 
@@ -189,7 +202,7 @@ class TemplateDumper(yaml.SafeDumper):
 TemplateDumper.add_representer(FlowElement, TemplateDumper.represent_flow)
 
 
-class Canvas:
+class Canvas(PanelBlocks):
     """Accumulate scaled elements for one display resolution."""
 
     def __init__(self, width: int, height: int, vw: int, vh: int):
@@ -437,188 +450,121 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     return c.items
 
 
-def _panel_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 800, 480)
-    c.icon("home-outline", 38, 38, 30)
-    c.text_fit(TITLE, 60, 18, 330, 40, 30)
-    c.text_fit(CLOCK, 404, 24, 146, 28, 17, align="right")
-    c.rect(564, 16, 776, 58, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=10)
-    c.text_fit(BADGE_TEXT, 572, 20, 196, 34, 21, align="center", color=BADGE_COLOR)
-    c.line(24, 68, 776, 68, width=2)
-
-    cards = (
-        (
-            "thermometer",
-            "실내 온도",
-            TEMP_CHIP,
-            TEMP_VAL,
-            TEMP_PCT,
-            TEMP_COLOR,
-            TEMP_BAR_COLOR,
-            TEMP_HINT,
-            24,
-        ),
-        (
-            "water-percent",
-            "실내 습도",
-            HUM_CHIP,
-            HUM_VAL,
-            HUM_PCT,
-            HUM_COLOR,
-            HUM_BAR_COLOR,
-            "적정 40 ~ 60%",
-            408,
-        ),
-    )
-    for icon_name, label, chip, val, pct, color, bar_color, hint, left in cards:
-        right = left + 368
-        c.rect(left, 80, right, 256, width=1.5, radius=10)
-        c.icon(icon_name, left + 28, 106, 26, color=color)
-        c.text_fit(label, left + 48, 89, 156, 32, 21)
-        c.text_fit(chip, left + 212, 91, 138, 28, 17, align="right", color=color)
-        c.text_fit(val, left + 18, 125, 332, 76, 64, color=color)
-        c.progress_bar(left + 18, 209, right - 18, 224, pct, fill=bar_color)
-        c.text_fit(hint, left + 18, 227, 332, 25, 14)
-
-    aq_cards = (
-        (
-            "molecule-co2",
-            "이산화탄소 (CO2)",
-            CO2_CHIP,
-            CO2_VAL,
-            CO2_PCT,
-            CO2_COLOR,
-            CO2_BAR_COLOR,
-            "좋음 <700 · 환기 권장 1000+ ppm",
-            24,
-        ),
-        (
-            "air-filter",
-            "초미세먼지 (PM2.5)",
-            PM25_CHIP,
-            PM25_VAL,
-            PM25_PCT,
-            PM25_COLOR,
-            PM25_BAR_COLOR,
-            "좋음 0~15 · 보통 ~35 · 나쁨 36+",
-            408,
-        ),
-    )
-    for icon_name, label, chip, val, pct, color, bar_color, hint, left in aq_cards:
-        right = left + 368
-        c.rect(left, 268, right, 406, width=1.5, radius=10)
-        c.icon(icon_name, left + 28, 294, 24, color=color)
-        c.text_fit(label, left + 48, 277, 192, 30, 18)
-        c.text_fit(chip, left + 244, 279, 106, 26, 15, align="right", color=color)
-        c.text_fit(val, left + 18, 309, 332, 48, 36, color=color)
-        c.progress_bar(left + 18, 362, right - 18, 376, pct, fill=bar_color)
-        c.text_fit(hint, left + 18, 379, 332, 24, 14)
-
-    c.rect(24, 418, 776, 466, width=1.5, radius=8)
-    c.icon(ADVICE_ICON, 48, 442, 22, color=ADVICE_COLOR)
-    c.text_fit(ADVICE_TEXT, 68, 424, 692, 36, 19)
+def _panel_43(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 400, 300)
+    c.header("home-thermometer", TITLE, BADGE)
+    c.line(200, 52, 200, 292)
+    c.line(14, 172, 386, 172)
+    for index, (icon, caption, value, color, hint, rng, _, _) in enumerate(METRICS):
+        x = 14 + (index % 2) * 192
+        y = 52 + (index // 2) * 122
+        c.icon(icon, x + 15, y + 19, 22)
+        c.text_fit(caption, x + 32, y + 5, 140, 28, 18, min_size=c.ms(15))
+        c.text_fit(value, x + 4, y + 36, 178, 56, 42, color=color, min_size=c.ms(24))
+        c.text_fit(hint, x + 4, y + 94, 84, 24, 16, min_size=c.ms(14))
+        if rng:
+            c.text_fit(rng, x + 90, y + 94, 92, 24, 16, align="right", min_size=c.ms(14))
     return c.items
 
 
-def _panel_portrait(w: int, h: int) -> list[FlowElement]:
+def _panel_34(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 300, 400)
+    c.header("home-thermometer", TITLE, BADGE, pill_w=104)
+    for index, (icon, caption, value, color, hint, rng, _, _) in enumerate(METRICS):
+        top = 50 + index * 87
+        if index:
+            c.line(14, top - 2, 286, top - 2)
+        c.icon(icon, 28, top + 24, 24)
+        c.text_fit(caption, 46, top + 8, 96, 32, 18, min_size=c.ms(15))
+        c.text_fit(value, 144, top + 4, 144, 50, 36, align="right", color=color, min_size=c.ms(20))
+        c.text_fit(hint, 14, top + 54, 130, 24, 16, min_size=c.ms(14))
+        if rng:
+            c.text_fit(rng, 150, top + 54, 136, 24, 16, align="right", min_size=c.ms(14))
+    return c.items
+
+
+def _large_landscape(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 800, 480)
+    c.header(
+        "home-thermometer",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=190,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
+    )
+    c.line(400, 76, 400, 408, 2)
+    c.line(24, 242, 776, 242, 2)
+    for index, (icon, caption, value, color, hint, rng, pct, bar) in enumerate(METRICS):
+        x = 24 + (index % 2) * 388
+        y = 74 + (index // 2) * 168
+        c.icon(icon, x + 20, y + 22, 32)
+        c.text_fit(caption, x + 46, y + 2, 200, 40, 26, min_size=c.ms(20))
+        c.text_fit(value, x + 6, y + 44, 340, 66, 56, color=color, min_size=c.ms(28))
+        c.progress_bar(x + 6, y + 116, x + 340, y + 132, pct, fill=bar)
+        c.text_fit(hint, x + 6, y + 134, 160, 30, 22, min_size=c.ms(18))
+        if rng:
+            c.text_fit(rng, x + 170, y + 134, 170, 30, 22, align="right", min_size=c.ms(18))
+    c.line(24, 420, 776, 420, 2)
+    c.icon(ADVICE_ICON, 46, 448, 30, color=ADVICE_COLOR)
+    c.text_fit(ADVICE_TEXT, 74, 430, 700, 38, 24, color=ADVICE_COLOR, min_size=c.ms(18))
+    return c.items
+
+
+def _large_portrait(w: int, h: int) -> list[FlowElement]:
     c = Canvas(w, h, 480, 800)
-    c.icon("home-outline", 34, 36, 26)
-    c.text_fit(TITLE, 54, 18, 256, 36, 26)
-    c.text_fit(CLOCK, 316, 20, 144, 32, 16, align="right")
-    c.rect(20, 60, 460, 98, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
-    c.text_fit(BADGE_TEXT, 28, 63, 424, 32, 19, align="center", color=BADGE_COLOR)
-
-    primary = (
-        (
-            "thermometer",
-            "실내 온도",
-            TEMP_CHIP,
-            TEMP_VAL,
-            TEMP_PCT,
-            TEMP_COLOR,
-            TEMP_BAR_COLOR,
-            TEMP_HINT,
-            110,
-        ),
-        (
-            "water-percent",
-            "실내 습도",
-            HUM_CHIP,
-            HUM_VAL,
-            HUM_PCT,
-            HUM_COLOR,
-            HUM_BAR_COLOR,
-            "적정 40 ~ 60%",
-            288,
-        ),
+    c.header(
+        "home-thermometer",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=170,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
     )
-    for icon_name, label, chip, val, pct, color, bar_color, hint, top in primary:
-        c.rect(20, top, 460, top + 168, width=1.5, radius=10)
-        c.icon(icon_name, 44, top + 25, 24, color=color)
-        c.text_fit(label, 64, top + 9, 180, 32, 19)
-        c.text_fit(chip, 252, top + 9, 192, 32, 17, align="right", color=color)
-        c.text_fit(val, 36, top + 45, 408, 68, 56, color=color)
-        c.progress_bar(36, top + 116, 444, top + 130, pct, fill=bar_color)
-        c.text_fit(hint, 36, top + 132, 408, 32, 16)
-
-    aq = (
-        (
-            "molecule-co2",
-            "이산화탄소 (CO2)",
-            CO2_CHIP,
-            CO2_VAL,
-            CO2_PCT,
-            CO2_COLOR,
-            CO2_BAR_COLOR,
-            466,
-        ),
-        (
-            "air-filter",
-            "초미세먼지 (PM2.5)",
-            PM25_CHIP,
-            PM25_VAL,
-            PM25_PCT,
-            PM25_COLOR,
-            PM25_BAR_COLOR,
-            600,
-        ),
-    )
-    for icon_name, label, chip, val, pct, color, bar_color, top in aq:
-        c.rect(20, top, 460, top + 124, width=1.5, radius=10)
-        c.icon(icon_name, 44, top + 24, 22, color=color)
-        c.text_fit(label, 64, top + 8, 224, 32, 18)
-        c.text_fit(chip, 294, top + 8, 150, 32, 16, align="right", color=color)
-        c.text_fit(val, 36, top + 42, 408, 46, 34, color=color)
-        c.progress_bar(36, top + 92, 444, top + 106, pct, fill=bar_color)
-
-    c.rect(20, 734, 460, 784, width=1.5, radius=8)
-    c.icon(ADVICE_ICON, 44, 759, 22, color=ADVICE_COLOR)
-    c.text_fit(ADVICE_TEXT, 64, 741, 384, 36, 17)
+    for index, (icon, caption, value, color, hint, rng, pct, bar) in enumerate(METRICS):
+        top = 74 + index * 150
+        if index:
+            c.line(24, top - 4, 456, top - 4, 2)
+        c.icon(icon, 44, top + 28, 36)
+        c.text_fit(caption, 74, top + 6, 150, 44, 28, min_size=c.ms(22))
+        c.text_fit(value, 226, top + 2, 230, 64, 52, align="right", color=color, min_size=c.ms(26))
+        c.progress_bar(24, top + 76, 456, top + 92, pct, fill=bar)
+        c.text_fit(hint, 24, top + 100, 200, 36, 24, min_size=c.ms(18))
+        if rng:
+            c.text_fit(rng, 230, top + 100, 226, 36, 24, align="right", min_size=c.ms(18))
+    c.line(24, 674, 456, 674, 2)
+    c.icon(ADVICE_ICON, 44, 724, 34, color=ADVICE_COLOR)
+    c.text_fit(ADVICE_TEXT, 72, 694, 384, 60, 26, color=ADVICE_COLOR, min_size=c.ms(20))
     return c.items
 
 
 def generate() -> str:
     layouts: dict[str, list[FlowElement]] = {}
     profiles = (
-        (_square_200, ((200, 200),)),
-        (_tiny_landscape, ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152))),
-        (_medium_compact_landscape, ((384, 184), (416, 240))),
+        (_square_200, _square_200, ((200, 200),)),
         (
-            _panel_landscape,
-            ((400, 300), (648, 480), (800, 480), (960, 640), (960, 680), (1600, 1200)),
+            _tiny_landscape,
+            _tiny_portrait,
+            ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152)),
         ),
+        (_medium_compact_landscape, _medium_compact_portrait, ((384, 184), (416, 240))),
+        (_panel_43, _panel_34, ((400, 300), (648, 480), (1600, 1200))),
+        (_large_landscape, _large_portrait, ((800, 480), (960, 640), (960, 680))),
     )
-    portrait_map = {
-        _tiny_landscape: _tiny_portrait,
-        _medium_compact_landscape: _medium_compact_portrait,
-        _panel_landscape: _panel_portrait,
-    }
-    for builder, sizes in profiles:
+    for landscape, portrait_builder, sizes in profiles:
         for width, height in sizes:
-            layouts[f"{width}x{height}"] = builder(width, height)
+            layouts[f"{width}x{height}"] = landscape(width, height)
             portrait = f"{height}x{width}"
             if width > height and portrait not in layouts:
-                layouts[portrait] = portrait_map[builder](height, width)
+                layouts[portrait] = portrait_builder(height, width)
 
     for items in layouts.values():
         for item in items:

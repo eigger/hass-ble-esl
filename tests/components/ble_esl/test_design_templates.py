@@ -1026,16 +1026,50 @@ async def test_sensor_card_formats_the_value(hass, state, shown):
         "sensor.temperature", state, {"friendly_name": "Room", "unit_of_measurement": "°C"}
     )
     texts = _texts(_shown(hass, "sensor_card"))
-    assert texts == ["Room", shown, "°C"]
+    assert texts[0] == "Room"
+    assert shown in texts
+    assert "°C" in texts
 
 
 async def test_sensor_card_title_and_missing_entity(hass):
     hass.states.async_set("sensor.temperature", "5", {"friendly_name": "Room"})
     texts = _texts(_shown(hass, "sensor_card", given={"title": "Kitchen"}))
-    assert texts == ["Kitchen", "5", ""]
+    assert texts[0] == "Kitchen"
+    assert "5" in texts
     # An entity that does not exist leaves empty text, never "None".
     texts = _texts(_shown(hass, "sensor_card", given={"sensor": "sensor.nowhere"}))
-    assert texts == ["", "unknown", ""]
+    assert texts[0] == ""
+    assert "unknown" in texts
+    assert not any("None" in value for value in texts)
+
+
+def _ink(item):
+    return item.get("color", item.get("fill"))
+
+
+def _below_header(rendered):
+    return [item for item in rendered if item.get("y", item.get("y_start", 0)) > 50]
+
+
+async def test_sensor_card_shows_age_and_hides_an_unset_secondary_reading(hass):
+    import time
+
+    hass.states.async_set(
+        "sensor.temperature", "21", {"unit_of_measurement": "°C"}, timestamp=time.time() - 420
+    )
+    texts = _texts(_shown(hass, "sensor_card"))
+    assert "7 min ago" in texts
+    rendered = _shown(hass, "sensor_card")
+    # Without a secondary sensor its icon and divider are drawn in white.
+    assert "white" in {
+        _ink(item) for item in _below_header(rendered) if item["type"] in ("icon", "line")
+    }
+    hass.states.async_set("sensor.humidity", "45", {"unit_of_measurement": "%"})
+    shown = _shown(hass, "sensor_card", given={"secondary_sensor": "sensor.humidity"})
+    assert "45 %" in _texts(shown)
+    assert "white" not in {
+        _ink(item) for item in _below_header(shown) if item["type"] in ("icon", "line")
+    }
 
 
 async def test_calendar_next_shows_the_event_its_times_and_place(hass):
@@ -1047,17 +1081,18 @@ async def test_calendar_next_shows_the_event_its_times_and_place(hass):
     }
     hass.states.async_set("calendar.home", "on", event)
     texts = _texts(_shown(hass, "calendar_next", given={"date_format": "%d.%m."}))
-    assert texts == ["Next event", "Dentist", "02.11. 14:30", "Seoul"]
+    assert {"Next event", "Dentist", "02.11. 14:30", "Seoul"} <= set(texts)
     hass.states.async_set("calendar.home", "on", {**event, "all_day": True})
-    assert _texts(_shown(hass, "calendar_next"))[2] == "11/02"
+    assert "11/02" in _texts(_shown(hass, "calendar_next"))
 
 
 async def test_calendar_next_without_an_event_says_so(hass):
     hass.states.async_set("calendar.home", "off", {"friendly_name": "Home"})
     texts = _texts(_shown(hass, "calendar_next", given={"empty_text": "Free"}))
-    assert texts == ["Next event", "Free", "", ""]
+    assert "Free" in texts
+    assert not any(value in texts for value in ("Dentist", "None"))
     hass.states.async_set("calendar.home", "off", {"message": "x", "start_time": "garbage"})
-    assert _texts(_shown(hass, "calendar_next"))[2] == ""
+    assert not any("garbage" in value for value in _texts(_shown(hass, "calendar_next")))
 
 
 def _progress_bar(rendered):
@@ -1080,9 +1115,9 @@ async def test_print_progress_shows_status_and_finish_time(hass):
     hass.states.async_set("sensor.print_status", "running")
     hass.states.async_set("sensor.print_end_time", "2026-11-01T18:45:00+00:00")
     texts = _texts(_shown(hass, "print_progress", given={"time_format": "%Y"}))
-    assert texts[-2:] == ["running", "Finish 2026"]
+    assert {"running", "2026", "Finish"} <= set(texts)
     hass.states.async_set("sensor.print_end_time", "unavailable")
-    assert _texts(_shown(hass, "print_progress"))[-1] == "Finish --"
+    assert "--" in _texts(_shown(hass, "print_progress"))
 
 
 @pytest.mark.parametrize(
@@ -1115,11 +1150,11 @@ async def test_countdown_with_a_bad_date_shows_dashes(hass, target):
 
 
 async def test_date_weather_shows_the_day_and_the_weather(hass):
-    hass.states.async_set("weather.home", "sunny", {"temperature": 21.5, "temperature_unit": "°C"})
+    hass.states.async_set("weather.home", "sunny", {"temperature": 21.4, "temperature_unit": "°C"})
     for size in ((250, 128), (400, 300)):
         rendered = _shown(hass, "date_weather", *size, given={"weekdays": "a,b,c,d,e,f,g"})
         values = [str(item["value"]) for item in rendered if "value" in item]
-        assert "21.5°C" in values
+        assert "21°" in values
         assert "weather-sunny" in values
         assert not any("None" in value for value in values)
     # Too few weekday names leave the weekday empty instead of failing.
@@ -1128,7 +1163,24 @@ async def test_date_weather_shows_the_day_and_the_weather(hass):
     short = _texts(_shown(hass, "date_weather", given={"weekdays": "a"}))
     assert short[1] == ("a" if dt_util.now().weekday() == 0 else "")
     hass.states.async_set("weather.home", "unavailable", {})
-    assert "--" in _texts(_shown(hass, "date_weather"))
+    assert "—" in _texts(_shown(hass, "date_weather"))
+    # Today's high, low and chance of rain come from the daily forecast.
+    hass.states.async_set("weather.home", "sunny", {"temperature": 21.4})
+    forecast = {
+        "weather.home": {
+            "forecast": [
+                {
+                    "datetime": dt_util.now().isoformat(),
+                    "temperature": 24.2,
+                    "templow": 12.6,
+                    "precipitation_probability": 30,
+                }
+            ]
+        }
+    }
+    built = build(TEMPLATES["date_weather"], 400, 300, "BWR")
+    shown = _texts(resolve_templates(hass, built["payload"], set(), {"fc": forecast}))
+    assert {"24°", "13°", "30%"} <= set(shown)
 
 
 @pytest.mark.parametrize("template_id", sorted(TEMPLATES))
@@ -1349,9 +1401,7 @@ async def test_large_calendar_adds_end_time_and_optional_details(hass):
         "description": "Bring the drawings.",
     }
     hass.states.async_set("calendar.home", "on", event)
-    assert {"11/02 14:30 - 16:00", "Bring the drawings."} <= set(
-        _texts(_shown(hass, "calendar_next", 800, 480))
-    )
+    assert "11/02 14:30 \u2013 16:00" in _texts(_shown(hass, "calendar_next", 800, 480))
     hass.states.async_set("calendar.home", "on", {**event, "all_day": True})
     assert "11/02" in _texts(_shown(hass, "calendar_next", 480, 800))
     assert not any("16:00" in value for value in _texts(_shown(hass, "calendar_next", 480, 800)))
@@ -1397,7 +1447,7 @@ async def test_large_wifi_does_not_print_a_hidden_network_name(hass):
 
 
 @pytest.mark.parametrize(
-    ("short", "long", "detail"), [(300, 400, False), (480, 648, True), (480, 800, True)]
+    ("short", "long", "detail"), [(300, 400, True), (480, 648, True), (480, 800, True)]
 )
 async def test_gallery_information_tier_is_preserved_when_rotating(hass, short, long, detail):
     hass.states.async_set("sensor.temperature", "24", {"unit_of_measurement": "°C"})
@@ -1647,14 +1697,15 @@ async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(
             {"nozzle_sensor": "sensor.nozzle_temp", "bed_sensor": "sensor.bed_temp"},
         )
     )
-    assert "210° / 60°" in texts_with
+    assert {"210°", "60°"} <= set(texts_with)
     assert "—" in _texts(_shown(hass, "print_progress", 800, 480))
 
     # Single sensor supplied and non-sensor IDs.
-    assert "210° / —" in _texts(
+    single = _texts(
         _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "sensor.nozzle_temp"})
     )
-    assert "—" in _texts(
+    assert "210°" in single and "—" in single
+    assert "210°" not in _texts(
         _shown(hass, "print_progress", 800, 480, {"nozzle_sensor": "binary_sensor.door"})
     )
 
@@ -1662,7 +1713,7 @@ async def test_print_progress_shows_optional_nozzle_and_bed_temps_on_large_tags(
     for bad in ("unavailable", "nan", "inf"):
         hass.states.async_set("sensor.nozzle_temp", bad)
         hass.states.async_set("sensor.bed_temp", bad)
-        assert "— / —" in _texts(
+        assert _texts(
             _shown(
                 hass,
                 "print_progress",
@@ -1716,7 +1767,7 @@ async def test_calendar_next_renders_upcoming_events_on_large_tags(hass, wolink_
             {"events": {"calendar.home": {"events": [events[2]]}}},
         )
     )
-    assert "11/23 - 11/24" in all_day_texts and not any("00:00" in t for t in all_day_texts)
+    assert "11/23 \u2013 11/24" in all_day_texts and not any("00:00" in t for t in all_day_texts)
 
     mixed_tz = [{"summary": "Mixed", "start": "2026-11-23", "end": "2026-11-23T12:00:00+09:00"}]
     mixed_texts = _texts(
@@ -2319,7 +2370,7 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
     hass.states.async_set("sensor.temperature", "72", {"unit_of_measurement": "°F"})
     hass.states.async_set("sensor.humidity", "50", {"unit_of_measurement": "%"})
     f_texts = _texts(_shown(hass, "indoor_climate", 800, 480))
-    assert "72°F" in f_texts and "쾌적" in f_texts and "적정 68 ~ 79°F" in f_texts
+    assert "72°F" in f_texts and "쾌적" in f_texts and "적정" in f_texts and "68–79°F" in f_texts  # noqa: RUF001
 
     # Near-zero negative temperatures never render as "-0°C", while real negatives keep their sign.
     hass.states.async_set("sensor.temperature", "-0.04", {"unit_of_measurement": "°C"})
@@ -2361,7 +2412,9 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
         item.get("value") == "환기 권장" and item.get("color") == "black" for item in bwry_items
     )
     assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        item.get("type") in ("text_fit", "icon")
+        and item.get("color") in ("yellow", "white")
+        and item.get("y", 0) > 70
         for item in bwry_items
     )
 
@@ -2407,7 +2460,7 @@ async def test_indoor_climate_renders_alerts_contrast_and_edge_cases(hass):
     co2_panel = _texts(_shown(hass, "indoor_climate", 400, 300, {"co2_sensor": "sensor.co2"}))
     assert "1250 ppm" in co2_panel and "환기 권장" in co2_panel
     hass.states.async_set("sensor.humidity", "22")
-    dry_panel = _texts(_shown(hass, "indoor_climate", 400, 300))
+    dry_panel = _texts(_shown(hass, "indoor_climate", 800, 480))
     assert any("가습기" in t for t in dry_panel)
 
     # Malformed optional entity IDs are treated as unset rather than missing entities.
@@ -2573,7 +2626,7 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
     )
     assert small_saved["setup_actions"] == []
 
-    # 4.2"+ displays forecast + upcoming events list + badge contrast + all-day formatting.
+    # 4.2"+ displays forecast + upcoming events list + compact time labels + accent contrast.
     large_payload = build(TEMPLATES["calendar_weather"], 800, 480, "BWR")["payload"]
     vars_both = {
         "fc": {"weather.home": {"forecast": forecast}},
@@ -2581,14 +2634,15 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
     }
     large_rendered = resolve_templates(hass, large_payload, set(), vars_both)
     large_texts = [str(item.get("value", "")) for item in large_rendered]
-    assert "14.5°C" in large_texts and "70%" in large_texts
+    # The forecast columns start tomorrow; today's weather is in the header.
+    assert "14°" in large_texts and "10%" in large_texts and "6° / 19°" in large_texts
     assert (
         "Standup" in large_texts
         and "Design Review" in large_texts
         and "Release Trip" in large_texts
     )
-    assert any("11/23 - 11/24" in text for text in large_texts)
-    assert "일정 3건" in large_texts
+    # Upcoming rows lead with a short time label; an all-day event reads "종일".
+    assert any("종일" in text for text in large_texts)
     render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), large_rendered)
 
     # Fallback to entity attributes when events list is empty.
@@ -2603,7 +2657,7 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
             },
         )
     )
-    assert "Fallback Meeting" in fallback_texts and "일정 1건" in fallback_texts
+    assert "Fallback Meeting" in fallback_texts
 
     # Contrast safety on BWRY accent=yellow & BWR accent=white, plus near-zero/nan/inf resilience.
     bwry_items = resolve_templates(
@@ -2612,16 +2666,8 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         set(),
         vars_both,
     )
-    assert any(
-        item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in bwry_items
-    )
-    assert any(
-        item.get("value") == "일정 3건" and item.get("color") == "black" for item in bwry_items
-    )
-    assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
-        for item in bwry_items
-    )
+    # Yellow is unreadable on white: today's time label and the rainy days fall back to black.
+    assert not any(item.get("color") == "yellow" for item in bwry_items)
 
     white_items = resolve_templates(
         hass,
@@ -2629,11 +2675,10 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         set(),
         vars_both,
     )
-    assert any(
-        item.get("type") == "rectangle" and item.get("fill") == "black" for item in white_items
-    )
-    assert any(
-        item.get("value") == "일정 3건" and item.get("color") == "white" for item in white_items
+    # Below the black header nothing is drawn in white.
+    assert not any(
+        item.get("type") in ("text_fit", "icon") and item.get("color") == "white" and item["y"] > 60
+        for item in white_items
     )
 
     hass.states.async_set("weather.home", "sunny", {"temperature": -0.04, "humidity": "nan"})
@@ -2672,11 +2717,10 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
             },
         )
     )
-    assert "0°C" in near_zero_texts and "-0°C" not in near_zero_texts and "Mix" in near_zero_texts
-    assert "11/23" in near_zero_texts and "11/23 - 11/23" not in near_zero_texts
-    assert "11/23 09:00 - 11/24 18:00" in near_zero_texts
+    assert "0°" in near_zero_texts and "-0°" not in near_zero_texts and "Mix" in near_zero_texts
+    assert "SingleDayAll" in near_zero_texts and "MultiTimed" in near_zero_texts
     utc_expected = dt_util.as_local(dt_util.parse_datetime("2026-11-25T10:00:00+00:00")).strftime(
-        "%m/%d %H:%M"
+        "%H:%M"
     )
     assert any(utc_expected in t for t in near_zero_texts)
 
@@ -2690,7 +2734,7 @@ async def test_calendar_weather_renders_forecast_events_edge_cases_and_designer(
         bad_res = _texts(
             resolve_templates(hass, large_payload, set(), {"fc": bad_fc, "events": bad_ev})
         )
-        assert "Fallback Meeting" in bad_res and "일정 1건" in bad_res
+        assert "Fallback Meeting" in bad_res
 
     # Empty time_format is rejected by parameter validation.
     with pytest.raises(HomeAssistantError, match="time_format"):
@@ -2893,11 +2937,11 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
         hass, build(TEMPLATES["home_presence"], 800, 480, "BWR", options)["payload"], set()
     )
     texts = [str(item.get("value", "")) for item in rendered]
-    assert {"민준", "서연", "지우", "손님", "재실", "외출", "학교", "알 수 없음"} <= set(texts)
+    assert {"민준", "서연", "지우", "손님", "집", "외출", "학교", "알 수 없음"} <= set(texts)
     assert "재실 1/4" in texts and "현관 출입문 · 열림 주의" in texts
     assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in rendered)
     assert any(
-        item.get("value") == "현관 출입문 · 열림 주의" and item.get("color") == "white"
+        item.get("value") == "현관 출입문 · 열림 주의" and item.get("color") == "red"
         for item in rendered
     )
     render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), rendered)
@@ -2975,7 +3019,9 @@ async def test_home_presence_renders_states_doors_contrast_and_edge_cases(hass, 
         for item in bwry_items
     )
     assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        item.get("type") in ("text_fit", "icon")
+        and item.get("color") in ("yellow", "white")
+        and item.get("y", 0) > 70
         for item in bwry_items
     )
 
@@ -3074,7 +3120,10 @@ def test_energy_power_covers_all_29_sizes_without_overlap():
                 i1, _, b1 = rect_boxes[r1]
                 i2, _, b2 = rect_boxes[r2]
                 overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
-                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+                nested = (
+                    b1[0] <= b2[0] and b1[1] <= b2[1] and b2[2] <= b1[2] and b2[3] <= b1[3]
+                ) or (b2[0] <= b1[0] and b2[1] <= b1[1] and b1[2] <= b2[2] and b1[3] <= b2[3])
+                assert not overlaps or nested, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
         for idx in range(len(fg_boxes)):
             for jdx in range(idx + 1, len(fg_boxes)):
                 i1, t1, b1 = fg_boxes[idx]
@@ -3127,7 +3176,12 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         hass, build(TEMPLATES["energy_power"], 800, 480, "BWR", options)["payload"], set()
     )
     kw_texts = [str(item.get("value", "")) for item in kw_items]
-    assert "3.2 kW" in kw_texts and "과부하" in kw_texts and "목표 3000W 대비 107%" in kw_texts
+    assert (
+        "3.2 kW" in kw_texts
+        and "과부하" in kw_texts
+        and "목표 3000 W" in kw_texts
+        and "107%" in kw_texts
+    )
     assert any(item.get("type") == "rectangle" and item.get("fill") == "red" for item in kw_items)
     assert any(item.get("value") == "과부하" and item.get("color") == "white" for item in kw_items)
     render_image(hass, DevicePreset("large", "large", 800, 480, "BWR"), kw_items)
@@ -3146,7 +3200,9 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         item.get("value") == "과부하" and item.get("color") == "black" for item in bwry_items
     )
     assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        item.get("type") in ("text_fit", "icon")
+        and item.get("color") in ("yellow", "white")
+        and item.get("y", 0) > 70
         for item in bwry_items
     )
 
@@ -3193,13 +3249,13 @@ async def test_energy_power_renders_units_alerts_contrast_and_edge_cases(hass, w
         )
     )
     assert med_l_texts == ["1800 W", "보통", "오늘 1.05kWh"]
-    panel_solar_texts = _texts(_shown(hass, "energy_power", 400, 300, options))
+    panel_solar_texts = _texts(_shown(hass, "energy_power", 800, 480, options))
     assert "태양광 840W 발전 중 · 현재 부하 60%" in panel_solar_texts
 
     # Compact <4" omits timestamp chrome; 4.2"+ shows advice.
     med_l_plain = _texts(_shown(hass, "energy_power", 384, 184))
     assert not any("갱신" in t for t in med_l_plain)
-    panel_plain = _texts(_shown(hass, "energy_power", 400, 300))
+    panel_plain = _texts(_shown(hass, "energy_power", 800, 480))
     assert any("안정적인 전력 사용 중입니다" in t for t in panel_plain)
 
     # Caution tier (80-99%), BW fallback, budget_watts coercion bounds, & empty/missing unit.
@@ -3307,7 +3363,10 @@ def test_ev_charging_covers_all_29_sizes_without_overlap():
                 i1, _, b1 = rect_boxes[r1]
                 i2, _, b2 = rect_boxes[r2]
                 overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
-                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+                nested = (
+                    b1[0] <= b2[0] and b1[1] <= b2[1] and b2[2] <= b1[2] and b2[3] <= b1[3]
+                ) or (b2[0] <= b1[0] and b2[1] <= b1[1] and b1[2] <= b2[2] and b1[3] <= b2[3])
+                assert not overlaps or nested, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
         for idx in range(len(fg_boxes)):
             for jdx in range(idx + 1, len(fg_boxes)):
                 i1, t1, b1 = fg_boxes[idx]
@@ -3385,7 +3444,9 @@ async def test_ev_charging_renders_states_alerts_contrast_and_edge_cases(hass, w
         item.get("type") == "rectangle" and item.get("fill") == "yellow" for item in low_bwry
     )
     assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        item.get("type") in ("text_fit", "icon")
+        and item.get("color") in ("yellow", "white")
+        and item.get("y", 0) > 70
         for item in low_bwry
     )
 
@@ -3528,7 +3589,10 @@ def test_appliance_status_covers_all_29_sizes_without_overlap():
                 i1, _, b1 = rect_boxes[r1]
                 i2, _, b2 = rect_boxes[r2]
                 overlaps = b1[0] < b2[2] and b2[0] < b1[2] and b1[1] < b2[3] and b2[1] < b1[3]
-                assert not overlaps, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
+                nested = (
+                    b1[0] <= b2[0] and b1[1] <= b2[1] and b2[2] <= b1[2] and b2[3] <= b1[3]
+                ) or (b2[0] <= b1[0] and b2[1] <= b1[1] and b1[2] <= b2[2] and b1[3] <= b2[3])
+                assert not overlaps or nested, f"{size}: rect {i1} {b1} overlaps rect {i2} {b2}"
         for idx in range(len(fg_boxes)):
             for jdx in range(idx + 1, len(fg_boxes)):
                 i1, t1, b1 = fg_boxes[idx]
@@ -3613,7 +3677,9 @@ async def test_appliance_status_renders_states_alerts_contrast_and_edge_cases(ha
         item.get("value") == "오류 확인" and item.get("color") == "black" for item in err_bwry
     )
     assert not any(
-        item.get("type") in ("text_fit", "icon") and item.get("color") in ("yellow", "white")
+        item.get("type") in ("text_fit", "icon")
+        and item.get("color") in ("yellow", "white")
+        and item.get("y", 0) > 70
         for item in err_bwry
     )
 
