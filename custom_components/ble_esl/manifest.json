@@ -66,5 +66,5 @@
     "imagespec[datamatrix]>=1.2.1",
     "sensor-state-data>=2.20.0"
   ],
-  "version": "1.12.0"
+  "version": "1.13.0-beta.1"
 }
