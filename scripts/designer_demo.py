@@ -139,6 +139,17 @@ STATES["sensor.washer_state"] = {
     "state": "running",
     "attributes": {"friendly_name": "세탁기"},
 }
+# Default entities of the indoor climate design template.
+STATES["sensor.temperature"] = {
+    "entity_id": "sensor.temperature",
+    "state": "23.5",
+    "attributes": {"unit_of_measurement": "°C", "friendly_name": "Temperature"},
+}
+STATES["sensor.humidity"] = {
+    "entity_id": "sensor.humidity",
+    "state": "48",
+    "attributes": {"unit_of_measurement": "%", "friendly_name": "Humidity"},
+}
 TEMPLATES = {}
 TAGS = [
     {

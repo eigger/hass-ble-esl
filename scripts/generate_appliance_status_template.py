@@ -4,6 +4,7 @@
 from pathlib import Path
 import sys
 
+from _panel_blocks import PanelBlocks
 import yaml
 
 DESTINATION = (
@@ -200,6 +201,7 @@ BADGE_COLOR = SUMMARY_PRELUDE + "{{ _fg if _has_alert else 'black' }}"
 BANNER_FILL = BADGE_FILL
 BANNER_OUTLINE = BADGE_OUTLINE
 BANNER_FG = BADGE_COLOR
+BANNER_INK = SUMMARY_PRELUDE + "{{ _tink if _has_alert else 'black' }}"
 BANNER_ICON = (
     SUMMARY_PRELUDE
     + "{{ 'alert-circle-outline' if _ns.err > 0 else ('check-circle-outline' if _ns.done > 0 else ('timer-sand' if _ns.run > 0 else 'washing-machine')) }}"
@@ -260,6 +262,25 @@ FEAT_ICON = FEAT_PRELUDE + "{{ _ns.icon }}"
 FEAT_COLOR = FEAT_PRELUDE + f"{{{{ {TEXT_INK_EXPR} if _ns.alert else 'black' }}}}"
 
 
+def _row(idx: int) -> tuple[str, str, str, str, str, str]:
+    """Return (name, state, sub text, icon, state colour, icon colour) for a redesigned row."""
+    name, status, subtext, icon, color, _ = _slot(idx, compact=False)
+    ent_expr = APPLIANCES[idx][0]
+    running = (
+        f"{{% set _ae = '{ent_expr}' %}}"
+        f"{{% set _ao = states[_ae] if _ae is match('{ENTITY_RE}') else none %}}"
+        "{% set _stl = (_ao.state | string | trim | lower) if _ao is not none else '' %}"
+    )
+    state_color = running + (
+        f"{{{{ {TEXT_INK_EXPR} if (_stl in {_ERR_STATES} or _stl in {_DONE_STATES} "
+        f"or _stl in {_RUN_STATES}) else 'black' }}}}"
+    )
+    return name, status, subtext, icon, state_color, color
+
+
+BADGE = (BADGE_TEXT, BADGE_FILL, BADGE_OUTLINE, BADGE_COLOR)
+
+
 class FlowElement(dict):
     """Write each generated layout item as compact single-line YAML flow mapping."""
 
@@ -277,7 +298,7 @@ class TemplateDumper(yaml.SafeDumper):
 TemplateDumper.add_representer(FlowElement, TemplateDumper.represent_flow)
 
 
-class Canvas:
+class Canvas(PanelBlocks):
     """Accumulate scaled elements for one display resolution."""
 
     def __init__(self, width: int, height: int, vw: int, vh: int):
@@ -498,98 +519,129 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     return c.items
 
 
-def _panel_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 800, 480)
-    c.icon("washing-machine", 38, 36, 28)
-    c.text_fit(TITLE, 60, 17, 360, 38, 28)
-    c.text_fit(CLOCK, 430, 22, 144, 28, 16, align="right")
-    c.rect(588, 15, 776, 55, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=10)
-    c.text_fit(BADGE_TEXT, 596, 19, 172, 32, 20, align="center", color=BADGE_COLOR)
-    c.line(24, 65, 776, 65, width=2)
-
-    xs = (24, 280, 536)
-    for idx, left in enumerate(xs):
-        right = left + 240
-        c.rect(left, 78, right, 398, width=1.5, radius=10)
-        name, status, subtext, icon, color, _ = _slot(idx, compact=False)
-        c.icon(icon, left + 30, 112, 30, color=color)
-        c.text_fit(name, left + 52, 95, 172, 34, 21)
-        c.line(left + 16, 146, right - 16, 146)
-        c.text_fit(status, left + 16, 178, 208, 72, 42, align="center", color=color)
-        c.line(left + 16, 282, right - 16, 282)
-        c.text_fit("세부 정보", left + 16, 298, 208, 26, 15, align="center")
-        c.text_fit(subtext, left + 16, 330, 208, 42, 22, align="center")
-
-    c.rect(
-        24,
-        412,
-        776,
-        466,
-        fill=BANNER_FILL,
-        outline=BANNER_OUTLINE,
-        width=1.5,
-        radius=8,
+def _banner(c: Canvas, y: float, size: float, icon_size: float, *, x: float = 12) -> None:
+    c.line(x + 2, y, c.vw - x - 2, y, 2)
+    h = size * 1.5
+    c.icon(BANNER_ICON, x + 6 + icon_size / 2, y + 6 + h / 2, icon_size, color=BANNER_INK)
+    c.text_fit(
+        BANNER_TEXT,
+        x + 16 + icon_size,
+        y + 6,
+        c.vw - 2 * x - icon_size - 20,
+        h,
+        size,
+        color=BANNER_INK,
+        min_size=c.ms(14),
     )
-    c.icon(BANNER_ICON, 50, 439, 24, color=BANNER_FG)
-    c.text_fit(BANNER_TEXT, 72, 421, 686, 36, 20, color=BANNER_FG)
+
+
+def _panel_43(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 400, 300)
+    c.header("home-lightning-bolt", TITLE, BADGE)
+    for idx in range(3):
+        name, status, subtext, icon, state_color, icon_color = _row(idx)
+        y = 52 + idx * 83
+        if idx:
+            c.line(14, y - 2, 386, y - 2)
+        c.icon(icon, 38, y + 40, 44, color=icon_color)
+        c.text_fit(name, 70, y + 18, 170, 44, 26, min_size=c.ms(16))
+        c.text_fit(
+            status, 244, y + 6, 142, 38, 28, align="right", color=state_color, min_size=c.ms(16)
+        )
+        c.text_fit(subtext, 244, y + 46, 142, 26, 17, align="right", min_size=c.ms(14))
     return c.items
 
 
-def _panel_portrait(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 480, 800)
-    c.icon("washing-machine", 34, 34, 24)
-    c.text_fit(TITLE, 54, 17, 256, 34, 24)
-    c.text_fit(CLOCK, 316, 18, 144, 32, 16, align="right")
-    c.rect(20, 58, 460, 98, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
-    c.text_fit(BADGE_TEXT, 28, 62, 424, 32, 19, align="center", color=BADGE_COLOR)
-
+def _panel_34(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 300, 400)
+    c.header("home-lightning-bolt", TITLE, BADGE, pill_w=104)
     for idx in range(3):
-        top = 110 + idx * 200
-        c.rect(20, top, 460, top + 186, width=1.5, radius=10)
-        name, status, subtext, icon, color, _ = _slot(idx, compact=False)
-        c.icon(icon, 48, top + 36, 30, color=color)
-        c.text_fit(name, 74, top + 16, 214, 36, 21)
-        c.text_fit(subtext, 294, top + 18, 150, 32, 15, align="right")
-        c.line(36, top + 62, 444, top + 62)
-        c.text_fit(status, 36, top + 84, 408, 76, 46, align="center", color=color)
+        name, status, subtext, icon, state_color, icon_color = _row(idx)
+        y = 50 + idx * 117
+        if idx:
+            c.line(14, y - 2, 286, y - 2)
+        c.icon(icon, 36, y + 40, 46, color=icon_color)
+        c.text_fit(name, 68, y + 8, 218, 36, 24, min_size=c.ms(16))
+        c.text_fit(status, 68, y + 46, 218, 38, 30, color=state_color, min_size=c.ms(18))
+        c.text_fit(subtext, 68, y + 86, 218, 26, 17, min_size=c.ms(14))
+    return c.items
 
-    c.rect(
-        20,
-        712,
-        460,
-        784,
-        fill=BANNER_FILL,
-        outline=BANNER_OUTLINE,
-        width=1.5,
-        radius=8,
+
+def _large_landscape(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 800, 480)
+    c.header(
+        "home-lightning-bolt",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=190,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
     )
-    c.icon(BANNER_ICON, 48, 748, 24, color=BANNER_FG)
-    c.text_fit(BANNER_TEXT, 72, 728, 372, 40, 19, color=BANNER_FG)
+    for idx in range(3):
+        name, status, subtext, icon, state_color, icon_color = _row(idx)
+        y = 72 + idx * 114
+        if idx:
+            c.line(24, y - 3, 776, y - 3, 2)
+        c.icon(icon, 66, y + 54, 68, color=icon_color)
+        c.text_fit(name, 120, y + 8, 330, 52, 36, min_size=c.ms(20))
+        c.text_fit(subtext, 120, y + 62, 330, 38, 24, min_size=c.ms(18))
+        c.text_fit(
+            status, 460, y + 22, 316, 70, 50, align="right", color=state_color, min_size=c.ms(24)
+        )
+    _banner(c, 416, 24, 30, x=24)
+    return c.items
+
+
+def _large_portrait(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 480, 800)
+    c.header(
+        "home-lightning-bolt",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=170,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
+    )
+    for idx in range(3):
+        name, status, subtext, icon, state_color, icon_color = _row(idx)
+        y = 74 + idx * 204
+        if idx:
+            c.line(24, y - 4, 456, y - 4, 2)
+        c.icon(icon, 60, y + 56, 72, color=icon_color)
+        c.text_fit(name, 112, y + 12, 344, 54, 36, min_size=c.ms(20))
+        c.text_fit(status, 112, y + 78, 344, 70, 52, color=state_color, min_size=c.ms(26))
+        c.text_fit(subtext, 112, y + 150, 344, 40, 26, min_size=c.ms(18))
+    _banner(c, 692, 26, 34, x=24)
     return c.items
 
 
 def generate() -> str:
     layouts: dict[str, list[FlowElement]] = {}
     profiles = (
-        (_square_200, ((200, 200),)),
-        (_tiny_landscape, ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152))),
-        (_medium_compact_landscape, ((384, 184), (416, 240))),
+        (_square_200, _square_200, ((200, 200),)),
         (
-            _panel_landscape,
-            ((400, 300), (648, 480), (800, 480), (960, 640), (960, 680), (1600, 1200)),
+            _tiny_landscape,
+            _tiny_portrait,
+            ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152)),
         ),
+        (_medium_compact_landscape, _medium_compact_portrait, ((384, 184), (416, 240))),
+        (_panel_43, _panel_34, ((400, 300), (648, 480), (1600, 1200))),
+        (_large_landscape, _large_portrait, ((800, 480), (960, 640), (960, 680))),
     )
-    portrait_map = {
-        _tiny_landscape: _tiny_portrait,
-        _medium_compact_landscape: _medium_compact_portrait,
-        _panel_landscape: _panel_portrait,
-    }
-    for builder, sizes in profiles:
+    for landscape, portrait_builder, sizes in profiles:
         for width, height in sizes:
-            layouts[f"{width}x{height}"] = builder(width, height)
+            layouts[f"{width}x{height}"] = landscape(width, height)
             portrait = f"{height}x{width}"
             if width > height and portrait not in layouts:
-                layouts[portrait] = portrait_map[builder](height, width)
+                layouts[portrait] = portrait_builder(height, width)
 
     for items in layouts.values():
         for item in items:

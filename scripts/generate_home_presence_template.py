@@ -4,6 +4,7 @@
 from pathlib import Path
 import sys
 
+from _panel_blocks import PanelBlocks
 import yaml
 
 DESTINATION = (
@@ -126,6 +127,35 @@ def _person(idx: int, *, compact: bool) -> tuple[str, str, str, str, str]:
     return name, status, icon, color, icon_color, since
 
 
+def _person_card(idx: int, *, unset: str = "") -> tuple[str, str, str, str, str]:
+    """Return (name, status, icon, since, colour) templates for the redesigned member cells."""
+    name, _, _, _, _, _since = _person(idx, compact=False)
+    color = "black"
+    sel = (
+        f"{{% set _pe = '{PEOPLE[idx]}' %}}"
+        f"{{% set _has = _pe is match('{ENTITY_RE}') %}}"
+        "{% set _po = states[_pe] if _has else none %}"
+        "{% set _st = (_po.state | string) if _po is not none else '' %}"
+    )
+    status = sel + (
+        "{{ ('집' if _st == 'home' else ('외출' if _st == 'not_home' else ('알 수 없음' if _st in ('unknown', 'unavailable') else _st[:6]))) "
+        "if _po is not none else ('엔티티 없음' if _has else '" + unset + "') }}"
+    )
+    icon = sel + (
+        "{{ ('account' if _st == 'home' else ('account-outline' if _st == 'not_home' else 'alert-circle-outline')) "
+        "if _po is not none else 'account-outline' }}"
+    )
+    since_card = sel + (
+        "{% set _lc = (_po.last_changed | default(none)) if _po is not none else none %}"
+        "{% set _t = ((as_local(_lc) if _lc.tzinfo is not none else _lc).strftime('%m/%d %H:%M')) if _lc is not none else '' %}"
+        "{{ (_t ~ ('부터' if _st == 'home' else (' 외출' if _st == 'not_home' else ''))) if _t else ('선택 입력' if not _has else '') }}"
+    )
+    return name, status, icon, since_card, color
+
+
+BADGE = (BADGE_TEXT, BADGE_FILL, BADGE_OUTLINE, BADGE_COLOR)
+
+
 class FlowElement(dict):
     """Write each generated layout item as compact single-line YAML flow mapping."""
 
@@ -143,7 +173,7 @@ class TemplateDumper(yaml.SafeDumper):
 TemplateDumper.add_representer(FlowElement, TemplateDumper.represent_flow)
 
 
-class Canvas:
+class Canvas(PanelBlocks):
     """Accumulate scaled elements for one display resolution."""
 
     def __init__(self, width: int, height: int, vw: int, vh: int):
@@ -389,96 +419,135 @@ def _medium_compact_portrait(w: int, h: int) -> list[FlowElement]:
     return c.items
 
 
-def _panel_landscape(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 800, 480)
-    c.icon("home-outline", 38, 36, 28)
-    c.text_fit(TITLE, 60, 17, 360, 38, 28)
-    c.text_fit(CLOCK, 430, 22, 144, 28, 16, align="right")
-    c.rect(588, 15, 776, 55, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=10)
-    c.text_fit(BADGE_TEXT, 596, 19, 172, 32, 20, align="center", color=BADGE_COLOR)
-    c.line(24, 65, 776, 65, width=2)
-
-    cards = ((24, 78), (408, 78), (24, 244), (408, 244))
-    for idx, (left, top) in enumerate(cards):
-        right = left + 368
-        c.rect(left, top, right, top + 154, width=1.5, radius=10)
-        name, status, icon, color, _, since = _person(idx, compact=False)
-        c.icon(icon, left + 28, top + 28, 28, color=color)
-        c.text_fit(name, left + 50, top + 11, 184, 34, 21)
-        c.text_fit(since, left + 238, top + 13, 114, 30, 14, align="right")
-        c.line(left + 16, top + 52, right - 16, top + 52)
-        c.text_fit(status, left + 18, top + 64, 332, 76, 48, align="center", color=color)
-
-    c.rect(
-        24,
-        412,
-        776,
-        466,
-        fill=DOOR_BANNER_FILL,
-        outline=DOOR_BANNER_OUTLINE,
-        width=1.5,
-        radius=8,
+def _footer(
+    c: Canvas, y: float, icon_size: float, size: float, text: str, *, x: float = 12
+) -> None:
+    c.line(14 if x == 12 else x, y, c.vw - (14 if x == 12 else x), y, 2)
+    h = size * 1.5
+    c.icon(DOOR_ICON, x + 6 + icon_size / 2, y + 6 + h / 2, icon_size, color=DOOR_TEXT_COLOR)
+    c.text_fit(
+        text,
+        x + 16 + icon_size,
+        y + 6,
+        c.vw - 2 * x - icon_size - 20,
+        h,
+        size,
+        color=DOOR_TEXT_COLOR,
+        min_size=c.ms(14),
     )
-    c.icon(DOOR_ICON, 50, 439, 24, color=DOOR_BANNER_FG)
-    c.text_fit(DOOR_BANNER_TEXT, 72, 421, 686, 36, 20, color=DOOR_BANNER_FG)
+
+
+def _panel_43(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 400, 300)
+    c.header("home-account", TITLE, BADGE)
+    c.line(200, 52, 200, 252)
+    c.line(14, 153, 386, 153)
+    for idx in range(4):
+        name, status, icon, since, color = _person_card(idx)
+        x = 14 + (idx % 2) * 192
+        y = 52 + (idx // 2) * 102
+        c.icon(icon, x + 22, y + 36, 40, color=color)
+        c.text_fit(name, x + 48, y + 8, 78, 32, 22, min_size=c.ms(15))
+        c.text_fit(
+            status, x + 128, y + 8, 56, 32, 22, align="right", color=color, min_size=c.ms(14)
+        )
+        c.text_fit(since, x + 48, y + 46, 136, 26, 16, min_size=c.ms(14))
+    _footer(c, 262, 22, 19, DOOR_BANNER_TEXT)
     return c.items
 
 
-def _panel_portrait(w: int, h: int) -> list[FlowElement]:
-    c = Canvas(w, h, 480, 800)
-    c.icon("home-outline", 34, 34, 24)
-    c.text_fit(TITLE, 54, 17, 256, 34, 24)
-    c.text_fit(CLOCK, 316, 18, 144, 32, 16, align="right")
-    c.rect(20, 58, 460, 98, fill=BADGE_FILL, outline=BADGE_OUTLINE, width=2, radius=8)
-    c.text_fit(BADGE_TEXT, 28, 62, 424, 32, 19, align="center", color=BADGE_COLOR)
-
+def _panel_34(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 300, 400)
+    c.header("home-account", TITLE, BADGE, pill_w=104)
     for idx in range(4):
-        top = 108 + idx * 148
-        c.rect(20, top, 460, top + 136, width=1.5, radius=10)
-        name, status, icon, color, _, since = _person(idx, compact=False)
-        c.icon(icon, 48, top + 34, 30, color=color)
-        c.text_fit(name, 74, top + 14, 214, 36, 21)
-        c.text_fit(since, 294, top + 15, 150, 34, 15, align="right")
-        c.line(36, top + 56, 444, top + 56)
-        c.text_fit(status, 36, top + 66, 408, 60, 42, align="center", color=color)
+        name, status, icon, since, color = _person_card(idx)
+        y = 50 + idx * 76
+        if idx:
+            c.line(14, y - 2, 286, y - 2)
+        c.icon(icon, 34, y + 38, 40, color=color)
+        c.text_fit(name, 62, y + 6, 130, 34, 22, min_size=c.ms(15))
+        c.text_fit(status, 194, y + 6, 92, 34, 24, align="right", color=color, min_size=c.ms(14))
+        c.text_fit(since, 62, y + 42, 224, 26, 16, min_size=c.ms(14))
+    _footer(c, 358, 22, 17, DOOR_STATUS_COMPACT)
+    return c.items
 
-    c.rect(
-        20,
-        710,
-        460,
-        784,
-        fill=DOOR_BANNER_FILL,
-        outline=DOOR_BANNER_OUTLINE,
-        width=1.5,
-        radius=8,
+
+def _large_landscape(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 800, 480)
+    c.header(
+        "home-account",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=190,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
     )
-    c.icon(DOOR_ICON, 48, 747, 24, color=DOOR_BANNER_FG)
-    c.text_fit(DOOR_BANNER_TEXT, 72, 726, 372, 42, 19, color=DOOR_BANNER_FG)
+    c.line(400, 76, 400, 400, 2)
+    c.line(24, 238, 776, 238, 2)
+    for idx in range(4):
+        name, status, icon, since, color = _person_card(idx, unset="미설정")
+        x = 24 + (idx % 2) * 388
+        y = 72 + (idx // 2) * 168
+        c.icon(icon, x + 44, y + 80, 76, color=color)
+        c.text_fit(name, x + 100, y + 26, 146, 52, 34, min_size=c.ms(20))
+        c.text_fit(
+            status, x + 250, y + 26, 114, 52, 40, align="right", color=color, min_size=c.ms(20)
+        )
+        c.text_fit(since, x + 100, y + 90, 264, 40, 24, min_size=c.ms(18))
+    _footer(c, 412, 34, 26, DOOR_BANNER_TEXT, x=24)
+    return c.items
+
+
+def _large_portrait(w: int, h: int) -> list[FlowElement]:
+    c = Canvas(w, h, 480, 800)
+    c.header(
+        "home-account",
+        TITLE,
+        BADGE,
+        bar=64,
+        margin=24,
+        pill_w=170,
+        pill_h=40,
+        size=28,
+        pill_size=24,
+        icon_size=34,
+    )
+    for idx in range(4):
+        name, status, icon, since, color = _person_card(idx, unset="미설정")
+        y = 74 + idx * 152
+        if idx:
+            c.line(24, y - 4, 456, y - 4, 2)
+        c.icon(icon, 62, y + 66, 76, color=color)
+        c.text_fit(name, 116, y + 16, 190, 54, 36, min_size=c.ms(20))
+        c.text_fit(status, 310, y + 16, 146, 54, 42, align="right", color=color, min_size=c.ms(20))
+        c.text_fit(since, 116, y + 80, 340, 42, 26, min_size=c.ms(18))
+    _footer(c, 692, 34, 26, DOOR_BANNER_TEXT, x=24)
     return c.items
 
 
 def generate() -> str:
     layouts: dict[str, list[FlowElement]] = {}
     profiles = (
-        (_square_200, ((200, 200),)),
-        (_tiny_landscape, ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152))),
-        (_medium_compact_landscape, ((384, 184), (416, 240))),
+        (_square_200, _square_200, ((200, 200),)),
         (
-            _panel_landscape,
-            ((400, 300), (648, 480), (800, 480), (960, 640), (960, 680), (1600, 1200)),
+            _tiny_landscape,
+            _tiny_portrait,
+            ((212, 104), (250, 122), (250, 128), (250, 132), (296, 128), (296, 152)),
         ),
+        (_medium_compact_landscape, _medium_compact_portrait, ((384, 184), (416, 240))),
+        (_panel_43, _panel_34, ((400, 300), (648, 480), (1600, 1200))),
+        (_large_landscape, _large_portrait, ((800, 480), (960, 640), (960, 680))),
     )
-    portrait_map = {
-        _tiny_landscape: _tiny_portrait,
-        _medium_compact_landscape: _medium_compact_portrait,
-        _panel_landscape: _panel_portrait,
-    }
-    for builder, sizes in profiles:
+    for landscape, portrait_builder, sizes in profiles:
         for width, height in sizes:
-            layouts[f"{width}x{height}"] = builder(width, height)
+            layouts[f"{width}x{height}"] = landscape(width, height)
             portrait = f"{height}x{width}"
             if width > height and portrait not in layouts:
-                layouts[portrait] = portrait_map[builder](height, width)
+                layouts[portrait] = portrait_builder(height, width)
 
     for items in layouts.values():
         for item in items:

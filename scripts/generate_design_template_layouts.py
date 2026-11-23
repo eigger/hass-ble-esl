@@ -96,7 +96,21 @@ class Layout:
             }
         )
 
-    def fit(self, x, y, width, height, value, size, *, align="center", color=BLACK, min_size=None):
+    def fit(
+        self,
+        x,
+        y,
+        width,
+        height,
+        value,
+        size,
+        *,
+        align="center",
+        color=BLACK,
+        min_size=None,
+        lines=1,
+        valign="middle",
+    ):
         """A one-line text box in pixels that shrinks to fit instead of clipping."""
         self.items.append(
             {
@@ -109,9 +123,9 @@ class Layout:
                 "height": max(1, round(height)),
                 "size": max(7, round(size)),
                 "min_size": max(7, round(min_size if min_size is not None else size * 0.6)),
-                "max_lines": 1,
+                "max_lines": lines,
                 "align": align,
-                "valign": "middle",
+                "valign": valign,
                 "fit": "shrink",
                 "color": color,
             }
@@ -322,195 +336,6 @@ def color_layout(layout, _base):
             left = 5 + index * 30
             layout.rule(left, 81, left + 25, 81, width=width)
             layout.text((left, 85, left + 25, 95), f"{width} px", 5)
-
-
-def calendar_layout(layout, base):
-    heading, title, start, location = values(base)
-    if layout.detail:
-        layout.header(heading, "${accent}")
-        ev_prefix = tag(
-            "set _evs = events['${calendar}'].events | default([], true) "
-            "if events is defined and events['${calendar}'] is defined else []"
-        )
-        title_expr = title.split("{{", 1)[1].rsplit("}}", 1)[0].strip()
-        loc_expr = location.split("{{", 1)[1].rsplit("}}", 1)[0].strip()
-        layout.text(
-            (5, 21, 95, 46),
-            ev_prefix
-            + template(
-                f"(_evs[0].summary | default('${{empty_text}}', true)) if _evs else ({title_expr})"
-            ),
-            22,
-            align="left",
-            lines=2,
-        )
-        ev_period = (
-            tag("set _sr = (_evs[0].start | default('')) | string")
-            + tag("set _er = (_evs[0].end | default('')) | string")
-            + tag("set _sd = as_datetime(_sr, none)")
-            + tag("set _ed = as_datetime(_er, none)")
-            + tag(
-                "if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif"
-            )
-            + tag(
-                "if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif"
-            )
-        )
-        period = (
-            ev_prefix
-            + tag("if _evs")
-            + ev_period
-            + template(
-                "_sd.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
-                "~ ((' - ' ~ (_ed - timedelta(days=1)).strftime('${date_format}')) "
-                "if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) "
-                "else (' - ' ~ _ed.strftime('${time_format}' if _ed.date() == _sd.date() else '${date_format} ${time_format}') "
-                "if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '')) "
-                "if _sd is not none else ''"
-            )
-            + tag("else")
-            + tag(f"set start = as_datetime({attribute('calendar', 'start_time')}, none)")
-            + tag(f"set end = as_datetime({attribute('calendar', 'end_time')}, none)")
-            + tag(f"set all_day = {attribute('calendar', 'all_day')}")
-            + template(
-                "start.strftime('${date_format}') ~ ('' if all_day else "
-                "' ' ~ start.strftime('${time_format}') ~ "
-                "(' - ' ~ end.strftime('${time_format}' if end.date() == start.date() else '${date_format} ${time_format}') "
-                "if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '')) if start else ''"
-            )
-            + tag("endif")
-        )
-        layout.icon(8, 53, "clock-outline", 6)
-        layout.text((14, 48, 95, 58), period, 8, align="left")
-        layout.icon(8, 65, "map-marker-outline", 6)
-        layout.text(
-            (14, 60, 95, 70),
-            ev_prefix
-            + template(f"(_evs[0].location | default('', true)) if _evs else ({loc_expr})"),
-            8,
-            align="left",
-        )
-
-        def upcoming_slot(index):
-            return (
-                ev_prefix
-                + tag(f"if _evs | length > {index}")
-                + tag(f"set _ev = _evs[{index}]")
-                + tag("set _sr = (_ev.start | default('')) | string")
-                + tag("set _dt = as_datetime(_sr, none)")
-                + tag(
-                    "if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif"
-                )
-                + tag(
-                    "set _when = _dt.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
-                    "if _dt is not none else ''"
-                )
-                + template("(_when ~ '  ' if _when else '') ~ (_ev.summary | default('', true))")
-                + tag("endif")
-            )
-
-        slot_one = (
-            ev_prefix
-            + tag("if _evs | length > 1")
-            + upcoming_slot(1).removeprefix(ev_prefix)
-            + tag("elif _evs")
-            + template("_evs[0].description | default('', true)")
-            + tag("else")
-            + template(f"{attribute('calendar', 'description')} or ''")
-            + tag("endif")
-        )
-        layout.rule(5, 74, 95, 74)
-        layout.text((5, 76, 95, 85), slot_one, 6.5, align="left", lines=1)
-        layout.text((5, 87, 95, 96), upcoming_slot(2), 6.5, align="left", lines=1)
-    else:
-        layout.header(heading, "${accent}")
-        layout.text((5, 23, 95, 60), title, 24, align="left", lines=2)
-        for top, glyph, value in (
-            (64, "clock-outline", start),
-            (81, "map-marker-outline", location),
-        ):
-            layout.icon(9, top + 7, glyph, 10)
-            layout.text((17, top, 95, top + 15), value, 11, align="left")
-
-
-def sensor_layout(layout, base):
-    title, value, unit = values(base)
-    value_color = next(item["color"] for item in base if item.get("value") == value)
-    layout.header(title)
-    if layout.square:
-        layout.icon(50, 30, "${icon}", 14)
-        layout.text((5, 39, 95, 62 if layout.detail else 77), value, 35, color=value_color)
-        layout.text((5, 62 if layout.detail else 78, 95, 71 if layout.detail else 95), unit, 12)
-    else:
-        limit = 70 if layout.detail else 95
-        layout.icon(19, (19 + limit) / 2, "${icon}", 27)
-        layout.text((33, 22, 76, limit), value, 45, color=value_color, align="right")
-        layout.text((78, 22, 95, limit), unit, 14, align="left")
-    if layout.detail:
-        last = tag("set s = states['${sensor}']") + template(
-            "as_local(s.last_updated).strftime('%m/%d %H:%M') if s is not none else ''"
-        )
-        secondary = tag("set e = '${secondary_sensor}'") + tag(
-            "set s = states[e] if e.startswith('sensor.') else none"
-        )
-        second_name = secondary + template("s.name if s is not none else ''")
-        second_value = secondary + template(
-            "s.state ~ (' ' ~ s.attributes.unit_of_measurement if s.attributes.unit_of_measurement is defined else '') if s is not none else ''"
-        )
-        layout.rule(5, 73, 95, 73)
-        layout.row(75, 95, (("Updated", last, None), (second_name, second_value, None)))
-
-
-def print_layout(layout, base):
-    title, percentage, status, finish = values(base)
-    bar = next(item for item in base if item["type"] == "progress_bar")
-    layout.header(title)
-    layout.text((5, 22, 95, 56 if layout.detail else 57), percentage, 38, color="${color}")
-    layout.rectangle(
-        (6, 59, 94, 67),
-        "progress_bar",
-        **{
-            key: bar[key]
-            for key in ("progress", "fill", "outline", "background", "show_percentage")
-        },
-    )
-    if layout.detail:
-        remaining = (
-            tag("set d = as_datetime(states('${end_time}'), none)")
-            + tag(
-                "set minutes = ((as_timestamp(d) - as_timestamp(now())) / 60) | round(0, 'ceil') | int if d else -1"
-            )
-            + template(
-                "((minutes // 60) ~ 'h ' if minutes >= 60 else '') ~ (minutes % 60) ~ 'm' if minutes >= 0 else '—'"
-            )
-        )
-        temps = (
-            tag("set _ns = '${nozzle_sensor}'")
-            + tag("set _bs = '${bed_sensor}'")
-            + tag("set _nr = states(_ns) if _ns.startswith('sensor.') else ''")
-            + tag("set _br = states(_bs) if _bs.startswith('sensor.') else ''")
-            + tag("set _nt = (_nr | float | round(0) | int ~ '°') if is_number(_nr) else '—'")
-            + tag("set _bt = (_br | float | round(0) | int ~ '°') if is_number(_br) else '—'")
-            + template(
-                "_nt ~ ' / ' ~ _bt if (_ns.startswith('sensor.') or _bs.startswith('sensor.')) else '—'"
-            )
-        )
-        layout.row(
-            71,
-            95,
-            (
-                ("Status", status, None),
-                ("ETA", finish, None),
-                ("Remaining", remaining, None),
-                ("Nozzle / Bed", temps, None),
-            ),
-        )
-    elif layout.square:
-        layout.text((6, 69, 94, 82), status, 14)
-        layout.text((6, 83, 94, 97), finish, 12)
-    else:
-        layout.text((6, 71, 45, 96), status, 15, align="left")
-        layout.text((47, 71, 94, 96), finish, 15, align="right")
 
 
 def countdown_layout(layout, base):
@@ -1441,38 +1266,6 @@ def current_weather_layout(layout, _base):
         square_now(layout)
 
 
-def date_weather_layout(layout, base):
-    date, weekday, temperature, state = values(base)
-    weather_icon = values(base, "icon")[0]
-    weekend = next(item["color"] for item in base if item.get("value") == weekday)
-    if layout.square:
-        layout.text((5, 6, 95, 22), date, 21, lines=2)
-        layout.text((5, 23, 95, 39), weekday, 17, color=weekend)
-        layout.rule(8, 40, 92, 40)
-        if layout.detail:
-            layout.icon(23, 53, weather_icon, 19)
-            layout.text((40, 42, 95, 58), temperature, 16)
-            layout.text((40, 58, 95, 67), state, 9)
-            layout.rule(5, 68, 95, 68)
-            conditions(layout)
-        else:
-            layout.icon(23, 63, weather_icon, 24)
-            layout.text((40, 48, 95, 73), temperature, 26)
-            layout.text((5, 76, 95, 95), state, 12)
-
-    else:
-        limit = 67 if layout.detail else 94
-        layout.text((4, 8, 52, limit * 0.63), date, 29)
-        layout.text((5, limit * 0.65, 51, limit), weekday, 24, color=weekend)
-        layout.rule(53, 10, 53, limit)
-        layout.icon(65, limit * 0.46, weather_icon, 26)
-        layout.text((75, 9, 97, limit * 0.65), temperature, 27)
-        layout.text((56, limit * 0.65, 99, limit), state, 13)
-        if layout.detail:
-            layout.rule(5, 68, 95, 68)
-            conditions(layout)
-
-
 def legacy_forecast_layout(layout, base):
     # Reuse the existing forecast parsing, condition mapping and fallbacks.
     day, high, low = values(base, "text")[:3]
@@ -2121,8 +1914,1028 @@ def forecast_layout(layout, base):
     legacy_forecast_layout(layout, base)
 
 
+# BEGIN REDESIGNED CARDS
+# ---------------------------------------------------------------------------
+# Header-bar cards (sensor_card, date_weather, calendar_next, print_progress)
+# ---------------------------------------------------------------------------
+
+
+def shape(layout):
+    """The aspect-ratio class a tag falls into."""
+    width, height = layout.width, layout.height
+    if max(width, height) >= 800:
+        return "large_portrait" if height > width else "large_landscape"
+    if height > width:
+        if width <= 132 and height <= 250:
+            return "tiny"
+        return "narrow" if width < 300 else "portrait"
+    ratio = width / height
+    if ratio >= 1.7:
+        return "wide"
+    return "landscape" if ratio >= 1.2 else "square"
+
+
+class Grid:
+    """Design-space helpers: positions scale per axis, sizes by the smaller factor."""
+
+    def __init__(self, layout, width, height):
+        self.layout = layout
+        self.w, self.h = width, height
+        self.sx = layout.width / width
+        self.sy = layout.height / height
+        self.s = min(self.sx, self.sy)
+
+    def X(self, value):
+        return value * self.sx
+
+    def Y(self, value):
+        return value * self.sy
+
+    def S(self, value):
+        return value * self.s
+
+    def px(self, size, floor=14):
+        scaled = self.S(size)
+        return max(scaled, floor) if size >= floor else scaled
+
+    def text(
+        self, value, x, cy, w, size, *, align="left", color=BLACK, floor=14, ratio=0.7, bold=False
+    ):
+        """One line centred on ``cy``; ``x`` is the left, right or middle edge by ``align``."""
+        px = self.px(size, floor)
+        height = px * (1.5 if size >= 60 else 1.6)
+        width = self.X(w)
+        edge = self.X(x)
+        left = edge if align == "left" else edge - width if align == "right" else edge - width / 2
+        left, top, width, height = self.inside(left, self.Y(cy) - height / 2, width, height)
+        self.layout.fit(
+            left,
+            top,
+            width,
+            height,
+            value,
+            px,
+            align=align,
+            color=color,
+            min_size=min(px, max(floor, px * ratio)),
+        )
+
+    def inside(self, left, top, width, height):
+        """Keep a text box within the tag."""
+        left = max(0, left)
+        top = max(0, top)
+        return (
+            left,
+            top,
+            min(width, self.layout.width - left),
+            min(height, self.layout.height - top),
+        )
+
+    def box(self, value, x, y, w, h, size, *, lines=2, valign="top", color=BLACK, align="left"):
+        px = self.px(size, 14)
+        self.layout.fit(
+            self.X(x),
+            self.Y(y),
+            self.X(w),
+            self.Y(h),
+            value,
+            px,
+            align=align,
+            color=color,
+            min_size=min(px, max(14, px * 0.6)),
+            lines=lines,
+            valign=valign,
+        )
+
+    def icon(self, value, x, cy, size, color=BLACK):
+        self.layout.glyph(self.X(x), self.Y(cy), value, self.S(size), color=color)
+
+    def rule(self, x1, y1, x2, y2, width=1, color=BLACK):
+        self.layout.stroke(
+            self.X(x1), self.Y(y1), self.X(x2), self.Y(y2), max(1, round(self.S(width))), color
+        )
+
+    def fill(self, x1, y1, x2, y2, color=BLACK, radius=0):
+        self.layout.block(
+            self.X(x1),
+            self.Y(y1),
+            self.X(x2) - 1,
+            self.Y(y2) - 1,
+            fill=color,
+            radius=self.S(radius),
+        )
+
+    def bar(
+        self, icon, title, *, right=None, pill=None, height=44, size=20, pill_width=96, inset=44
+    ):
+        """Black header: icon and title, then a plain text or a status pill on the right."""
+        middle = height / 2
+        self.fill(0, 0, self.w, height)
+        self.icon(icon, inset - 20, middle, inset - 20, color="white")
+        reserve = pill_width + 12 if pill else 100 if right else 0
+        self.text(title, inset, middle, self.w - inset - reserve - 8, size, color="white")
+        if right:
+            self.text(right, self.w - 12, middle, 90, size - 2, align="right", color="white")
+        if pill:
+            text, fill = pill
+            half = self.S(13)
+            self.layout.block(
+                self.X(self.w - 12 - pill_width),
+                self.Y(middle) - half,
+                self.X(self.w - 12),
+                self.Y(middle) + half,
+                fill=fill,
+                radius=half,
+            )
+            self.text(
+                text,
+                self.w - 12 - pill_width / 2,
+                middle,
+                pill_width - 12,
+                max(size - 3, 14),
+                align="center",
+                color=BLACK,
+            )
+
+    def cells(self, items, top, bottom, x0, x1, *, label=17, value=26, icon=24):
+        """Equal cells split by vertical lines: icon beside a label, the value underneath."""
+        width = (x1 - x0) / len(items)
+        middle = (top + bottom) / 2
+        for index, (glyph, name, text, ink) in enumerate(items):
+            x = x0 + index * width
+            self.icon(glyph, x + 16, middle, icon, color=ink)
+            self.text(name, x + 36, middle - label * 0.7, width - 44, label)
+            self.text(text, x + 36, middle + value * 0.55, width - 44, value, ratio=0.6)
+            if index:
+                self.rule(x - 6, top + 4, x - 6, bottom - 4, color=ink)
+
+
+def bar_ink(condition):
+    """White when the condition is false so that a decoration disappears with its value."""
+    return template(f"'black' if ({condition}) else 'white'")
+
+
+# --- sensor_card -------------------------------------------------------------
+
+SENSOR_TITLE = template("'${title}' or state_attr('${sensor}', 'friendly_name') or ''")
+SENSOR_VALUE = (
+    "{% set s = states('${sensor}') %}{% set n = s | float(none) %}"
+    "{{ s if n is none or n != n else (n | round(1) | string | replace('.0', '')) }}"
+)
+SENSOR_COLOR = (
+    "{% set s = states('${sensor}') %}{% set _w = '${warn_above}' %}"
+    "{% set lim = (_w | float) if is_number(_w) else none %}"
+    "{% set n = (s | float) if is_number(s) else none %}"
+    "{{ ('black' if '${warn_color}' == 'white' else '${warn_color}') "
+    "if lim is not none and n is not none and n >= lim else '${color}' }}"
+)
+SENSOR_UNIT = template("state_attr('${sensor}', 'unit_of_measurement') or ''")
+SECONDARY_SET = (
+    "'${secondary_sensor}'.startswith('sensor.') and states['${secondary_sensor}'] is not none"
+)
+
+
+def sensor_age(field):
+    return (
+        tag("set s = states['${sensor}']")
+        + tag(
+            f"set m = ((as_timestamp(now()) - as_timestamp(s.{field})) / 60) | int "
+            "if s is not none else -1"
+        )
+        + template(
+            f"'{DASH}' if m < 0 else ('just now' if m < 1 else (m ~ ' min ago' if m < 60 "
+            "else ((m // 60) ~ ' h ago' if m < 1440 else (m // 1440) ~ ' d ago')))"
+        )
+    )
+
+
+def secondary_value(part):
+    head = tag(
+        "set e = states['${secondary_sensor}'] if '${secondary_sensor}'.startswith('sensor.') else none"
+    ) + tag("set ok = e is not none")
+    if part == "name":
+        return head + template("(e.name | default('', true)) if ok else ''")
+    return head + template(
+        "(e.state ~ (' ' ~ e.attributes.unit_of_measurement "
+        "if e.attributes.unit_of_measurement is defined else '')) if ok else ''"
+    )
+
+
+def sensor_layout(layout, base):
+    kind = shape(layout)
+    sec = bar_ink(SECONDARY_SET)
+    time = current_value("time")
+    if kind in {"landscape", "large_landscape"}:
+        big = kind == "large_landscape"
+        g = Grid(layout, 800 if big else 400, 480 if big else 300)
+        title_size, bar_h = (28, 56) if big else (20, 44)
+        g.bar("${icon}", SENSOR_TITLE, right=time, height=bar_h, size=title_size)
+        if big:
+            g.icon("${icon}", 120, 214, 170)
+            g.text(SENSOR_VALUE, 640, 212, 450, 200, align="right", color=SENSOR_COLOR, ratio=0.3)
+            g.text(SENSOR_UNIT, 654, 176, 130, 60, ratio=0.4)
+            g.rule(24, 352, 776, 352, 3)
+            items = [
+                ("clock-outline", "Updated", sensor_age("last_updated"), BLACK),
+                ("swap-vertical", "Changed", sensor_age("last_changed"), BLACK),
+                ("gauge", secondary_value("name"), secondary_value("both"), sec),
+            ]
+            g.cells(items, 364, 470, 24, 776, label=22, value=34, icon=34)
+        else:
+            g.icon("${icon}", 50, 138, 84)
+            g.text(SENSOR_VALUE, 318, 142, 222, 100, align="right", color=SENSOR_COLOR, ratio=0.3)
+            g.text(SENSOR_UNIT, 326, 112, 62, 34, ratio=0.45)
+            g.rule(14, 222, 386, 222, 2)
+            items = [
+                ("clock-outline", "Updated", sensor_age("last_updated"), BLACK),
+                ("gauge", secondary_value("name"), secondary_value("both"), sec),
+            ]
+            g.cells(items, 230, 292, 14, 386, label=17, value=24, icon=26)
+    elif kind in {"portrait", "large_portrait"}:
+        big = kind == "large_portrait"
+        g = Grid(layout, 480 if big else 300, 800 if big else 400)
+        g.bar("${icon}", SENSOR_TITLE, right=time, height=56 if big else 44, size=28 if big else 20)
+        if big:
+            g.icon("${icon}", 240, 190, 150)
+            g.text(SENSOR_VALUE, 240, 380, 440, 170, align="center", color=SENSOR_COLOR, ratio=0.3)
+            g.text(SENSOR_UNIT, 240, 480, 300, 52, align="center", ratio=0.4)
+            g.rule(24, 548, 456, 548, 3)
+            rows = [
+                ("clock-outline", "Updated", sensor_age("last_updated"), BLACK, 596),
+                ("swap-vertical", "Changed", sensor_age("last_changed"), BLACK, 662),
+                ("gauge", secondary_value("name"), secondary_value("both"), sec, 728),
+            ]
+            size, label_size = 32, 26
+        else:
+            g.icon("${icon}", 150, 112, 80)
+            g.text(SENSOR_VALUE, 150, 224, 270, 88, align="center", color=SENSOR_COLOR, ratio=0.3)
+            g.text(SENSOR_UNIT, 150, 292, 200, 32, align="center", ratio=0.5)
+            g.rule(14, 320, 286, 320, 2)
+            rows = [
+                ("clock-outline", "Updated", sensor_age("last_updated"), BLACK, 346),
+                ("gauge", secondary_value("name"), secondary_value("both"), sec, 380),
+            ]
+            size, label_size = 20, 16
+        for glyph, name, text, ink, centre in rows:
+            g.icon(glyph, 30 if not big else 44, centre, 26 if not big else 34, color=ink)
+            g.text(name, 52 if not big else 76, centre, 120 if not big else 190, label_size)
+            g.text(
+                text,
+                288 if not big else 456,
+                centre,
+                130 if not big else 220,
+                size,
+                align="right",
+                ratio=0.6,
+            )
+        if big:
+            g.rule(24, 630, 456, 630)
+            g.rule(24, 696, 456, 696)
+    elif kind == "wide":
+        g = Grid(layout, 296, 128)
+        g.bar("${icon}", SENSOR_TITLE, right=time, height=28, size=16)
+        g.icon("${icon}", 32, 62, 44)
+        g.text(SENSOR_VALUE, 218, 60, 150, 56, align="right", color=SENSOR_COLOR, ratio=0.3)
+        g.text(SENSOR_UNIT, 224, 52, 64, 22, ratio=0.6)
+        g.rule(8, 94, 288, 94)
+        g.rule(148, 98, 148, 124, color=sec)
+        g.icon("clock-outline", 18, 111, 18)
+        g.text(sensor_age("last_updated"), 32, 111, 112, 15, ratio=0.9)
+        g.text(secondary_value("both"), 288, 111, 134, 15, align="right", ratio=0.9)
+    elif kind == "square":
+        g = Grid(layout, 200, 200)
+        g.bar("${icon}", SENSOR_TITLE, height=34, size=17)
+        g.text(SENSOR_VALUE, 100, 84, 184, 66, align="center", color=SENSOR_COLOR, ratio=0.3)
+        g.text(SENSOR_UNIT, 100, 128, 150, 22, align="center", ratio=0.6)
+        g.rule(8, 150, 192, 150)
+        g.rule(100, 156, 100, 192, color=sec)
+        g.icon("clock-outline", 18, 174, 18)
+        g.text(sensor_age("last_updated"), 30, 174, 66, 14, ratio=1.0)
+        g.text(secondary_value("both"), 194, 174, 94, 14, align="right", ratio=1.0)
+    else:
+        narrow(layout, kind, SENSOR_TITLE, sensor_narrow_body(layout, kind, sec))
+
+
+def sensor_narrow_body(layout, kind, sec):
+    """Stacked body for tall narrow tags; returns a function that draws below the bar."""
+
+    def draw(g, top):
+        width, height = layout.width, layout.height
+        if kind == "tiny":
+            area = height - top - 40
+            g.icon("${icon}", width / 2, top + area * 0.17, min(width * 0.42, area * 0.28))
+            g.text(
+                SENSOR_VALUE,
+                width / 2,
+                top + area * 0.55,
+                width - 6,
+                min(width * 0.36, area * 0.34),
+                align="center",
+                color=SENSOR_COLOR,
+                ratio=0.3,
+            )
+            g.text(
+                SENSOR_UNIT, width / 2, top + area * 0.88, width - 8, 18, align="center", ratio=0.7
+            )
+            g.rule(8, height - 40, width - 8, height - 40)
+            g.text(
+                sensor_age("last_updated"),
+                width / 2,
+                height - 28,
+                width - 6,
+                14,
+                align="center",
+                ratio=1.0,
+            )
+            g.text(
+                secondary_value("both"),
+                width / 2,
+                height - 11,
+                width - 6,
+                14,
+                align="center",
+                ratio=1.0,
+            )
+            return
+        area = height - top - 104
+        g.icon("${icon}", width / 2, top + area * 0.2, min(width * 0.36, area * 0.3))
+        g.text(
+            SENSOR_VALUE,
+            width / 2,
+            top + area * 0.6,
+            width - 8,
+            min(width * 0.34, area * 0.36),
+            align="center",
+            color=SENSOR_COLOR,
+            ratio=0.3,
+        )
+        g.text(SENSOR_UNIT, width / 2, top + area * 0.9, width - 8, 20, align="center", ratio=0.6)
+        g.rule(10, height - 100, width - 10, height - 100, 2)
+        for centre, glyph, name, text, ink in (
+            (height - 76, "clock-outline", "Updated", sensor_age("last_updated"), BLACK),
+            (height - 28, "gauge", secondary_value("name"), secondary_value("both"), sec),
+        ):
+            g.icon(glyph, 18, centre - 10, 20, color=ink)
+            g.text(name, 34, centre - 10, width - 40, 14)
+            g.text(text, 12, centre + 14, width - 20, 18, ratio=0.6)
+        g.rule(10, height - 52, width - 10, height - 52, color=sec)
+
+    return draw
+
+
+def narrow(layout, kind, title, body):
+    """Tall narrow tags: a slim black title bar over a stacked body."""
+    width = layout.width
+    g = Grid(layout, width, layout.height)
+    height = 30 if width < 160 else 36
+    g.fill(0, 0, width, height)
+    g.text(title, 8, height / 2, width - 16, 15, align="left", color="white")
+    body(g, height)
+
+
+# --- calendar_next -----------------------------------------------------------
+
+CAL_EVENTS = tag(
+    "set _evs = events['${calendar}'].events | default([], true) "
+    "if events is defined and events['${calendar}'] is defined else []"
+)
+CAL_TITLE = CAL_EVENTS + template(
+    "(_evs[0].summary | default('${empty_text}', true)) if _evs "
+    "else (state_attr('${calendar}', 'message') or '${empty_text}')"
+)
+CAL_LOCATION = CAL_EVENTS + template(
+    "(_evs[0].location | default('', true)) if _evs else (state_attr('${calendar}', 'location') or '')"
+)
+CAL_HAS_EVENT = "_evs or state_attr('${calendar}', 'start_time')"
+CAL_HAS_PLACE = "(_evs[0].location | default('', true)) if _evs else (state_attr('${calendar}', 'location') or '')"
+CAL_START = (
+    tag("if _evs")
+    + tag("set _s = as_datetime((_evs[0].start | default('')) | string, none)")
+    + tag("else")
+    + tag("set _a = state_attr('${calendar}', 'start_time')")
+    + tag("set _s = as_datetime(_a, none) if _a else none")
+    + tag("endif")
+    + tag("if _s is not none and _s.tzinfo is not none %}{% set _s = as_local(_s) %}{% endif")
+)
+CAL_RELATIVE = (
+    CAL_EVENTS
+    + CAL_START
+    + tag(
+        "set _m = ((as_timestamp(_s) - as_timestamp(now())) / 60) | round(0, 'ceil') | int "
+        "if _s is not none else none"
+    )
+    + tag(
+        "set _rel = '' if _m is none else ('now' if _m <= 0 else ('in ' ~ _m ~ 'm' if _m < 60 "
+        "else ('in ' ~ (_m // 60) ~ 'h' if _m < 2880 else 'in ' ~ (_m // 1440) ~ 'd')))"
+    )
+)
+CAL_PILL = (
+    CAL_RELATIVE + template("_rel"),
+    CAL_RELATIVE + template("'white' if _rel else 'black'"),
+)
+CAL_PERIOD = (
+    CAL_EVENTS
+    + tag("if _evs")
+    + tag("set _sr = (_evs[0].start | default('')) | string")
+    + tag("set _er = (_evs[0].end | default('')) | string")
+    + tag("set _sd = as_datetime(_sr, none)")
+    + tag("set _ed = as_datetime(_er, none)")
+    + tag("if _sd is not none and _sd.tzinfo is not none %}{% set _sd = as_local(_sd) %}{% endif")
+    + tag("if _ed is not none and _ed.tzinfo is not none %}{% set _ed = as_local(_ed) %}{% endif")
+    + template(
+        "_sd.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
+        "~ ((' \u2013 ' ~ (_ed - timedelta(days=1)).strftime('${date_format}')) "
+        "if _sr | length == 10 and _er | length == 10 and _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed.date() > _sd.date() + timedelta(days=1) "
+        "else (' \u2013 ' ~ _ed.strftime('${time_format}' if _ed.date() == _sd.date() else '${date_format} ${time_format}') "
+        "if _ed is not none and (_ed.tzinfo is none) == (_sd.tzinfo is none) and _ed >= _sd and _sr | length > 10 else '')) "
+        "if _sd is not none else ''"
+    )
+    + tag("else")
+    + tag("set start = as_datetime(state_attr('${calendar}', 'start_time'), none)")
+    + tag("set end = as_datetime(state_attr('${calendar}', 'end_time'), none)")
+    + tag("set all_day = state_attr('${calendar}', 'all_day')")
+    + template(
+        "start.strftime('${date_format}') ~ ('' if all_day else "
+        "' ' ~ start.strftime('${time_format}') ~ "
+        "(' \u2013 ' ~ end.strftime('${time_format}' if end.date() == start.date() else '${date_format} ${time_format}') "
+        "if end and (end.tzinfo is none) == (start.tzinfo is none) and end >= start else '')) if start else ''"
+    )
+    + tag("endif")
+)
+
+
+CAL_START_TEXT = tag("set _p") + CAL_PERIOD + tag("endset") + template("_p.split(' \u2013 ')[0]")
+
+
+def calendar_slot(index, part):
+    """When or title of upcoming event ``index``; empty when there is no such event."""
+    head = (
+        CAL_EVENTS
+        + tag(f"if _evs | length > {index}")
+        + tag(f"set _ev = _evs[{index}]")
+        + tag("set _sr = (_ev.start | default('')) | string")
+        + tag("set _dt = as_datetime(_sr, none)")
+        + tag(
+            "if _dt is not none and _dt.tzinfo is not none %}{% set _dt = as_local(_dt) %}{% endif"
+        )
+    )
+    if part == "title":
+        return head + template("_ev.summary | default('', true)") + tag("endif")
+    return (
+        head
+        + template(
+            "_dt.strftime('${date_format}' if _sr | length == 10 else '${date_format} ${time_format}') "
+            "if _dt is not none else ''"
+        )
+        + tag("endif")
+    )
+
+
+def calendar_ink(index=1):
+    return CAL_EVENTS + template(f"'black' if _evs | length > {index} else 'white'")
+
+
+def calendar_next_layout(layout, base):
+    kind = shape(layout)
+    draw_calendar_next(layout, kind)
+    if kind in {"wide", "square", "tiny", "narrow"}:
+        # Small tags read the calendar entity only; no event list is fetched for them.
+        for item in layout.items:
+            for key, value in item.items():
+                if isinstance(value, str):
+                    item[key] = value.replace(CAL_EVENTS, tag("set _evs = []"))
+
+
+def draw_calendar_next(layout, kind):
+    heading = "${heading}"
+    has_event = CAL_EVENTS + template(f"'black' if ({CAL_HAS_EVENT}) else 'white'")
+    has_place = CAL_EVENTS + template(f"'black' if ({CAL_HAS_PLACE}) else 'white'")
+    if kind in {"landscape", "large_landscape"}:
+        big = kind == "large_landscape"
+        g = Grid(layout, 800 if big else 400, 480 if big else 300)
+        g.bar(
+            "calendar",
+            heading,
+            pill=CAL_PILL,
+            height=56 if big else 44,
+            size=28 if big else 20,
+            pill_width=150 if big else 96,
+        )
+        if big:
+            g.box(CAL_TITLE, 24, 72, 752, 168, 68, lines=2, color=BLACK)
+            g.icon("clock-outline", 44, 266, 36, color=has_event)
+            g.text(CAL_PERIOD, 76, 266, 700, 36, ratio=0.6)
+            g.icon("map-marker-outline", 44, 314, 36, color=has_place)
+            g.text(CAL_LOCATION, 76, 314, 700, 36, ratio=0.6)
+            g.rule(24, 346, 776, 346, 2, color=calendar_ink())
+            for index in range(1, 4):
+                centre = 352 + 44 * index - 14
+                if index > 1:
+                    g.rule(24, centre - 22, 776, centre - 22, color=calendar_ink(index))
+                g.text(calendar_slot(index, "when"), 24, centre, 270, 24, ratio=0.7)
+                g.text(calendar_slot(index, "title"), 304, centre, 472, 28, ratio=0.6)
+        else:
+            g.box(CAL_TITLE, 16, 52, 368, 104, 40, lines=2)
+            g.icon("clock-outline", 30, 176, 24, color=has_event)
+            g.text(CAL_PERIOD, 52, 176, 334, 22, ratio=0.7)
+            g.icon("map-marker-outline", 30, 210, 24, color=has_place)
+            g.text(CAL_LOCATION, 52, 210, 334, 22, ratio=0.7)
+            g.rule(14, 238, 386, 238, 1, color=calendar_ink())
+            g.text(CAL_EVENTS + template("'Then' if _evs | length > 1 else ''"), 16, 266, 54, 17)
+            g.text(calendar_slot(1, "title"), 70, 266, 190, 20, ratio=0.7)
+            g.text(calendar_slot(1, "when"), 386, 266, 130, 20, align="right", ratio=0.7)
+    elif kind in {"portrait", "large_portrait"}:
+        big = kind == "large_portrait"
+        g = Grid(layout, 480 if big else 300, 800 if big else 400)
+        g.bar(
+            "calendar",
+            heading,
+            pill=CAL_PILL,
+            height=56 if big else 44,
+            size=28 if big else 20,
+            pill_width=150 if big else 96,
+        )
+        if big:
+            g.box(CAL_TITLE, 24, 76, 432, 230, 62, lines=3)
+            g.icon("clock-outline", 40, 340, 34, color=has_event)
+            g.text(CAL_PERIOD, 70, 340, 390, 30, ratio=0.6)
+            g.icon("map-marker-outline", 40, 392, 34, color=has_place)
+            g.text(CAL_LOCATION, 70, 392, 390, 30, ratio=0.6)
+            g.rule(24, 432, 456, 432, 2, color=calendar_ink())
+            for index in range(1, 4):
+                top = 432 + (index - 1) * 122
+                if index > 1:
+                    g.rule(24, top, 456, top, color=calendar_ink(index))
+                g.text(calendar_slot(index, "when"), 24, top + 34, 432, 24, ratio=0.7)
+                g.text(calendar_slot(index, "title"), 24, top + 78, 432, 32, ratio=0.6)
+        else:
+            g.box(CAL_TITLE, 16, 54, 268, 156, 40, lines=3)
+            g.icon("clock-outline", 28, 236, 22, color=has_event)
+            g.text(CAL_PERIOD, 50, 236, 240, 20, ratio=0.7)
+            g.icon("map-marker-outline", 28, 270, 22, color=has_place)
+            g.text(CAL_LOCATION, 50, 270, 240, 20, ratio=0.7)
+            g.rule(14, 298, 286, 298, 1, color=calendar_ink())
+            g.text(CAL_EVENTS + template("'Then' if _evs | length > 1 else ''"), 16, 322, 100, 17)
+            g.text(calendar_slot(1, "title"), 16, 350, 268, 22, ratio=0.7)
+            g.text(calendar_slot(1, "when"), 16, 378, 268, 18, ratio=0.8)
+    elif kind == "wide":
+        g = Grid(layout, 296, 128)
+        g.bar("calendar", heading, pill=CAL_PILL, height=28, size=16, pill_width=72)
+        g.box(CAL_TITLE, 8, 31, 280, 48, 22, lines=2, valign="middle")
+        g.icon("clock-outline", 16, 92, 16, color=has_event)
+        g.text(CAL_PERIOD, 30, 92, 258, 16, ratio=0.85)
+        g.icon("map-marker-outline", 16, 112, 16, color=has_place)
+        g.text(CAL_LOCATION, 30, 112, 258, 15, ratio=0.9)
+    elif kind == "square":
+        g = Grid(layout, 200, 200)
+        g.bar("calendar", heading, pill=CAL_PILL, height=34, size=16, pill_width=60, inset=34)
+        g.box(CAL_TITLE, 8, 40, 184, 84, 28, lines=3, valign="middle")
+        g.icon("clock-outline", 16, 140, 16, color=has_event)
+        g.text(CAL_PERIOD, 30, 140, 164, 16, ratio=0.85)
+        g.icon("map-marker-outline", 16, 168, 16, color=has_place)
+        g.text(CAL_LOCATION, 30, 168, 164, 15, ratio=0.9)
+    else:
+        width, height = layout.width, layout.height
+        g = Grid(layout, width, height)
+        bar_h = 30 if width < 160 else 36
+        g.fill(0, 0, width, bar_h)
+        g.text(heading, 8, bar_h / 2, width - 16, 15, color="white")
+        rel_top = bar_h + 4
+        g.box(
+            CAL_TITLE,
+            6,
+            rel_top,
+            width - 12,
+            height * 0.42,
+            min(width * 0.16, 22),
+            lines=4,
+            valign="top",
+        )
+        y = rel_top + height * 0.42 + 6
+        g.rule(8, y - 3, width - 8, y - 3, color=has_event)
+        g.box(CAL_PERIOD if width >= 160 else CAL_START_TEXT, 6, y, width - 12, 36, 14, lines=2)
+        g.box(CAL_LOCATION, 6, y + 40, width - 12, 36, 14, lines=2)
+        g.text(
+            CAL_RELATIVE + template("_rel"),
+            width / 2,
+            height - 14,
+            width - 8,
+            16,
+            align="center",
+            ratio=0.9,
+        )
+
+
+# --- date_weather ------------------------------------------------------------
+
+DW_DATE = template("now().strftime('${date_format}')")
+DW_WEEKDAY = tag("set names = '${weekdays}'.split(',')") + template(
+    "names[now().weekday()] if names | length > now().weekday() else ''"
+)
+DW_WEEKDAY_COLOR = "{{ '${weekend_color}' if now().weekday() >= 5 else 'black' }}"
+DW_YEAR = template("now().strftime('%Y')")
+DW_WEEK = template("'Week ' ~ now().strftime('%V')")
+DW_YEAR_WEEK = template("now().strftime('%Y') ~ '  ·  Week ' ~ now().strftime('%V')")
+WARM = "red"
+
+
+def weather_readings(g, y, size, *, xs):
+    """Red high, low and chance of rain on one line at the given x positions."""
+    (up, down, rain) = xs
+    g.icon("arrow-up-thin", up, y, size + 2, color=WARM)
+    g.text(today_value("high"), up + size * 0.6, y, size * 2.2, size, color=WARM, ratio=0.8)
+    g.icon("arrow-down-thin", down, y, size + 2)
+    g.text(today_value("low"), down + size * 0.6, y, size * 2.2, size, ratio=0.8)
+    g.icon("umbrella-outline", rain, y, size)
+    g.text(today_value("chance"), rain + size * 0.6, y, size * 2.4, size, ratio=0.8)
+
+
+def date_weather_layout(layout, base):
+    kind = shape(layout)
+    temp = current_value("temperature")
+    state = current_value("state")
+    if kind in {"landscape", "large_landscape"}:
+        big = kind == "large_landscape"
+        g = Grid(layout, 800 if big else 400, 480 if big else 300)
+        if big:
+            g.text(DW_DATE, 36, 80, 500, 130, color=BLACK, ratio=0.4)
+            g.text(DW_WEEKDAY, 40, 172, 420, 56, color=DW_WEEKDAY_COLOR, ratio=0.4)
+            g.text(DW_YEAR, 764, 56, 200, 40, align="right")
+            g.text(DW_WEEK, 764, 106, 200, 34, align="right")
+            g.rule(24, 218, 776, 218, 3)
+            g.icon(CONDITION_ICON, 130, 308, 190)
+            g.text(temp, 250, 296, 330, 150, ratio=0.4)
+            g.text(state, 764, 258, 220, 42, align="right", ratio=0.5)
+            g.icon("arrow-up-thin", 604, 316, 36, color=WARM)
+            g.text(today_value("high"), 628, 316, 80, 34, color=WARM)
+            g.icon("arrow-down-thin", 700, 316, 36)
+            g.text(today_value("low"), 724, 316, 70, 34)
+            g.icon("umbrella-outline", 624, 366, 32)
+            g.text(today_value("chance"), 764, 366, 120, 32, align="right")
+            g.rule(24, 396, 776, 396, 2)
+            readings = [
+                ("thermometer", "feels", "Feels"),
+                ("water-percent", "humidity", "Humid."),
+                ("weather-windy", "wind", "Wind"),
+            ]
+            cell = 752 / 3
+            for index, (glyph, key, label) in enumerate(readings):
+                left = 24 + index * cell
+                if index:
+                    g.rule(left, 410, left, 468)
+                g.icon(glyph, left + 30, 438, 34)
+                g.text(label, left + 56, 420, cell - 70, 22)
+                g.text(current_value(key), left + 56, 450, cell - 70, 30, ratio=0.6)
+        else:
+            g.text(DW_DATE, 20, 50, 270, 64, ratio=0.4)
+            g.text(DW_WEEKDAY, 22, 112, 250, 30, color=DW_WEEKDAY_COLOR, ratio=0.5)
+            g.text(DW_YEAR, 386, 34, 90, 22, align="right")
+            g.text(DW_WEEK, 386, 62, 90, 20, align="right")
+            g.rule(14, 140, 386, 140, 2)
+            g.icon(CONDITION_ICON, 74, 214, 104)
+            g.text(temp, 140, 196, 160, 80, ratio=0.4)
+            g.text(state, 386, 170, 200, 26, align="right", ratio=0.6)
+            g.icon("arrow-up-thin", 290, 222, 22, color=WARM)
+            g.text(today_value("high"), 301, 222, 44, 22, color=WARM, ratio=0.8)
+            g.icon("arrow-down-thin", 346, 222, 22)
+            g.text(today_value("low"), 357, 222, 40, 22, ratio=0.8)
+            g.icon("umbrella-outline", 300, 262, 20)
+            g.text(today_value("chance"), 386, 262, 70, 20, align="right")
+    elif kind in {"portrait", "large_portrait"}:
+        big = kind == "large_portrait"
+        g = Grid(layout, 480 if big else 300, 800 if big else 400)
+        mid = g.w / 2
+        if big:
+            g.text(DW_DATE, mid, 130, 440, 150, align="center", ratio=0.4)
+            g.text(DW_WEEKDAY, mid, 252, 440, 64, align="center", color=DW_WEEKDAY_COLOR, ratio=0.4)
+            g.text(DW_YEAR_WEEK, mid, 316, 440, 30, align="center")
+            g.rule(24, 358, 456, 358, 3)
+            g.icon(CONDITION_ICON, 130, 456, 170)
+            g.text(temp, 214, 444, 250, 120, ratio=0.4)
+            g.text(state, mid, 566, 440, 40, align="center", ratio=0.5)
+            weather_readings(g, 626, 32, xs=(48, 192, 330))
+            g.rule(24, 668, 456, 668, 2)
+            for index, (glyph, key, label) in enumerate(
+                [
+                    ("thermometer", "feels", "Feels like"),
+                    ("water-percent", "humidity", "Humidity"),
+                    ("weather-windy", "wind", "Wind"),
+                ]
+            ):
+                centre = 704 + index * 36
+                g.icon(glyph, 40, centre, 26)
+                g.text(label, 66, centre, 180, 22)
+                g.text(current_value(key), 456, centre, 200, 26, align="right", ratio=0.6)
+        else:
+            g.text(DW_DATE, mid, 56, 280, 72, align="center", ratio=0.4)
+            g.text(DW_WEEKDAY, mid, 112, 280, 32, align="center", color=DW_WEEKDAY_COLOR, ratio=0.5)
+            g.text(DW_YEAR_WEEK, mid, 148, 280, 18, align="center")
+            g.rule(14, 172, 286, 172, 2)
+            g.icon(CONDITION_ICON, 78, 236, 96)
+            g.text(temp, 134, 228, 160, 72, ratio=0.4)
+            g.text(state, mid, 296, 280, 26, align="center", ratio=0.6)
+            weather_readings(g, 340, 20, xs=(24, 112, 206))
+    elif kind == "wide":
+        g = Grid(layout, 296, 128)
+        g.text(DW_DATE, 8, 34, 134, 40, ratio=0.5)
+        g.text(DW_WEEKDAY, 10, 72, 130, 24, color=DW_WEEKDAY_COLOR, ratio=0.6)
+        small = layout.width < 296
+        if not small:
+            g.text(DW_YEAR_WEEK, 10, 106, 134, 14, ratio=1.0)
+        g.rule(144, 10, 144, 118)
+        g.icon(CONDITION_ICON, 174, 34, 48)
+        g.text(temp, 204, 34, 86, 40, ratio=0.5)
+        g.text(state, 152, 70, 136, 17, ratio=0.8)
+        if small:
+            g.icon("arrow-up-thin", 158, 100, 18, color=WARM)
+            g.text(today_value("high"), 170, 100, 48, 17, color=WARM, ratio=0.8)
+            g.icon("arrow-down-thin", 220, 100, 18)
+            g.text(today_value("low"), 232, 100, 48, 17, ratio=0.8)
+        else:
+            weather_readings(g, 100, 16, xs=(158, 206, 252))
+    elif kind == "square":
+        g = Grid(layout, 200, 200)
+        g.text(DW_DATE, 100, 30, 184, 42, align="center", ratio=0.5)
+        g.text(DW_WEEKDAY, 100, 66, 184, 24, align="center", color=DW_WEEKDAY_COLOR, ratio=0.6)
+        g.rule(10, 86, 190, 86, 2)
+        g.icon(CONDITION_ICON, 44, 122, 56)
+        g.text(temp, 78, 116, 116, 44, ratio=0.5)
+        g.text(state, 100, 152, 184, 17, align="center", ratio=0.8)
+        weather_readings(g, 180, 16, xs=(14, 70, 126))
+    elif kind == "tiny":
+        width, height = layout.width, layout.height
+        g = Grid(layout, width, height)
+        mid = width / 2
+        g.text(DW_DATE, mid, height * 0.095, width - 6, 24, align="center", ratio=0.5)
+        g.text(
+            DW_WEEKDAY,
+            mid,
+            height * 0.205,
+            width - 6,
+            15,
+            align="center",
+            color=DW_WEEKDAY_COLOR,
+            ratio=0.9,
+        )
+        g.rule(8, height * 0.265, width - 8, height * 0.265, 2)
+        g.icon(CONDITION_ICON, mid, height * 0.36, 28)
+        g.text(temp, mid, height * 0.485, width - 6, 30, align="center", ratio=0.5)
+        g.text(state, mid, height * 0.585, width - 8, 15, align="center", ratio=0.9)
+        for index, (glyph, value, ink) in enumerate(
+            (
+                ("arrow-up-thin", today_value("high"), WARM),
+                ("arrow-down-thin", today_value("low"), BLACK),
+                ("umbrella-outline", today_value("chance"), BLACK),
+            )
+        ):
+            centre = height * (0.68 + 0.1 * index)
+            g.icon(glyph, mid - 24, centre, 20, color=ink)
+            g.text(value, mid - 8, centre, width / 2, 18, color=ink, ratio=0.8)
+    else:
+        width, height = layout.width, layout.height
+        g = Grid(layout, width, height)
+        mid = width / 2
+        g.text(
+            DW_DATE,
+            mid,
+            height * 0.075,
+            width - 6,
+            min(width * 0.26, height * 0.09),
+            align="center",
+            ratio=0.5,
+        )
+        g.text(
+            DW_WEEKDAY,
+            mid,
+            height * 0.15,
+            width - 6,
+            min(width * 0.17, height * 0.06),
+            align="center",
+            color=DW_WEEKDAY_COLOR,
+            ratio=0.6,
+        )
+        g.rule(8, height * 0.205, width - 8, height * 0.205, 2)
+        g.icon(CONDITION_ICON, mid, height * 0.3, min(width * 0.5, height * 0.14))
+        g.text(
+            temp,
+            mid,
+            height * 0.43,
+            width - 6,
+            min(width * 0.34, height * 0.13),
+            align="center",
+            ratio=0.5,
+        )
+        g.text(state, mid, height * 0.52, width - 8, 16, align="center", ratio=0.9)
+        for index, (glyph, value, ink) in enumerate(
+            (
+                ("arrow-up-thin", today_value("high"), WARM),
+                ("arrow-down-thin", today_value("low"), BLACK),
+                ("umbrella-outline", today_value("chance"), BLACK),
+            )
+        ):
+            centre = height * (0.62 + 0.1 * index)
+            g.icon(glyph, mid - 22, centre, 20, color=ink)
+            g.text(value, mid - 6, centre, width / 2, 18, color=ink, ratio=0.8)
+        g.text(DW_YEAR_WEEK, mid, height * 0.95, width - 8, 14, align="center", ratio=1.0)
+
+
+# --- print_progress ----------------------------------------------------------
+
+PRINT_PERCENT = (
+    "{% set p = states('${progress}') | float(0) %}{% set p = p if p == p else 0 %}"
+    "{{ [0, [100, p] | min] | max | round(0) | int }}"
+)
+PRINT_TEXT = PRINT_PERCENT + "%"
+PRINT_STATUS = template("states('${status}')")
+PRINT_FINISH = tag("set d = as_datetime(states('${end_time}'), none)") + template(
+    "as_local(d).strftime('${time_format}') if d else '--'"
+)
+PRINT_ETA_LINE = "${eta_label} " + PRINT_FINISH
+
+
+def print_remaining(short=False):
+    unit = "m" if short else " min left"
+    hours = "h " if short else " h "
+    return (
+        tag("set d = as_datetime(states('${end_time}'), none)")
+        + tag(
+            "set minutes = ((as_timestamp(d) - as_timestamp(now())) / 60) | round(0, 'ceil') | int "
+            "if d else -1"
+        )
+        + template(
+            f"(((minutes // 60) ~ '{hours}') if minutes >= 60 else '') ~ (minutes % 60) ~ '{unit}' "
+            "if minutes >= 0 else ''"
+        )
+    )
+
+
+def print_temperature(kind):
+    """Nozzle or bed reading: a dash until the sensor option is set or while it is unreadable."""
+    option = f"'${{{kind}_sensor}}'"
+    return (
+        tag(f"set _s = {option}")
+        + tag("set _r = states(_s) if _s.startswith('sensor.') else ''")
+        + template(
+            f"((_r | float | round(0) | int ~ '°') if _s.startswith('sensor.') and is_number(_r) else '{DASH}')"
+        )
+    )
+
+
+def print_probe(kind, label):
+    return label, BLACK
+
+
+def print_progress_bar(g, x1, y1, x2, y2):
+    g.layout.items.append(
+        {
+            "type": "progress_bar",
+            "x_start": round(g.X(x1)),
+            "y_start": round(g.Y(y1)),
+            "x_end": round(g.X(x2)),
+            "y_end": round(g.Y(y2)),
+            "progress": PRINT_PERCENT,
+            "fill": "${color}",
+            "outline": BLACK,
+            "background": "white",
+            "show_percentage": False,
+        }
+    )
+
+
+def print_layout(layout, base):
+    kind = shape(layout)
+    title = "${title}"
+    pill = (PRINT_STATUS, "white")
+    nozzle, nozzle_ink = print_probe("nozzle", "Nozzle")
+    bed, bed_ink = print_probe("bed", "Bed")
+    probes = [
+        ("printer-3d-nozzle-heat", nozzle, print_temperature("nozzle"), nozzle_ink),
+        ("radiator", bed, print_temperature("bed"), bed_ink),
+    ]
+    if kind in {"landscape", "large_landscape"}:
+        big = kind == "large_landscape"
+        g = Grid(layout, 800 if big else 400, 480 if big else 300)
+        g.bar(
+            "printer-3d",
+            title,
+            pill=pill,
+            height=56 if big else 44,
+            size=28 if big else 20,
+            pill_width=190 if big else 120,
+        )
+        if big:
+            g.text(PRINT_TEXT, 24, 176, 460, 190, color="${color}", ratio=0.3)
+            g.text("${eta_label}", 776, 100, 300, 26, align="right")
+            g.text(PRINT_FINISH, 776, 164, 300, 86, align="right", ratio=0.4)
+            g.text(print_remaining(), 776, 232, 300, 32, align="right", ratio=0.6)
+            print_progress_bar(g, 24, 270, 776, 312)
+            status = ("information-outline", "Status", PRINT_STATUS, BLACK)
+            g.cells([status, *probes], 334, 468, 24, 776, label=22, value=34, icon=34)
+        else:
+            g.text(PRINT_TEXT, 16, 104, 250, 96, color="${color}", ratio=0.3)
+            g.text("${eta_label}", 386, 78, 130, 17, align="right")
+            g.text(PRINT_FINISH, 386, 108, 130, 38, align="right", ratio=0.5)
+            g.text(print_remaining(), 386, 148, 150, 18, align="right", ratio=0.7)
+            print_progress_bar(g, 16, 168, 384, 192)
+            g.cells(probes, 206, 292, 14, 386, label=17, value=30, icon=24)
+    elif kind in {"portrait", "large_portrait"}:
+        big = kind == "large_portrait"
+        g = Grid(layout, 480 if big else 300, 800 if big else 400)
+        mid = g.w / 2
+        g.bar(
+            "printer-3d",
+            title,
+            pill=pill,
+            height=56 if big else 44,
+            size=28 if big else 20,
+            pill_width=190 if big else 110,
+        )
+        if big:
+            g.text(PRINT_TEXT, mid, 204, 440, 190, align="center", color="${color}", ratio=0.3)
+            g.text("${eta_label}", mid, 332, 440, 26, align="center")
+            g.text(PRINT_FINISH, mid, 404, 440, 92, align="center", ratio=0.4)
+            g.text(print_remaining(), mid, 478, 440, 32, align="center", ratio=0.6)
+            print_progress_bar(g, 24, 530, 456, 574)
+            status = ("information-outline", "Status", PRINT_STATUS, BLACK)
+            g.cells([status, *probes], 620, 764, 24, 456, label=22, value=32, icon=32)
+        else:
+            g.text(PRINT_TEXT, mid, 116, 280, 100, align="center", color="${color}", ratio=0.3)
+            g.text("${eta_label}", mid, 196, 280, 17, align="center")
+            g.text(PRINT_FINISH, mid, 232, 280, 44, align="center", ratio=0.5)
+            g.text(print_remaining(), mid, 272, 280, 18, align="center", ratio=0.7)
+            print_progress_bar(g, 16, 294, 284, 322)
+            g.cells(probes, 334, 396, 12, 288, label=16, value=24, icon=22)
+    elif kind == "wide":
+        g = Grid(layout, 296, 128)
+        g.bar("printer-3d", title, pill=pill, height=28, size=16, pill_width=84)
+        g.text(PRINT_TEXT, 8, 56, 150, 54, color="${color}", ratio=0.4)
+        g.text("${eta_label}", 288, 42, 120, 14, align="right", ratio=1.0)
+        g.text(PRINT_FINISH, 288, 62, 120, 28, align="right", ratio=0.6)
+        g.text(print_remaining(layout.width < 250), 288, 82, 130, 15, align="right", ratio=0.9)
+        print_progress_bar(g, 8, 96, 288, 120)
+    elif kind == "square":
+        g = Grid(layout, 200, 200)
+        g.fill(0, 0, 200, 34)
+        g.icon("printer-3d", 20, 17, 20, color="white")
+        g.text(title, 36, 17, 152, 17, color="white")
+        g.text(PRINT_TEXT, 100, 74, 184, 62, align="center", color="${color}", ratio=0.4)
+        g.text(PRINT_ETA_LINE, 100, 120, 184, 22, align="center", ratio=0.7)
+        g.text(print_remaining(True), 100, 144, 184, 16, align="center", ratio=0.9)
+        print_progress_bar(g, 10, 158, 190, 180)
+        g.text(PRINT_STATUS, 100, 192, 184, 14, align="center", ratio=1.0)
+    else:
+        width, height = layout.width, layout.height
+        g = Grid(layout, width, height)
+        mid = width / 2
+        bar_h = 30 if width < 160 else 36
+        g.fill(0, 0, width, bar_h)
+        g.text(title, 8, bar_h / 2, width - 16, 15, color="white")
+        probes_shown = height >= 250
+        top = height - (62 if probes_shown else 0)
+        space = top - bar_h
+        g.text(
+            PRINT_TEXT,
+            mid,
+            bar_h + space * 0.2,
+            width - 6,
+            min(width * 0.34, space * 0.2),
+            align="center",
+            color="${color}",
+            ratio=0.4,
+        )
+        base = bar_h + space * 0.36
+        print_progress_bar(g, 8, base, width - 8, base + max(16, space * 0.07))
+        g.text(PRINT_ETA_LINE, mid, bar_h + space * 0.57, width - 6, 16, align="center", ratio=0.9)
+        g.text(
+            print_remaining(True),
+            mid,
+            bar_h + space * 0.7,
+            width - 6,
+            18,
+            align="center",
+            ratio=0.9,
+        )
+        g.text(PRINT_STATUS, mid, bar_h + space * 0.84, width - 6, 16, align="center", ratio=0.9)
+        if probes_shown:
+            g.rule(8, top, width - 8, top)
+            for centre, option, label in ((top + 20, "nozzle", "Nozzle"), (top + 46, "bed", "Bed")):
+                g.text(label, 10, centre, width * 0.5, 15)
+                g.text(
+                    print_temperature(option),
+                    width - 10,
+                    centre,
+                    width * 0.45,
+                    18,
+                    align="right",
+                    ratio=0.8,
+                )
+
+
+# END REDESIGNED CARDS
+
+
 BUILDERS = {
-    "calendar_next": calendar_layout,
+    "calendar_next": calendar_next_layout,
     "color_check": color_layout,
     "countdown": countdown_layout,
     "date": date_layout,
@@ -2196,8 +3009,8 @@ def generate(path, sizes):
         "message": ("subtitle", "Second line on larger tags", "큰 화면의 보조 문구"),
         "sensor_card": (
             "secondary_sensor",
-            "Secondary sensor ID on larger tags",
-            "큰 화면의 보조 센서 ID",
+            "Secondary sensor ID (optional)",
+            "보조 센서 ID (선택)",
         ),
     }
     if data["id"] in params:
