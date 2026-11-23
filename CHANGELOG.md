@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Design templates `weather_now`, `weather_forecast` and `weather_commute` (renamed *Outing weather* / 외출 날씨 브리핑) have new layouts arranged per tag shape. `weather_now`: a header or footer bar, a big temperature with today's high (in the new accent color) and low, and feels-like, humidity, wind and chance-of-rain readings; tags from 5.8 inches add a three-hourly strip. `weather_forecast`: today on top and one row per coming day with chance of rain and a low-to-high temperature bar on 4.2-inch and larger tags, side-by-side days on short wide tags and a short list on narrow tall tags. `weather_commute`: a verdict banner (umbrella, snow, temperature gap, wind) above an hourly forecast with a temperature trend and feels-like, humidity, wind and sunset readings, replacing the weekly strip. Missing values show `—` instead of `--`, nothing or a lone icon. The automations of `weather_now` and `weather_commute` now also fetch the hourly forecast (`fc_hourly`), `weather_now` fetches the daily forecast for the high and low, and the first two templates gained an *accent* color parameter.
+
 ### Added
 
 - XTE device number 176 is the Poshiji PSJ-750 7.5" BWRY tag (800×480, no rotation), verified on a real tag from a user report (#360). It is now picked automatically from the advertisement; the `psj-750` preset key is unchanged, so existing config entries keep working.

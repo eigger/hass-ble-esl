@@ -562,19 +562,24 @@ async def demo_convert(element, preset):
 async def demo_forecasts():
     now = dt_util.now()
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    conditions = ("cloudy", "rainy", "partlycloudy", "sunny", "snowy", "cloudy")
     return {
         ("weather.home", kind): [
             {
                 "datetime": (midnight + offset).isoformat(),
-                "condition": "sunny",
-                "temperature": 22.5,
-                "templow": 15,
-                "precipitation_probability": 20,
+                "condition": conditions[index % len(conditions)],
+                "temperature": (
+                    22.5 - 3 * (index % 4) + (index % 3)
+                    if kind == "daily"
+                    else 14 + 7 - abs(index % 14 - 7)
+                ),
+                "templow": 15 - 3 * (index % 3) + (index % 2) - 2 * (index % 4),
+                "precipitation_probability": (20, 70, 30, 0, 60, 10)[index % 6],
             }
-            for offset in offsets
+            for index, offset in enumerate(offsets)
         ]
         for kind, offsets in (
-            ("daily", [timedelta(days=day, hours=12) for day in range(7)]),
+            ("daily", [timedelta(days=day, hours=12) for day in range(8)]),
             ("hourly", [timedelta(hours=hour) for hour in range(now.hour, now.hour + 24)]),
         )
     }
