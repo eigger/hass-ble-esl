@@ -3,18 +3,11 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from homeassistant.components.bluetooth import async_last_service_info
 from homeassistant.components.bluetooth.passive_update_processor import (
     PassiveBluetoothEntityKey,
-)
-from homeassistant.const import (
-    ATTR_HW_VERSION,
-    ATTR_MANUFACTURER,
-    ATTR_MODEL,
-    ATTR_NAME,
-    ATTR_SW_VERSION,
 )
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 from sensor_state_data import DeviceKey, SensorDeviceInfo
@@ -55,17 +48,16 @@ def _device_info(
     hw_version: str | None,
 ) -> DeviceInfo:
     """Return cached device info for these values, leaving None values unset."""
-    device_info = DeviceInfo()
-    for key, value in (
-        (ATTR_NAME, name),
-        (ATTR_MANUFACTURER, manufacturer),
-        (ATTR_MODEL, model),
-        (ATTR_SW_VERSION, sw_version),
-        (ATTR_HW_VERSION, hw_version),
-    ):
-        if value is not None:
-            device_info[key] = value
-    return device_info
+    # Keyword construction only: DeviceInfo is a TypedDict before HA 2026.11 and
+    # a dataclass after it, so unset fields must be omitted (never passed as None).
+    fields: dict[str, Any] = {
+        "name": name,
+        "manufacturer": manufacturer,
+        "model": model,
+        "sw_version": sw_version,
+        "hw_version": hw_version,
+    }
+    return DeviceInfo(**{k: v for k, v in fields.items() if v is not None})
 
 
 class PresetResolution(NamedTuple):
