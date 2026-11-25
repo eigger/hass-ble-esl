@@ -5,9 +5,10 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 
 from custom_components.ble_esl import device
-from custom_components.ble_esl.device import build_device_info
+from custom_components.ble_esl.device import _device_info, build_device_info
 from custom_components.ble_esl.esl_ble.picksmart import PickSmartProtocol
 from custom_components.ble_esl.esl_ble.picksmart.const import MANUFACTURER_ID as PS_ID
 from tests.components.ble_esl.bt import service_info
@@ -18,12 +19,35 @@ async def test_build_device_info_matches_registry(hass: HomeAssistant, enable_bl
     entry = await setup_entry(hass)
     info = build_device_info(entry.runtime_data)
     registered = device_of(hass)
-    assert info["name"] == f"Zhsunyco {IDENT}" == registered.name
-    assert info["manufacturer"] == "Zhsunyco" == registered.manufacturer
-    assert info["model"] == '2.9" BWRY 296x128' == registered.model
-    assert info["model_id"] == "WOLINK" == registered.model_id
-    assert info["sw_version"] == "513" and info["hw_version"] == "1027"
-    assert ("bluetooth", ADDRESS) in info["connections"]
+    assert info == DeviceInfo(
+        connections={(CONNECTION_BLUETOOTH, ADDRESS)},
+        name=f"Zhsunyco {IDENT}",
+        manufacturer="Zhsunyco",
+        model='2.9" BWRY 296x128',
+        model_id="WOLINK",
+        sw_version="513",
+        hw_version="1027",
+    )
+    assert registered.name == f"Zhsunyco {IDENT}"
+    assert registered.manufacturer == "Zhsunyco"
+    assert registered.model == '2.9" BWRY 296x128'
+    assert registered.model_id == "WOLINK"
+    assert registered.sw_version == "513" and registered.hw_version == "1027"
+
+
+def test_device_info_from_sensor_values_omits_unset_fields() -> None:
+    """Unset values are left out (never None), on TypedDict and dataclass alike."""
+    assert _device_info("Tag", "Acme", "M1", "1.0", "2.0") == DeviceInfo(
+        name="Tag", manufacturer="Acme", model="M1", sw_version="1.0", hw_version="2.0"
+    )
+    assert _device_info("Tag", None, None, None, None) == DeviceInfo(name="Tag")
+    assert _device_info(None, "Acme", None, "1.0", None) == DeviceInfo(
+        manufacturer="Acme", sw_version="1.0"
+    )
+    assert _device_info(None, None, None, None, None) == DeviceInfo()
+    assert _device_info("Tag", "Acme", None, None, None) is _device_info(
+        "Tag", "Acme", None, None, None
+    )
 
 
 def test_resolve_preset_refines_from_last_advertisement(monkeypatch) -> None:
