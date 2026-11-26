@@ -37,7 +37,8 @@ export function renderToolbar({
   // Designs are saved into automations: Save is there for a loaded automation
   // ("Save to automation") and for a sensor tile style; a tag design on its
   // own is kept as the browser draft until it goes into an automation.
-  // Write this design into an existing automation's ble_esl.write action:
+  // Write this design into an existing automation's ble_esl.write or
+  // ble_esl.write_guarded action:
   // another one than the automation it was loaded from, if any.
   const saveToOther = translate(
     automationSaveMode

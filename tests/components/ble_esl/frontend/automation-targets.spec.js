@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 // The designer authors automations: a tag opens blank, a linked automation's
 // design is loaded into it, and the design can be saved into any automation
-// whose ble_esl.write action targets the tag.
+// whose ble_esl.write or ble_esl.write_guarded action targets the tag.
 
 const automation = async (request, id) =>
   (await request.get(`/api/config/automation/config/${id}`)).json();
@@ -298,6 +298,70 @@ test("a design that reads calendar events offers to add the step that fetches th
   });
   expect(saved.actions.length).toBe(original.actions.length + 1);
 });
+
+const useGuarded = async (request, id, legacy) => {
+  const config = await automation(request, id);
+  const write = config.actions[1];
+  if (legacy) {
+    write.service = "ble_esl.write_guarded";
+    delete write.action;
+  } else write.action = "ble_esl.write_guarded";
+  await request.post(`/api/config/automation/config/${id}`, { data: config });
+  return config;
+};
+
+for (const legacy of [false, true]) {
+  test(`an automation using ble_esl.write_guarded${legacy ? " under the legacy service key" : ""} is listed, opened and saved as it is`, async ({
+    page,
+    request,
+  }) => {
+    await useGuarded(request, "night", legacy);
+    const before = await automation(request, "night");
+    const key = legacy ? "service" : "action";
+    // Listed as a place to save a blank design.
+    await page
+      .locator('[data-action="edit"][data-entry="demo-writable"]')
+      .click();
+    await page.getByRole("button", { name: "Add text", exact: true }).click();
+    await page
+      .getByRole("button", {
+        name: "Save to existing automation…",
+        exact: true,
+      })
+      .click();
+    const chooser = page.getByRole("dialog", {
+      name: "Choose the automation to save to:",
+    });
+    await expect(
+      chooser.getByRole("radio", { name: "Night screen" }),
+    ).toHaveCount(1);
+    await chooser.getByRole("button", { name: "Cancel" }).click();
+
+    // Opened in the designer.
+    await page.evaluate(() => {
+      window.confirm = () => true;
+      window.manager.editAutomation("demo-writable", "automation.night");
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.manager.automationEditSource?.configId),
+      )
+      .toBe("night");
+    await page.getByRole("button", { name: "Add text", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Save to automation", exact: true })
+      .click();
+    await expect(page.locator(".message")).toContainText("Automation saved.");
+    const saved = await automation(request, "night");
+    expect(saved.actions[1][key]).toBe("ble_esl.write_guarded");
+    expect(saved.actions[1].action ?? saved.actions[1].service).toBe(
+      "ble_esl.write_guarded",
+    );
+    expect(saved.actions[1].data.payload.length).toBe(
+      before.actions[1].data.payload.length + 1,
+    );
+  });
+}
 
 test("saving into an automation keeps the design's orientation", async ({
   page,

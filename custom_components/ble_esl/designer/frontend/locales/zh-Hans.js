@@ -387,8 +387,8 @@ export default {
     "保存此自动化前，请先切换到显示模式。",
   "Automation configuration ID is missing.": "缺少自动化配置 ID。",
   "Automation configuration could not be loaded.": "无法加载自动化配置。",
-  "No ble_esl.write action targeting this ESL was found.":
-    "未找到针对此 ESL 的 ble_esl.write 操作。",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "未找到针对此 ESL 的 ble_esl.write 或 ble_esl.write_guarded 操作。",
   "Choose the write action to import:": "选择要导入的写入动作：",
   "The matching write action changed. Reopen the automation and try again.":
     "匹配的写入动作已更改。请重新打开自动化后再试。",
@@ -541,8 +541,8 @@ export default {
   "Save to another automation…": "保存到其他自动化…",
   "Choose the automation to save to:": "选择要保存到的自动化：",
   "Choose the write action to replace:": "选择要替换的写入动作：",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "未找到包含此 ESL 的 ble_esl.write 操作的自动化。",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "未找到包含此 ESL 的 ble_esl.write 或 ble_esl.write_guarded 操作的自动化。",
   "Saved to {name}.": "已保存到 {name}。",
   "Saved to {name}. Some values are as of now, not live.":
     "已保存到 {name}。部分值为保存时的值，不会实时更新。",

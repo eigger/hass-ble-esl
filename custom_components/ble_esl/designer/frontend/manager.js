@@ -25,6 +25,11 @@ const css = `
 @media(max-width:650px){header,.editor-nav{padding:0 12px}.editor-nav{flex-wrap:wrap;height:auto;min-height:var(--header-height,56px);padding-top:6px;padding-bottom:6px;row-gap:6px}.editor-nav .editor-context{order:3;flex:1 1 100%}.controls{padding:16px 12px 12px}.summary{padding:0 12px 16px}.grid{padding:0 12px 16px;grid-template-columns:minmax(0,1fr);gap:12px}.message{margin:0}.card{padding:16px}}
 `;
 
+// Both services take the same data, so the designer treats them alike.
+const WRITE_ACTIONS = ["ble_esl.write", "ble_esl.write_guarded"];
+const isWriteAction = (action) =>
+  WRITE_ACTIONS.includes(action?.action || action?.service);
+
 const AUTOMATION_DRAFT_KEY = "ble_esl_designer_automation_draft";
 // Releases before 1.8 drew an action with the background of the design source it
 // carried, which is no longer read: this is that colour, if there is one.
@@ -886,7 +891,10 @@ class EslManager extends HTMLElement {
         );
       if (!matches.length)
         throw new Error(
-          t(this.hass, "No ble_esl.write action targeting this ESL was found."),
+          t(
+            this.hass,
+            "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.",
+          ),
         );
       let selectedIndex = 0;
       if (matches.length > 1) {
@@ -904,10 +912,7 @@ class EslManager extends HTMLElement {
       }
       const selectedPath = matches[selectedIndex].path;
       const selectedAction = this.actionAt(config, selectedPath);
-      if (
-        !selectedAction ||
-        (selectedAction.action || selectedAction.service) !== "ble_esl.write"
-      )
+      if (!isWriteAction(selectedAction))
         throw new Error(
           t(
             this.hass,
@@ -1202,19 +1207,17 @@ class EslManager extends HTMLElement {
       // A disabled step never runs, and neither do the steps inside it.
       if (value.enabled === false) return;
       const service = value.action || value.service;
-      if (service === "ble_esl.write") {
+      if (WRITE_ACTIONS.includes(service)) {
         const target = targetMatch(value);
         if (target.unsupported)
           unsupported.push({
             path,
-            label: String(value.alias || "ble_esl.write"),
+            label: String(value.alias || service),
           });
         else if (target.matches)
           matches.push({
             path,
-            label: String(
-              value.alias || `ble_esl.write (${matches.length + 1})`,
-            ),
+            label: String(value.alias || `${service} (${matches.length + 1})`),
           });
       }
       for (const [key, child] of Object.entries(value)) {
@@ -1329,7 +1332,7 @@ class EslManager extends HTMLElement {
       if (run === this.automationSaveRun) this.automationSaving = false;
     }
   }
-  // The design as ble_esl.write data, refusing anything a payload cannot hold.
+  // The design as ble_esl.write(_guarded) data, refusing anything a payload cannot hold.
   async exportForAutomation(editor, entryId, snapshot) {
     const exported = await editor.api("export", {
       entry_id: entryId,
@@ -1355,7 +1358,7 @@ class EslManager extends HTMLElement {
     }
     return exported;
   }
-  // Replace the design data of one ble_esl.write action in the latest saved
+  // Replace the design data of one ble_esl.write(_guarded) action in the latest saved
   // automation: the one that still equals `expectedAction`, at `path` when
   // given. Everything else in the automation stays as it is. Resolves with the
   // written action, or null when `current()` says the request is obsolete.
@@ -1447,12 +1450,7 @@ class EslManager extends HTMLElement {
     const updated = structuredClone(latest);
     const action = this.actionAt(updated, selected.path);
     const data = action?.data || action?.service_data;
-    if (
-      !action ||
-      (action.action || action.service) !== "ble_esl.write" ||
-      !data ||
-      !Array.isArray(data.payload)
-    )
+    if (!isWriteAction(action) || !data || !Array.isArray(data.payload))
       throw new Error(
         t(this.hass, "The selected write action is no longer available."),
       );
@@ -1507,7 +1505,7 @@ class EslManager extends HTMLElement {
     return { action, path: writePath };
   }
   // Automations that could take this design: those linked to the ESL whose
-  // ble_esl.write actions target it. The automation being edited is not
+  // ble_esl.write or ble_esl.write_guarded actions target it. The automation being edited is not
   // offered at all: none of its actions is "another automation".
   async automationTargets(entryId, excludeConfigId = null) {
     const listing = await this.api("automations", { entry_id: entryId });
@@ -1596,7 +1594,7 @@ class EslManager extends HTMLElement {
         throw new Error(
           t(
             this.hass,
-            "No automation with a ble_esl.write action for this ESL was found.",
+            "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.",
           ),
         );
       const choice = await chooseOne(
