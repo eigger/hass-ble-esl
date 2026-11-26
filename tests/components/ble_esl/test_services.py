@@ -1545,7 +1545,7 @@ async def test_response_locked_for_write_guarded(
 async def test_plain_write_ignores_write_lock(
     hass: HomeAssistant, wolink_entry, tag_writer
 ) -> None:
-    """ble_esl.write never skips: the Write Lock only stops write_guarded."""
+    """ble_esl.write ignores the Write Lock: only write_guarded honours it."""
     wolink_entry.runtime_data.write_lock = True
     response = await respond(hass, "write", device_id_of(hass))
     assert response[device_id_of(hass)]["status"] == "written"

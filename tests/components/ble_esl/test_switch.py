@@ -16,7 +16,7 @@ async def test_write_lock_skips_physical_write(
     await call(hass, "write_guarded", device_id_of(hass))
     assert tag_writer.write_prepared.await_count == 0
     assert hass.states.get(f"image.zhsunyco_{IDENT}_preview_content").state != "unknown"
-    # ble_esl.write never skips: it ignores the lock.
+    # ble_esl.write ignores the Write Lock: only write_guarded honours it.
     await call(hass, "write", device_id_of(hass))
     assert tag_writer.write_prepared.await_count == 1
 
