@@ -138,8 +138,8 @@
         "data_description": {
           "model": "ESL 屏幕分辨率和型号类型。",
           "retry_count": "放弃之前重试写入的次数。",
-          "prevent_duplicate_send": "当新图像与上次发送的图像相同时跳过写入。",
-          "debounce_ms": "写入前的等待时间。新请求会取消待处理的请求。0 = 禁用（立即写入）。"
+          "prevent_duplicate_send": "当新图像与上次发送的图像相同时跳过写入。仅适用于 ble_esl.write_guarded。",
+          "debounce_ms": "写入前的等待时间。新请求会取消待处理的请求。0 = 禁用（立即写入）。仅适用于 ble_esl.write_guarded。"
         }
       }
     }

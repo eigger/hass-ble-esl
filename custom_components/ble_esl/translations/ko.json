@@ -138,8 +138,8 @@
         "data_description": {
           "model": "ESL 화면 해상도 및 모델 유형입니다.",
           "retry_count": "기기에 쓰기를 포기하기 전까지 재시도할 횟수입니다.",
-          "prevent_duplicate_send": "새 이미지가 마지막으로 전송한 이미지와 동일하면 쓰기를 건너뜁니다.",
-          "debounce_ms": "기기에 쓰기 전 대기 시간입니다. 새 쓰기 요청이 대기 중인 요청을 취소합니다. 0 = 비활성화(즉시 쓰기)."
+          "prevent_duplicate_send": "새 이미지가 마지막으로 전송한 이미지와 동일하면 쓰기를 건너뜁니다. ble_esl.write_guarded에만 적용됩니다.",
+          "debounce_ms": "기기에 쓰기 전 대기 시간입니다. 새 쓰기 요청이 대기 중인 요청을 취소합니다. 0 = 비활성화(즉시 쓰기). ble_esl.write_guarded에만 적용됩니다."
         }
       }
     }

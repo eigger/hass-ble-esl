@@ -72,11 +72,11 @@ Both actions can return a per-tag result via `response_variable`. Full reference
 |--------|---------|-------|-------------|
 | **Model** | — | model list | Shown only for protocols that cannot report their model (WOLINK, easyTag) |
 | **Retry Count** | 3 | 1–10 | Retries when a BLE write fails |
-| **Prevent Duplicate Send** | off | on/off | Skip sending when the image is unchanged |
-| **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones |
+| **Prevent Duplicate Send** | off | on/off | Skip sending when the image is unchanged (`write_guarded` only) |
+| **Debounce Delay (ms)** | 0 | 0–120000 | Wait before writing; new requests cancel pending ones (`write_guarded` only) |
 
 > [!TIP]
-> Frequent automations: enable **Prevent Duplicate Send** and/or **Debounce Delay** to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [actions.md](actions.md#write-breakdown) and [troubleshooting.md](troubleshooting.md).
+> Frequent automations: use `ble_esl.write_guarded` and enable **Prevent Duplicate Send** and/or **Debounce Delay** (they do not affect `ble_esl.write`, which always sends) to save tag battery and BLE airtime. A write that fails mid-transfer is retried with slower packet pacing; if writes keep failing, the **Write Duration** sensor's attributes say whether it is the link or the placement — see [actions.md](actions.md#write-breakdown) and [troubleshooting.md](troubleshooting.md).
 
 These options are specific to BLE ESL; they are not Bluetooth proxy firmware settings.
 

@@ -138,8 +138,8 @@
         "data_description": {
           "model": "ESL display resolution and model type.",
           "retry_count": "Number of times to retry writing to the device before giving up.",
-          "prevent_duplicate_send": "Skip writing when the new image is identical to the last one sent.",
-          "debounce_ms": "Delay before writing to device. New writes cancel pending ones. 0 = disabled (immediate write)."
+          "prevent_duplicate_send": "Skip writing when the new image is identical to the last one sent. Applies to ble_esl.write_guarded only.",
+          "debounce_ms": "Delay before writing to device. New writes cancel pending ones. 0 = disabled (immediate write). Applies to ble_esl.write_guarded only."
         }
       }
     }

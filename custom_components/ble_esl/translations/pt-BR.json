@@ -138,8 +138,8 @@
         "data_description": {
           "model": "Resolução da tela e tipo de modelo do ESL.",
           "retry_count": "Quantas vezes tentar escrever novamente antes de desistir.",
-          "prevent_duplicate_send": "Ignora a escrita se a nova imagem for idêntica à última enviada.",
-          "debounce_ms": "Espera antes de escrever. Uma nova solicitação cancela a pendente. 0 = desativado (escrita imediata)."
+          "prevent_duplicate_send": "Ignora a escrita se a nova imagem for idêntica à última enviada. Aplica-se somente a ble_esl.write_guarded.",
+          "debounce_ms": "Espera antes de escrever. Uma nova solicitação cancela a pendente. 0 = desativado (escrita imediata). Aplica-se somente a ble_esl.write_guarded."
         }
       }
     }

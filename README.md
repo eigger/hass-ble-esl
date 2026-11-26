@@ -67,7 +67,7 @@ On Home Assistant versions before 2026.11, the same badge opens HACS. [HACS setu
 
 Confirm discovered tags in **Settings → Devices & services**. To add a tag manually, choose **Add integration → BLE ESL**.
 
-Set retries, duplicate prevention, and debounce under **Configure**. Choose the matching **Model** for WOLINK or easyTag. [Integration options](docs/usage.md#options)
+Set retries, duplicate prevention, and debounce under **Configure** (duplicate prevention and debounce apply to `ble_esl.write_guarded` only). Choose the matching **Model** for WOLINK or easyTag. [Integration options](docs/usage.md#options)
 
 If you use `hass-gicisky` or `hass-zhsunyco`, re-add the tags in BLE ESL and replace `gicisky.write` with `ble_esl.write`. You can reuse the same payload. [Migration guide](docs/migration.md)
 
