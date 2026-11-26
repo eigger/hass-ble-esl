@@ -403,8 +403,8 @@ export default {
     "オートメーション設定の ID がありません。",
   "Automation configuration could not be loaded.":
     "オートメーション設定を読み込めませんでした。",
-  "No ble_esl.write action targeting this ESL was found.":
-    "このESLを対象とする ble_esl.write アクションが見つかりませんでした。",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "このESLを対象とする ble_esl.write または ble_esl.write_guarded アクションが見つかりませんでした。",
   "Choose the write action to import:":
     "インポートする書き込みアクションを選んでください:",
   "The matching write action changed. Reopen the automation and try again.":
@@ -574,8 +574,8 @@ export default {
     "保存先のオートメーションを選んでください:",
   "Choose the write action to replace:":
     "置き換える書き込みアクションを選んでください:",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "このESL用の ble_esl.write アクションを含むオートメーションが見つかりませんでした。",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "このESL用の ble_esl.write または ble_esl.write_guarded アクションを含むオートメーションが見つかりませんでした。",
   "Saved to {name}.": "{name} に保存しました。",
   "Saved to {name}. Some values are as of now, not live.":
     "{name} に保存しました。一部の値は現時点のもので、リアルタイムには追従しません。",

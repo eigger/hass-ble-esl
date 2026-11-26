@@ -167,8 +167,8 @@ export default {
     "Automation configuration ID is missing.",
   "Automation configuration could not be loaded.":
     "Automation configuration could not be loaded.",
-  "No ble_esl.write action targeting this ESL was found.":
-    "No ble_esl.write action targeting this ESL was found.",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.",
   "Choose the write action to import:": "Choose the write action to import:",
   "The matching write action changed. Reopen the automation and try again.":
     "The matching write action changed. Reopen the automation and try again.",
@@ -562,8 +562,8 @@ export default {
   "Save to another automation…": "Save to another automation…",
   "Choose the automation to save to:": "Choose the automation to save to:",
   "Choose the write action to replace:": "Choose the write action to replace:",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "No automation with a ble_esl.write action for this ESL was found.",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.",
   "Saved to {name}.": "Saved to {name}.",
   "Saved to {name}. Some values are as of now, not live.":
     "Saved to {name}. Some values are as of now, not live.",

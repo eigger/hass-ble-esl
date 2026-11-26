@@ -403,8 +403,8 @@ export default {
     "Отсутствует ID конфигурации автоматизации.",
   "Automation configuration could not be loaded.":
     "Не удалось загрузить конфигурацию автоматизации.",
-  "No ble_esl.write action targeting this ESL was found.":
-    "Действие ble_esl.write для этого ESL не найдено.",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "Действие ble_esl.write или ble_esl.write_guarded для этого ESL не найдено.",
   "Choose the write action to import:": "Выберите действие записи для импорта:",
   "The matching write action changed. Reopen the automation and try again.":
     "Подходящее действие записи изменилось. Снова откройте автоматизацию и повторите попытку.",
@@ -571,8 +571,8 @@ export default {
   "Save to another automation…": "Сохранить в другую автоматизацию…",
   "Choose the automation to save to:": "Выберите автоматизацию для сохранения:",
   "Choose the write action to replace:": "Выберите действие записи для замены:",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "Автоматизация с действием ble_esl.write для этого ESL не найдена.",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "Автоматизация с действием ble_esl.write или ble_esl.write_guarded для этого ESL не найдена.",
   "Saved to {name}.": "Сохранено в {name}.",
   "Saved to {name}. Some values are as of now, not live.":
     "Сохранено в {name}. Некоторые значения зафиксированы на текущий момент и не обновляются.",

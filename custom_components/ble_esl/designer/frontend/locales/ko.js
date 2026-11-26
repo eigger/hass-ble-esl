@@ -166,8 +166,8 @@ export default {
   "Automation configuration ID is missing.": "자동화 구성 ID가 없습니다.",
   "Automation configuration could not be loaded.":
     "자동화 구성을 불러오지 못했습니다.",
-  "No ble_esl.write action targeting this ESL was found.":
-    "이 ESL을 대상으로 하는 ble_esl.write 동작을 찾지 못했습니다.",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "이 ESL을 대상으로 하는 ble_esl.write 또는 ble_esl.write_guarded 동작을 찾지 못했습니다.",
   "Choose the write action to import:": "가져올 쓰기 동작을 선택하세요:",
   "The matching write action changed. Reopen the automation and try again.":
     "일치하는 쓰기 동작이 변경되었습니다. 자동화를 다시 열어 주세요.",
@@ -561,8 +561,8 @@ export default {
   "Save to another automation…": "다른 자동화에 저장…",
   "Choose the automation to save to:": "저장할 자동화를 선택하세요:",
   "Choose the write action to replace:": "바꿀 쓰기 동작을 선택하세요:",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "이 ESL용 ble_esl.write 동작이 있는 자동화를 찾지 못했습니다.",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "이 ESL용 ble_esl.write 또는 ble_esl.write_guarded 동작이 있는 자동화를 찾지 못했습니다.",
   "Saved to {name}.": "{name}에 저장했습니다.",
   "Saved to {name}. Some values are as of now, not live.":
     "{name}에 저장했습니다. 일부 값은 저장 시점의 값이며 실시간으로 따라가지 않습니다.",
