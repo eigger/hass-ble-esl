@@ -167,6 +167,8 @@ Same rendering as `ble_esl.write`, with guards before BLE transmission:
 - write lock check
 - debounce scheduling (**Debounce Delay** option, overridable per call)
 
+`ble_esl.write` always sends: it ignores the **Write Lock** switch, **Prevent Duplicate Send** and **Debounce Delay**. Only `ble_esl.write_guarded` honours them. Both actions still drop a write that a newer request superseded or whose config entry was unloaded (`dropped`).
+
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `payload` | yes | — | Same as `ble_esl.write` |
@@ -231,7 +233,7 @@ Both actions can return what happened to each target. Ask for it with `response_
 | `failed` | Every attempt failed | `error`, `attempts`, `duration_s`, `timing` of the last attempt |
 | `scheduled` | `write_guarded` debounced the write; it runs in the background after the quiet period (`delay_ms`). **Its result is not part of this response** — check the *Display In Sync* / *Failure Count* entities if you need it | `delay_ms` |
 | `duplicate` | `write_guarded`: image unchanged, not sent (**Prevent Duplicate Send**) | |
-| `locked` | Write lock switch is on; preview updated only | |
+| `locked` | `write_guarded`: write lock switch is on; preview updated only | |
 | `preview` | `dry_run`: rendered only | |
 | `dropped` | A queued write was superseded or its config entry unloaded before it reached the BLE lock | |
 
@@ -253,7 +255,7 @@ Every tag is one device with these entities:
 | Last Updated Content | image | Last image the tag received; kept across restarts (`.storage`) and used by **Prevent Duplicate Send**. Cleared if an entry is unloaded during an active write because the tag may finish after reload. |
 | Preview Content | image | Last image rendered, sent or not (`dry_run` too); kept across restarts |
 | Alias | text | Free-form label for the tag |
-| Write Lock | switch | On: nothing is sent to the tag; both actions only update the preview |
+| Write Lock | switch | On: `ble_esl.write_guarded` sends nothing to the tag and only updates the preview; `ble_esl.write` is not affected |
 
 - **Write monitoring:** the **Write Duration** sensor's attributes describe the last write attempt (see [Write breakdown](#write-breakdown)); the same data is in the diagnostics download.
 - **Battery:** the tag voltage is mapped linearly to **Battery** (%) over 2.5–2.9 V for every protocol that reports a voltage (PickSmart and WOLINK from the advertisement, easyTag from the write session), and a **Battery** binary sensor (low battery) turns on at 2.5 V or below, where e-paper refresh becomes unreliable even though BLE still works. XTE (Poshiji) tags advertise a percentage directly; the low-battery sensor turns on at 10 % or below.

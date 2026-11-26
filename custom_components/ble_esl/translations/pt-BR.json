@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Escrever etiqueta",
-      "description": "Escreve uma imagem de etiqueta em um dispositivo ESL BLE.",
+      "description": "Escreve uma imagem de etiqueta em um dispositivo ESL BLE. Sempre envia; ignora Bloqueio de escrita, Evitar envio duplicado e Atraso de debounce.",
       "fields": {
         "payload": {
           "name": "Conteúdo",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Escrever etiqueta (protegido)",
-      "description": "Escreve uma imagem de etiqueta com proteções (duplicatas, bloqueio de escrita, debounce).",
+      "description": "Aplica todas as proteções: Bloqueio de escrita, Evitar envio duplicado e Atraso de debounce. Use ble_esl.write para sempre enviar.",
       "fields": {
         "payload": {
           "name": "Conteúdo",

@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "写入标签",
-      "description": "将标签图像写入 BLE ESL 设备。",
+      "description": "将标签图像写入 BLE ESL 设备。始终发送，忽略写入锁定、防止重复发送和防抖延迟。",
       "fields": {
         "payload": {
           "name": "载荷",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "受保护写入标签",
-      "description": "在保护机制（去重、写入锁定、防抖）下写入标签图像。",
+      "description": "应用所有保护：写入锁定、防止重复发送和防抖延迟。如需始终发送，请使用 ble_esl.write。",
       "fields": {
         "payload": {
           "name": "载荷",

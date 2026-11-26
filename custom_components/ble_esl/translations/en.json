@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Write Label",
-      "description": "Write a label image to a BLE ESL device.",
+      "description": "Write a label image to a BLE ESL device. Always sends; ignores Write Lock, Prevent Duplicate Send and Debounce Delay.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Write Guarded Label",
-      "description": "Write a label image with guards applied (duplicate, write lock, debounce).",
+      "description": "Applies every guard: Write Lock, Prevent Duplicate Send and Debounce Delay. Use ble_esl.write to always send.",
       "fields": {
         "payload": {
           "name": "Payload",

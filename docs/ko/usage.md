@@ -82,6 +82,18 @@ data:
 
 이 옵션은 BLE ESL 전용이며 Bluetooth 프록시 펌웨어 설정이 아닙니다.
 
+### `write`와 `write_guarded`
+
+`ble_esl.write`는 항상 전송하며 Write Lock, Prevent Duplicate Send, Debounce Delay를 무시합니다. `ble_esl.write_guarded`는 모든 보호 장치(**Write Lock** 스위치, **Prevent Duplicate Send**, **Debounce Delay**)를 적용합니다.
+
+| 보호 장치 | `ble_esl.write` | `ble_esl.write_guarded` |
+|---|---|---|
+| **Write Lock** 스위치 | 무시 | 적용 (`locked`) |
+| **Prevent Duplicate Send** | 무시 | 적용 (`duplicate`) |
+| **Debounce Delay** | 무시 | 적용 (`scheduled`) |
+
+새 요청으로 대체되었거나 설정 항목이 언로드된 쓰기는 두 액션 모두에서 버려집니다(`dropped`).
+
 ## 페이로드와 렌더링
 
 레이아웃은 **[imagespec](https://github.com/eigger/imagespec)** 이 렌더링합니다; 요소와 필드의 기준 문서는 그쪽입니다:

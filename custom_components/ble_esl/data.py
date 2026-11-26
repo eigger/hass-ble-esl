@@ -57,7 +57,7 @@ class BleEslRuntimeData:
     """Held for a whole write (all its attempts) so two writes to this tag
     never interleave; the domain-wide BLE lock is taken per attempt."""
     write_lock: bool = False
-    """Physical writes are skipped while set (the write-lock switch)."""
+    """Write Lock switch: set, it stops ble_esl.write_guarded writes (never ble_esl.write)."""
     start_time: float | None = None
     """monotonic() when the current BLE write started, for the duration sensor."""
     last_image_data: bytes | None = None
@@ -81,8 +81,8 @@ class BleEslRuntimeData:
     services._report). Shown as the Write Duration sensor's attributes so the
     write path can be monitored without debug logging. An attempt a guard
     declined under the BLE lock is recorded too, as `skipped` (`locked` /
-    `duplicate` / `dropped`) rather than an error, so "nothing was sent" is as
-    readable as a failure.
+    `duplicate` for write_guarded, `dropped` for both actions) rather than an
+    error, so "nothing was sent" is as readable as a failure.
 
     Every attempt is recorded, and blesession tells them apart by whether
     another attempt follows (`retrying`): a failed attempt a retry follows goes

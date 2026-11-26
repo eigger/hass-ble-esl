@@ -24,7 +24,9 @@ async def async_setup_entry(
 
 
 class BleEslWriteLockSwitch(BleEslEntity, SwitchEntity):
-    """Switch that locks physical writes (virtual updates still apply).
+    """Switch that locks ble_esl.write_guarded writes (virtual updates still apply).
+
+    ble_esl.write ignores it: that action always sends.
 
     The state is persisted in the config entry data, which async_setup_entry
     seeds into runtime_data.write_lock, so the lock is in force before this

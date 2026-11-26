@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Zapisz etykietę",
-      "description": "Zapisuje obraz etykiety na urządzeniu BLE ESL.",
+      "description": "Zapisuje obraz etykiety na urządzeniu BLE ESL. Zawsze wysyła; ignoruje Blokada zapisu, Zapobiegaj podwójnemu wysyłaniu i Opóźnienie odbicia.",
       "fields": {
         "payload": {
           "name": "Zawartość",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Zapisz etykietę (z zabezpieczeniami)",
-      "description": "Zapisuje obraz etykiety z zabezpieczeniami (duplikaty, blokada zapisu, odbicie).",
+      "description": "Stosuje wszystkie zabezpieczenia: Blokada zapisu, Zapobiegaj podwójnemu wysyłaniu i Opóźnienie odbicia. Aby zawsze wysyłać, użyj ble_esl.write.",
       "fields": {
         "payload": {
           "name": "Zawartość",

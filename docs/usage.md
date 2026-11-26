@@ -80,6 +80,18 @@ Both actions can return a per-tag result via `response_variable`. Full reference
 
 These options are specific to BLE ESL; they are not Bluetooth proxy firmware settings.
 
+### `write` vs `write_guarded`
+
+`ble_esl.write` always sends; it ignores Write Lock, Prevent Duplicate Send and Debounce Delay. `ble_esl.write_guarded` applies every guard: the **Write Lock** switch, **Prevent Duplicate Send** and **Debounce Delay**.
+
+| Guard | `ble_esl.write` | `ble_esl.write_guarded` |
+|---|---|---|
+| **Write Lock** switch | ignored | honoured (`locked`) |
+| **Prevent Duplicate Send** | ignored | honoured (`duplicate`) |
+| **Debounce Delay** | ignored | honoured (`scheduled`) |
+
+Both actions still drop a write that a newer request superseded or whose config entry was unloaded (`dropped`).
+
 ## Payload & rendering
 
 Layouts are rendered by **[imagespec](https://github.com/eigger/imagespec)**; its docs are the reference for elements and fields:

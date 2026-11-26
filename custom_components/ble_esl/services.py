@@ -219,7 +219,7 @@ class WriteOutcome:
              scheduled  write_guarded: debounced, will run after `delay_ms`;
                         what happens then is not part of the response
              duplicate  write_guarded: unchanged image, not sent
-             locked     the write-lock switch is on, not sent
+             locked     write_guarded: the write-lock switch is on, not sent
              preview    dry_run: rendered only
              dropped    superseded or unloaded before reaching the BLE lock
     """
@@ -315,6 +315,9 @@ class WriteJob:
     image_png: bytes
     max_retries: int
     prevent_duplicate_send: bool = False
+    respect_write_lock: bool = False
+    """write_guarded only: the Write Lock switch stops this job. A plain
+    ble_esl.write always sends, so it leaves this False."""
     generation: int | None = None
     """Set for debounced writes; compared under the lock (see run_ble_write)."""
     prepared: Future[Any] | None = field(default=None, repr=False)
@@ -492,8 +495,8 @@ def _report(hass: HomeAssistant, job: WriteJob, attempt: Attempt[WriteResult]) -
 
 
 def _locked(job: WriteJob) -> _Decline | None:
-    """The write-lock switch is on."""
-    if not job.data.write_lock:
+    """The write-lock switch is on and this is a guarded write."""
+    if not (job.respect_write_lock and job.data.write_lock):
         return None
     _LOGGER.info("Write lock active for %s — skipping BLE write", job.address)
     return "locked"
@@ -524,8 +527,10 @@ def _duplicate(job: WriteJob) -> _Decline | None:
 def _guard(job: WriteJob) -> _Decline | None:
     """Checks that can change while a write waits, run under the BLE lock before every attempt.
 
-    The lock is first because it can flip during the wait, then a superseded
-    debounce, then a duplicate of a write that finished ahead of this one.
+    The lock is first because it can flip during the wait (it only applies to
+    write_guarded jobs; a plain ble_esl.write is never locked out), then a
+    superseded write, which applies to both actions, then a duplicate of a
+    write that finished ahead of this one (guarded only).
     The status is what blesession stores as `skipped`, so it stays a plain
     string for the entity attributes and the diagnostics download.
     """
@@ -873,6 +878,9 @@ async def _async_write_guarded(hass: HomeAssistant, service: ServiceCall) -> Ser
         job.prevent_duplicate_send = bool(
             options.get(CONF_PREVENT_DUPLICATE_SEND, DEFAULT_PREVENT_DUPLICATE_SEND)
         )
+        # Also checked again under the BLE lock, so a lock turned on while a
+        # debounced write waits still stops it.
+        job.respect_write_lock = True
 
         if dry_run:
             # Preview only (README): leaves duplicate detection untouched.

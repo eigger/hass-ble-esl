@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Label schrijven",
-      "description": "Schrijft een labelafbeelding naar een BLE ESL-apparaat.",
+      "description": "Schrijft een labelafbeelding naar een BLE ESL-apparaat. Verzendt altijd; negeert Schrijfvergrendeling, Dubbel verzenden voorkomen en Debouncevertraging.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Label beveiligd schrijven",
-      "description": "Schrijft een labelafbeelding met beveiligingen (duplicaten, schrijfvergrendeling, debounce).",
+      "description": "Past alle beveiligingen toe: Schrijfvergrendeling, Dubbel verzenden voorkomen en Debouncevertraging. Gebruik ble_esl.write om altijd te verzenden.",
       "fields": {
         "payload": {
           "name": "Payload",

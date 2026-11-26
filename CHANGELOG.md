@@ -4,12 +4,17 @@
 
 ### Changed
 
+- The **Write Lock** switch now applies only to `ble_esl.write_guarded`. `ble_esl.write` and the designer's Send always send, even with the lock on, so automations that relied on the lock to block writes should switch to `ble_esl.write_guarded`. **Prevent Duplicate Send** and **Debounce Delay** likewise apply only to `ble_esl.write_guarded`, and the action and option descriptions now say so (#374, #376).
 - Design templates `weather_now`, `weather_forecast` and `weather_commute` (renamed *Outing weather* / 외출 날씨 브리핑) have new layouts arranged per tag shape. `weather_now`: a header or footer bar, a big temperature with today's high (in the new accent color) and low, and feels-like, humidity, wind and chance-of-rain readings; tags from 5.8 inches add a three-hourly strip. `weather_forecast`: today on top and one row per coming day with chance of rain and a low-to-high temperature bar on 4.2-inch and larger tags, side-by-side days on short wide tags and a short list on narrow tall tags. `weather_commute`: a verdict banner (umbrella, snow, temperature gap, wind) above an hourly forecast with a temperature trend and feels-like, humidity, wind and sunset readings, replacing the weekly strip. Missing values show `—` instead of `--`, nothing or a lone icon. The automations of `weather_now` and `weather_commute` now also fetch the hourly forecast (`fc_hourly`), `weather_now` fetches the daily forecast for the high and low, and the first two templates gained an *accent* color parameter.
 - Design templates `sensor_card`, `date_weather`, `calendar_next`, `calendar_weather`, `print_progress`, `energy_power`, `ev_charging`, `indoor_climate`, `home_presence` and `appliance_status` follow the same look: a black header bar with the title and a status pill (in the accent color when alerting), dividers instead of outlined boxes, and larger labels and values; 7.5-inch and larger tags get dedicated layouts. `sensor_card` shows how long ago the value changed, `calendar_next` shows the time until the event and the following event, `print_progress` shows the remaining time and nozzle/bed temperatures in cells, and `date_weather` adds today's high, low and chance of rain, so its automation now also fetches the daily forecast (`fc`). The dashboard templates keep their existing small-tag layouts, and `calendar_weather` keeps its layouts under 4 inches.
 
 ### Added
 
 - XTE device number 176 is the Poshiji PSJ-750 7.5" BWRY tag (800×480, no rotation), verified on a real tag from a user report (#360). It is now picked automatically from the advertisement; the `psj-750` preset key is unchanged, so existing config entries keep working.
+
+### Fixed
+
+- The designer now lists, opens and saves automations that use `ble_esl.write_guarded`, keeping the action they use; before, it only recognised `ble_esl.write` (#375).
 
 ## 1.10.3
 

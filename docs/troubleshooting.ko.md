@@ -116,7 +116,7 @@ Bluetooth 연결 후 프로토콜이 시작되기 전에 태그가 세션을 끊
 
 **Bluetooth 전송을 시작하기 전에 액션이 실패하는 경우**. 템플릿을 렌더링하지 못하거나 글꼴 파일 또는 `dlimg` URL을 읽을 수 없으면 액션이 즉시 오류를 반환합니다. 이 경우 쓰기 센서에는 기록되지 않습니다. **개발자 도구 → 액션**에서 `dry_run: true`로 실행하고 **Preview Content**에서 렌더링 결과를 확인하세요.
 
-**쓰기가 시도되지 않음.** 액션은 `locked`(**Write Lock** 스위치가 켜짐 — `ble_esl.write`도 막습니다)로 끝나거나, `ble_esl.write_guarded`의 경우 `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 실패로 치지 않습니다: Failure Count와 Last Failure Time은 그대로입니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요. BLE 락까지 갔다가 멈춘 쓰기는 **Write Duration** 속성에 `success: false`와 `skipped: locked` / `duplicate` / `dropped`를 남깁니다 — 자동화 트레이스는 액션이 실행됐다고 하는데 태그는 그대로일 때 확인할 곳입니다. Write Lock 스위치에 막힌 모든 `ble_esl.write`(큐에 넣기 전에 검사하지 않습니다)와, 순서를 기다리는 동안 조건이 바뀐 guarded 쓰기가 여기 해당합니다. `ble_esl.write_guarded`는 큐에 넣기 전에도 검사하므로, 평범한 중복은 아무것도 기록하지 않고 반환됩니다.
+**쓰기가 시도되지 않음.** 액션은 `locked`(`ble_esl.write_guarded` 전용: **Write Lock** 스위치가 켜짐; `ble_esl.write`는 무시합니다)로 끝나거나, `duplicate`(이미지가 바뀌지 않았고 *Prevent Duplicate Send*가 켜짐)나 `scheduled`(디바운스됨; 나중에 실행)로 끝날 수 있습니다. 어느 것도 실패로 치지 않습니다: Failure Count와 Last Failure Time은 그대로입니다. 액션 응답의 `status`가 어느 쪽인지 알려주고([actions.md](actions.md#response-data)), "아무것도 안 하는" 자동화는 트레이스부터 보세요. BLE 락까지 갔다가 멈춘 쓰기는 **Write Duration** 속성에 `success: false`와 `skipped: locked` / `duplicate` / `dropped`를 남깁니다 — 자동화 트레이스는 액션이 실행됐다고 하는데 태그는 그대로일 때 확인할 곳입니다. 순서를 기다리는 동안 조건이 바뀐 guarded 쓰기(예: 큐에 넣은 뒤 Write Lock을 켠 경우)와 `dropped`로 밀려난 쓰기가 여기 해당합니다. `ble_esl.write_guarded`는 큐에 넣기 전에도 검사하므로, 평범한 중복이나 잠금은 아무것도 기록하지 않고 반환됩니다.
 
 ### 간헐적 실패
 
