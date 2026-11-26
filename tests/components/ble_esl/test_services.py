@@ -11,6 +11,7 @@ import asyncio
 from datetime import timedelta
 import logging
 from threading import Event
+import time
 from unittest.mock import patch
 
 from blesession import (
@@ -1435,10 +1436,14 @@ async def test_skipped_write_discards_failed_encode_quietly(
             # would wait for the write queued on the lock held here.
             freezer.tick(timedelta(seconds=2))
             async_fire_time_changed(hass, dt_util.utcnow())
+            # Wait in real time: on older HA the frozen clock also stops the
+            # event loop's, so asyncio.sleep(0.01) would never return.
             for _ in range(500):
                 if encodes:
                     break
-                await asyncio.sleep(0.01)
+                await hass.async_add_executor_job(time.sleep, 0.01)
+            # Let the raising encode settle its future before the guard runs.
+            await hass.async_add_executor_job(time.sleep, 0.05)
         finally:
             ble_lock.release()
         await debounced_writes_done()
