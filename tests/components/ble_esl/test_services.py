@@ -1431,7 +1431,10 @@ async def test_skipped_write_discards_failed_encode_quietly(
         ble_lock = hass.data[DATA_LOCK]
         await ble_lock.acquire()
         try:
-            await advance(hass, freezer, 2, settle=False)
+            # Fire the timer without async_block_till_done: on older HA it
+            # would wait for the write queued on the lock held here.
+            freezer.tick(timedelta(seconds=2))
+            async_fire_time_changed(hass, dt_util.utcnow())
             for _ in range(500):
                 if encodes:
                     break
