@@ -138,8 +138,8 @@
         "data_description": {
           "model": "Résolution de l'écran et type de modèle ESL.",
           "retry_count": "Nombre de nouvelles tentatives d'écriture avant d'abandonner.",
-          "prevent_duplicate_send": "Ignore l'écriture si la nouvelle image est identique à la dernière envoyée.",
-          "debounce_ms": "Attente avant l'écriture. Une nouvelle demande annule celle en attente. 0 = désactivé (écriture immédiate)."
+          "prevent_duplicate_send": "Ignore l'écriture si la nouvelle image est identique à la dernière envoyée. S'applique uniquement à ble_esl.write_guarded.",
+          "debounce_ms": "Attente avant l'écriture. Une nouvelle demande annule celle en attente. 0 = désactivé (écriture immédiate). S'applique uniquement à ble_esl.write_guarded."
         }
       }
     }

@@ -67,7 +67,7 @@ Home Assistant 2026.11 이전 버전에서는 같은 배지가 HACS를 엽니다
 
 자동으로 발견된 태그는 **설정 → 기기 및 서비스**에서 확인합니다. 수동으로 등록하려면 **통합구성요소 추가 → BLE ESL**을 선택하세요.
 
-**구성**에서 재시도 횟수, 중복 전송 방지, 디바운스 지연을 설정할 수 있습니다. WOLINK 또는 easyTag는 기기에 맞는 **모델**을 선택하세요. [통합 옵션](docs/ko/usage.md#옵션)
+**구성**에서 재시도 횟수, 중복 전송 방지, 디바운스 지연을 설정할 수 있습니다 (중복 전송 방지와 디바운스는 `ble_esl.write_guarded`에만 적용됩니다). WOLINK 또는 easyTag는 기기에 맞는 **모델**을 선택하세요. [통합 옵션](docs/ko/usage.md#옵션)
 
 `hass-gicisky`나 `hass-zhsunyco`에서 옮겨오는 경우 BLE ESL에 태그를 다시 추가하고 `gicisky.write`를 `ble_esl.write`로 바꾸세요. 기존 페이로드를 재사용할 수 있습니다. [마이그레이션 가이드](docs/ko/migration.md)
 

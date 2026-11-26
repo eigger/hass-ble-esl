@@ -138,8 +138,8 @@
         "data_description": {
           "model": "Schermresolutie en modeltype van de ESL.",
           "retry_count": "Hoe vaak het schrijven opnieuw wordt geprobeerd voordat wordt opgegeven.",
-          "prevent_duplicate_send": "Slaat het schrijven over als de nieuwe afbeelding identiek is aan de laatst verzonden.",
-          "debounce_ms": "Wachttijd voor het schrijven. Een nieuwe aanvraag annuleert de wachtende. 0 = uit (direct schrijven)."
+          "prevent_duplicate_send": "Slaat het schrijven over als de nieuwe afbeelding identiek is aan de laatst verzonden. Geldt alleen voor ble_esl.write_guarded.",
+          "debounce_ms": "Wachttijd voor het schrijven. Een nieuwe aanvraag annuleert de wachtende. 0 = uit (direct schrijven). Geldt alleen voor ble_esl.write_guarded."
         }
       }
     }

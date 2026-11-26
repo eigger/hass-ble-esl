@@ -138,8 +138,8 @@
         "data_description": {
           "model": "Displayauflösung und Modelltyp des ESL.",
           "retry_count": "Wie oft das Schreiben wiederholt wird, bevor aufgegeben wird.",
-          "prevent_duplicate_send": "Überspringt das Schreiben, wenn das neue Bild mit dem zuletzt gesendeten identisch ist.",
-          "debounce_ms": "Wartezeit vor dem Schreiben. Neue Anforderungen brechen ausstehende ab. 0 = deaktiviert (sofort schreiben)."
+          "prevent_duplicate_send": "Überspringt das Schreiben, wenn das neue Bild mit dem zuletzt gesendeten identisch ist. Gilt nur für ble_esl.write_guarded.",
+          "debounce_ms": "Wartezeit vor dem Schreiben. Neue Anforderungen brechen ausstehende ab. 0 = deaktiviert (sofort schreiben). Gilt nur für ble_esl.write_guarded."
         }
       }
     }

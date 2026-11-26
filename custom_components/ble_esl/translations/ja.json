@@ -138,8 +138,8 @@
         "data_description": {
           "model": "ESL の画面解像度とモデルの種類です。",
           "retry_count": "書き込みを諦めるまでに再試行する回数です。",
-          "prevent_duplicate_send": "新しい画像が最後に送信した画像と同一の場合、書き込みをスキップします。",
-          "debounce_ms": "書き込み前の待機時間です。新しい要求は待機中の要求を取り消します。0 = 無効（即時書き込み）。"
+          "prevent_duplicate_send": "新しい画像が最後に送信した画像と同一の場合、書き込みをスキップします。ble_esl.write_guarded にのみ適用されます。",
+          "debounce_ms": "書き込み前の待機時間です。新しい要求は待機中の要求を取り消します。0 = 無効（即時書き込み）。ble_esl.write_guarded にのみ適用されます。"
         }
       }
     }

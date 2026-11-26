@@ -74,11 +74,11 @@ data:
 |--------|---------|-------|-------------|
 | **Model** | — | 모델 목록 | 모델을 스스로 알리지 못하는 프로토콜(WOLINK, easyTag)에만 표시 |
 | **Retry Count** | 3 | 1–10 | BLE 쓰기 실패 시 재시도 횟수 |
-| **Prevent Duplicate Send** | 꺼짐 | 켬/끔 | 이미지가 바뀌지 않았으면 전송 생략 |
-| **Debounce Delay (ms)** | 0 | 0–120000 | 쓰기 전 대기; 새 요청이 오면 대기 중인 요청은 취소 |
+| **Prevent Duplicate Send** | 꺼짐 | 켬/끔 | 이미지가 바뀌지 않았으면 전송 생략 (`write_guarded` 전용) |
+| **Debounce Delay (ms)** | 0 | 0–120000 | 쓰기 전 대기; 새 요청이 오면 대기 중인 요청은 취소 (`write_guarded` 전용) |
 
 > [!TIP]
-> 자주 발화하는 자동화라면 **Prevent Duplicate Send**나 **Debounce Delay**를 켜서 태그 배터리와 BLE 점유를 아끼세요. 전송 중에 실패한 쓰기는 다음 재시도에서 패킷 간격을 더 두고 보냅니다; 계속 실패하면 **Write Duration** 센서의 속성이 링크 문제인지 배치 문제인지 알려줍니다 — [troubleshooting.md](../troubleshooting.ko.md)를 보세요.
+> 자주 발화하는 자동화라면 `ble_esl.write_guarded`를 쓰고 **Prevent Duplicate Send**나 **Debounce Delay**를 켜서 태그 배터리와 BLE 점유를 아끼세요(`ble_esl.write`는 항상 전송하므로 이 옵션의 영향을 받지 않습니다). 전송 중에 실패한 쓰기는 다음 재시도에서 패킷 간격을 더 두고 보냅니다; 계속 실패하면 **Write Duration** 센서의 속성이 링크 문제인지 배치 문제인지 알려줍니다 — [troubleshooting.md](../troubleshooting.ko.md)를 보세요.
 
 이 옵션은 BLE ESL 전용이며 Bluetooth 프록시 펌웨어 설정이 아닙니다.
 
