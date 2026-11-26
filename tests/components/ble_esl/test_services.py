@@ -1423,10 +1423,22 @@ async def test_skipped_write_discards_failed_encode_quietly(
     hass.loop.set_exception_handler(lambda loop, ctx: unhandled.append(ctx))
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(WolinkProtocol, "prepare_image", staticmethod(broken))
-        # Debounced, so the lock is first checked under the BLE lock.
+        # Debounced, so the lock is first checked under the BLE lock. Hold
+        # that lock until the encode has failed, so the guard declines a
+        # finished (not a cancelled) encode future.
         await call(hass, "write_guarded", device_id_of(hass), debounce_override_ms=1000)
         wolink_entry.runtime_data.write_lock = True
-        await advance(hass, freezer, 2)
+        ble_lock = hass.data[DATA_LOCK]
+        await ble_lock.acquire()
+        try:
+            await advance(hass, freezer, 2, settle=False)
+            for _ in range(500):
+                if encodes:
+                    break
+                await asyncio.sleep(0.01)
+        finally:
+            ble_lock.release()
+        await debounced_writes_done()
         await hass.async_block_till_done()
     import gc
 
