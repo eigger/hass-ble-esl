@@ -597,8 +597,6 @@ export default {
   "Refreshing ESLs…": "Actualisation des ESL…",
   "Edit ESL design": "Modifier le design de l'ESL",
   "ESL design": "Design de l'ESL",
-  "Not sent: the ESL's write lock is on":
-    "Non envoyé : le verrouillage en écriture de l'ESL est activé",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
     "Les valeurs sont actuelles. Utilisez l'action d'automatisation pour planifier les mises à jour des ESL dans Home Assistant.",
   "Rendered view": "Vue rendue",

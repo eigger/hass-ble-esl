@@ -559,7 +559,6 @@ export default {
   "Refreshing ESLs…": "正在刷新 ESL……",
   "Edit ESL design": "编辑 ESL 设计",
   "ESL design": "ESL 设计",
-  "Not sent: the ESL's write lock is on": "未发送：ESL 的写锁定已打开",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
     "数值是截至目前的。使用自动化操作安排 Home Assistant 中的 ESL 更新。",
   "Rendered view": "渲染视图",

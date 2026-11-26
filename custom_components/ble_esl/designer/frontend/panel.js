@@ -2829,7 +2829,6 @@ export class BleEslDesigner extends HTMLElement {
         if (action === "send") {
           const sent = {
             written: "Display sent and acknowledged",
-            locked: "Not sent: the ESL's write lock is on",
             duplicate: "Not sent: the display is unchanged",
             dropped: "Not sent: a newer write replaced this one",
             failed: {
@@ -2839,7 +2838,7 @@ export class BleEslDesigner extends HTMLElement {
           };
           this.status = sent[result.status] || result.status;
           this.notice = this.status;
-          this.error = ["locked", "failed"].includes(result.status);
+          this.error = result.status === "failed";
         }
       } else if (action === "discard") {
         if (this._automationSaveMode) {

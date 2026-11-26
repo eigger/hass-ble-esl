@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Écrire l'étiquette",
-      "description": "Écrit une image d'étiquette sur un appareil ESL BLE.",
+      "description": "Écrit une image d'étiquette sur un appareil ESL BLE. Envoie toujours ; ignore Verrou d'écriture, Empêcher les envois en double et Délai anti-rebond.",
       "fields": {
         "payload": {
           "name": "Contenu",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Écrire l'étiquette (protégé)",
-      "description": "Écrit une image d'étiquette avec des protections (doublons, verrou d'écriture, anti-rebond).",
+      "description": "Applique toutes les protections : Verrou d'écriture, Empêcher les envois en double et Délai anti-rebond. Utilisez ble_esl.write pour toujours envoyer.",
       "fields": {
         "payload": {
           "name": "Contenu",

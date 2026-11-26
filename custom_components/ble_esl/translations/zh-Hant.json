@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "寫入標籤",
-      "description": "將標籤影像寫入 BLE ESL 裝置。",
+      "description": "將標籤影像寫入 BLE ESL 裝置。一律傳送，忽略寫入鎖定、防止重複傳送與防彈跳延遲。",
       "fields": {
         "payload": {
           "name": "酬載",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "受保護寫入標籤",
-      "description": "在保護機制（去重、寫入鎖定、防彈跳）下寫入標籤影像。",
+      "description": "套用所有保護：寫入鎖定、防止重複傳送與防彈跳延遲。如需一律傳送，請使用 ble_esl.write。",
       "fields": {
         "payload": {
           "name": "酬載",

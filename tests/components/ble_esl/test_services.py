@@ -1407,26 +1407,32 @@ async def test_unexpected_error_keeps_other_targets_failures_as_note(
 
 
 async def test_skipped_write_discards_failed_encode_quietly(
-    hass: HomeAssistant, wolink_entry, tag_writer
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer
 ) -> None:
     """A write skipped under the lock consumes its encode future, so a failing
     encode never logs 'exception was never retrieved'."""
     from custom_components.ble_esl.esl_ble.wolink import WolinkProtocol
 
-    wolink_entry.runtime_data.write_lock = True
+    encodes: list[int] = []
 
     def broken(preset, image, address):
+        encodes.append(1)
         raise RuntimeError("encode failed")
 
     unhandled: list = []
     hass.loop.set_exception_handler(lambda loop, ctx: unhandled.append(ctx))
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(WolinkProtocol, "prepare_image", staticmethod(broken))
-        await call(hass, "write", device_id_of(hass))
-        await asyncio.sleep(0.05)
+        # Debounced, so the lock is first checked under the BLE lock.
+        await call(hass, "write_guarded", device_id_of(hass), debounce_override_ms=1000)
+        wolink_entry.runtime_data.write_lock = True
+        await advance(hass, freezer, 2)
+        await hass.async_block_till_done()
     import gc
 
     gc.collect()
+    assert encodes  # the failing encode really ran
+    assert wolink_entry.runtime_data.reports.last["skipped"] == "locked"
     assert tag_writer.write_prepared.await_count == 0
     assert unhandled == []
 
@@ -1527,10 +1533,79 @@ async def test_response_guarded_statuses(
     assert tag_writer.write_prepared.await_count == 2
 
 
-async def test_response_locked_for_write(hass: HomeAssistant, wolink_entry, tag_writer) -> None:
+async def test_response_locked_for_write_guarded(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    wolink_entry.runtime_data.write_lock = True
+    response = await respond(hass, "write_guarded", device_id_of(hass))
+    assert response[device_id_of(hass)] == {"status": "locked"}
+    assert tag_writer.write_prepared.await_count == 0
+
+
+async def test_plain_write_ignores_write_lock(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """ble_esl.write never skips: the Write Lock only stops write_guarded."""
     wolink_entry.runtime_data.write_lock = True
     response = await respond(hass, "write", device_id_of(hass))
-    assert response[device_id_of(hass)] == {"status": "locked"}
+    assert response[device_id_of(hass)]["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 1
+
+
+async def test_lock_turned_on_during_debounce_stops_guarded_write(
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer
+) -> None:
+    """The lock is checked again when a debounced write fires."""
+    device_id = device_id_of(hass)
+    response = await respond(hass, "write_guarded", device_id, debounce_override_ms=5000)
+    assert response[device_id]["status"] == "scheduled"
+    wolink_entry.runtime_data.write_lock = True
+    await advance(hass, freezer, 6)
+    assert tag_writer.write_prepared.await_count == 0
+    assert wolink_entry.runtime_data.reports.last["skipped"] == "locked"
+
+
+async def test_plain_write_retries_after_lock_turned_on(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """A lock switched on between attempts does not stop a plain write's retry."""
+    data = wolink_entry.runtime_data
+
+    async def hook(ble_device, preset, image, **kwargs):
+        data.write_lock = True  # flipped during attempt 1
+        if tag_writer.write_prepared.await_count == 1:
+            return fail("first try", connect=0.1)
+        return ok(transfer=0.1)
+
+    tag_writer.write_hook = hook
+    response = await respond(hass, "write", device_id_of(hass))
+
+    assert response[device_id_of(hass)]["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 2
+
+
+async def test_lock_does_not_stop_dropped_plain_write(
+    hass: HomeAssistant, wolink_entry, tag_writer
+) -> None:
+    """Invalidation still applies to ble_esl.write while the lock is on."""
+    device_id = device_id_of(hass)
+    data = wolink_entry.runtime_data
+    data.write_lock = True
+    lock = hass.data[DATA_LOCK]
+    await lock.acquire()
+
+    write_task = hass.async_create_task(respond(hass, "write", device_id))
+    for _ in range(500):
+        if data.write_serial.locked():
+            break
+        await asyncio.sleep(0.01)
+    assert data.write_serial.locked()
+
+    assert await hass.config_entries.async_unload(wolink_entry.entry_id)
+    lock.release()
+
+    assert (await write_task)[device_id] == {"status": "dropped"}
+    assert tag_writer.write_prepared.await_count == 0
 
 
 async def test_no_target_still_raises_with_response(
@@ -1692,7 +1767,7 @@ async def test_guards_are_rechecked_before_a_retry(
         return fail("first try", connect=0.1)
 
     tag_writer.write_hook = hook
-    response = await respond(hass, "write", device_id_of(hass))
+    response = await respond(hass, "write_guarded", device_id_of(hass))
 
     assert response[device_id_of(hass)]["status"] == "locked"
     assert tag_writer.write_prepared.await_count == 1  # no second attempt
@@ -1711,7 +1786,7 @@ async def test_declined_attempt_is_reported_as_skipped(
         return fail("first try", connect=0.1)
 
     tag_writer.write_hook = hook
-    await respond(hass, "write", device_id_of(hass))
+    await respond(hass, "write_guarded", device_id_of(hass))
 
     report = data.reports.last
     assert report["success"] is False
@@ -1727,12 +1802,12 @@ async def test_declined_attempt_is_reported_as_skipped(
 
 
 async def test_write_declined_before_any_attempt_reaches_the_entity(
-    hass: HomeAssistant, wolink_entry, tag_writer
+    hass: HomeAssistant, wolink_entry, tag_writer, freezer
 ) -> None:
     """A write the guard stops on arrival still publishes its `skipped`.
 
-    `ble_esl.write` does not look at the write lock before queueing, so the
-    guard declines attempt 1 and nothing ever runs — the duration sensor is
+    A debounced write checks the write lock only when it fires, so the guard
+    declines attempt 1 and nothing ever runs — the duration sensor is
     not touched by the write itself, and the entity only rewrites its
     attributes when its coordinator fires. Without a nudge the skip would
     sit in `reports.last`, visible in the diagnostics download while the
@@ -1748,10 +1823,10 @@ async def test_write_declined_before_any_attempt_reaches_the_entity(
         lambda: wakes.append(data.duration_coordinator.data)
     )
 
-    data.write_lock = True
-    assert (await respond(hass, "write", device_id_of(hass)))[device_id_of(hass)] == {
-        "status": "locked"
-    }
+    scheduled = await respond(hass, "write_guarded", device_id_of(hass), debounce_override_ms=1000)
+    assert scheduled[device_id_of(hass)]["status"] == "scheduled"
+    data.write_lock = True  # flipped during the debounce wait
+    await advance(hass, freezer, 2)
     remove()
     # Woken exactly once, with the value it already had.
     assert wakes == [float(written_duration)]

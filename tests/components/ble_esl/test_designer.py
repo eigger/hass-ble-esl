@@ -77,9 +77,7 @@ async def test_panel_preview_without_stored_designs(hass: HomeAssistant, wolink_
     assert not hasattr(designer, "documents")
 
 
-async def test_manual_send_rewrites_and_respects_lock(
-    hass: HomeAssistant, wolink_entry, tag_writer
-):
+async def test_manual_send_rewrites_and_ignores_lock(hass: HomeAssistant, wolink_entry, tag_writer):
     designer = hass.data[KEY]
     entry = wolink_entry
     assert (await designer.send(entry, document()))["status"] == "written"
@@ -90,8 +88,9 @@ async def test_manual_send_rewrites_and_respects_lock(
     entry.runtime_data.write_lock = True
     doc = document()
     doc["elements"][0]["label"] = "Changed label"
-    assert (await designer.send(entry, doc))["status"] == "locked"
-    assert tag_writer.write_prepared.await_count == 2
+    # Send is a plain write: the lock only stops ble_esl.write_guarded.
+    assert (await designer.send(entry, doc))["status"] == "written"
+    assert tag_writer.write_prepared.await_count == 3
 
 
 async def test_legacy_auto_update_options_are_dropped(hass, wolink_entry):

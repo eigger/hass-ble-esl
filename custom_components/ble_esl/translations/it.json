@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Scrivi etichetta",
-      "description": "Scrive un'immagine di etichetta su un dispositivo ESL BLE.",
+      "description": "Scrive un'immagine di etichetta su un dispositivo ESL BLE. Invia sempre; ignora Blocco scrittura, Evita invii duplicati e Ritardo debounce.",
       "fields": {
         "payload": {
           "name": "Contenuto",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Scrivi etichetta (protetta)",
-      "description": "Scrive un'immagine di etichetta con protezioni (duplicati, blocco scrittura, debounce).",
+      "description": "Applica tutte le protezioni: Blocco scrittura, Evita invii duplicati e Ritardo debounce. Usa ble_esl.write per inviare sempre.",
       "fields": {
         "payload": {
           "name": "Contenuto",

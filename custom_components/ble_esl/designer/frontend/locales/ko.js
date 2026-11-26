@@ -580,7 +580,6 @@ export default {
   "Refreshing ESLs…": "ESL 새로고침 중…",
   "Edit ESL design": "ESL 디자인 편집",
   "ESL design": "ESL 디자인",
-  "Not sent: the ESL's write lock is on": "전송하지 않음: ESL 쓰기 잠금 활성",
   "Values are as of now. Use the automation action to schedule ESL updates in Home Assistant.":
     "현재 시점의 값입니다. Home Assistant 자동화 동작으로 ESL 업데이트를 예약하세요.",
   "Rendered view": "렌더링 보기",

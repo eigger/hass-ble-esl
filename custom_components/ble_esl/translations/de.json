@@ -2,7 +2,7 @@
   "services": {
     "write": {
       "name": "Etikett schreiben",
-      "description": "Schreibt ein Etikettenbild auf ein BLE-ESL-Gerät.",
+      "description": "Schreibt ein Etikettenbild auf ein BLE-ESL-Gerät. Sendet immer; ignoriert Schreibsperre, Doppeltes Senden verhindern und Entprellverzögerung.",
       "fields": {
         "payload": {
           "name": "Payload",
@@ -24,7 +24,7 @@
     },
     "write_guarded": {
       "name": "Etikett geschützt schreiben",
-      "description": "Schreibt ein Etikettenbild mit Schutzmechanismen (Duplikate, Schreibsperre, Entprellung).",
+      "description": "Wendet alle Schutzmechanismen an: Schreibsperre, Doppeltes Senden verhindern und Entprellverzögerung. Für garantiertes Senden ble_esl.write verwenden.",
       "fields": {
         "payload": {
           "name": "Payload",
