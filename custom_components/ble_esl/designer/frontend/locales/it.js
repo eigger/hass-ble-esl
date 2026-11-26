@@ -406,8 +406,8 @@ export default {
     "ID della configurazione dell'automazione mancante.",
   "Automation configuration could not be loaded.":
     "Impossibile caricare la configurazione dell'automazione.",
-  "No ble_esl.write action targeting this ESL was found.":
-    "Nessuna azione ble_esl.write rivolta a questo ESL è stata trovata.",
+  "No ble_esl.write or ble_esl.write_guarded action targeting this ESL was found.":
+    "Nessuna azione ble_esl.write o ble_esl.write_guarded rivolta a questo ESL è stata trovata.",
   "Choose the write action to import:":
     "Scegli l'azione di scrittura da importare:",
   "The matching write action changed. Reopen the automation and try again.":
@@ -576,8 +576,8 @@ export default {
   "Choose the automation to save to:": "Scegli l'automazione in cui salvare:",
   "Choose the write action to replace:":
     "Scegli l'azione di scrittura da sostituire:",
-  "No automation with a ble_esl.write action for this ESL was found.":
-    "Nessuna automazione con un'azione ble_esl.write per questo ESL è stata trovata.",
+  "No automation with a ble_esl.write or ble_esl.write_guarded action for this ESL was found.":
+    "Nessuna automazione con un'azione ble_esl.write o ble_esl.write_guarded per questo ESL è stata trovata.",
   "Saved to {name}.": "Salvato in {name}.",
   "Saved to {name}. Some values are as of now, not live.":
     "Salvato in {name}. Alcuni valori restano fissi a questo momento e non si aggiornano in tempo reale.",
